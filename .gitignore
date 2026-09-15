@@ -1,0 +1,4 @@
+# working copy of the application (release source tree); delivered via zip
+work/
+# external runtime DATA_DIR — never commit user data
+medschool-data/
