@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 300" width="480" height="300">
+  <defs>
+    <radialGradient id="lumen" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#7a1f14"/><stop offset="70%" stop-color="#3d0d08"/><stop offset="100%" stop-color="#1a0503"/>
+    </radialGradient>
+  </defs>
+  <rect width="480" height="300" fill="#0d0603"/>
+  <circle cx="240" cy="150" r="140" fill="url(#lumen)"/>
+  <ellipse cx="210" cy="140" rx="46" ry="34" fill="#e8c9b0" stroke="#8a3b26" stroke-width="4"/>
+  <ellipse cx="210" cy="140" rx="20" ry="14" fill="#6b0f0a"/>
+  <path d="M250 180 q20 10 44 4" stroke="#c0392b" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <text x="240" y="284" text-anchor="middle" font-family="sans-serif" font-size="18" fill="#f4d7c4">آندوسکوپی: زخم پپتیک با پایهٔ خونریزی‌دهنده (نمونهٔ آموزشی)</text>
+</svg>

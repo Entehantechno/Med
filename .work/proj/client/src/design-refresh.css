@@ -1,0 +1,2233 @@
+/* ============================================================================
+   design-refresh.css — 2025 visual polish (loaded AFTER styles.css so it wins)
+   ----------------------------------------------------------------------------
+   Goals (research-backed): a confident Persian display font for headings, a
+   cleaner type scale, tactile "3D" primary buttons, richer micro-interactions,
+   stronger focus states for accessibility, and a premium feel — WITHOUT
+   rewriting the existing component classes (so nothing regresses).
+   Everything respects prefers-reduced-motion. Self-hosted fonts only.
+   ========================================================================== */
+
+:root{
+  /* Display face for headings/hero; body stays Vazirmatn/Inter for readability */
+  --font-display:"Estedad","Vazirmatn Variable","Vazirmatn",sans-serif;
+  /* a slightly springier motion curve reused across interactions */
+  --ease-spring:cubic-bezier(.34,1.56,.64,1);
+  /* tactile button depth (Duolingo-style solid bottom shadow) */
+  --btn-depth:#1f5aa0;
+  --btn-depth-accent:#177a4f;
+}
+[data-theme="dark"]{ --btn-depth:#1a3c6b; --btn-depth-accent:#12704a; }
+
+/* ---- Headings: use the display face with tighter, punchier tracking ---- */
+h1,h2,h3,.home-greet,.lp-h1,.sec-title h2,.section-title h4,.blog-hero h1,
+.blog-article h1,.cert-org,.verify-card h1{
+  font-family:var(--font-display);
+  letter-spacing:-.01em;
+  font-weight:800;
+}
+[dir="rtl"] h1,[dir="rtl"] h2,[dir="rtl"] h3{ letter-spacing:0; } /* Persian: no negative tracking */
+.lp-h1,.home-greet{ font-weight:900; }
+
+/* Bigger, friendlier hero headline on the landing page */
+.lp-h1{ font-size:clamp(2.1rem,5vw,3.6rem); line-height:1.22; }
+
+/* ---- Tactile primary buttons: solid bottom edge that "presses" ---- */
+.btn-primary,.lp-btn-primary,.pwa-btn-primary{
+  box-shadow:0 4px 0 var(--btn-depth), 0 8px 18px -8px var(--primaryGlow);
+  transition:transform .12s var(--ease-spring), box-shadow .12s ease, filter .18s ease;
+}
+.btn-primary:hover,.lp-btn-primary:hover{ transform:translateY(-1px); filter:brightness(1.04); }
+.btn-primary:active,.lp-btn-primary:active,.pwa-btn-primary:active{
+  transform:translateY(3px); box-shadow:0 1px 0 var(--btn-depth), 0 4px 10px -8px var(--primaryGlow);
+}
+.btn-accent{ box-shadow:0 4px 0 var(--btn-depth-accent), 0 8px 18px -8px var(--accentGlow); }
+.btn-accent:active{ transform:translateY(3px); box-shadow:0 1px 0 var(--btn-depth-accent); }
+
+/* ---- Cards: softer, layered, lift a touch on hover for tactility ---- */
+.card{ transition:transform .18s var(--ease-spring), box-shadow .22s ease, border-color .22s ease; }
+.card:hover{ box-shadow:var(--shadow); }
+
+/* ---- Accessible focus ring (keyboard users) — visible, on-brand ---- */
+:focus-visible{ outline:3px solid var(--primary); outline-offset:2px; border-radius:8px; }
+.btn:focus-visible,.lp-btn-primary:focus-visible,.lp-btn-ghost:focus-visible{ outline-offset:3px; }
+
+/* ---- Inputs: clearer focus + comfortable sizing ---- */
+input,textarea,select{ transition:border-color .16s ease, box-shadow .16s ease; }
+input:focus,textarea:focus,select:focus{
+  border-color:var(--primary); box-shadow:0 0 0 3px var(--primaryGlow); outline:none;
+}
+
+/* ---- Nav items: gentle slide + active indicator polish ---- */
+.nav-item,.learn-nav .nav-item{ transition:background .15s ease, transform .12s var(--ease-spring); }
+.learn-nav .nav-item:hover{ transform:translateX(-2px); }
+[dir="ltr"] .learn-nav .nav-item:hover{ transform:translateX(2px); }
+
+/* ---- Micro-interaction: subtle pop when content mounts ---- */
+@keyframes softPop{ from{opacity:0; transform:translateY(8px) scale(.99)} to{opacity:1; transform:none} }
+.card,.blog-card,.cert-mini{ animation:softPop .34s var(--ease-spring) both; }
+
+/* ---- Reading comfort for Persian long-form (blog/articles) ---- */
+[dir="rtl"] .blog-content,[dir="rtl"] .blog-article{ line-height:2.05; }
+.blog-content h2,.blog-content h3{ font-family:var(--font-display); }
+
+/* ---- Pills / badges: rounder, crisper ---- */
+.tag,.pill{ letter-spacing:0; }
+
+/* ============================ ACCESSIBILITY ============================== */
+/* Respect users who prefer less motion — turn off non-essential animation. */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important; animation-iteration-count:1 !important;
+    transition-duration:.001ms !important; scroll-behavior:auto !important;
+  }
+}
+
+/* Lazy-route loading fallback — centered, full-height, theme-aware */
+.route-fallback{min-height:100vh;display:grid;place-items:center;background:var(--bg)}
+
+/* ============================ Accessibility: contrast ===================== */
+/* WCAG AA fix: the old muted grey (#647184) scored 4.37:1 on the light
+   background — just under the 4.5:1 minimum. Darkened to #5a6578 (5.2:1) so
+   secondary text is readable for everyone. Dark theme muted already passes. */
+:root{ --muted:#5a6578; --muted2:#6c7789; }
+/* keep the dark theme's lighter muted (it passes on the dark background) */
+[data-theme="dark"]{ --muted:#9fadc9; --muted2:#8492ad; }
+
+/* --- Contrast: interactive & text elements that must pass AA (light theme) --- */
+/* Deepen the primary blue in the LIGHT theme only: #2f7fd1 was 4.13:1 on white
+   (just under AA). #2569b0 is 5.64:1 both as text-on-white AND white-on-it, so
+   blue headings, links, active-nav backgrounds and chips all pass at once.
+   The dark theme keeps its brighter blue (already AA on dark). */
+[data-theme="light"]{ --primary:#2569b0; --primaryGlow:rgba(37,105,176,.22); }
+
+.lp-btn-outline{ color:var(--primary) !important; border-color:var(--primary) !important; }
+[data-theme="dark"] .lp-btn-outline{ color:#7fb2ee !important; border-color:#7fb2ee !important; }
+
+/* Learner-home leaderboard rank number used bright XP gold (fails on white);
+   use the deeper gold token so it reads clearly. */
+[data-theme="light"] .rank-num{ color:#7a580a; }
+[data-theme="dark"] .rank-num{ color:var(--xp); }
+
+/* "Medically reviewed" badge: green on a pale-green pill — deepen the green. */
+.blog-reviewed,.verify-badge{ color:#0f6e4d !important; }
+
+/* Gamification HUD chips read as labels next to their icon/number. On light
+   surfaces the vivid hues fell below AA; deepen them for the light theme only
+   (the gradient-hero HUD keeps the bright tokens via its own dark backdrop). */
+[data-theme="light"] .hud-chip.heart,[data-theme="light"] .mock-pill.heart,[data-theme="light"] .lp-chip.heart,[data-theme="light"] .heart{ color:#b7362f; }
+[data-theme="light"] .hud-chip.gem,[data-theme="light"] .mock-pill.gem,[data-theme="light"] .lp-chip.gem,[data-theme="light"] .gem{ color:#1780a3; }
+[data-theme="light"] .hud-chip.xp,[data-theme="light"] .mock-pill.xp,[data-theme="light"] .lp-chip.xp,[data-theme="light"] .xp{ color:#7a580a; }
+[data-theme="light"] .hud-chip.flame,[data-theme="light"] .mock-pill.flame,[data-theme="light"] .lp-chip.flame,[data-theme="light"] .flame{ color:#9a4705; }
+/* case-item stat spans use the xp gold too */
+[data-theme="light"] .case-item span[class*="xp"],[data-theme="light"] .ss-freezes{ color:#7a580a; }
+
+/* Marketing leaderboard mock row sits on a pale-blue highlight — its muted XP
+   text needs a darker grey to clear AA on that tint. */
+[data-theme="light"] .mock-lg-xp{ color:#4a5568; }
+
+/* ============================ Learning path polish ======================== */
+/* Sticky "continue / up next" progress card — always shows the next lesson. */
+.path-progress-card{position:sticky;top:8px;z-index:5;background:var(--panel);
+  border:1px solid var(--border);border-radius:18px;padding:16px 18px;margin-bottom:18px;
+  box-shadow:var(--shadow-sm)}
+.ppc-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ppc-msg{font-family:var(--font-display);font-weight:800;font-size:1.05rem;color:var(--text)}
+.ppc-pct{font-weight:900;font-size:1.15rem;color:var(--primary)}
+.ppc-bar{height:12px;background:var(--panel3);border-radius:999px;overflow:hidden;margin:9px 0 6px}
+.ppc-bar>span{display:block;height:100%;border-radius:999px;background:var(--grad-green);
+  transition:width .5s var(--ease-spring,ease)}
+.ppc-sub{font-size:.8rem;color:var(--muted)}
+.ppc-continue{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)}
+.ppc-continue-label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.ppc-continue-title{font-weight:800;font-size:1rem;color:var(--text);margin-top:2px}
+.ppc-continue-actions{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:560px){.ppc-continue-actions{width:100%}.ppc-continue-actions .btn{flex:1}}
+
+/* Section (parent group) label now carries a mini progress bar. */
+.path-section-label{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.path-section-prog{display:flex;align-items:center;gap:8px}
+.psp-bar{width:90px;height:8px;background:var(--panel3);border-radius:999px;overflow:hidden}
+.psp-bar>span{display:block;height:100%;background:var(--primary);border-radius:999px}
+.psp-pct{font-size:.75rem;font-weight:800;color:var(--muted)}
+
+/* Completed unit header gets a subtle "done" ribbon feel. */
+.unit-header-done{position:relative}
+.unit-header-done::after{content:"✓";position:absolute;top:8px;inset-inline-start:10px;
+  width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.9);color:#12805a;
+  font-weight:900;display:grid;place-items:center;font-size:.8rem}
+
+/* Checkpoint (boss) badge under the node. */
+.node-badge-boss{display:inline-block;margin-top:4px;background:var(--gold);color:#3a2a00;
+  font-size:.62rem;font-weight:800;padding:2px 8px;border-radius:999px}
+
+/* Whole-path finish celebration. */
+.path-finish-card{margin-top:22px;text-align:center;background:linear-gradient(135deg,#fff7db,#ffe9a8);
+  color:#5c4300;border:2px solid var(--gold);border-radius:18px;padding:22px;font-weight:800;
+  font-size:1.05rem;display:flex;flex-direction:column;align-items:center;gap:8px}
+.path-finish-card{font-size:2rem}.path-finish-card div{font-size:1rem}
+[data-theme="dark"] .path-finish-card{background:linear-gradient(135deg,#2a2410,#3a3012);color:#ffe9a8}
+
+/* Unit-header text sits on vivid DB-driven banner colors; a crisp shadow keeps
+   the white text readable (AA-equivalent legibility on any banner hue) and
+   the semi-opaque progress pill gets a solid backdrop. */
+.unit-header-title,.unit-header-sub,.uhp-count{
+  text-shadow:0 1px 3px rgba(0,0,0,.45), 0 0 1px rgba(0,0,0,.35);
+}
+.unit-header::before{content:"";position:absolute;inset:0;border-radius:inherit;
+  background:linear-gradient(180deg,rgba(0,0,0,.06),rgba(0,0,0,.22));pointer-events:none}
+.unit-header{position:relative;isolation:isolate}
+.unit-header>*{position:relative;z-index:1}
+.unit-header-done::after{z-index:2}
+
+/* "START" flag: make it a solid green pill (white on green) — higher contrast
+   AND a stronger call-to-action than green-on-white. */
+.node-start-flag{ background:#178053 !important; color:#fff !important;
+  box-shadow:0 4px 10px -3px rgba(28,138,91,.5); }
+.node-start-flag::after{ border-top-color:#178053 !important; }
+
+/* ============================ Lesson feedback polish ===================== */
+/* Combo streak chip in the lesson header (momentum reward). */
+.combo-chip{display:inline-flex;align-items:center;gap:3px;font-weight:900;font-size:.9rem;
+  color:#b35407;background:#fff3e0;border:1px solid #ffd8a8;border-radius:999px;padding:2px 10px;
+  animation:comboPop .3s var(--ease-spring,ease)}
+[data-theme="dark"] .combo-chip{color:#ffb066;background:#3a2a12;border-color:#5a4020}
+@keyframes comboPop{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+/* Varied encouragement line + corrective answer reveal. */
+.fb-encourage{font-weight:700;opacity:.95}
+.fb-correct-answer{margin-top:6px;font-size:.92rem;opacity:.95}
+.lesson-fb.ok .fb-encourage{color:#0f6e4d}
+.lesson-fb.bad .fb-encourage{color:#b7362f}
+/* the feedback banner slides in for a livelier, instant response */
+.lesson-fb{animation:fbSlide .22s ease}
+@keyframes fbSlide{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+/* Interleaved "review" card badge — signals spaced retrieval from prior lessons. */
+.review-tag{display:inline-flex;align-items:center;gap:3px;margin-inline-start:8px;
+  background:#e7eefb;color:#2264a8;border:1px solid #c7d9f2;border-radius:999px;
+  padding:1px 9px;font-size:.72rem;font-weight:800}
+[data-theme="dark"] .review-tag{background:#182742;color:#7fb2ee;border-color:#2a3f66}
+
+/* ==================== Clinical Compare & Contrast card ==================== */
+.cmp-wrap{margin-top:6px}
+.cmp-head{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:6px;flex-wrap:wrap}
+.cmp-ent{font-family:var(--font-display);font-weight:800;font-size:1.05rem;padding:6px 16px;border-radius:12px}
+.cmp-ent-a{background:rgba(37,105,176,.12);color:var(--primary)}
+.cmp-ent-b{background:rgba(159,71,5,.12);color:#9a4705}
+[data-theme="dark"] .cmp-ent-b{color:#ffb066;background:rgba(255,176,102,.12)}
+.cmp-vs{color:var(--muted);font-size:.85rem;font-weight:700}
+.cmp-hint{text-align:center;margin-bottom:12px}
+.cmp-row{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px;
+  transition:border-color .18s,background .18s}
+.cmp-row.ok{border-color:var(--ok);background:var(--accentGlow,#e7f7ef)}
+.cmp-row.bad{border-color:var(--danger);background:rgba(224,84,79,.08)}
+.cmp-feature{font-weight:700;margin-bottom:10px;line-height:1.6}
+.cmp-choices{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.cmp-choice{background:var(--panel2);border:1.5px solid var(--border);border-radius:10px;padding:9px 6px;
+  font-family:inherit;font-weight:700;font-size:.85rem;color:var(--text);cursor:pointer;transition:.15s;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmp-choice:hover:not(:disabled){border-color:var(--primary)}
+.cmp-choice.sel{background:var(--primary);color:#fff;border-color:var(--primary)}
+.cmp-choice.correct{background:var(--ok);color:#fff;border-color:var(--ok)}
+.cmp-choice.wrong{background:rgba(224,84,79,.15);border-color:var(--danger);color:var(--danger)}
+.cmp-choice:disabled{cursor:default}
+
+/* ---------------- Section Checkpoint exam (shelf-style) ---------------- */
+.cp-page{max-width:820px;margin:0 auto}
+.cp-intro{margin:2px 0 18px;line-height:1.7}
+.cp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.cp-card{display:flex;flex-direction:column;gap:12px;border:1px solid var(--border);
+  border-radius:18px;padding:18px;transition:.18s var(--ease-spring,ease)}
+/* WCAG-AA safe green (white-on-green ~4.9:1) for pass indicators; the base
+   --ok (#28a745) only reaches 3.1:1 which fails AA at small text sizes. */
+.cp-card.passed{border-color:#178053;box-shadow:0 0 0 1px #178053 inset}
+.cp-card.locked{opacity:.75}
+.cp-head{display:flex;align-items:center;gap:12px}
+.cp-emoji{font-size:2rem;line-height:1;flex:0 0 auto}
+.cp-head-txt{flex:1;min-width:0}
+.cp-head-txt h3{margin:0 0 2px;font-family:var(--font-display,inherit);font-size:1.15rem}
+.cp-badge-pass{background:#178053;color:#fff;border-radius:999px;padding:3px 10px;font-size:.72rem;font-weight:800;white-space:nowrap}
+.cp-progress .cp-bar{height:9px;background:var(--panel2,rgba(120,130,150,.18));border-radius:999px;overflow:hidden;margin-bottom:5px}
+.cp-progress .cp-bar>span{display:block;height:100%;background:var(--primary);border-radius:999px;transition:width .4s var(--ease-spring,ease)}
+.cp-best{color:var(--muted)}
+.cp-locked-note{display:flex;align-items:center;gap:6px;color:var(--muted);line-height:1.5}
+.cp-start{margin-top:auto}
+
+/* exam runner extras */
+.cp-exam .cp-timer{font-weight:800;font-size:.9rem;background:var(--panel2,rgba(120,130,150,.14));
+  border-radius:999px;padding:3px 10px;white-space:nowrap}
+.cp-exam .cp-timer.low{background:rgba(224,84,79,.16);color:var(--danger);animation:cpPulse 1s ease-in-out infinite}
+@keyframes cpPulse{50%{opacity:.55}}
+.cp-exam .lesson-actions{margin-top:18px}
+
+/* result / score report */
+.cp-result-card{max-width:460px;margin:24px auto;text-align:center;padding:28px 22px;
+  border:1px solid var(--border);border-radius:22px}
+.cp-result-card.pass{border-color:var(--ok);box-shadow:0 0 0 1px var(--ok) inset}
+.cp-result-card.fail{border-color:var(--border)}
+.cp-result-emoji{font-size:3.4rem;line-height:1;margin-bottom:6px}
+.cp-result-card h2{margin:0 0 10px;font-family:var(--font-display,inherit)}
+.cp-score-big{font-size:3.6rem;font-weight:900;line-height:1;color:var(--primary);font-family:var(--font-display,inherit)}
+.cp-result-card.fail .cp-score-big{color:var(--danger)}
+.cp-score-big .pct{font-size:1.6rem;font-weight:800}
+.cp-result-stats{display:flex;justify-content:center;gap:26px;margin:18px 0 4px}
+.cp-stat{display:flex;flex-direction:column;gap:2px}
+.cp-stat-v{font-size:1.35rem;font-weight:900;color:var(--text)}
+.cp-stat-l{font-size:.72rem;color:var(--muted);font-weight:700}
+.cp-encourage{margin:14px 0 0;line-height:1.7}
+@media (prefers-reduced-motion:reduce){.cp-exam .cp-timer.low{animation:none}}
+
+/* ---------------- Dr. Med — medical guide/mascot + difficulty calibration ---------------- */
+.medguide{display:flex;align-items:center;gap:16px;margin-bottom:16px;
+  border:1px solid var(--border);border-radius:18px;padding:16px 18px;
+  background:linear-gradient(120deg,var(--panel),var(--panel2));position:relative;overflow:hidden}
+.medguide::before{content:"";position:absolute;inset-inline-start:0;top:0;bottom:0;width:5px;background:var(--mg-accent,#22a06b)}
+.medguide.compact{padding:12px 14px}
+.medguide-ava{position:relative;flex:0 0 auto;width:72px;height:72px;display:grid;place-items:center;
+  background:radial-gradient(circle at 50% 40%, rgba(255,255,255,.10), transparent 70%);border-radius:50%}
+.medguide-face{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);font-size:1.1rem;line-height:1}
+.medguide-body{flex:1;min-width:0}
+.medguide-name{font-family:var(--font-display,inherit);font-weight:900;font-size:1.05rem;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.medguide-zone{font-size:.72rem;font-weight:800;border-radius:999px;padding:3px 10px;white-space:nowrap}
+.medguide-zone.zone-in{background:#178053;color:#fff}
+.medguide-zone.zone-easy{background:#5a49b8;color:#fff}
+.medguide-zone.zone-hard{background:#b56a12;color:#fff}
+.medguide-zone.zone-unknown{background:var(--panel2);color:var(--muted);border:1px solid var(--border)}
+.medguide-line{margin-top:4px;line-height:1.7;color:var(--text)}
+.medguide-meter{margin-top:10px}
+.mg-track{position:relative;height:9px;background:var(--panel2,rgba(120,130,150,.2));border-radius:999px;overflow:hidden}
+.mg-track>span{display:block;height:100%;background:var(--mg-accent,#22a06b);border-radius:999px;transition:width .5s var(--ease-spring,ease)}
+.mg-zone-band{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,rgba(255,255,255,.22),rgba(255,255,255,.22) 3px,transparent 3px,transparent 6px);border-inline:2px dashed rgba(255,255,255,.5);pointer-events:none}
+.mg-meter-label{margin-top:5px}
+/* in-lesson "tuned to you" chip */
+.calib-chip{display:inline-flex;align-items:center;gap:4px;font-size:.72rem;font-weight:800;
+  background:rgba(34,160,107,.16);color:#178053;border:1px solid rgba(34,160,107,.35);
+  border-radius:999px;padding:2px 9px;margin-inline-start:6px}
+[data-theme="dark"] .calib-chip{color:#3ecb86;background:rgba(62,203,134,.14);border-color:rgba(62,203,134,.3)}
+@media (prefers-reduced-motion:reduce){.mg-track>span{transition:none}}
+
+/* ---------------- Rich media (image / video / Aparat|YouTube embed) ---------------- */
+.media-embed{margin:0 auto 14px;max-width:560px}
+.media-embed img{display:block;width:100%;max-height:360px;object-fit:contain;border-radius:14px;
+  border:1px solid var(--border);background:var(--panel2,#0d1526)}
+.media-video video{display:block;width:100%;max-height:400px;border-radius:14px;border:1px solid var(--border);background:#000}
+.media-frame .media-ratio{position:relative;width:100%;padding-top:56.25%;border-radius:14px;overflow:hidden;
+  border:1px solid var(--border);background:#000}
+.media-frame .media-ratio iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.media-cap{margin-top:6px;font-size:.8rem;color:var(--muted);text-align:center;line-height:1.6}
+.lesson-media,.micro-media,.ae-media,.mn-media{margin-top:4px}
+.micro-media{max-width:100%}
+/* media "has X" badge (lists/editor) */
+.media-badge{display:inline-flex;align-items:center;gap:4px;font-size:.68rem;font-weight:800;
+  background:var(--panel2,rgba(120,130,150,.16));border:1px solid var(--border);border-radius:999px;
+  padding:2px 8px;color:var(--muted);margin-inline-start:6px}
+
+/* Answer key (پاسخنامه) — dedicated explanation block after answering */
+.answer-explain{margin-top:10px;border:1px solid var(--border);border-inline-start:4px solid var(--primary);
+  border-radius:14px;padding:14px 16px;background:var(--panel)}
+.ae-title{font-weight:900;font-family:var(--font-display,inherit);display:flex;align-items:center;gap:8px;
+  color:var(--primary);margin-bottom:8px}
+.ae-text{line-height:1.8;color:var(--text)}
+
+/* Media upload control (admin) */
+.media-upload-row{display:flex;gap:8px;flex-wrap:wrap}
+.media-url-input,.media-cap-input{width:100%;font-size:.82rem}
+.media-upload-preview{border:1px dashed var(--border);border-radius:12px;padding:10px}
+
+/* ---------------- Comprehensive card filter bar (admin content) ---------------- */
+.lc-filters{padding:16px 18px}
+.lc-filter-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.lc-filter-grid .field{margin:0}
+.lc-filter-grid .field>span{display:block;font-size:.75rem;font-weight:700;color:var(--muted);margin-bottom:4px}
+.lc-filter-grid select,.lc-filter-grid input{width:100%}
+.lc-filter-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;
+  padding-top:12px;border-top:1px dashed var(--border)}
+.lc-badge.media{background:transparent;border:none;padding:0 1px;font-size:.9rem}
+
+/* ---------------- Central media library ---------------- */
+.media-lib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.media-lib-item{display:flex;flex-direction:column;gap:8px;padding:12px}
+.mli-preview{border-radius:10px;overflow:hidden;background:var(--panel2,#0d1526);min-height:120px;display:grid;place-items:center}
+.mli-preview .media-embed{margin:0;max-width:100%}
+.mli-preview img,.mli-preview video{max-height:150px}
+.mli-name{font-size:.78rem;font-weight:700;word-break:break-all;line-height:1.4}
+.mli-meta{display:flex;justify-content:space-between;gap:8px}
+.mli-usage .mli-used{color:#178053;font-weight:800}
+[data-theme="dark"] .mli-usage .mli-used{color:#3ecb86}
+.mli-actions{display:flex;gap:6px;justify-content:space-between;margin-top:auto;padding-top:6px;border-top:1px dashed var(--border)}
+
+/* ---------------- Bulk-action bar (content list) + library picker ---------------- */
+.lc-bulkbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;
+  border-inline-start:4px solid var(--primary)}
+.lc-bulk-count{font-weight:800;display:inline-flex;align-items:center;gap:6px;color:var(--primary)}
+.lc-bulk-actions{display:flex;gap:6px;flex-wrap:wrap}
+.media-pick-grid{max-height:60vh;overflow:auto;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.media-pick-item{cursor:pointer;text-align:start;font-family:inherit;transition:.15s var(--ease-spring,ease)}
+.media-pick-item:hover{border-color:var(--primary);transform:translateY(-2px)}
+.media-pick-item .mli-preview img,.media-pick-item .mli-preview video{max-height:100px}
+.media-pick-item .mli-used{color:#178053;font-weight:800}
+[data-theme="dark"] .media-pick-item .mli-used{color:#3ecb86}
+
+/* ---------------- Content statistics dashboard ---------------- */
+.cs-kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin-bottom:16px}
+.cs-kpi{padding:16px;text-align:center}
+.cs-kpi-v{font-size:1.8rem;font-weight:900;font-family:var(--font-display,inherit);color:var(--primary);line-height:1}
+.cs-kpi-l{font-size:.82rem;font-weight:700;margin-top:5px}
+.cs-kpi-sub{margin-top:3px}
+.cs-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:16px}
+.cs-bar-row{display:grid;grid-template-columns:130px 1fr auto;align-items:center;gap:10px;margin:8px 0}
+.cs-bar-label{font-size:.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cs-bar-track{height:10px;background:var(--panel2,rgba(120,130,150,.18));border-radius:999px;overflow:hidden}
+.cs-bar-track>span{display:block;height:100%;border-radius:999px;transition:width .5s var(--ease-spring,ease)}
+.cs-bar-val{font-size:.8rem;font-weight:800;color:var(--muted);white-space:nowrap}
+.cs-gaps{margin-bottom:16px}
+.cs-table-wrap{overflow:auto}
+.cs-table{width:100%;border-collapse:collapse;font-size:.88rem}
+.cs-table th,.cs-table td{text-align:right;padding:9px 10px;border-bottom:1px solid var(--border);white-space:nowrap}
+/* AA-safe header text (the base --accent green is only ~3.1:1 on the light
+   table header background); use the primary color which passes on both themes */
+.cs-table th{color:var(--primary);font-weight:800}
+.cs-pill{display:inline-block;color:#fff;font-weight:800;font-size:.72rem;border-radius:999px;padding:2px 9px}
+.cs-lib-row{display:flex;gap:20px;flex-wrap:wrap;font-weight:700;font-size:.9rem}
+@media (max-width:560px){ .cs-bar-row{grid-template-columns:90px 1fr auto} }
+@media (prefers-reduced-motion:reduce){ .cs-bar-track>span{transition:none} }
+
+/* ---------------- Clickable content-gap shortcuts (dashboard → filtered list) ---------------- */
+.cs-gap-btn{display:block;width:100%;text-align:inherit;background:none;border:none;padding:0;margin:0;
+  font:inherit;color:inherit;cursor:pointer;border-radius:10px;transition:background .15s}
+.cs-gap-btn:hover:not(:disabled){background:var(--panel2,rgba(120,130,150,.12))}
+.cs-gap-btn:disabled{cursor:default}
+.cs-gap-btn:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+.cs-row-click{cursor:pointer;transition:background .15s}
+.cs-row-click:hover{background:var(--panel2,rgba(120,130,150,.12))}
+
+/* ============================================================================
+   Learning-path visual polish (2026 refresh)
+   3D pushable node bubbles, glossy sheen, a continuous winding trail, a livelier
+   current-node beacon, legendary shimmer, richer unit headers with related-
+   subject emoji, and gentle staggered entrance. Purely additive — keeps all the
+   existing class names/selectors the E2E suite relies on.
+   ========================================================================== */
+
+/* --- glossy top-light sheen inside every bubble (Duolingo signature) --- */
+.unit-bubble{ overflow:visible; }
+.bubble-gloss{
+  position:absolute; inset:6px 6px auto 6px; height:42%; border-radius:50% 50% 45% 45%;
+  background:linear-gradient(180deg, rgba(255,255,255,.45), rgba(255,255,255,0));
+  pointer-events:none; opacity:.85;
+}
+.unit-node.locked .bubble-gloss{ opacity:.25; }
+
+/* --- deeper, springier 3D press for the DEFAULT (in-progress) node too --- */
+.unit-bubble{
+  box-shadow:0 8px 0 rgba(0,0,0,.16), 0 12px 18px -10px rgba(20,40,90,.45);
+  transition:transform .13s var(--ease-spring,cubic-bezier(.2,.9,.3,1)), box-shadow .13s ease;
+}
+.unit-node:hover:not(:disabled) .unit-bubble{ transform:translateY(-4px) scale(1.03); }
+.unit-node:active:not(:disabled) .unit-bubble{ transform:translateY(5px) scale(.98); box-shadow:0 2px 0 rgba(0,0,0,.18); }
+.unit-node:hover:not(:disabled) .node-emoji{ transform:scale(1.12) rotate(-4deg); transition:transform .18s var(--ease-spring,ease); }
+.unit-node .node-emoji{ transition:transform .18s ease; display:inline-block; }
+
+/* --- a continuous WINDING TRAIL between nodes (thicker, rounded, gradient) ---
+   sits in the gap BELOW the bubble+title and above the next bubble, so it reads
+   as a connecting path without crossing the lesson titles. */
+.unit-node-row:not(:last-child)::after{
+  content:""; position:absolute; bottom:-14px; left:50%; width:6px; height:26px;
+  transform:translateX(-50%); z-index:0; border-radius:999px;
+  background:repeating-linear-gradient(var(--border) 0 6px, transparent 6px 12px);
+}
+/* a solid, colored trail segment once a node is completed (feels like progress) */
+.unit-node-row.row-done:not(:last-child)::after{
+  background:linear-gradient(180deg,#f0c454,#d0982a);
+  box-shadow:0 0 8px -2px rgba(224,165,46,.5);
+}
+
+/* --- current-node beacon: soft glowing halo + bigger animated START flag --- */
+.node-ring.on{ border-width:5px; box-shadow:0 0 22px -2px var(--accentGlow,rgba(34,160,107,.5)); }
+.node-start-flag{
+  top:-34px; font-size:.74rem; padding:5px 14px; letter-spacing:.5px;
+  box-shadow:0 6px 16px -4px rgba(0,0,0,.35);
+  /* purely decorative — must never intercept clicks on nearby nodes/CTAs */
+  pointer-events:none;
+}
+
+/* --- legendary shimmer sweep + mastered glow --- */
+.unit-node.legendary .unit-bubble{ position:relative; overflow:hidden; }
+.unit-node.legendary .unit-bubble::after{
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  background:linear-gradient(115deg, transparent 30%, rgba(255,255,255,.55) 48%, transparent 66%);
+  transform:translateX(-120%); animation:legendSweep 2.8s ease-in-out infinite;
+}
+@keyframes legendSweep{ 0%{ transform:translateX(-120%); } 55%,100%{ transform:translateX(120%); } }
+
+/* --- unit header: emoji sticker pop + subtle pattern + hover lift --- */
+.unit-header{ transition:transform .16s var(--ease-spring,ease), box-shadow .16s ease; }
+.unit-header:hover{ transform:translateY(-2px); box-shadow:0 14px 30px -14px rgba(30,60,120,.6); }
+.unit-header-ico{ box-shadow:0 4px 0 rgba(0,0,0,.15) inset, 0 3px 8px -2px rgba(0,0,0,.3); }
+.unit-header::before{
+  /* soft diagonal texture over the colored banner */
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255,255,255,.20), transparent 42%),
+    repeating-linear-gradient(135deg, rgba(255,255,255,.06) 0 10px, transparent 10px 22px) !important;
+}
+
+/* --- related-subject emoji row on the unit header --- */
+.unit-related{ display:flex; align-items:center; gap:5px; margin-top:6px; flex-wrap:wrap; }
+.unit-related-lbl{ font-size:.68rem; font-weight:800; opacity:.85; }
+.unit-related-emoji{
+  font-size:.95rem; line-height:1; background:rgba(255,255,255,.22);
+  border-radius:8px; padding:2px 5px; transition:transform .15s var(--ease-spring,ease);
+}
+.unit-related-emoji:hover{ transform:translateY(-2px) scale(1.15); }
+
+/* --- gentle entrance for the nodes (opacity-only so button positions stay
+   stable — a transform-based stagger made interactive nodes briefly
+   un-clickable). Short, capped, and disabled for reduced-motion. --- */
+@media (prefers-reduced-motion:no-preference){
+  .unit-node-row{ animation:nodeEnter .3s both ease; }
+  @keyframes nodeEnter{ from{ opacity:0; } to{ opacity:1; } }
+}
+
+/* --- unit complete badge: a little celebratory lift --- */
+.unit-complete-badge{ box-shadow:0 6px 16px -8px rgba(18,128,90,.5); }
+
+/* ============================================================================
+   Path — per-section color identity + unit-complete celebration
+   ========================================================================== */
+
+/* each section (parent group) carries --sec; tint its label, progress + trail */
+.path-section-label .psl-name{
+  position:relative; padding-inline-start:14px;
+}
+.path-section-label .psl-name::before{
+  content:""; position:absolute; inset-inline-start:0; top:50%; transform:translateY(-50%);
+  width:6px; height:22px; border-radius:4px; background:var(--sec,#647184);
+}
+.path-section-prog .psp-bar>span{ background:var(--sec,var(--primary)) !important; }
+.path-section-prog .psp-pct{ color:var(--sec,var(--muted)); font-weight:800; }
+/* the winding trail between DONE nodes takes the section color (still gradient-y) */
+.path-section-wrap .unit-node-row.row-done:not(:last-child)::after{
+  background:linear-gradient(180deg, color-mix(in srgb, var(--sec,#d0982a) 78%, #fff), var(--sec,#d0982a));
+  box-shadow:0 0 8px -2px color-mix(in srgb, var(--sec,#d0982a) 60%, transparent);
+}
+/* a soft section-tinted glow behind the unit header icon */
+.path-section-wrap .unit-header-ico{ outline:2px solid rgba(255,255,255,.18); }
+
+/* deep-link focus: briefly glow the topic we jumped to (from placement reco) */
+.path-section-wrap.topic-focus-glow{
+  border-radius:18px;
+  animation:topicFocusGlow 2.6s ease-out 1;
+}
+@keyframes topicFocusGlow{
+  0%   { box-shadow:0 0 0 0 rgba(34,160,107,.0); background:rgba(34,160,107,.14); }
+  15%  { box-shadow:0 0 0 4px rgba(34,160,107,.35); background:rgba(34,160,107,.14); }
+  100% { box-shadow:0 0 0 0 rgba(34,160,107,0); background:transparent; }
+}
+@media (prefers-reduced-motion: reduce){
+  .path-section-wrap.topic-focus-glow{ animation:none; box-shadow:0 0 0 3px rgba(34,160,107,.35); }
+}
+
+/* --- unit-complete celebration card (replaces the plain badge) --- */
+.unit-complete-card{
+  margin-top:16px; display:flex; align-items:center; gap:14px;
+  background:linear-gradient(120deg, color-mix(in srgb, var(--sec,#22a06b) 16%, var(--panel)), var(--panel));
+  border:1px solid color-mix(in srgb, var(--sec,#22a06b) 40%, var(--border));
+  border-radius:16px; padding:14px 18px;
+  box-shadow:0 10px 26px -16px color-mix(in srgb, var(--sec,#22a06b) 70%, transparent);
+  animation:uccPop .5s var(--ease-spring,cubic-bezier(.2,.9,.3,1)) both;
+}
+@keyframes uccPop{ from{ opacity:0; transform:translateY(10px) scale(.96); } to{ opacity:1; transform:translateY(0) scale(1); } }
+.ucc-burst{ font-size:2rem; line-height:1; animation:uccWiggle 2.4s ease-in-out infinite; }
+@keyframes uccWiggle{ 0%,100%{ transform:rotate(-8deg) scale(1); } 50%{ transform:rotate(8deg) scale(1.12); } }
+.ucc-title{ font-family:var(--font-display,inherit); font-weight:900; font-size:1.02rem; color:var(--sec,#12805a); }
+[data-theme="dark"] .ucc-title{ color:color-mix(in srgb, var(--sec,#3ecb86) 55%, #ffffff); }
+.ucc-sub{ font-size:.8rem; color:var(--muted); margin-top:2px; }
+@media (prefers-reduced-motion:reduce){ .ucc-burst{ animation:none; } .unit-complete-card{ animation:none; } }
+
+/* ============================================================================
+   Learner HOME polish (2026 refresh) — aurora hero, glossy stat chips, 3D
+   teaser cards with hover lift + icon pop, glowing goal ring & streak strip.
+   Scoped to .learn-home so nothing else is affected. Keeps all E2E selectors.
+   ========================================================================== */
+
+/* --- Hero: layered aurora glow + soft texture over the gradient --- */
+.learn-home .home-hero{
+  position:relative; isolation:isolate; overflow:hidden;
+  background:linear-gradient(135deg,#2f6ad0,#6d28d9) ;
+  box-shadow:0 16px 40px -18px rgba(45,60,130,.7);
+}
+.learn-home .home-hero::before{
+  content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(60% 90% at 88% 6%, rgba(255,255,255,.22), transparent 60%),
+    radial-gradient(45% 70% at 6% 100%, rgba(80,200,255,.28), transparent 62%),
+    repeating-linear-gradient(135deg, rgba(255,255,255,.05) 0 12px, transparent 12px 26px);
+}
+.learn-home .home-hero>*{ position:relative; z-index:1; }
+.learn-home .home-greet{ text-shadow:0 1px 6px rgba(0,0,0,.18); }
+
+/* glossy pill stat chips (⭐ 💉 🔥) in the hero */
+.learn-home .home-hero-stats{ gap:8px; flex-wrap:wrap; }
+.learn-home .hh-stat{
+  display:inline-flex; align-items:center; gap:5px;
+  background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.22);
+  border-radius:999px; padding:4px 11px; backdrop-filter:blur(3px);
+  box-shadow:0 2px 8px -3px rgba(0,0,0,.25);
+}
+.learn-home .home-hero-main{
+  background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.16);
+  box-shadow:0 6px 18px -12px rgba(0,0,0,.4) inset;
+}
+
+/* --- Goal ring: glossy inner + a celebratory glow when the goal is hit --- */
+.learn-home .goal-ring::before{
+  content:""; position:absolute; inset:14px; border-radius:50%; z-index:2; pointer-events:none;
+  background:linear-gradient(180deg, rgba(255,255,255,.28), transparent 55%);
+}
+.learn-home .goal-ring .gv{ z-index:3; }
+
+/* --- Home teaser cards: 3D depth + spring hover lift + icon sticker pop --- */
+.learn-home .card{
+  transition:transform .16s var(--ease-spring,cubic-bezier(.2,.9,.3,1)), box-shadow .16s ease;
+}
+.learn-home .card:not(.home-hero):not(.medguide):hover{
+  transform:translateY(-3px);
+  box-shadow:0 16px 34px -18px rgba(30,50,110,.55);
+}
+.learn-home .mod-ico{
+  box-shadow:0 5px 0 rgba(0,0,0,.14), 0 8px 16px -6px rgba(0,0,0,.35);
+  transition:transform .18s var(--ease-spring,ease);
+}
+.learn-home .card:hover .mod-ico{ transform:translateY(-2px) scale(1.08) rotate(-4deg); }
+
+/* --- Streak strip: warm glow + a gentle flame flicker --- */
+.learn-home .streak-strip{
+  background:linear-gradient(120deg, rgba(255,140,50,.14), var(--panel));
+  border:1px solid rgba(255,140,50,.3);
+}
+.learn-home .streak-strip.at-risk{ background:linear-gradient(120deg, rgba(224,84,79,.16), var(--panel)); }
+.learn-home .ss-flame{ animation:homeFlicker 2.2s ease-in-out infinite; }
+@keyframes homeFlicker{ 0%,100%{ transform:rotate(-3deg) scale(1); } 50%{ transform:rotate(4deg) scale(1.1); } }
+
+/* --- Top-learners rows: subtle hover highlight + gold medal for #1 --- */
+.learn-home .case-item{ border-radius:12px; transition:background .15s; }
+.learn-home .case-item:hover{ background:var(--panel2,rgba(120,130,150,.1)); }
+.learn-home .rank-num{ color:var(--muted); }
+.learn-home .case-item:first-of-type .rank-num{ color:var(--gold,#e0a52e); }
+
+@media (prefers-reduced-motion:reduce){
+  .learn-home .ss-flame{ animation:none; }
+  .learn-home .card:not(.home-hero):hover{ transform:none; }
+}
+
+/* ============================================================================
+   Lesson polish (2026 refresh) — 3D tactile options, livelier feedback, a
+   glossy progress bar, and a more festive celebrate screen. Scoped to
+   .lesson-wrap / .celebrate so nothing else changes. All E2E selectors kept.
+   ========================================================================== */
+
+/* --- glossier, slightly taller progress bar with a moving shine --- */
+.lesson-wrap .pbar{ height:12px; }
+.lesson-wrap .pbar>span{
+  background:linear-gradient(90deg, var(--primary), color-mix(in srgb, var(--primary) 60%, #6d28d9));
+  position:relative; overflow:hidden;
+}
+.lesson-wrap .pbar>span::after{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.5), transparent);
+  transform:translateX(-100%); animation:pbarShine 2.2s ease-in-out infinite;
+}
+@keyframes pbarShine{ 0%{ transform:translateX(-100%); } 60%,100%{ transform:translateX(200%); } }
+
+/* --- 3D tactile MCQ / true-false / match / order options --- */
+.lesson-wrap .opt{
+  border-bottom-width:4px;
+  box-shadow:0 4px 0 var(--border2); transition:transform .1s var(--ease-spring,ease), box-shadow .1s ease, border-color .12s, background .12s;
+}
+.lesson-wrap .opt:hover:not(:disabled):not(.ok):not(.bad){ transform:translateY(-2px); box-shadow:0 6px 0 var(--primary); }
+.lesson-wrap .opt:active:not(:disabled){ transform:translateY(3px); box-shadow:0 1px 0 var(--border2); }
+.lesson-wrap .opt.sel{ box-shadow:0 4px 0 var(--primary); }
+.lesson-wrap .opt.ok{ box-shadow:0 4px 0 #178053; }
+.lesson-wrap .opt.bad{ box-shadow:0 4px 0 var(--danger); }
+/* a subtle ✓ / ✗ marker on the graded options — shown in a reserved gutter on
+   the inline-start so it never overlaps the (centered) option text. */
+.lesson-wrap .opt{ position:relative; }
+.lesson-wrap .opt.ok, .lesson-wrap .opt.bad{ padding-inline-start:44px; }
+.lesson-wrap .opt.ok::before, .lesson-wrap .opt.bad::before{
+  position:absolute; inset-inline-start:14px; top:50%; transform:translateY(-50%);
+  width:22px; height:22px; border-radius:50%; display:grid; place-items:center;
+  font-weight:900; font-size:.8rem; color:#fff;
+}
+.lesson-wrap .opt.ok::before{ content:"✓"; background:#178053; }
+.lesson-wrap .opt.bad::before{ content:"✕"; background:var(--danger); }
+
+/* --- feedback bar: slide-up entrance + a pop on the icon --- */
+.lesson-wrap .lesson-fb{ animation:fbSlide .32s var(--ease-spring,cubic-bezier(.2,.9,.3,1)) both; border-inline-start:4px solid transparent; }
+.lesson-wrap .lesson-fb.ok{ border-inline-start-color:#178053; }
+.lesson-wrap .lesson-fb.bad{ border-inline-start-color:var(--danger); }
+@keyframes fbSlide{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
+.lesson-wrap .lesson-fb .icon, .lesson-wrap .lesson-fb svg:first-child{ animation:fbPop .4s var(--ease-spring,ease) both; }
+@keyframes fbPop{ 0%{ transform:scale(0); } 60%{ transform:scale(1.25); } 100%{ transform:scale(1); } }
+
+/* --- combo chip gets a little heartbeat when it appears --- */
+.lesson-wrap .combo-chip{ animation:comboPulse 1.4s ease-in-out infinite; }
+@keyframes comboPulse{ 0%,100%{ transform:scale(1); } 50%{ transform:scale(1.08); } }
+
+/* --- lesson action buttons: 3D depth --- */
+.lesson-wrap .lesson-actions .btn,
+.lesson-wrap .btn-primary.btn-block, .lesson-wrap .btn-accent.btn-block{
+  border-radius:16px; font-weight:800;
+}
+
+/* --- celebrate screen: festive, bigger, springy --- */
+.celebrate{ animation:celebIn .5s var(--ease-spring,cubic-bezier(.2,.9,.3,1)) both; }
+@keyframes celebIn{ from{ opacity:0; transform:scale(.92); } to{ opacity:1; transform:scale(1); } }
+.celebrate .big{ font-size:3.4rem; text-shadow:0 4px 18px var(--primaryGlow); }
+.celebrate .reward-chip{
+  box-shadow:0 8px 0 var(--border), 0 12px 22px -12px rgba(30,50,110,.5);
+  animation:rewardPop .5s var(--ease-spring,ease) both;
+}
+.celebrate .reward-chip:nth-child(2){ animation-delay:.08s; }
+.celebrate .reward-chip:nth-child(3){ animation-delay:.16s; }
+@keyframes rewardPop{ from{ opacity:0; transform:translateY(12px) scale(.9); } to{ opacity:1; transform:translateY(0) scale(1); } }
+.celebrate .reward-chip .rv{ animation:rvWiggle 2.6s ease-in-out infinite; display:inline-block; }
+@keyframes rvWiggle{ 0%,100%{ transform:rotate(-6deg); } 50%{ transform:rotate(6deg); } }
+
+@media (prefers-reduced-motion:reduce){
+  .lesson-wrap .pbar>span::after,
+  .lesson-wrap .combo-chip,
+  .celebrate .reward-chip .rv{ animation:none; }
+  .lesson-wrap .lesson-fb, .celebrate, .celebrate .reward-chip{ animation:none; }
+}
+
+/* livelier competitive leaderboard rows: subtle hover highlight */
+.page .card>div[style*="border-bottom"]{ transition:background .15s; }
+.page .card>div[style*="border-bottom"]:hover{ background:var(--panel2,rgba(120,130,150,.08)) !important; }
+
+
+/* Standalone podium (league / ranking pages) — the exam Leaderboard reveals
+   columns + grows bars via a .lb.reveal ancestor; these pages have no .lb
+   wrapper, so reveal the columns and grow the bars here directly. */
+.podium-standalone .podium-col{ animation:podRise .6s cubic-bezier(.2,.8,.25,1.3) both; animation-delay:var(--d,0s); }
+.podium-standalone .podium-bar{ height:var(--h); animation:barGrow .7s cubic-bezier(.2,.8,.25,1.1) .15s both; }
+@media (prefers-reduced-motion:reduce){
+  .podium-standalone .podium-col{ animation:none; opacity:1; transform:none; }
+  .podium-standalone .podium-bar{ animation:none; }
+}
+
+/* ============================================================================
+   Achievements + Quests polish (2026) — 3D cards, earned-achievement glow &
+   shimmer, and a gentle pulse on claimable quests.
+   ========================================================================== */
+
+/* --- achievement cards: 3D depth + hover lift --- */
+.achv-card{ transition:transform .16s var(--ease-spring,cubic-bezier(.2,.9,.3,1)), box-shadow .16s ease; }
+.achv-card:hover{ transform:translateY(-3px); box-shadow:0 16px 32px -18px rgba(30,50,110,.5); }
+.achv-card .achv-ico{ box-shadow:0 5px 0 rgba(0,0,0,.14), 0 8px 16px -6px rgba(0,0,0,.32); transition:transform .18s var(--ease-spring,ease); }
+.achv-card:hover .achv-ico{ transform:translateY(-2px) scale(1.06) rotate(-4deg); }
+
+/* --- earned achievements: warm golden glow + a shimmer sweep on the icon --- */
+.achv-card.unlocked{ border-color:color-mix(in srgb, #e0a52e 40%, var(--border)); box-shadow:0 0 0 1px color-mix(in srgb,#e0a52e 22%, transparent) inset; }
+.achv-card.unlocked .achv-ico{ box-shadow:0 5px 0 #a9781f, 0 10px 22px -6px rgba(224,165,46,.6); }
+.achv-shine{ position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(115deg, transparent 35%, rgba(255,255,255,.6) 50%, transparent 65%);
+  transform:translateX(-120%); animation:achvSweep 3.2s ease-in-out infinite; }
+@keyframes achvSweep{ 0%{ transform:translateX(-120%);} 55%,100%{ transform:translateX(120%);} }
+
+/* --- locked achievements: softly dimmed + frosted --- */
+.achv-card.locked{ opacity:.8; }
+.achv-card.locked .achv-ico{ filter:grayscale(.3); }
+
+/* --- quests: card depth (via .learn container isn't present here; scope to page) --- */
+.page .quest-row{ transition:background .15s; border-radius:10px; }
+.page .quest-row:hover{ background:var(--panel2,rgba(120,130,150,.08)); }
+.page .quest-row .quest-ico{ box-shadow:0 3px 0 rgba(0,0,0,.14); }
+/* a claimable quest gently pulses to draw the eye + its reward button glows */
+.page .quest-row.claimable .quest-ico{ animation:questPulse 1.6s ease-in-out infinite; }
+.page .quest-row.claimable .btn-accent{ box-shadow:0 4px 0 #b5720c, 0 0 0 3px rgba(224,165,46,.25); }
+@keyframes questPulse{ 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.1);} }
+.page .quest-row.is-claimed{ opacity:.7; }
+
+@media (prefers-reduced-motion:reduce){
+  .achv-shine{ animation:none; display:none; }
+  .page .quest-row.claimable .quest-ico{ animation:none; }
+  .achv-card:hover{ transform:none; }
+}
+
+/* ============================================================================
+   Practice (Smart Practice) + Review (spaced repetition) polish (2026)
+   ========================================================================== */
+
+/* --- practice source cards: 3D depth + hover lift + emoji pop --- */
+.page .practice-source{ transition:transform .16s var(--ease-spring,cubic-bezier(.2,.9,.3,1)), box-shadow .16s ease; }
+.page .practice-source:hover{ transform:translateY(-3px); box-shadow:0 16px 32px -18px rgba(30,50,110,.5); }
+.page .practice-source .ps-emoji{ box-shadow:0 4px 0 rgba(0,0,0,.12); transition:transform .18s var(--ease-spring,ease); }
+.page .practice-source:hover .ps-emoji{ transform:translateY(-2px) scale(1.1) rotate(-4deg); }
+
+/* --- weak-topic rows: hover highlight --- */
+.page .weak-row{ transition:background .15s; border-radius:10px; }
+.page .weak-row:hover{ background:var(--panel2,rgba(120,130,150,.08)); }
+
+/* --- review FSRS stat chips: glossy pills --- */
+.srs-stats .srs-chip{
+  background:linear-gradient(180deg, var(--panel2), color-mix(in srgb, var(--panel2) 70%, var(--panel)));
+  box-shadow:0 2px 6px -3px rgba(0,0,0,.25); transition:transform .14s var(--ease-spring,ease);
+}
+.srs-stats .srs-chip:hover{ transform:translateY(-1px); }
+
+/* --- review grade buttons: satisfying 3D tactile press --- */
+.grade-row .btn{
+  border-bottom-width:0 !important; border-radius:14px;
+  box-shadow:0 5px 0 rgba(0,0,0,.22); transition:transform .1s var(--ease-spring,ease), box-shadow .1s ease;
+}
+.grade-row .btn:hover{ transform:translateY(-2px); box-shadow:0 7px 0 rgba(0,0,0,.22); }
+.grade-row .btn:active{ transform:translateY(4px); box-shadow:0 1px 0 rgba(0,0,0,.22); }
+.grade-iv{ opacity:.9; }
+
+@media (prefers-reduced-motion:reduce){
+  .page .practice-source:hover, .grade-row .btn:hover, .srs-stats .srs-chip:hover{ transform:none; }
+}
+
+/* =====================================================================
+   POLISHED DARK MODE PASS  (v ...-av-)
+   Fixes hardcoded light surfaces that broke in dark, plus depth/tone polish.
+   All rules scoped to [data-theme="dark"] so light theme is untouched.
+   ===================================================================== */
+
+/* --- Form controls: were hardcoded background:#fff → glaring white boxes.
+       Give them the panel tone with a subtle inner depth so fields read as
+       recessed wells on the dark canvas. --- */
+[data-theme="dark"] .field input,
+[data-theme="dark"] .field textarea,
+[data-theme="dark"] .field select,
+[data-theme="dark"] .chat-input input{
+  background:var(--panel2);
+  border-color:var(--border2);
+  color:var(--text);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.28);
+}
+[data-theme="dark"] .field input::placeholder,
+[data-theme="dark"] .field textarea::placeholder,
+[data-theme="dark"] .chat-input input::placeholder{ color:var(--muted2); }
+[data-theme="dark"] .field input:focus,
+[data-theme="dark"] .field textarea:focus,
+[data-theme="dark"] .field select:focus,
+[data-theme="dark"] .chat-input input:focus{
+  background:var(--panel);
+  border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primaryGlow), inset 0 1px 2px rgba(0,0,0,.20);
+}
+/* native select dropdown arrow readable on dark */
+[data-theme="dark"] .field select{ color-scheme:dark; }
+/* search box (had background:#fff) */
+[data-theme="dark"] .search-input-wrap{
+  background:var(--panel2); border-color:var(--border2);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,.28);
+}
+[data-theme="dark"] .search-input-wrap:focus-within{
+  background:var(--panel); border-color:var(--primary);
+}
+
+/* --- Buttons: default .btn / .btn-ghost / .btn-danger had background:#fff --- */
+[data-theme="dark"] .btn{
+  background:linear-gradient(180deg, var(--panel3), var(--panel2));
+  border-color:var(--border2);
+}
+[data-theme="dark"] .btn:hover{
+  background:linear-gradient(180deg, color-mix(in srgb,var(--panel3) 80%,#fff 6%), var(--panel3));
+}
+[data-theme="dark"] .btn-ghost{
+  background:var(--panel2); border-color:var(--border2); color:var(--muted);
+}
+[data-theme="dark"] .btn-ghost:hover{
+  background:color-mix(in srgb, var(--primary) 14%, var(--panel2));
+  border-color:var(--primary); color:#7fb2ee;
+}
+[data-theme="dark"] .btn-danger{
+  background:color-mix(in srgb, var(--danger) 14%, var(--panel2));
+  border-color:color-mix(in srgb, var(--danger) 55%, transparent);
+}
+
+/* --- Elevated panels & cards: add a faint top highlight + real depth so the
+       dark UI feels layered rather than flat charcoal. --- */
+[data-theme="dark"] .card,
+[data-theme="dark"] .modal,
+[data-theme="dark"] .login-card,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .mod-card{
+  background:linear-gradient(180deg,
+     color-mix(in srgb, var(--panel) 92%, #ffffff 4%),
+     var(--panel));
+  box-shadow:0 1px 0 rgba(255,255,255,.03) inset,
+             0 12px 30px -18px rgba(0,0,0,.75);
+}
+[data-theme="dark"] .modal{
+  box-shadow:0 1px 0 rgba(255,255,255,.04) inset,
+             0 30px 70px -24px rgba(0,0,0,.8);
+}
+
+/* --- Tables: header + row separators clearer on dark --- */
+[data-theme="dark"] thead th{
+  background:linear-gradient(180deg, var(--panel3), var(--panel2));
+  border-bottom-color:var(--border2);
+}
+[data-theme="dark"] tbody tr:hover td{ background:rgba(79,147,232,.06); }
+
+/* --- Tag / chip / pill surfaces slightly lifted from the card --- */
+[data-theme="dark"] .tag,
+[data-theme="dark"] .chip{
+  background:var(--panel3); border-color:var(--border2);
+}
+
+/* --- MC options & clean-list buttons (used background:#fff-ish panel2) --- */
+[data-theme="dark"] .mc-opt{ background:var(--panel2); border-color:var(--border2); }
+[data-theme="dark"] .mc-opt:hover:not(:disabled){
+  background:color-mix(in srgb, var(--primary) 12%, var(--panel2));
+}
+
+/* --- Blog surfaces used var(--card,#fff) fallbacks; define --card on dark --- */
+[data-theme="dark"]{ --card:#141d33; }
+[data-theme="dark"] .blog-card-featured{
+  background:linear-gradient(135deg, var(--panel), color-mix(in srgb,var(--gold) 8%, var(--panel)));
+  border-color:color-mix(in srgb,var(--gold) 45%, transparent);
+}
+[data-theme="dark"] .blog-content blockquote{
+  background:var(--panel2); color:var(--text);
+}
+
+/* --- Certificate sheet: keep it a printed white card even in dark (it is a
+       document artifact), but frame it so it doesn't glare edge-to-edge. --- */
+[data-theme="dark"] .cert-sheet{
+  box-shadow:0 20px 60px -20px rgba(0,0,0,.9);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+}
+
+/* --- Ambient background: give dark canvas a soft dual-glow instead of flat.
+       Very subtle, GPU-cheap fixed radial layers behind everything. --- */
+[data-theme="dark"] body::before{
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(60% 50% at 12% -5%, rgba(79,147,232,.10), transparent 60%),
+    radial-gradient(50% 45% at 100% 0%, rgba(47,201,141,.08), transparent 60%);
+}
+
+/* --- Dividers / dashed borders a touch brighter to stay visible --- */
+[data-theme="dark"] .divider{ background:var(--border2); }
+[data-theme="dark"] .info-row,
+[data-theme="dark"] .toggle-row{ border-bottom-color:var(--border2); }
+
+/* --- Scrollbar theming (WebKit) for a finished feel --- */
+[data-theme="dark"] ::-webkit-scrollbar{ width:12px; height:12px; }
+[data-theme="dark"] ::-webkit-scrollbar-track{ background:var(--bg2); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb{
+  background:var(--panel3); border:3px solid var(--bg2); border-radius:999px;
+}
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover{ background:var(--border2); }
+
+@media (prefers-reduced-motion:reduce){
+  [data-theme="dark"] body::before{ background:
+    radial-gradient(60% 50% at 12% -5%, rgba(79,147,232,.08), transparent 60%); }
+}
+
+/* --- Dark-mode AA fix: active nav / tab / mode pills used white text on
+       --primary (#4f93e8 = only 3.14:1). Deepen the active fill in dark mode
+       so white text clears WCAG AA (4.5:1). #2f6ec2 → white ≈ 5.08:1. --- */
+[data-theme="dark"] .learn-nav button.active,
+[data-theme="dark"] .tab.active,
+[data-theme="dark"] .mode-switch button.active{
+  background:linear-gradient(135deg,#3a7ad0,#2f6ec2);
+  border-color:#2f6ec2;
+}
+/* keep the readable focus outline distinct from the deep fill */
+[data-theme="dark"] .learn-nav button.active:focus-visible{ outline-offset:3px; }
+
+/* Program selector active state: accent-on-accentGlow can be thin in dark;
+   give it a solid readable treatment (bright accent text on a deep tint). */
+[data-theme="dark"] .program-opt.active{
+  color:#3ecb86;
+  background:rgba(47,201,141,.16);
+  border-color:rgba(47,201,141,.5);
+}
+
+/* =====================================================================
+   TIER-UP ("level up") celebration card + celebration-sound feedback
+   (v ...-aw-). Shown in the lesson Celebrate screen when a learner is
+   promoted to a new tier. Purely visual; the fanfare is in feedback.js.
+   ===================================================================== */
+.tierup-celebrate{
+  text-align:center; position:relative; overflow:hidden;
+  background:linear-gradient(135deg, #6d28d9, #b45309);
+  color:#fff; border:none;
+  box-shadow:0 16px 40px -16px rgba(109,40,217,.6);
+  animation:tierupIn .5s var(--ease-spring,cubic-bezier(.34,1.56,.64,1)) both;
+}
+.tierup-celebrate::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(120% 80% at 50% -10%, rgba(255,255,255,.28), transparent 55%);
+}
+.tierup-badge{
+  font-size:52px; line-height:1; display:inline-block;
+  filter:drop-shadow(0 6px 14px rgba(0,0,0,.35));
+  animation:tierupBadge 1.1s ease-in-out infinite;
+}
+.tierup-title{ font-weight:900; font-size:1.25rem; margin:6px 0 10px; letter-spacing:.01em; }
+.tierup-tiers{ display:flex; align-items:center; justify-content:center; gap:12px; font-weight:800; }
+.tierup-from{ opacity:.75; }
+.tierup-arrow{ opacity:.9; font-size:1.2rem; }
+.tierup-to{
+  font-size:1.15rem;
+  background:rgba(255,255,255,.22); padding:4px 14px; border-radius:999px;
+  box-shadow:0 2px 8px -2px rgba(0,0,0,.4);
+}
+@keyframes tierupIn{ from{ opacity:0; transform:translateY(14px) scale(.94); } to{ opacity:1; transform:none; } }
+@keyframes tierupBadge{ 0%,100%{ transform:translateY(0) rotate(-4deg); } 50%{ transform:translateY(-6px) rotate(4deg); } }
+
+[data-theme="dark"] .tierup-celebrate{
+  background:linear-gradient(135deg, #5b21b6, #92400e);
+  box-shadow:0 16px 44px -16px rgba(0,0,0,.7);
+}
+
+@media (prefers-reduced-motion:reduce){
+  .tierup-celebrate{ animation:none; }
+  .tierup-badge{ animation:none; }
+}
+
+/* =====================================================================
+   MICRO-ANIMATIONS: count-up numbers + stars that light up one-by-one
+   (v ...-ax-). The count-up is driven in JS (StatNum); here we style the
+   star reveal. Both respect prefers-reduced-motion (JS shows final state).
+   ===================================================================== */
+.reward-stars{ display:inline-flex; gap:6px; line-height:1; align-items:center; }
+.reward-star{
+  display:inline-flex; color:var(--muted); /* muted star inherits currentColor */
+  transform:scale(.85); transition:none;
+}
+.reward-star.lit{
+  filter:drop-shadow(0 0 10px rgba(246,195,67,.55));
+  animation:starPop .42s var(--ease-spring,cubic-bezier(.34,1.56,.64,1)) both;
+}
+@keyframes starPop{
+  0%{ transform:scale(.5) rotate(-12deg); opacity:0; }
+  55%{ transform:scale(1.35) rotate(6deg); opacity:1; }
+  100%{ transform:scale(1) rotate(0); opacity:1; }
+}
+/* the big +XP number gets a soft settle-in as it counts */
+.celebrate .big, .cp-score-big{
+  animation:xpSettle .5s var(--ease-spring,ease) both;
+}
+@keyframes xpSettle{
+  from{ transform:translateY(6px) scale(.96); opacity:.6; }
+  to{ transform:none; opacity:1; }
+}
+
+@media (prefers-reduced-motion:reduce){
+  .reward-star.lit{ animation:none; transform:scale(1); }
+  .celebrate .big, .cp-score-big{ animation:none; }
+}
+
+/* =====================================================================
+   POLISHED DARK MODE — round 2 (v ...-ay-)
+   Fixes remaining light surfaces found on Certificates & Premium pages,
+   plus a catch-all so any bare <input> also reads as a dark well.
+   ===================================================================== */
+
+/* Certificate mini-card: was a light silver gradient with dark-blue text —
+   unreadable on the dark canvas. Give it a dark panel with a warm gold frame
+   (keeps the "achievement" feel) and readable light text. */
+[data-theme="dark"] .cert-mini{
+  background:linear-gradient(135deg,
+     color-mix(in srgb, var(--gold,#f6c343) 10%, var(--panel)),
+     var(--panel));
+  border-color:color-mix(in srgb, var(--gold,#f6c343) 50%, transparent);
+}
+[data-theme="dark"] .cert-mini-title{ color:var(--text); }
+[data-theme="dark"] .cert-mini-org{ color:var(--muted); }
+[data-theme="dark"] .cert-mini-serial{ color:#7fb2ee; }   /* was #26527a (unreadable) */
+[data-theme="dark"] .cert-mini-open{ color:#7fb2ee; }
+[data-theme="dark"] .cert-mini:hover{ box-shadow:0 14px 34px -16px rgba(246,195,67,.35); }
+
+/* Catch-all: any bare text input/textarea (e.g. the group-code redeem field on
+   the Premium page) that isn't wrapped in .field still used the light base bg.
+   Theme it to match the fielded inputs so no glaring white box remains. */
+[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+[data-theme="dark"] textarea{
+  background:var(--panel2);
+  color:var(--text);
+  border-color:var(--border2);
+}
+[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"])::placeholder,
+[data-theme="dark"] textarea::placeholder{ color:var(--muted2); }
+[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]):focus,
+[data-theme="dark"] textarea:focus{
+  background:var(--panel); border-color:var(--primary);
+  box-shadow:0 0 0 3px var(--primaryGlow);
+}
+/* keep the topbar/landing/search inputs (which are intentionally styled) intact */
+[data-theme="dark"] .topbar input,
+[data-theme="dark"] .search-input-wrap input{ background:transparent; box-shadow:none; }
+
+/* Daily-diagnosis game leftovers that were light-tinted */
+[data-theme="dark"] .ddle-hint{ background:var(--panel2); border-color:var(--border2); color:var(--text); }
+[data-theme="dark"] .ddle-guess-no{ background:var(--panel3); border-color:color-mix(in srgb,var(--danger) 45%, transparent); }
+
+/* PWA install banners / iOS sheet used var(--card,#fff) with no --card in dark;
+   --card is already defined for dark above, but pin the accent text too. */
+[data-theme="dark"] .pwa-install-icon,
+[data-theme="dark"] .pwa-ios-plus,
+[data-theme="dark"] .pwa-install-benefits li b{ color:#7fb2ee; }
+
+/* =====================================================================
+   GLOBAL SETTINGS PAGE (v ...-az-)
+   One hub for theme / sound / language / motion. Uses existing tokens so it
+   is fully theme-aware; segmented controls pass WCAG AA in both themes.
+   ===================================================================== */
+.settings-page{ max-width:640px; }
+.set-card{ padding:16px 18px; margin-top:14px; }
+.set-head{
+  font-weight:800; color:var(--primary); display:flex; align-items:center; gap:8px;
+  margin-bottom:12px; padding-bottom:8px; border-bottom:2px solid var(--panel3);
+}
+.set-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.set-label{ font-weight:600; }
+
+/* Segmented control (theme / language) */
+.set-seg{
+  display:inline-flex; gap:4px; padding:4px; border-radius:12px;
+  background:var(--panel2); border:1px solid var(--border);
+}
+.set-seg-btn{
+  border:none; background:transparent; color:var(--muted); cursor:pointer;
+  font-family:inherit; font-weight:700; font-size:.88rem; padding:8px 16px; border-radius:9px;
+  transition:background .15s ease, color .15s ease, transform .1s var(--ease-spring,ease);
+}
+.set-seg-btn:hover{ color:var(--text); }
+.set-seg-btn.active{
+  background:var(--grad-primary); color:#fff;
+  box-shadow:0 4px 12px -6px var(--primaryGlow);
+}
+[data-theme="dark"] .set-seg-btn.active{
+  background:linear-gradient(135deg,#3a7ad0,#2f6ec2);   /* AA-safe deep blue (5.08:1) */
+}
+.set-seg-btn:focus-visible{ outline:2px solid var(--primary); outline-offset:2px; }
+
+.set-test{ margin-top:12px; }
+.set-motion-on{ color:#178053; font-weight:700; }
+[data-theme="dark"] .set-motion-on{ color:#3ecb86; }
+
+@media (prefers-reduced-motion:reduce){
+  .set-seg-btn{ transition:none; }
+}
+
+/* --- Settings: font-size control (v ...-ba-) --- */
+.set-seg.set-seg-wrap{ flex-wrap:wrap; }
+.set-font-preview{
+  margin-top:12px; padding:12px 14px; border-radius:12px;
+  background:var(--panel2); border:1px dashed var(--border2);
+  color:var(--text); line-height:1.7;
+}
+
+/* =====================================================================
+   PROGRESS PAGE — richer stats & charts (v ...-bb-)
+   Overall-accuracy ring, 3D count-up KPIs, accuracy-colored 7-day bars with
+   a baseline grid + staggered grow-in, and a legend. All theme-aware &
+   reduced-motion-gated.
+   ===================================================================== */
+
+/* Overview: ring beside the KPI grid (stacks on mobile) */
+.prog-overview{ display:flex; gap:16px; align-items:stretch; flex-wrap:wrap; }
+.prog-overview .prog-kpis{ flex:1; min-width:260px; }
+@media(max-width:640px){ .prog-overview{ flex-direction:column; } }
+
+/* Accuracy ring — conic gradient donut with count-up center */
+.acc-ring{
+  flex:0 0 auto; width:132px; height:132px; border-radius:50%;
+  background:conic-gradient(var(--ring) calc(var(--p)), var(--panel3) 0);
+  display:grid; place-items:center; position:relative;
+  box-shadow:0 8px 22px -12px rgba(0,0,0,.4);
+  animation:ringIn .6s var(--ease-spring,ease) both;
+}
+.acc-ring-hole{
+  width:98px; height:98px; border-radius:50%;
+  background:var(--panel); display:grid; place-items:center; text-align:center;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,.12);
+}
+.acc-ring-num{ font-size:1.7rem; font-weight:900; line-height:1; color:var(--text); }
+.acc-ring-lbl{ margin-top:2px; }
+@keyframes ringIn{ from{ transform:scale(.88) rotate(-8deg); opacity:0; } to{ transform:none; opacity:1; } }
+
+/* 3D KPI cards with an icon tile */
+.kpi.kpi-3d{
+  border-bottom:3px solid var(--border2);
+  transition:transform .14s var(--ease-spring,ease), box-shadow .14s ease;
+}
+.kpi.kpi-3d:hover{ transform:translateY(-2px); box-shadow:0 10px 24px -14px rgba(0,0,0,.4); }
+.kpi .kpi-ico{
+  width:38px; height:38px; border-radius:11px; flex:none;
+  display:grid; place-items:center; background:var(--panel2); border:1px solid var(--border);
+}
+.kpi .kpi-ico svg{ color:var(--primary); }
+.kpi.accent .kpi-ico{ background:color-mix(in srgb, var(--accent) 16%, var(--panel)); border-color:transparent; }
+
+/* 7-day trend: baseline grid + accuracy-colored bars + staggered grow */
+.trend.trend-grid{
+  background:
+    repeating-linear-gradient(to top, transparent, transparent 39px, var(--border) 39px, var(--border) 40px);
+  border-radius:10px;
+}
+.trend-bar{ transform-origin:bottom; }
+.trend-bar.acc-good{ background:linear-gradient(180deg,#2fbd6e,#178053); }
+.trend-bar.acc-mid{ background:linear-gradient(180deg,#e8a33d,#b7791f); }
+.trend-bar.acc-low{ background:linear-gradient(180deg,#ef6b5f,#c0392b); }
+.trend-bar.acc-empty{ background:var(--panel3); }
+.trend-bar{ animation:barGrowUp .5s var(--ease-spring,ease) both; animation-delay:var(--grow-delay,0ms); }
+@keyframes barGrowUp{ from{ transform:scaleY(.02); opacity:.4; } to{ transform:scaleY(1); opacity:1; } }
+[data-theme="dark"] .trend-bar.acc-good{ background:linear-gradient(180deg,#3ecb86,#20b077); }
+[data-theme="dark"] .trend-bar.acc-mid{ background:linear-gradient(180deg,#f0b955,#c98a1f); }
+[data-theme="dark"] .trend-bar.acc-low{ background:linear-gradient(180deg,#f0857a,#d0483c); }
+
+.trend-legend{ display:flex; gap:16px; justify-content:center; margin-top:12px; flex-wrap:wrap; }
+.tl-item{ display:inline-flex; align-items:center; gap:6px; font-size:.74rem; color:var(--muted); }
+.tl-dot{ width:11px; height:11px; border-radius:4px; display:inline-block; }
+.tl-dot.acc-good{ background:#178053; }
+.tl-dot.acc-mid{ background:#b7791f; }
+.tl-dot.acc-low{ background:#c0392b; }
+
+@media (prefers-reduced-motion:reduce){
+  .acc-ring, .trend-bar{ animation:none; }
+}
+
+/* =====================================================================
+   NATIONAL RANKING — richer hero + XP-bar rows (v ...-bc-)
+   ===================================================================== */
+/* "Your rank" hero: big rank badge + percentile chip */
+.rank-hero{
+  display:flex; align-items:center; gap:16px;
+  background:linear-gradient(135deg, color-mix(in srgb,var(--primary) 12%, var(--panel)), var(--panel));
+  border-inline-start:4px solid var(--primary);
+}
+.rank-hero-badge{
+  flex:none; min-width:74px; height:74px; padding:0 12px; border-radius:18px;
+  display:grid; place-items:center; font-size:1.7rem; font-weight:900; color:#fff;
+  background:var(--grad-primary); box-shadow:0 8px 20px -8px var(--primaryGlow);
+}
+[data-theme="dark"] .rank-hero-badge{ background:linear-gradient(135deg,#3a7ad0,#2f6ec2); }
+.rank-hero-info{ min-width:0; }
+.rank-hero-label{ font-weight:800; font-size:1.05rem; }
+.rank-hero-sub{ font-size:.82rem; color:var(--muted); margin-top:2px; }
+.rank-hero-pct{
+  display:inline-block; margin-top:8px; padding:4px 12px; border-radius:999px;
+  font-size:.76rem; font-weight:800; color:#fff; background:linear-gradient(135deg,var(--gold),#d99a1c);
+  box-shadow:0 4px 12px -6px rgba(217,154,28,.5);
+}
+
+/* List rows with an XP progress bar (relative to the #1 leader) */
+.rank-row{
+  display:flex; align-items:center; gap:12px; padding:12px 16px;
+  border-bottom:1px solid var(--border); transition:background .15s;
+}
+.rank-row:last-child{ border-bottom:none; }
+.rank-row:hover{ background:var(--panel2); }
+.rank-row.is-me{
+  background:color-mix(in srgb,var(--primary) 10%, var(--panel));
+  border-inline-start:4px solid var(--primary);
+}
+.rank-row .rank-num{ font-weight:900; width:34px; flex:none; text-align:center; color:var(--muted); }
+.rank-row.is-top .rank-num{ font-size:1.15rem; }
+.rank-main{ flex:1; min-width:0; }
+.rank-name{ font-weight:700; }
+.rank-row.is-me .rank-name{ font-weight:800; color:var(--primary); }
+.rank-bar{ height:6px; border-radius:999px; background:var(--panel3); overflow:hidden; margin:5px 0 3px; }
+.rank-bar>span{ display:block; height:100%; border-radius:999px; background:var(--grad-primary);
+  transition:width .6s var(--ease-spring,ease); }
+.rank-row.is-top .rank-bar>span{ background:linear-gradient(90deg,var(--gold),#e0a92c); }
+.rank-prov{ line-height:1.2; }
+.rank-tier{ flex:none; padding:3px 10px; font-size:.72rem; }
+.rank-xp{ flex:none; font-weight:800; font-size:.82rem; display:inline-flex; align-items:center; gap:4px;
+  padding:5px 11px; border-radius:9px; background:var(--panel2); border:1px solid var(--border); }
+[data-theme="dark"] .rank-row:hover{ background:rgba(79,147,232,.06); }
+
+/* =====================================================================
+   SMOOTHER LESSON PROGRESS BAR + PATH MICRO-ANIMATIONS (v ...-bd-)
+   ===================================================================== */
+
+/* --- Lesson progress: springier growth + segment ticks + a leading pip --- */
+.lesson-wrap .pbar{ --seg:1; position:relative; }
+.lesson-wrap .pbar>span{
+  /* springy, satisfying width change as each question advances */
+  transition:width .55s var(--ease-spring,cubic-bezier(.34,1.3,.5,1)) !important;
+}
+/* faint segment dividers so progress reads as discrete steps (one per question) */
+.lesson-wrap .pbar::before{
+  content:""; position:absolute; inset:0; pointer-events:none; z-index:2; border-radius:inherit;
+  background:repeating-linear-gradient(
+    to right, transparent 0, transparent calc(100% / var(--seg) - 1.5px),
+    color-mix(in srgb, var(--panel) 70%, transparent) calc(100% / var(--seg) - 1.5px),
+    color-mix(in srgb, var(--panel) 70%, transparent) calc(100% / var(--seg)));
+  opacity:.55;
+}
+[dir="rtl"] .lesson-wrap .pbar::before{ background:repeating-linear-gradient(
+    to left, transparent 0, transparent calc(100% / var(--seg) - 1.5px),
+    color-mix(in srgb, var(--panel) 70%, transparent) calc(100% / var(--seg) - 1.5px),
+    color-mix(in srgb, var(--panel) 70%, transparent) calc(100% / var(--seg))); }
+/* a soft glowing pip riding the leading edge of the fill */
+.lesson-wrap .pbar>span::before{
+  content:""; position:absolute; inset-inline-end:0; top:50%; transform:translateY(-50%);
+  width:10px; height:10px; border-radius:50%; background:#fff;
+  box-shadow:0 0 8px 2px var(--primaryGlow); z-index:3;
+}
+
+/* --- Path: current-node beacon now gently breathes to draw the eye --- */
+@media (prefers-reduced-motion:no-preference){
+  .node-ring.on{ animation:beacon 2.4s ease-in-out infinite; }
+  @keyframes beacon{
+    0%,100%{ box-shadow:0 0 18px -2px var(--accentGlow,rgba(34,160,107,.5)); }
+    50%{ box-shadow:0 0 30px 2px var(--accentGlow,rgba(34,160,107,.7)); }
+  }
+  /* the START flag does a subtle float so it feels alive */
+  .node-start-flag{ animation:flagFloat 2.4s ease-in-out infinite; }
+  @keyframes flagFloat{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-3px); } }
+}
+
+/* --- Path: a gentle scale-in on the bubble as rows enter (safe: animates the
+   inner .unit-bubble, NOT the button, so click targets stay stable). Staggered
+   by the per-row --i index, capped so late rows don't wait too long. --- */
+@media (prefers-reduced-motion:no-preference){
+  .unit-node-row .unit-bubble{
+    animation:bubbleIn .38s var(--ease-spring,cubic-bezier(.34,1.4,.6,1)) both;
+    animation-delay:calc(min(var(--i,0), 8) * 45ms);
+  }
+  @keyframes bubbleIn{ from{ transform:scale(.7); opacity:0; } to{ transform:scale(1); opacity:1; } }
+}
+
+/* =====================================================================
+   FRIENDS — colorful per-person avatars + row polish (v ...-be-)
+   ===================================================================== */
+.avatar{
+  position:relative; border-radius:50%; display:grid; place-items:center;
+  font-weight:800; color:#fff; text-transform:uppercase; flex:none;
+  background:linear-gradient(135deg,
+    hsl(var(--h,220) 62% 58%),
+    hsl(calc(var(--h,220) + 26) 66% 42%));
+  box-shadow:0 3px 8px -3px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.avatar-letter{ line-height:1; }
+.avatar-streak{
+  position:absolute; inset-block-end:-3px; inset-inline-end:-3px;
+  font-size:.62rem; background:var(--panel); border-radius:50%;
+  width:16px; height:16px; display:grid; place-items:center;
+  box-shadow:0 1px 3px rgba(0,0,0,.3);
+}
+/* a thin tier-colored ring for higher tiers */
+.avatar.av-tier-gold{ box-shadow:0 0 0 2px #e0a92c, 0 3px 8px -3px rgba(0,0,0,.35); }
+.avatar.av-tier-sapphire{ box-shadow:0 0 0 2px #3b82f6, 0 3px 8px -3px rgba(0,0,0,.35); }
+.avatar.av-tier-ruby{ box-shadow:0 0 0 2px #e0405a, 0 3px 8px -3px rgba(0,0,0,.35); }
+.avatar.av-tier-diamond{ box-shadow:0 0 0 2px #5ad0e0, 0 3px 8px -3px rgba(0,0,0,.35); }
+
+/* friend / feed rows: subtle hover lift + rounded hit area */
+.card .friend-row, .card .feed-item{
+  border-radius:12px; padding-inline:8px; margin-inline:-8px;
+  transition:background .14s ease;
+}
+.card .friend-row:hover, .card .feed-item:hover{ background:var(--panel2); }
+[data-theme="dark"] .card .friend-row:hover, [data-theme="dark"] .card .feed-item:hover{ background:rgba(79,147,232,.06); }
+
+/* =====================================================================
+   CHALLENGES + STORE polish (v ...-bg-)
+   ===================================================================== */
+
+/* --- Challenges: exciting quick-match button + 3D topic pills + VS cards --- */
+.quick-match-btn{
+  position:relative; overflow:hidden; font-size:1.02rem;
+  box-shadow:0 6px 0 color-mix(in srgb, var(--accent) 55%, #000), 0 12px 26px -10px var(--accentGlow);
+  transition:transform .1s var(--ease-spring,ease), box-shadow .1s ease;
+}
+.quick-match-btn:hover{ transform:translateY(-2px); box-shadow:0 8px 0 color-mix(in srgb, var(--accent) 55%, #000), 0 16px 30px -10px var(--accentGlow); }
+.quick-match-btn:active{ transform:translateY(4px); box-shadow:0 2px 0 color-mix(in srgb, var(--accent) 55%, #000); }
+.quick-match-btn::after{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
+  transform:translateX(-100%); animation:qmShine 2.6s ease-in-out infinite;
+}
+@keyframes qmShine{ 0%{ transform:translateX(-100%); } 55%,100%{ transform:translateX(220%); } }
+
+.ch-setup-card h4{ color:var(--primary); }
+.ch-topics{ display:flex; gap:8px; flex-wrap:wrap; }
+.ch-topic-pill{
+  border-bottom-width:3px; transition:transform .1s var(--ease-spring,ease), box-shadow .1s ease, border-color .12s, color .12s;
+}
+.ch-topic-pill:hover{ transform:translateY(-2px); border-color:var(--primary); color:var(--primary); box-shadow:0 4px 10px -4px var(--primaryGlow); }
+.ch-topic-pill:active{ transform:translateY(1px); }
+
+.vs-card{
+  background:linear-gradient(135deg, var(--panel), var(--panel2));
+  transition:transform .14s var(--ease-spring,ease), box-shadow .14s ease;
+}
+.vs-card:hover{ transform:translateY(-2px); box-shadow:0 12px 26px -14px rgba(0,0,0,.4); }
+.vs-mid > div:first-child{
+  display:inline-grid; place-items:center; min-width:34px; height:34px; padding:0 6px;
+  border-radius:10px; background:var(--grad-primary); color:#fff; font-size:.9rem;
+  box-shadow:0 4px 10px -4px var(--primaryGlow);
+}
+[data-theme="dark"] .vs-mid > div:first-child{ background:linear-gradient(135deg,#3a7ad0,#2f6ec2); }
+
+/* --- Store: 3D course cards + polished cover + empty state --- */
+.course-card{ box-shadow:0 6px 16px -12px rgba(0,0,0,.35); }
+.course-card:hover{ box-shadow:0 16px 34px -16px rgba(0,0,0,.45); }
+.course-cover{
+  background-image:linear-gradient(135deg, var(--primary), #6d28d9);
+  position:relative;
+}
+.course-cover::after{
+  content:""; position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(120% 90% at 20% 0%, rgba(255,255,255,.22), transparent 55%);
+}
+.course-card:hover .course-cover svg{ transform:scale(1.12); transition:transform .2s var(--ease-spring,ease); }
+.course-owned{
+  position:absolute; inset-block-start:8px; inset-inline-end:8px; z-index:2;
+  background:var(--green,#178053); color:#fff; font-size:.7rem; font-weight:800;
+  padding:3px 9px; border-radius:999px; box-shadow:0 3px 8px -3px rgba(0,0,0,.4);
+}
+.course-price{ display:inline-flex; align-items:center; gap:4px; }
+
+/* richer empty-state icon tile (store / challenges) */
+.page .empty-state .ico{ filter:drop-shadow(0 8px 20px var(--primaryGlow)); }
+
+/* =====================================================================
+   MOBILE TOPBAR + HUD OVERLAP FIXES (v ...-bi-)
+   On narrow phones the 4 topbar action buttons were wide enough to collide
+   with the brand name ("MED School"), and the HUD chip row could wrap under
+   the notification bell. Tighten both so nothing overlaps.
+   ===================================================================== */
+@media (max-width:560px){
+  /* brand must be allowed to shrink & truncate so it never sits under actions */
+  .topbar{ gap:8px; }
+  .brand{ flex:1 1 auto; min-width:0; overflow:hidden; }
+  .brand h1{ overflow:hidden; text-overflow:ellipsis; font-size:1.05rem; }
+  /* keep the action cluster compact and never shrinking into the brand */
+  .topbar-actions{ gap:6px; flex:0 0 auto; }
+  .topbar-actions .btn{ padding:7px 9px; }
+  /* the language button's text label ("English"/"فارسی") is the widest offender
+     on tiny screens — show only its globe icon there. */
+  .topbar-actions .btn-ghost:not(.icon-btn) .icon-lang-label{ display:none; }
+}
+
+/* Learn-shell top row (back + HUD ... notification bell): allow it to wrap
+   gracefully and keep the bell from overlapping wrapped HUD chips. */
+@media (max-width:560px){
+  .learn-shell > div:first-child,
+  .learn-topline{ flex-wrap:wrap; row-gap:6px; }
+  /* The back+HUD cluster must be allowed to shrink AND wrap so the HUD chips
+     never get clipped when the "back" button is present inside a lesson. */
+  .learn-topline-main{ flex-wrap:wrap; min-width:0; flex:1 1 auto; }
+  .learn-topline-main .hud{ flex-wrap:wrap; }
+  .hud{ gap:10px; padding:6px 0; }
+  .hud-chip{ font-size:.98rem; }
+  .bell-wrap{ margin-inline-start:auto; }   /* bell hugs the far edge, own line if needed */
+}
+
+/* =====================================================================
+   UNIFIED STAT ICONS (v ...-bl-) — crisp SVG hearts/gems/xp/streak used in
+   the HUD, welcome hero, streak strip, lesson combo & celebrate. A gentle
+   drop-shadow makes them pop identically on light, purple and dark backdrops.
+   ===================================================================== */
+.stat-icon{ filter:drop-shadow(0 1px 1px rgba(0,0,0,.18)); }
+.hud-chip .stat-icon, .hh-stat .stat-icon{ margin-inline-end:1px; }
+/* the big flame in the streak strip / celebrate uses the SVG now, not a glyph */
+.streak-strip .ss-flame .stat-icon{ filter:drop-shadow(0 2px 4px rgba(255,138,61,.5)); }
+.streak-flame .stat-icon{ filter:drop-shadow(0 3px 8px rgba(255,138,61,.55)); }
+
+/* --- rating stars now use the SVG XpIcon (matches the HUD star) --- */
+.node .stars, .unit-node .stars{ gap:2px; align-items:center; color:var(--muted); }
+.node .stars .xp-muted, .unit-node .stars .xp-muted{ color:var(--muted); }
+
+/* =====================================================================
+   SIMPLER, DUOLINGO-LIKE LEARNING PATH (v ...-bp-)
+   Declutter: nodes are clean circles (no per-node title/CTA), a subtle
+   "complete" chip instead of a big card, tighter winding column.
+   ===================================================================== */
+/* a small, unobtrusive "unit complete" chip centered under the unit's nodes */
+.unit-complete-chip{
+  display:inline-flex; align-items:center; gap:5px; align-self:center;
+  margin:6px auto 2px; padding:4px 12px; border-radius:999px;
+  font-size:.74rem; font-weight:800; color:#fff;
+  background:linear-gradient(135deg,#2fbd6e,#178053);
+  box-shadow:0 4px 12px -6px rgba(23,128,83,.6);
+}
+[data-theme="dark"] .unit-complete-chip{ background:linear-gradient(135deg,#2aa862,#15794c); }
+
+/* bigger, springier node bubbles + a touch more breathing room, like Duolingo */
+.unit-node .unit-bubble{ width:82px; height:82px; }
+@media(max-width:560px){ .unit-node .unit-bubble{ width:76px; height:76px; } }
+.unit-node-row{ margin:14px 0; }
+/* the tiny star pips sit right under the circle, small and centered */
+.unit-node .stars{ margin-top:6px; transform:scale(.9); }
+
+/* the connector trail a bit softer/rounder */
+.unit-node-row:not(:last-child)::after{ width:5px; border-radius:5px; }
+
+/* keep the checkpoint (boss) node a CIRCLE like the rest — differentiate by its
+   trophy icon + gold color, not by shape (cleaner, more Duolingo-like) */
+.unit-node.boss .unit-bubble{ border-radius:50% !important; }
+
+/* on mobile the winding sway is a touch gentler so nothing clips the edges */
+@media(max-width:560px){ .unit-node-row{ transform:translateX(calc(var(--offset,0) * .7)); } }
+
+/* ============================================================================
+   Path mascots (2026 character cast) — Dr. Med greets each section and a
+   mischievous Microbe guards each boss/checkpoint node. Soft-3D inline-SVG
+   characters (see components/PathMascots.jsx) with a small speech bubble.
+   Purely decorative & additive; respects reduced-motion.
+   ========================================================================== */
+.path-mascot{ position:relative; display:flex; align-items:flex-end; gap:8px;
+  pointer-events:none; /* never block taps on nearby nodes */ }
+.path-mascot .mascot{ flex:0 0 auto; filter:drop-shadow(0 6px 10px rgba(15,35,80,.18)); }
+
+/* Dr. Med sits just under a section label, leaning in from the start edge */
+.path-mascot-dr{ margin:2px 0 10px; padding-inline-start:6px; }
+/* the tap-to-react button wrapper is invisible chrome. The parent .path-mascot
+   is pointer-events:none so it never blocks node taps; we re-enable events on
+   JUST the character image so it can be poked for a fun reaction. */
+.mascot-btn{ display:inline-block; -webkit-tap-highlight-color:transparent; pointer-events:auto; }
+.path-mascot-dr .mascot-drmed{ animation:mascotBob var(--mascot-dur,3.2s) ease-in-out infinite; transform-origin:50% 90%; }
+
+/* Microbe floats to the trailing side of a boss node. It sits fully OUTSIDE the
+   node (translate past its own width) so its speech bubble never overlaps the
+   circle. flex-direction row-reverse keeps the germ next to the node and the
+   bubble further out toward the trailing edge. */
+.path-mascot-boss{ position:absolute; top:50%; inset-inline-start:calc(50% + 60px);
+  transform:translateY(-50%); align-items:center; flex-direction:row; gap:6px; }
+@media(max-width:560px){ .path-mascot-boss{ inset-inline-start:calc(50% + 48px); }
+  .path-mascot-boss .mascot{ width:46px; height:46px; } }
+.path-mascot-boss .mascot-microbe.mascot-smirk{ animation:microbeWobble var(--mascot-dur-mb,2.4s) ease-in-out infinite; transform-origin:50% 90%; }
+
+/* ---- per-mascot animation tempo (admin-controlled speed) ---- */
+.mascot-drmed.speed-slow{ --mascot-dur:4.6s; } .mascot-drmed.speed-normal{ --mascot-dur:3.2s; } .mascot-drmed.speed-fast{ --mascot-dur:1.9s; }
+.mascot-microbe.speed-slow{ --mascot-dur-mb:3.4s; } .mascot-microbe.speed-normal{ --mascot-dur-mb:2.4s; } .mascot-microbe.speed-fast{ --mascot-dur-mb:1.4s; }
+
+/* ---- one-shot playful TAP reactions (Duolingo-style) ---- */
+.mascot-btn.react-jump .mascot-drmed{ animation:mascotJump .55s var(--ease-spring,cubic-bezier(.2,.9,.3,1)); }
+.mascot-btn.react-squish .mascot-microbe{ animation:mascotSquish .5s ease; }
+@keyframes mascotJump{ 0%{ transform:translateY(0) scale(1); } 30%{ transform:translateY(-22px) scale(1.06,.96); } 55%{ transform:translateY(0) scale(.96,1.06); } 75%{ transform:translateY(-6px) scale(1.02,.98); } 100%{ transform:translateY(0) scale(1); } }
+@keyframes mascotSquish{ 0%{ transform:scale(1); } 25%{ transform:scale(1.15,.82); } 50%{ transform:scale(.86,1.16) rotate(-6deg); } 75%{ transform:scale(1.06,.94) rotate(4deg); } 100%{ transform:scale(1); } }
+
+/* speech bubble */
+.mascot-say{ position:relative; max-width:190px; min-width:120px; }
+.mascot-say-bubble{ display:inline-block; background:var(--panel); color:var(--text);
+  border:1px solid var(--border); border-radius:14px; padding:8px 12px;
+  font-size:.82rem; font-weight:700; line-height:1.5; box-shadow:0 6px 16px -8px rgba(15,35,80,.35); }
+/* the boss microbe's bubble points back toward the germ (which is on its start
+   side thanks to row-reverse), and needs a firmer minimum width */
+.path-mascot-boss .mascot-say{ min-width:150px; }
+/* little tail pointing back toward the character */
+.mascot-say-start .mascot-say-bubble::before,
+.mascot-say-end .mascot-say-bubble::before{ content:""; position:absolute; bottom:12px;
+  width:0; height:0; border:7px solid transparent; }
+.mascot-say-start .mascot-say-bubble::before{ inset-inline-start:-13px;
+  border-inline-end-color:var(--border); }
+.mascot-say-end   .mascot-say-bubble::before{ inset-inline-end:-13px;
+  border-inline-start-color:var(--border); }
+/* on very small screens the microbe's bubble would crowd the node — hide it */
+@media(max-width:560px){ .path-mascot-boss .mascot-say{ display:none; } }
+
+@keyframes mascotBob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
+@keyframes microbeWobble{ 0%,100%{ transform:rotate(-5deg); } 50%{ transform:rotate(5deg); } }
+@media (prefers-reduced-motion:reduce){
+  .path-mascot-dr .mascot-drmed,
+  .path-mascot-boss .mascot-microbe,
+  .mascot-btn.react-jump .mascot-drmed,
+  .mascot-btn.react-squish .mascot-microbe{ animation:none; }
+}
+
+/* celebration cameo — Dr. Med pops into the lesson "complete" card */
+.celebrate-mascot{ display:flex; justify-content:center; margin:2px 0 6px; }
+.celebrate-mascot .mascot-drmed{ animation:mascotPop .5s var(--ease-spring,cubic-bezier(.2,.9,.3,1)) both; }
+@keyframes mascotPop{ 0%{ transform:scale(.4) translateY(20px); opacity:0; }
+  70%{ transform:scale(1.08); } 100%{ transform:scale(1) translateY(0); opacity:1; } }
+@media (prefers-reduced-motion:reduce){ .celebrate-mascot .mascot-drmed{ animation:none; } }
+
+/* ============================================================================
+   Learner shell cleanup (2026) — Duolingo-style focus.
+   Feedback: the learner path felt cluttered and the side panel seemed to "move
+   separately" from the path. Fixes: (1) the nav rail is a calm sticky column
+   that stays put while ONLY the path scrolls; (2) the path is a narrower,
+   clearly-centered column so it reads as the single focus; (3) boss mascots sit
+   fully beside nodes; (4) less visual noise on the path header.
+   ========================================================================== */
+
+/* the path becomes a clean, centered, narrow column (like Duolingo) */
+.path-page{ max-width:520px; margin-inline:auto; }
+.path-page .path-progress-card{ margin-bottom:18px; }
+
+/* the nav rail: calm, self-scrolling, visually separated so it clearly is a
+   fixed rail (not part of the scrolling path) */
+@media(min-width:841px){
+  .learn-layout{ grid-template-columns:220px 1fr; gap:28px; }
+  .learn-nav{
+    top:76px; max-height:calc(100vh - 90px);
+    border-inline-start:1px solid var(--border); padding-inline-start:12px;
+    scrollbar-width:thin;
+  }
+  /* give the path column its own comfortable breathing room + center it in the
+     remaining space so it doesn't hug the rail */
+  .learn-layout > .page,
+  .learn-layout > div:last-child{ min-width:0; }
+}
+
+/* boss mascot: never larger than needed, never overlapping the node */
+.path-mascot-boss .mascot{ filter:drop-shadow(0 4px 8px rgba(15,35,80,.18)); }
+.path-mascot-boss .mascot-say-bubble{ font-size:.75rem; padding:6px 10px; }
+
+/* keep the Dr. Med section guide from crowding the path — sit it to the side */
+.path-mascot-dr{ max-width:340px; }
+
+/* on mobile the boss speech bubble is hidden (already) and the microbe shrinks;
+   make sure nothing pushes horizontal overflow */
+@media(max-width:560px){
+  .path-page{ max-width:100%; }
+  .path-mascot-boss{ pointer-events:none; }
+}
+
+/* ---- Admin sidebar: collapsible groups + quick search (declutter) ---- */
+.sidenav-search{ margin-bottom:10px; }
+/* the group header is a compact muted button; it must NOT inherit the full
+   nav-item button styling (which would make it look like a tab) */
+button.sidenav-title{ display:flex; align-items:center; justify-content:space-between; gap:6px;
+  width:100%; background:none; border:none; cursor:pointer; font-family:inherit;
+  font-size:.72rem; font-weight:800; color:#5b6472; text-transform:uppercase;
+  letter-spacing:.04em; padding:6px 8px 3px; opacity:1; border-radius:8px; transition:background .12s; }
+button.sidenav-title:hover{ background:var(--panel2, rgba(120,130,150,.10)); color:var(--text); }
+[data-theme="dark"] button.sidenav-title{ color:#aeb8c7; }
+button.sidenav-title svg{ flex:none; opacity:.6; }
+button.sidenav-title::before{ display:none !important; }  /* no active accent bar */
+/* the real tab buttons keep their normal readable colors */
+.sidenav .nav-tab-btn{ color:var(--muted); }
+.sidenav .nav-tab-btn.active{ color:var(--primary); }
+.sidenav-group.collapsed{ margin-bottom:4px; }
+/* desktop: a collapsed group hides its tab buttons (keeps the menu short) */
+@media(min-width:821px){
+  .sidenav-group.collapsed .nav-tab-btn{ display:none; }
+}
+/* ---- Admin sidebar on mobile: a clean collapsible DROPDOWN ----------------
+   Before: ~25 tabs dumped into a cramped wrapping bar (hard to tap, confusing).
+   Now: a single toggle shows the current section; tapping opens a tidy vertical
+   list (search + categorized groups), and picking a tab closes it. */
+.sidenav-mobile-toggle{ display:none; }
+@media(max-width:820px){
+  .sidenav-mobile-toggle{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    width:100%; padding:12px 15px; border:1px solid var(--border);
+    border-radius:14px; background:var(--panel); color:var(--text);
+    font-weight:800; font-family:inherit; font-size:.95rem; cursor:pointer;
+    box-shadow:var(--shadow-sm, 0 2px 8px -4px rgba(30,50,110,.25)); margin-bottom:12px;
+  }
+  .sidenav-mobile-toggle span{ display:inline-flex; align-items:center; gap:8px; min-width:0; }
+  .sidenav-mobile-toggle svg{ flex:none; }
+  /* collapsed by default on mobile; expands only when .mobile-open */
+  .sidenav{ display:none; }
+  .sidenav.mobile-open{ display:flex; margin-bottom:14px; animation:pageIn .2s ease; }
+  /* inside the dropdown restore the readable vertical, categorized layout */
+  .sidenav-search{ display:flex; }
+  .sidenav-group{ flex-direction:column; margin-bottom:8px; }
+  button.sidenav-title{ display:flex; }
+  .sidenav-group.collapsed .nav-tab-btn{ display:none; }
+  .sidenav .nav-tab-btn{ padding:12px 14px; }
+}
+
+/* ============================================================================
+   Distractor rationale (UWorld-style "why each option is right/wrong").
+   Shown UNDER each option after the learner checks their answer. This is what
+   turns a quiz into a clinical-reasoning trainer: the learner learns why the
+   traps are traps, not just which letter was right.
+   ========================================================================== */
+.opt-wrap{ display:flex; flex-direction:column; }
+.opt-wrap.has-why{ gap:0; }
+.opt-why{ display:flex; align-items:flex-start; gap:8px; font-size:.86rem; line-height:1.7;
+  margin:4px 2px 8px; padding:8px 12px; border-radius:10px; animation:whyIn .28s ease both; }
+.opt-why .opt-why-mark{ flex:none; font-weight:900; font-size:.95rem; margin-top:1px; }
+.opt-why.why-ok{ background:rgba(34,160,107,.12); color:#146c48; border:1px solid rgba(34,160,107,.28); }
+.opt-why.why-bad{ background:rgba(224,84,79,.10); color:#b0322d; border:1px solid rgba(224,84,79,.28); }
+.opt-why.why-muted{ background:var(--panel2,rgba(120,130,150,.10)); color:var(--muted); border:1px solid var(--border); }
+[data-theme="dark"] .opt-why.why-ok{ color:#5ad6a0; }
+[data-theme="dark"] .opt-why.why-bad{ color:#ff8a86; }
+@keyframes whyIn{ from{ opacity:0; transform:translateY(-3px); } to{ opacity:1; transform:none; } }
+@media (prefers-reduced-motion:reduce){ .opt-why{ animation:none; } }
+
+/* ---- Study signals: flag-for-review + honest "I guessed" ---- */
+.study-signals{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+.sig-btn{ display:inline-flex; align-items:center; gap:6px; font-size:.82rem; font-weight:700;
+  padding:5px 12px; border-radius:999px; cursor:pointer; font-family:inherit;
+  background:var(--panel2, rgba(120,130,150,.10)); color:var(--muted);
+  border:1px solid var(--border); transition:.15s; }
+.sig-btn:hover{ color:var(--text); border-color:var(--border2, var(--border)); }
+.sig-btn.on{ background:rgba(224,145,46,.16); color:#b5730f; border-color:rgba(224,145,46,.45); }
+[data-theme="dark"] .sig-btn.on{ color:#f0b45f; }
+
+/* ============================================================================
+   AMBOSS-style teaching aids: highlight key clues in the stem + attending tip.
+   ========================================================================== */
+/* the reveal-highlight toggle sits inline after the question stem */
+.hl-toggle{ display:inline-flex; align-items:center; gap:5px; margin-inline-start:8px;
+  font-size:.72rem; font-weight:800; vertical-align:middle; cursor:pointer;
+  padding:3px 9px; border-radius:999px; font-family:inherit;
+  background:rgba(224,165,46,.14); color:#a5720f; border:1px solid rgba(224,165,46,.35); transition:.15s; }
+.hl-toggle:hover{ background:rgba(224,165,46,.22); }
+.hl-toggle.on{ background:rgba(224,165,46,.28); }
+[data-theme="dark"] .hl-toggle{ color:#f0b45f; }
+/* highlighted key clue phrases inside the stem */
+mark.stem-hl{ background:linear-gradient(transparent 55%, rgba(246,195,67,.6) 55%);
+  color:inherit; padding:0 1px; border-radius:2px; font-weight:700; }
+[data-theme="dark"] mark.stem-hl{ background:linear-gradient(transparent 55%, rgba(246,195,67,.4) 55%); }
+
+/* attending-physician tip block (shown after answering) */
+.attending-tip{ margin-top:10px; border:1px solid rgba(47,127,209,.3);
+  border-inline-start:4px solid var(--primary); border-radius:14px; padding:12px 16px;
+  background:rgba(47,127,209,.06); }
+.at-title{ font-weight:900; font-family:var(--font-display,inherit); display:flex;
+  align-items:center; gap:8px; color:var(--primary); margin-bottom:6px; }
+.at-text{ line-height:1.8; color:var(--text); }
+
+/* ---- Post-quiz insights: error taxonomy + auto-review bridge (Priority-3) --- */
+.insights-card{ border-inline-start:4px solid var(--gold); }
+.insights-head{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.insights-bar{ display:flex; height:14px; border-radius:999px; overflow:hidden;
+  background:var(--panel3); border:1px solid var(--border); }
+.insights-seg{ min-width:6px; transition:flex .5s ease; }
+.insights-legend{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.insights-chip{ display:inline-flex; align-items:center; gap:6px; font-size:.85rem;
+  background:var(--panel2); border:1px solid var(--border); border-radius:999px; padding:4px 10px; }
+.insights-chip b{ color:var(--text); }
+.insights-dot{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+.insights-tip{ margin-top:10px; color:var(--muted); display:flex; align-items:flex-start; gap:6px; line-height:1.7; }
+.insights-srs{ margin-top:10px; padding:8px 12px; border-radius:10px; line-height:1.7;
+  background:color-mix(in srgb, var(--primary) 10%, transparent); color:var(--text); }
+@media (prefers-reduced-motion: reduce){ .insights-seg{ transition:none; } }
+
+/* ---- Confidence-Based Assessment (metacognition) --------------------------- */
+.conf-picker{ margin-top:14px; text-align:center; }
+.conf-ask{ margin-bottom:8px; font-weight:700; }
+.conf-btns{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+.conf-btn{ display:inline-flex; align-items:center; gap:6px; padding:8px 16px;
+  border-radius:999px; border:1.5px solid var(--border); background:var(--panel2);
+  color:var(--text); font-weight:700; cursor:pointer; transition:transform .12s ease, border-color .12s ease, background .12s ease; }
+.conf-btn:hover{ transform:translateY(-1px); }
+.conf-btn .conf-emo{ font-size:1.1rem; }
+.conf-btn.conf-1.on{ border-color:var(--muted); background:color-mix(in srgb, var(--muted) 16%, transparent); }
+.conf-btn.conf-2.on{ border-color:var(--primary); background:color-mix(in srgb, var(--primary) 16%, transparent); }
+.conf-btn.conf-3.on{ border-color:var(--gold); background:color-mix(in srgb, var(--gold) 18%, transparent); }
+.conf-note{ margin-top:8px; padding:7px 12px; border-radius:10px; line-height:1.7; font-weight:600; }
+.conf-note.good{ background:color-mix(in srgb, var(--primary) 12%, transparent); color:var(--text); }
+.conf-note.danger{ background:color-mix(in srgb, var(--danger) 14%, transparent); color:var(--text); }
+.insights-conf{ margin-top:12px; padding-top:10px; border-top:1px dashed var(--border); }
+
+/* calibration report on the Progress dashboard */
+.calib-card .calib-levels{ display:flex; flex-direction:column; gap:10px; margin-top:4px; }
+.calib-row{ display:grid; grid-template-columns:96px 1fr 48px 40px; align-items:center; gap:8px; }
+.calib-lbl{ font-weight:700; white-space:nowrap; }
+.calib-bar{ height:12px; border-radius:999px; background:var(--panel3);
+  border:1px solid var(--border); overflow:hidden; }
+.calib-bar > span{ display:block; height:100%; border-radius:999px; transition:width .5s ease; }
+.calib-pct{ font-weight:800; text-align:end; }
+.calib-verdict{ margin-top:12px; padding:9px 12px; border-radius:10px; line-height:1.7;
+  font-weight:700; background:var(--panel2); border:1px solid var(--border); }
+.calib-verdict.good{ background:color-mix(in srgb, var(--primary) 12%, transparent); }
+.calib-verdict.danger{ background:color-mix(in srgb, var(--danger) 14%, transparent); }
+@media (prefers-reduced-motion: reduce){ .conf-btn, .calib-bar > span{ transition:none; } }
+
+/* ---- Topic Mastery Badges (Mastery Learning + durable memory) -------------- */
+.mastery-summary{ display:flex; align-items:center; gap:14px; }
+.mastery-summary .ms-count{ font-size:1.5rem; font-weight:900; }
+.mastery-card{ border:1px solid var(--border); }
+.mastery-card.mastered{ border-color:var(--gold);
+  box-shadow:0 0 0 1px color-mix(in srgb, var(--gold) 40%, transparent) inset; }
+.mc-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.mc-ico{ width:34px; height:34px; border-radius:10px; display:grid; place-items:center; color:#fff; flex:0 0 auto; }
+.mc-name{ font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mc-badge{ font-size:1.5rem; }
+.mc-done{ padding:8px 12px; border-radius:10px; font-weight:700; line-height:1.7;
+  background:color-mix(in srgb, var(--gold) 14%, transparent); }
+.mc-progress{ display:flex; flex-direction:column; gap:8px; }
+.mc-row{ display:grid; grid-template-columns:96px 1fr auto; align-items:center; gap:8px; font-size:.85rem; }
+.mc-lbl{ white-space:nowrap; color:var(--muted); }
+.mc-bar{ height:10px; border-radius:999px; background:var(--panel3); border:1px solid var(--border); overflow:hidden; }
+.mc-bar > span{ display:block; height:100%; border-radius:999px; background:var(--primary); transition:width .5s ease; }
+.mc-val{ font-weight:700; white-space:nowrap; }
+/* newly-earned mastery on the lesson result */
+.insights-mastery{ margin-top:12px; }
+.mastery-earned{ padding:10px 12px; border-radius:12px; line-height:1.8; font-weight:800;
+  background:color-mix(in srgb, var(--gold) 16%, transparent);
+  border:1px solid color-mix(in srgb, var(--gold) 45%, transparent); }
+.mastery-earned .me-reward{ font-weight:700; color:var(--muted); }
+@media (prefers-reduced-motion: reduce){ .mc-bar > span{ transition:none; } }
+
+/* ---- Calm Mode (anti-burnout) --------------------------------------------- */
+.calm-card{ border-inline-start:4px solid #3fae8f; }
+.calm-body{ margin-top:10px; display:flex; flex-direction:column; gap:12px; }
+.calm-field label{ display:block; font-weight:600; margin-bottom:6px; }
+.calm-field input[type="range"]{ width:100%; accent-color:#3fae8f; }
+.calm-rest{ display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:10px 12px; border-radius:12px; background:color-mix(in srgb, #3fae8f 10%, transparent);
+  border:1px solid color-mix(in srgb, #3fae8f 30%, transparent); }
+.calm-msg{ color:#2c8f74; }
+.calm-tip{ padding:9px 12px; border-radius:10px; line-height:1.8;
+  background:color-mix(in srgb, var(--primary) 8%, transparent); color:var(--text); }
+.calm-cap-note{ padding:12px 14px; line-height:1.8;
+  background:color-mix(in srgb, #3fae8f 12%, transparent);
+  border:1px solid color-mix(in srgb, #3fae8f 30%, transparent); }
+
+/* ---- Anonymous / stealth ranking ------------------------------------------ */
+.anon-card{ border-inline-start:4px solid #7c6cff; }
+.anon-body{ margin-top:10px; display:flex; flex-direction:column; gap:10px; }
+.anon-alias-row{ display:flex; gap:8px; align-items:center; }
+.anon-alias-row input{ flex:1; }
+.anon-tip{ padding:9px 12px; border-radius:10px; line-height:1.8;
+  background:color-mix(in srgb, #7c6cff 10%, transparent); color:var(--text); }
+
+/* ============================================================================
+   UX PASS (from real device screenshots): mobile-first refinements.
+   Goal: dedupe stats, slim the mobile hero, tidy the top HUD & nav row so the
+   first screen shows real content, not just chrome. Desktop is untouched.
+   ========================================================================== */
+
+/* --- Top HUD: compact chips on phones. On roomier phones (>=361px) keep it a
+       single scrolling row; on very small screens (<=360px) let it wrap so it
+       can never push the page wider than the viewport. --- */
+@media (max-width: 560px){
+  .hud{ gap:8px; padding:6px 0; }
+  .hud-chip{ font-size:.9rem; gap:4px; white-space:nowrap; }
+  .hud-chip svg{ width:16px; height:16px; }
+}
+@media (min-width: 361px) and (max-width: 560px){
+  .hud{ flex-wrap:nowrap; overflow-x:auto; min-width:0; max-width:100%;
+    -ms-overflow-style:none; scrollbar-width:none; }
+  .hud::-webkit-scrollbar{ display:none; }
+  .hud-chip{ flex:0 0 auto; }
+}
+@media (max-width: 360px){
+  .hud{ flex-wrap:wrap; }
+}
+
+/* --- Home hero: keep the (icon-consistent) stat strip but tighten the whole
+       hero on phones so the goal ring + primary CTA fit on the first screen and
+       real content (guide, daily challenge) peeks below instead of being buried.
+       NOTE: we intentionally KEEP .home-hero-stats so the hero's SVG stat icons
+       stay consistent with the top HUD (a deliberate design guarantee). --- */
+@media (max-width: 560px){
+  .home-hero{ padding:14px 15px; margin-bottom:12px; }
+  .home-greet{ font-size:1.1rem; }
+  .home-hero-stats{ gap:10px; }
+  .hh-stat{ font-size:.85rem; }
+  .home-hero-main{ margin-top:12px; gap:12px; padding:12px; }
+  .home-hero-main .goal-ring{ width:92px; height:92px; }
+  .home-hero-main .goal-ring .gv b{ font-size:1.2rem; }
+  .home-hero-main .goal-ring::after{ inset:9px; }
+}
+
+/* --- Learn top bar row: keep the back button + HUD + bell on one tidy line;
+       let the HUD group shrink (min-width:0) so a long HUD scrolls internally
+       rather than pushing the whole page wider than the viewport. --- */
+@media (max-width: 560px){
+  .learn-shell > div:first-child{ gap:8px; }
+  .learn-shell > div:first-child > div:first-child{ min-width:0; flex:1 1 auto; overflow:hidden; }
+}
+
+/* --- Mobile nav row: bigger tap targets, clean pills, clearer active state,
+       and a soft edge-fade hint that it scrolls horizontally. --- */
+@media (max-width: 840px){
+  .learn-nav{ gap:8px; padding:4px 2px 8px; min-width:0; max-width:100%; }
+  .learn-nav-group{ gap:8px; }
+  .learn-nav button.nav-item{ padding:9px 14px; border-radius:999px;
+    font-size:.9rem; background:var(--panel2,#eef2f8); color:var(--text); white-space:nowrap; }
+  /* the SELECTED tab must stay clearly highlighted (was blending into the
+     background on mobile because the pill rule above overrode the active bg). */
+  .learn-nav button.nav-item.active{ background:var(--primary); color:#fff;
+    box-shadow:0 4px 12px -4px var(--primary); }
+  .learn-nav button.nav-item.active svg{ color:#fff; }
+}
+
+/* --- Empty states: make them helpful, not dead ends. Center + breathing room. */
+.empty-state{ text-align:center; padding:26px 18px; }
+.empty-state .ico{ font-size:2.2rem; opacity:.9; margin-bottom:6px; }
+.empty-state .empty-cta{ margin-top:14px; display:inline-flex; }
+
+/* --- Lesson page must never overflow the phone viewport (measured bug: the
+       question + options were rendering 40px wider than the screen). The grid
+       track fix (minmax(0,1fr)) is the root cure; this guarantees the wrap and
+       its children stay within the content column. --- */
+.lesson-wrap{ width:100%; max-width:min(640px,100%); }
+.lesson-wrap .opt, .lesson-wrap .lesson-q, .lesson-wrap .opt-grid{ max-width:100%; }
+.lesson-wrap .lesson-q{ overflow-wrap:anywhere; }
+
+/* ---- Student home: filled, tappable module rows + clickable stat cards -----
+   Fix (from real screenshots): module cards looked empty (icon in a corner,
+   text far below) and the stat counters were dead-ends. Now each module is a
+   compact row (icon + text + go-arrow) and the counters navigate. */
+.mod-card-row{ display:flex; align-items:center; gap:14px; text-align:start;
+  width:100%; font-family:inherit; border:1px solid var(--border);
+  border-top:3px solid var(--primary); }
+.mod-card-row .mod-ico{ width:52px; height:52px; margin-bottom:0; flex:0 0 auto; }
+.mod-card-row .mod-card-body{ flex:1; min-width:0; }
+.mod-card-row .mod-card-body h3{ margin-bottom:2px; }
+.mod-card-row .mod-card-body p{ margin:0; }
+.mod-card-row .mod-card-go{ flex:0 0 auto; color:var(--muted); opacity:.6; transition:transform .16s ease, opacity .16s ease; }
+.mod-card-row:hover .mod-card-go{ opacity:1; transform:translateX(-3px); }
+[dir="ltr"] .mod-card-row:hover .mod-card-go{ transform:translateX(3px); }
+
+.stat-card-link{ cursor:pointer; font-family:inherit; width:100%;
+  transition:transform .16s var(--ease-spring,cubic-bezier(.2,.9,.3,1)), box-shadow .16s ease; }
+.stat-card-link:hover{ transform:translateY(-3px); box-shadow:0 14px 30px -18px rgba(30,50,110,.5); }
+.stat-card-link:active{ transform:translateY(0); }
+
+/* ---- Exam / virtual-patient chat: mobile polish (from real screenshots) ----
+   On phones the stacked chat box reserved ~420px and left a big empty gap with
+   only a couple of messages, pushing the patient-info tabs far down. Size the
+   chat to the viewport so the input stays reachable and the side panel is close. */
+@media (max-width: 900px){
+  .chat-box{ min-height:0; height:auto; }
+  /* messages area gets a sensible scrollable window instead of a fixed tall box */
+  .chat-box .chat-msgs{ min-height:200px; max-height:52vh; }
+  .side-panel{ min-height:0; height:auto; }
+  /* the sticky exam input stays comfortably tappable */
+  .chat-input input{ font-size:16px; }   /* 16px avoids iOS zoom-on-focus */
+}
+
+/* ---- Class flashcard picker (graded/practice + weight) --------------------- */
+.fp-row{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.fp-opts{ display:flex; align-items:center; gap:6px; flex:0 0 auto; }
+.chip-btn{ border:1px solid var(--border); background:var(--panel2); color:var(--muted);
+  border-radius:999px; padding:4px 12px; font-size:.8rem; font-weight:700; cursor:pointer; font-family:inherit; }
+.chip-btn.on{ background:var(--primary); color:#fff; border-color:var(--primary); }
+.fp-weight{ width:56px; padding:5px 8px; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); }
+@media (max-width:560px){ .fp-row{ align-items:flex-start; } .fp-opts{ width:100%; } }
+
+/* ---- Card picker (grouped by subject + searchable) for exam/class flashcards */
+.card-picker .cp-group{ margin-bottom:12px; }
+.card-picker .cp-group-head{ display:flex; align-items:center; justify-content:space-between; gap:8px;
+  padding:6px 4px; margin-bottom:4px; border-bottom:1.5px solid var(--border); position:sticky; top:0; background:var(--panel); z-index:1; }
+.card-picker .cp-cat{ font-weight:800; color:var(--primary); }
+.card-picker .cp-count{ color:var(--muted); font-weight:600; font-size:.85rem; }
+.card-picker .dt-search{ position:sticky; top:0; z-index:2; background:var(--panel); }
+/* Sticky search inside PickModal (add students to a class, cases, etc.). */
+.pick-search{ position:sticky; top:0; z-index:3; }
+
+/* ---------------------------------------------------------------------------
+   RTL heading fix: Persian glyphs with high dots (ق، ث، ت …) were clipped at
+   the top when the gradient-clipped hero title used a tight line-height.
+   Give RTL headings a touch more line-height + top padding so nothing is cut. */
+[dir="rtl"] .lp-h1{
+  line-height:1.5;
+  padding-top:.12em;
+  overflow:visible;
+}
+/* Same care for other big gradient/clipped headings in Persian. */
+[dir="rtl"] .home-greet,[dir="rtl"] .blog-hero h1{ line-height:1.5; padding-top:.08em; }
+
+/* ── Auth modal (login/signup popover over the landing) ───────────────────── */
+.login-modal-overlay{
+  position:fixed; inset:0; z-index:1000;
+  display:grid; place-items:center; padding:20px;
+  background:rgba(15,23,42,.55); backdrop-filter:blur(3px);
+  animation:authFade .18s ease;
+  overflow-y:auto;
+}
+.login-modal-shell{
+  width:min(430px,94vw);
+  animation:authPop .22s cubic-bezier(.22,1,.36,1);
+  margin:auto;
+}
+.login-modal-shell .login-card{
+  width:100%;
+  box-shadow:0 24px 70px rgba(2,8,23,.35);
+  max-height:calc(100vh - 40px); overflow-y:auto;
+}
+.login-modal-close{
+  position:absolute; inset-inline-end:12px; top:12px; z-index:3;
+  width:34px; height:34px; display:grid; place-items:center;
+  border:1px solid var(--border); border-radius:10px;
+  background:var(--card,#fff); color:var(--muted); cursor:pointer;
+  transition:background .15s,color .15s;
+}
+.login-modal-close:hover{ background:var(--danger-bg,#fee2e2); color:var(--danger,#dc2626); }
+@keyframes authFade{ from{opacity:0} to{opacity:1} }
+@keyframes authPop{ from{opacity:0; transform:translateY(12px) scale(.97)} to{opacity:1; transform:none} }
+[data-theme="dark"] .login-modal-close{ background:var(--card); }
+@media (max-width:480px){
+  .login-modal-overlay{ padding:0; }
+  .login-modal-shell{ width:100vw; min-height:100vh; }
+  .login-modal-shell .login-card{ min-height:100vh; max-height:none; border-radius:0; border-top:none; display:flex; flex-direction:column; justify-content:center; }
+}
+
+/* ── Blog editor (pro) ─────────────────────────────────────────────────────── */
+.md-toolbar .btn{ line-height:1; }
+.blog-preview-pane img{ max-width:100%; height:auto; border-radius:8px; }
+.blog-preview-pane :first-child{ margin-top:0; }
+.blog-figure{ margin:14px 0; text-align:center; }
+.blog-figure img{ max-width:100%; border-radius:10px; }
+.blog-figure figcaption{ font-size:.85rem; color:var(--muted); margin-top:6px; }
+.blog-content pre{ background:#0f172a; color:#e2e8f0; padding:12px 14px; border-radius:10px; overflow:auto; direction:ltr; text-align:left; }
+.blog-content pre code{ background:none; color:inherit; padding:0; }
+@media (max-width: 820px){
+  .blog-editor-split{ grid-template-columns:1fr !important; }
+  .blog-preview-pane{ max-height:320px !important; }
+}
+
+/* ===== Question classification: admin facets + demo cleanup ===== */
+/* Section divider inside the filter panel, so the three groups (general,
+   exam provenance, modifications) read as distinct rather than one long grid. */
+.lc-filter-sep{display:flex;align-items:center;gap:6px;margin:14px 0 8px;
+  font-size:.78rem;font-weight:800;color:var(--muted);
+  border-top:1px solid var(--line);padding-top:10px}
+.lc-filter-grid .lc-wide{grid-column:span 2}
+@media (max-width:640px){.lc-filter-grid .lc-wide{grid-column:span 1}}
+
+/* Seeded-demo notice: informative, not alarming — it is a normal cleanup step. */
+.lc-demo-banner{display:flex;flex-wrap:wrap;gap:12px;align-items:center;
+  justify-content:space-between;border-inline-start:4px solid #f59e0b;background:#fffbeb}
+:root[data-theme="dark"] .lc-demo-banner{background:#3a2f14}
+.lc-demo-text{display:flex;flex-direction:column;gap:2px;min-width:240px;flex:1}
+.lc-demo-text strong{display:flex;align-items:center;gap:6px}
+.lc-demo-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Inline provenance chips in the admin table */
+.chip-exam{background:#eef4ff;color:#2563eb;border-radius:6px;padding:1px 6px;font-size:.72rem;white-space:nowrap}
+:root[data-theme="dark"] .chip-exam{background:#1e3a5f;color:#93c5fd}
+.chip-rev{background:var(--line);border-radius:5px;padding:0 4px;margin-inline-start:5px;font-size:.68rem}
+
+/* ===== Learner question browser ===== */
+.browse-page{display:flex;flex-direction:column;gap:12px}
+.browse-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.browse-head .h2{display:flex;align-items:center;gap:8px;margin:0 0 2px}
+.browse-search{display:flex;align-items:center;gap:8px;background:var(--card);
+  border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.browse-search input{flex:1;border:0;background:transparent;outline:none;font:inherit;color:inherit;min-width:0}
+.browse-search select{border:0;background:transparent;font:inherit;color:var(--muted);outline:none}
+.browse-filters{display:flex;flex-direction:column;gap:10px}
+.browse-filter-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.browse-filter-grid .field{margin:0}
+.browse-filter-grid .field>span{display:block;font-size:.75rem;font-weight:700;color:var(--muted);margin-bottom:4px}
+.browse-count{min-height:18px}
+.browse-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.browse-item{padding:0;overflow:hidden}
+.browse-item-main{display:block;width:100%;text-align:start;background:none;border:0;
+  padding:12px 14px;cursor:pointer;font:inherit;color:inherit}
+.browse-item-main:hover{background:var(--hover,rgba(0,0,0,.03))}
+:root[data-theme="dark"] .browse-item-main:hover{background:rgba(255,255,255,.04)}
+.browse-q{margin:0 0 8px;font-weight:600;line-height:1.7;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.browse-meta{display:flex;flex-wrap:wrap;gap:6px}
+.browse-meta .chip{background:var(--line);border-radius:6px;padding:1px 7px;font-size:.72rem}
+.browse-meta .chip-soft{background:transparent;border:1px solid var(--line);color:var(--muted)}
+.browse-meta .chip-done{background:#dcfce7;color:#16a34a}
+:root[data-theme="dark"] .browse-meta .chip-done{background:#14532d;color:#86efac}
+.browse-pager{display:flex;align-items:center;justify-content:center;gap:14px;padding:8px 0}
+.browse-preview-q{font-weight:700;line-height:1.9;margin:0 0 14px}
+.pad24{padding:24px}
+
+/* ============================================================================
+   Explicit stage labels on the competitive path (2026.09)
+   Every node shows WHAT it quizzes — stage title + the tested concepts —
+   instead of a bare bubble with a hover tooltip.
+   ============================================================================ */
+.unit-node-label{
+  width:min(220px,80vw);
+  text-align:center;
+  margin-top:6px;
+  pointer-events:none;               /* the bubble stays the click target */
+  z-index:1;
+}
+.unit-node-label .unl-title{
+  font-size:.8rem; font-weight:800; line-height:1.3;
+  color:var(--text,#16233b);
+  overflow:hidden; display:-webkit-box; -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+}
+.unit-node-label .unl-subtitle{
+  font-size:.67rem; line-height:1.35; color:var(--muted,#6b7688);
+  margin-top:2px;
+  overflow:hidden; display:-webkit-box; -webkit-box-orient:vertical;
+  -webkit-line-clamp:3;
+}
+.unit-node.locked ~ .unit-node-label .unl-title{ opacity:.62; }
+.ppc-continue-subtitle{ margin-top:3px; line-height:1.35; }
+
+/* Stage header inside a lesson (title + tested concepts on the first card) */
+.lesson-stage-head{
+  text-align:center; margin:2px 0 10px;
+  padding:8px 12px; border-radius:12px;
+  background:var(--panel2,rgba(120,130,150,.12));
+}
+.lesson-stage-head .lsh-title{ font-weight:800; font-size:.95rem; line-height:1.3; }
+.lesson-stage-head .lsh-subtitle{ margin-top:2px; line-height:1.4; }
+.chip-premium{background:linear-gradient(90deg,#f5c451,#e8a72d);color:#3a2a00;border-radius:6px;padding:1px 6px;font-size:.72rem;font-weight:800;white-space:nowrap}
+
+/* Round 7: premium «تمرین بیشتر 👑» nodes */
+.unit-node.premium-node .unit-bubble{ background:linear-gradient(135deg,#f6c453,#d99a1c) !important; color:#3a2600; }
+.unit-node.premium-locked{ cursor:pointer; opacity:.92; }
+.unit-node.premium-locked .unit-bubble{ background:linear-gradient(135deg,#e9d9a8,#c9b06a) !important; filter:saturate(.8); }
+.unit-node.premium-locked .node-premium-lock{ position:absolute; inset-inline-end:-2px; bottom:8px; width:22px; height:22px; border-radius:50%; background:#fff; color:#7a5a00; display:grid; place-items:center; box-shadow:0 1px 4px rgba(0,0,0,.25); }
+.unit-node-label .unl-premium{ font-size:.72rem; color:#9a6b00; margin-top:2px; }
+
+/* ================= Round 8: آزمون‌ساز (custom test builder) ================= */
+.ct-page{padding-bottom:96px}
+.ct-crown{font-size:.8em;vertical-align:middle}
+.ct-step{margin-bottom:12px}
+.ct-step-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.ct-step-head .muted{margin-inline-start:auto}
+.ct-num{width:26px;height:26px;border-radius:50%;background:var(--primary,#2f7fd1);color:#fff;display:grid;place-items:center;font-weight:800;font-size:.85rem;flex:none}
+.ct-clear{margin-inline-start:auto;background:none;border:none;color:var(--primary,#2f7fd1);font:inherit;font-size:.8rem;cursor:pointer;padding:2px 6px}
+.ct-chips{display:flex;flex-wrap:wrap;gap:8px}
+.ct-chips-sm{gap:6px}
+.ct-chip{--c:var(--primary,#2f7fd1);display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;border:2px solid var(--line,#e5e7eb);background:var(--panel,#fff);font:inherit;font-weight:700;font-size:.9rem;cursor:pointer;transition:transform .12s,border-color .12s,background .12s;color:inherit}
+.ct-chip.sm{padding:5px 10px;font-size:.82rem;font-weight:600}
+.ct-chip:hover{transform:translateY(-1px);border-color:var(--c)}
+.ct-chip:active{transform:translateY(1px) scale(.97)}
+.ct-chip.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,var(--panel,#fff));box-shadow:inset 0 -2px 0 var(--c);transform:scale(1.02)}
+.ct-chip-emoji{font-size:1.05em}
+.ct-count{font-size:.72rem;font-weight:700;opacity:.65;background:rgba(0,0,0,.06);padding:1px 6px;border-radius:999px}
+.ct-chip.on .ct-count{background:var(--c);color:#fff;opacity:1}
+.ct-sub{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line,#e5e7eb)}
+.ct-sub-title{display:flex;align-items:center;font-size:.85rem;font-weight:700;margin-bottom:8px;color:var(--muted,#667)}
+.ct-seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.ct-seg-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;border-radius:12px;border:2px solid var(--line,#e5e7eb);background:var(--panel,#fff);font:inherit;font-size:.82rem;font-weight:700;cursor:pointer;color:inherit}
+.ct-seg-btn.on{border-color:var(--primary,#2f7fd1);background:color-mix(in srgb,var(--primary,#2f7fd1) 12%,var(--panel,#fff))}
+.ct-seg-btn:disabled{opacity:.45;cursor:not-allowed}
+.ct-more{display:inline-flex;align-items:center;gap:6px;margin-top:12px;background:none;border:none;font:inherit;font-size:.85rem;color:var(--primary,#2f7fd1);cursor:pointer;padding:4px 0}
+.ct-badge{background:var(--primary,#2f7fd1);color:#fff;border-radius:999px;font-size:.7rem;padding:0 6px}
+.ct-sizes{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ct-size{min-width:54px;padding:10px 12px;border-radius:12px;border:2px solid var(--line,#e5e7eb);background:var(--panel,#fff);font:inherit;font-weight:800;font-size:1rem;cursor:pointer;color:inherit}
+.ct-size.on{border-color:var(--accent,#f59e0b);background:color-mix(in srgb,var(--accent,#f59e0b) 16%,var(--panel,#fff))}
+.ct-size:disabled{opacity:.45}
+.ct-size-custom input{width:84px;padding:9px 10px;border-radius:12px;border:2px solid var(--line,#e5e7eb);font:inherit;font-weight:800;font-size:1rem;text-align:center;background:var(--panel,#fff);color:inherit}
+.ct-order{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:12px}
+.ct-pill{padding:4px 10px;border-radius:999px;border:1.5px solid var(--line,#e5e7eb);background:var(--panel,#fff);font:inherit;font-size:.8rem;cursor:pointer;color:inherit}
+.ct-pill.on{border-color:var(--primary,#2f7fd1);color:var(--primary,#2f7fd1);font-weight:700}
+.ct-modes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ct-mode{display:flex;gap:10px;align-items:flex-start;text-align:start;padding:12px;border-radius:14px;border:2px solid var(--line,#e5e7eb);background:var(--panel,#fff);font:inherit;cursor:pointer;color:inherit}
+.ct-mode.on{border-color:var(--primary,#2f7fd1);background:color-mix(in srgb,var(--primary,#2f7fd1) 10%,var(--panel,#fff))}
+.ct-mode-ico{font-size:1.6rem;line-height:1}
+.ct-cta{position:sticky;bottom:calc(64px + env(safe-area-inset-bottom,0px));z-index:5;display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:16px;background:var(--panel,#fff);box-shadow:0 8px 28px rgba(0,0,0,.16);border:1px solid var(--line,#e5e7eb);margin-top:8px}
+@media (min-width:900px){.ct-cta{bottom:12px}}
+.ct-cta-info{display:flex;flex-direction:column;flex:1;min-width:0}
+.ct-cta-info .small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ct-hist{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px dashed var(--line,#e5e7eb)}
+.ct-hist:last-child{border-bottom:none}
+/* runner */
+.ct-nav{display:flex;gap:4px;overflow-x:auto;padding:6px 2px 10px;scrollbar-width:thin}
+.ct-nav-dot{flex:none;width:30px;height:30px;border-radius:8px;border:1.5px solid var(--line,#e5e7eb);background:var(--panel,#fff);font:inherit;font-size:.75rem;font-weight:700;cursor:pointer;color:inherit;position:relative}
+.ct-nav-dot.cur{border-color:var(--primary,#2f7fd1);box-shadow:0 0 0 2px color-mix(in srgb,var(--primary,#2f7fd1) 30%,transparent)}
+.ct-nav-dot.done{background:color-mix(in srgb,var(--primary,#2f7fd1) 18%,var(--panel,#fff))}
+.ct-nav-dot.ok{background:color-mix(in srgb,var(--accent2,#22c55e) 22%,var(--panel,#fff));border-color:var(--accent2,#22c55e)}
+.ct-nav-dot.bad{background:color-mix(in srgb,var(--danger,#ef4444) 18%,var(--panel,#fff));border-color:var(--danger,#ef4444)}
+.ct-nav-dot.flag::after{content:"";position:absolute;top:-3px;inset-inline-end:-3px;width:9px;height:9px;border-radius:50%;background:var(--accent,#f59e0b)}
+.ct-flag-on{background:color-mix(in srgb,var(--accent,#f59e0b) 22%,var(--panel,#fff)) !important}
+.ct-feedback{margin-top:12px;padding:12px;border-radius:12px;border-inline-start:4px solid var(--accent2,#22c55e);background:color-mix(in srgb,var(--accent2,#22c55e) 8%,var(--panel,#fff))}
+.ct-feedback.bad{border-color:var(--danger,#ef4444);background:color-mix(in srgb,var(--danger,#ef4444) 7%,var(--panel,#fff))}
+/* result */
+.ct-pertopic{width:100%;max-width:420px;margin:14px auto 0;display:grid;gap:6px;text-align:start}
+.ct-pt-row{display:grid;grid-template-columns:1fr 2fr auto;gap:8px;align-items:center;font-size:.85rem}
+.ct-pt-bar{height:8px;border-radius:99px;background:var(--line,#e5e7eb);overflow:hidden}
+.ct-pt-bar span{display:block;height:100%;background:var(--accent2,#22c55e)}
+.ct-rev{border-bottom:1px dashed var(--line,#e5e7eb)}
+.ct-rev-head{display:flex;gap:10px;align-items:flex-start;width:100%;background:none;border:none;font:inherit;text-align:start;padding:10px 0;cursor:pointer;color:inherit}
+.ct-rev-n{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:.75rem;font-weight:800;background:var(--line,#e5e7eb)}
+.ct-rev.ok .ct-rev-n{background:color-mix(in srgb,var(--accent2,#22c55e) 30%,var(--panel,#fff))}
+.ct-rev.bad .ct-rev-n{background:color-mix(in srgb,var(--danger,#ef4444) 25%,var(--panel,#fff))}
+.ct-rev-q{flex:1;font-size:.9rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ct-rev-body{padding:0 0 12px 34px}
+[dir="rtl"] .ct-rev-body{padding:0 34px 12px 0}
+@media (max-width:520px){.ct-modes{grid-template-columns:1fr}.ct-seg{grid-template-columns:repeat(2,1fr)}}
+
+/* ===== Round 8: path UX (Duolingo-informed) ===== */
+.path-progress-card.ppc-compact{padding:8px 12px}
+.path-progress-card.ppc-compact .ppc-top,.path-progress-card.ppc-compact .ppc-bar,.path-progress-card.ppc-compact .ppc-sub,.path-progress-card.ppc-compact .ppc-continue{display:none}
+.ppc-mini{display:flex;align-items:center;gap:10px}
+.ppc-mini-title{flex:1;min-width:0;font-weight:800;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ppc-mini-pct{font-weight:900;color:var(--primary)}
+.path-progress-card{transition:padding .2s ease}
+/* compact sticky unit header just under the mini bar */
+.unit-header{position:sticky;top:64px;z-index:4;padding:10px 14px;gap:10px}
+.unit-header-title{font-size:1rem}
+@media(min-width:900px){.unit-header{top:72px}}
+/* locked-node hint bubble */
+.node-pop{position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--text,#1f2937);color:#fff;font-size:.78rem;font-weight:700;padding:6px 10px;border-radius:10px;white-space:nowrap;z-index:6;animation:nodepop .18s ease-out}
+.node-pop::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:var(--text,#1f2937)}
+@keyframes nodepop{from{opacity:0;transform:translate(-50%,4px)}to{opacity:1;transform:translate(-50%,0)}}
+.unit-node[aria-disabled="true"] .unit-bubble{cursor:pointer}
+/* premium node: unmistakably "crown", not "grey lock" */
+.unit-node.premium-locked .unit-bubble{background:linear-gradient(135deg,#ffe29a,#f2b53a) !important;filter:none;box-shadow:0 5px 0 #c98f14,0 8px 18px -8px rgba(201,143,20,.6)}
+.unit-node.premium-locked .node-emoji{font-size:1.6rem}
+.unit-node.premium-locked .node-premium-lock{background:#fff;color:#8a6200}
+.unit-node-label .unl-subtitle{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+/* sticky offsets must clear the sticky .topbar (≈56–64px) */
+.path-progress-card{top:calc(var(--topbar-h,60px) + 6px)}
+.path-progress-card.ppc-compact{border-radius:14px}
+.unit-header{top:calc(var(--topbar-h,60px) + 58px)}
+@media(min-width:900px){.path-progress-card{top:calc(var(--topbar-h,68px) + 8px)}.unit-header{top:calc(var(--topbar-h,68px) + 62px)}}
+
+/* ===================== Round 9: peer benchmark & premium extras ===================== */
+.tag.gold{background:linear-gradient(135deg,#f5c451,#e0a020);color:#3b2a00;border:0}
+/* شناسنامهٔ سؤال — option pick % */
+.ost-wrap{margin-top:10px;padding:10px 12px;border-radius:14px;background:var(--panel-2,rgba(127,127,127,.08));border:1px solid var(--border,rgba(127,127,127,.18))}
+.ost-head{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;font-weight:800;font-size:.9rem;margin-bottom:6px}
+.ost-row{display:grid;grid-template-columns:26px 1fr 44px;align-items:center;gap:8px;margin:4px 0;font-size:.85rem}
+.ost-letter{width:24px;height:24px;border-radius:8px;display:grid;place-items:center;background:rgba(127,127,127,.15);font-weight:800;font-size:.78rem}
+.ost-bar{height:10px;border-radius:99px;background:rgba(127,127,127,.15);overflow:hidden}
+.ost-bar>span{display:block;height:100%;border-radius:99px;background:var(--muted,#94a3b8);transition:width .5s ease}
+.ost-row.ok .ost-bar>span{background:var(--accent2,#22a06b)}.ost-row.ok .ost-letter{background:rgba(34,160,107,.18);color:var(--accent2,#22a06b)}
+.ost-row.bad .ost-bar>span{background:var(--danger,#e0533d)}.ost-row.bad .ost-letter{background:rgba(224,83,61,.18);color:var(--danger,#e0533d)}
+.ost-pct{text-align:end;font-variant-numeric:tabular-nums}
+.ost-empty{padding:8px 12px}
+/* hint */
+.hint-cta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 10px;justify-content:flex-start}
+.hint-btn{border:1px dashed var(--border,rgba(127,127,127,.3));border-radius:12px}
+.hint-cost{opacity:.85;font-size:.8em}
+.hint-box{margin:8px 0;padding:10px 12px;border-radius:14px;background:rgba(245,196,81,.12);border:1px solid rgba(245,196,81,.35);animation:fadeUp .25s}
+.hint-title{font-weight:800;font-size:.85rem;margin-bottom:4px}
+.hint-text{font-size:.92rem;line-height:1.7}
+.sfc-btn{border-radius:12px}
+/* percentile card */
+.peer-card{margin:14px auto 0;max-width:460px;width:100%;text-align:start;padding:12px 14px;border-radius:16px;background:var(--panel-2,rgba(127,127,127,.08));border:1px solid var(--border,rgba(127,127,127,.18));display:flex;flex-direction:column;gap:10px}
+.peer-card.peer-locked{flex-direction:row;align-items:center;gap:12px;cursor:pointer;font:inherit;color:inherit;border-style:dashed}
+.peer-card.peer-locked:hover{border-color:#e0a020;background:rgba(245,196,81,.08)}
+.peer-ico{font-size:1.6rem}
+.peer-body{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.peer-main{display:flex;align-items:center;gap:14px}
+.peer-pct{width:64px;height:64px;border-radius:50%;flex:0 0 auto;display:grid;place-content:center;text-align:center;background:linear-gradient(135deg,var(--primary,#3b82f6),#6d28d9);color:#fff;line-height:1}
+.peer-pct b{font-size:1.4rem}.peer-pct span{font-size:.62rem;opacity:.9}
+.peer-bars{display:flex;flex-direction:column;gap:6px}
+.peer-bar-row{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px;font-size:.85rem}
+.peer-bar{height:10px;border-radius:99px;background:rgba(127,127,127,.15);overflow:hidden}
+.peer-bar>span{display:block;height:100%;border-radius:99px;background:var(--muted,#94a3b8);transition:width .6s ease}
+.peer-bar.me>span{background:linear-gradient(90deg,var(--primary,#3b82f6),#6d28d9)}
+.peer-bar-row b{text-align:end;font-variant-numeric:tabular-nums}
+.peer-time{font-size:.85rem;padding:6px 10px;border-radius:10px;background:rgba(127,127,127,.1)}
+.peer-time.ok{background:rgba(34,160,107,.12)}.peer-time.slow{background:rgba(245,196,81,.14)}
+/* daily report */
+.dr-card{display:block;width:100%;text-align:start}
+.dr-card.dr-locked{display:flex;align-items:center;gap:14px;cursor:pointer;font:inherit;color:inherit;border-inline-start:4px solid #e0a020}
+.dr-ico{background:linear-gradient(135deg,#0ea5e9,#6366f1);width:48px;height:48px;margin-bottom:0;flex:0 0 auto}
+.dr-head{display:flex;align-items:center;gap:14px}
+.dr-spark{display:flex;align-items:flex-end;gap:3px;height:36px;width:84px}
+.dr-sp{flex:1;border-radius:3px 3px 0 0;background:rgba(127,127,127,.28);min-height:3px}
+.dr-sp.today{background:var(--primary,#3b82f6)}
+.dr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.dr-stat{padding:8px 6px;border-radius:12px;background:var(--panel-2,rgba(127,127,127,.08));text-align:center;display:flex;flex-direction:column;gap:2px}
+.dr-stat b{font-size:1.15rem;line-height:1.1}.dr-stat span{font-size:.7rem;color:var(--muted)}
+.dr-delta{font-size:.68rem;font-weight:800}.dr-delta.up{color:var(--accent2,#22a06b)}.dr-delta.down{color:var(--danger,#e0533d)}
+.dr-weak{margin-top:10px;width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;border:1px dashed var(--border,rgba(127,127,127,.3));background:transparent;color:inherit;font:inherit;text-align:start;cursor:pointer}
+.dr-weak:hover{background:rgba(127,127,127,.08)}
+.dr-go{font-weight:800;color:var(--primary,#3b82f6);white-space:nowrap}
+.dr-empty{margin-top:8px}
+/* premium trial chest */
+.premium-trial-chest{background:linear-gradient(135deg,rgba(245,196,81,.22),rgba(224,160,32,.12));border:1px solid rgba(224,160,32,.45)}
+/* jump ahead */
+.unit-jump-btn{margin-top:4px;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.18);color:inherit;border-radius:99px;padding:3px 10px;font:inherit;font-size:.74rem;font-weight:800;cursor:pointer;backdrop-filter:blur(4px)}
+.unit-jump-btn:hover{background:rgba(255,255,255,.3)}
+.ja-modal{position:relative;width:min(560px,96vw);max-height:92vh;overflow-y:auto;padding:22px 18px 18px}
+.ja-close{position:absolute;top:8px;inset-inline-end:8px}
+.ja-intro{text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.ja-emoji{font-size:3rem;line-height:1}
+.ja-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+.ja-run .lesson-q{margin:6px 0 12px}
+@media(max-width:480px){.dr-grid{grid-template-columns:repeat(2,1fr)}.dr-spark{display:none}}

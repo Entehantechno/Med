@@ -1,0 +1,80 @@
+{
+  "baseline": "MED-School-94-round46.zip",
+  "scope_count": 200,
+  "enriched_count": 194,
+  "deferred_count": 6,
+  "deferred": [
+    {
+      "part": 22,
+      "local_question": 142,
+      "id": "QB-04969",
+      "reason": "missing_laboratory_table",
+      "status": "deferred_by_user_unchanged",
+      "original_correct_index": 2,
+      "exam_question_no": 78,
+      "exam_year": "۱۳۹۶",
+      "exam_month": "اسفند",
+      "exam_pole": "شیراز و کرمانشاه"
+    },
+    {
+      "part": 22,
+      "local_question": 145,
+      "id": "QB-04972",
+      "reason": "missing_growth_chart",
+      "status": "deferred_by_user_unchanged",
+      "original_correct_index": 0,
+      "exam_question_no": 11,
+      "exam_year": "۱۳۹۶",
+      "exam_month": "اسفند",
+      "exam_pole": "مشهد"
+    },
+    {
+      "part": 22,
+      "local_question": 166,
+      "id": "QB-04993",
+      "reason": "disputed_meningitis_key",
+      "status": "deferred_by_user_unchanged",
+      "original_correct_index": 3,
+      "exam_question_no": 141,
+      "exam_year": "۱۳۹۶",
+      "exam_month": "اسفند",
+      "exam_pole": ""
+    },
+    {
+      "part": 22,
+      "local_question": 174,
+      "id": "QB-05001",
+      "reason": "disputed_caustic_ingestion_answer",
+      "status": "deferred_by_user_unchanged",
+      "original_correct_index": 0,
+      "exam_question_no": 158,
+      "exam_year": "۱۳۹۷",
+      "exam_month": "اسفند",
+      "exam_pole": ""
+    },
+    {
+      "part": 22,
+      "local_question": 214,
+      "id": "QB-05041",
+      "reason": "potential_multiple_answers",
+      "status": "deferred_by_user_unchanged",
+      "original_correct_index": 2,
+      "exam_question_no": 31,
+      "exam_year": "۱۳۹۷",
+      "exam_month": "اسفند",
+      "exam_pole": "اهواز"
+    },
+    {
+      "part": 23,
+      "local_question": 32,
+      "id": "QB-05079",
+      "reason": "missing_thyroid_results",
+      "status": "deferred_by_user_unchanged",
+      "original_correct_index": 2,
+      "exam_question_no": 96,
+      "exam_year": "۱۳۹۷",
+      "exam_month": "اسفند",
+      "exam_pole": "زنجان ۲ ۲."
+    }
+  ]
+}

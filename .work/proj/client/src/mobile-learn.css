@@ -1,0 +1,272 @@
+/* ================================================================
+   Mobile learner shell — world-class thumb-zone pass
+   Research applied:
+     Apple HIG 44pt / Material 48dp tap targets
+     3–5 fixed bottom tabs, never scrollable
+     Labels + icons; filled active state
+     Hide chrome in immersive lesson (Duolingo / Anki)
+     Hide tab bar when the software keyboard is open
+     Safe-area + 100dvh (iOS address bar)
+     Primary CTA in the lower third
+     Badges on tabs for due work
+   ================================================================ */
+
+html{ -webkit-text-size-adjust:100%; text-size-adjust:100% }
+body{ min-height:100dvh }
+button, a, .opt, .mc-opt, .tab, .nav-item{
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+@media (prefers-reduced-motion: reduce){
+  *, *::before, *::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+
+/* Option letters — medical-exam scanning (A B C D) */
+.opt{ display:flex; align-items:flex-start; gap:12px }
+.opt-letter{
+  flex:none; min-width:30px; height:30px; padding:0 5px; border-radius:8px;
+  display:grid; place-items:center; font-size:.78rem; font-weight:900;
+  background:var(--panel2); border:1px solid var(--border); color:var(--primary);
+  margin-top:1px; line-height:1; cursor:pointer; user-select:none;
+}
+[dir="rtl"] .opt-letter{ font-size:.8rem; font-family:"Vazirmatn Variable","Vazirmatn",sans-serif }
+.opt.elim{ opacity:.48 }
+.opt.elim .opt-text{ text-decoration:line-through; text-decoration-thickness:2px }
+.opt.sel .opt-letter{ background:var(--primary); color:#fff; border-color:var(--primary) }
+.opt.ok .opt-letter{ background:var(--green); color:#fff; border-color:var(--green) }
+.opt.bad .opt-letter{ background:var(--danger); color:#fff; border-color:var(--danger) }
+.opt-text{ flex:1; min-width:0; line-height:1.55 }
+
+@media (max-width:840px){
+  .learn-tabbar{
+    display:flex; position:fixed; left:0; right:0; bottom:0; z-index:80;
+    background:color-mix(in srgb, var(--panel) 92%, transparent);
+    backdrop-filter:saturate(1.4) blur(16px);
+    -webkit-backdrop-filter:saturate(1.4) blur(16px);
+    border-top:1px solid var(--border);
+    padding:2px 4px calc(4px + env(safe-area-inset-bottom));
+    box-shadow:0 -10px 28px -18px rgba(15,23,48,.45);
+  }
+  .learn-tabbar button{
+    flex:1; min-height:52px; min-width:0; position:relative;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:2px; background:none; border:none; color:var(--muted);
+    font-family:inherit; font-weight:800; font-size:.68rem;
+    padding:6px 2px; border-radius:14px;
+  }
+  .learn-tabbar button.active{
+    color:var(--primary);
+    background:rgba(47,127,209,.10);
+  }
+  .learn-tabbar button.active svg{ stroke-width:2.4 }
+  .tab-badge{
+    position:absolute; top:4px; inset-inline-end:calc(50% - 18px);
+    min-width:16px; height:16px; padding:0 4px; border-radius:99px;
+    background:var(--danger); color:#fff; font-size:.58rem; font-weight:900;
+    display:grid; place-items:center; line-height:1; border:2px solid var(--panel);
+  }
+  .has-mobile-tabbar .learn-shell{ padding-bottom:calc(88px + env(safe-area-inset-bottom)) }
+  .has-mobile-tabbar .support-fab{ bottom:calc(78px + env(safe-area-inset-bottom)) }
+  .has-mobile-tabbar .support-panel{ bottom:calc(78px + env(safe-area-inset-bottom)); max-height:calc(100dvh - 160px) }
+  .has-mobile-tabbar .pwa-install{ bottom:calc(86px + env(safe-area-inset-bottom)) }
+  .has-mobile-tabbar .toast{ bottom:calc(86px + env(safe-area-inset-bottom)) }
+
+  .lesson-cta{
+    position:sticky; bottom:calc(68px + env(safe-area-inset-bottom)); z-index:20;
+    background:linear-gradient(180deg,transparent,var(--bg) 28%);
+    padding-top:10px; padding-bottom:4px;
+  }
+  .lesson-cta .btn{ min-height:52px; font-size:1.02rem; border-radius:14px }
+
+  .opt, .mc-opt, .dx-opt{ min-height:52px }
+  .hud{ gap:6px }
+  .hud-chip{ padding:4px 9px; font-size:.86rem }
+
+  .learn-more-overlay{
+    display:block; position:fixed; inset:0; z-index:95;
+    background:rgba(8,12,20,.48); overscroll-behavior:contain;
+  }
+  .learn-more-sheet{
+    position:absolute; left:0; right:0; bottom:0; max-height:82dvh; overflow-y:auto;
+    background:var(--panel); border-radius:22px 22px 0 0;
+    padding:8px 14px calc(20px + env(safe-area-inset-bottom));
+    box-shadow:0 -18px 44px rgba(0,0,0,.22);
+    overscroll-behavior:contain;
+    animation:moreUp .28s cubic-bezier(.2,.8,.2,1);
+  }
+  @keyframes moreUp{ from{ transform:translateY(24px); opacity:.6 } to{ transform:none; opacity:1 } }
+  .learn-more-handle{ width:42px; height:5px; border-radius:99px; background:var(--border2); margin:6px auto 10px }
+  .learn-more-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:8px }
+  .learn-more-sec{ margin-bottom:12px }
+  .learn-more-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px }
+  .learn-more-item{
+    display:flex; align-items:center; gap:8px; min-height:52px; padding:10px 12px; border-radius:14px;
+    border:1px solid var(--border); background:var(--panel2); color:var(--text);
+    font-weight:700; font-family:inherit; text-align:start; font-size:.86rem;
+  }
+  .learn-more-item.active{ border-color:var(--primary); background:rgba(47,127,209,.1); color:var(--primary) }
+
+  /* Home: hero already shows streak/xp/gems — drop the duplicate HUD */
+  .learn-topline.on-home .hud{ display:none }
+  .learn-topline{ gap:8px }
+  .home-hero{ padding:14px 14px 16px; border-radius:18px }
+  .home-greet{ font-size:1.08rem }
+  .home-hero-stats{ gap:10px }
+  .goal-ring{ width:88px; height:88px }
+  .goal-ring .gv b{ font-size:1.2rem }
+  .home-quick{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin:0 0 14px;
+  }
+  .home-quick button{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;
+    min-height:72px; padding:10px 4px; border-radius:16px; border:1px solid var(--border);
+    background:var(--panel); color:var(--text); font-family:inherit; font-weight:800; font-size:.72rem;
+    box-shadow:var(--shadow-sm);
+  }
+  .home-quick button:active{ transform:scale(.97) }
+  .home-quick .hq-ico{
+    width:34px; height:34px; border-radius:11px; display:grid; place-items:center;
+    background:rgba(47,127,209,.12); color:var(--primary);
+  }
+
+  /* Teaser cards: stack so the CTA is a full-width thumb target */
+  .placement-offer, .placement-reco, .dx-teaser, .rewarded-cta,
+  .learn-home .card.mb16{
+    flex-wrap:wrap;
+  }
+  .placement-offer, .placement-reco, .dx-teaser{
+    align-items:stretch !important;
+  }
+  .placement-offer > div:last-child,
+  .placement-reco > div:last-child{
+    width:100%; flex-direction:row !important; gap:8px;
+  }
+  .placement-offer .btn, .placement-reco .btn, .dx-teaser .btn, .rewarded-cta .btn{
+    min-height:44px;
+  }
+
+  .browse-search{ flex-wrap:wrap }
+  .browse-search input{ min-width:0; flex:1 1 160px }
+  .browse-search select{ width:100%; min-height:44px }
+
+  .unit-node-row{ transform:translateX(calc(var(--offset,0) * .45)) }
+  .unit-bubble{ width:70px; height:70px }
+  .path-progress-card .ppc-continue-actions{ width:100% }
+  .path-progress-card .ppc-continue-actions .btn-primary{ flex:1; min-height:48px }
+
+  .topbar{ padding-top:max(8px, env(safe-area-inset-top)); padding-bottom:8px }
+  .brand h1{ font-size:1.05rem }
+  .icon-lang-label{ display:none }
+
+  /* Immersive lesson: one job — answer the question */
+  .is-immersive-lesson .topbar,
+  .is-immersive-lesson .learn-topline,
+  .is-immersive-lesson .learn-tabbar,
+  .is-immersive-lesson .support-fab{ display:none !important }
+  .is-immersive-lesson .learn-shell{ padding-bottom:12px; padding-top:4px }
+  .is-immersive-lesson .lesson-cta{
+    bottom:0;
+    padding-bottom:max(10px, env(safe-area-inset-bottom));
+    margin-inline:-4px; padding-inline:4px;
+  }
+  .is-immersive-lesson .lesson-q{ font-size:1.12rem; margin:12px 0 14px; text-align:start }
+  .is-immersive-lesson .lesson-top{ margin-bottom:10px }
+  .grade-row .btn{ min-height:56px }
+
+  /* Software keyboard: reclaim the bottom chrome */
+  html.kb-open .learn-tabbar,
+  html.kb-open .support-fab,
+  html.kb-open .pwa-install{ display:none !important }
+  html.kb-open .has-mobile-tabbar .learn-shell{ padding-bottom:16px }
+  html.kb-open .lesson-cta{ bottom:0; padding-bottom:8px }
+}
+
+@media (min-width:841px){
+  .learn-tabbar, .learn-more-overlay, .home-quick{ display:none !important }
+}
+
+@media (max-width:360px){
+  .learn-tabbar button{ font-size:.6rem }
+  .home-quick{ grid-template-columns:repeat(2,1fr) }
+}
+
+/* ================================================================
+   v70 mobile pass — virtual-patient exam, app header, question screens
+   ================================================================ */
+/* Segmented switch: chat ⇄ chart. Desktop keeps the two-column layout. */
+.exam-pane-switch{ display:none }
+@media (max-width:900px){
+  .exam-pane-switch{
+    display:grid; grid-template-columns:1fr 1fr; gap:4px; padding:4px;
+    background:var(--panel2); border:1px solid var(--border); border-radius:14px; margin-bottom:12px;
+    position:sticky; top:calc(var(--topbar-h, 60px) + 6px); z-index:30;
+  }
+  .exam-pane-switch button{
+    min-height:44px; border:none; border-radius:11px; background:transparent; color:var(--muted);
+    font-family:inherit; font-weight:800; font-size:.9rem; display:flex; align-items:center; justify-content:center; gap:6px;
+  }
+  .exam-pane-switch button.active{ background:var(--panel); color:var(--primary); box-shadow:var(--shadow-sm) }
+  .exam-layout.pane-chat .side-panel{ display:none }
+  .exam-layout.pane-panel .chat-box{ display:none }
+  /* the chat fills the viewport minus header + switch + keyboard-safe input */
+  .exam-layout .chat-box{ height:calc(100dvh - 230px); min-height:360px }
+  .chat-input{ position:sticky; bottom:calc(8px + env(safe-area-inset-bottom)); background:var(--panel); padding-top:6px }
+  .chat-input .btn{ min-height:46px }
+  .msg{ max-width:92%; font-size:.95rem }
+  /* case panel tabs: horizontal scroll, never wrap into a 3-row block */
+  .side-panel .tabs{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; -ms-overflow-style:none; margin-inline:-4px; padding:0 4px 4px }
+  .side-panel .tabs::-webkit-scrollbar{ display:none }
+  .side-panel .tab{ white-space:nowrap; min-height:40px; flex:0 0 auto }
+  .side-panel .btn-accent{ min-height:50px; position:sticky; bottom:calc(8px + env(safe-area-inset-bottom)) }
+  /* title + timer: timer becomes a compact pill on the same row */
+  .section-title .timer{ font-size:1.1rem }
+}
+
+/* App header (learner / university pages): compact ≤56px on phones,
+   safe-area aware; the sub-title line is dropped, the logo shrinks. */
+@media (max-width:640px){
+  :root{ --topbar-h:56px }
+  .topbar{ padding:calc(6px + env(safe-area-inset-top)) 12px 6px; gap:8px; min-height:56px }
+  .logo{ width:36px; height:36px; border-radius:10px; font-size:18px }
+  .logo svg{ width:22px; height:22px }
+  .brand h1{ font-size:1rem }
+  .brand p{ display:none }
+  .topbar-actions .btn{ min-width:40px; min-height:40px; padding:6px 9px; border-radius:11px }
+}
+
+/* Question screens everywhere (competitive lesson, checkpoint, class
+   flashcards, daily dx): full-width, ≥48px options, comfortable reading. */
+@media (max-width:640px){
+  .container{ padding-inline:12px }
+  .card{ border-radius:16px }
+  .lesson-q, .fc-q, .dx-vignette{ font-size:1.08rem; line-height:1.8 }
+  .opt, .mc-opt, .dx-opt{ padding:12px 12px; border-radius:14px; font-size:.98rem }
+  .grade-row .btn, .lesson-cta .btn, .fc-actions .btn{ min-height:52px; font-size:1rem }
+  .btn-block{ min-height:48px }
+  input, select, textarea{ font-size:16px }   /* iOS: no zoom-on-focus */
+  /* dialogs become bottom sheets (thumb-reachable Save/Close) */
+  .modal-back{ place-items:end center; padding:0 }
+  .modal{ width:100vw; max-width:100vw; max-height:92dvh; border-radius:20px 20px 0 0 }
+}
+
+@media (max-width:640px){
+  /* competitive question types: matching/compare chips wrap, never overflow */
+  .cmp-choices{ grid-template-columns:repeat(auto-fit, minmax(84px,1fr)) }
+  .cmp-choice{ min-height:44px; font-size:.86rem }
+  .match-grid button, .match-item{ min-height:48px }
+  /* learner top row: HUD chips scroll horizontally in one line */
+  .learn-topline-main .hud{ flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; max-width:100% }
+  .learn-topline-main .hud::-webkit-scrollbar{ display:none }
+  /* virtual-patient case list + class cards: single column, tappable */
+  .case-card, .class-card{ min-height:auto }
+  .lp-cta-row .lp-btn-lg{ width:100%; min-height:52px }
+}
+
+/* Round 5: windowed unit path — "show all" pills between hidden stage ranges */
+.unit-window-more{display:flex;align-items:center;gap:6px;margin:6px auto 10px;padding:6px 14px;border-radius:999px;border:1px dashed var(--border);background:var(--surface,#fff);color:var(--muted);font-size:.8rem;font-weight:700;cursor:pointer}
+.unit-window-more:hover{color:var(--primary);border-color:var(--primary)}

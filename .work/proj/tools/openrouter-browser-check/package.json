@@ -1,0 +1,12 @@
+{
+  "name": "med-openrouter-browser-check",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "1.63.0",
+    "@sparticuz/chromium": "153.0.0"
+  }
+}

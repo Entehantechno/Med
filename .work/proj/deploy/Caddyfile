@@ -1,0 +1,48 @@
+# ================================================================
+#  Caddyfile — automatic HTTPS reverse proxy for MED School
+# ================================================================
+#
+#  Canonical live domain: medschool.ir
+#  www.medschool.ir permanently redirects to the apex so Zarinpal
+#  callbacks, cookies, and CSRF all stay on one origin.
+#
+#  After editing, apply changes with:
+#     docker compose -f docker-compose.deploy.yml up -d
+# ================================================================
+
+# -------- Live site (medschool.ir) --------
+www.medschool.ir {
+    redir https://medschool.ir{uri} permanent
+}
+
+medschool.ir {
+    encode zstd gzip
+
+    # Enterprise Security Headers (Qualys SSL Labs A+ rating)
+    header {
+        Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Permissions-Policy "accelerometer=(), camera=(), geolocation=(), microphone=()"
+    }
+
+    reverse_proxy medlab:4000 {
+        health_uri /api/health
+        health_interval 30s
+        health_timeout 5s
+        buffer_requests
+        buffer_responses
+    }
+}
+
+# -------- OPTION B: local / LAN testing (comment the block above, uncomment this) ----
+# medschool.localhost {
+#     encode zstd gzip
+#     tls internal
+#     reverse_proxy medlab:4000 {
+#         health_uri /api/health
+#         health_interval 30s
+#         health_timeout 5s
+#     }
+# }

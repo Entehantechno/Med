@@ -1,0 +1,88 @@
+# ================================================================
+#  MED School — PRODUCTION deployment (HTTPS + auto-backup)
+#
+#  One command:
+#      docker compose -f docker-compose.deploy.yml up -d --build
+#
+#  Then open:
+#      https://medschool.ir
+#   or https://medschool.localhost         (local test, after switching Caddyfile)
+#
+#  Three services:
+#    caddy   → automatic HTTPS reverse proxy (ports 80/443)
+#    medlab  → the MED School app (Node) — NOT exposed to the internet
+#              directly; only Caddy can reach it, which is safer.
+#    backup  → makes a daily snapshot of the database into ./backups
+# ================================================================
+services:
+
+  # ---- The application (API + built React client on one port) ----
+  medlab:
+    build: .
+    container_name: medlab
+    expose:
+      - "4000"                       # visible only inside the docker network
+    environment:
+      PORT: 4000
+      NODE_ENV: production
+      # ⚠️ CHANGE THIS to a long random string before going live:
+      JWT_SECRET: "${JWT_SECRET:-change-this-secret-in-production}"
+      # DB lives inside /app/server (the persisted volume) as medlab.db — the default.
+      APP_URL: "${APP_URL:-https://medschool.ir}"
+      ZARINPAL_MERCHANT_ID: "${ZARINPAL_MERCHANT_ID:-}"
+      ZARINPAL_SANDBOX: "${ZARINPAL_SANDBOX:-false}"
+      ALLOW_MOCK_PAY: "${ALLOW_MOCK_PAY:-}"
+      # Security: cross-origin allow-list (blank = same-origin, the normal setup):
+      CORS_ORIGIN: "${CORS_ORIGIN:-}"
+      # Optional real AI provider (blank = built-in mock engine):
+      AI_PROVIDER: "${AI_PROVIDER:-}"
+      AI_MODEL: "${AI_MODEL:-}"
+      AI_API_KEY: "${AI_API_KEY:-}"
+      AI_BASE_URL: "${AI_BASE_URL:-}"
+      # Optional Google Sign-In:
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-}"
+      # Optional email verification (SMTP):
+      SMTP_HOST: "${SMTP_HOST:-}"
+      SMTP_PORT: "${SMTP_PORT:-587}"
+      SMTP_USER: "${SMTP_USER:-}"
+      SMTP_PASS: "${SMTP_PASS:-}"
+      MAIL_FROM: "${MAIL_FROM:-MED School <no-reply@medschool.ir>}"
+      # Optional web-push notifications:
+      VAPID_PUBLIC_KEY: "${VAPID_PUBLIC_KEY:-}"
+      VAPID_PRIVATE_KEY: "${VAPID_PRIVATE_KEY:-}"
+      VAPID_SUBJECT: "${VAPID_SUBJECT:-mailto:admin@medschool.ir}"
+    volumes:
+      - medlab-data:/app/server      # keeps the database + uploads safe
+    restart: unless-stopped
+
+  # ---- Caddy: automatic HTTPS reverse proxy ----
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"                # HTTP/3
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data             # stores the HTTPS certificates
+      - caddy-config:/config
+    depends_on:
+      - medlab
+    restart: unless-stopped
+
+  # ---- Automatic daily database backups ----
+  backup:
+    image: alpine:3.20
+    container_name: medlab-backup
+    volumes:
+      - medlab-data:/data:ro         # read-only access to the live DB
+      - ./backups:/backups           # snapshots land in ./backups on your machine
+      - ./deploy/backup.sh:/backup.sh:ro
+    entrypoint: ["/bin/sh", "/backup.sh"]
+    restart: unless-stopped
+
+volumes:
+  medlab-data:
+  caddy-data:
+  caddy-config:

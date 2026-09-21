@@ -1,0 +1,37 @@
+{
+  "name": "medlab-server",
+  "version": "1.0.0",
+  "description": "MED Lab — backend API",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "seed": "node src/seed.js",
+    "seed:reset": "node src/seed.js --force",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.22.2",
+    "express-rate-limit": "^7.5.1",
+    "helmet": "^7.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.4.0",
+    "nodemailer": "^9.0.3",
+    "qs": "^6.16.0",
+    "sql.js": "^1.11.0",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "supertest": "^7.0.0",
+    "vitest": "^2.1.1"
+  },
+  "optionalDependencies": {
+    "hash-wasm": "^4.12.0",
+    "sharp": "^0.35.4"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "credentialsStored": true,
+  "storage": "isolated private synthetic database; no public preview",
+  "provider": "OpenRouter",
+  "model": "openrouter/free",
+  "authChecks": [
+    {
+      "attempt": 1,
+      "networkError": "ECONNRESET"
+    },
+    {
+      "attempt": 2,
+      "networkError": "ECONNRESET"
+    },
+    {
+      "attempt": 3,
+      "networkError": "ECONNRESET"
+    }
+  ],
+  "chat": [
+    {
+      "question": "سلام وقت شما بخیر",
+      "http": 200,
+      "source": "mock",
+      "text": "سلام دکتر.",
+      "providerFailed": true
+    },
+    {
+      "question": "سلام، از کی شروع شده؟",
+      "http": 200,
+      "source": "mock",
+      "text": "درد از ۲ ساعت پیش هنگام فعالیت شروع شده",
+      "providerFailed": true
+    }
+  ],
+  "liveCompletions": 0,
+  "providerRequests": 2,
+  "connectionVerified": false
+}

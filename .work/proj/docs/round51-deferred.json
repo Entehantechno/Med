@@ -1,0 +1,1131 @@
+{
+  "baseline": "MED-School-100-round50.zip (payload reconstructed in workspace after sandbox restore)",
+  "baseline_sha256": "26294f52eee2b8d487a20836ee386d3ee554e27ffb54ee56e0ec122f7e99bee3",
+  "scope_count": 45,
+  "enriched_count": 45,
+  "new_deferred_count": 0,
+  "cumulative_deferred_count": 81,
+  "authorization": "User: continue without asking; leave flawed questions for final review. No permission to change keys or protected text.",
+  "grading_warning": "Deferred records retain all original content and grading status; not removed from quizzes.",
+  "previous_queues": [
+    "docs/round47-deferred.json",
+    "docs/round48-deferred.json",
+    "docs/round49-deferred.json",
+    "docs/round50-deferred.json"
+  ],
+  "next_ordinary_scope": "part26 Q46–220 + part27 Q1–25 (200 total)",
+  "deferred": [
+    {
+      "part": 22,
+      "local_question": 142,
+      "id": "QB-04969",
+      "reason": "missing_laboratory_table",
+      "status": "deferred_by_user_unchanged",
+      "original_correct_index": 2,
+      "exam_question_no": 78,
+      "exam_year": "۱۳۹۶",
+      "exam_month": "اسفند",
+      "exam_pole": "شیراز و کرمانشاه"
+    },
+    {
+      "part": 22,
+      "local_question": 145,
+      "id": "QB-04972",
+      "reason": "missing_growth_chart",
+      "status": "deferred_by_user_unchanged",
+      "original_correct_index": 0,
+      "exam_question_no": 11,
+      "exam_year": "۱۳۹۶",
+      "exam_month": "اسفند",
+      "exam_pole": "مشهد"
+    },
+    {
+      "part": 22,
+      "local_question": 166,
+      "id": "QB-04993",
+      "reason": "disputed_meningitis_key",
+      "status": "deferred_by_user_unchanged",
+      "original_correct_index": 3,
+      "exam_question_no": 141,
+      "exam_year": "۱۳۹۶",
+      "exam_month": "اسفند",
+      "exam_pole": ""
+    },
+    {
+      "part": 22,
+      "local_question": 174,
+      "id": "QB-05001",
+      "reason": "disputed_caustic_ingestion_answer",
+      "status": "deferred_by_user_unchanged",
+      "original_correct_index": 0,
+      "exam_question_no": 158,
+      "exam_year": "۱۳۹۷",
+      "exam_month": "اسفند",
+      "exam_pole": ""
+    },
+    {
+      "part": 22,
+      "local_question": 214,
+      "id": "QB-05041",
+      "reason": "potential_multiple_answers",
+      "status": "deferred_by_user_unchanged",
+      "original_correct_index": 2,
+      "exam_question_no": 31,
+      "exam_year": "۱۳۹۷",
+      "exam_month": "اسفند",
+      "exam_pole": "اهواز"
+    },
+    {
+      "part": 23,
+      "local_question": 32,
+      "id": "QB-05079",
+      "reason": "missing_thyroid_results",
+      "status": "deferred_by_user_unchanged",
+      "original_correct_index": 2,
+      "exam_question_no": 96,
+      "exam_year": "۱۳۹۷",
+      "exam_month": "اسفند",
+      "exam_pole": "زنجان ۲ ۲."
+    },
+    {
+      "part": 23,
+      "local_question": 68,
+      "id": "QB-05115",
+      "reason": "missing_mass_characteristics",
+      "detail_fa": "خصوصیات توده سر که صورت سؤال به آن ارجاع می‌دهد موجود نیست؛ تصویر یا ضمیمه مرتبط هم در رکورد وجود ندارد.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 2,
+      "exam_question_no": 110,
+      "exam_year": "۱۳۹۷",
+      "exam_month": "اسفند",
+      "exam_pole": "مشهد"
+    },
+    {
+      "part": 23,
+      "local_question": 77,
+      "id": "QB-05124",
+      "reason": "missing_arterial_blood_gas",
+      "detail_fa": "نتایج گاز خون وعده‌داده‌شده در صورت سؤال موجود نیست؛ انتخاب نوع حمایت تنفسی به داده و بالین کامل نیاز دارد.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 1,
+      "exam_question_no": 68,
+      "exam_year": "۱۳۹۷",
+      "exam_month": "اسفند",
+      "exam_pole": "مشهد"
+    },
+    {
+      "part": 23,
+      "local_question": 88,
+      "id": "QB-05135",
+      "reason": "infant_hiv_testing_key",
+      "detail_fa": "گزینه‌های الیزا/وسترن‌بلات برای تصمیم قطعی HIV شیرخوار کافی نیستند؛ آزمون ویروس‌شناختی لازم است و انتخاب جایگزین ساخته نشد.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 1,
+      "exam_question_no": 367,
+      "exam_year": "۱۳۹۷",
+      "exam_month": "اسفند",
+      "exam_pole": "کرمانشاه",
+      "supporting_references": [
+        "https://clinicalinfo.hiv.gov/en/guidelines/perinatal/management-infants-diagnosis-hiv-infection-children"
+      ]
+    },
+    {
+      "part": 23,
+      "local_question": 95,
+      "id": "QB-05142",
+      "reason": "multiple_incorrect_tic_statements",
+      "detail_fa": "غیرکلیشه‌ای دانستن تیک و پایدار دانستن اکثر تیک‌های کودکی هر دو محل اشکال‌اند؛ پاسخ یکتا نیازمند دفترچه است.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 1,
+      "exam_question_no": 96,
+      "exam_year": "۱۳۹۷",
+      "exam_month": "اسفند",
+      "exam_pole": "کرمانشاه"
+    },
+    {
+      "part": 23,
+      "local_question": 98,
+      "id": "QB-05145",
+      "reason": "cholestasis_key_dispute",
+      "detail_fa": "کریگلر–نجار اختلال بیلی‌روبین غیرمستقیم است و با کلستاز/فشار پورت تطابق ندارد؛ انتخاب اختلالات متابولیک به‌عنوان کم‌احتمال‌ترین نیازمند بررسی کلید است.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 1,
+      "exam_question_no": 151,
+      "exam_year": "۱۳۹۷",
+      "exam_month": "اسفند",
+      "exam_pole": ""
+    },
+    {
+      "part": 23,
+      "local_question": 102,
+      "id": "QB-05149",
+      "reason": "wiskott_multiple_false_options",
+      "detail_fa": "دو گزینه اثر پیوند بر پلاکت و ایمنی را نفی می‌کنند؛ کلید گزینه اثر طحال‌برداری را نادرست می‌داند. بازنویسی گزینه یا اصلاح کلید انجام نشد.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 0,
+      "exam_question_no": 62,
+      "exam_year": "۱۳۹۷",
+      "exam_month": "اسفند",
+      "exam_pole": "",
+      "supporting_references": [
+        "https://www.merckmanuals.com/professional/immunology-allergic-disorders/immunodeficiency-disorders/wiskott-aldrich-syndrome"
+      ]
+    },
+    {
+      "part": 23,
+      "local_question": 118,
+      "id": "QB-05165",
+      "reason": "contradictory_b_cell_description",
+      "detail_fa": "عبارت غالب‌بودن مارکر B با فنوتیپ مورد انتظار آگاماگلوبولینمی ناسازگار است؛ آن را خودسرانه به غایب تبدیل نکردیم.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 3,
+      "exam_question_no": 40,
+      "exam_year": "۱۳۹۷",
+      "exam_month": "تیر",
+      "exam_pole": ""
+    },
+    {
+      "part": 23,
+      "local_question": 137,
+      "id": "QB-05184",
+      "reason": "infant_nutrition_historical_ambiguity",
+      "detail_fa": "آبمیوه برای زیر دوازده ماه به‌طور روتین توصیه نمی‌شود؛ رد سایر مواد بدون دانستن روش آماده‌سازی و مرجع تاریخی قابل اتکا نیست.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 2,
+      "exam_question_no": 34,
+      "exam_year": "۱۳۹۷",
+      "exam_month": "دی",
+      "exam_pole": "",
+      "supporting_references": [
+        "https://www.healthychildren.org/English/ages-stages/baby/feeding-nutrition/Pages/Starting-Solid-Foods.aspx"
+      ]
+    },
+    {
+      "part": 23,
+      "local_question": 144,
+      "id": "QB-05191",
+      "reason": "corrupt_developmental_age_options",
+      "detail_fa": "گزینه‌های دو ماهگی و چهار ماهگی با راه‌رفتن از پله و خودیاری ناسازگارند؛ واحد یا عدد گمشده حدس زده نشد.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 2,
+      "exam_question_no": 96,
+      "exam_year": "۱۳۹۷",
+      "exam_month": "دی",
+      "exam_pole": ""
+    },
+    {
+      "part": 23,
+      "local_question": 152,
+      "id": "QB-05199",
+      "reason": "missing_hip_pain_laboratory_results",
+      "detail_fa": "متن به آزمایش‌های زیر ارجاع می‌دهد اما هیچ نتیجه‌ای ندارد؛ احتمال سینوویت گذرا مجوز ساخت نتایج نیست.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 0,
+      "exam_question_no": 19,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": ""
+    },
+    {
+      "part": 23,
+      "local_question": 157,
+      "id": "QB-05204",
+      "reason": "sinus_birth_key_dispute",
+      "detail_fa": "اتموئید و ماگزیلا هر دو در بدو تولد وجود دارند؛ انتخاب اتموئید تنها در برابر گزینه ترکیبی نیازمند بررسی اصطلاح پنوماتیزه و منبع آزمون است.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 0,
+      "exam_question_no": 184,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "آزاد",
+      "supporting_references": [
+        "https://www.ncbi.nlm.nih.gov/books/NBK513272/"
+      ]
+    },
+    {
+      "part": 23,
+      "local_question": 163,
+      "id": "QB-05210",
+      "reason": "truncated_correct_option",
+      "detail_fa": "متن گزینه کلیدی فقط عدد ۱۵ است؛ مهارت تکاملی یا واحد آن ساخته نشد.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 1,
+      "exam_question_no": 28,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "آزاد"
+    },
+    {
+      "part": 23,
+      "local_question": 176,
+      "id": "QB-05223",
+      "reason": "no_clear_immunodeficiency_exception",
+      "detail_fa": "هر چهار شرح حال می‌توانند هشدار بررسی نقص ایمنی باشند؛ شش اوتیت سالانه استثنای روشن نیست.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 0,
+      "exam_question_no": 1,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "اصفهان",
+      "supporting_references": [
+        "https://immunodeficiency.ca/primary-immunodeficiency/10-warning-signs/"
+      ]
+    },
+    {
+      "part": 23,
+      "local_question": 182,
+      "id": "QB-05229",
+      "reason": "endocarditis_prophylaxis_ongoing_penicillin",
+      "detail_fa": "دریچه مصنوعی نیاز پیشگیری را مطرح می‌کند، ولی مصرف جاری پنی‌سیلین در انتخاب کلاس آنتی‌بیوتیک اثر دارد؛ آموکسی‌سیلین کلید باید با راهنمای زمان آزمون تطبیق یابد.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 1,
+      "exam_question_no": 265,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "اصفهان",
+      "supporting_references": [
+        "https://www.ada.org/resources/ada-library/oral-health-topics/antibiotic-prophylaxis"
+      ]
+    },
+    {
+      "part": 23,
+      "local_question": 190,
+      "id": "QB-05237",
+      "reason": "anemia_thrombocytopenia_unsafe_trial_only",
+      "detail_fa": "پلاکت ۵۵هزار در کنار کم‌خونی، نسخه صرفاً آزمون آهن بدون بررسی بیشتر را نامطمئن می‌کند؛ احتمال صفر افتاده تأیید نشده و عدد اصلاح نشد.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 2,
+      "exam_question_no": 7,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "اصفهان"
+    },
+    {
+      "part": 23,
+      "local_question": 195,
+      "id": "QB-05242",
+      "reason": "missing_nephritic_laboratory_results",
+      "detail_fa": "با وجود فنوتیپ نفریتی، نتایج آزمایش‌هایی که متن وعده می‌دهد وجود ندارند؛ سؤال تا تکمیل منبع بدون تغییر ماند.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 1,
+      "exam_question_no": 34,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "اصفهان,"
+    },
+    {
+      "part": 23,
+      "local_question": 202,
+      "id": "QB-05249",
+      "reason": "meningitis_hydrocephalus_infarction_key",
+      "detail_fa": "هیدروسفالی و انفارکتوس، مننژیت سلی را جدی مطرح می‌کنند؛ پنوموکوک هم می‌تواند عارضه بدهد و اصلاح قطعی کلید بدون دفترچه انجام نشد.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 0,
+      "exam_question_no": 137,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "اهواز",
+      "supporting_references": [
+        "https://www.merckmanuals.com/professional/neurologic-disorders/meningitis/subacute-and-chronic-meningitis"
+      ]
+    },
+    {
+      "part": 23,
+      "local_question": 203,
+      "id": "QB-05250",
+      "reason": "fatty_cast_dehydration_option",
+      "detail_fa": "کاست چربی از یافته‌های تیپیک نفروتیک است، نه کم‌آبی ساده؛ گزینه ترکیبی هیالین و چربی و سایر داده‌ها برای کلید معتبر نیاز بازبینی دارند.",
+      "status": "deferred_pending_source_no_payload_edits",
+      "original_correct_index": 2,
+      "exam_question_no": 16,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "اهواز",
+      "supporting_references": [
+        "https://www.merckmanuals.com/professional/genitourinary-disorders/glomerular-disorders/overview-of-nephrotic-syndrome"
+      ]
+    },
+    {
+      "part": 24,
+      "local_question": 48,
+      "id": "QB-05315",
+      "reason": "missing_labs",
+      "detail_fa": "متن به آزمایش‌ها ارجاع می‌دهد ولی نتیجه‌ها در رکورد فارسی/انگلیسی یا micro.media موجود نیستند.",
+      "original_correct_index": 1,
+      "exam_question_no": 72,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "شمال",
+      "status": "deferred_by_user_unchanged"
+    },
+    {
+      "part": 24,
+      "local_question": 50,
+      "id": "QB-05317",
+      "reason": "renal_indices_key_dispute",
+      "detail_fa": "فنوتیپ PSGN را نباید خودکار با شاخص‌های آسیب توبولی یکی دانست؛ BUN/Cr داده‌شده ۳۲/۱٫۲≈۲۶٫۷ است و خود گزینه نسبت بالاتر از ۲۰ را تأیید می‌کند، درحالی‌که کلید FENa بالاتر از ۲٪ است.",
+      "original_correct_index": 2,
+      "exam_question_no": 80,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "شمال",
+      "status": "deferred_by_user_unchanged"
+    },
+    {
+      "part": 24,
+      "local_question": 58,
+      "id": "QB-05325",
+      "reason": "outdated_egg_allergy_vaccine_contraindication",
+      "detail_fa": "حساسیت به تخم‌مرغ به‌تنهایی منع واکسن آنفلوانزای متناسب با سن نیست؛ کلید منع آنفلوانزا با راهنمای امروز ناسازگار است.",
+      "original_correct_index": 1,
+      "exam_question_no": 22,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "شیراز",
+      "status": "deferred_by_user_unchanged"
+    },
+    {
+      "part": 24,
+      "local_question": 66,
+      "id": "QB-05333",
+      "reason": "missing_pedigree",
+      "detail_fa": "صورت سؤال به شکل انتقال وراثتی اشاره می‌کند اما شکل و ضمیمه موجود نیست.",
+      "original_correct_index": 1,
+      "exam_question_no": 5,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "شیراز",
+      "status": "deferred_by_user_unchanged"
+    },
+    {
+      "part": 24,
+      "local_question": 76,
+      "id": "QB-05343",
+      "reason": "corrupt_cbc_and_dose_unit",
+      "detail_fa": "چینش CBC مخدوش است، MCV دو بار با اعداد متفاوت آمده و WBC ظاهراً ۵۰هزار است. دوز فروس سولفات بدون تصریح آهن المنتال قابل تبدیل به نسخه نیست؛ داده‌ها باید با دفترچه تطبیق یابند.",
+      "original_correct_index": 2,
+      "exam_question_no": 92,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "شیراز",
+      "status": "deferred_by_user_unchanged"
+    },
+    {
+      "part": 24,
+      "local_question": 85,
+      "id": "QB-05352",
+      "reason": "missing_labs",
+      "detail_fa": "در سؤال HUS، آزمایش‌هایی که متن وعده می‌دهد غایب‌اند؛ ساخت پلاکت/هموگلوبین فرضی مجاز نیست.",
+      "original_correct_index": 1,
+      "exam_question_no": 62,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "مشهد",
+      "status": "deferred_by_user_unchanged"
+    },
+    {
+      "part": 24,
+      "local_question": 97,
+      "id": "QB-05364",
+      "reason": "severe_thrombocytopenia_in_limp_case",
+      "detail_fa": "پلاکت ۲۵هزار ثبت شده ولی کلید سینوویت گذراست؛ نمی‌توان یک صفر به عدد افزود یا سیتوپنی شدید را نادیده گرفت.",
+      "original_correct_index": 3,
+      "exam_question_no": 18,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "کرمانشاه",
+      "status": "deferred_by_user_unchanged"
+    },
+    {
+      "part": 24,
+      "local_question": 102,
+      "id": "QB-05369",
+      "reason": "obsolete_routine_meconium_suction",
+      "detail_fa": "نوزاد غیرسرحال با ضربان ۵۰: کلید ساکشن تراشه قبل از تهویه است؛ امروزه تهویه مؤثر نباید برای ساکشن روتین مکونیوم عقب بیفتد.",
+      "original_correct_index": 3,
+      "exam_question_no": 42,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "کرمانشاه",
+      "status": "deferred_by_user_unchanged"
+    },
+    {
+      "part": 24,
+      "local_question": 108,
+      "id": "QB-05375",
+      "reason": "hypercyanotic_spell_beta_blocker_key",
+      "detail_fa": "پروپرانولول در حمله هیپوکسمیک فالوت می‌تواند کاربرد داشته باشد؛ کلید آن را اقدام غیرلازم می‌داند و استثنای روشن در گزینه‌ها وجود ندارد.",
+      "original_correct_index": 0,
+      "exam_question_no": 14,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "کرمانشاه و مشهد و تهران",
+      "status": "deferred_by_user_unchanged"
+    },
+    {
+      "part": 24,
+      "local_question": 113,
+      "id": "QB-05380",
+      "reason": "obsolete_routine_meconium_suction",
+      "detail_fa": "همان مسئله احیای نوزاد غیرسرحال و تقدم ساکشن روتین به‌جای تهویه؛ کلید بدون مجوز تغییر نمی‌کند.",
+      "original_correct_index": 2,
+      "exam_question_no": 16,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "",
+      "status": "deferred_by_user_unchanged"
+    },
+    {
+      "part": 24,
+      "local_question": 123,
+      "id": "QB-05390",
+      "reason": "obsolete_routine_meconium_suction",
+      "detail_fa": "کلید ساکشن نای در نوزاد مکونیومی هیپوتون با ضربان ۵۰؛ نیازمند تطبیق تاریخی/راهنمای روز.",
+      "original_correct_index": 3,
+      "exam_question_no": 43,
+      "exam_year": "۱۳۹۳",
+      "exam_month": "شهریور",
+      "exam_pole": "",
+      "status": "deferred_by_user_unchanged"
+    },
+    {
+      "part": 24,
+      "local_question": 146,
+      "id": "QB-05413",
+      "reason": "multiple_plausible_febrile_seizure_statements",
+      "detail_fa": "دیازپام رکتال برای تشنج ادامه‌دار می‌تواند درست باشد؛ افزایش اندک خطر صرع پس از تب‌تشنج نیز قابل دفاع است. رد قطعی گزینه سوم برای ساخت پاسخ یکتا مناسب نیست.",
+      "original_correct_index": 0,
+      "exam_question_no": 42,
+      "exam_year": "۱۳۹۴",
+      "exam_month": "شهریور",
+      "exam_pole": "آزاد",
+      "status": "deferred_by_user_unchanged"
+    },
+    {
+      "part": 24,
+      "local_question": 147,
+      "id": "QB-05414",
+      "reason": "obsolete_routine_meconium_suction",
+      "detail_fa": "نوزاد آپنه‌دار غیرسرحال؛ کلید ساکشن دهان و تراشه به‌عنوان اولین اقدام با رویکرد تهویه‌محور امروز نیازمند بازبینی است.",
+      "original_correct_index": 2,
+      "exam_question_no": 46,
+      "exam_year": "۱۳۹۴",
+      "exam_month": "شهریور",
+      "exam_pole": "آزاد",
+      "status": "deferred_by_user_unchanged"
+    },
+    {
+      "part": 24,
+      "local_question": 171,
+      "id": "QB-05438",
+      "reason": "missing_thyroid_labs",
+      "detail_fa": "هیچ نتیجه تیروئیدی با وجود ارجاع صورت سؤال به آزمایش‌ها موجود نیست.",
+      "original_correct_index": 3,
+      "exam_question_no": 75,
+      "exam_year": "۱۳۹۴",
+      "exam_month": "شهریور",
+      "exam_pole": "اصفهان",
+      "status": "deferred_by_user_unchanged"
+    },
+    {
+      "part": 24,
+      "local_question": 193,
+      "id": "QB-05460",
+      "reason": "underspecified_vitamin_a_regimen",
+      "detail_fa": "سؤال دوز درمانی ویتامین A در سوءجذب، سن دقیق/شدت/راه/فاصله و مدت مصرف را مشخص نمی‌کند؛ بازه کلید را نمی‌توان دستور درمان مستقل دانست.",
+      "original_correct_index": 1,
+      "exam_question_no": 71,
+      "exam_year": "۱۳۹۴",
+      "exam_month": "شهریور",
+      "exam_pole": "اهواز",
+      "status": "deferred_by_user_unchanged"
+    },
+    {
+      "part": 24,
+      "local_question": 201,
+      "id": "QB-05468",
+      "reason": "bcg_in_suspected_familial_cellular_immunodeficiency",
+      "detail_fa": "سابقه مرگ خواهر/برادر با نقص ایمنی سلولی نیاز بررسی پیش از واکسن زنده دارد، ولی کلید تزریق BCG را توصیه می‌کند؛ احتمال افتادن نفی باید فقط با دفترچه بررسی شود.",
+      "original_correct_index": 2,
+      "exam_question_no": 11,
+      "exam_year": "۱۳۹۴",
+      "exam_month": "شهریور",
+      "exam_pole": "تبریز",
+      "status": "deferred_by_user_unchanged"
+    },
+    {
+      "part": 24,
+      "local_question": 213,
+      "id": "QB-05480",
+      "reason": "obsolete_routine_meconium_suction",
+      "detail_fa": "کلید انتوباسیون و ساکشن روتین در نوزاد مکونیومی بدون تنفس؛ از پنج سؤال هم‌موضوع با اختلاف تاریخی جدی است.",
+      "original_correct_index": 3,
+      "exam_question_no": 44,
+      "exam_year": "۱۳۹۴",
+      "exam_month": "شهریور",
+      "exam_pole": "تبریز",
+      "status": "deferred_by_user_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 17,
+      "question_no": 7,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "تهران",
+      "tags": [
+        "QB-05504"
+      ],
+      "original_correct_index": 0,
+      "detail_fa": "کاهش خطر RDS در IUGR به‌صورت قاعده عمومی قابل اتکا نیست؛ نارسی ۳۴هفته و نارسایی جفت نیاز تفکیک مرجع تاریخی دارند.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 19,
+      "question_no": 7,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "تهران",
+      "tags": [
+        "QB-05506"
+      ],
+      "original_correct_index": 1,
+      "detail_fa": "بی‌نیازی مطلق از بررسی لارنژومالاسی بدون ثبت رشد، اشباع و ارزیابی راه هوایی قابل تعمیم نیست؛ لارنگوسکوپی انعطاف‌پذیر نیز در گزینه‌ها نیست.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 23,
+      "question_no": 9,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "تهران",
+      "tags": [
+        "QB-05510"
+      ],
+      "original_correct_index": 3,
+      "detail_fa": "بیماری عصبی پیشرونده برای واکسن حاوی سیاه‌سرفه احتیاط و تعویق تا تثبیت است، نه منع دائمی کلی؛ نوع فرآورده و منبع تاریخی لازم است.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 27,
+      "question_no": 13,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "زنجان",
+      "tags": [
+        "QB-05514"
+      ],
+      "original_correct_index": 1,
+      "detail_fa": "عبارت بهبود دائم مخدوش است و رتیکولوسیتوز۳–۵روز نیز قابل دفاع؛ بهبود سریع همه عوارض عصبی را نمی‌توان قطعی دانست.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 31,
+      "question_no": 18,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "زنجان",
+      "tags": [
+        "QB-05518"
+      ],
+      "original_correct_index": 0,
+      "detail_fa": "شجره‌نامه ارجاع‌شده موجود نیست.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 55,
+      "question_no": 23,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "شمال",
+      "tags": [
+        "QB-05542"
+      ],
+      "original_correct_index": 1,
+      "detail_fa": "تشخیص CVIDدر۱۸ماهگی و عبارت B-cellده درصد نرمال مبهم است؛ افتراق نقص گذرا و بروتون و معیار سنی نیاز منبع دارد.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 68,
+      "question_no": 1,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "شیراز",
+      "tags": [
+        "QB-05555"
+      ],
+      "original_correct_index": 1,
+      "detail_fa": "مایع نگهدارنده هیپوتونیک کلید با توصیه امروز ایزوتونیک برای بیشتر کودکان بستری ناسازگار است.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 74,
+      "question_no": 23,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "شیراز",
+      "tags": [
+        "QB-05561"
+      ],
+      "original_correct_index": 3,
+      "detail_fa": "QTطولانی به‌تنهایی اندیکاسیون بی‌کربنات یا اثبات مسمومیت TCAنیست؛ دارو و QRSذکر نشده‌اند.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 83,
+      "question_no": 7,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "شیراز",
+      "tags": [
+        "QB-05570"
+      ],
+      "original_correct_index": 1,
+      "detail_fa": "تعداد دوز هپاتیتBدر زیر۲۰۰۰گرم به HBsAgمادر، دوز تولد و برنامه کشوری بستگی دارد؛ داده کافی نیست.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 84,
+      "question_no": 8,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "شیراز",
+      "tags": [
+        "QB-05571"
+      ],
+      "original_correct_index": 1,
+      "detail_fa": "رابطه شیرگاو قبل دوسالگی با دیابت به‌صورت علت قطعی پذیرفته نیست؛ تعریف مواجهه و مبنای مقایسه گزینه‌ها نیاز مرجع است.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 90,
+      "question_no": 114,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "مشهد",
+      "tags": [
+        "QB-05577"
+      ],
+      "original_correct_index": 3,
+      "detail_fa": "هیپوتانسیون و تأخیر دفع مکونیوم هر دو در مواجهه منیزیم ممکن‌اند؛ پاسخ یکتا روشن نیست.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 91,
+      "question_no": 130,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "مشهد",
+      "tags": [
+        "QB-05578"
+      ],
+      "original_correct_index": 3,
+      "detail_fa": "لنف‌گره منفرد غیرالتهابی بدون مواجهه/آزمایش توکسوپلاسموز را از سل و خراش گربه به‌طور کافی متمایز نمی‌کند.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 93,
+      "question_no": 20,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "مشهد",
+      "tags": [
+        "QB-05580"
+      ],
+      "original_correct_index": 1,
+      "detail_fa": "تصویر شجره موجود نیست و یکی از نام‌ها نیز ناقص است.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 94,
+      "question_no": 23,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "مشهد",
+      "tags": [
+        "QB-05581"
+      ],
+      "original_correct_index": 1,
+      "detail_fa": "درصد دهیدراتاسیون و حساب کسری پس از بولوس مشخص نیست؛ حجم۱۳۵۰بدون فرض اضافی یکتا به دست نمی‌آید.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 96,
+      "question_no": 241,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "مشهد",
+      "tags": [
+        "QB-05583"
+      ],
+      "original_correct_index": 0,
+      "detail_fa": "شرح بیشتر زونای مادر است نه واریسلای اولیه؛ VZIGهمگانی نوزاد بدون وضعیت مواجهه موجه نیست.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 98,
+      "question_no": 336,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "مشهد",
+      "tags": [
+        "QB-05585"
+      ],
+      "original_correct_index": 2,
+      "detail_fa": "فوتوفوبی شدید و کموزیس شدید هر دو نیاز افتراق دارند؛ رتبه‌بندی پاسخ بدون منبع و زمینه روشن نیست.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 105,
+      "question_no": 6,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "مشهد",
+      "tags": [
+        "QB-05592"
+      ],
+      "original_correct_index": 1,
+      "detail_fa": "اریتم مولتی‌فرم امروزه یک طیف مشترک با SJS/TENتلقی نمی‌شود؛ کلید بر طبقه‌بندی تاریخی استوار است.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 106,
+      "question_no": 68,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "مشهد",
+      "tags": [
+        "QB-05593"
+      ],
+      "original_correct_index": 2,
+      "detail_fa": "پلاکت روتین درHUSبدون خون‌ریزی توصیه نمی‌شود، ولی کاپتوپریل درAKIشدید با خطر پتاسیم نیز مشکل‌دار است؛ استثنای یکتا نیاز بازبینی دارد.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 107,
+      "question_no": 77,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "مشهد",
+      "tags": [
+        "QB-05594"
+      ],
+      "original_correct_index": 0,
+      "detail_fa": "آستانه ثابت بیلی‌روبین۲۰و وزن به‌تنهایی معیارهای روز غربالگری شنوایی نیستند؛ شدت، تعویض خون و بستری باید روشن شوند.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 121,
+      "question_no": 30,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "کرمانشاه",
+      "tags": [
+        "QB-05608"
+      ],
+      "original_correct_index": 0,
+      "detail_fa": "معاینه سالانه چشم در شش‌سالگی با مدت۴سال دیابت با آستانه سنی/بلوغ توصیه‌های روز یکسان نیست؛ گزینه مناسب کامل وجود ندارد.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 126,
+      "question_no": 4,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "کرمانشاه",
+      "tags": [
+        "QB-05613"
+      ],
+      "original_correct_index": 0,
+      "detail_fa": "گزینه افت وزن در۱۰روز نخست نیز مبهم است؛ افت معمول درروزهای اول است و ادامه افت تا روزدهم قابل تعمیم نیست. عبارت حداقل۱۵گرم هم با میانگین وزن‌گیری خلط شده است.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 129,
+      "question_no": 58,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "کرمانشاه",
+      "tags": [
+        "QB-05616"
+      ],
+      "original_correct_index": 3,
+      "detail_fa": "واحد سدیم mg/dLمخدوش است؛ فشار و حجم ادرار طبیعی برای احرازSIADHو انتخاب قطعی محدودیت مایع کافی نیستند.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 135,
+      "question_no": 68,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "",
+      "tags": [
+        "QB-05622"
+      ],
+      "original_correct_index": 2,
+      "detail_fa": "اختلال رشد و استفراغ مزمن علامت هشدارند؛ باریوم نرمال تشخیصGERDیا تجویز خودکارPPIرا ثابت نمی‌کند.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 136,
+      "question_no": 69,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "",
+      "tags": [
+        "QB-05623"
+      ],
+      "original_correct_index": 0,
+      "detail_fa": "بازه استاندارد سرایت سرخک۴روز قبل تا۴روز بعد راش با کلید۵روز قبل متفاوت است؛ دو گزینه نیز تکراری‌اند.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 139,
+      "question_no": 16,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "",
+      "tags": [
+        "QB-05626"
+      ],
+      "original_correct_index": 0,
+      "detail_fa": "عبارت مجازبودن شیردهی درHIVبراساس صرف توسعه‌یافتگی کشور، بدونARTو بارویروسی و سیاست معتبر، قابل تعمیم نیست.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 143,
+      "question_no": 25,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "",
+      "tags": [
+        "QB-05630"
+      ],
+      "original_correct_index": 1,
+      "detail_fa": "بیش از یک رژیم حاویICSبا راهنماهای روز قابل دفاع است؛ شدت، سابقه تشدید و چارچوب مرجع روشن نیست.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 144,
+      "question_no": 26,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "",
+      "tags": [
+        "QB-05631"
+      ],
+      "original_correct_index": 2,
+      "detail_fa": "PRبا وجود کاردیت و آرترالژی با وجود آرتریت نباید دوباره شمرده شوند؛ کلید۲ماژور۳مینور و واحدPRنیاز بررسی دارند.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 145,
+      "question_no": 36,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "",
+      "tags": [
+        "QB-05632"
+      ],
+      "original_correct_index": 2,
+      "detail_fa": "رتبه‌بندی ایمنی بیشتر بین چند واکسن بسیار مؤثر بدون پیامد، فاصله زمانی و منبع دقیق مبهم است.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 149,
+      "question_no": 45,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "",
+      "tags": [
+        "QB-05636"
+      ],
+      "original_correct_index": 2,
+      "detail_fa": "پاک‌کردن روتین راه هوایی پیش از تهویه در نوزاد مکونیومی آپنه‌ای با برادی‌کاردی نباید تهویه مؤثر را عقب بیندازد.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 157,
+      "question_no": 8,
+      "year": "۱۳۹۴",
+      "month": "شهریور",
+      "pole": "",
+      "tags": [
+        "QB-05644"
+      ],
+      "original_correct_index": 0,
+      "detail_fa": "ابتلای دو جنس در سه نسل به‌تنهایی اتوزوم غالب را ازXغالب قطعی جدا نمی‌کند؛ جزئیات انتقال پدر به پسر موجود نیست.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 162,
+      "question_no": 43,
+      "year": "۱۳۹۵",
+      "month": "شهریور",
+      "pole": "",
+      "tags": [
+        "QB-05649"
+      ],
+      "original_correct_index": 2,
+      "detail_fa": "مفهوم امروز و بازکردن در، مرز سن یکتای معتبر نمی‌سازند؛ نیاز مقابله با جدول تکامل مرجع است.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 164,
+      "question_no": 57,
+      "year": "۱۳۹۵",
+      "month": "شهریور",
+      "pole": "",
+      "tags": [
+        "QB-05651"
+      ],
+      "original_correct_index": 3,
+      "detail_fa": "پس از ضربه سر، SIADHاز دفع نمک مغزی بدون وضعیت حجم/اسمولالیته متمایز نشده؛ محدودیت مایع ممکن است برای دومی مضر باشد.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 166,
+      "question_no": 18,
+      "year": "۱۳۹۵",
+      "month": "شهریور",
+      "pole": "آزاد",
+      "tags": [
+        "QB-05653"
+      ],
+      "original_correct_index": 3,
+      "detail_fa": "کمبود آهن نیز می‌تواند عملکرد ایمنی را مختل کند؛ استثناشدن مطلق آن نیاز مرجع و تعریف دارد.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 167,
+      "question_no": 193,
+      "year": "۱۳۹۵",
+      "month": "شهریور",
+      "pole": "آزاد",
+      "tags": [
+        "QB-05654"
+      ],
+      "original_correct_index": 0,
+      "detail_fa": "وزن۱۵۰۰گرم و بیلی‌روبین۱۵برای حکم قطعی تعویض خون کافی نیست؛ سن حاملگی، عوامل خطر و نمودار لازم‌اند.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 173,
+      "question_no": 49,
+      "year": "۱۳۹۵",
+      "month": "شهریور",
+      "pole": "آزاد",
+      "tags": [
+        "QB-05660"
+      ],
+      "original_correct_index": 1,
+      "detail_fa": "داکتیلیت و انتقال خون به‌تنهایی سیکل‌تالاسمی را ازHbSSمتمایز نمی‌کنند؛ بررسی هموگلوبین لازم است.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 175,
+      "question_no": 56,
+      "year": "۱۳۹۵",
+      "month": "شهریور",
+      "pole": "آزاد",
+      "tags": [
+        "QB-05662"
+      ],
+      "original_correct_index": 1,
+      "detail_fa": "هماچوری میکروسکوپی منفرد بدون علامت معمولاً نخست به تأیید تکراری نیاز دارد؛ کشت همگانی در گزینه کلیدی نیاز مرجع دارد.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 189,
+      "question_no": 1,
+      "year": "۱۳۹۵",
+      "month": "شهریور",
+      "pole": "اصفهان Bill T",
+      "tags": [
+        "QB-05676"
+      ],
+      "original_correct_index": 3,
+      "detail_fa": "نتایج آزمایش ارجاع‌شده مفقود است؛ تجویزFFPبدون خون‌ریزی/اقدام تهاجمی یا داده انعقادی قابل توجیه نیست.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 192,
+      "question_no": 15,
+      "year": "۱۳۹۵",
+      "month": "شهریور",
+      "pole": "اهواز",
+      "tags": [
+        "QB-05679"
+      ],
+      "original_correct_index": 3,
+      "detail_fa": "برنامه جبرانی ایران و فرآورده‌های روز بدون نسخه رسمی همان دوره تأیید نشده است.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 198,
+      "question_no": 38,
+      "year": "۱۳۹۵",
+      "month": "شهریور",
+      "pole": "اهواز",
+      "tags": [
+        "QB-05685"
+      ],
+      "original_correct_index": 1,
+      "detail_fa": "نشستن به‌تنهایی بین شروع حدود۶ماه و نشستن مستقل پایدار تا۹ماه مبهم است؛ دو گزینه بسته به تعریف مهارت قابل دفاع‌اند.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    },
+    {
+      "part": 25,
+      "local_question": 200,
+      "question_no": 40,
+      "year": "۱۳۹۵",
+      "month": "شهریور",
+      "pole": "اهواز",
+      "tags": [
+        "QB-05687"
+      ],
+      "original_correct_index": 2,
+      "detail_fa": "داروی نجات سریع استنشاقی در گزینه‌ها نیست؛ پردنیزولون جای اولین برونکودیلاتور حمله حاد را نمی‌گیرد.",
+      "status": "deferred_under_user_standing_authorization_unchanged"
+    }
+  ],
+  "enriched_caveats_by_local_question": {}
+}

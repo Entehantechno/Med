@@ -1,0 +1,37 @@
+{
+  "name": "medlab-fullstack",
+  "version": "1.0.0",
+  "description": "MED School — bilingual full-stack (Node/Express + React + SQLite)",
+  "private": true,
+  "type": "module",
+  "main": "server/src/index.js",
+  "scripts": {
+    "start": "node server/src/index.js",
+    "seed": "node server/src/seed.js",
+    "setup": "cd server && npm install && cd ../client && npm install",
+    "build": "cd client && npm run build",
+    "test": "cd server && npm test",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "docker:up": "docker compose up --build",
+    "docker:down": "docker compose down",
+    "release:check": "node scripts/check-release-zip.mjs",
+    "audit:gate": "node scripts/audit-check.mjs server && node scripts/audit-check.mjs client",
+    "perf:budget": "cd client && npm run perf:budget"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.22.2",
+    "express-rate-limit": "^7.5.1",
+    "helmet": "^7.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.4.0",
+    "nodemailer": "^9.0.3",
+    "qs": "^6.16.0",
+    "sql.js": "^1.11.0",
+    "web-push": "^3.6.7"
+  }
+}

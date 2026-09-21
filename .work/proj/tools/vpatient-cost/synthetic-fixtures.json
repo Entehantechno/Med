@@ -1,0 +1,684 @@
+{
+  "description": "Seed educational cases only; no credentials or real patient data.",
+  "cases": [
+    {
+      "title_fa": "درد قفسه سینه در مرد ۵۸ ساله",
+      "title_en": "Chest pain in a 58-year-old man",
+      "specialty_fa": "قلب و عروق",
+      "specialty_en": "Cardiology",
+      "age": 58,
+      "sex": "male",
+      "chief_fa": "درد فشارنده قفسه سینه از ۲ ساعت پیش",
+      "chief_en": "Crushing chest pain for 2 hours",
+      "history_fa": "درد از ۲ ساعت پیش هنگام فعالیت شروع شده، فشارنده و با انتشار به بازوی چپ و فک، همراه با تعریق و تهوع، با استراحت بهبود نمی‌یابد.",
+      "history_en": "Pain started 2 hours ago on exertion, crushing, radiating to left arm and jaw, with sweating and nausea, not relieved by rest.",
+      "pmh_fa": "فشار خون بالا، دیابت نوع ۲",
+      "pmh_en": "Hypertension, type 2 diabetes",
+      "meds_fa": "متفورمین، لوزارتان",
+      "meds_en": "Metformin, Losartan",
+      "allergies_fa": "ندارد",
+      "allergies_en": "None",
+      "family_fa": "پدر در ۶۰ سالگی سکته قلبی داشته",
+      "family_en": "Father had MI at age 60",
+      "exam_fa": "مضطرب و رنگ‌پریده، تعریق سرد، صداهای قلبی طبیعی، ریه پاک",
+      "exam_en": "Anxious, pale, cold sweat, normal heart sounds, clear lungs",
+      "vitals": {
+        "bp": "150/95",
+        "hr": "98",
+        "rr": "20",
+        "temp": "36.8",
+        "spo2": "96%"
+      },
+      "labs_fa": "تروپونین بالا (۰٫۹)، CK-MB بالا",
+      "labs_en": "Elevated troponin (0.9), elevated CK-MB",
+      "imaging_fa": "ECG: صعود ST در لیدهای II, III, aVF",
+      "imaging_en": "ECG: ST elevation in II, III, aVF",
+      "labResults": [
+        {
+          "name_fa": "تروپونین",
+          "name_en": "Troponin",
+          "aliases": [
+            "troponin",
+            "trop"
+          ],
+          "result_fa": "بالا — ۰٫۹ (طبیعی <۰٫۰۴)",
+          "result_en": "Elevated — 0.9 (normal <0.04)"
+        },
+        {
+          "name_fa": "CK-MB",
+          "name_en": "CK-MB",
+          "aliases": [
+            "ckmb"
+          ],
+          "result_fa": "بالا",
+          "result_en": "Elevated"
+        },
+        {
+          "name_fa": "قند خون",
+          "name_en": "Blood glucose",
+          "aliases": [
+            "glucose",
+            "bs",
+            "fbs"
+          ],
+          "result_fa": "۱۸۵ mg/dL",
+          "result_en": "185 mg/dL"
+        }
+      ],
+      "imagingResults": [
+        {
+          "name_fa": "نوار قلب",
+          "name_en": "ECG",
+          "aliases": [
+            "ecg",
+            "ekg",
+            "electrocardiogram"
+          ],
+          "result_fa": "صعود قطعه ST در لیدهای II، III، aVF",
+          "result_en": "ST elevation in leads II, III, aVF",
+          "imageUrl": "/uploads/demo-ecg.svg"
+        },
+        {
+          "name_fa": "عکس قفسه سینه",
+          "name_en": "Chest X-ray",
+          "aliases": [
+            "cxr",
+            "chest xray"
+          ],
+          "result_fa": "طبیعی، بدون احتقان",
+          "result_en": "Normal, no congestion"
+        }
+      ],
+      "images": [
+        {
+          "url": "/uploads/demo-ecg.svg",
+          "label_fa": "نوار قلب — صعود قطعه ST",
+          "label_en": "ECG — ST elevation"
+        }
+      ],
+      "problem_list_fa": "درد قفسهٔ سینهٔ حاد (مشکوک به ACS)\nدیابت نوع ۲\nفشار خون بالا",
+      "problem_list_en": "Acute chest pain (concerning for ACS)\nType 2 diabetes\nHypertension",
+      "diagnosis_fa": "انفارکتوس حاد میوکارد تحتانی (STEMI)",
+      "diagnosis_en": "Acute inferior STEMI",
+      "objectives_fa": "شناخت ACS، درخواست به‌موقع ECG و تروپونین، شروع درمان اولیه",
+      "objectives_en": "Recognize ACS, timely ECG & troponin, initiate acute management",
+      "allowedResponses_fa": "بیمار مؤدب اما مضطرب پاسخ می‌دهد و فقط اطلاعات پرونده را می‌گوید.",
+      "allowedResponses_en": "Patient answers politely but anxiously, only sharing chart info.",
+      "id": 1,
+      "checklist": {
+        "items": [
+          {
+            "id": "i1",
+            "section": "communication",
+            "weight": 2,
+            "fa": "معرفی خود به‌عنوان پزشک و کسب رضایت",
+            "en": "Introduce self as doctor & obtain consent",
+            "keys": [
+              "من دکتر",
+              "من پزشک",
+              "دکتر شما",
+              "پزشک شما",
+              "معرفی",
+              "اجازه هست",
+              "کسب رضایت",
+              "با اجازه",
+              "رضایت دارید",
+              "introduce",
+              "i am dr",
+              "i am doctor",
+              "consent"
+            ]
+          },
+          {
+            "id": "i2",
+            "section": "history",
+            "weight": 3,
+            "fa": "پرسش ماهیت، محل و انتشار درد",
+            "en": "Ask pain character, site & radiation",
+            "keys": [
+              "انتشار",
+              "بازو",
+              "فشارنده",
+              "تیر کشیدن",
+              "radiat",
+              "arm",
+              "crush"
+            ]
+          },
+          {
+            "id": "i3",
+            "section": "history",
+            "weight": 2,
+            "fa": "پرسش عوامل خطر قلبی (دیابت، فشار، چربی، سیگار)",
+            "en": "Ask cardiac risk factors (DM, HTN, smoking, family)",
+            "keys": [
+              "دیابت",
+              "فشار خون",
+              "سیگار",
+              "سابقه قلبی",
+              "diabet",
+              "smok",
+              "hypertens",
+              "cardiac history"
+            ]
+          },
+          {
+            "id": "i_ros",
+            "section": "history",
+            "weight": 2,
+            "fa": "مرور سیستم‌ها (ROS: تنگی‌نفس، تعریق سرد، تهوع، تپش قلب)",
+            "en": "Review of systems (ROS: dyspnea, cold sweat, nausea, palpitation)",
+            "keys": [
+              "مرور سیستم",
+              "ros",
+              "تنگی نفس",
+              "تعریق",
+              "عرق سرد",
+              "تهوع",
+              "تپش",
+              "dyspnea",
+              "sweat",
+              "nausea",
+              "palpitation"
+            ]
+          },
+          {
+            "id": "i_exam",
+            "section": "exam",
+            "weight": 2,
+            "fa": "معاینه فیزیکی و علائم حیاتی (فشار خون، نبض، سمع قلب و ریه)",
+            "en": "Physical exam & vitals (BP, pulse, auscultation)",
+            "keys": [
+              "معاینه",
+              "علائم حیاتی",
+              "فشار خون",
+              "سمع",
+              "نبض",
+              "vitals",
+              "physical exam",
+              "auscultat",
+              "bp",
+              "pulse"
+            ]
+          },
+          {
+            "id": "i4",
+            "section": "workup",
+            "weight": 3,
+            "fa": "درخواست نوار قلب (ECG)",
+            "en": "Order ECG",
+            "keys": [
+              "ecg",
+              "نوار قلب",
+              "الکتروکاردیو",
+              "ekg"
+            ]
+          },
+          {
+            "id": "i5",
+            "section": "workup",
+            "weight": 3,
+            "fa": "درخواست تروپونین و بیومارکرهای قلبی",
+            "en": "Order troponin & cardiac biomarkers",
+            "keys": [
+              "troponin",
+              "تروپونین",
+              "ck-mb",
+              "بیومارکر"
+            ]
+          },
+          {
+            "id": "i6",
+            "section": "diagnosis",
+            "weight": 4,
+            "fa": "تشخیص صحیح STEMI / ACS",
+            "en": "Correct STEMI/ACS diagnosis",
+            "keys": [
+              "stemi",
+              "انفارکتوس",
+              "سکته قلبی",
+              "acs",
+              "myocardial"
+            ]
+          },
+          {
+            "id": "i7",
+            "section": "management",
+            "weight": 3,
+            "fa": "بیان برنامه درمان اولیه (آسپرین، نیترات، ارجاع برای آنژیوگرافی/PCI)",
+            "en": "State initial management (Aspirin, nitrate, cath lab/PCI)",
+            "keys": [
+              "aspirin",
+              "آسپرین",
+              "آنژیوگرافی",
+              "pci",
+              "درمان",
+              "treatment",
+              "reperfus"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "title_fa": "درد شکم در زن ۳۴ ساله",
+      "title_en": "Abdominal pain in a 34-year-old woman",
+      "specialty_fa": "گوارش",
+      "specialty_en": "Gastroenterology",
+      "age": 34,
+      "sex": "female",
+      "chief_fa": "درد ربع فوقانی راست شکم از دیشب",
+      "chief_en": "Right upper quadrant pain since last night",
+      "history_fa": "درد پس از غذای چرب شروع شده، به شانه راست انتشار دارد، همراه با تهوع و استفراغ.",
+      "history_en": "Pain started after a fatty meal, radiates to right shoulder, with nausea and vomiting.",
+      "pmh_fa": "ندارد",
+      "pmh_en": "None",
+      "meds_fa": "قرص ضدبارداری",
+      "meds_en": "Oral contraceptive",
+      "allergies_fa": "پنی‌سیلین",
+      "allergies_en": "Penicillin",
+      "family_fa": "مادر سنگ کیسه صفرا داشته",
+      "family_en": "Mother had gallstones",
+      "exam_fa": "تندرنس ربع فوقانی راست، علامت مورفی مثبت",
+      "exam_en": "RUQ tenderness, positive Murphy's sign",
+      "vitals": {
+        "bp": "125/80",
+        "hr": "92",
+        "rr": "18",
+        "temp": "38.1",
+        "spo2": "98%"
+      },
+      "labs_fa": "لکوسیتوز، بیلی‌روبین کمی بالا",
+      "labs_en": "Leukocytosis, mildly elevated bilirubin",
+      "imaging_fa": "سونوگرافی: سنگ و ضخیم‌شدگی دیواره کیسه صفرا",
+      "imaging_en": "Ultrasound: gallstones and wall thickening",
+      "labResults": [
+        {
+          "name_fa": "شمارش کامل خون",
+          "name_en": "CBC",
+          "aliases": [
+            "cbc",
+            "wbc",
+            "لکوسیت"
+          ],
+          "result_fa": "لکوسیتوز (WBC ۱۴٬۰۰۰)",
+          "result_en": "Leukocytosis (WBC 14,000)"
+        },
+        {
+          "name_fa": "بیلی‌روبین",
+          "name_en": "Bilirubin",
+          "aliases": [
+            "bilirubin",
+            "bili"
+          ],
+          "result_fa": "کمی بالا",
+          "result_en": "Mildly elevated"
+        }
+      ],
+      "imagingResults": [
+        {
+          "name_fa": "سونوگرافی شکم",
+          "name_en": "Abdominal ultrasound",
+          "aliases": [
+            "ultrasound",
+            "us",
+            "سونو"
+          ],
+          "result_fa": "سنگ کیسه صفرا و ضخیم‌شدگی دیواره",
+          "result_en": "Gallstones and wall thickening"
+        }
+      ],
+      "problem_list_fa": "درد حاد ربع فوقانی راست شکم (مشکوک به کوله‌سیستیت)\nتب ۳۸٫۱ درجه",
+      "problem_list_en": "Acute RUQ pain (concerning for cholecystitis)\nFever (38.1°C)",
+      "diagnosis_fa": "کوله‌سیستیت حاد",
+      "diagnosis_en": "Acute cholecystitis",
+      "objectives_fa": "افتراق درد RUQ، علامت مورفی، درخواست سونوگرافی",
+      "objectives_en": "Work up RUQ pain, Murphy's sign, order ultrasound",
+      "allowedResponses_fa": "بیمار با ناراحتی پاسخ می‌دهد و فقط اطلاعات پرونده را بیان می‌کند.",
+      "allowedResponses_en": "Patient answers uncomfortably, sharing only chart data.",
+      "id": 2,
+      "checklist": {
+        "items": [
+          {
+            "id": "i1",
+            "section": "communication",
+            "weight": 2,
+            "fa": "معرفی خود به‌عنوان پزشک و کسب رضایت",
+            "en": "Introduce self as doctor & obtain consent",
+            "keys": [
+              "من دکتر",
+              "من پزشک",
+              "دکتر شما",
+              "پزشک شما",
+              "معرفی",
+              "اجازه هست",
+              "کسب رضایت",
+              "با اجازه",
+              "رضایت دارید",
+              "introduce",
+              "i am dr",
+              "i am doctor",
+              "consent"
+            ]
+          },
+          {
+            "id": "i2",
+            "section": "history",
+            "weight": 3,
+            "fa": "شرح‌حال درد، محل و ارتباط با مصرف غذای چرب",
+            "en": "Pain history, site & relation to fatty meals",
+            "keys": [
+              "غذا",
+              "چرب",
+              "کجا",
+              "کیفیت درد",
+              "meal",
+              "fatty",
+              "pain"
+            ]
+          },
+          {
+            "id": "i3",
+            "section": "history",
+            "weight": 2,
+            "fa": "پرسش تهوع، استفراغ و تب",
+            "en": "Ask nausea/vomiting & fever",
+            "keys": [
+              "تهوع",
+              "استفراغ",
+              "تب",
+              "nausea",
+              "vomit",
+              "fever"
+            ]
+          },
+          {
+            "id": "i_ros",
+            "section": "history",
+            "weight": 2,
+            "fa": "مرور سیستم‌ها (ROS: وضعیت ادرار، ایکتر/زردی، تغییر رنگ مدفوع)",
+            "en": "Review of systems (ROS: jaundice, urinary, acholic stool)",
+            "keys": [
+              "مرور سیستم",
+              "ros",
+              "زردی",
+              "ادرار",
+              "مدفوع",
+              "jaundice",
+              "stool",
+              "urine"
+            ]
+          },
+          {
+            "id": "i4",
+            "section": "exam",
+            "weight": 3,
+            "fa": "معاینه فیزیکی شکم و بررسی تندرنس یا علامت مورفی",
+            "en": "Abdominal physical exam & Murphy's sign / tenderness",
+            "keys": [
+              "مورفی",
+              "murphy",
+              "معاینه شکم",
+              "تندرنس",
+              "لمس",
+              "tenderness",
+              "palpat"
+            ]
+          },
+          {
+            "id": "i5",
+            "section": "workup",
+            "weight": 4,
+            "fa": "درخواست سونوگرافی شکم و کبد/کیسه صفرا",
+            "en": "Order abdominal/gallbladder ultrasound",
+            "keys": [
+              "سونوگرافی",
+              "سونو",
+              "ultrasound",
+              "sono"
+            ]
+          },
+          {
+            "id": "i6",
+            "section": "diagnosis",
+            "weight": 4,
+            "fa": "تشخیص کوله‌سیستیت حاد",
+            "en": "Diagnose acute cholecystitis",
+            "keys": [
+              "کوله سیستیت",
+              "کوله‌سیستیت",
+              "کیسه صفرا",
+              "cholecystitis",
+              "gallbladder"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "track": "learn",
+      "title_fa": "تنگی نفس در مرد ۴۵ ساله (مسیر رقابتی)",
+      "title_en": "Dyspnea in a 45-year-old man (competitive track)",
+      "specialty_fa": "قلب و عروق",
+      "specialty_en": "Cardiology",
+      "age": 45,
+      "sex": "male",
+      "chief_fa": "تنگی نفس ناگهانی از یک ساعت پیش",
+      "chief_en": "Sudden shortness of breath for one hour",
+      "history_fa": "تنگی نفس ناگهانی در حال نشستن، بدون درد قفسه سینه واضح، سابقه سفر طولانی هفته گذشته.",
+      "history_en": "Sudden dyspnea at rest, no clear chest pain, long-haul travel last week.",
+      "pmh_fa": "ندارد",
+      "pmh_en": "None",
+      "meds_fa": "ندارد",
+      "meds_en": "None",
+      "allergies_fa": "ندارد",
+      "allergies_en": "None",
+      "exam_fa": "تاکی‌پنه، ریه راست کاهش صدا",
+      "exam_en": "Tachypnea, reduced breath sounds on the right",
+      "vitals": {
+        "bp": "110/70",
+        "hr": "110",
+        "rr": "28",
+        "temp": "37.0",
+        "spo2": "89%"
+      },
+      "diagnosis_fa": "آمبولی ریه",
+      "diagnosis_en": "Pulmonary embolism",
+      "labResults": [
+        {
+          "name_fa": "دی‌دایمر",
+          "name_en": "D-dimer",
+          "aliases": [
+            "ddimer"
+          ],
+          "result_fa": "بالا",
+          "result_en": "Elevated"
+        }
+      ],
+      "imagingResults": [
+        {
+          "name_fa": "سی‌تی آنژیو ریه",
+          "name_en": "CT pulmonary angiogram",
+          "aliases": [
+            "ctpa"
+          ],
+          "result_fa": "ترومبوز شریان ریوی",
+          "result_en": "Pulmonary artery thrombus"
+        }
+      ],
+      "objectives_fa": "شک به آمبولی ریه و درخواست دی‌دایمر و CTPA",
+      "objectives_en": "Suspect PE and order D-dimer and CTPA",
+      "id": 3,
+      "checklist": {
+        "items": [
+          {
+            "id": "i1",
+            "section": "communication",
+            "weight": 2,
+            "fa": "معرفی خود به‌عنوان پزشک و کسب رضایت",
+            "en": "Introduce self as doctor & obtain consent",
+            "keys": [
+              "من دکتر",
+              "من پزشک",
+              "دکتر شما",
+              "پزشک شما",
+              "معرفی",
+              "اجازه هست",
+              "کسب رضایت",
+              "با اجازه",
+              "رضایت دارید",
+              "introduce",
+              "i am dr",
+              "i am doctor",
+              "consent"
+            ]
+          },
+          {
+            "id": "i2",
+            "section": "history",
+            "weight": 3,
+            "fa": "پرسش ماهیت، محل و انتشار درد",
+            "en": "Ask pain character, site & radiation",
+            "keys": [
+              "انتشار",
+              "بازو",
+              "فشارنده",
+              "تیر کشیدن",
+              "radiat",
+              "arm",
+              "crush"
+            ]
+          },
+          {
+            "id": "i3",
+            "section": "history",
+            "weight": 2,
+            "fa": "پرسش عوامل خطر قلبی (دیابت، فشار، چربی، سیگار)",
+            "en": "Ask cardiac risk factors (DM, HTN, smoking, family)",
+            "keys": [
+              "دیابت",
+              "فشار خون",
+              "سیگار",
+              "سابقه قلبی",
+              "diabet",
+              "smok",
+              "hypertens",
+              "cardiac history"
+            ]
+          },
+          {
+            "id": "i_ros",
+            "section": "history",
+            "weight": 2,
+            "fa": "مرور سیستم‌ها (ROS: تنگی‌نفس، تعریق سرد، تهوع، تپش قلب)",
+            "en": "Review of systems (ROS: dyspnea, cold sweat, nausea, palpitation)",
+            "keys": [
+              "مرور سیستم",
+              "ros",
+              "تنگی نفس",
+              "تعریق",
+              "عرق سرد",
+              "تهوع",
+              "تپش",
+              "dyspnea",
+              "sweat",
+              "nausea",
+              "palpitation"
+            ]
+          },
+          {
+            "id": "i_exam",
+            "section": "exam",
+            "weight": 2,
+            "fa": "معاینه فیزیکی و علائم حیاتی (فشار خون، نبض، سمع قلب و ریه)",
+            "en": "Physical exam & vitals (BP, pulse, auscultation)",
+            "keys": [
+              "معاینه",
+              "علائم حیاتی",
+              "فشار خون",
+              "سمع",
+              "نبض",
+              "vitals",
+              "physical exam",
+              "auscultat",
+              "bp",
+              "pulse"
+            ]
+          },
+          {
+            "id": "i4",
+            "section": "workup",
+            "weight": 3,
+            "fa": "درخواست نوار قلب (ECG)",
+            "en": "Order ECG",
+            "keys": [
+              "ecg",
+              "نوار قلب",
+              "الکتروکاردیو",
+              "ekg"
+            ]
+          },
+          {
+            "id": "i5",
+            "section": "workup",
+            "weight": 3,
+            "fa": "درخواست تروپونین و بیومارکرهای قلبی",
+            "en": "Order troponin & cardiac biomarkers",
+            "keys": [
+              "troponin",
+              "تروپونین",
+              "ck-mb",
+              "بیومارکر"
+            ]
+          },
+          {
+            "id": "i6",
+            "section": "diagnosis",
+            "weight": 4,
+            "fa": "تشخیص صحیح STEMI / ACS",
+            "en": "Correct STEMI/ACS diagnosis",
+            "keys": [
+              "stemi",
+              "انفارکتوس",
+              "سکته قلبی",
+              "acs",
+              "myocardial"
+            ]
+          },
+          {
+            "id": "i7",
+            "section": "management",
+            "weight": 3,
+            "fa": "بیان برنامه درمان اولیه (آسپرین، نیترات، ارجاع برای آنژیوگرافی/PCI)",
+            "en": "State initial management (Aspirin, nitrate, cath lab/PCI)",
+            "keys": [
+              "aspirin",
+              "آسپرین",
+              "آنژیوگرافی",
+              "pci",
+              "درمان",
+              "treatment",
+              "reperfus"
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "prompts": {
+    "patient_fa": "تو نقش یک بیمار مجازی واقعی را ایفا می‌کنی که به پزشک مراجعه کرده است. تمام پاسخ‌هایت باید بر اساس «پروندهٔ بیمار» (JSON) باشد. اصل اساسی: اطلاعات را ذره‌ذره (قطره‌چکانی) و دقیقاً در حد همان سؤالی که پزشک پرسیده ارائه بده و از ارائه اطلاعات اضافه یا پیش‌دستانه اکیداً خودداری کن. مثلاً اگر پرسید «مشکل شما چیست؟»، فقط شکایت اصلی را در یک جمله بگو (مثلاً «شکمم درد می‌کنه آقای دکتر»)؛ توضیحات اضافه مثل محل دقیق، انتشار درد، شدت، زمان شروع، عوامل تشدید یا تسکین، علائم همراه و سوابق را فقط و فقط وقتی بازگو کن که پزشک اختصاصاً درباره همان مورد سؤال بپرسد. زبان عامیانه و پاسخ‌های کوتاه (۱ تا ۲ جمله).",
+    "patient_en": "You play a realistic virtual patient who has come to see a doctor. Answer ONLY from the PATIENT CHART (JSON). Core rule: Disclose information strictly bit by bit, answering ONLY what the doctor explicitly asked. If asked 'What is your problem?' or 'What brings you here?', answer ONLY with the chief complaint in a brief sentence (e.g. 'My stomach hurts, doctor'). Do NOT volunteer pain radiation, onset, severity, relieving/aggravating factors, associated symptoms, or history unless specifically asked for that exact item. Natural patient tone, brief 1-2 sentences.",
+    "patient_rules_fa": "قوانین: ۱) اطلاعات را ذره‌ذره و متناسب با سؤال پزشک ارائه کن و هرگز بدون پرسش پزشک اطلاعاتی مثل انتشار درد، زمان شروع، شدت یا علائم همراه را فاش نکن. ۲) پاسخ‌ها را فقط از روی پروندهٔ بیمار استخراج کن و هیچ حقیقت پزشکیِ جدیدی از خودت نساز. ۳) اگر پزشک چیزی پرسید که در پرونده نیست، پاسخ منفی یا طبیعی بده (مثلاً «نه، سیگار نمی‌کشم»). ۴) هرگز تشخیص نهایی، نتیجهٔ آزمایش/تصویربرداری یا یافته‌های معاینهٔ فیزیکی را لو نده (معاینه را استاد انجام می‌دهد). ۵) اول‌شخص و از زبان بیمار عادی، کوتاه (۱ تا ۲ جمله) و طبیعی پاسخ بده.",
+    "patient_rules_en": "Rules: 1) Disclose information strictly bit by bit as asked; never volunteer pain radiation, onset, severity, or associated symptoms unprompted. 2) Draw answers ONLY from the chart and never invent new facts. 3) If asked about something unrecorded, give a plausible negative/normal reply. 4) Never reveal the final diagnosis, lab/imaging results, or physical exam findings (the supervising teacher performs exams). 5) Reply in the first person as an ordinary patient, briefly (1-2 sentences) and naturally.",
+    "exam_teacher_fa": "تو استادِ نظارت (attending) هستی. دانشجو از تو خواسته معاینهٔ بیمار مجازی را انجام دهی و یافته‌ها را به او بگویی.",
+    "exam_teacher_en": "You are the supervising attending. The student has asked you to examine the virtual patient and report the findings.",
+    "labresult_rules_fa": "تو گزارش‌دهندهٔ آزمایشگاه/رادیولوژی هستی. لحن رسمی و کوتاه. فقط یک جمله بنویس.",
+    "labresult_rules_en": "You are the lab/radiology reporter. Formal, short tone. Write only one sentence.",
+    "lab_normal_fa": "طبق گزارش آزمایشگاه، {item} بیمار نرمال است.",
+    "lab_normal_en": "Per the lab report, the patient's {item} is normal.",
+    "evaluator_fa": "تو یک استادِ ارزیابِ بالینی و مصحح سخت‌گیر و عادل OSCE هستی. کل تعامل دانشجو با بیمار مجازی را بررسی کن: متن گفتگو، آزمایش‌ها/تصویربرداری‌ها، پرابلم لیست، تشخیص‌های افتراقی و تشخیص نهایی. قوانین ارزیابی چک‌لیست: ۱) معرفی خود و کسب رضایت: دانشجو باید صراحتاً نام یا عنوان خود را به‌عنوان پزشک بیان کرده باشد و از بیمار اجازه/رضایت گرفته باشد؛ صرف گفتن «سلام» یا پرسیدن «مشکل چیست؟» به هیچ وجه معرفی و کسب رضایت نیست (done: false). ۲) بررسی سیستماتیک شکایت اصلی و مرور سیستم‌ها (ROS): تنها در صورتی تیک می‌خورد که دانشجو ویژگی‌های علامت و ارگان‌های دیگر را صریحاً پرسیده باشد. ۳) برای هر مورد یک دلیل کوتاه بنویس و خروجی را با فرمت معتبر JSON ارائه بده.",
+    "evaluator_en": "You are a strict, fair clinical OSCE examiner. Review the student encounter: chat transcript, orders, problem list, differentials, and final diagnosis. Rules: 1) Introduction & consent: The student MUST have explicitly stated their name/role as doctor and asked for consent; merely saying 'hello' or 'what is your problem' is NOT introduction or consent (done: false). 2) Systematic exploration & ROS: Only mark done if the student specifically asked about characteristics and organ systems. 3) Provide a brief reason per item and return valid JSON.",
+    "micro_fa": "بر اساس نقاط ضعف و خطاهای این دانشجو در این سناریو، یک درسنامه میکرو-لرنینگِ کاربردی، ساختاریافته و جامع (شامل پیام کلیدی، رویکرد شرح‌حال، معاینه فیزیکی و مرور سیستم‌ها ROS، نکات دام‌دار، و جمع‌بندی طلایی) در قالب مارک‌داون بنویس تا دانشجو بلافاصله پس از مشاهده نمره، آن را بخواند و یاد بگیرد.",
+    "micro_en": "Based on the student's weaknesses and mistakes in this encounter, write a structured, practical clinical micro-learning lesson (covering core concept, H&P + ROS approach, common pitfalls, and golden takeaway) in markdown."
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "asOf": "2026-09-18",
+  "assumed_input": 40096,
+  "assumed_output": 3159,
+  "cache": 0,
+  "reasoning": 0,
+  "retries": 0,
+  "models": [
+    {
+      "model": "GPT-4.1 nano",
+      "input_price_per_million": 0.1,
+      "output_price_per_million": 0.4,
+      "usd_per_encounter": 0.0052732000000000005,
+      "usd_per_100": 0.5273200000000001,
+      "usd_per_3000": 15.819600000000003,
+      "source": "https://openrouter.ai/openai/gpt-4.1-nano",
+      "caveat": "o200k-based text estimate; not measured API usage"
+    },
+    {
+      "model": "GPT-4.1 mini",
+      "input_price_per_million": 0.4,
+      "output_price_per_million": 1.6,
+      "usd_per_encounter": 0.021092800000000002,
+      "usd_per_100": 2.1092800000000005,
+      "usd_per_3000": 63.27840000000001,
+      "source": "https://openrouter.ai/openai/gpt-4.1-mini",
+      "caveat": "o200k-based text estimate; not measured API usage"
+    },
+    {
+      "model": "Gemini 2.5 Flash",
+      "input_price_per_million": 0.3,
+      "output_price_per_million": 2.5,
+      "usd_per_encounter": 0.0199263,
+      "usd_per_100": 1.99263,
+      "usd_per_3000": 59.7789,
+      "source": "https://openrouter.ai/google/gemini-2.5-flash",
+      "caveat": "Proxy token volume; native tokenizer/reasoning differs. Page says retiring 2026-10-20."
+    },
+    {
+      "model": "Gemini 3.1 Flash Lite Preview",
+      "input_price_per_million": 0.25,
+      "output_price_per_million": 1.5,
+      "usd_per_encounter": 0.0147625,
+      "usd_per_100": 1.47625,
+      "usd_per_3000": 44.2875,
+      "source": "https://openrouter.ai/google/gemini-3.1-flash-lite-preview",
+      "caveat": "Preview model; proxy token volume and additional reasoning may differ."
+    },
+    {
+      "model": "DeepSeek V3.2 / DeepInfra",
+      "input_price_per_million": 0.26,
+      "output_price_per_million": 0.38,
+      "usd_per_encounter": 0.011625380000000001,
+      "usd_per_100": 1.162538,
+      "usd_per_3000": 34.87614000000001,
+      "source": "https://openrouter.ai/deepseek/deepseek-v3.2",
+      "caveat": "Named provider rate, not cheapest promo. Proxy tokenizer; reasoning excluded."
+    }
+  ]
+}

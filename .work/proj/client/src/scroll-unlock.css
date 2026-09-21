@@ -1,0 +1,148 @@
+/* =============================================================================
+   scroll-unlock.css — loaded LAST so it always wins.
+   -----------------------------------------------------------------------------
+   Bug (user-reported): the whole site could not scroll; ONLY the signup form
+   moved. That form is a position:fixed overlay with its own overflow-y:auto.
+   Everything else relies on the DOCUMENT scroller.
+
+   Cause: overflow-x:clip / overflow-y:auto was set on BOTH html AND body
+   (and overflow-x:hidden on .landing). That creates nested scrollports whose
+   used height is the viewport, so wheel/touch go to a container that has
+   nothing to scroll. Nested overflow:auto (the signup card) still works.
+
+   Fix: html is the ONE document scroller. body / #root / .app / .landing
+   must NOT be scroll containers. Horizontal overflow is clipped on inner
+   wrappers, not by making body a second scroller.
+   ============================================================================= */
+
+html{
+  overflow-x:hidden !important;
+  overflow-y:scroll !important;
+  height:auto !important;
+  max-height:none !important;
+  overscroll-behavior-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+body{
+  overflow:visible !important;
+  overflow-x:visible !important;
+  overflow-y:visible !important;
+  height:auto !important;
+  max-height:none !important;
+  min-height:100%;
+  position:relative;
+  background-attachment:scroll !important;
+  overscroll-behavior-y:auto;
+}
+#root,
+.app,
+.landing,
+.blog-wrap,
+.verify-wrap,
+.learn-shell,
+.container{
+  overflow:visible !important;
+  height:auto !important;
+  max-height:none !important;
+  min-height:0;
+}
+.app,
+.landing{
+  min-height:100%;
+}
+
+/* Phone zoom bug: any element wider than the viewport (a decorative blob,
+   a wide table, a long unbroken word) makes the DOCUMENT wider than the
+   screen, so mobile browsers zoom OUT to fit it and the whole site looks
+   tiny until the user pinches. html already clips horizontal overflow; the
+   two page roots also clip it so a stray child can never widen the layout
+   viewport. `clip` (not hidden) keeps them from becoming scroll containers. */
+.landing,.app{overflow-x:clip !important;max-width:100vw}
+.container,.page,.card,.section-title,.lp-section,.lp-main,.learn-shell{max-width:100%;min-width:0}
+img,video,iframe,canvas,svg{max-width:100%}
+h1,h2,h3,p,li,td,th,.card,.q-stem,.msg{overflow-wrap:anywhere}
+table{min-width:0}
+.table-wrap table{min-width:520px}
+
+/* When a modal/sheet is open we freeze the document and let THAT overlay scroll. */
+html.overlay-open,
+html.overlay-open body{
+  overflow:hidden !important;
+}
+
+/* Signup / login popover: flex + margin:auto (NOT grid place-items:center)
+   so a tall form can scroll from the top. This is the only overlay the
+   visitor could previously scroll — keep that, and make it reliable. */
+.login-modal-overlay{
+  position:fixed !important;
+  inset:0 !important;
+  z-index:1000;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  overflow-y:auto !important;
+  overflow-x:hidden !important;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  padding:max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom)) !important;
+  place-items:unset !important;
+}
+.login-modal-shell{
+  width:min(430px, 94vw);
+  margin-block:auto;
+  flex:0 0 auto;
+}
+.login-modal-shell .login-card{
+  max-height:none !important;
+  overflow:visible !important;
+}
+@media (max-width:480px){
+  .login-modal-overlay{ padding:0 !important; }
+  .login-modal-shell{ width:100%; min-height:0; margin-block:0; }
+  .login-modal-shell .login-card{
+    min-height:100dvh;
+    border-radius:0;
+    justify-content:flex-start !important;
+    padding-top:max(28px, env(safe-area-inset-top));
+    padding-bottom:max(28px, env(safe-area-inset-bottom));
+  }
+}
+
+.modal-back,
+.learn-more-overlay,
+.welcome-overlay,
+.rewarded-overlay,
+.img-zoom-back,
+.pwa-ios-overlay{
+  overflow-y:auto !important;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+}
+.learn-more-sheet{
+  overflow-y:auto !important;
+  -webkit-overflow-scrolling:touch;
+}
+.modal-body{
+  overflow-y:auto !important;
+  -webkit-overflow-scrolling:touch;
+  min-height:0;
+}
+
+/* Keep wide tables/charts inside their own scroller, not the page. */
+.table-wrap,
+.data-table-wrap{
+  max-width:100%;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+/* content-visibility:auto can under-report document height so the page looks
+   like it has nothing left to scroll. Keep marketing sections in normal flow. */
+.lp-section,
+.lp-gamify,
+.lp-final,
+.blog-related,
+.path-section-wrap{
+  content-visibility:visible;
+}
