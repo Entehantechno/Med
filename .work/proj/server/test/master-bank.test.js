@@ -273,6 +273,10 @@ const round52Baseline = JSON.parse(readFileSync(join(here, "fixtures/round52-pre
 // next versioned continuation, captured from the untouched payloads before
 // its edit, chained exactly like round50/51/52.
 const round53Baseline = JSON.parse(readFileSync(join(here, "fixtures/round53-preservation.json"), "utf8"));
+// round54 (part28 rows 6-220 except 19 deferred) is the next versioned
+// continuation, captured from the untouched payload before its edit,
+// chained exactly like round50/51/52/53.
+const round54Baseline = JSON.parse(readFileSync(join(here, "fixtures/round54-preservation.json"), "utf8"));
 // New part25 edits are allowed only if its PRE-EDIT raw hash equals each
 // historical fixture. The round50 suite then protects every field/record.
 function checkHistoricalOtherBank(name, expected) {
@@ -920,6 +924,10 @@ describe("round53 exact editorial boundaries", () => {
         if (edited.has(i + 1)) {
           expect(protectedFields(q), `${part}:${i + 1}`).toEqual(protectedFields(originalQuestions[i]));
           expect(q).not.toEqual(originalQuestions[i]); count++;
+        } else if (part === "28" && round54Baseline.edited_numbers["28"].includes(i + 1)) {
+          // round54 legitimately re-wrote part28 rows 6-220 (except its 19
+          // deferred records); its PRE-EDIT baseline must equal this state.
+          expect(round54Baseline.original_parts["28"].questions[i], `chained untouched 28:${i + 1}`).toEqual(originalQuestions[i]);
         } else expect(q, `untouched ${part}:${i + 1}`).toEqual(originalQuestions[i]);
       });
       expect(count).toBe(expectedScopes[part].length);
@@ -983,6 +991,103 @@ describe("round53 exact editorial boundaries", () => {
     expect(readdirSync(bank).filter((n) => PART_RE.test(n)).sort()).toEqual(names.map((n) => n.split("/").at(-1)).sort());
     for (const [name, hash] of Object.entries(f.original_file_hashes)) {
       if (name.endsWith("master-preint.part27.json") || name.endsWith("master-preint.part28.json")) continue;
+      expect(createHash("sha256").update(readFileSync(join(here, "../..", name))).digest("hex"), name).toBe(hash);
+    }
+  });
+});
+
+// round54 fixture captured in this workspace before the part28
+// (gynaecology/obstetrics, rows 6-220, except the 19 deferred records)
+// payload edit; pre-edit payload hashes chain back through the
+// round50/51/52/53 fixtures.
+describe("round54 exact editorial boundaries", () => {
+  const f = round54Baseline;
+  const protectedFields = (q) => {
+    const copy = structuredClone(q);
+    delete copy.explanation_fa; delete copy.options_why_fa;
+    for (const name of ["lead_fa", "golden_fa", "points_fa"]) delete copy.micro[name];
+    return copy;
+  };
+  const deferred28 = [8, 23, 25, 27, 28, 30, 32, 50, 55, 57, 66, 87, 91, 94,
+    113, 118, 151, 189, 218];
+  const expectedScope = Array.from({ length: 215 }, (_, i) => i + 6)
+    .filter((n) => !deferred28.includes(n));
+
+  const body = JSON.parse(readFileSync(join(bank, "import-payload.master-preint.part28.json"), "utf8"));
+  const original = f.original_parts["28"];
+  const edited = new Set(f.edited_numbers["28"]);
+
+  it("locks exact part28 scope, all protected fields and every untouched record", () => {
+    expect(f.edited_numbers["28"]).toEqual(expectedScope);
+    expect(f.deferred_numbers["28"]).toEqual(deferred28);
+    const { questions, ...meta } = body;
+    const { questions: originalQuestions, ...originalMeta } = original;
+    expect(meta).toEqual(originalMeta);
+    expect(questions).toHaveLength(220);
+    let count = 0;
+    questions.forEach((q, i) => {
+      if (edited.has(i + 1)) {
+        expect(protectedFields(q), `28:${i + 1}`).toEqual(protectedFields(originalQuestions[i]));
+        expect(q).not.toEqual(originalQuestions[i]); count++;
+      } else expect(q, `untouched 28:${i + 1}`).toEqual(originalQuestions[i]);
+    });
+    expect(count).toBe(expectedScope.length);
+  });
+
+  it("ships individualized explanations, four rationales and four clinical points for part28", () => {
+    const explanations = new Set(), leads = new Set();
+    for (const n of edited) {
+      const q = body.questions[n - 1];
+      expect(q.explanation_fa.length).toBeGreaterThan(300);
+      expect(q.options_why_fa).toHaveLength(4);
+      q.options_why_fa.forEach((reason, i) => {
+        expect(reason.startsWith(i === q.correct_index ? "گزینه صحیح: " : "دلیل رد گزینه: ")).toBe(true);
+        expect(reason.length).toBeGreaterThan(30);
+      });
+      expect(new Set(q.options_why_fa).size).toBe(4);
+      expect(q.micro.lead_fa.includes("\n")).toBe(false);
+      expect(q.micro.lead_fa.length).toBeGreaterThan(20);
+      expect(q.micro.golden_fa.length).toBeGreaterThan(20);
+      expect(q.micro.points_fa).toHaveLength(4);
+      expect(new Set(q.micro.points_fa).size).toBe(4);
+      expect(q.micro.points_fa.every((r) => r.length > 20)).toBe(true);
+      explanations.add(q.explanation_fa); leads.add(q.micro.lead_fa);
+    }
+    expect(explanations.size).toBe(edited.size); expect(leads.size).toBe(edited.size);
+  });
+
+  it("keeps the previous 134 queue entries and records exactly 19 new unchanged graded entries", () => {
+    const previous = JSON.parse(readFileSync(join(here, "../../docs/round53-deferred.json"), "utf8"));
+    const queue = JSON.parse(readFileSync(join(here, "../../docs/round54-deferred.json"), "utf8"));
+    expect(queue.deferred.slice(0, 134)).toEqual(previous.deferred);
+    expect(queue.scope_count).toBe(215); expect(queue.enriched_count).toBe(196);
+    expect(queue.new_deferred_count).toBe(19); expect(queue.cumulative_deferred_count).toBe(153);
+    expect(queue.deferred).toHaveLength(153);
+    const newEntries = queue.deferred.slice(134);
+    expect(newEntries).toHaveLength(19);
+    expect(newEntries.map((e) => e.local_question).sort((a, b) => a - b)).toEqual(deferred28);
+    for (const entry of newEntries) {
+      expect(entry.part).toBe(28);
+      expect(body.questions[entry.local_question - 1]).toEqual(original.questions[entry.local_question - 1]);
+      expect(entry.original_correct_index).toBe(body.questions[entry.local_question - 1].correct_index);
+    }
+  });
+
+  it("keeps part27 (round53 work) and part28 rows 1-5 (round53 work) unchanged", () => {
+    expect(createHash("sha256").update(readFileSync(join(bank, "import-payload.master-preint.part27.json"))).digest("hex"))
+      .toBe(f.original_file_hashes["tools/master-bank/import-payload.master-preint.part27.json"]);
+    for (const n of [1, 2, 3, 4, 5]) {
+      expect(body.questions[n - 1], `earlier 28:${n}`).toEqual(original.questions[n - 1]);
+    }
+    expect(body.questions).toHaveLength(220);
+  });
+
+  it("keeps the other 53 banks byte-identical", () => {
+    const names = Object.keys(f.original_file_hashes);
+    expect(names).toHaveLength(54);
+    expect(readdirSync(bank).filter((n) => PART_RE.test(n)).sort()).toEqual(names.map((n) => n.split("/").at(-1)).sort());
+    for (const [name, hash] of Object.entries(f.original_file_hashes)) {
+      if (name.endsWith("master-preint.part28.json")) continue;
       expect(createHash("sha256").update(readFileSync(join(here, "../..", name))).digest("hex"), name).toBe(hash);
     }
   });
