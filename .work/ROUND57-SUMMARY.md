@@ -1,6 +1,6 @@
 # Round 57 — publication summary (2026-09-24)
 
-## Что это / What this round did
+## What this round did
 Round 56 audited the 161-row deferred queue. Its recommendation #4 — the 55 rows whose key is
 sound (verdict **K** or **K_EXC**) could be enriched with **no change to any key** — was executed here.
 Rows with a wrong/outdated key (KEY_WRONG/OUTDATED), damaged stems (BROKEN) or open disputes
