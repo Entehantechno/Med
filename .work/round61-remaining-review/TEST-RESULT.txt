@@ -1,0 +1,14 @@
+reviewed 27 broken rows: 13 source-blocked / 12 rewrite / 1 copy-only / 1 evidence candidate; nothing applied
+test_all_and_only_round59_broken_rows_are_covered_once (__main__.Round61RemainingReviewTest.test_all_and_only_round59_broken_rows_are_covered_once) ... ok
+test_curator_is_read_only_for_every_relevant_payload (__main__.Round61RemainingReviewTest.test_curator_is_read_only_for_every_relevant_payload) ... ok
+test_fingerprints_references_and_aggregate_queue_are_consistent (__main__.Round61RemainingReviewTest.test_fingerprints_references_and_aggregate_queue_are_consistent) ... ok
+test_human_report_has_all_protective_sections (__main__.Round61RemainingReviewTest.test_human_report_has_all_protective_sections) ... ok
+test_measles_copy_row_keeps_current_key_and_only_flags_duplicate_choice (__main__.Round61RemainingReviewTest.test_measles_copy_row_keeps_current_key_and_only_flags_duplicate_choice) ... ok
+test_only_the_zoster_row_has_a_new_nonapplying_key_candidate (__main__.Round61RemainingReviewTest.test_only_the_zoster_row_has_a_new_nonapplying_key_candidate) ... ok
+test_route_counts_capture_the_final_safe_disposition (__main__.Round61RemainingReviewTest.test_route_counts_capture_the_final_safe_disposition) ... ok
+test_source_blocked_rows_have_no_invented_key_and_exact_recovery_contract (__main__.Round61RemainingReviewTest.test_source_blocked_rows_have_no_invented_key_and_exact_recovery_contract) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.395s
+
+OK
