@@ -1,0 +1,2070 @@
+{
+ "baseline": "MED-School-100-round55.zip workspace payload state",
+ "baseline_sha256": "aa549cf92fd7ec3489d3dd543a2ea778c56ef9e09148e19996d5ecba6a35bfb2",
+ "scope_count": 55,
+ "enriched_count": 55,
+ "new_deferred_count": 0,
+ "cumulative_deferred_count": 106,
+ "authorization": "User: continue without asking; leave flawed questions for final review. No permission to change keys or protected text. Only rows whose audit verdict was K/K_EXC were enriched; keys were not changed.",
+ "grading_warning": "Deferred records retain all original content and grading status; not removed from quizzes.",
+ "previous_queues": [
+  "docs/round47-deferred.json",
+  "docs/round48-deferred.json",
+  "docs/round49-deferred.json",
+  "docs/round50-deferred.json",
+  "docs/round51-deferred.json",
+  "docs/round52-deferred.json",
+  {
+   "round": 53,
+   "file": "docs/round53-deferred.json",
+   "count": 134
+  },
+  {
+   "round": 54,
+   "file": "docs/round54-deferred.json",
+   "count": 153
+  },
+  {
+   "round": 55,
+   "file": "docs/round55-deferred.json",
+   "count": 161
+  }
+ ],
+ "next_ordinary_scope": "۴۸ ردیف باقی‌ماندهٔ صف با کلید مشکوک (KEY_WRONG/OUTDATED) و ۲۷ ردیف BROKEN و ۱۳ ردیف DISPUTED نیازمند مجوز جداگانه‌اند",
+ "deferred": [
+  {
+   "part": 22,
+   "local_question": 142,
+   "id": "QB-04969",
+   "reason": "missing_laboratory_table",
+   "status": "deferred_by_user_unchanged",
+   "original_correct_index": 2,
+   "exam_question_no": 78,
+   "exam_year": "۱۳۹۶",
+   "exam_month": "اسفند",
+   "exam_pole": "شیراز و کرمانشاه"
+  },
+  {
+   "part": 22,
+   "local_question": 145,
+   "id": "QB-04972",
+   "reason": "missing_growth_chart",
+   "status": "deferred_by_user_unchanged",
+   "original_correct_index": 0,
+   "exam_question_no": 11,
+   "exam_year": "۱۳۹۶",
+   "exam_month": "اسفند",
+   "exam_pole": "مشهد"
+  },
+  {
+   "part": 22,
+   "local_question": 166,
+   "id": "QB-04993",
+   "reason": "disputed_meningitis_key",
+   "status": "deferred_by_user_unchanged",
+   "original_correct_index": 3,
+   "exam_question_no": 141,
+   "exam_year": "۱۳۹۶",
+   "exam_month": "اسفند",
+   "exam_pole": ""
+  },
+  {
+   "part": 23,
+   "local_question": 68,
+   "id": "QB-05115",
+   "reason": "missing_mass_characteristics",
+   "detail_fa": "خصوصیات توده سر که صورت سؤال به آن ارجاع می‌دهد موجود نیست؛ تصویر یا ضمیمه مرتبط هم در رکورد وجود ندارد.",
+   "status": "deferred_pending_source_no_payload_edits",
+   "original_correct_index": 2,
+   "exam_question_no": 110,
+   "exam_year": "۱۳۹۷",
+   "exam_month": "اسفند",
+   "exam_pole": "مشهد"
+  },
+  {
+   "part": 23,
+   "local_question": 77,
+   "id": "QB-05124",
+   "reason": "missing_arterial_blood_gas",
+   "detail_fa": "نتایج گاز خون وعده‌داده‌شده در صورت سؤال موجود نیست؛ انتخاب نوع حمایت تنفسی به داده و بالین کامل نیاز دارد.",
+   "status": "deferred_pending_source_no_payload_edits",
+   "original_correct_index": 1,
+   "exam_question_no": 68,
+   "exam_year": "۱۳۹۷",
+   "exam_month": "اسفند",
+   "exam_pole": "مشهد"
+  },
+  {
+   "part": 23,
+   "local_question": 88,
+   "id": "QB-05135",
+   "reason": "infant_hiv_testing_key",
+   "detail_fa": "گزینه‌های الیزا/وسترن‌بلات برای تصمیم قطعی HIV شیرخوار کافی نیستند؛ آزمون ویروس‌شناختی لازم است و انتخاب جایگزین ساخته نشد.",
+   "status": "deferred_pending_source_no_payload_edits",
+   "original_correct_index": 1,
+   "exam_question_no": 367,
+   "exam_year": "۱۳۹۷",
+   "exam_month": "اسفند",
+   "exam_pole": "کرمانشاه",
+   "supporting_references": [
+    "https://clinicalinfo.hiv.gov/en/guidelines/perinatal/management-infants-diagnosis-hiv-infection-children"
+   ]
+  },
+  {
+   "part": 23,
+   "local_question": 98,
+   "id": "QB-05145",
+   "reason": "cholestasis_key_dispute",
+   "detail_fa": "کریگلر–نجار اختلال بیلی‌روبین غیرمستقیم است و با کلستاز/فشار پورت تطابق ندارد؛ انتخاب اختلالات متابولیک به‌عنوان کم‌احتمال‌ترین نیازمند بررسی کلید است.",
+   "status": "deferred_pending_source_no_payload_edits",
+   "original_correct_index": 1,
+   "exam_question_no": 151,
+   "exam_year": "۱۳۹۷",
+   "exam_month": "اسفند",
+   "exam_pole": ""
+  },
+  {
+   "part": 23,
+   "local_question": 102,
+   "id": "QB-05149",
+   "reason": "wiskott_multiple_false_options",
+   "detail_fa": "دو گزینه اثر پیوند بر پلاکت و ایمنی را نفی می‌کنند؛ کلید گزینه اثر طحال‌برداری را نادرست می‌داند. بازنویسی گزینه یا اصلاح کلید انجام نشد.",
+   "status": "deferred_pending_source_no_payload_edits",
+   "original_correct_index": 0,
+   "exam_question_no": 62,
+   "exam_year": "۱۳۹۷",
+   "exam_month": "اسفند",
+   "exam_pole": "",
+   "supporting_references": [
+    "https://www.merckmanuals.com/professional/immunology-allergic-disorders/immunodeficiency-disorders/wiskott-aldrich-syndrome"
+   ]
+  },
+  {
+   "part": 23,
+   "local_question": 144,
+   "id": "QB-05191",
+   "reason": "corrupt_developmental_age_options",
+   "detail_fa": "گزینه‌های دو ماهگی و چهار ماهگی با راه‌رفتن از پله و خودیاری ناسازگارند؛ واحد یا عدد گمشده حدس زده نشد.",
+   "status": "deferred_pending_source_no_payload_edits",
+   "original_correct_index": 2,
+   "exam_question_no": 96,
+   "exam_year": "۱۳۹۷",
+   "exam_month": "دی",
+   "exam_pole": ""
+  },
+  {
+   "part": 23,
+   "local_question": 152,
+   "id": "QB-05199",
+   "reason": "missing_hip_pain_laboratory_results",
+   "detail_fa": "متن به آزمایش‌های زیر ارجاع می‌دهد اما هیچ نتیجه‌ای ندارد؛ احتمال سینوویت گذرا مجوز ساخت نتایج نیست.",
+   "status": "deferred_pending_source_no_payload_edits",
+   "original_correct_index": 0,
+   "exam_question_no": 19,
+   "exam_year": "۱۳۹۳",
+   "exam_month": "شهریور",
+   "exam_pole": ""
+  },
+  {
+   "part": 23,
+   "local_question": 163,
+   "id": "QB-05210",
+   "reason": "truncated_correct_option",
+   "detail_fa": "متن گزینه کلیدی فقط عدد ۱۵ است؛ مهارت تکاملی یا واحد آن ساخته نشد.",
+   "status": "deferred_pending_source_no_payload_edits",
+   "original_correct_index": 1,
+   "exam_question_no": 28,
+   "exam_year": "۱۳۹۳",
+   "exam_month": "شهریور",
+   "exam_pole": "آزاد"
+  },
+  {
+   "part": 23,
+   "local_question": 176,
+   "id": "QB-05223",
+   "reason": "no_clear_immunodeficiency_exception",
+   "detail_fa": "هر چهار شرح حال می‌توانند هشدار بررسی نقص ایمنی باشند؛ شش اوتیت سالانه استثنای روشن نیست.",
+   "status": "deferred_pending_source_no_payload_edits",
+   "original_correct_index": 0,
+   "exam_question_no": 1,
+   "exam_year": "۱۳۹۳",
+   "exam_month": "شهریور",
+   "exam_pole": "اصفهان",
+   "supporting_references": [
+    "https://immunodeficiency.ca/primary-immunodeficiency/10-warning-signs/"
+   ]
+  },
+  {
+   "part": 24,
+   "local_question": 48,
+   "id": "QB-05315",
+   "reason": "missing_labs",
+   "detail_fa": "متن به آزمایش‌ها ارجاع می‌دهد ولی نتیجه‌ها در رکورد فارسی/انگلیسی یا micro.media موجود نیستند.",
+   "original_correct_index": 1,
+   "exam_question_no": 72,
+   "exam_year": "۱۳۹۳",
+   "exam_month": "شهریور",
+   "exam_pole": "شمال",
+   "status": "deferred_by_user_unchanged"
+  },
+  {
+   "part": 24,
+   "local_question": 50,
+   "id": "QB-05317",
+   "reason": "renal_indices_key_dispute",
+   "detail_fa": "فنوتیپ PSGN را نباید خودکار با شاخص‌های آسیب توبولی یکی دانست؛ BUN/Cr داده‌شده ۳۲/۱٫۲≈۲۶٫۷ است و خود گزینه نسبت بالاتر از ۲۰ را تأیید می‌کند، درحالی‌که کلید FENa بالاتر از ۲٪ است.",
+   "original_correct_index": 2,
+   "exam_question_no": 80,
+   "exam_year": "۱۳۹۳",
+   "exam_month": "شهریور",
+   "exam_pole": "شمال",
+   "status": "deferred_by_user_unchanged"
+  },
+  {
+   "part": 24,
+   "local_question": 58,
+   "id": "QB-05325",
+   "reason": "outdated_egg_allergy_vaccine_contraindication",
+   "detail_fa": "حساسیت به تخم‌مرغ به‌تنهایی منع واکسن آنفلوانزای متناسب با سن نیست؛ کلید منع آنفلوانزا با راهنمای امروز ناسازگار است.",
+   "original_correct_index": 1,
+   "exam_question_no": 22,
+   "exam_year": "۱۳۹۳",
+   "exam_month": "شهریور",
+   "exam_pole": "شیراز",
+   "status": "deferred_by_user_unchanged"
+  },
+  {
+   "part": 24,
+   "local_question": 66,
+   "id": "QB-05333",
+   "reason": "missing_pedigree",
+   "detail_fa": "صورت سؤال به شکل انتقال وراثتی اشاره می‌کند اما شکل و ضمیمه موجود نیست.",
+   "original_correct_index": 1,
+   "exam_question_no": 5,
+   "exam_year": "۱۳۹۳",
+   "exam_month": "شهریور",
+   "exam_pole": "شیراز",
+   "status": "deferred_by_user_unchanged"
+  },
+  {
+   "part": 24,
+   "local_question": 102,
+   "id": "QB-05369",
+   "reason": "obsolete_routine_meconium_suction",
+   "detail_fa": "نوزاد غیرسرحال با ضربان ۵۰: کلید ساکشن تراشه قبل از تهویه است؛ امروزه تهویه مؤثر نباید برای ساکشن روتین مکونیوم عقب بیفتد.",
+   "original_correct_index": 3,
+   "exam_question_no": 42,
+   "exam_year": "۱۳۹۳",
+   "exam_month": "شهریور",
+   "exam_pole": "کرمانشاه",
+   "status": "deferred_by_user_unchanged"
+  },
+  {
+   "part": 24,
+   "local_question": 113,
+   "id": "QB-05380",
+   "reason": "obsolete_routine_meconium_suction",
+   "detail_fa": "همان مسئله احیای نوزاد غیرسرحال و تقدم ساکشن روتین به‌جای تهویه؛ کلید بدون مجوز تغییر نمی‌کند.",
+   "original_correct_index": 2,
+   "exam_question_no": 16,
+   "exam_year": "۱۳۹۳",
+   "exam_month": "شهریور",
+   "exam_pole": "",
+   "status": "deferred_by_user_unchanged"
+  },
+  {
+   "part": 24,
+   "local_question": 123,
+   "id": "QB-05390",
+   "reason": "obsolete_routine_meconium_suction",
+   "detail_fa": "کلید ساکشن نای در نوزاد مکونیومی هیپوتون با ضربان ۵۰؛ نیازمند تطبیق تاریخی/راهنمای روز.",
+   "original_correct_index": 3,
+   "exam_question_no": 43,
+   "exam_year": "۱۳۹۳",
+   "exam_month": "شهریور",
+   "exam_pole": "",
+   "status": "deferred_by_user_unchanged"
+  },
+  {
+   "part": 24,
+   "local_question": 147,
+   "id": "QB-05414",
+   "reason": "obsolete_routine_meconium_suction",
+   "detail_fa": "نوزاد آپنه‌دار غیرسرحال؛ کلید ساکشن دهان و تراشه به‌عنوان اولین اقدام با رویکرد تهویه‌محور امروز نیازمند بازبینی است.",
+   "original_correct_index": 2,
+   "exam_question_no": 46,
+   "exam_year": "۱۳۹۴",
+   "exam_month": "شهریور",
+   "exam_pole": "آزاد",
+   "status": "deferred_by_user_unchanged"
+  },
+  {
+   "part": 24,
+   "local_question": 171,
+   "id": "QB-05438",
+   "reason": "missing_thyroid_labs",
+   "detail_fa": "هیچ نتیجه تیروئیدی با وجود ارجاع صورت سؤال به آزمایش‌ها موجود نیست.",
+   "original_correct_index": 3,
+   "exam_question_no": 75,
+   "exam_year": "۱۳۹۴",
+   "exam_month": "شهریور",
+   "exam_pole": "اصفهان",
+   "status": "deferred_by_user_unchanged"
+  },
+  {
+   "part": 24,
+   "local_question": 193,
+   "id": "QB-05460",
+   "reason": "underspecified_vitamin_a_regimen",
+   "detail_fa": "سؤال دوز درمانی ویتامین A در سوءجذب، سن دقیق/شدت/راه/فاصله و مدت مصرف را مشخص نمی‌کند؛ بازه کلید را نمی‌توان دستور درمان مستقل دانست.",
+   "original_correct_index": 1,
+   "exam_question_no": 71,
+   "exam_year": "۱۳۹۴",
+   "exam_month": "شهریور",
+   "exam_pole": "اهواز",
+   "status": "deferred_by_user_unchanged"
+  },
+  {
+   "part": 24,
+   "local_question": 201,
+   "id": "QB-05468",
+   "reason": "bcg_in_suspected_familial_cellular_immunodeficiency",
+   "detail_fa": "سابقه مرگ خواهر/برادر با نقص ایمنی سلولی نیاز بررسی پیش از واکسن زنده دارد، ولی کلید تزریق BCG را توصیه می‌کند؛ احتمال افتادن نفی باید فقط با دفترچه بررسی شود.",
+   "original_correct_index": 2,
+   "exam_question_no": 11,
+   "exam_year": "۱۳۹۴",
+   "exam_month": "شهریور",
+   "exam_pole": "تبریز",
+   "status": "deferred_by_user_unchanged"
+  },
+  {
+   "part": 24,
+   "local_question": 213,
+   "id": "QB-05480",
+   "reason": "obsolete_routine_meconium_suction",
+   "detail_fa": "کلید انتوباسیون و ساکشن روتین در نوزاد مکونیومی بدون تنفس؛ از پنج سؤال هم‌موضوع با اختلاف تاریخی جدی است.",
+   "original_correct_index": 3,
+   "exam_question_no": 44,
+   "exam_year": "۱۳۹۴",
+   "exam_month": "شهریور",
+   "exam_pole": "تبریز",
+   "status": "deferred_by_user_unchanged"
+  },
+  {
+   "part": 25,
+   "local_question": 27,
+   "question_no": 13,
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "pole": "زنجان",
+   "tags": [
+    "QB-05514"
+   ],
+   "original_correct_index": 1,
+   "detail_fa": "عبارت بهبود دائم مخدوش است و رتیکولوسیتوز۳–۵روز نیز قابل دفاع؛ بهبود سریع همه عوارض عصبی را نمی‌توان قطعی دانست.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 25,
+   "local_question": 31,
+   "question_no": 18,
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "pole": "زنجان",
+   "tags": [
+    "QB-05518"
+   ],
+   "original_correct_index": 0,
+   "detail_fa": "شجره‌نامه ارجاع‌شده موجود نیست.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 25,
+   "local_question": 93,
+   "question_no": 20,
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "pole": "مشهد",
+   "tags": [
+    "QB-05580"
+   ],
+   "original_correct_index": 1,
+   "detail_fa": "تصویر شجره موجود نیست و یکی از نام‌ها نیز ناقص است.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 25,
+   "local_question": 94,
+   "question_no": 23,
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "pole": "مشهد",
+   "tags": [
+    "QB-05581"
+   ],
+   "original_correct_index": 1,
+   "detail_fa": "درصد دهیدراتاسیون و حساب کسری پس از بولوس مشخص نیست؛ حجم۱۳۵۰بدون فرض اضافی یکتا به دست نمی‌آید.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 25,
+   "local_question": 96,
+   "question_no": 241,
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "pole": "مشهد",
+   "tags": [
+    "QB-05583"
+   ],
+   "original_correct_index": 0,
+   "detail_fa": "شرح بیشتر زونای مادر است نه واریسلای اولیه؛ VZIGهمگانی نوزاد بدون وضعیت مواجهه موجه نیست.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 25,
+   "local_question": 98,
+   "question_no": 336,
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "pole": "مشهد",
+   "tags": [
+    "QB-05585"
+   ],
+   "original_correct_index": 2,
+   "detail_fa": "فوتوفوبی شدید و کموزیس شدید هر دو نیاز افتراق دارند؛ رتبه‌بندی پاسخ بدون منبع و زمینه روشن نیست.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 25,
+   "local_question": 126,
+   "question_no": 4,
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "pole": "کرمانشاه",
+   "tags": [
+    "QB-05613"
+   ],
+   "original_correct_index": 0,
+   "detail_fa": "گزینه افت وزن در۱۰روز نخست نیز مبهم است؛ افت معمول درروزهای اول است و ادامه افت تا روزدهم قابل تعمیم نیست. عبارت حداقل۱۵گرم هم با میانگین وزن‌گیری خلط شده است.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 25,
+   "local_question": 136,
+   "question_no": 69,
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "pole": "",
+   "tags": [
+    "QB-05623"
+   ],
+   "original_correct_index": 0,
+   "detail_fa": "بازه استاندارد سرایت سرخک۴روز قبل تا۴روز بعد راش با کلید۵روز قبل متفاوت است؛ دو گزینه نیز تکراری‌اند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 25,
+   "local_question": 145,
+   "question_no": 36,
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "pole": "",
+   "tags": [
+    "QB-05632"
+   ],
+   "original_correct_index": 2,
+   "detail_fa": "رتبه‌بندی ایمنی بیشتر بین چند واکسن بسیار مؤثر بدون پیامد، فاصله زمانی و منبع دقیق مبهم است.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 25,
+   "local_question": 149,
+   "question_no": 45,
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "pole": "",
+   "tags": [
+    "QB-05636"
+   ],
+   "original_correct_index": 2,
+   "detail_fa": "پاک‌کردن روتین راه هوایی پیش از تهویه در نوزاد مکونیومی آپنه‌ای با برادی‌کاردی نباید تهویه مؤثر را عقب بیندازد.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 25,
+   "local_question": 173,
+   "question_no": 49,
+   "year": "۱۳۹۵",
+   "month": "شهریور",
+   "pole": "آزاد",
+   "tags": [
+    "QB-05660"
+   ],
+   "original_correct_index": 1,
+   "detail_fa": "داکتیلیت و انتقال خون به‌تنهایی سیکل‌تالاسمی را ازHbSSمتمایز نمی‌کنند؛ بررسی هموگلوبین لازم است.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 100,
+   "question_no": 60,
+   "year": "۱۳۹۷",
+   "month": "شهریور",
+   "pole": "کرمانشاه",
+   "tags": [
+    "QB-06027"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 114,
+   "question_no": 86,
+   "year": "۱۳۹۴",
+   "month": "",
+   "pole": "تبریز",
+   "tags": [
+    "QB-06041"
+   ],
+   "original_correct_index": 3,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 121,
+   "question_no": 102,
+   "year": "۱۳۹۹",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06048"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 126,
+   "question_no": 108,
+   "year": "۱۳۹۹",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06054"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 128,
+   "question_no": 110,
+   "year": "۱۳۹۹",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06056"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 129,
+   "question_no": 111,
+   "year": "۱۳۹۹",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06057"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 130,
+   "question_no": 112,
+   "year": "۱۳۹۹",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06058"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 132,
+   "question_no": 95,
+   "year": "۱۳۹۹",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06060"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 133,
+   "question_no": 97,
+   "year": "۱۳۹۹",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06062"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 134,
+   "question_no": 98,
+   "year": "۱۳۹۹",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06063"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 135,
+   "question_no": 99,
+   "year": "۱۳۹۹",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06064"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 137,
+   "question_no": 101,
+   "year": "۱۴۰۰",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06066"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 138,
+   "question_no": 102,
+   "year": "۱۴۰۰",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06067"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 140,
+   "question_no": 104,
+   "year": "۱۴۰۰",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06069"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 141,
+   "question_no": 105,
+   "year": "۱۴۰۰",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06070"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 142,
+   "question_no": 106,
+   "year": "۱۴۰۰",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06071"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 143,
+   "question_no": 107,
+   "year": "۱۴۰۰",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06072"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 145,
+   "question_no": 109,
+   "year": "۱۴۰۰",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06074"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 146,
+   "question_no": 110,
+   "year": "۱۴۰۰",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06075"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 148,
+   "question_no": 112,
+   "year": "۱۴۰۰",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06077"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 150,
+   "question_no": 95,
+   "year": "۱۴۰۰",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06079"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 151,
+   "question_no": 96,
+   "year": "۱۴۰۰",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06080"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 153,
+   "question_no": 98,
+   "year": "۱۴۰۰",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06082"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 154,
+   "question_no": 99,
+   "year": "۱۴۰۰",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06083"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 156,
+   "question_no": 101,
+   "year": "۱۴۰۳",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06085"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 160,
+   "question_no": 105,
+   "year": "۱۴۰۳",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06089"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 161,
+   "question_no": 106,
+   "year": "۱۴۰۳",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06090"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 162,
+   "question_no": 107,
+   "year": "۱۴۰۳",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06091"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 163,
+   "question_no": 108,
+   "year": "۱۴۰۳",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06092"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 164,
+   "question_no": 109,
+   "year": "۱۴۰۳",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06093"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 166,
+   "question_no": 111,
+   "year": "۱۴۰۳",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06095"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 167,
+   "question_no": 112,
+   "year": "۱۴۰۳",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06096"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 169,
+   "question_no": 95,
+   "year": "۱۴۰۳",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06098"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 170,
+   "question_no": 96,
+   "year": "۱۴۰۳",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06099"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 171,
+   "question_no": 97,
+   "year": "۱۴۰۳",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06100"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 172,
+   "question_no": 98,
+   "year": "۱۴۰۳",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06101"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 173,
+   "question_no": 99,
+   "year": "۱۴۰۳",
+   "month": "اسفند",
+   "pole": "",
+   "tags": [
+    "QB-06102"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 174,
+   "question_no": 100,
+   "year": "۱۳۹۹",
+   "month": "شهریور",
+   "pole": "",
+   "tags": [
+    "QB-06103"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 175,
+   "question_no": 101,
+   "year": "۱۳۹۹",
+   "month": "شهریور",
+   "pole": "",
+   "tags": [
+    "QB-06104"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 176,
+   "question_no": 102,
+   "year": "۱۳۹۹",
+   "month": "شهریور",
+   "pole": "",
+   "tags": [
+    "QB-06105"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 178,
+   "question_no": 104,
+   "year": "۱۳۹۹",
+   "month": "شهریور",
+   "pole": "",
+   "tags": [
+    "QB-06107"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 179,
+   "question_no": 105,
+   "year": "۱۳۹۹",
+   "month": "شهریور",
+   "pole": "",
+   "tags": [
+    "QB-06108"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 180,
+   "question_no": 106,
+   "year": "۱۳۹۹",
+   "month": "شهریور",
+   "pole": "",
+   "tags": [
+    "QB-06109"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 183,
+   "question_no": 111,
+   "year": "۱۳۹۹",
+   "month": "شهریور",
+   "pole": "",
+   "tags": [
+    "QB-06112"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 184,
+   "question_no": 112,
+   "year": "۱۳۹۹",
+   "month": "شهریور",
+   "pole": "",
+   "tags": [
+    "QB-06113"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 185,
+   "question_no": 113,
+   "year": "۱۳۹۹",
+   "month": "شهریور",
+   "pole": "",
+   "tags": [
+    "QB-06114"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 186,
+   "question_no": 95,
+   "year": "۱۳۹۹",
+   "month": "شهریور",
+   "pole": "",
+   "tags": [
+    "QB-06115"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 198,
+   "question_no": 109,
+   "year": "۱۴۰۰",
+   "month": "شهریور",
+   "pole": "",
+   "tags": [
+    "QB-06129"
+   ],
+   "original_correct_index": 3,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 203,
+   "question_no": 95,
+   "year": "۱۴۰۰",
+   "month": "شهریور",
+   "pole": "",
+   "tags": [
+    "QB-06134"
+   ],
+   "original_correct_index": 3,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 27,
+   "local_question": 204,
+   "question_no": 96,
+   "year": "۱۴۰۰",
+   "month": "شهریور",
+   "pole": "",
+   "tags": [
+    "QB-06135"
+   ],
+   "original_correct_index": 1,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در بازنویسی دوبارهٔ دور پنجاه‌وسه برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 28,
+   "local_question": 23,
+   "question_no": 100,
+   "year": "۱۳۹۸",
+   "month": "خرداد",
+   "pole": "",
+   "tags": [
+    "QB-06179"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در دور پنجاه‌وچهارم برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 28,
+   "local_question": 25,
+   "question_no": 104,
+   "year": "۱۳۹۸",
+   "month": "خرداد",
+   "pole": "",
+   "tags": [
+    "QB-06181"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در دور پنجاه‌وچهارم برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 28,
+   "local_question": 27,
+   "question_no": 106,
+   "year": "۱۳۹۸",
+   "month": "خرداد",
+   "pole": "",
+   "tags": [
+    "QB-06183"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در دور پنجاه‌وچهارم برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 28,
+   "local_question": 28,
+   "question_no": 108,
+   "year": "۱۳۹۸",
+   "month": "خرداد",
+   "pole": "",
+   "tags": [
+    "QB-06185"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در دور پنجاه‌وچهارم برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 28,
+   "local_question": 30,
+   "question_no": 110,
+   "year": "۱۳۹۸",
+   "month": "خرداد",
+   "pole": "",
+   "tags": [
+    "QB-06187"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در دور پنجاه‌وچهارم برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 28,
+   "local_question": 32,
+   "question_no": 112,
+   "year": "۱۳۹۸",
+   "month": "خرداد",
+   "pole": "",
+   "tags": [
+    "QB-06189"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در دور پنجاه‌وچهارم برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 28,
+   "local_question": 50,
+   "question_no": 4,
+   "year": "۱۳۹۶",
+   "month": "آبان",
+   "pole": "",
+   "tags": [
+    "QB-06232"
+   ],
+   "original_correct_index": 1,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در دور پنجاه‌وچهارم برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 28,
+   "local_question": 87,
+   "question_no": 23,
+   "year": "۱۳۹۶",
+   "month": "اردیبهشت",
+   "pole": "",
+   "tags": [
+    "QB-06269"
+   ],
+   "original_correct_index": 2,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در دور پنجاه‌وچهارم برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 28,
+   "local_question": 91,
+   "question_no": 13,
+   "year": "۱۳۹۷",
+   "month": "اردیبهشت",
+   "pole": "",
+   "tags": [
+    "QB-06273"
+   ],
+   "original_correct_index": 3,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در دور پنجاه‌وچهارم برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 28,
+   "local_question": 113,
+   "question_no": 22,
+   "year": "۱۳۹۳",
+   "month": "اسفند",
+   "pole": "آزاد",
+   "tags": [
+    "QB-06295"
+   ],
+   "original_correct_index": 0,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در دور پنجاه‌وچهارم برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 28,
+   "local_question": 118,
+   "question_no": 43,
+   "year": "۱۳۹۳",
+   "month": "اسفند",
+   "pole": "آزاد",
+   "tags": [
+    "QB-06300"
+   ],
+   "original_correct_index": 1,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در دور پنجاه‌وچهارم برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 28,
+   "local_question": 189,
+   "question_no": 61,
+   "year": "۱۳۹۳",
+   "month": "اسفند",
+   "pole": "تهران",
+   "tags": [
+    "QB-06371"
+   ],
+   "original_correct_index": 3,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در دور پنجاه‌وچهارم برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 28,
+   "local_question": 218,
+   "question_no": 31,
+   "year": "۱۳۹۳",
+   "month": "اسفند",
+   "pole": "شیراز",
+   "tags": [
+    "QB-06400"
+   ],
+   "original_correct_index": 1,
+   "reason": "needs_final_review_after_rebuild",
+   "detail_fa": "این ردیف در دور پنجاه‌وچهارم برای بازبینی نهایی (هماهنگی کلید و متن) نگه داشته شد؛ متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 29,
+   "local_question": 59,
+   "question_no": 44,
+   "year": "۱۳۹۴",
+   "month": "اسفند",
+   "pole": "اصفهان؛ آزمون پیشکارورزی (پرهانترنی) شهریور ۱۳۹۸ — قطب اصفهان",
+   "tags": [
+    "QB-06461"
+   ],
+   "original_correct_index": 1,
+   "reason": "key_conflicts_with_heavy_bleeding",
+   "detail_fa": "کلید، القای زایمان را پاسخ می‌داند در حالی که متن، خونریزی شدید را توصیف می‌کند و در جفت سرراهی با خونریزی شدید و کنترل‌نشده، ختم بارداری با سزارین مطرح است. متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 29,
+   "local_question": 103,
+   "question_no": 46,
+   "year": "۱۳۹۴",
+   "month": "اسفند",
+   "pole": "تهران",
+   "tags": [
+    "QB-06505"
+   ],
+   "original_correct_index": 2,
+   "reason": "key_conflicts_with_frothy_discharge",
+   "detail_fa": "ترشح کف‌آلود و بدبو نمای تریکومونیاز است که درمان آن مترونیدازول است، ولی کلید آزیترومایسین را پاسخ می‌داند. متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 29,
+   "local_question": 110,
+   "question_no": 11,
+   "year": "۱۳۹۴",
+   "month": "اسفند",
+   "pole": "زنجان",
+   "tags": [
+    "QB-06512"
+   ],
+   "original_correct_index": 3,
+   "reason": "prevention_key_names_treatment_drug",
+   "detail_fa": "پرسش دربارهٔ پیشگیری از عفونت سیتومگالوویروس است و گانسیکلوویر داروی درمانی است، بنابراین کلید با متن هماهنگ نیست. متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 29,
+   "local_question": 132,
+   "question_no": 40,
+   "year": "۱۳۹۴",
+   "month": "اسفند",
+   "pole": "شمال",
+   "tags": [
+    "QB-06534"
+   ],
+   "original_correct_index": 0,
+   "reason": "stem_conflicts_with_observational_key",
+   "detail_fa": "متن سؤال وجود شواهد دیسترس جنین را مطرح می‌کند ولی کلید گزینهٔ «تحت نظر» را پاسخ می‌داند؛ هماهنگی متن و کلید نیازمند بازبینی نهایی است. متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 29,
+   "local_question": 166,
+   "question_no": 27,
+   "year": "۱۳۹۴",
+   "month": "اسفند",
+   "pole": "مشهد",
+   "tags": [
+    "QB-06568"
+   ],
+   "original_correct_index": 0,
+   "reason": "key_option_not_recognised_drug",
+   "detail_fa": "گزینهٔ کلید (شیاف واژینال اسیدیوریک) با نام دارویی شناخته‌شده‌ای مطابقت ندارد، در حالی که ترشح سفید دلمه‌ای با التهاب ولو با کاندیدیاز سازگارتر است. متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 29,
+   "local_question": 183,
+   "question_no": 31,
+   "year": "۱۳۹۴",
+   "month": "اسفند",
+   "pole": "کرمان",
+   "tags": [
+    "QB-06585"
+   ],
+   "original_correct_index": 2,
+   "reason": "multiple_abnormal_parameters",
+   "detail_fa": "در این اسپرموگرام تعداد اسپرم ۱۰ میلیون در میلی‌لیتر نیز پایین‌تر از حد مرجع است، ولی کلید تنها گزینهٔ تحرک را غیرطبیعی می‌داند. متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 29,
+   "local_question": 191,
+   "question_no": 3,
+   "year": "۱۳۹۴",
+   "month": "اسفند",
+   "pole": "کرمان شاه",
+   "tags": [
+    "QB-06593"
+   ],
+   "original_correct_index": 3,
+   "reason": "key_names_consequence_not_cause",
+   "detail_fa": "کلید جفت سرراهی را علت مستعدکنندهٔ پرزانتاسیون می‌داند در حالی که جفت سرراهی خود از پیامدهای نمایش غیرطبیعی است و در فهرست گزینه‌ها، الیگوهیدرآمنیوس علت مستند محسوب می‌شود. متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  },
+  {
+   "part": 29,
+   "local_question": 218,
+   "question_no": 58,
+   "year": "۱۳۹۵",
+   "month": "اسفند",
+   "pole": "آزاد",
+   "tags": [
+    "QB-06620"
+   ],
+   "original_correct_index": 3,
+   "reason": "key_conflicts_with_hcg_plateau_rule",
+   "detail_fa": "کلید جراحی را اقدام بعدی می‌داند در حالی که بر پایهٔ پایش تیتراژ روز چهارم و هفتم، افت کمتر از ۱۵ درصد اندیکاسیون دوز دوم متوترکسات است. متن سؤال، گزینه‌ها و کلید محافظت‌شده بدون هیچ تغییری باقی ماند.",
+   "status": "deferred_under_user_standing_authorization_unchanged"
+  }
+ ],
+ "enriched_from_queue": [
+  {
+   "part": 22,
+   "local_question": 174,
+   "id": "QB-05001",
+   "year": "۱۳۹۷",
+   "month": "اسفند",
+   "audit_verdict": "K_EXC",
+   "audit_note_fa": "گزینهها ضعیفاند: شستشو و خنثیسازی در بلع سودا کنتراندیکه است؛ آنتیبیوتیک وسیعالطیف تنها گزینهٔ قابل دفاع است و کلید درست است."
+  },
+  {
+   "part": 22,
+   "local_question": 214,
+   "id": "QB-05041",
+   "year": "۱۳۹۷",
+   "month": "اسفند",
+   "audit_verdict": "K",
+   "audit_note_fa": "در هرپس تناسلی (بدون ضایعهٔ پستان) شیردهی ادامه مییابد؛ کلید درست است و تنها نکته، ضرورت پوشاندن ضایعات است."
+  },
+  {
+   "part": 23,
+   "local_question": 32,
+   "id": "QB-05079",
+   "year": "۱۳۹۷",
+   "month": "اسفند",
+   "audit_verdict": "K",
+   "audit_note_fa": "ترکیب هورمونهای تیروئید پایین با TSH طبیعی و معاینهٔ نرمال با کمبود گلوبولین متصلشونده سازگار است؛ مقادیر عددی در متن موجود نیست."
+  },
+  {
+   "part": 23,
+   "local_question": 95,
+   "id": "QB-05142",
+   "year": "۱۳۹۷",
+   "month": "اسفند",
+   "audit_verdict": "K",
+   "audit_note_fa": "گزارهٔ «پایداری تیک در بیشتر کودکان» نادرست است؛ در بیشتر موارد تیکها با رسیدن به نوجوانی بهبود مییابند. کلید درست است."
+  },
+  {
+   "part": 23,
+   "local_question": 118,
+   "id": "QB-05165",
+   "year": "۱۳۹۷",
+   "month": "تیر",
+   "audit_verdict": "K",
+   "audit_note_fa": "کلید (عفونت سیتومگالوویروس) درست است؛ نقص ایمنی هومورال مستعد عفونت CMV نیست. مشکل در توصیف متناقض سلولهای B در متن است که محافظتشده میماند."
+  },
+  {
+   "part": 23,
+   "local_question": 137,
+   "id": "QB-05184",
+   "year": "۱۳۹۷",
+   "month": "دی",
+   "audit_verdict": "K",
+   "audit_note_fa": "کلید «آبمیوهٔ طبیعی» در ۹ ماهگی قابل دفاع است؛ شیر پاستوریزه تا یک سالگی و سبزیجات پرنیترات محدود میشوند."
+  },
+  {
+   "part": 23,
+   "local_question": 157,
+   "id": "QB-05204",
+   "year": "۱۳۹۳",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "تنها سینوس پنوماتیزه در بدو تولد، اتموئید است."
+  },
+  {
+   "part": 23,
+   "local_question": 182,
+   "id": "QB-05229",
+   "year": "۱۳۹۳",
+   "month": "شهریور",
+   "audit_verdict": "K_EXC",
+   "audit_note_fa": "راهنمای پروفیلاکسی اندوکاردیت برای بیمار تحت پنیسیلین ماهانه، کلیندامایسین را پیشنهاد میکند که در گزینهها نیست؛ آموکسیسیلین نزدیکترین گزینهٔ قابل دفاع در این فهرست است."
+  },
+  {
+   "part": 23,
+   "local_question": 190,
+   "id": "QB-05237",
+   "year": "۱۳۹۳",
+   "month": "شهریور",
+   "audit_verdict": "K_EXC",
+   "audit_note_fa": "کمخونی میکروسیتیک با MCV=۶۸ در کودک ۲ ساله با تغذیهٔ نامناسب، آزمایش درمانی با آهن را قابل دفاع میکند؛ مقادیر پلاکت در متن مخدوش است."
+  },
+  {
+   "part": 23,
+   "local_question": 195,
+   "id": "QB-05242",
+   "year": "۱۳۹۳",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "ادم پلک و ادرار تیره با فشار خون بالا، گلومرولونفریت حاد را مطرح میکند؛ آزمایشات ردیف در متن موجود نیست."
+  },
+  {
+   "part": 23,
+   "local_question": 202,
+   "id": "QB-05249",
+   "year": "۱۳۹۳",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "کلید (پنوموکوک) با الگوی هیدروسفالی و انفارکتوس پریونتریکولار در مننژیت باکتریایی سازگار است."
+  },
+  {
+   "part": 23,
+   "local_question": 203,
+   "id": "QB-05250",
+   "year": "۱۳۹۳",
+   "month": "شهریور",
+   "audit_verdict": "K_EXC",
+   "audit_note_fa": "گزینهها ضعیفاند (وزن مخصوص ۱٫۰۱۵ برای کمآبی شدید نادرست است)؛ کاست هیالین در پیشکلیوی قابل دفاع و کلید درست است."
+  },
+  {
+   "part": 24,
+   "local_question": 76,
+   "id": "QB-05343",
+   "year": "۱۳۹۳",
+   "month": "شهریور",
+   "audit_verdict": "K_EXC",
+   "audit_note_fa": "کمخونی میکروسیتیک با مصرف شیر گاو در نوپا، درمان آهن خوراکی را ایجاب میکند؛ ساختار اعداد آزمایش در متن مخدوش است."
+  },
+  {
+   "part": 24,
+   "local_question": 85,
+   "id": "QB-05352",
+   "year": "۱۳۹۳",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "کمخونی پس از اسهال خونی همراه کاهش ادرار و افت پلاکت، سندرم همولیتیک-اورمیک است."
+  },
+  {
+   "part": 24,
+   "local_question": 97,
+   "id": "QB-05364",
+   "year": "۱۳۹۳",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "لنگش بدون تب با WBC و ESR طبیعی و CRP منفی، سینوویت گذرا است."
+  },
+  {
+   "part": 24,
+   "local_question": 108,
+   "id": "QB-05375",
+   "year": "۱۳۹۳",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "در حملهٔ سیانوتیک تترالوژی، اکسیژن و وضعیت زانو-سینه و مورفین اقدامات فوریاند و پروپرانولول اقدام این مرحله نیست؛ کلید درست است."
+  },
+  {
+   "part": 24,
+   "local_question": 146,
+   "id": "QB-05413",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "کلید (دیازپام رکتال در تشنج طولکشیده) درست است؛ EEG و فنوباربیتال مداوم در تشنج سادهٔ ناشی از تب اندیکاسیون ندارند."
+  },
+  {
+   "part": 25,
+   "local_question": 17,
+   "id": "QB-05504",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "کلید (سندرم دیسترس تنفسی) درست است؛ در نارسایی رشد داخل رحمی آسفیکسی و هیپوگلیسمی و پلیسیتمی همه محتملاند و تنها گزینهٔ قابل استثنا دیسترس تنفسی نیست، ولی بر پایهٔ نگارش متن کلید پذیرفته است."
+  },
+  {
+   "part": 25,
+   "local_question": 19,
+   "id": "QB-05506",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "استریدور دمی که در خواب بهتر میشود؛ نزدیکترین تشخیص لارنگومالاسی است که نیازی به بررسی بیشتر ندارد و کلید درست است."
+  },
+  {
+   "part": 25,
+   "local_question": 23,
+   "id": "QB-05510",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K_EXC",
+   "audit_note_fa": "گزینهها ضعیفاند (هم OPV و هم DTP میتوانند مطرح باشند)؛ ولی در ضایعات پیشروندهٔ مغزی واکسن زندهی OPV خطرناک است؛ کلید DTP قابل دفاع ولی قابل بحث."
+  },
+  {
+   "part": 25,
+   "local_question": 55,
+   "id": "QB-05542",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "کلید (نقص ایمنی متغیر شایع) با ایمونوگلوبولین پایین و سلول B قابل تشخیص سازگار است."
+  },
+  {
+   "part": 25,
+   "local_question": 68,
+   "id": "QB-05555",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "مایع نگهدارندهٔ کودکان با عملکرد کلی طبیعی، محلول یکدوم نرمال سالین در دکستروز ۵٪ همراه پتاسیم است؛ کلید درست است."
+  },
+  {
+   "part": 25,
+   "local_question": 74,
+   "id": "QB-05561",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "سندرم آنتیکولینرژیک با میدریاز و هیپررفلکسی و طولانی شدن QT: آنتیدوت سدیم بیکربنات است؛ کلید درست است."
+  },
+  {
+   "part": 25,
+   "local_question": 83,
+   "id": "QB-05570",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "واکسیناسیون نوزاد نارس بر پایهٔ سن تقویمی و مانند برنامهٔ عادی کشور انجام میشود."
+  },
+  {
+   "part": 25,
+   "local_question": 84,
+   "id": "QB-05571",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "افزایش مصرف ویتامین D در اتیولوژی دیابت نوع یک نقشی ندارد (اثر آن حتی محافظتی مطرح شده است)."
+  },
+  {
+   "part": 25,
+   "local_question": 90,
+   "id": "QB-05577",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "نوزاد مادر تحت سولفات منیزیم: تأخیر دفع مکونیوم (ایلئوس) عارضهٔ محتمل است؛ ادم و بیتابی و هیپوتانسیون یافتههای شایع نوزاد نیستند."
+  },
+  {
+   "part": 25,
+   "local_question": 91,
+   "id": "QB-05578",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K_EXC",
+   "audit_note_fa": "لنفادنوپاتی منفرد و بدون التهاب گردنی: توکسوپلاسموز در چارچوب برخی منابع پاسخ پذیرفته است ولی بیماری خراش گربه رقیب قوی است."
+  },
+  {
+   "part": 25,
+   "local_question": 105,
+   "id": "QB-05592",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "کهیر خارج از طیف اریتم مولتیفرم/استیونس-جانسون/توکسیک اپیدرمال نکروز است."
+  },
+  {
+   "part": 25,
+   "local_question": 106,
+   "id": "QB-05593",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "در سندرم همولیتیک-اورمیک، تزریق پلاکت منع نسبی دارد و گزینهٔ نادرست درمانی است."
+  },
+  {
+   "part": 25,
+   "local_question": 107,
+   "id": "QB-05594",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "آپگار دقیقهٔ پنج برابر ۶ عامل خطر شنوایی محسوب نمیشود؛ وزن ۱۲۰۰ گرم، بیلی روبین بالای ۲۰ و مننژیت عوامل خطرند."
+  },
+  {
+   "part": 25,
+   "local_question": 121,
+   "id": "QB-05608",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "با چهار سال سابقهٔ دیابت، معاینهٔ سالیانهٔ چشم پزشکی توصیهٔ درست است."
+  },
+  {
+   "part": 25,
+   "local_question": 129,
+   "id": "QB-05616",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "هیپوناترمی با حجم ادرار طبیعی و فشار خون طبیعی در مننژیت = SIADH و درمانش محدودیت مایع است."
+  },
+  {
+   "part": 25,
+   "local_question": 135,
+   "id": "QB-05622",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "استفراغ مکرر با وزن پایین و بلع باریم طبیعی: آزمایش درمانی با مهارکنندهٔ پمپ پروتون اقدام بعدی است."
+  },
+  {
+   "part": 25,
+   "local_question": 139,
+   "id": "QB-05626",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "گالاکتوزمی تنها مورد مانع شیردهی در این فهرست است."
+  },
+  {
+   "part": 25,
+   "local_question": 143,
+   "id": "QB-05630",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "علائم دو روز در هفته و دو شب در ماه = آسم پایدار خفیف و درمانش کورتیکواستروئید استنشاقی با دوز پایین روزانه است."
+  },
+  {
+   "part": 25,
+   "local_question": 144,
+   "id": "QB-05631",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "شمارش معیارهای جونز با قاعدهٔ «آرترالژی تنها وقتی مینور شمرده میشود که آرتریت ماژور نباشد» به دو ماژور و سه مینور میرسد."
+  },
+  {
+   "part": 25,
+   "local_question": 157,
+   "id": "QB-05644",
+   "year": "۱۳۹۴",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "ابتلا هر دو جنس در سه نسل متوالی الگوی اتوزوم غالب است."
+  },
+  {
+   "part": 25,
+   "local_question": 162,
+   "id": "QB-05649",
+   "year": "۱۳۹۵",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "باز کردن در، نشستن روی صندلی و درک مفهوم «امروز» با ۲۴ ماهگی سازگار است."
+  },
+  {
+   "part": 25,
+   "local_question": 164,
+   "id": "QB-05651",
+   "year": "۱۳۹۵",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "هیپوناترمی با پتاسیم طبیعی در ضربه به سر = SIADH و درمانش محدودیت مایع است."
+  },
+  {
+   "part": 25,
+   "local_question": 166,
+   "id": "QB-05653",
+   "year": "۱۳۹۵",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "سوختگی و اورمی و کمبود روی از علل ثانویهٔ نقص ایمنیاند؛ کمبود آهن گزینهٔ مستثناست."
+  },
+  {
+   "part": 25,
+   "local_question": 167,
+   "id": "QB-05654",
+   "year": "۱۳۹۵",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "نوزاد ۱۵۰۰ گرمی با بیلی روبین ۱۵ در روز دوم، آستانهٔ تعویض خون را رد میکند."
+  },
+  {
+   "part": 25,
+   "local_question": 175,
+   "id": "QB-05662",
+   "year": "۱۳۹۵",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "در هماچوری میکروسکوپی بدون علامت، کشت ادرار گام تشخیصی اول است."
+  },
+  {
+   "part": 25,
+   "local_question": 189,
+   "id": "QB-05676",
+   "year": "۱۳۹۵",
+   "month": "شهریور",
+   "audit_verdict": "K_EXC",
+   "audit_note_fa": "کودک با زردی شدید و آسیت و انسفالوپاتی، نارسایی حاد کبد است و تجویز پلاسمای تازه منجمدشده در خونریزی/کواگولوپاتی جایگاه دارد؛ مقادیر آزمایشگاهی در متن موجود نیست."
+  },
+  {
+   "part": 25,
+   "local_question": 192,
+   "id": "QB-05679",
+   "year": "۱۳۹۵",
+   "month": "شهریور",
+   "audit_verdict": "K_EXC",
+   "audit_note_fa": "کودک ۴ ماههٔ واکسینهنشده باید واکسنهای پایه (بثژ، پنتاوالان، فلج اطفال) را دریافت کند؛ ترکیب گزینهٔ ۳ نزدیکترین به برنامهٔ کشوری است."
+  },
+  {
+   "part": 25,
+   "local_question": 198,
+   "id": "QB-05685",
+   "year": "۱۳۹۵",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "نشستن بدون کمک در ششماهگی مهارت مورد انتظار است (گزینهٔ ۹ برای نشستن مستقل و بلند شدن است)."
+  },
+  {
+   "part": 25,
+   "local_question": 200,
+   "id": "QB-05687",
+   "year": "۱۳۹۵",
+   "month": "شهریور",
+   "audit_verdict": "K_EXC",
+   "audit_note_fa": "سالbutamol استنشاقی داروی خط اول حملهٔ آسم است که در گزینهها نیست؛ در این فهرست کورتیکواستروئید سیستمیک منطقیترین گزینه است."
+  },
+  {
+   "part": 27,
+   "local_question": 23,
+   "id": "QB-05950",
+   "year": "۱۳۹۷",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "واکسنهای برنامهٔ کشوری این شیرخوار (فلج اطفال و سهگانه) تحت تأثیر IVIG نیستند؛ تأخیر بهخاطر IVIG تنها به واکسنهای زندهٔ ویروسی مانند MMR مربوط است که در این سن تمام شدهاند."
+  },
+  {
+   "part": 27,
+   "local_question": 139,
+   "id": "QB-06068",
+   "year": "۱۴۰۰",
+   "month": "اسفند",
+   "audit_verdict": "K_EXC",
+   "audit_note_fa": "لیتیوم با پایش سطح دارویی در شیردهی قابل ادامه است؛ تتراسایکلین، بروموکریپتین و آگونیست اوپیوئید در این فهرست مناسب شیردهی نیستند."
+  },
+  {
+   "part": 27,
+   "local_question": 195,
+   "id": "QB-06126",
+   "year": "۱۴۰۰",
+   "month": "شهریور",
+   "audit_verdict": "K",
+   "audit_note_fa": "در خونریزی پس از یائسگی، ضخامت آندومتر ۶ میلیمتر اندیکاسیون بیوپسی است؛ کلید درست است."
+  },
+  {
+   "part": 28,
+   "local_question": 8,
+   "id": "QB-06160",
+   "year": "۱۴۰۳",
+   "month": "آذر",
+   "audit_verdict": "K_EXC",
+   "audit_note_fa": "تعریف کتابی «توقف نزول» = عدم نزول در مرحلهٔ دوم پس از یک ساعت فشار (گزینهٔ ۲)؛ در دوزای اپیدورال آستانههای کشش طولانیتر میشوند."
+  },
+  {
+   "part": 28,
+   "local_question": 55,
+   "id": "QB-06237",
+   "year": "۱۳۹۶",
+   "month": "آبان",
+   "audit_verdict": "K_EXC",
+   "audit_note_fa": "در تشنج مقاوم به سولفات منیزیم ابتدا دوز اضافی منیزیم مطرح است که در گزینهها نیست؛ آموباربیتال سدیم (گزینهٔ ۳) طبق منابع مرجع از گزینههای بعدی و پذیرفتهشده است."
+  },
+  {
+   "part": 28,
+   "local_question": 57,
+   "id": "QB-06239",
+   "year": "۱۳۹۸",
+   "month": "آذر",
+   "audit_verdict": "K",
+   "audit_note_fa": "فیبروآدنوم تأییدشده با FNA در زن جوان، پیگیری (گزینهٔ ۳) درمان درست است."
+  },
+  {
+   "part": 28,
+   "local_question": 66,
+   "id": "QB-06248",
+   "year": "۱۳۹۸",
+   "month": "آذر",
+   "audit_verdict": "K",
+   "audit_note_fa": "تکرار OCT پس از افت متغیر به دنبال انقباض، اقدام نادرست است (گزینهٔ ۱) و سایر گزینهها پذیرفتهاند."
+  },
+  {
+   "part": 28,
+   "local_question": 94,
+   "id": "QB-06276",
+   "year": "۱۳۹۷",
+   "month": "اردیبهشت",
+   "audit_verdict": "K",
+   "audit_note_fa": "آمنورهٔ ثانویه با FSH بالا در زن ۴۲ ساله = نارسایی تخمدان (گزینهٔ ۱)؛ متن گزینه مخدوش است."
+  },
+  {
+   "part": 28,
+   "local_question": 151,
+   "id": "QB-06333",
+   "year": "۱۳۹۳",
+   "month": "اسفند",
+   "audit_verdict": "K",
+   "audit_note_fa": "مانور سوم لئوپولد برای تعیین نزول و ارزیابی فلکسیون/اکستنسیون سر جنین است."
+  }
+ ]
+}

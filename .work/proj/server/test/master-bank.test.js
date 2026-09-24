@@ -281,6 +281,24 @@ const round54Baseline = JSON.parse(readFileSync(join(here, "fixtures/round54-pre
 // continuation, captured from the untouched payload before its edit,
 // chained exactly like round50/51/52/53/54.
 const round55Baseline = JSON.parse(readFileSync(join(here, "fixtures/round55-preservation.json"), "utf8"));
+
+// round57 (deferred-queue rows whose audit verdict was K/K_EXC, i.e. the key is
+// sound) is the next versioned continuation: 55 queued rows in parts 22, 23, 24,
+// 25, 27 and 28 were enriched without touching a single key, stem or option.
+// Earlier suites must therefore tolerate those 55 rows changing their four
+// educational fields while every protected field stays identical.
+const round57Baseline = JSON.parse(readFileSync(join(here, "fixtures/round57-preservation.json"), "utf8"));
+const ROUND57_PARTS = ["22", "23", "24", "25", "27", "28"];
+const round57Row = (part, number) => {
+  const list = round57Baseline.edited_numbers[String(part)];
+  return Boolean(list && list.includes(number));
+};
+const stripEducational = (row) => {
+  const copy = structuredClone(row);
+  delete copy.explanation_fa; delete copy.options_why_fa;
+  for (const name of ["lead_fa", "golden_fa", "points_fa"]) delete copy.micro[name];
+  return copy;
+};
 // New part25 edits are allowed only if its PRE-EDIT raw hash equals each
 // historical fixture. The round50 suite then protects every field/record.
 function checkHistoricalOtherBank(name, expected) {
@@ -304,6 +322,11 @@ function checkHistoricalOtherBank(name, expected) {
     // except 8 deferred), but its PRE-EDIT hash (round55 fixture) must equal
     // the history.
     expect(round55Baseline.original_file_hashes[`tools/master-bank/${name}`], name).toBe(expected);
+  } else if (ROUND57_PARTS.some((number) => name === `import-payload.master-preint.part${number}.json`)) {
+    // round57 continuation: these six files were re-written for 55 queued rows
+    // (sound keys), so their PRE-EDIT hashes (round57 fixture) must equal the
+    // history.
+    expect(round57Baseline.original_file_hashes[`tools/master-bank/${name}`], name).toBe(expected);
   } else {
     expect(createHash("sha256").update(readFileSync(join(bank, name))).digest("hex"), name).toBe(expected);
   }
@@ -349,6 +372,14 @@ describe("round47 exact editorial boundaries", () => {
           for (const key of ["lead_fa", "golden_fa", "points_fa"]) delete check.micro[key];
           expected = later.protected;
         }
+        if (round57Row(part, index + 1)) {
+          // round57 enriched this queued row (sound key); every protected field
+          // must still match the pre-round57 payload.
+          const before57 = round57Baseline.original_parts[String(part)].questions[index];
+          expect(stripEducational(q), baseline.id).toEqual(stripEducational(before57));
+          expect(q.correct_index, baseline.id).toBe(before57.correct_index);
+          return;
+        }
         expect(digest(check), baseline.id).toBe(expected);
       });
     }
@@ -360,6 +391,7 @@ describe("round47 exact editorial boundaries", () => {
     expect(fixture.deferred.sort()).toEqual(["22:142", "22:145", "22:166", "22:174", "22:214", "23:32"].sort());
     for (const id of fixture.deferred) {
       const [part, number] = id.split(":").map(Number);
+      if (round57Row(part, number)) continue; // round57 enriched it under the sound-key audit
       expect(digest(current[part].questions[number - 1])).toBe(fixture.parts[part].questions[number - 1].full);
       expect(fixture.parts[part].questions[number - 1].edited).toBe(false);
     }
@@ -455,6 +487,14 @@ describe("round48 exact editorial boundaries", () => {
           for (const key of ["lead_fa", "golden_fa", "points_fa"]) delete check.micro[key];
           expected = later.protected;
         }
+        if (round57Row(part, index + 1)) {
+          // round57 enriched this queued row (sound key); every protected field
+          // must still match the pre-round57 payload.
+          const before57 = round57Baseline.original_parts[String(part)].questions[index];
+          expect(stripEducational(q), id).toEqual(stripEducational(before57));
+          expect(q.correct_index, id).toBe(before57.correct_index);
+          return;
+        }
         expect(digest(check), id).toBe(expected);
       });
     }
@@ -469,6 +509,7 @@ describe("round48 exact editorial boundaries", () => {
       const [part, number] = id.split(":").map(Number);
       const baseline = fixture.parts[part].questions[number - 1];
       expect(baseline.edited).toBe(false);
+      if (round57Row(part, number)) continue; // round57 enriched it under the sound-key audit
       expect(digest(current[part].questions[number - 1]), id).toBe(baseline.full);
     }
   });
@@ -543,6 +584,14 @@ describe("round49 exact editorial boundaries", () => {
           delete check.options_why_fa;
           for (const key of ["lead_fa", "golden_fa", "points_fa"]) delete check.micro[key];
         }
+        if (round57Row(part, index + 1)) {
+          // round57 enriched this queued row (sound key); protected fields must
+          // still match the pre-round57 payload.
+          const before57 = round57Baseline.original_parts[String(part)].questions[index];
+          expect(stripEducational(q), id).toEqual(stripEducational(before57));
+          expect(q.correct_index, id).toBe(before57.correct_index);
+          return;
+        }
         expect(digest(check), id).toBe(baseline.protected);
       });
     }
@@ -557,6 +606,7 @@ describe("round49 exact editorial boundaries", () => {
       const [part, number] = id.split(":").map(Number);
       const baseline = fixture.parts[part].questions[number - 1];
       expect(baseline.edited).toBe(false);
+      if (round57Row(part, number)) continue; // round57 enriched it under the sound-key audit
       expect(digest(current[part].questions[number - 1]), id).toBe(baseline.full);
     }
   });
@@ -622,6 +672,8 @@ describe("round50 exact editorial boundaries", () => {
       if (edited.has(i+1)) {
         expect(protectedFields(q), `25:${i+1}`).toEqual(protectedFields(original[i]));
         expect(q).not.toEqual(original[i]); count++;
+      } else if (round57Row(25, i + 1)) {
+        expect(stripEducational(q), `round57 25:${i+1}`).toEqual(stripEducational(original[i]));
       } else expect(q, `untouched 25:${i+1}`).toEqual(original[i]);
     });
     expect(count).toBe(160);
@@ -658,6 +710,11 @@ describe("round50 exact editorial boundaries", () => {
     expect(queue.deferred.slice(41).map(x=>x.local_question)).toEqual(newlyDeferred);
     for (const entry of queue.deferred.slice(41)) {
       expect(entry.part).toBe(25);
+      if (round57Row(25, entry.local_question)) {
+        expect(stripEducational(body.questions[entry.local_question-1]))
+          .toEqual(stripEducational(f.original_part25.questions[entry.local_question-1]));
+        continue;
+      }
       expect(body.questions[entry.local_question-1]).toEqual(f.original_part25.questions[entry.local_question-1]);
       expect(entry.original_correct_index).toBe(body.questions[entry.local_question-1].correct_index);
     }
@@ -693,6 +750,12 @@ describe("round50 exact editorial boundaries", () => {
         // its PRE-EDIT hash (round55 fixture) must match this round50-era
         // snapshot.
         expect(round55Baseline.original_file_hashes[name], name).toBe(hash);
+        continue;
+      }
+      if (ROUND57_PARTS.some((number) => name.endsWith(`master-preint.part${number}.json`))) {
+        // round57 re-wrote these six files for 55 queued rows; their PRE-EDIT
+        // hashes (round57 fixture) must match this era's snapshot.
+        expect(round57Baseline.original_file_hashes[name], name).toBe(hash);
         continue;
       }
       expect(createHash("sha256").update(readFileSync(join(here,"../..",name))).digest("hex"),name).toBe(hash);
@@ -800,6 +863,12 @@ describe("round51 exact editorial boundaries", () => {
         expect(round55Baseline.original_file_hashes[name], name).toBe(hash);
         continue;
       }
+      if (ROUND57_PARTS.some((number) => name.endsWith(`master-preint.part${number}.json`))) {
+        // round57 re-wrote these six files for 55 queued rows; their PRE-EDIT
+        // hashes (round57 fixture) must match this era's snapshot.
+        expect(round57Baseline.original_file_hashes[name], name).toBe(hash);
+        continue;
+      }
       expect(createHash("sha256").update(readFileSync(join(here,"../..",name))).digest("hex"),name).toBe(hash);
     }
   });
@@ -843,6 +912,8 @@ describe("round52 exact editorial boundaries", () => {
           // deferred records); its PRE-EDIT snapshot must equal the rows
           // round52 left behind.
           expect(round53Baseline.original_parts["27"].questions[i], `chained untouched 27:${i + 1}`).toEqual(originalQuestions[i]);
+        } else if (round57Row(part, i + 1)) {
+          expect(stripEducational(q), `round57 ${part}:${i + 1}`).toEqual(stripEducational(originalQuestions[i]));
         } else expect(q, `untouched ${part}:${i + 1}`).toEqual(originalQuestions[i]);
       });
       expect(count).toBe(expectedScopes[part].length);
@@ -881,8 +952,16 @@ describe("round52 exact editorial boundaries", () => {
     const entry = queue.deferred[81];
     expect(entry.part).toBe(27); expect(entry.local_question).toBe(23);
     const body27 = JSON.parse(readFileSync(join(bank, "import-payload.master-preint.part27.json"), "utf8"));
-    expect(body27.questions[22]).toEqual(f.original_parts["27"].questions[22]);
-    expect(entry.original_correct_index).toBe(body27.questions[22].correct_index);
+    if (round57Row(27, 23)) {
+      // round57 enriched this queued row under the sound-key audit; its
+      // protected fields and key must still match the round52 snapshot.
+      expect(stripEducational(body27.questions[22]))
+        .toEqual(stripEducational(f.original_parts["27"].questions[22]));
+      expect(entry.original_correct_index).toBe(body27.questions[22].correct_index);
+    } else {
+      expect(body27.questions[22]).toEqual(f.original_parts["27"].questions[22]);
+      expect(entry.original_correct_index).toBe(body27.questions[22].correct_index);
+    }
   });
 
   it("keeps part26 rows 1-45 (round51 work) byte-identical to the fixture baseline", () => {
@@ -909,6 +988,12 @@ describe("round52 exact editorial boundaries", () => {
         // its PRE-EDIT hash (round55 fixture) must match this round52-era
         // snapshot.
         expect(round55Baseline.original_file_hashes[name], name).toBe(hash);
+        continue;
+      }
+      if (ROUND57_PARTS.some((number) => name.endsWith(`master-preint.part${number}.json`))) {
+        // round57 re-wrote these six files for 55 queued rows; their PRE-EDIT
+        // hashes (round57 fixture) must match this era's snapshot.
+        expect(round57Baseline.original_file_hashes[name], name).toBe(hash);
         continue;
       }
       expect(createHash("sha256").update(readFileSync(join(here, "../..", name))).digest("hex"), name).toBe(hash);
@@ -958,6 +1043,8 @@ describe("round53 exact editorial boundaries", () => {
           // round54 legitimately re-wrote part28 rows 6-220 (except its 19
           // deferred records); its PRE-EDIT baseline must equal this state.
           expect(round54Baseline.original_parts["28"].questions[i], `chained untouched 28:${i + 1}`).toEqual(originalQuestions[i]);
+        } else if (round57Row(part, i + 1)) {
+          expect(stripEducational(q), `round57 ${part}:${i + 1}`).toEqual(stripEducational(originalQuestions[i]));
         } else expect(q, `untouched ${part}:${i + 1}`).toEqual(originalQuestions[i]);
       });
       expect(count).toBe(expectedScopes[part].length);
@@ -999,6 +1086,11 @@ describe("round53 exact editorial boundaries", () => {
     expect(newEntries.map((e) => e.local_question).sort((a, b) => a - b)).toEqual(deferred27);
     for (const entry of newEntries) {
       expect(entry.part).toBe(27);
+      if (round57Row(27, entry.local_question)) {
+        expect(stripEducational(body27.questions[entry.local_question - 1]))
+          .toEqual(stripEducational(f.original_parts["27"].questions[entry.local_question - 1]));
+        continue;
+      }
       expect(body27.questions[entry.local_question - 1]).toEqual(f.original_parts["27"].questions[entry.local_question - 1]);
       expect(entry.original_correct_index).toBe(body27.questions[entry.local_question - 1].correct_index);
     }
@@ -1010,6 +1102,11 @@ describe("round53 exact editorial boundaries", () => {
       .toBe(f.original_file_hashes["tools/master-bank/import-payload.master-preint.part26.json"]);
     const body27 = JSON.parse(readFileSync(join(bank, "import-payload.master-preint.part27.json"), "utf8"));
     for (const n of Array.from({ length: 25 }, (_, i) => i + 1)) {
+      if (round57Row(27, n)) {
+        expect(stripEducational(body27.questions[n - 1]), `round57 earlier 27:${n}`)
+          .toEqual(stripEducational(f.original_parts["27"].questions[n - 1]));
+        continue;
+      }
       expect(body27.questions[n - 1], `earlier 27:${n}`).toEqual(f.original_parts["27"].questions[n - 1]);
     }
     expect(body26.questions).toHaveLength(220);
@@ -1026,6 +1123,12 @@ describe("round53 exact editorial boundaries", () => {
         // its PRE-EDIT hash (round55 fixture) must match this round53-era
         // snapshot.
         expect(round55Baseline.original_file_hashes[name], name).toBe(hash);
+        continue;
+      }
+      if (ROUND57_PARTS.some((number) => name.endsWith(`master-preint.part${number}.json`))) {
+        // round57 re-wrote these six files for 55 queued rows; their PRE-EDIT
+        // hashes (round57 fixture) must match this era's snapshot.
+        expect(round57Baseline.original_file_hashes[name], name).toBe(hash);
         continue;
       }
       expect(createHash("sha256").update(readFileSync(join(here, "../..", name))).digest("hex"), name).toBe(hash);
@@ -1066,6 +1169,8 @@ describe("round54 exact editorial boundaries", () => {
       if (edited.has(i + 1)) {
         expect(protectedFields(q), `28:${i + 1}`).toEqual(protectedFields(originalQuestions[i]));
         expect(q).not.toEqual(originalQuestions[i]); count++;
+      } else if (round57Row(28, i + 1)) {
+        expect(stripEducational(q), `round57 28:${i + 1}`).toEqual(stripEducational(originalQuestions[i]));
       } else expect(q, `untouched 28:${i + 1}`).toEqual(originalQuestions[i]);
     });
     expect(count).toBe(expectedScope.length);
@@ -1105,13 +1210,18 @@ describe("round54 exact editorial boundaries", () => {
     expect(newEntries.map((e) => e.local_question).sort((a, b) => a - b)).toEqual(deferred28);
     for (const entry of newEntries) {
       expect(entry.part).toBe(28);
+      if (round57Row(28, entry.local_question)) {
+        expect(stripEducational(body.questions[entry.local_question - 1]))
+          .toEqual(stripEducational(original.questions[entry.local_question - 1]));
+        continue;
+      }
       expect(body.questions[entry.local_question - 1]).toEqual(original.questions[entry.local_question - 1]);
       expect(entry.original_correct_index).toBe(body.questions[entry.local_question - 1].correct_index);
     }
   });
 
   it("keeps part27 (round53 work) and part28 rows 1-5 (round53 work) unchanged", () => {
-    expect(createHash("sha256").update(readFileSync(join(bank, "import-payload.master-preint.part27.json"))).digest("hex"))
+    expect(round57Baseline.original_file_hashes["tools/master-bank/import-payload.master-preint.part27.json"])
       .toBe(f.original_file_hashes["tools/master-bank/import-payload.master-preint.part27.json"]);
     for (const n of [1, 2, 3, 4, 5]) {
       expect(body.questions[n - 1], `earlier 28:${n}`).toEqual(original.questions[n - 1]);
@@ -1130,6 +1240,12 @@ describe("round54 exact editorial boundaries", () => {
         // its PRE-EDIT hash (round55 fixture) must match this round54-era
         // snapshot.
         expect(round55Baseline.original_file_hashes[name], name).toBe(hash);
+        continue;
+      }
+      if (ROUND57_PARTS.some((number) => name.endsWith(`master-preint.part${number}.json`))) {
+        // round57 re-wrote these six files for 55 queued rows; their PRE-EDIT
+        // hashes (round57 fixture) must match this era's snapshot.
+        expect(round57Baseline.original_file_hashes[name], name).toBe(hash);
         continue;
       }
       expect(createHash("sha256").update(readFileSync(join(here, "../..", name))).digest("hex"), name).toBe(hash);
@@ -1208,13 +1324,18 @@ describe("round55 exact editorial boundaries", () => {
     expect(newEntries.map((e) => e.local_question).sort((a, b) => a - b)).toEqual(deferred29);
     for (const entry of newEntries) {
       expect(entry.part).toBe(29);
+      if (round57Row(28, entry.local_question)) {
+        expect(stripEducational(body.questions[entry.local_question - 1]))
+          .toEqual(stripEducational(original.questions[entry.local_question - 1]));
+        continue;
+      }
       expect(body.questions[entry.local_question - 1]).toEqual(original.questions[entry.local_question - 1]);
       expect(entry.original_correct_index).toBe(body.questions[entry.local_question - 1].correct_index);
     }
   });
 
   it("keeps part28 (round54 work) unchanged", () => {
-    expect(createHash("sha256").update(readFileSync(join(bank, "import-payload.master-preint.part28.json"))).digest("hex"))
+    expect(round57Baseline.original_file_hashes["tools/master-bank/import-payload.master-preint.part28.json"])
       .toBe(f.original_file_hashes["tools/master-bank/import-payload.master-preint.part28.json"]);
   });
 
@@ -1224,7 +1345,115 @@ describe("round55 exact editorial boundaries", () => {
     expect(readdirSync(bank).filter((n) => PART_RE.test(n)).sort()).toEqual(names.map((n) => n.split("/").at(-1)).sort());
     for (const [name, hash] of Object.entries(f.original_file_hashes)) {
       if (name.endsWith("master-preint.part29.json")) continue;
+      if (ROUND57_PARTS.some((number) => name.endsWith(`master-preint.part${number}.json`))) {
+        // round57 re-wrote these six files for 55 queued rows; their PRE-EDIT
+        // hashes (round57 fixture) must match this era's snapshot.
+        expect(round57Baseline.original_file_hashes[name], name).toBe(hash);
+        continue;
+      }
       expect(createHash("sha256").update(readFileSync(join(here, "../..", name))).digest("hex"), name).toBe(hash);
+    }
+  });
+});
+
+// round57 fixture captured in this workspace before the deferred-queue
+// enrichment: 55 queued rows (audit verdicts K/K_EXC, i.e. the printed key is
+// sound) in parts 22, 23, 24, 25, 27 and 28 received explanation/options_why/
+// micro content. No key, stem or option was touched, and the remaining 106
+// queued rows are byte-identical to the round55 release.
+describe("round57 deferred-queue enrichment boundaries", () => {
+  const f = round57Baseline;
+  const queue = JSON.parse(readFileSync(join(here, "../../docs/round57-deferred.json"), "utf8"));
+  const previousQueue = JSON.parse(readFileSync(join(here, "../../docs/round55-deferred.json"), "utf8"));
+  const enriched = f.edited_numbers;
+  const partFiles = { "22": 220, "23": 220, "24": 220, "25": 220, "27": 220, "28": 220 };
+
+  it("locks the 55-row scope and the 106-row queue that stays deferred", () => {
+    const ids = Object.entries(enriched).flatMap(([part, rows]) => rows.map((n) => `${part}:${n}`));
+    expect(ids).toHaveLength(55);
+    expect(new Set(ids).size).toBe(55);
+    expect(queue.cumulative_deferred_count).toBe(106);
+    expect(queue.enriched_count).toBe(55);
+    expect(queue.new_deferred_count).toBe(0);
+    expect(queue.deferred).toHaveLength(106);
+    const enrichedSet = new Set(ids);
+    const kept = previousQueue.deferred.filter((e) => !enrichedSet.has(`${e.part}:${e.local_question}`));
+    expect(queue.deferred).toEqual(kept);
+    const records = queue.enriched_from_queue.map((e) => `${e.part}:${e.local_question}`).sort();
+    expect(records).toEqual(ids.sort());
+  });
+
+  it("keeps every queued row that was not enriched byte-identical to the round55 release", () => {
+    for (const entry of queue.deferred) {
+      const body = JSON.parse(readFileSync(join(bank, `import-payload.master-preint.part${entry.part}.json`), "utf8"));
+      const snapshot = JSON.parse(readFileSync(join(here, `fixtures/round${entry.part === 29 ? 55 : 57}-preservation.json`), "utf8"));
+      const original = snapshot.original_parts[String(entry.part)] ?? snapshot.original_parts[String(entry.part)];
+      if (!original) continue;
+      const row = body.questions[entry.local_question - 1];
+      const before = original.questions[entry.local_question - 1];
+      expect(row, `${entry.part}:${entry.local_question}`).toEqual(before);
+      expect(row.correct_index).toBe(entry.original_correct_index);
+    }
+  });
+
+  it("enriched each of the 55 rows in place, without touching a key or any protected field", () => {
+    for (const [part, rows] of Object.entries(enriched)) {
+      const body = JSON.parse(readFileSync(join(bank, `import-payload.master-preint.part${part}.json`), "utf8"));
+      const original = f.original_parts[part];
+      expect(body.questions).toHaveLength(partFiles[part]);
+      for (const n of rows) {
+        const q = body.questions[n - 1];
+        const before = original.questions[n - 1];
+        expect(q.correct_index, `${part}:${n}`).toBe(before.correct_index);
+        expect(stripEducational(q), `${part}:${n}`).toEqual(stripEducational(before));
+        expect(q).not.toEqual(before);
+        expect(q.explanation_fa.length).toBeGreaterThan(300);
+        expect(q.options_why_fa).toHaveLength(4);
+        q.options_why_fa.forEach((why, i) => {
+          expect(why.startsWith(i === q.correct_index ? "گزینه صحیح: " : "دلیل رد گزینه: ")).toBe(true);
+          expect(why.length).toBeGreaterThan(30);
+        });
+        expect(new Set(q.options_why_fa).size).toBe(4);
+        expect(q.micro.lead_fa.length).toBeGreaterThan(20);
+        expect(q.micro.lead_fa.includes("\n")).toBe(false);
+        expect(q.micro.golden_fa.length).toBeGreaterThan(20);
+        expect(q.micro.points_fa).toHaveLength(4);
+        expect(new Set(q.micro.points_fa).size).toBe(4);
+      }
+    }
+    expect(Object.values(enriched).flatMap((rows) => rows)).toHaveLength(55);
+  });
+
+  it("ships 55 unique explanations and 55 unique leads for the enriched rows", () => {
+    const explanations = new Set(), leads = new Set();
+    let count = 0;
+    for (const [part, rows] of Object.entries(enriched)) {
+      const body = JSON.parse(readFileSync(join(bank, `import-payload.master-preint.part${part}.json`), "utf8"));
+      for (const n of rows) {
+        const q = body.questions[n - 1];
+        explanations.add(q.explanation_fa); leads.add(q.micro.lead_fa); count++;
+      }
+    }
+    expect(count).toBe(55);
+    expect(explanations.size).toBe(55);
+    expect(leads.size).toBe(55);
+  });
+
+  it("keeps the other 48 banks byte-identical", () => {
+    const names = Object.keys(f.original_file_hashes);
+    expect(names).toHaveLength(54);
+    expect(readdirSync(bank).filter((n) => PART_RE.test(n)).sort()).toEqual(names.map((n) => n.split("/").at(-1)).sort());
+    for (const [name, hash] of Object.entries(f.original_file_hashes)) {
+      if (ROUND57_PARTS.some((number) => name.endsWith(`master-preint.part${number}.json`))) continue;
+      expect(createHash("sha256").update(readFileSync(join(here, "../..", name))).digest("hex"), name).toBe(hash);
+    }
+  });
+
+  it("chains the six re-written payloads back through the round55 release", () => {
+    for (const part of ROUND57_PARTS) {
+      const name = `tools/master-bank/import-payload.master-preint.part${part}.json`;
+      expect(round57Baseline.original_file_hashes[name], name)
+        .toBe(round55Baseline.original_file_hashes[name]);
     }
   });
 });
