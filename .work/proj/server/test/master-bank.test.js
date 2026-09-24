@@ -1560,3 +1560,68 @@ describe("round58 remediation pack (prepared, not applied)", () => {
     expect(readFileSync(join(bank, "import-payload.master-preint.part27.json")).length).toBeGreaterThan(0);
   });
 });
+
+// round59 is a review-only follow-on for the 27 rows that round58 classified as
+// needing a content rewrite. It freezes the evidence and recovery route without
+// permitting a stem, option, or key mutation. The per-row fingerprint includes
+// those protected fields, so an eventual editorial round must intentionally
+// renew this review instead of silently drifting past it.
+describe("round59 broken-content recovery review (not applied)", () => {
+  const read = (name) => JSON.parse(readFileSync(join(here, "../../docs", name), "utf8"));
+  const broken = read("round58-broken-rows.json");
+  const recovery = read("round59-broken-recovery.json");
+  const payloads = {};
+  const row = (part, number) => {
+    payloads[part] ??= JSON.parse(readFileSync(join(bank, `import-payload.master-preint.part${part}.json`), "utf8"));
+    return payloads[part].questions[number - 1];
+  };
+  const fingerprint = (question, defect) => createHash("sha256")
+    .update([
+      question.tags[0],
+      question.question_fa,
+      ...question.options_fa,
+      String(question.correct_index),
+      defect,
+    ].join("\n"), "utf8")
+    .digest("hex");
+
+  it("covers exactly the 27 broken rows with a safe, explicit recovery route", () => {
+    expect(recovery.status).toBe("reviewed_not_applied");
+    expect(recovery.count).toBe(27);
+    expect(recovery.rows).toHaveLength(27);
+    expect(recovery.source_artifact_required).toBe(13);
+    expect(recovery.editorial_rewrite_required).toBe(14);
+    expect(recovery.authorization_fa).toContain("هیچ سؤال");
+
+    const reviewed = recovery.rows.map((entry) => `${entry.part}:${entry.local_question}`);
+    const originallyBroken = broken.rows.map((entry) => `${entry.part}:${entry.local_question}`);
+    expect(reviewed).toEqual(originallyBroken);
+    expect(new Set(reviewed).size).toBe(27);
+    expect(recovery.rows.filter((entry) => entry.route === "source_artifact_required")).toHaveLength(13);
+    expect(recovery.rows.filter((entry) => entry.route === "editorial_rewrite_required")).toHaveLength(14);
+  });
+
+  it("binds every review to the current protected record and confirms no local source artifact was invented", () => {
+    const byBrokenRow = new Map(broken.rows.map((entry) => [`${entry.part}:${entry.local_question}`, entry]));
+    for (const entry of recovery.rows) {
+      const id = `${entry.part}:${entry.local_question}`;
+      const original = byBrokenRow.get(id);
+      const question = row(entry.part, entry.local_question);
+      expect(original, id).toBeTruthy();
+      expect(question.tags, id).toContain(entry.id);
+      expect(entry.defect_fa, id).toBe(original.defect_fa);
+      expect(entry.current_index, id).toBe(question.correct_index);
+      expect(entry.current_option_fa, id).toBe(question.options_fa[question.correct_index]);
+      expect(entry.record_fingerprint_sha256, id).toBe(fingerprint(question, entry.defect_fa));
+      expect(entry.content_mutation_allowed, id).toBe(false);
+      expect(entry.status, id).toBe("reviewed_not_applied");
+      expect(entry.authorization_required_fa, id).toContain("مجوز مستقل");
+      expect(entry.evidence_fa.length, id).toBeGreaterThan(45);
+      expect(entry.next_step_fa.length, id).toBeGreaterThan(45);
+      expect(entry.archive_locator, id).toMatch(/^https:\/\/www\.medqb\.ir\//);
+      expect(question.image ?? null, id).toBeNull();
+      expect(question.media ?? null, id).toBeNull();
+      expect(question.micro?.media ?? null, id).toBeNull();
+    }
+  });
+});
