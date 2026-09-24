@@ -20,6 +20,12 @@ Rows with a wrong/outdated key (KEY_WRONG/OUTDATED), damaged stems (BROKEN) or o
 - 55 unique explanations and 55 unique leads; every key marker machine-verified against
   `correct_index` before the payload edit.
 
+## Post-publication fix
+The first archive shipped a Hungarian filler word («után») in the last option rationale of
+row 28:66. It was replaced with «پس از این آزمون», the tool chain (`gen_round57_tools.py` →
+`enrich_round57.py`) was re-run, and the whole suite plus a full non-Persian-token scan were
+re-executed clean. The archive below is the corrected build; the earlier sha256 is retired.
+
 ## Verification
 - `npx vitest run test/master-bank.test.js` → **65/65 green**, including the new round57 boundary suite
   (scope, cross-fixture chain, remaining 106 rows byte-identical) and the updated earlier-era suites.
@@ -27,8 +33,8 @@ Rows with a wrong/outdated key (KEY_WRONG/OUTDATED), damaged stems (BROKEN) or o
 - `node scripts/check-release-zip.mjs` passed: 54 bank payloads, required root files, 79 feature markers.
 
 ## Release
-- `MED-School-100-round57.zip` — 21,765,413 B, **1004 files**
-- sha256: `ac11e79fa6ef050a789a939404d95cedb4880199b2c28af24bbf132980489c86`
+- `MED-School-100-round57.zip` — 21,765,414 B, **1004 files**
+- sha256: `af0f056a276a85329904a6d8cd9d49a02b98e7d20568af59919b81ded8f9c23d` (corrected build)
 - Previous `MED-School-100-round55.zip` deleted (workspace-storage policy).
 
 ## Still waiting for an explicit decision
