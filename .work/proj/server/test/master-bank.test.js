@@ -22,6 +22,7 @@
 import { describe, it, expect } from "vitest";
 import { createHash } from "node:crypto";
 import { readFileSync, readdirSync, existsSync } from "fs";
+import { spawnSync } from "node:child_process";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 
@@ -1455,5 +1456,107 @@ describe("round57 deferred-queue enrichment boundaries", () => {
       expect(round57Baseline.original_file_hashes[name], name)
         .toBe(round55Baseline.original_file_hashes[name]);
     }
+  });
+});
+
+// round58 remediation pack: prepared after the round56 audit and deliberately
+// NOT applied. The pack binds every one of the 106 queued rows to a verdict —
+// 58 rows with a wrong printed key (proposal ready), 8 rows whose supporting
+// guideline drifted, 27 rows that need a content rewrite and 13 rows that need
+// the original booklet. The tests below keep the pack and the shipped payloads
+// in step: while no docs/round58-key-application.json exists every payload must
+// still carry the *old* index; the moment that trail file appears, every row it
+// lists must carry the corrected one instead.
+describe("round58 remediation pack (prepared, not applied)", () => {
+  const read = (name) => JSON.parse(readFileSync(join(here, "../../docs", name), "utf8"));
+  const proposals = read("round58-key-proposals.json");
+  const outdated = read("round58-outdated-rows.json");
+  const broken = read("round58-broken-rows.json");
+  const disputed = read("round58-disputed-rows.json");
+  const queue = read("round57-deferred.json");
+  const trailPath = join(here, "../../docs/round58-key-application.json");
+  const trail = existsSync(trailPath) ? JSON.parse(readFileSync(trailPath, "utf8")) : null;
+  const appliedTo = new Map((trail?.rows ?? []).map((row) => [`${row.part}:${row.local_question}`, row.to]));
+  const payloads = {};
+  const row = (part, number) => {
+    payloads[part] ??= JSON.parse(readFileSync(join(bank, `import-payload.master-preint.part${part}.json`), "utf8"));
+    return payloads[part].questions[number - 1];
+  };
+
+  it("covers the whole 106-row queue with exactly one verdict per row", () => {
+    expect(proposals.status).toBe("proposed_not_applied");
+    expect(proposals.count).toBe(58);
+    expect(proposals.proposals).toHaveLength(58);
+    expect(outdated.rows).toHaveLength(8);
+    expect(broken.rows).toHaveLength(27);
+    expect(disputed.rows).toHaveLength(13);
+    const covered = [...proposals.proposals, ...outdated.rows, ...broken.rows, ...disputed.rows]
+      .map((entry) => `${entry.part}:${entry.local_question}`).sort();
+    const queued = queue.deferred.map((entry) => `${entry.part}:${entry.local_question}`).sort();
+    expect(covered).toEqual(queued);
+    expect(new Set(covered).size).toBe(106);
+  });
+
+  it("keeps every proposed key inside its own row and unapplied unless the trail says otherwise", () => {
+    let pending = 0;
+    for (const entry of proposals.proposals) {
+      const id = `${entry.part}:${entry.local_question}`;
+      const question = row(entry.part, entry.local_question);
+      expect(entry.proposed_index, id).toBeGreaterThanOrEqual(0);
+      expect(entry.proposed_index, id).toBeLessThanOrEqual(3);
+      expect(entry.proposed_index, id).not.toBe(entry.current_index);
+      expect(entry.proposed_option_fa, id).toBe(question.options_fa[entry.proposed_index]);
+      expect(entry.status, id).toBe("verified");
+      if (appliedTo.has(id)) {
+        expect(question.correct_index, id).toBe(entry.proposed_index);
+      } else {
+        expect(question.correct_index, id).toBe(entry.current_index);
+        pending++;
+      }
+      expect(question.correct_index, id).not.toBeNull();
+    }
+    expect(pending).toBe(trail ? 0 : 58);
+  });
+
+  it("splits the guideline-drift rows into six ready moves and two open questions", () => {
+    const ready = outdated.rows.filter((entry) => entry.apply);
+    const open = outdated.rows.filter((entry) => !entry.apply);
+    expect(ready).toHaveLength(6);
+    expect(open).toHaveLength(2);
+    for (const entry of ready) {
+      const id = `${entry.part}:${entry.local_question}`;
+      const question = row(entry.part, entry.local_question);
+      expect(entry.proposed_index, id).not.toBe(entry.current_index);
+      if (appliedTo.has(id)) expect(question.correct_index, id).toBe(entry.proposed_index);
+      else expect(question.correct_index, id).toBe(entry.current_index);
+    }
+    for (const entry of open) {
+      expect(entry.proposed_index, `${entry.part}:${entry.local_question}`).toBeNull();
+    }
+    expect(outdated.decided).toBe(6);
+    expect(outdated.open).toBe(2);
+  });
+
+  it("records why the 27 broken and 13 disputed rows cannot be fixed by a key move", () => {
+    for (const entry of [...broken.rows, ...disputed.rows]) {
+      const text = entry.defect_fa ?? entry.open_question_fa;
+      expect(text, `${entry.part}:${entry.local_question}`).toBeTruthy();
+      expect(text.length, `${entry.part}:${entry.local_question}`).toBeGreaterThan(30);
+    }
+    expect(broken.status).toBe("needs_content_rewrite");
+    expect(disputed.status).toBe("needs_source_document");
+    expect(broken.rows.map((entry) => `${entry.part}:${entry.local_question}`)).toContain("25:136");
+    expect(disputed.rows.map((entry) => `${entry.part}:${entry.local_question}`)).toContain("27:185");
+  });
+
+  it("keeps the round58 tooling honest: the apply script refuses a stale pack", () => {
+    const script = readFileSync(join(here, "../../tools/apply_round58_keys.py"), "utf8");
+    expect(script).toContain("--apply");
+    expect(script).toContain("assert question['correct_index'] == row['current_index']");
+    expect(script).toContain("Nothing was written");
+    const dryRun = spawnSync("python3", [join(here, "../../tools/apply_round58_keys.py")], { encoding: "utf8" });
+    expect(dryRun.status, dryRun.stderr).toBe(0);
+    expect(dryRun.stdout).toContain(trail ? "key move(s)" : "Nothing was written");
+    expect(readFileSync(join(bank, "import-payload.master-preint.part27.json")).length).toBeGreaterThan(0);
   });
 });
