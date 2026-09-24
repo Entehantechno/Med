@@ -1,0 +1,16 @@
+written: .work/proj/docs/round63-rewrite-specification.json
+written: .work/round63-rewrite-specification/rewrite-specification-brief.md
+canonical payloads changed: no
+test_curator_is_read_only_for_all_relevant_canonical_payloads (__main__.Round63RewriteSpecificationTest.test_curator_is_read_only_for_all_relevant_canonical_payloads) ... ok
+test_each_snapshot_still_exactly_matches_the_canonical_question (__main__.Round63RewriteSpecificationTest.test_each_snapshot_still_exactly_matches_the_canonical_question) ... ok
+test_human_brief_explains_the_nonapplying_contract (__main__.Round63RewriteSpecificationTest.test_human_brief_explains_the_nonapplying_contract) ... ok
+test_no_key_recommendation_or_replacement_text_is_smuggled_into_the_dossier (__main__.Round63RewriteSpecificationTest.test_no_key_recommendation_or_replacement_text_is_smuggled_into_the_dossier) ... ok
+test_primary_blocker_and_priority_counts_are_complete (__main__.Round63RewriteSpecificationTest.test_primary_blocker_and_priority_counts_are_complete) ... ok
+test_queue_and_exclusions_stay_explicit (__main__.Round63RewriteSpecificationTest.test_queue_and_exclusions_stay_explicit) ... ok
+test_scope_is_all_and_only_the_27_prior_rewrite_records (__main__.Round63RewriteSpecificationTest.test_scope_is_all_and_only_the_27_prior_rewrite_records) ... ok
+test_sources_are_https_and_used_by_every_record (__main__.Round63RewriteSpecificationTest.test_sources_are_https_and_used_by_every_record) ... ok
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.284s
+
+OK

@@ -1,0 +1,1489 @@
+{
+  "schema_version": "round63-rewrite-specification/v1",
+  "status": "reviewed_not_applied",
+  "round": 63,
+  "review_date": "2026-09-24",
+  "language": "fa",
+  "scope": {
+    "round60_editorial_rewrite": 9,
+    "round61_editorial_rewrite": 12,
+    "round62_rewrite_or_ambiguity": 6,
+    "total": 27
+  },
+  "mode_fa": "مشخصات‌گذاری فقط‌خواندنی برای بازنویسی آینده؛ هیچ متن، گزینه، کلید یا غنی‌سازی payload تغییر نکرده است.",
+  "exclusions_fa": [
+    "۱۵ مورد منبع/آرتیفکت به‌علت فقدان دادهٔ اولیه در این بسته بازنویسی نشده‌اند.",
+    "۵۵ کاندیدای تغییر کلید دور۶۲، ۶ کاندیدای دور۶۰ و یک کاندیدای دور۶۱ خارج از دامنهٔ بازنویسی‌اند.",
+    "ردیف رفع تکرار گزینهٔ 25:136 خارج از این ۲۷ مورد و همچنان نیازمند مجوز مستقل ویرایش است."
+  ],
+  "primary_blocker_counts": {
+    "missing_or_corrupt_decision_data": 7,
+    "nonunique_or_undefined_construct": 10,
+    "protocol_safety_or_guideline_drift": 10
+  },
+  "action_priority_counts": {
+    "high": 14,
+    "medium": 13
+  },
+  "priority_policy_fa": "اولویت بالا یعنی خطر پروتکل/ایمنی، راهنمای تغییرکرده یا محاسبهٔ حساس؛ اولویت متوسط یعنی نقص سازه یا داده که باز هم پیش از استفادهٔ آموزشی باید بازنویسی شود. اولویت پایین در این بسته وجود ندارد.",
+  "publication_guardrails_fa": [
+    "هیچ `correct_index` پیشنهاد یا اعمال نشده است.",
+    "هیچ متن جایگزین برای `question_fa` یا `options_fa` در dossier ساخته نشده است.",
+    "هر بازنویسی آینده به مجوز صریح کاربر و بازبینی مستقل دوم نیاز دارد.",
+    "داده یا زمینهٔ غایب از حدس تکمیل نمی‌شود."
+  ],
+  "protected_payload_sections": {
+    "parts": [
+      23,
+      24,
+      25,
+      27,
+      28,
+      29
+    ],
+    "before_sha256": {
+      "23": "937b90c4792521ad4d5154773538659f481952334db22ed0fe281d6ea12e9e92",
+      "24": "fbfa78078cbf3c19026d349d592c642a5445404dba327da035ad3c9f33c9d072",
+      "25": "ee2b0b6a76bfb07ab5d34bee66ca6e372c5041e5c2452e35432766127475903d",
+      "27": "2715c6bc60c06c2fa4646d4a0ed4d4e0af7e64f1d34271124f5e24acb464e61f",
+      "28": "8cabf2c59eb3e8b5a298b3701e92c691556b3e2675f4ca1b802c72007ba649ad",
+      "29": "b77a4c482ea23dc2f4019a58eb1b23e04e77ff16619a8dffc36d00f4f7eae27d"
+    },
+    "after_sha256": {
+      "23": "937b90c4792521ad4d5154773538659f481952334db22ed0fe281d6ea12e9e92",
+      "24": "fbfa78078cbf3c19026d349d592c642a5445404dba327da035ad3c9f33c9d072",
+      "25": "ee2b0b6a76bfb07ab5d34bee66ca6e372c5041e5c2452e35432766127475903d",
+      "27": "2715c6bc60c06c2fa4646d4a0ed4d4e0af7e64f1d34271124f5e24acb464e61f",
+      "28": "8cabf2c59eb3e8b5a298b3701e92c691556b3e2675f4ca1b802c72007ba649ad",
+      "29": "b77a4c482ea23dc2f4019a58eb1b23e04e77ff16619a8dffc36d00f4f7eae27d"
+    },
+    "unchanged": true
+  },
+  "upstream_queue_status": {
+    "actionable_total_unchanged": 105,
+    "reason_fa": "این دور فقط قرارداد بازنویسی را روشن می‌کند؛ هیچ موردی از صف حل یا اعمال نشده است."
+  },
+  "reference_registry": {
+    "bcg_immunodeficiency": {
+      "organization": "منبع حرفه‌ای",
+      "title_fa": "عفونت منتشر ب‌ث‌ژ در شیرخوار دارای نقص ایمنی — مرور دسترس‌آزاد",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5420150/",
+      "use_fa": "برای پرهیز از واکسن زنده ب‌ث‌ژ وقتی سابقهٔ خانوادگی یا شواهد بالینی نگران‌کنندهٔ نقص ایمنی وجود دارد."
+    },
+    "breech_review": {
+      "organization": "Springer / J Perinatology",
+      "title_fa": "مرور عوامل خطر پرزانتاسیون بریچ",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9006544/",
+      "use_fa": "منبع شواهد یا قید بالینی در dossier بالادستی."
+    },
+    "cdc_egg_allergy": {
+      "organization": "منبع حرفه‌ای",
+      "title_fa": "واکسن آنفلوانزا و حساسیت به تخم‌مرغ — مرکز کنترل و پیشگیری بیماری آمریکا",
+      "url": "https://www.cdc.gov/flu/vaccines/egg-allergies.html",
+      "use_fa": "برای این نکته که حساسیت به تخم‌مرغ به‌تنهایی منع دریافت واکسن آنفلوانزا نیست."
+    },
+    "cdc_immunization_best_practices": {
+      "organization": "CDC",
+      "title_fa": "راهنمای عمومی بهترین‌روش واکسیناسیون",
+      "url": "https://www.cdc.gov/pinkbook/hcp/table-of-contents/chapter-2-general-best-practice-guidance.html",
+      "use_fa": "برای تفاوت دوام ایمنی واکسن زنده و کاهش تیتر/نیاز به یادآور در برخی واکسن‌های غیرفعال یا توکسوئیدی."
+    },
+    "cervical_uspstf": {
+      "organization": "USPSTF",
+      "title_fa": "غربالگری سرطان سرویکس",
+      "url": "https://www.uspreventiveservicestaskforce.org/uspstf/recommendation/cervical-cancer-screening",
+      "use_fa": "منبع شواهد یا قید بالینی در dossier بالادستی."
+    },
+    "contraception_cdc_mec": {
+      "organization": "CDC",
+      "title_fa": "معیارهای واجدشرایط‌بودن پیشگیری از بارداری",
+      "url": "https://www.cdc.gov/contraception/hcp/usmec/index.html",
+      "use_fa": "منبع شواهد یا قید بالینی در dossier بالادستی."
+    },
+    "developmental_milestones": {
+      "organization": "منبع حرفه‌ای",
+      "title_fa": "نقاط عطف تکاملی سه‌سالگی — مدلاین‌پلاس",
+      "url": "https://medlineplus.gov/ency/article/002014.htm",
+      "use_fa": "برای سازگاری مهارت‌های پله، خودمراقبتی و شناخت با حوالی سه‌سالگی، نه ماه‌های اول زندگی."
+    },
+    "figo_mole": {
+      "organization": "منبع حرفه‌ای",
+      "title_fa": "پیگیری پس از مول هیداتی‌فرم — مرور مبتنی بر راهنمای فدراسیون بین‌المللی زنان و زایمان",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7813445/",
+      "use_fa": "برای تفاوت پیگیری مول کامل و ناقص پس از طبیعی‌شدن تیتر هورمون بارداری."
+    },
+    "figo_vbac_2025": {
+      "organization": "FIGO",
+      "title_fa": "توصیه‌های عملی زایمان واژینال پس از سزارین",
+      "url": "https://obgyn.onlinelibrary.wiley.com/doi/10.1002/ijgo.70406",
+      "use_fa": "برای شایع‌بودن ناهنجاری ضربان قلب جنین در پارگی رحم و نیاز به زمینهٔ کامل برای تفسیر علائم مادری در TOLAC."
+    },
+    "growth_merck": {
+      "organization": "منبع حرفه‌ای",
+      "title_fa": "رشد جسمی شیرخوار و کودک — راهنمای حرفه‌ای مرک",
+      "url": "https://www.merckmanuals.com/professional/pediatrics/growth-and-development/physical-growth-of-infants-and-children",
+      "use_fa": "برای سرعت تقریبی وزن‌گیری ماه‌های نخست، کاهش وزن نوزادی و رشد سالانه پس از دو سالگی."
+    },
+    "hypernatraemia_rch": {
+      "organization": "منبع حرفه‌ای",
+      "title_fa": "هایپرناترمی در کودکان — راهنمای بیمارستان رویال چلدرنز ملبورن",
+      "url": "https://www.rch.org.au/clinicalguide/guideline_index/hypernatraemia/",
+      "use_fa": "برای این اصل که مایع نگهدارنده، کسری و اتلاف جاری باید جدا محاسبه شوند و اصلاح کسری آب معمولاً طی ۴۸ ساعت است."
+    },
+    "iron_response": {
+      "organization": "منبع حرفه‌ای",
+      "title_fa": "پاسخ به درمان کم‌خونی فقر آهن در کودک — مرور دسترس‌آزاد",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC9029079/",
+      "use_fa": "برای شروع رتیکولوسیتوز در حدود ۷۲ تا ۹۶ ساعت و تأخیر نسبی افزایش هموگلوبین."
+    },
+    "merck_conjunctivitis": {
+      "organization": "منبع حرفه‌ای",
+      "title_fa": "کونژونکتیویت ویروسی — راهنمای حرفه‌ای مرک",
+      "url": "https://www.merckmanuals.com/professional/eye-disorders/conjunctival-and-scleral-disorders/viral-conjunctivitis",
+      "use_fa": "برای هم‌پوشانی کموز، فوتوفوبی و حس جسم خارجی در طیف کونژونکتیویت ویروسی."
+    },
+    "nih_infant_hiv": {
+      "organization": "منبع حرفه‌ای",
+      "title_fa": "تشخیص اچ‌آی‌وی در شیرخوار و کودک — مؤسسهٔ ملی سلامت آمریکا",
+      "url": "https://clinicalinfo.hiv.gov/en/guidelines/perinatal/management-infants-diagnosis-hiv-infection-children",
+      "use_fa": "برای لزوم آزمون مولکولی ویروس در کودک زیر ۱۸ ماه و زمان‌بندی آزمون‌ها."
+    },
+    "nrp_aafp": {
+      "organization": "AAFP",
+      "title_fa": "احیای نوزادان",
+      "url": "https://www.aafp.org/pubs/afp/issues/2021/1000/p425.html",
+      "use_fa": "منبع شواهد یا قید بالینی در dossier بالادستی."
+    },
+    "pcos_2023_asrm": {
+      "organization": "ASRM / Monash",
+      "title_fa": "راهنمای مبتنی بر شواهد PCOS ۲۰۲۳",
+      "url": "https://www.asrm.org/globalassets/_asrm/practice-guidance/practice-guidelines/pdf/recommendations_from_the_2023_int_evidence-based_guideline_on_pcos.pdf",
+      "use_fa": "منبع شواهد یا قید بالینی در dossier بالادستی."
+    },
+    "pid_warning_signs": {
+      "organization": "منبع حرفه‌ای",
+      "title_fa": "ده نشانهٔ هشدار نقص ایمنی اولیه در کودک — بنیاد مشورتی جفری مدل",
+      "url": "https://immunodeficiency.ca/primary-immunodeficiency/10-warning-signs/",
+      "use_fa": "برای آستانه‌های چهار عفونت گوش، دو سینوزیت جدی و دو پنومونی در سال و نیز عفونت‌های عمقیِ راجعه."
+    },
+    "placenta_previa_merck": {
+      "organization": "Merck Manual Professional",
+      "title_fa": "پلاسنتا پرویا",
+      "url": "https://www.merckmanuals.com/professional/gynecology-and-obstetrics/antenatal-complications/placenta-previa",
+      "use_fa": "منبع شواهد یا قید بالینی در dossier بالادستی."
+    },
+    "pprom_smfm": {
+      "organization": "SMFM",
+      "title_fa": "PPROM پیش‌زیست و پری‌زیست",
+      "url": "https://assets.noviams.com/novi-file-uploads/smfm/Publications_and_Guidelines/Consults/PPROM_Final_Publication.pdf",
+      "use_fa": "منبع شواهد یا قید بالینی در dossier بالادستی."
+    },
+    "pregnancy_adnexal": {
+      "organization": "منبع حرفه‌ای",
+      "title_fa": "مدیریت توده‌های آدنکس در بارداری — مرور دسترس‌آزاد",
+      "url": "https://link.springer.com/article/10.1186/s10397-021-01084-9",
+      "use_fa": "برای وابستگی تصمیم به شکل سونوگرافی، علائم و پایداری توده و ترجیح پیگیری در تودهٔ خوش‌خیمِ بدون علامت."
+    },
+    "psgn_aap": {
+      "organization": "منبع حرفه‌ای",
+      "title_fa": "گلومرولونفریت حاد پس از استرپتوکوک در کودک — مرور آکادمی کودکان آمریکا",
+      "url": "https://publications.aap.org/pediatricsinreview/article/36/1/3/32223/Acute-Poststreptococcal-Glomerulonephritis-The",
+      "use_fa": "برای این نکته که در گلومرولونفریت پس‌استرپتوکوکیِ الیگوریک، کسر دفعی سدیم غالباً پایین است و نگه‌داشت سدیم رخ می‌دهد."
+    },
+    "septic_abortion_msd": {
+      "organization": "MSD Manual Professional",
+      "title_fa": "سقط سپتیک",
+      "url": "https://www.msdmanuals.com/professional/gynecology-and-obstetrics/early-pregnancy-disorders/septic-abortion",
+      "use_fa": "منبع شواهد یا قید بالینی در dossier بالادستی."
+    },
+    "sickle_genereviews": {
+      "organization": "منبع حرفه‌ای",
+      "title_fa": "بیماری سلول داسی‌شکل — ژن‌ریویوز/کتابخانهٔ ملی پزشکی آمریکا",
+      "url": "https://www.ncbi.nlm.nih.gov/sites/books/NBK1377/",
+      "use_fa": "برای این‌که هم هموزیگوت HbS و هم گونه‌های HbS/بتا‌تالاسمی نیازمند تفکیک با سنجش هموگلوبین یا آزمون مولکولی‌اند."
+    },
+    "stillbirth_acog": {
+      "organization": "منبع حرفه‌ای",
+      "title_fa": "مدیریت مرده‌زایی — کالج متخصصان زنان و زایمان آمریکا",
+      "url": "https://www.acog.org/clinical/clinical-guidance/obstetric-care-consensus/articles/2020/03/management-of-stillbirth",
+      "use_fa": "برای اجزای اصلی ارزیابی مرگ داخل‌رحمی: آسیب‌شناسی جفت، کالبدگشایی جنین و ارزیابی ژنتیک؛ بررسی جفت مفیدترین جزء منفرد است."
+    },
+    "uspstf_osteoporosis": {
+      "organization": "منبع حرفه‌ای",
+      "title_fa": "غربالگری پوکی استخوان برای پیشگیری از شکستگی — گروه خدمات پیشگیرانهٔ ایالات متحده",
+      "url": "https://www.uspreventiveservicestaskforce.org/uspstf/recommendation/osteoporosis-screening",
+      "use_fa": "برای این نکته که هم سیگار و هم مصرف زیاد الکل از عوامل خطر در زنان یائسهٔ زیر ۶۵ سال‌اند."
+    },
+    "vitamin_a_who": {
+      "organization": "منبع حرفه‌ای",
+      "title_fa": "ویتامین آ در شیرخوار و کودک — راهنمای سازمان جهانی بهداشت",
+      "url": "https://iris.who.int/server/api/core/bitstreams/af8ab64a-7d09-4789-af43-60ccd68a548d/content",
+      "use_fa": "برای وابستگی دوز به سن و تفاوت میان دوزهای ۱۰۰٬۰۰۰ و ۲۰۰٬۰۰۰ واحد بین‌المللی در گروه‌های سنی مختلف."
+    },
+    "was_genereviews": {
+      "organization": "منبع حرفه‌ای",
+      "title_fa": "درمان تظاهرهای سندرم ویسکوت–آلدریچ — ژن‌ریویوز/کتابخانهٔ ملی پزشکی آمریکا",
+      "url": "https://www.ncbi.nlm.nih.gov/sites/books/NBK1178/table/was.T.wiskottaldrich_syndrome_and_xlinke/",
+      "use_fa": "برای نقش پیوند سلول‌های بنیادی خون‌ساز در درمان و امکان بهبود ترومبوسیتوپنی با اسپلنکتومیِ انتخابی، همراه با خطر عفونت."
+    }
+  },
+  "rows": [
+    {
+      "part": 23,
+      "local_question": 88,
+      "id": "QB-05135",
+      "upstream_review": "round60",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "needs_editorial_rewrite",
+      "primary_blocker": "protocol_safety_or_guideline_drift",
+      "primary_blocker_fa": "پروتکل ایمنی یا تغییر راهنما",
+      "action_priority": "high",
+      "action_priority_fa": "بالا",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "تشخیص یا رد عفونت HIV در شیرخوارِ مواجهه‌یافته در حوالی تولد، بر پایهٔ روش تشخیصی جاری.",
+      "why_rewrite_fa": "الایزا و وسترن‌بلات در شیرخوار کم‌سن به‌دلیل آنتی‌بادی مادری، چارچوب تشخیصی قطعی فعلی نیستند؛ صرف تغییر کلید، پروتکل منسوخ را اصلاح نمی‌کند.",
+      "minimum_context_fa": [
+        "سن دقیق کودک و نوع مواجهه",
+        "وضعیت تغذیه با شیر مادر و آخرین مواجهه",
+        "نوع و زمان پایان پیشگیری/درمان ضدویروسی",
+        "روش مولکولی موردنظر و زمان‌بندی آزمون‌ها"
+      ],
+      "option_design_rules_fa": [
+        "همهٔ گزینه‌ها بر یک روش تشخیصی معاصر بنا شوند",
+        "حداقل یک برنامهٔ زمانی قابل‌راستی‌آزمایی و فقط یک پاسخ کامل وجود داشته باشد",
+        "روش‌های سرولوژیک منسوخ در زیر ۱۸ ماه به‌عنوان پاسخ قطعی عرضه نشوند"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "nih_infant_hiv"
+      ],
+      "upstream_defect_fa": "کلید «ادامهٔ پایش» درست است ولی چارچوب سنجش با الیزا منسوخ شده؛ تشخیص قطعی امروز با آزمون مولکولی ویروسی و ELISA تنها پس از ۱۸ ماه معتبر است.",
+      "upstream_evidence_fa": "در شیرخوار زیر ۱۸ ماه با مواجههٔ پیرامون تولد، تشخیص با آزمون مولکولی ویروس است، نه الایزا یا وسترن‌بلاتِ گزینه‌ها. بنابراین جابه‌جایی کلید، پرسش را امروزی نمی‌کند.",
+      "question_snapshot": {
+        "question_fa": "کودکی از مادر HIV مثبت متولد شده است. تست الیزا دو روزگی و ۲/۵ ماهگی کودک منفی است. کودک زیدوویدین دریافت میکند. نظر شما چیست؟",
+        "options_fa": [
+          "HIV رد است و کودک موردی ندارد.",
+          "باید تست الیزا بالای ۴ ماهگی داشته باشیم تا قضاوت کنیم.",
+          "تست دیگری در سه ماهگی انجام شود ولی فعالً زیدوو یدین را قطع می کنیم.",
+          "تست وسترن بالت در ۴ ماهگی به تشخیص قطعی کمک میکند."
+        ],
+        "correct_index_before": 1,
+        "question_sha256": "6bed150753459fdd3cf4f9a8fc0dce3b02321624a5510a664150b7e50384489b"
+      }
+    },
+    {
+      "part": 23,
+      "local_question": 102,
+      "id": "QB-05149",
+      "upstream_review": "round61",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "editorial_rewrite_required",
+      "primary_blocker": "nonunique_or_undefined_construct",
+      "primary_blocker_fa": "پاسخ چندگانه یا سازهٔ تعریف‌نشده",
+      "action_priority": "medium",
+      "action_priority_fa": "متوسط",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "یک نکتهٔ روشن دربارهٔ درمان یا وراثت سندرم ویسکوت–آلدریچ، نه چند گزارهٔ مطلق در یک سؤال.",
+      "why_rewrite_fa": "دو گزینهٔ مربوط به «کمک‌نکردن» پیوند مغز استخوان هم‌زمان نادرست‌اند و نقش انتخابی اسپلنکتومی نیز مطلق نیست.",
+      "minimum_context_fa": [
+        "این‌که هدف سؤال درمان قطعی است یا درمان یک تظاهر",
+        "شدت/مقاومت ترومبوسیتوپنی در صورت طرح اسپلنکتومی",
+        "نوع گزاره: درست یا نادرست"
+      ],
+      "option_design_rules_fa": [
+        "هر گزینه فقط یک ادعای قابل‌بررسی داشته باشد",
+        "درمان قطعی و درمان حمایتی از هم تفکیک شوند",
+        "واژه‌های مطلق مانند «کمک نمی‌کند» فقط با پشتوانهٔ یکتا استفاده شوند"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "was_genereviews"
+      ],
+      "upstream_defect_fa": "سه گزینه همزمان گزارهٔ نادرستاند (طحالبرداری و هر دو گزارهٔ پیوند مغز استخوان)؛ بدون بازنویسی گزینهها قابل اصلاح نیست.",
+      "upstream_evidence_fa": "در ویسکوت–آلدریچ، پیوند سلول‌های بنیادی درمان اصلی است و می‌تواند مؤلفه‌های خونی و ایمنی را اصلاح کند؛ اسپلنکتومی نیز در ترومبوسیتوپنی شدیدِ مقاوم ممکن است شمارش پلاکت را بهتر کند. بنابراین دست‌کم دو گزینهٔ «پیوند کمک نمی‌کند» هم‌زمان نادرست‌اند.",
+      "question_snapshot": {
+        "question_fa": "کودک ۱ سالهای را با شکایت عفونتهای مکرر باکتلایر ریه و گوش به درمانگاه آورده اند. در معاینه متوجه اگزمای شدید در صورت و تنه ی بیمار می شوید. در آزمایشات همراه سطح ایمونوگلوبولینها و پلاکت پایین است و اندازه ی پلاکتها کوچک تر از طبیعی است. با توجه به محتملتر ین تشخیص کدام مورد صحیح نیست؟",
+        "options_fa": [
+          "طحال برداری به درمان ترومبوسیتوپنی این بیمار کمک میکند.",
+          "پیوند مغز استخوان به درمان ترومبوسیتوپنی این بیمار کمک نمیکند.",
+          "پیوند مغز استخوان به درمان نقص ایمنی این بیمارا ن کمک نمیکند.",
+          "بیماری در پسران فامیل بیشتر دیده میشود."
+        ],
+        "correct_index_before": 0,
+        "question_sha256": "63d02772cbe8ba656a2f8caf5b1d32168c94d0d57fe172a4e1717eb8fd8ab432"
+      }
+    },
+    {
+      "part": 23,
+      "local_question": 144,
+      "id": "QB-05191",
+      "upstream_review": "round61",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "editorial_rewrite_required",
+      "primary_blocker": "missing_or_corrupt_decision_data",
+      "primary_blocker_fa": "دادهٔ تصمیم‌ساز مفقود یا مخدوش",
+      "action_priority": "medium",
+      "action_priority_fa": "متوسط",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "تخمین سن تکاملی بر پایهٔ مجموعه‌ای هم‌سنخ از مهارت‌های مشخص.",
+      "why_rewrite_fa": "مهارت‌ها با حوالی سه‌سالگی هم‌خوان‌اند اما همهٔ سن‌های چاپ‌شده نامعتبر، مخدوش یا ناسازگارند؛ کلید به‌تنهایی قابل نجات نیست.",
+      "minimum_context_fa": [
+        "مرجع تکاملی واحد",
+        "زمینهٔ مهارت‌های حرکتی/خودمراقبتی/شناختی",
+        "واحد سن و بازهٔ زمانی معتبر"
+      ],
+      "option_design_rules_fa": [
+        "سن‌ها واقع‌بینانه و غیرهم‌پوشان باشند",
+        "تمام مهارت‌های صورت سؤال با یک سن هدف سازگار باشند",
+        "اعداد و واحدها پیش از انتشار کنترل شوند"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "developmental_milestones"
+      ],
+      "upstream_defect_fa": "گزینههای سنی مخدوشاند (۲ و ۴ ماهگی برای مهارتهای ذکرشده بیمعناست)؛ کلید با گزینههای چاپشده همخوان نیست و اصلاح آن مستلزم تغییر گزینههاست.",
+      "upstream_evidence_fa": "ترکیب بالا/پایین‌رفتن از پله، شستن و خشک‌کردن دست و شناخت اعضای بدن با حوالی سه‌سالگی سازگار است. هیچ‌یک از سن‌های چاپ‌شده، از جمله ۱۵ یا ۱۸ ماه و ۲ یا ۴ ماه، پاسخ کامل و قابل دفاعی نیست.",
+      "question_snapshot": {
+        "question_fa": "کودکی قادر است پلهها را بالا و پایین برود. دست هایش را بشوید و خشک کند. دندان هایش را مسواک بزند و اعضای بدنش را می شناسد. حداقل سن تقریبی او چقدر است؟",
+        "options_fa": [
+          "۱ ٥ ماهگی",
+          "۱۸ ماهگی",
+          "۲ ماهگی",
+          "۴ ماهگی"
+        ],
+        "correct_index_before": 2,
+        "question_sha256": "60f865be83e31d25a86030b8bf0f0a37bb8c179fc78fc18618007ea52b2ae157"
+      }
+    },
+    {
+      "part": 23,
+      "local_question": 176,
+      "id": "QB-05223",
+      "upstream_review": "round61",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "editorial_rewrite_required",
+      "primary_blocker": "nonunique_or_undefined_construct",
+      "primary_blocker_fa": "پاسخ چندگانه یا سازهٔ تعریف‌نشده",
+      "action_priority": "medium",
+      "action_priority_fa": "متوسط",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "تشخیص یک سناریوی خارج از آستانهٔ بررسی نقص ایمنی اولیه با معیار واحد.",
+      "why_rewrite_fa": "هر چهار سناریو نشانهٔ هشدارِ قابل‌ارزیابی دارند؛ عبارت «به‌جز» پاسخ یکتا نمی‌سازد.",
+      "minimum_context_fa": [
+        "فهرست معیار/آستانهٔ واحد",
+        "بازهٔ زمانی و شدت هر عفونت",
+        "روشن‌بودن هدف: نیاز به ارزیابی یا تشخیص"
+      ],
+      "option_design_rules_fa": [
+        "فقط یک گزینه خارج از آستانهٔ تعریف‌شده بماند",
+        "آستانه‌های مستقل در یک گزینه با هم مخلوط نشوند",
+        "سناریوها با همان منبع معیار نوشته شوند"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "pid_warning_signs"
+      ],
+      "upstream_defect_fa": "بر پایهٔ فهرست هشدار نقص ایمنی، هر چهار کودک نشانهٔ هشدار دارند (حتی ۴ عفونت گوش در سال)؛ چند پاسخ درست همزمان.",
+      "upstream_evidence_fa": "شش اوتیت در سال، سه سینوزیت شدید در سال و دو پنومونی در سال، همگی از آستانه‌های هشدارِ بررسی نقص ایمنی عبور می‌کنند؛ عفونت‌های مکرر پوستی همراه با دیر افتادن بند ناف نیز ارزیابی را توجیه می‌کند. پس برای سؤال «به‌جز» گزینهٔ یکتا وجود ندارد.",
+      "question_snapshot": {
+        "question_fa": ": در تمام بیماران زیر بررسی از نظر وجود نقص ایمنی اولیه لازم است بجز",
+        "options_fa": [
+          "کودک ۲ سالهای با سابقه ی شش مرتبه عفونت گوش میانی در طول سال گذشته",
+          "کودک ۴ سالهای با سابقه ی ابتلا به سه مرتبه سینوزیت شدید در طول سا ل گذشته",
+          "شیرخوار ۸ ماهه ای با عفونتهای مکرر پوستی و سابقه ی دیر افتادن بندناف",
+          "کودک ۲ سالهای با سابقه ی دو مرتبه ذات الریه در طول سال گذشته"
+        ],
+        "correct_index_before": 0,
+        "question_sha256": "aa831505951aa952ecc0044c7eadedded8e36ac29e891e621c45b88386d2f156"
+      }
+    },
+    {
+      "part": 24,
+      "local_question": 50,
+      "id": "QB-05317",
+      "upstream_review": "round61",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "editorial_rewrite_required",
+      "primary_blocker": "nonunique_or_undefined_construct",
+      "primary_blocker_fa": "پاسخ چندگانه یا سازهٔ تعریف‌نشده",
+      "action_priority": "medium",
+      "action_priority_fa": "متوسط",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "ارزیابی یک شاخص آزمایشگاهی مشخص در آسیب حاد کلیه با زمینهٔ گلومرولونفریت پس‌استرپتوکوکی.",
+      "why_rewrite_fa": "سدیم ادرار پایین و اسمولالیتهٔ بالا هر دو می‌توانند با سناریو سازگار باشند، در حالی که گزینهٔ کلیدی الگوی دیگری را توصیف می‌کند؛ هدف فیزیولوژیک سؤال روشن نیست.",
+      "minimum_context_fa": [
+        "هدف آموزشیِ واحد: پیش‌کلیوی، گلومرولی یا نکروز توبولی",
+        "وضعیت حجم و مرحلهٔ بیماری",
+        "تعریف شاخص منتخب و واحدها"
+      ],
+      "option_design_rules_fa": [
+        "فقط یک شاخص آزمایشگاهیِ منطبق با هدف سؤال سنجیده شود",
+        "کسر دفعی سدیم، سدیم ادرار و اسمولالیته در یک چارچوب سازگار باشند",
+        "گزینهٔ درست و حواس‌پرت‌کن‌ها هم‌زمان درست نباشند"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "psgn_aap"
+      ],
+      "upstream_defect_fa": "در گلومرولونفریت حاد هم سدیم ادرار کمتر از ۲۰ و هم اسمولالیتهٔ ادرار بالای ۵۰۰ انتظار میرود و گزینهٔ کلید (کسر ترشحی بیشتر از ۲٪) الگوی نکروز حاد توبولی است؛ چند گزینه با علت ذکرشده همخواناند.",
+      "upstream_evidence_fa": "در گلومرولونفریت حاد پس‌استرپتوکوکیِ الیگوریک، کلیه سدیم را نگه می‌دارد و کسر دفعی سدیم غالباً پایین است؛ در نتیجه هم سدیم ادرار پایین و هم ادرار غلیظ می‌توانند با سناریو سازگار باشند، در حالی که گزینهٔ کلیدیِ دفع سدیمِ بالا ناسازگار است. میان گزینه‌های حاضر پاسخ یکتا ساخته نمی‌شود.",
+      "question_snapshot": {
+        "question_fa": "بیمار پسر ۸ سالهای است که به دلیل تغییر رنگ ادرار و ورم و کاهش حجم ادرار در بخش بستری گردیده است حدود ۳ هفته قبل سابقه ی گلودرد چرکی داشته است فشار خون کودک ۱۶۰/۱۰۰ و در آزمایشات BUN=32، کراتینین ۱/۲ است به نظر شما کدامیک از معیارهای آزمایشگاهی زیر با علت نارسایی حاد کلیه ی بیمار مطابقت دارد؟",
+        "options_fa": [
+          "تست BUN به Cr بیشتر از ۲۰",
+          "سدیم ادرار کم تر از ۲۰ میلی اکی واالن در لیتر",
+          "کسر ترشحی سدیم بیشتر از ۲%",
+          "اسمواللیته ی ادرار بالاتر از ۵۰۰"
+        ],
+        "correct_index_before": 2,
+        "question_sha256": "4aee0039ea1a45d9d8d42c52f743a8c65e95751da9cbcbe404c28162750a8149"
+      }
+    },
+    {
+      "part": 24,
+      "local_question": 58,
+      "id": "QB-05325",
+      "upstream_review": "round60",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "needs_editorial_rewrite",
+      "primary_blocker": "protocol_safety_or_guideline_drift",
+      "primary_blocker_fa": "پروتکل ایمنی یا تغییر راهنما",
+      "action_priority": "high",
+      "action_priority_fa": "بالا",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "شناخت منع واقعی واکسیناسیون در کودک، با تقویم و فرآوردهٔ واکسنی مشخص.",
+      "why_rewrite_fa": "حساسیت به تخم‌مرغ به‌تنهایی منع واکسن آنفلوانزا نیست و حضور OPV در گزینه‌ها با برنامهٔ امروزی/محلی ممکن است پاسخ کاذب بسازد.",
+      "minimum_context_fa": [
+        "سن کودک",
+        "برنامهٔ واکسیناسیون و کشور/سیاست هدف",
+        "نوع فرآوردهٔ واکسن",
+        "تعریف واکنش آلرژیک و منع مورد سؤال"
+      ],
+      "option_design_rules_fa": [
+        "فقط فرآورده‌های قابل‌استفاده در برنامهٔ هدف مطرح شوند",
+        "یک منع واقعی و به‌روز هدف قرار گیرد",
+        "تفاوت احتیاط، ارجاع و منع مطلق در گزینه‌ها روشن باشد"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "cdc_egg_allergy"
+      ],
+      "upstream_defect_fa": "یه گزینهٔ MMR هم نه، کلید آنفلوانزا: در حساسیت به تخممرغ، واکسن آنفلوانزا امروز منع مطلق نیست (پروتکلهای امروزی تجویز در محیط مجهز را مجاز میدانند) و ایمنترین گزینهٔ این فهرست OPV است که فلج اطفال خوراکی در برنامهٔ کشوری حذف شده؛ دو گزینه مشکلدارند.",
+      "upstream_evidence_fa": "حساسیت به تخم‌مرغ به‌تنهایی منع واکسن آنفلوانزا نیست و گزینه‌های قدیمی دربارهٔ واکسن خوراکی فلج اطفال نیز انتخاب امروزی و یکتایی نمی‌سازند.",
+      "question_snapshot": {
+        "question_fa": "مادر یک شیرخوار با سابقه ی عکس العمل شبیه به آنافیالکسی به تخم، مرغ از شما در موارد واکسیناسیون شیرخوارش مشورت می خواهد کدام واکسیناسیون نباید به این شیرخوار تلقیح یا خورانده شود؟",
+        "options_fa": [
+          "MMR",
+          "آنفلوانزا",
+          "OPV",
+          "DTP"
+        ],
+        "correct_index_before": 1,
+        "question_sha256": "3bcdc921aa68c8113b25649ebff7744f62def3027dd8cea99f47d8043a8c7bba"
+      }
+    },
+    {
+      "part": 24,
+      "local_question": 193,
+      "id": "QB-05460",
+      "upstream_review": "round61",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "editorial_rewrite_required",
+      "primary_blocker": "missing_or_corrupt_decision_data",
+      "primary_blocker_fa": "دادهٔ تصمیم‌ساز مفقود یا مخدوش",
+      "action_priority": "high",
+      "action_priority_fa": "بالا",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "انتخاب دوز ویتامین A فقط برای یک سن و یک اندیکاسیون دقیق.",
+      "why_rewrite_fa": "سن، واحد، راه تجویز، هدف درمانی/پیشگیری و دفعات دوز غایب‌اند و بازه‌های عددی گزینه‌ها هم‌پوشانی و جهت مبهم دارند.",
+      "minimum_context_fa": [
+        "سن دقیق و در صورت نیاز وزن",
+        "اندیکاسیون درمانی مشخص",
+        "واحد بین‌المللی، راه تجویز و تعداد/فاصلهٔ دوزها",
+        "راهنمای مبنا"
+      ],
+      "option_design_rules_fa": [
+        "هر گزینه یک رژیم کامل و غیرهم‌پوشان داشته باشد",
+        "اعداد به‌صورت استاندارد و بدون بازهٔ معکوس نوشته شوند",
+        "پیشگیری و درمان در یک سؤال مخلوط نشوند"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "vitamin_a_who"
+      ],
+      "upstream_defect_fa": "دوز درمانی ویتامین A بدون تعیین واحد (واحد بینالمللی/روز یا ماه) و دفعات تجویز مبهم است؛ ضمن آنکه دوزهای چاپشده همپوشانی دارند.",
+      "upstream_evidence_fa": "دوز ویتامین آ به سن، هدف درمانی یا پیشگیری، واحد و برنامهٔ تکرار وابسته است. صورت سؤال سن شیرخوار، واحد و دفعات را نمی‌دهد و بازه‌های گزینه‌ها هم‌پوشانی دارند؛ بنابراین هیچ پاسخ عددی یکتا نیست.",
+      "question_snapshot": {
+        "question_fa": "دوز مناسب درمانی ویتامین A در شیرخواری که دچار سوء جذب ویتامین A، است چند واحد است؟",
+        "options_fa": [
+          "۱۰۰۰۰ - ۵۰۰۰",
+          "۵۰۰۰۰ - ۱۰۰۰۰",
+          "۵۰۰۰۰ - ۳۰۰۰۰",
+          "۲۰۰۰۰۰ - ۵۰۰۰۰"
+        ],
+        "correct_index_before": 1,
+        "question_sha256": "9952a8793370ab0ba6fd91c2398f54b1d3d21802883dfd5a8be13e2c7612754e"
+      }
+    },
+    {
+      "part": 24,
+      "local_question": 201,
+      "id": "QB-05468",
+      "upstream_review": "round61",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "editorial_rewrite_required",
+      "primary_blocker": "protocol_safety_or_guideline_drift",
+      "primary_blocker_fa": "پروتکل ایمنی یا تغییر راهنما",
+      "action_priority": "high",
+      "action_priority_fa": "بالا",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "اقدام واکسیناسیونی ایمن در نوزاد با سابقهٔ خانوادگی نگران‌کننده برای نقص ایمنی.",
+      "why_rewrite_fa": "گزینه‌ها واکسن زنده و غیرزنده را جدا نمی‌کنند و هیچ‌یک اقدام ایمن همراه با ارجاع را کامل بیان نمی‌کند؛ تزریق روتین BCG در این سناریو قابل اتکا نیست.",
+      "minimum_context_fa": [
+        "شدت و نوع سابقهٔ خانوادگی",
+        "وضعیت نقص ایمنیِ مشکوک یا تأییدشده",
+        "سیاست BCG محلی",
+        "دسترسی به ارجاع و غربالگری"
+      ],
+      "option_design_rules_fa": [
+        "واکسن‌های زنده و غیرزنده صریحاً تفکیک شوند",
+        "یک اقدام فوریِ ایمن و مسیر ارجاع در پاسخ یکتا باشد",
+        "منع نادرست واکسن غیرزنده ساخته نشود"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "bcg_immunodeficiency"
+      ],
+      "upstream_defect_fa": "مشاورهٔ واکسیناسیون در نوزاد با مرگ مشکوک برادر از نقص ایمنی سلولی؛ تزریق «بثژ» (گزینهٔ ۳ چاپشده) با اصول کنتراندیکه و کلید با سایر گزینهها ناسازگار است و متن نیز کامل نیست.",
+      "upstream_evidence_fa": "مرگ خواهر/برادر با شک به نقص ایمنی سلولی، پیش از تزریق واکسن زنده ب‌ث‌ژ نیازمند ارزیابی اختصاصی است. «تزریق روتین همهٔ واکسن‌ها» و «تزریق ب‌ث‌ژ» ایمن و کامل نیستند، اما منع واکسن هپاتیت B نیز درست نیست؛ هیچ گزینهٔ چاپ‌شده اقدام کامل و ایمنی را جدا نمی‌کند.",
+      "question_snapshot": {
+        "question_fa": "از شما در مورد انجام واکسیناسیون نوزاد تازه متولد در یک مرکز بهداشتی درمانی روستایی مشاوره به عمل می آید. در سابقه ی نوزاد مرگ برادر نوزاد در ۹ ماهگی با احتمال بیماری نقص ایمنی سلوالر وجود دارد کدامیک از موارد ذیل را توصیه میکنید؟",
+        "options_fa": [
+          "تزریق واکسنها به صورت روتین بالمانع است.",
+          "واکسن هپاتیت را نمیتواند تزریق کند.",
+          "واکسن «ب ث ژ» را تزریق می کنیم.",
+          "واکسنها را تزریق کرده و بیمار را به متخصص ایمونولوژی ارجاع می دهیم."
+        ],
+        "correct_index_before": 2,
+        "question_sha256": "86ec4a6e4fd0b7d519394a5417eaecb880adf03a0325e664dabde2b331b4b5a2"
+      }
+    },
+    {
+      "part": 24,
+      "local_question": 213,
+      "id": "QB-05480",
+      "upstream_review": "round62",
+      "upstream_status": "review",
+      "upstream_route": "rewrite_or_ambiguity",
+      "primary_blocker": "protocol_safety_or_guideline_drift",
+      "primary_blocker_fa": "پروتکل ایمنی یا تغییر راهنما",
+      "action_priority": "high",
+      "action_priority_fa": "بالا",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "انتخاب مرحلهٔ درست الگوریتم احیای نوزاد مکونیومی پس از تعیین وضعیت تنفسی و ضربان قلب.",
+      "why_rewrite_fa": "صورت سؤال ضربان قلب و تون را نمی‌دهد و معلوم نیست پرسش گام نخست یا اقدام پس از گام‌های اولیه را می‌خواهد؛ تحریک و PPV در مراحل متفاوت می‌توانند مطرح شوند.",
+      "minimum_context_fa": [
+        "تون نوزاد",
+        "HR و الگوی تنفس",
+        "تصریح مرحلهٔ الگوریتم: ابتدا یا پس از گام‌های اولیه",
+        "وجود یا عدم وجود انسداد راه هوایی"
+      ],
+      "option_design_rules_fa": [
+        "گزینه‌ها یک مرحلهٔ الگوریتمی مشترک را پاسخ دهند",
+        "ساکشن روتین نای به‌عنوان پاسخ پیش‌فرض عرضه نشود",
+        "فقط یک اقدام با داده‌های داده‌شده سازگار باشد"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "nrp_aafp"
+      ],
+      "upstream_defect_fa": "عبارت «بدون تنفس خودبه‌خودی» HR و تون را مشخص نکرده و بین گام اولیهٔ تحریک و شروع PPV تمایز نمی‌گذارد. NRP ابتدا گام‌های اولیه و سپس برای apnea/gasping یا HR<100، PPV را توصیه می‌کند؛ پس پاسخ یکتا نیست.",
+      "upstream_evidence_fa": "عبارت «بدون تنفس خودبه‌خودی» HR و تون را مشخص نکرده و بین گام اولیهٔ تحریک و شروع PPV تمایز نمی‌گذارد. NRP ابتدا گام‌های اولیه و سپس برای apnea/gasping یا HR<100، PPV را توصیه می‌کند؛ پس پاسخ یکتا نیست.",
+      "question_snapshot": {
+        "question_fa": "در نوزادی که آغشته به مکونیوم و بدون تنفس خودبخودی به دنیا آمده است اولین اقدام درمانی شما چیست؟",
+        "options_fa": [
+          "ساکشن دهان و بینی",
+          "تحریک برای شروع تنفس خودبخودی",
+          "شروع تنفس با پگ و ماسک",
+          "لوله گذاری و ساکشن ترشحات"
+        ],
+        "correct_index_before": 3,
+        "question_sha256": "e9c8aa971ec0ddb753a14bab90c5266b1dbda75f159bc8856469dd53e30fa100"
+      }
+    },
+    {
+      "part": 25,
+      "local_question": 27,
+      "id": "QB-05514",
+      "upstream_review": "round61",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "editorial_rewrite_required",
+      "primary_blocker": "nonunique_or_undefined_construct",
+      "primary_blocker_fa": "پاسخ چندگانه یا سازهٔ تعریف‌نشده",
+      "action_priority": "medium",
+      "action_priority_fa": "متوسط",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "زمان پاسخ درمانی کم‌خونی فقر آهن بر پایهٔ یک شاخص قابل‌اندازه‌گیری.",
+      "why_rewrite_fa": "«بهبود دائم» تعریف نشده و چند شاخص با زمان‌های متفاوت در گزینه‌ها آمده‌اند؛ ترتیب زمانی و بازه‌ها نیز مخدوش‌اند.",
+      "minimum_context_fa": [
+        "شاخص هدف: رتیکولوسیت، هموگلوبین یا علامت بالینی",
+        "دوز/پایبندی درمان در صورت نیاز",
+        "واحد و بازهٔ زمانی دقیق"
+      ],
+      "option_design_rules_fa": [
+        "فقط یک شاخص در صورت سؤال هدف باشد",
+        "زمان‌ها بدون وارونگی و با واحد یکسان نوشته شوند",
+        "سه گزینهٔ دیگر از نظر زمانی قطعاً نادرست باشند"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "iron_response"
+      ],
+      "upstream_defect_fa": "چهار گزارهٔ بهبودی کمخونی فقر آهن با هم همپوشانی دارند و ترتیب زمانی گزینهها گم شده است؛ سنجش نمیتواند تکپاسخ باشد.",
+      "upstream_evidence_fa": "بهبود علامتی می‌تواند زود رخ دهد، رتیکولوسیتوز در چند روز آغاز می‌شود و افزایش هموگلوبین با فاصله قابل مشاهده است؛ گزینه‌های فعلی بیش از یک گزارهٔ زمانی قابل دفاع دارند و «بهبود دائم» را به شاخصی دقیق گره نمی‌زنند.",
+      "question_snapshot": {
+        "question_fa": "، کدامیک از جمالت زیر در مورد بهبود دائم بعد از درمان کم خونی فقر آهن صحیح است؟",
+        "options_fa": [
+          "بهبودی کامل (طی ۶)ماه",
+          "بهبود سریع علائم بخصوص عملکرد عصبی (طی ۴۸ - ۲۴)ساعت",
+          "رتیکولوسیتوز (طی ۵ - ۳)روز",
+          "افزایش سطح هموگلوبین (طی ۴ - ۲)ماه"
+        ],
+        "correct_index_before": 1,
+        "question_sha256": "044ffded045996b91c84357c14dfddd7673259dbaa095172c31e46b74c4328c1"
+      }
+    },
+    {
+      "part": 25,
+      "local_question": 94,
+      "id": "QB-05581",
+      "upstream_review": "round61",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "editorial_rewrite_required",
+      "primary_blocker": "missing_or_corrupt_decision_data",
+      "primary_blocker_fa": "دادهٔ تصمیم‌ساز مفقود یا مخدوش",
+      "action_priority": "high",
+      "action_priority_fa": "بالا",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "محاسبهٔ شفاف برنامهٔ مایع در هایپرناترمی کودک، نه حدس‌زدن حجم از دادهٔ ناقص.",
+      "why_rewrite_fa": "درصد کم‌آبی/کسری آب، هدف سدیم، زمان اصلاح، اتلاف جاری و احتساب بولوس قبلی مشخص نشده‌اند؛ چهار حجم چاپی پاسخ یکتا ندارند.",
+      "minimum_context_fa": [
+        "درصد یا فرمول کسری آب",
+        "وزن مبنا و مایع نگهدارنده",
+        "هدف سدیم و مدت اصلاح",
+        "اتلاف جاری و نقش بولوس اولیه"
+      ],
+      "option_design_rules_fa": [
+        "فرمول و فرض‌های محاسبه در صورت سؤال کامل باشند",
+        "واحدهای حجم و زمان یک‌دست باشند",
+        "فقط یک پاسخ با فرمول اعلام‌شده به دست آید"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "hypernatraemia_rch"
+      ],
+      "upstream_defect_fa": "محاسبهٔ کمبود آب بر پایهٔ فرضی انجام شده که در متن ذکر نشده است؛ پاسخ عددی با اطلاعات چاپشده یکتا نیست.",
+      "upstream_evidence_fa": "در هایپرناترمی، مجموع مایع نگهدارنده، کسری آب و اتلاف جاری تعیین‌کننده است و کسری آب معمولاً طی ۴۸ ساعت اصلاح می‌شود. متن درصد کم‌آبی، هدف سدیم، روش محاسبه و نحوهٔ احتساب بولوس قبلی را تعیین نمی‌کند؛ پس حجم ۲۴ساعته یکتا نیست.",
+      "question_snapshot": {
+        "question_fa": "شیرخوار ۹ ماهه ای به علت اسهال و استفراغ از دو روز قبل مراجعه نموده است در معاینه بی حال و تحریک پذیر است درجه حرارت ۳۸ درجه ی سانتی گراد و وزن بیمار ۹ کیلوگرم است سطح سرمی سدیم ۱۶۳ میلی اکی واالن در لیتر است برای بیمار ۱۸۰ سی سی نرمال سالین تجویز شد که حال عمومی بیمار بهتر شد در صورتی که اسهال و استفراغ بیمار قطع شده باشد میزان مایع تجویزی در ۲۴ ساعت چقدر است؟",
+        "options_fa": [
+          "۱۹۵۰ سی سی",
+          "۱۳۵۰ سی سی",
+          "۱۵۰۰ سی سی",
+          "۱۸۰۰ سی سی"
+        ],
+        "correct_index_before": 1,
+        "question_sha256": "60bd677cc172af4c48ef34ce3e0d6a6673a785becab0d18189399628b595daea"
+      }
+    },
+    {
+      "part": 25,
+      "local_question": 98,
+      "id": "QB-05585",
+      "upstream_review": "round60",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "needs_editorial_rewrite",
+      "primary_blocker": "nonunique_or_undefined_construct",
+      "primary_blocker_fa": "پاسخ چندگانه یا سازهٔ تعریف‌نشده",
+      "action_priority": "medium",
+      "action_priority_fa": "متوسط",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "افتراق ویروسی/باکتریایی کونژونکتیویت با یک یافتهٔ بالینی مشخص و قابل اتکا.",
+      "why_rewrite_fa": "کموز، فوتوفوبی و حس جسم خارجی می‌توانند در طیف ویروسی هم دیده شوند و عبارت «کمتر به نفع» معیار کافی برای پاسخ یکتا نمی‌سازد.",
+      "minimum_context_fa": [
+        "هدف افتراقی روشن",
+        "شدت درد/افت بینایی یا درگیری قرنیه در صورت ارتباط",
+        "یافتهٔ معاینه یا نوع ترشح مشخص"
+      ],
+      "option_design_rules_fa": [
+        "یک یافتهٔ تمایزدهندهٔ معتبر هدف باشد",
+        "موارد هم‌پوشان به‌عنوان حواس‌پرت‌کن قطعی استفاده نشوند",
+        "در صورت نیاز، هشدار ارجاع از تشخیص افتراقی جدا شود"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "merck_conjunctivitis"
+      ],
+      "upstream_defect_fa": "کموزیس شدید در کونژونکتیویت ویروسی (آدنوویروس) شایع است؛ تفکیک ویروسی/باکتریایی با این یافته قطعی نیست.",
+      "upstream_evidence_fa": "کموز، فوتوفوبی و حس جسم خارجی همگی می‌توانند در طیف کونژونکتیویت ویروسی، به‌ویژه درگیری قرنیه، دیده شوند. هیچ گزینه‌ای به‌تنهایی «کمتر به نفع ویروس» نیست.",
+      "question_snapshot": {
+        "question_fa": "در یک کونژونکتیویت حاد کدام یافته کم تر به نفع عامل ویروسی است؟",
+        "options_fa": [
+          "فوتوفوبی شدید",
+          "احساس جسم خارجی",
+          "کموزیس شدید",
+          "ترشح موکوسی"
+        ],
+        "correct_index_before": 2,
+        "question_sha256": "6a46c02d06769641e37efad37ff81adcd36b31d1f202a1e83c0e9b8f7d8ccdf0"
+      }
+    },
+    {
+      "part": 25,
+      "local_question": 126,
+      "id": "QB-05613",
+      "upstream_review": "round61",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "editorial_rewrite_required",
+      "primary_blocker": "missing_or_corrupt_decision_data",
+      "primary_blocker_fa": "دادهٔ تصمیم‌ساز مفقود یا مخدوش",
+      "action_priority": "medium",
+      "action_priority_fa": "متوسط",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "سنجش یک گزارهٔ رشد کودک با سن، واحد و مرجع رشد معلوم.",
+      "why_rewrite_fa": "اعداد/بازه‌ها مخدوش‌اند و عبارت «حداقل» با مرجع رشد هم‌سنخ نیست؛ چند گزینه در حاشیهٔ بازهٔ طبیعی‌اند.",
+      "minimum_context_fa": [
+        "سن دقیق و واحد استاندارد",
+        "یک نمودار یا مرجع رشد",
+        "شاخص هدف: وزن‌گیری، کاهش وزن نوزادی یا قد"
+      ],
+      "option_design_rules_fa": [
+        "هر گزینه فقط یک گزارهٔ سنی داشته باشد",
+        "بازه‌های زمانی/عددی قابل خواندن و غیرهم‌پوشان باشند",
+        "از واژهٔ مبهم «حداقل» بدون مرجع پرهیز شود"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "growth_merck"
+      ],
+      "upstream_defect_fa": "اعداد گزینهها مخدوش است («۴ - ۳ ماه»، «۱۰ - ۲ سالگی») و گزارهٔ وزن ۱۵ گرم با منابع همخوان نیست.",
+      "upstream_evidence_fa": "رشد در ماه‌های نخست و پس از دو سالگی بازه‌دار است و عبارت «حداقل ۱۵ گرم» برای ماه‌های نخست با میانگین مرجع هم‌سنخ نیست؛ در عین حال ۲٫۵ کیلوگرم در سال نیز بسته به مرجع و سن می‌تواند در مرز بازه باشد. صورت و گزینه‌ها پاسخ نادرست یکتا نمی‌سازند.",
+      "question_snapshot": {
+        "question_fa": "کدامیک از موارد زیر در خصوص رشد نادرست است؟",
+        "options_fa": [
+          "وزن گیری در ۴ - ۳ ماه اول زندگی حداقل ۱۵ گرم روزانه است.",
+          "در ۱۰، روز اول زندگی نوزادان حدود ۱۰ - ۵ درصد از وزن خود را از دست میدهند.",
+          "از ۱۰ - ۲ سالگی کودکان حدود ۲/۵ کیلوگرم سالیانه وزن می گیرند.",
+          "قد یک کودک ۱، ساله ۷۵ سانتی متر است."
+        ],
+        "correct_index_before": 0,
+        "question_sha256": "5262b93daaf84af0f0ad78c15f09cb09c029253ce6a229bf1df24aa417398d9c"
+      }
+    },
+    {
+      "part": 25,
+      "local_question": 145,
+      "id": "QB-05632",
+      "upstream_review": "round60",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "needs_editorial_rewrite",
+      "primary_blocker": "nonunique_or_undefined_construct",
+      "primary_blocker_fa": "پاسخ چندگانه یا سازهٔ تعریف‌نشده",
+      "action_priority": "medium",
+      "action_priority_fa": "متوسط",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "مقایسهٔ یک ویژگی دقیق ایمنی واکسن‌ها با تعریف زمان و نوع ایمنی.",
+      "why_rewrite_fa": "«ایمنی بیشتر» نه نوع حفاظت را تعریف می‌کند و نه دوام یا نیاز به یادآور را؛ چند واکسنِ گزینه‌ها با معیارهای متفاوت قابل دفاع‌اند.",
+      "minimum_context_fa": [
+        "نوع ایمنی موردنظر",
+        "بازهٔ پیگیری",
+        "کامل‌بودن سری واکسیناسیون",
+        "مبنای مقایسه مانند نیاز به یادآور"
+      ],
+      "option_design_rules_fa": [
+        "یک سازهٔ قابل‌راستی‌آزمایی تعریف شود",
+        "اثر نوع واکسن و یادآور در گزینه‌ها در نظر گرفته شود",
+        "پاسخ از یک زمان/معیار مشخص نتیجه بگیرد"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "cdc_immunization_best_practices"
+      ],
+      "upstream_defect_fa": "کزاز با توکسوئید ایمنی طولانی میدهد ولی سرخک با دو نوبت ایمنی مادامالعمر ایجاد میکند؛ دو گزینه قابل بحثاند.",
+      "upstream_evidence_fa": "عبارت «ایمنی بیشتری» معیار قابل سنجش، بازهٔ زمانی یا نوع ایمنی را مشخص نمی‌کند؛ مقایسهٔ چهار واکسن با این عبارت پاسخ یکتا نمی‌سازد.",
+      "question_snapshot": {
+        "question_fa": "واکسن کدامیک از بیماریهای زیر در صورتی که به دفعات مناسب تزریق شده باشد ایمنی بیشتری ایجاد میکند؟",
+        "options_fa": [
+          "دیفتری",
+          "هپاتیت B",
+          "کزاز",
+          "سرخک"
+        ],
+        "correct_index_before": 2,
+        "question_sha256": "e8703d679d97364507bd88efb75a5e18f6de9e9fb4e044fca345d48faacda2ff"
+      }
+    },
+    {
+      "part": 25,
+      "local_question": 173,
+      "id": "QB-05660",
+      "upstream_review": "round61",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "editorial_rewrite_required",
+      "primary_blocker": "missing_or_corrupt_decision_data",
+      "primary_blocker_fa": "دادهٔ تصمیم‌ساز مفقود یا مخدوش",
+      "action_priority": "medium",
+      "action_priority_fa": "متوسط",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "تمایز یک ژنوتیپ بیماری سلول داسی یا تشخیص کلی سندرم، نه هر دو هم‌زمان.",
+      "why_rewrite_fa": "داکتیلیت و سابقهٔ تزریق برای تفکیک HbSS از HbS/بتا‌تالاسمی کافی نیستند و انتقال خون نیز می‌تواند تفسیر را تغییر دهد.",
+      "minimum_context_fa": [
+        "هدف تشخیصی: سندرم یا زیرگونه",
+        "الگوی HPLC/الکتروفورز و زمان نسبت به انتقال خون",
+        "یافتهٔ افتراقی معتبر در صورت هدف‌گرفتن زیرگونه"
+      ],
+      "option_design_rules_fa": [
+        "اگر زیرگونه هدف است دادهٔ اختصاصی اضافه شود",
+        "اگر سندرم هدف است گزینه‌های زیرگونه حذف شوند",
+        "سابقهٔ انتقال خون در تفسیر آزمون روشن باشد"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "sickle_genereviews"
+      ],
+      "upstream_defect_fa": "گزینههای ۰ (کمخونی داسی) و ۱ (داسی-تالاسمی) هر دو با داکتیلیت و تزریقهای مکرر سازگارند.",
+      "upstream_evidence_fa": "داکتیلیت در شیرخوار با بیماری سلول داسی‌شکل رخ می‌دهد، اما تنها بر اساس آن و سابقهٔ تزریق، تفکیک HbSS از HbS/بتا‌تالاسمی امکان‌پذیر نیست. تشخیص به سنجش هموگلوبین و گاه آزمون مولکولی وابسته است.",
+      "question_snapshot": {
+        "question_fa": "شیرخوار ۸ ماهه ای به دلیل آنمی تاکنون ۳ نوبت تزریق خون داشته است: در حال حاضر به دلیل درد و تورم انگشتان هر دو دست مراجعه کرده است، (dactylitis)، تب ندارد تشخیص احتمالی:",
+        "options_fa": [
+          "سیکل سل آنمی",
+          "سیکل تالاسمی",
+          "β تالاسمی ماژور",
+          "اسفروسیتوز ارثی"
+        ],
+        "correct_index_before": 1,
+        "question_sha256": "a80fb7e3d9af27b50d0f4de1b062eb6ddc962ae00c916c69cd87db5d6a255ae9"
+      }
+    },
+    {
+      "part": 27,
+      "local_question": 133,
+      "id": "QB-06062",
+      "upstream_review": "round62",
+      "upstream_status": "verified",
+      "upstream_route": "rewrite_or_ambiguity",
+      "primary_blocker": "protocol_safety_or_guideline_drift",
+      "primary_blocker_fa": "پروتکل ایمنی یا تغییر راهنما",
+      "action_priority": "high",
+      "action_priority_fa": "بالا",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "اولویت‌بندی ایمن اقدام فوری در سقط سپتیک همراه با ناپایداری همودینامیک.",
+      "why_rewrite_fa": "در شوک سپتیک، احیا، آنتی‌بیوتیک وریدی و کنترل منبع هم‌زمان‌اند؛ هیچ گزینه‌ای پاسخ کامل «اولین اقدام» نیست و سونوگرافی نباید تأخیر بسازد.",
+      "minimum_context_fa": [
+        "پایداری همودینامیک و شواهد عفونت",
+        "هدف سؤال: اولین اقدام یا بستهٔ اقدام فوری",
+        "وضعیت نیاز به کنترل منبع"
+      ],
+      "option_design_rules_fa": [
+        "اقدام نجات‌بخش از آزمون تشخیصیِ تأخیرزا جدا شود",
+        "پاسخ درست همهٔ اجزای فوری لازم را در بر گیرد",
+        "گزینه‌ها درمان خوراکی یا تأخیر غیرایمن را واضحاً نادرست کنند"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "septic_abortion_msd"
+      ],
+      "upstream_defect_fa": "در شوک ناشی از سقط سپتیک، اقدام درست احیا با مایع، آنتی‌بیوتیک وسیع‌الطیف وریدی و کنترل سریع منبع است. گزینهٔ ۳ نزدیک‌تر است، اما سونوگرافی نباید درمان یا تخلیهٔ لازم را به تأخیر بیندازد و هیچ گزینه‌ای پاسخ کاملِ «اولین اقدام» نیست.",
+      "upstream_evidence_fa": "در شوک ناشی از سقط سپتیک، اقدام درست احیا با مایع، آنتی‌بیوتیک وسیع‌الطیف وریدی و کنترل سریع منبع است. گزینهٔ ۳ نزدیک‌تر است، اما سونوگرافی نباید درمان یا تخلیهٔ لازم را به تأخیر بیندازد و هیچ گزینه‌ای پاسخ کاملِ «اولین اقدام» نیست.",
+      "question_snapshot": {
+        "question_fa": ".خانم 20 ساله با حاملگی 13 هفته و تب و بی حالی به درمانگاه مراجعه کرده است. وی سابقه اقدام به سقط غیرقانونی را ذکر می کند. در معاینه رحم دردناک بوده و ترشحات بدبوی واژینال دارد. علایم حیاتی T=39°C, BP=90/50, PR=110 دارد. اولین اقدام کدام است؟",
+        "options_fa": [
+          "لاپاراتومی اورژانس",
+          "کشت ترشحات واژینال+شروع انفوزیون اکسی توسین",
+          "تجویز آنتی بیوتیک وسیع الطیف خوراکی+کورتاژ",
+          "تجویزآنتی بیوتیک وسیع الطیف وریدی+سونوگرافی رحم"
+        ],
+        "correct_index_before": 0,
+        "question_sha256": "1174e0ed6e543bab560138fc05e125592acc9b4867b53a571f02550f19fe1373"
+      }
+    },
+    {
+      "part": 27,
+      "local_question": 146,
+      "id": "QB-06075",
+      "upstream_review": "round62",
+      "upstream_status": "verified",
+      "upstream_route": "rewrite_or_ambiguity",
+      "primary_blocker": "protocol_safety_or_guideline_drift",
+      "primary_blocker_fa": "پروتکل ایمنی یا تغییر راهنما",
+      "action_priority": "high",
+      "action_priority_fa": "بالا",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "مشاورهٔ فردمحور PPROM پیش‌زیست/پری‌زیست با نمایش هر دو مسیر مراقبتی.",
+      "why_rewrite_fa": "گزینهٔ مشاوره فقط برای ختم بارداری، مدیریت انتظاریِ قابل‌ارائه و تصمیم مشترک را حذف می‌کند؛ پاسخ تک‌گزینه‌ای کامل نیست.",
+      "minimum_context_fa": [
+        "سن دقیق بارداری و آستانهٔ احیای نوزاد در مرکز",
+        "وضعیت عفونت/خونریزی/پایداری",
+        "ارزش‌ها و انتخاب بیمار",
+        "پیامدهای مادری و جنینی هر مسیر"
+      ],
+      "option_design_rules_fa": [
+        "هر دو مسیر ختم و انتظار در چارچوب مشاوره مطرح شوند",
+        "گزینهٔ درست بی‌طرف و مبتنی بر تصمیم مشترک باشد",
+        "داروهای وابسته به سن بارداری فقط با قید مناسب بیایند"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "pprom_smfm"
+      ],
+      "upstream_defect_fa": "در PPROM در ۲۱ هفتگی، مشاورهٔ فردمحور باید هر دو مسیر مراقبتِ ختم بارداری و مدیریت انتظاری را همراه با خطرهای مادری/جنینی عرضه کند. گزینهٔ «مشاوره فقط برای ختم» پاسخ تک‌گزینه‌ای کامل نیست.",
+      "upstream_evidence_fa": "در PPROM در ۲۱ هفتگی، مشاورهٔ فردمحور باید هر دو مسیر مراقبتِ ختم بارداری و مدیریت انتظاری را همراه با خطرهای مادری/جنینی عرضه کند. گزینهٔ «مشاوره فقط برای ختم» پاسخ تک‌گزینه‌ای کامل نیست.",
+      "question_snapshot": {
+        "question_fa": "خانم بارداری در 21 هفتگی به دلیل پارگی کیسه آب مراجعه نموده است، بهترین اقدام جهت مدیریت بیمار کدام است؟",
+        "options_fa": [
+          "تجویز سولفات منیزیوم جهت نوروپروتکشن",
+          "مشاوره با بیمار جهت ختم بارداری",
+          "تجویز کورتیکو استروئید",
+          "تجویز توکو لیتیک"
+        ],
+        "correct_index_before": 0,
+        "question_sha256": "75ac2cb5be4f986d257d6d38e5656d931e86ea05ebd6cff13c3efbf6d1f171ea"
+      }
+    },
+    {
+      "part": 27,
+      "local_question": 150,
+      "id": "QB-06079",
+      "upstream_review": "round60",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "needs_editorial_rewrite",
+      "primary_blocker": "nonunique_or_undefined_construct",
+      "primary_blocker_fa": "پاسخ چندگانه یا سازهٔ تعریف‌نشده",
+      "action_priority": "medium",
+      "action_priority_fa": "متوسط",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "تصمیم غربالگری پوکی استخوان در گروه سنی و سطح خطر مشخص.",
+      "why_rewrite_fa": "سیگار و مصرف زیاد الکل هر دو عامل خطرند و سن ۶۰ سال نیز بدون سن دقیق/ابزار خطر پاسخ یکتا نمی‌سازد.",
+      "minimum_context_fa": [
+        "سن دقیق و وضعیت یائسگی",
+        "شدت مواجهه با سیگار/الکل",
+        "آستانه یا ابزار برآورد خطر",
+        "هدف: غربالگری یا ارزیابی تشخیصی"
+      ],
+      "option_design_rules_fa": [
+        "فقط یک عامل خطر یا یک آستانهٔ صریح هدف قرار گیرد",
+        "گزینه‌ها چند عامل معتبر را در برابر هم قرار ندهند",
+        "راهنمای مبنا و جمعیت هدف مشخص باشد"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "uspstf_osteoporosis"
+      ],
+      "upstream_defect_fa": "در نشانههای پیش از ۶۵ سالگی برای دانسیتومتری، اعتیاد به الکل و سابقهٔ مصرف سیگار هر دو عامل خطرند و گزینهٔ مورد نظر کتابچه مشخص نیست.",
+      "upstream_evidence_fa": "راهنمای غربالگری پوکی استخوان، هم سیگار و هم مصرف زیاد الکل را عامل خطر می‌داند؛ بنابراین پرسش تک‌پاسخ نیست.",
+      "question_snapshot": {
+        "question_fa": "- در کدامیک ازموارد زیر دریک خانم منوپوز توصیه به انجام دانسیتومتری استخوان می شود؟",
+        "options_fa": [
+          "سابقه مصرف سیگار در جوانی",
+          "الکلیسم",
+          "آرتروز زانو",
+          "سن 60 سال"
+        ],
+        "correct_index_before": 0,
+        "question_sha256": "61ebd68265c40200bc5e81767377aa81921b3d36ff4540b725b8bc612e27c752"
+      }
+    },
+    {
+      "part": 27,
+      "local_question": 151,
+      "id": "QB-06080",
+      "upstream_review": "round62",
+      "upstream_status": "verified",
+      "upstream_route": "rewrite_or_ambiguity",
+      "primary_blocker": "protocol_safety_or_guideline_drift",
+      "primary_blocker_fa": "پروتکل ایمنی یا تغییر راهنما",
+      "action_priority": "high",
+      "action_priority_fa": "بالا",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "تعیین شرایط توقف غربالگری سرطان سرویکس پس از ۶۵ سالگی با همهٔ قیود لازم.",
+      "why_rewrite_fa": "توقف به غربالگری کافیِ مستند و نبود سابقهٔ CIN2+ در بازهٔ مناسب وابسته است؛ گزینه‌های چاپی هیچ معیار کامل و یکتایی نمی‌دهند.",
+      "minimum_context_fa": [
+        "نوع و تعداد آزمون‌های قبلی و بازهٔ زمانی",
+        "سابقهٔ CIN2+ و زمان درمان/پیگیری",
+        "وضعیت خطر ویژه یا نقص ایمنی",
+        "راهنمای هدف"
+      ],
+      "option_design_rules_fa": [
+        "یک گزینه تمام معیارهای توقف را یک‌جا داشته باشد",
+        "گزینه‌های ناقص به‌گونه‌ای نوشته شوند که شروط کامل را نداشته باشند",
+        "تعریف آزمون کافی با راهنمای انتخابی سازگار باشد"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "cervical_uspstf"
+      ],
+      "upstream_defect_fa": "توقف غربالگری سرویکس پس از ۶۵ سالگی به غربالگری قبلی کافی و مستند و نبود سابقهٔ CIN2+ در بازهٔ پیگیری مناسب وابسته است. گزینهٔ «دو سیتولوژی منفی در ۱۰ سال» به‌تنهایی این معیار را کامل و یکتا نمی‌سازد.",
+      "upstream_evidence_fa": "توقف غربالگری سرویکس پس از ۶۵ سالگی به غربالگری قبلی کافی و مستند و نبود سابقهٔ CIN2+ در بازهٔ پیگیری مناسب وابسته است. گزینهٔ «دو سیتولوژی منفی در ۱۰ سال» به‌تنهایی این معیار را کامل و یکتا نمی‌سازد.",
+      "question_snapshot": {
+        "question_fa": "در کدامیک از شرایط زیر باید غربالگری کانسر سرویکس بعد از 65 سالگی متوقف شود؟",
+        "options_fa": [
+          "سابقهCIN2 درمان شده 15 سال قبل",
+          "سابقهCIN1 درمان شده 15 سال قبل",
+          "سابقهCIN3 درمان شده 10 سال قبل",
+          "سابقه دو تست سیتولوژی منفی در 10 سال اخیر"
+        ],
+        "correct_index_before": 0,
+        "question_sha256": "ebdda8ae5d73fc6a29125ab3b1263bc9d6a02cbf27c15a75593a7a44148ecf35"
+      }
+    },
+    {
+      "part": 27,
+      "local_question": 153,
+      "id": "QB-06082",
+      "upstream_review": "round62",
+      "upstream_status": "verified",
+      "upstream_route": "rewrite_or_ambiguity",
+      "primary_blocker": "protocol_safety_or_guideline_drift",
+      "primary_blocker_fa": "پروتکل ایمنی یا تغییر راهنما",
+      "action_priority": "high",
+      "action_priority_fa": "بالا",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "تفکیک توصیهٔ سبک زندگی در PCOS از داروی القای تخمک‌گذاری در ناباروری بدون تخمک‌گذاری.",
+      "why_rewrite_fa": "کاهش وزن و لتروزول پاسخ‌های قابل دفاع برای دو هدف متفاوت‌اند؛ صورت سؤال هدف درمان را روشن نمی‌کند.",
+      "minimum_context_fa": [
+        "هدف سؤال: توصیهٔ سبک زندگی یا درمان دارویی ناباروری",
+        "تأیید ناباروری بدون تخمک‌گذاری",
+        "BMI/ریسک‌ها و منع مصرف",
+        "ارزیابی عوامل دیگر ناباروری در صورت هدف دارویی"
+      ],
+      "option_design_rules_fa": [
+        "هر سؤال فقط یک هدف درمانی داشته باشد",
+        "اگر دارو هدف است، گزینه‌ها در یک خط درمان مقایسه شوند",
+        "اگر سبک زندگی هدف است، القای دارویی با آن مخلوط نشود"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "pcos_2023_asrm"
+      ],
+      "upstream_defect_fa": "پرسش میان توصیهٔ سبک زندگی برای همهٔ مبتلایان PCOS و القای دارویی تخمک‌گذاری در ناباروری بدون تخمک‌گذاری تمایز نگذاشته است؛ لتروزول درمان دارویی خط اول است، اما کاهش وزن نیز توصیهٔ مهم اولیه است.",
+      "upstream_evidence_fa": "پرسش میان توصیهٔ سبک زندگی برای همهٔ مبتلایان PCOS و القای دارویی تخمک‌گذاری در ناباروری بدون تخمک‌گذاری تمایز نگذاشته است؛ لتروزول درمان دارویی خط اول است، اما کاهش وزن نیز توصیهٔ مهم اولیه است.",
+      "question_snapshot": {
+        "question_fa": "خانم 24 ساله با س کل ی یها قاعدگ ی ی ال گومنوره، یه رسوت سم ی وBMI=27 خواهان بارور ی می باشد نی اول توص یه چی ست؟",
+        "options_fa": [
+          "مدروکسی پروژسترون",
+          "کلومیفن",
+          "کاهش وزن",
+          "لتروزول"
+        ],
+        "correct_index_before": 0,
+        "question_sha256": "11f5d20313ea628ce906cf31f2c4b84ec941d1ded0dae14c302a5ee853f3f5ee"
+      }
+    },
+    {
+      "part": 27,
+      "local_question": 169,
+      "id": "QB-06098",
+      "upstream_review": "round60",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "needs_editorial_rewrite",
+      "primary_blocker": "protocol_safety_or_guideline_drift",
+      "primary_blocker_fa": "پروتکل ایمنی یا تغییر راهنما",
+      "action_priority": "high",
+      "action_priority_fa": "بالا",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "شناسایی یک هشدار عصبی/عروقی مشخص در مصرف‌کنندهٔ قرص ترکیبی و اقدام ایمن بعدی.",
+      "why_rewrite_fa": "گزینهٔ چهارم به متن نامرتبط آلوده شده و بیش از یک علامت عصبی می‌تواند مسیر قطع و ارزیابی فوری را توجیه کند؛ پاسخ یکتا نیست.",
+      "minimum_context_fa": [
+        "نوع قرص هورمونی و زمان شروع علائم",
+        "نشانهٔ هشدار هدف",
+        "وجود یا نبود علائم کانونی/میگرن با اورا",
+        "هدف سؤال: قطع فوری یا ارزیابی"
+      ],
+      "option_design_rules_fa": [
+        "متن آلودهٔ گزینه حذف/بازیابی شود",
+        "فقط یک هشدار روشن در پاسخ صحیح هدف باشد",
+        "علائم مبهم یا غیرمرتبط با هشدار واقعی قاطی نشوند"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "contraception_cdc_mec"
+      ],
+      "upstream_defect_fa": "هر دو گزینهٔ سردرد شدید و لکنت زبان از اندیکاسیونهای قطع قرص ضدبارداریاند و تعیین گزینهٔ کتابچه نیازمند اصل منبع است.",
+      "upstream_evidence_fa": "گزینهٔ چهارم به متن نامرتبط دفترچه آلوده شده و بیش از یک نشانهٔ عصبی در گزینه‌ها می‌تواند قطع فوری قرص ضدبارداری و ارزیابی را ایجاب کند؛ کلید یکتا ساخته نمی‌شود.",
+      "question_snapshot": {
+        "question_fa": "کدام یک از موارد ذیل اندیکاسیون قحعOCP و ارزیابی فوری می باشد؟",
+        "options_fa": [
+          "توده پستان",
+          "سردرد شدید",
+          "لکنت زبان",
+          "آ منوره آزمون وامع پیش)کارورزی (با سوالات دروس شناور اسفندماه 1403"
+        ],
+        "correct_index_before": 0,
+        "question_sha256": "45e26e323efe0ad13a3d595053a01c1fec809b45ce9cdc942a370f1b4d596cd0"
+      }
+    },
+    {
+      "part": 27,
+      "local_question": 179,
+      "id": "QB-06108",
+      "upstream_review": "round60",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "needs_editorial_rewrite",
+      "primary_blocker": "protocol_safety_or_guideline_drift",
+      "primary_blocker_fa": "پروتکل ایمنی یا تغییر راهنما",
+      "action_priority": "high",
+      "action_priority_fa": "بالا",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "پیگیری پس از مول هیداتی‌فرم بر مبنای نوع مول و زمان طبیعی‌شدن hCG.",
+      "why_rewrite_fa": "نوع مول و راهنمای پیگیری مشخص نیستند؛ بازه‌های ۶ و ۱۲ ماه در منابع/سیاست‌های متفاوت دیده می‌شوند و pregnancy-after-normalization بدون این قیود یکتا نیست.",
+      "minimum_context_fa": [
+        "مول کامل یا ناقص",
+        "زمان طبیعی‌شدن hCG نسبت به تخلیه",
+        "راهنما/سیاست پیگیری هدف",
+        "نقطهٔ شروع بازهٔ منع بارداری"
+      ],
+      "option_design_rules_fa": [
+        "یک سیاست پیگیری مشخص انتخاب شود",
+        "گزینه‌ها با همان نوع مول و نقطهٔ شروع نوشته شوند",
+        "بازه‌های تاریخی یا متناقض هم‌زمان عرضه نشوند"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "figo_mole"
+      ],
+      "upstream_defect_fa": "فاصلهٔ مجاز تا بارداری بعدی پس از طبیعی شدن تیتر در مول (۶ یا ۱۲ ماه) بین منابع متفاوت است.",
+      "upstream_evidence_fa": "مدت پیگیری و پرهیز از بارداری پس از مول به نوع مول کامل یا ناقص وابسته است؛ صورت پرسش این تمایز را نمی‌دهد و ۶ یا ۱۲ ماه از راهنماهای مختلف می‌آیند.",
+      "question_snapshot": {
+        "question_fa": "ـ چند ماه بعد از نرمال شدن HCG در موارد مول هیداتیفورم، حاملگی مجاز می باشد؟",
+        "options_fa": [
+          "12 ماه",
+          "2 ماه",
+          "6 ماه",
+          "24 ماه"
+        ],
+        "correct_index_before": 0,
+        "question_sha256": "0d982fec8f25ecd9d9c39ff10054ff7430f4d42882dc4c7c4c92632591d6981f"
+      }
+    },
+    {
+      "part": 28,
+      "local_question": 25,
+      "id": "QB-06181",
+      "upstream_review": "round60",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "needs_editorial_rewrite",
+      "primary_blocker": "missing_or_corrupt_decision_data",
+      "primary_blocker_fa": "دادهٔ تصمیم‌ساز مفقود یا مخدوش",
+      "action_priority": "medium",
+      "action_priority_fa": "متوسط",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "مدیریت تودهٔ آدنکس در بارداری با دادهٔ کافی برای تمایز پیگیری از جراحی.",
+      "why_rewrite_fa": "اندازهٔ ۶ سانتی‌متر به‌تنهایی میان پیگیری و جراحی تصمیم‌ساز نیست؛ شکل سونوگرافی، علائم و احتمال بدخیمی حذف شده‌اند.",
+      "minimum_context_fa": [
+        "ویژگی کامل سونوگرافی",
+        "وجود درد/پیچ‌خوردگی یا علامت",
+        "نشانه‌های خطر بدخیمی",
+        "سن بارداری و زمان پیگیری در صورت انتظار"
+      ],
+      "option_design_rules_fa": [
+        "یک سناریوی خوش‌خیمِ بی‌علامت یا یک سناریوی پرخطر تعریف شود",
+        "روش جراحی فقط با اندیکاسیون روشن عرضه شود",
+        "زمان پیگیری در گزینهٔ انتظار دقیق باشد"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "pregnancy_adnexal"
+      ],
+      "upstream_defect_fa": "برای کیست ۶ سانتیمتری بدون علامت در هفتهٔ دهم، لاپاروسکوپی و بررسی مجدد در سه ماههٔ دوم هر دو در منابع مطرحاند.",
+      "upstream_evidence_fa": "برای کیست ۶ سانتی‌متری در هفتهٔ دهم، تصمیم به شکل سونوگرافی، علائم و احتمال بدخیمی وابسته است. در متن فعلی این داده‌ها نیستند و پیگیری یا جراحی هر دو می‌توانند مطرح شوند.",
+      "question_snapshot": {
+        "question_fa": "خانم 25 ساله در هفته 10 حاملگی اول بعلت یک توده کیستیک 6 سانتی متری در تخمدان راست مراجعه کرده است. بهترین اقدام کدام است؟",
+        "options_fa": [
+          "الپاروسکوپی",
+          "الپاراتومی",
+          "بیوپسی با گاید سونوگرافی",
+          "بررسی مجدد در هفته 16 حاملگی"
+        ],
+        "correct_index_before": 0,
+        "question_sha256": "d8b6515940ba42636c5560273efbe9f4ea8024d4e353888bae64603f4757af5c"
+      }
+    },
+    {
+      "part": 28,
+      "local_question": 50,
+      "id": "QB-06232",
+      "upstream_review": "round60",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "needs_editorial_rewrite",
+      "primary_blocker": "missing_or_corrupt_decision_data",
+      "primary_blocker_fa": "دادهٔ تصمیم‌ساز مفقود یا مخدوش",
+      "action_priority": "high",
+      "action_priority_fa": "بالا",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "تشخیص یک اندیکاسیون مشخص برای سزارین اورژانس در TOLAC با زمینهٔ کافی.",
+      "why_rewrite_fa": "هیچ الگوی ضربان قلب جنین یا مجموعهٔ علائم پارگی رحم داده نشده؛ تاکی‌کاردی مادر به‌تنهایی شاخص یکتای سزارین اورژانس نیست.",
+      "minimum_context_fa": [
+        "نوار/الگوی ضربان قلب جنین یا نشانهٔ واضح مادر",
+        "درد، خونریزی، فشارخون و وضعیت همودینامیک",
+        "نوع سابقهٔ سزارین و مرحلهٔ زایمان",
+        "هدف سؤال: پارگی رحم یا دیسترس جنین"
+      ],
+      "option_design_rules_fa": [
+        "یک معیار اورژانسی معتبر به‌طور کامل توصیف شود",
+        "نشانه‌های غیر اختصاصی بدون زمینه، پاسخ یکتا تلقی نشوند",
+        "امکان سزارین فوری و اقدام هم‌زمان در صورت طرح‌شدن روشن باشد"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "figo_vbac_2025"
+      ],
+      "upstream_defect_fa": "گزینهها برای نشانهٔ سزارین اورژانس مبهماند و هیچ الگوی غیرطمئنهٔ ضربان جنین در آنها ذکر نشده است.",
+      "upstream_evidence_fa": "در زایمان پس از سزارین، ناهنجاری ضربان قلب جنین شایع‌ترین نشانهٔ پارگی رحم است، اما هیچ نوار یا الگوی جنینی در صورت سؤال نیست. تاکی‌کاردی مادر یک علامت غیر اختصاصی است و به‌تنهایی معیار یکتا برای سزارین اورژانس نیست.",
+      "question_snapshot": {
+        "question_fa": "بیماری با سابقه ی یک بار سزارین و حاملگی ترم با شروع دردهای زایمانی بستری شده است. علائم حیاتی طبیعی بوده، تحت مانیتورینگ قلب جنین است. وجود کدامیک از علائم زیر لزوم انجام سزارین اورژانس را نشان میدهد؟",
+        "options_fa": [
+          "تنگی نفس مادر",
+          "تاکی کاردی مادر",
+          "بی قراری مادر",
+          "افزایش فشار خون مادر"
+        ],
+        "correct_index_before": 1,
+        "question_sha256": "7e7274c0c5001f604ebf30091f840824771053b239feb6316afb51b5552d79ee"
+      }
+    },
+    {
+      "part": 28,
+      "local_question": 113,
+      "id": "QB-06295",
+      "upstream_review": "round61",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "editorial_rewrite_required",
+      "primary_blocker": "nonunique_or_undefined_construct",
+      "primary_blocker_fa": "پاسخ چندگانه یا سازهٔ تعریف‌نشده",
+      "action_priority": "medium",
+      "action_priority_fa": "متوسط",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "سنجش یک محور واحد دربارهٔ جفت سرراهی: عامل خطر یا تظاهر بالینی.",
+      "why_rewrite_fa": "گزینهٔ عامل خطر و گزینهٔ تظاهر کلاسیک هر دو درست‌اند و گزینهٔ نخست هم دو عامل را در هم می‌آمیزد.",
+      "minimum_context_fa": [
+        "محور سؤال",
+        "در صورت طرح نوع جفت سرراهی، تعریف آن",
+        "سن بارداری و زمینهٔ تظاهر در صورت نیاز"
+      ],
+      "option_design_rules_fa": [
+        "هر گزینه فقط یک ادعا داشته باشد",
+        "عامل خطر و تظاهر در یک سؤال مخلوط نشوند",
+        "فقط یک گزینه با محور انتخاب‌شده صحیح باشد"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "placenta_previa_merck"
+      ],
+      "upstream_defect_fa": "هر دو گزارهٔ گزینهٔ ۰ (سابقهٔ سزارین/کورتاژ) و گزینهٔ ۳ (خونریزی روشن و بدون درد در نیمهٔ دوم) درستاند؛ سؤال تکپاسخ نیست.",
+      "upstream_evidence_fa": "سزارین و کورتاژ قبلی عوامل خطر جفت سرراهی‌اند و خون‌ریزی روشنِ بدون درد در نیمهٔ دوم نیز تظاهر کلاسیک آن است. بنابراین گزینهٔ ۰ و ۳ هم‌زمان قابل دفاع‌اند و سؤال تک‌پاسخ نیست.",
+      "question_snapshot": {
+        "question_fa": "در خانم باردار با جفت سرراهی (Placenta previa) کدام گزینه صحیح است؟",
+        "options_fa": [
+          "در خانمهای با سابقه ی سزارین با کورتاژ احتمال جفت سرراهی بیشتر است.",
+          "در جفت سرراه ی ناقص (Partial) زایمان واژینال امکان پذیر است.",
+          "از همان ابتدای بارداری با سونوگرافی می توان تشخیص قطعی جفت سرراهی را داد.",
+          "اکثر بیماران از نیمه ی دوم بارداری خون ریزی روشن و بدون درد دارند."
+        ],
+        "correct_index_before": 0,
+        "question_sha256": "28f5891b77f47c383827a094d1deeb2afbcca1566329df0c20a581749252b86a"
+      }
+    },
+    {
+      "part": 28,
+      "local_question": 118,
+      "id": "QB-06300",
+      "upstream_review": "round61",
+      "upstream_status": "reviewed_not_applied",
+      "upstream_route": "editorial_rewrite_required",
+      "primary_blocker": "nonunique_or_undefined_construct",
+      "primary_blocker_fa": "پاسخ چندگانه یا سازهٔ تعریف‌نشده",
+      "action_priority": "high",
+      "action_priority_fa": "بالا",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "تفکیک ارزیابی علت IUFD از انتخاب روش/زمان ختم بارداری در بیمار پایدار.",
+      "why_rewrite_fa": "چند گزارهٔ ارزیابی و مدیریت در یک سؤال مخلوط شده‌اند، ادعای علت اکثریت پشتوانهٔ پایدار ندارد و اطلاعات لازم برای انتخاب روش ختم ناقص است.",
+      "minimum_context_fa": [
+        "هدف سؤال: علت‌یابی یا تدبیر زایمان",
+        "پایداری مادر و اطلاعات سرویکس/ترجیح بیمار در صورت مدیریت",
+        "اجزای ارزیابی علت و سطح ادعا"
+      ],
+      "option_design_rules_fa": [
+        "گزینه‌های تشخیصی و تدبیر زایمان در یک سازه آمیخته نشوند",
+        "یک ادعای قابل‌استناد به‌عنوان پاسخ درست باقی بماند",
+        "گزینه‌های وابسته به آمادگی سرویکس دادهٔ لازم داشته باشند"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "stillbirth_acog"
+      ],
+      "upstream_defect_fa": "چند گزارهٔ این ردیف درستاند (اتوپسی بهترین ابزار تشخیص علت و شروع خودبهخودی زایمان در دو هفته در بیشتر موارد) و کلید «آنومالی کروموزومی بهعنوان علت اکثریت» مستند نیست.",
+      "upstream_evidence_fa": "راهنمای امروز ارزیابی مرگ داخل‌رحمی را مجموعه‌ای از آسیب‌شناسی جفت، کالبدگشایی جنین و ارزیابی ژنتیک می‌داند و آسیب‌شناسی جفت را مفیدترین جزء منفرد معرفی می‌کند. متن پرسش چند ادعای تشخیصی و تدبیر زایمان را در هم می‌آمیزد و با داده‌های ناقص، پاسخ یکتا پایدار ندارد.",
+      "question_snapshot": {
+        "question_fa": "خانم 23 ساله ی 1 Ab 0 P 2 G در هفته ی 38 بارداری با سونوگرافیIUFD مراجعه کرده است. سونوگرافی مایع را کم تر از نرمال و سن جنین را 37 هفته گزارش کرده است. کدام گزینه صحیح است؟",
+        "options_fa": [
+          "بهترین تست تشخیصی جهت تعیین علت مرگ جنین اتوپسی جنین است.",
+          "علت اکثریت موارد IUFD آنومالی کروموزومی است.",
+          "در صورت اصرار مادر بر ختم بارداری، بهترین روش القاء زایمان با اکسی توسین است.",
+          "اغلب در طی دو هفته علائم زایمان خودبخود شروع می د شو."
+        ],
+        "correct_index_before": 1,
+        "question_sha256": "0befbf13925869236ba554818a776a0cbd86622d8a0243ee6983f64bfeb2fe4e"
+      }
+    },
+    {
+      "part": 29,
+      "local_question": 191,
+      "id": "QB-06593",
+      "upstream_review": "round62",
+      "upstream_status": "verified",
+      "upstream_route": "rewrite_or_ambiguity",
+      "primary_blocker": "nonunique_or_undefined_construct",
+      "primary_blocker_fa": "پاسخ چندگانه یا سازهٔ تعریف‌نشده",
+      "action_priority": "medium",
+      "action_priority_fa": "متوسط",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "status": "specified_not_rewritten",
+      "rewrite_text_proposed": false,
+      "correct_index_recommendation": null,
+      "rewrite_objective_fa": "تشخیص یک عامل مستعدکنندهٔ بریچ با حذف عوامل هم‌زمان قابل دفاع.",
+      "why_rewrite_fa": "در صورت سؤال هم جفت سرراهی و هم الیگوهیدرآمنیوس قابل ارتباط با بریچ‌اند؛ کلید فعلی و پیشنهاد تاریخی هر دو قابل دفاع‌اند.",
+      "minimum_context_fa": [
+        "هدف دقیق سؤال: عامل واحد یا چندعامل",
+        "اطلاعاتی که یک عامل رقیب را حذف کند",
+        "سن بارداری و نوع presentation در صورت نیاز"
+      ],
+      "option_design_rules_fa": [
+        "فقط یک عامل با داده‌های صورت سؤال سازگار بماند",
+        "اگر هدف چندعامل است قالب پرسش چندپاسخی شود",
+        "گزینه‌های صحیح متعدد در آزمون تک‌پاسخ کنار هم نیایند"
+      ],
+      "authorization_gate_fa": "هر ویرایش `question_fa` یا `options_fa` فقط با مجوز مستقل و صریح کاربر، پس از بازبینی بالینی دوم، مجاز است.",
+      "reference_ids": [
+        "breech_review"
+      ],
+      "upstream_defect_fa": "در stem، هم placenta previa و هم الیگوهیدرآمنیوس می‌توانند با بریچ ارتباط داشته باشند؛ بنابراین گزینهٔ فعلی و پیشنهادی هر دو قابل دفاع‌اند و پاسخ یکتا نیست.",
+      "upstream_evidence_fa": "در stem، هم placenta previa و هم الیگوهیدرآمنیوس می‌توانند با بریچ ارتباط داشته باشند؛ بنابراین گزینهٔ فعلی و پیشنهادی هر دو قابل دفاع‌اند و پاسخ یکتا نیست.",
+      "question_snapshot": {
+        "question_fa": "خانم 35 سالهای G1 با حاملگی ترم جهت زایمان مراجعه میکند. در سونوگرافی جنین زنده به ظاهر سالم، بریچ و با AF کم تر از نرمال و جفت پرویا گزارش شده است. کدامیک از موارد زیر میتواند جزء علل مستعد کننده ی پرزانتاسیون جنین باشد؟",
+        "options_fa": [
+          "سن مادر",
+          "گراویدیتی",
+          "اولیگوهیدرآمینوس",
+          "پالسنتا پرویا"
+        ],
+        "correct_index_before": 3,
+        "question_sha256": "8edef5e74922e26ff17b8826c51e4a92a47f2aed963c404f9d4173e1fee7afc2"
+      }
+    }
+  ]
+}
