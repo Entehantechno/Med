@@ -277,6 +277,10 @@ const round53Baseline = JSON.parse(readFileSync(join(here, "fixtures/round53-pre
 // continuation, captured from the untouched payload before its edit,
 // chained exactly like round50/51/52/53.
 const round54Baseline = JSON.parse(readFileSync(join(here, "fixtures/round54-preservation.json"), "utf8"));
+// round55 (part29 rows 1-220 except 8 deferred) is the next versioned
+// continuation, captured from the untouched payload before its edit,
+// chained exactly like round50/51/52/53/54.
+const round55Baseline = JSON.parse(readFileSync(join(here, "fixtures/round55-preservation.json"), "utf8"));
 // New part25 edits are allowed only if its PRE-EDIT raw hash equals each
 // historical fixture. The round50 suite then protects every field/record.
 function checkHistoricalOtherBank(name, expected) {
@@ -295,6 +299,11 @@ function checkHistoricalOtherBank(name, expected) {
     // round53 continuation: the file was legitimately re-written (rows 1-5),
     // but its PRE-EDIT hash (round53 fixture) must equal the history.
     expect(round53Baseline.original_file_hashes[`tools/master-bank/${name}`], name).toBe(expected);
+  } else if (name === "import-payload.master-preint.part29.json") {
+    // round55 continuation: the file was legitimately re-written (rows 1-220
+    // except 8 deferred), but its PRE-EDIT hash (round55 fixture) must equal
+    // the history.
+    expect(round55Baseline.original_file_hashes[`tools/master-bank/${name}`], name).toBe(expected);
   } else {
     expect(createHash("sha256").update(readFileSync(join(bank, name))).digest("hex"), name).toBe(expected);
   }
@@ -679,6 +688,13 @@ describe("round50 exact editorial boundaries", () => {
         expect(round53Baseline.original_file_hashes[name], name).toBe(hash);
         continue;
       }
+      if (name.endsWith("master-preint.part29.json")) {
+        // round55 legitimately re-wrote part29 rows 1-220 except 8 deferred;
+        // its PRE-EDIT hash (round55 fixture) must match this round50-era
+        // snapshot.
+        expect(round55Baseline.original_file_hashes[name], name).toBe(hash);
+        continue;
+      }
       expect(createHash("sha256").update(readFileSync(join(here,"../..",name))).digest("hex"),name).toBe(hash);
     }
   });
@@ -775,6 +791,13 @@ describe("round51 exact editorial boundaries", () => {
         // round53 legitimately re-wrote part28 rows 1-5; its PRE-EDIT hash
         // (round53 fixture) must match this round51-era snapshot.
         expect(round53Baseline.original_file_hashes[name], name).toBe(hash);
+        continue;
+      }
+      if (name.endsWith("master-preint.part29.json")) {
+        // round55 legitimately re-wrote part29 rows 1-220 except 8 deferred;
+        // its PRE-EDIT hash (round55 fixture) must match this round51-era
+        // snapshot.
+        expect(round55Baseline.original_file_hashes[name], name).toBe(hash);
         continue;
       }
       expect(createHash("sha256").update(readFileSync(join(here,"../..",name))).digest("hex"),name).toBe(hash);
@@ -879,6 +902,13 @@ describe("round52 exact editorial boundaries", () => {
         // round53 legitimately re-wrote part28 rows 1-5; its PRE-EDIT hash
         // (round53 fixture) must match this round52-era snapshot.
         expect(round53Baseline.original_file_hashes[name], name).toBe(hash);
+        continue;
+      }
+      if (name.endsWith("master-preint.part29.json")) {
+        // round55 legitimately re-wrote part29 rows 1-220 except 8 deferred;
+        // its PRE-EDIT hash (round55 fixture) must match this round52-era
+        // snapshot.
+        expect(round55Baseline.original_file_hashes[name], name).toBe(hash);
         continue;
       }
       expect(createHash("sha256").update(readFileSync(join(here, "../..", name))).digest("hex"), name).toBe(hash);
@@ -991,6 +1021,13 @@ describe("round53 exact editorial boundaries", () => {
     expect(readdirSync(bank).filter((n) => PART_RE.test(n)).sort()).toEqual(names.map((n) => n.split("/").at(-1)).sort());
     for (const [name, hash] of Object.entries(f.original_file_hashes)) {
       if (name.endsWith("master-preint.part27.json") || name.endsWith("master-preint.part28.json")) continue;
+      if (name.endsWith("master-preint.part29.json")) {
+        // round55 legitimately re-wrote part29 rows 1-220 except 8 deferred;
+        // its PRE-EDIT hash (round55 fixture) must match this round53-era
+        // snapshot.
+        expect(round55Baseline.original_file_hashes[name], name).toBe(hash);
+        continue;
+      }
       expect(createHash("sha256").update(readFileSync(join(here, "../..", name))).digest("hex"), name).toBe(hash);
     }
   });
@@ -1088,6 +1125,105 @@ describe("round54 exact editorial boundaries", () => {
     expect(readdirSync(bank).filter((n) => PART_RE.test(n)).sort()).toEqual(names.map((n) => n.split("/").at(-1)).sort());
     for (const [name, hash] of Object.entries(f.original_file_hashes)) {
       if (name.endsWith("master-preint.part28.json")) continue;
+      if (name.endsWith("master-preint.part29.json")) {
+        // round55 legitimately re-wrote part29 rows 1-220 except 8 deferred;
+        // its PRE-EDIT hash (round55 fixture) must match this round54-era
+        // snapshot.
+        expect(round55Baseline.original_file_hashes[name], name).toBe(hash);
+        continue;
+      }
+      expect(createHash("sha256").update(readFileSync(join(here, "../..", name))).digest("hex"), name).toBe(hash);
+    }
+  });
+});
+
+// round55 fixture captured in this workspace before the part29
+// (gynaecology/obstetrics, rows 1-220, except the 8 deferred records)
+// payload edit; pre-edit payload hashes chain back through the
+// round50/51/52/53/54 fixtures.
+describe("round55 exact editorial boundaries", () => {
+  const f = round55Baseline;
+  const protectedFields = (q) => {
+    const copy = structuredClone(q);
+    delete copy.explanation_fa; delete copy.options_why_fa;
+    for (const name of ["lead_fa", "golden_fa", "points_fa"]) delete copy.micro[name];
+    return copy;
+  };
+  const deferred29 = [59, 103, 110, 132, 166, 183, 191, 218];
+  const expectedScope = Array.from({ length: 220 }, (_, i) => i + 1)
+    .filter((n) => !deferred29.includes(n));
+
+  const body = JSON.parse(readFileSync(join(bank, "import-payload.master-preint.part29.json"), "utf8"));
+  const original = f.original_parts["29"];
+  const edited = new Set(f.edited_numbers["29"]);
+
+  it("locks exact part29 scope, all protected fields and every untouched record", () => {
+    expect(f.edited_numbers["29"]).toEqual(expectedScope);
+    expect(f.deferred_numbers["29"]).toEqual(deferred29);
+    const { questions, ...meta } = body;
+    const { questions: originalQuestions, ...originalMeta } = original;
+    expect(meta).toEqual(originalMeta);
+    expect(questions).toHaveLength(220);
+    let count = 0;
+    questions.forEach((q, i) => {
+      if (edited.has(i + 1)) {
+        expect(protectedFields(q), `29:${i + 1}`).toEqual(protectedFields(originalQuestions[i]));
+        expect(q).not.toEqual(originalQuestions[i]); count++;
+      } else expect(q, `untouched 29:${i + 1}`).toEqual(originalQuestions[i]);
+    });
+    expect(count).toBe(expectedScope.length);
+  });
+
+  it("ships individualized explanations, four rationales and four clinical points for part29", () => {
+    const explanations = new Set(), leads = new Set();
+    for (const n of edited) {
+      const q = body.questions[n - 1];
+      expect(q.explanation_fa.length).toBeGreaterThan(300);
+      expect(q.options_why_fa).toHaveLength(4);
+      q.options_why_fa.forEach((reason, i) => {
+        expect(reason.startsWith(i === q.correct_index ? "گزینه صحیح: " : "دلیل رد گزینه: ")).toBe(true);
+        expect(reason.length).toBeGreaterThan(30);
+      });
+      expect(new Set(q.options_why_fa).size).toBe(4);
+      expect(q.micro.lead_fa.includes("\n")).toBe(false);
+      expect(q.micro.lead_fa.length).toBeGreaterThan(20);
+      expect(q.micro.golden_fa.length).toBeGreaterThan(20);
+      expect(q.micro.points_fa).toHaveLength(4);
+      expect(new Set(q.micro.points_fa).size).toBe(4);
+      expect(q.micro.points_fa.every((r) => r.length > 20)).toBe(true);
+      explanations.add(q.explanation_fa); leads.add(q.micro.lead_fa);
+    }
+    expect(explanations.size).toBe(edited.size); expect(leads.size).toBe(edited.size);
+  });
+
+  it("records exactly 8 new unchanged graded entries on top of the previous 153", () => {
+    const previous = JSON.parse(readFileSync(join(here, "../../docs/round54-deferred.json"), "utf8"));
+    const queue = JSON.parse(readFileSync(join(here, "../../docs/round55-deferred.json"), "utf8"));
+    expect(queue.deferred.slice(0, 153)).toEqual(previous.deferred);
+    expect(queue.scope_count).toBe(220); expect(queue.enriched_count).toBe(212);
+    expect(queue.new_deferred_count).toBe(8); expect(queue.cumulative_deferred_count).toBe(161);
+    expect(queue.deferred).toHaveLength(161);
+    const newEntries = queue.deferred.slice(153);
+    expect(newEntries).toHaveLength(8);
+    expect(newEntries.map((e) => e.local_question).sort((a, b) => a - b)).toEqual(deferred29);
+    for (const entry of newEntries) {
+      expect(entry.part).toBe(29);
+      expect(body.questions[entry.local_question - 1]).toEqual(original.questions[entry.local_question - 1]);
+      expect(entry.original_correct_index).toBe(body.questions[entry.local_question - 1].correct_index);
+    }
+  });
+
+  it("keeps part28 (round54 work) unchanged", () => {
+    expect(createHash("sha256").update(readFileSync(join(bank, "import-payload.master-preint.part28.json"))).digest("hex"))
+      .toBe(f.original_file_hashes["tools/master-bank/import-payload.master-preint.part28.json"]);
+  });
+
+  it("keeps the other 53 banks byte-identical", () => {
+    const names = Object.keys(f.original_file_hashes);
+    expect(names).toHaveLength(54);
+    expect(readdirSync(bank).filter((n) => PART_RE.test(n)).sort()).toEqual(names.map((n) => n.split("/").at(-1)).sort());
+    for (const [name, hash] of Object.entries(f.original_file_hashes)) {
+      if (name.endsWith("master-preint.part29.json")) continue;
       expect(createHash("sha256").update(readFileSync(join(here, "../..", name))).digest("hex"), name).toBe(hash);
     }
   });
