@@ -1,4 +1,15 @@
-
-# local tool caches
-__pycache__/
+# Extracted copies of the unchanged question-bank data live in the delivery ZIP.
+# Restore them for local development with scripts/restore-question-bank.py.
+.work/
+# Temporary unpacking of supplementary documents from the previous delivery.
+.work/extract/
+# Runtime/test data and dependencies must not be part of the source patch.
+**/node_modules/
+**/dist/
+**/__pycache__/
 *.pyc
+.work/medschool-data/
+**/.env
+**/*.db
+**/*.db-wal
+**/*.db-shm
