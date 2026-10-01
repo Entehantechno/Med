@@ -1,3 +1,4 @@
+import CompetitiveReferences from "./admin/CompetitiveReferences.jsx";
 import AiRoutesEditor from "../components/AiRoutesEditor.jsx";
 import { useEffect, useState, useRef, useMemo, lazy, Suspense } from "react";
 import { useApp } from "../context.jsx";
@@ -137,7 +138,7 @@ export default function Admin({ home }) {
   ];
   const competitiveSections = [
     { title: t("navGroupPeople"), items: [["learnerMgmt", "users", "learn.users"], ["placementReport", "compass", "learn.view"], ["certificatesAdmin", "medal", "learn.users"], ["premiumAccounts", "crown", "learn.users"]] },
-    { title: t("navGroupContent"), items: [["learnCards", "flask", "learn.content"], ["contentStats", "chart", "learn.content"], ["mediaLibrary", "image", "learn.content"], ["pathManager", "book", "learn.content"], ["mascotsAdmin", "star", "learn.content"], ["vpatientAdmin", "patient", "learn.settings"], ["dxAdmin", "target", "learn.content"], ["blogAdmin", "book", "learn.content"], ["communityMod", "users", "learn.content"]] },
+    { title: t("navGroupContent"), items: [["learnCards", "flask", "learn.content"], ["competitiveReferences", "book", "learn.content"], ["contentStats", "chart", "learn.content"], ["mediaLibrary", "image", "learn.content"], ["pathManager", "book", "learn.content"], ["mascotsAdmin", "star", "learn.content"], ["vpatientAdmin", "patient", "learn.settings"], ["dxAdmin", "target", "learn.content"], ["blogAdmin", "book", "learn.content"], ["communityMod", "users", "learn.content"]] },
     { title: t("navGroupMarketing"), items: [["adsMgmt", "image", "learn.ads"], ["storeManager", "store", "store.manage"], ["pricingEditor", "crown", "learn.settings"], ["groupPurchase", "users", "learn.settings"], ["payments", "crown", "learn.settings"]] },
     { title: t("navGroupSupport"), items: [["supportInbox", "chat", "learn.support"], ["helpCenter", "book", "learn.content"]] },
     { title: t("navGroupSystem"), items: [["remindersAdmin", "clock", "learn.settings"], ["pwaAdmin", "download", "learn.view"], ["twaAdmin", "download", "learn.settings"], ["seoAdmin", "settings", "learn.settings"], ["gamification", "bolt", "learn.settings"], ["fsrsOptimizer", "brain", "learn.settings"]] },
@@ -338,6 +339,7 @@ export default function Admin({ home }) {
             {tab === "learnerMgmt" && <LearnerManagement />}
             {tab === "placementReport" && <PlacementReport />}
             {tab === "learnCards" && <LazyAdminChunk><LearnCards jump={cardsJump} onJumpConsumed={() => setCardsJump(null)} /></LazyAdminChunk>}
+            {tab === "competitiveReferences" && <CompetitiveReferences />}
             {tab === "mediaLibrary" && <LazyAdminChunk><MediaLibrary /></LazyAdminChunk>}
             {tab === "contentStats" && <LazyAdminChunk><ContentStats onJump={jumpToCards} /></LazyAdminChunk>}
             {tab === "blogAdmin" && <BlogAdmin />}

@@ -919,6 +919,7 @@ export function initSchema() {
       title_fa TEXT NOT NULL DEFAULT '', title_en TEXT NOT NULL,
       short_title TEXT NOT NULL DEFAULT '', publisher TEXT NOT NULL DEFAULT '', edition TEXT NOT NULL DEFAULT '',
       publication_year INTEGER, isbn TEXT NOT NULL DEFAULT '', source_url TEXT NOT NULL DEFAULT '',
+      cover_url TEXT NOT NULL DEFAULT '',
       rights_status TEXT NOT NULL DEFAULT 'metadata_only', rights_note_fa TEXT NOT NULL DEFAULT '', rights_note_en TEXT NOT NULL DEFAULT '',
       version INTEGER NOT NULL DEFAULT 1, active INTEGER NOT NULL DEFAULT 1,
       created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now'))
@@ -1461,26 +1462,31 @@ export function initSchema() {
   try {
     db.exec("INSERT OR IGNORE INTO reference_catalog (id,code,title_en,short_title,publisher,edition,rights_status,active) VALUES (1,'harrison-22e','Harrison''s Principles of Internal Medicine','Harrison''s 22e','McGraw Hill','22e','metadata_only',1)");
   } catch { /* best-effort seed */ }
+  // cover_url column for the attractive reference shelf (added after 106)
+  try {
+    const cols = db.prepare("PRAGMA table_info(reference_catalog)").all().map(c=>c.name);
+    if (!cols.includes("cover_url")) db.exec("ALTER TABLE reference_catalog ADD COLUMN cover_url TEXT NOT NULL DEFAULT ''");
+  } catch {}
   // Seed the full competitive reference library (bilingual, metadata-only).
   // These back the attractive "View in reference" button at the bottom of every micro-lesson.
   try {
     const refBooks = [
-      ["harrison-22e","هاریسون - اصول طب داخلی","Harrison's Principles of Internal Medicine","Harrison 22e","McGraw Hill","22e","https://accessmedicine.mhmedical.com/book.aspx?bookid=3095"],
-      ["harrison-fa-22e","هاریسون - اصول طب داخلی (ترجمه فارسی)","Harrison's Principles of Internal Medicine - Persian Edition","هاریسون فارسی ۲۲","McGraw Hill / اندیشه رفیع","22e","https://accessmedicine.mhmedical.com/book.aspx?bookid=3095"],
-      ["nelson-21e","نلسون - طب کودکان","Nelson Textbook of Pediatrics","Nelson 21e","Elsevier","21e","https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111"],
-      ["williams-ob-26e","ویلیامز - بارداری و زایمان","Williams Obstetrics","Williams 26e","McGraw Hill","26e","https://accessmedicine.mhmedical.com/book.aspx?bookid=2977"],
-      ["berek-16e","برک و نواک - بیماری‌های زنان","Berek & Novak's Gynecology","Berek 16e","Wolters Kluwer","16e","https://shop.lww.com/Berek-and-Novak-s-Gynecology/p/9781975225639"],
-      ["schwartz-11e","شوارتز - اصول جراحی","Schwartz's Principles of Surgery","Schwartz 11e","McGraw Hill","11e","https://accessmedicine.mhmedical.com/book.aspx?bookid=2576"],
-      ["robbins-10e","رابینز - آسیب‌شناسی پایه","Robbins & Cotran Pathologic Basis of Disease","Robbins 10e","Elsevier","10e","https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111"],
-      ["katzung-15e","کاتزونگ - فارماکولوژی پایه و بالینی","Katzung's Basic & Clinical Pharmacology","Katzung 15e","McGraw Hill","15e","https://accessmedicine.mhmedical.com/book.aspx?bookid=3058"],
-      ["guyton-14e","گایتون و هال - فیزیولوژی پزشکی","Guyton and Hall Textbook of Medical Physiology","Guyton 14e","Elsevier","14e","https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111"],
-      ["junqueira-15e","جان‌کوئرا - بافت‌شناسی پایه","Junqueira's Basic Histology","Junqueira 15e","McGraw Hill","15e","https://accessmedicine.mhmedical.com/book.aspx?bookid=2430"],
-      ["kaplan-11e","کاپلان و سادوک - خلاصه روان‌پزشکی","Kaplan & Sadock's Synopsis of Psychiatry","Kaplan 11e","Wolters Kluwer","11e","https://shop.lww.com/Kaplan-and-Sadock-s-Synopsis-of-Psychiatry/p/9781975145569"],
-      ["bolognia-4e","بولونیا - پوست‌شناسی","Bolognia Dermatology","Bolognia 4e","Elsevier","4e","https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111"],
+      ["harrison-22e","هاریسون - اصول طب داخلی","Harrison's Principles of Internal Medicine","Harrison 22e","McGraw Hill","22e","https://accessmedicine.mhmedical.com/book.aspx?bookid=3095","/covers/harrison-22e.jpg"],
+      ["harrison-fa-22e","هاریسون - اصول طب داخلی (ترجمه فارسی)","Harrison's Principles of Internal Medicine - Persian Edition","هاریسون فارسی ۲۲","McGraw Hill / اندیشه رفیع","22e","https://accessmedicine.mhmedical.com/book.aspx?bookid=3095","/covers/harrison-fa-22e.jpg"],
+      ["nelson-21e","نلسون - طب کودکان","Nelson Textbook of Pediatrics","Nelson 21e","Elsevier","21e","https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111","/covers/nelson-21e.jpg"],
+      ["williams-ob-26e","ویلیامز - بارداری و زایمان","Williams Obstetrics","Williams 26e","McGraw Hill","26e","https://accessmedicine.mhmedical.com/book.aspx?bookid=2977","/covers/williams-26e.jpg"],
+      ["berek-16e","برک و نواک - بیماری‌های زنان","Berek & Novak's Gynecology","Berek 16e","Wolters Kluwer","16e","https://shop.lww.com/Berek-and-Novak-s-Gynecology/p/9781975225639","/covers/berek-16e.jpg"],
+      ["schwartz-11e","شوارتز - اصول جراحی","Schwartz's Principles of Surgery","Schwartz 11e","McGraw Hill","11e","https://accessmedicine.mhmedical.com/book.aspx?bookid=2576","/covers/schwartz-11e.jpg"],
+      ["robbins-10e","رابینز - آسیب‌شناسی پایه","Robbins & Cotran Pathologic Basis of Disease","Robbins 10e","Elsevier","10e","https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111","/covers/robbins-10e.jpg"],
+      ["katzung-15e","کاتزونگ - فارماکولوژی پایه و بالینی","Katzung's Basic & Clinical Pharmacology","Katzung 15e","McGraw Hill","15e","https://accessmedicine.mhmedical.com/book.aspx?bookid=3058","/covers/katzung-15e.jpg"],
+      ["guyton-14e","گایتون و هال - فیزیولوژی پزشکی","Guyton and Hall Textbook of Medical Physiology","Guyton 14e","Elsevier","14e","https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111","/covers/guyton-14e.jpg"],
+      ["junqueira-15e","جان‌کوئرا - بافت‌شناسی پایه","Junqueira's Basic Histology","Junqueira 15e","McGraw Hill","15e","https://accessmedicine.mhmedical.com/book.aspx?bookid=2430","/covers/junqueira-15e.jpg"],
+      ["kaplan-11e","کاپلان و سادوک - خلاصه روان‌پزشکی","Kaplan & Sadock's Synopsis of Psychiatry","Kaplan 11e","Wolters Kluwer","11e","https://shop.lww.com/Kaplan-and-Sadock-s-Synopsis-of-Psychiatry/p/9781975145569","/covers/kaplan-11e.jpg"],
+      ["bolognia-4e","بولونیا - پوست‌شناسی","Bolognia Dermatology","Bolognia 4e","Elsevier","4e","https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111","/covers/bolognia-4e.jpg"],
     ];
-    for (const [code, fa, en, short, pub, ed, url] of refBooks) {
-      db.prepare("INSERT OR IGNORE INTO reference_catalog (code,title_fa,title_en,short_title,publisher,edition,source_url,rights_status,active) VALUES (?,?,?,?,?,?,?,?,1)").run(code, fa, en, short, pub, ed, url, "metadata_only");
-      db.prepare("UPDATE reference_catalog SET title_fa=?, title_en=?, short_title=?, publisher=?, edition=?, source_url=? WHERE code=?").run(fa, en, short, pub, ed, url, code);
+    for (const [code, fa, en, short, pub, ed, url, cover] of refBooks) {
+      db.prepare("INSERT OR IGNORE INTO reference_catalog (code,title_fa,title_en,short_title,publisher,edition,source_url,cover_url,rights_status,active) VALUES (?,?,?,?,?,?,?,?,?,1)").run(code, fa, en, short, pub, ed, url, cover, "metadata_only");
+      db.prepare("UPDATE reference_catalog SET title_fa=?, title_en=?, short_title=?, publisher=?, edition=?, source_url=?, cover_url=? WHERE code=?").run(fa, en, short, pub, ed, url, cover, code);
     }
   } catch { /* best-effort */ }
   // Ensure every competitive micro-lesson has a reference link for the attractive button.

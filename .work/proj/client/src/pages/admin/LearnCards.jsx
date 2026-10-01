@@ -538,6 +538,8 @@ function CardModalInner({ card, onClose, onSaved }) {
   const { t, lang } = useApp();
   const isNew = !card.id;
   const d = card.data || {};
+  const [refs, setRefs] = useState([]);
+  useEffect(()=>{ api.get("/learn/admin/references").then(r=>setRefs(r.references||[])).catch(()=>api.get("/learn/references").then(r=>setRefs(r.references||[])).catch(()=>{})); }, []);
   const [f, setF] = useState({
     type: d.type || "mcq",
     q_fa: d.q_fa || d.title_fa || "", q_en: d.q_en || d.title_en || "",
@@ -558,6 +560,10 @@ function CardModalInner({ card, onClose, onSaved }) {
       lead_fa: d.micro?.lead_fa || "", golden_fa: d.micro?.golden_fa || "",
       points_fa: (d.micro?.points_fa || []).join("\n"), source_fa: d.micro?.source_fa || "",
       media: mediaState(d.micro?.media),         // درسنامه media
+      // competitive reference link (bilingual)
+      refCode: d.micro?.reference?.code || d.micro?.reference?.short_en || d.micro?.reference?.book_en || "",
+      refChapter: d.micro?.reference?.chapter_fa || d.micro?.reference?.chapter_en || "",
+      refPage: d.micro?.reference?.page || "",
     },
     // پاسخنامه — dedicated answer explanation (text + media)
     explain: {
@@ -585,6 +591,13 @@ function CardModalInner({ card, onClose, onSaved }) {
     const microMedia = mediaPayload(f.micro.media);
     const explainMedia = mediaPayload(f.explain.media);
     const mnemMedia = mediaPayload(f.mnemonic.media);
+    // resolve selected reference to full object for micro
+    const selRef = refs.find(r=>r.code===f.micro.refCode) || refs.find(r=>r.short_title===f.micro.refCode) || null;
+    const microRef = (f.micro.refCode || f.micro.refChapter || f.micro.refPage) ? {
+      ...(selRef ? { book_fa: selRef.title_fa, book_en: selRef.title_en, short_fa: selRef.short_title, short_en: selRef.short_title, url: selRef.source_url, edition: selRef.edition, code: selRef.code } : { book_fa: f.micro.refCode, book_en: f.micro.refCode, url: "" }),
+      chapter_fa: f.micro.refChapter || "", chapter_en: f.micro.refChapter || "",
+      page: f.micro.refPage || "",
+    } : undefined;
     const payload = {
       type: f.type, q_fa: f.q_fa, q_en: f.q_en, difficulty: f.difficulty, premium: f.premium, category: f.category,
       hints_fa: f.hints_fa ? f.hints_fa.split("\n").filter(Boolean) : [],
@@ -593,11 +606,12 @@ function CardModalInner({ card, onClose, onSaved }) {
       media: qMedia,
       // keep the legacy `image` in sync only when the question media is a plain image
       image: (qMedia && (qMedia.kind === "image" || !qMedia.kind)) ? qMedia.url : "",
-      micro: (f.micro.lead_fa || f.micro.golden_fa || f.micro.points_fa || microMedia) ? {
+      micro: (f.micro.lead_fa || f.micro.golden_fa || f.micro.points_fa || microMedia || microRef) ? {
         lead_fa: f.micro.lead_fa, lead_en: f.micro.lead_fa, golden_fa: f.micro.golden_fa, golden_en: f.micro.golden_fa,
         points_fa: f.micro.points_fa.split("\n").filter(Boolean), points_en: f.micro.points_fa.split("\n").filter(Boolean),
-        source_fa: f.micro.source_fa, source_en: f.micro.source_fa, options_fa: [], options_en: [],
+        source_fa: f.micro.source_fa || (microRef ? `${microRef.book_fa} - ${microRef.chapter_fa}` : ""), source_en: f.micro.source_fa || (microRef ? `${microRef.book_en} - ${microRef.chapter_en}` : ""), options_fa: [], options_en: [],
         media: microMedia,
+        reference: microRef,
       } : undefined,
       // پاسخنامه (answer explanation)
       explain: (f.explain.text_fa || explainMedia) ? {
@@ -735,6 +749,19 @@ function CardModalInner({ card, onClose, onSaved }) {
       <div className="field"><label>{t("microGolden")}</label><input value={f.micro.golden_fa} onChange={(e) => set("micro", { ...f.micro, golden_fa: e.target.value })} /></div>
       <div className="field"><label>{t("microPoints")}</label><textarea value={f.micro.points_fa} onChange={(e) => set("micro", { ...f.micro, points_fa: e.target.value })} placeholder={t("onePerLine")} /></div>
       <div className="field"><label>{t("microSource")}</label><input value={f.micro.source_fa} onChange={(e) => set("micro", { ...f.micro, source_fa: e.target.value })} /></div>
+      {/* رقابتی: انتخاب رفرنس اختصاصی + فصل/صفحه — ذخیره در micro.reference */}
+      <div className="grid grid-3">
+        <div className="field"><label>{lang==="fa"?"کتاب مرجع":"Reference"}</label>
+          <select value={f.micro.refCode||""} onChange={e=>set("micro",{...f.micro, refCode:e.target.value})}>
+            <option value="">{lang==="fa"?"— بدون رفرنس —":"— No reference —"}</option>
+            {refs.map(r=><option key={r.code} value={r.code}>{lang==="fa"?r.title_fa:r.title_en} — {r.short_title}{r.edition?` (${r.edition})`:""}</option>)}
+          </select>
+          {(()=>{ const sel=refs.find(r=>r.code===f.micro.refCode); return sel?.cover_url ? <div className="small muted" style={{display:"flex",gap:8,alignItems:"center",marginTop:6}}><img src={sel.cover_url} alt="" style={{width:36,height:50,objectFit:"cover",borderRadius:4,border:"1px solid #e8e8e8"}}/><span className="small muted">{sel.publisher||""}</span></div>:null; })()}
+        </div>
+        <div className="field"><label>{lang==="fa"?"فصل":"Chapter"}</label><input value={f.micro.refChapter||""} onChange={e=>set("micro",{...f.micro, refChapter:e.target.value})} placeholder={lang==="fa"?"مثلاً فصل ۳۱۵ — شوک":"e.g. Ch. 315 — Shock"} /></div>
+        <div className="field"><label>{lang==="fa"?"صفحه":"Page"}</label><input value={f.micro.refPage||""} onChange={e=>set("micro",{...f.micro, refPage:e.target.value})} placeholder="e.g. 2150" /></div>
+      </div>
+      {f.micro.refCode && <div className="small muted" style={{marginTop:4}}>{(() => { const sel=refs.find(r=>r.code===f.micro.refCode); return sel?.source_url ? <a href={sel.source_url} target="_blank" rel="noreferrer" className="small">{lang==="fa"?"مشاهده در سایت ناشر":"Open on publisher site"} ↗</a> : null; })()}</div>}
       <MediaUpload value={f.micro.media} onChange={(v) => set("micro", { ...f.micro, media: v })} label={`${t("microMedia")} (${t("optional")})`} />
 
       <div className="divider" />

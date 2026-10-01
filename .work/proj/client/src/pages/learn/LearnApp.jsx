@@ -46,6 +46,7 @@ const Mnemonics = lazy(() => import("./Mnemonics.jsx"));
 const CrowdInsights = lazy(() => import("./CrowdInsights.jsx"));
 const Settings = lazy(() => import("./Settings.jsx"));
 const Summaries = lazy(() => import("./Summaries.jsx"));
+const ReferenceViewer = lazy(() => import("./ReferenceViewer.jsx"));
 
 /* HUD shows XP / streak / hearts / gems — the shared currency signals. */
 export function Hud({ profile, hideStreak = false }) {
@@ -65,7 +66,10 @@ export function Hud({ profile, hideStreak = false }) {
 
 export default function LearnApp() {
   const { t, lang, flag } = useApp();
-  const [tab, setTabState] = useState(() => (typeof window !== "undefined" && /^#browse(\?|$)/.test(window.location.hash) ? "browse" : "home"));
+  // deep-link to reference viewer via pathname /learn/reference/:code?page=N  (SPA fallback)
+  const refMatch = typeof window !== "undefined" ? /^\/learn\/reference\/([^/?#]+)/.exec(window.location.pathname) : null;
+  const initRef = refMatch ? { code: decodeURIComponent(refMatch[1]), page: new URLSearchParams(window.location.search).get("page") || "" } : null;
+  const [tab, setTabState] = useState(() => initRef ? `reference:${initRef.code}:${initRef.page}` : (typeof window !== "undefined" && /^#browse(\?|$)/.test(window.location.hash) ? "browse" : "home"));
   const [navOpen, setNavOpen] = useState({});   // collapsible nav groups (cleaner menu)
   const [moreOpen, setMoreOpen] = useState(false);
   const [badges, setBadges] = useState({ due: 0, quests: 0 });
@@ -180,6 +184,20 @@ export default function LearnApp() {
     window.addEventListener("medlab-go", onGo);
     return () => window.removeEventListener("medlab-go", onGo);
   }, []);
+  // Keep SPA tab in sync with browser back/forward for /learn/reference/* shareable URLs
+  useEffect(() => {
+    const onPop = () => {
+      const m = /^\/learn\/reference\/([^/?#]+)/.exec(window.location.pathname);
+      if (m) {
+        const pg = new URLSearchParams(window.location.search).get("page")||"";
+        setTabState(`reference:${decodeURIComponent(m[1])}:${pg}`);
+      } else if (typeof tab === "string" && tab.startsWith("reference:")) {
+        setTabState("library");
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [tab]);
 
   // Handle return from the payment gateway (?pay=... for premium, ?buy=... for courses).
   // Also reconcile once on every login so a closed bank tab still grants Plus / course.
@@ -267,8 +285,11 @@ export default function LearnApp() {
   const allTabIds = new Set(["home", "path", "lesson", "legendary", "settings", ...(flag("premium") ? ["premium"] : []), ...nav.map((n) => n[0])]);
   const knownTab = ["premium","dxChallenge","review","quests","placement","practice","browse","customTest","summaries","examSim","vpatient","flashcards","checkpoint","studyPlan","mindmap","mnemonics","crowd","friends","invite","league","ranking","rampEvent","challenge","community","achievements","progress","mastery","flagged","certificates","notes","mycards","library","store"].includes(tab);
   const tabDisabled = knownTab && !allTabIds.has(tab);
+  const isRefTab = typeof tab === "string" && tab.startsWith("reference:");
   let page;
-  if (tabDisabled)
+  if (isRefTab)
+    page = <Suspense fallback={<Spinner />}><ReferenceViewer code={tab.split(":")[1]} initialPage={tab.split(":")[2]||""} onBack={()=>{ window.history.replaceState({}, "", "/"); setTab("library"); }} /></Suspense>;
+  else if (tabDisabled)
     page = (
       <div className="page"><div className="card empty-state">
         <div className="ico">🔒</div>

@@ -459,6 +459,7 @@ export const I18N = {
     dragToReorder: "برای جابه‌جایی بکشید و رها کنید",
     roleEditor: "مدیریت دسترسی نقش‌ها", roleEditorHint: "برای هر نقش، دسترسی‌های دلخواه را فعال/غیرفعال کن. ادمین همیشه به همه‌چیز دسترسی دارد.",
     allAccess: "دسترسی کامل", adminAlwaysAll: "نقش ادمین همیشه همه‌کاره است و قابل تغییر نیست.",
+    competitiveReferences: "رفرنس‌های رقابتی", competitiveReferencesHint: "کتاب‌های مرجع رقابتی (هاریسون، نلسون، ویلیامز و…) — کاور، عنوان دوزبانه، ویراست، ناشر و لینک قانونی ناشر. بدون میزبانی PDF کپی‌رایت.",
     learnCards: "مدیریت محتوا", learnCardsHint: "کارت‌ها و سوالات مسیر رقابتی را بساز و مدیریت کن؛ همهٔ انواع سوال، هینت، درسنامه، پریمیوم، دسته‌بندی و ورود دسته‌جمعی.",
     // comprehensive card filters
     filters: "فیلترها", clearFilters: "پاک‌کردن فیلترها", allSubjects: "همهٔ درس‌ها", allSections: "همهٔ بخش‌ها",
@@ -1291,6 +1292,7 @@ export const I18N = {
     dragToReorder: "Drag to reorder",
     roleEditor: "Role permissions", roleEditorHint: "Toggle each role's permissions. Admin always has full access.",
     allAccess: "Full access", adminAlwaysAll: "The admin role is always all-powerful and cannot be changed.",
+    competitiveReferences: "Competitive references", competitiveReferencesHint: "Competitive reference books (Harrison, Nelson, Williams …) — cover, bilingual title, edition, publisher and legal publisher link. No copyrighted PDF hosting.",
     learnCards: "Content management", learnCardsHint: "Create & manage competitive-track cards & questions — all types, hints, lessons, premium, categories and bulk import.",
     // comprehensive card filters
     filters: "Filters", clearFilters: "Clear filters", allSubjects: "All subjects", allSections: "All sections",

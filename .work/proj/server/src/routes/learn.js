@@ -18,8 +18,9 @@ import { recordAnswers, performanceDashboard, mistakeCardIds, flaggedCardIds, di
 import { emojiForTopic } from "../lib/topicemoji.js";
 import { serializeCard } from "../lib/cardserialize.js";
 import { glossaryPayload } from "../lib/glossary.js";
-import { listReferenceCatalog } from "../lib/reference-governance.js";
+import { listReferenceCatalog, normalizeReferenceInput, publicReference, referenceCatalogRow } from "../lib/reference-governance.js";
 import { lessonSummary, programSummaries } from "../lib/chaptersummary.js";
+import { requirePerm } from "../lib/rbac.js";
 import { cardFacets, buildFacetIndex, matchFacets, sortCards, fullYear, cardIsBankOnly } from "../lib/cardfacets.js";
 import { notify, vapidPublicKey, pushConfigured } from "../lib/notify.js";
 import { review as srsReview, dueCards, dueCount, ensureTracked, lapseWrongCards, previewSchedule, srsStats, tehranDay } from "../lib/srs.js";
@@ -2024,6 +2025,39 @@ r.get("/references", ...learner, (req, res) => {
   const all = listReferenceCatalog({ activeOnly: true });
   // publicReference is already the sanitized shape; listReferenceCatalog returns it
   res.json({ references: all });
+});
+// Competitive reference admin — CRUD for the same catalog but gated by learn.content (content manager)
+// so the competitive track can curate its own bookshelf without touching the academic governance.
+const learnContent = [authRequired, requirePerm("learn.content")];
+r.get("/admin/references", ...learnContent, (req, res) => {
+  const all = listReferenceCatalog({ activeOnly: false });
+  res.json({ references: all });
+});
+r.post("/admin/references", ...learnContent, (req, res) => {
+  const x = normalizeReferenceInput(req.body || {});
+  if (!x.code || !x.title_en) return res.status(400).json({ error: "reference_code_and_title_required" });
+  if (db.prepare("SELECT 1 FROM reference_catalog WHERE code=?").get(x.code)) return res.status(409).json({ error: "reference_code_exists" });
+  const out = db.prepare("INSERT INTO reference_catalog (code,title_fa,title_en,short_title,publisher,edition,publication_year,isbn,source_url,cover_url,rights_status,rights_note_fa,rights_note_en,active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)").run(x.code, x.title_fa, x.title_en, x.short_title, x.publisher, x.edition, x.publication_year, x.isbn, x.source_url, x.cover_url, x.rights_status, x.rights_note_fa, x.rights_note_en, x.active);
+  persistNow();
+  res.status(201).json({ reference: publicReference(referenceCatalogRow(out.lastInsertRowid)) });
+});
+r.put("/admin/references/:id", ...learnContent, (req, res) => {
+  const old = referenceCatalogRow(req.params.id);
+  if (!old) return res.status(404).json({ error: "not_found" });
+  const x = normalizeReferenceInput({ ...old, ...(req.body || {}) });
+  if (!x.code || !x.title_en) return res.status(400).json({ error: "reference_code_and_title_required" });
+  const dup = db.prepare("SELECT id FROM reference_catalog WHERE code=? AND id<>?").get(x.code, old.id);
+  if (dup) return res.status(409).json({ error: "reference_code_exists" });
+  db.prepare("UPDATE reference_catalog SET code=?,title_fa=?,title_en=?,short_title=?,publisher=?,edition=?,publication_year=?,isbn=?,source_url=?,cover_url=?,rights_status=?,rights_note_fa=?,rights_note_en=?,active=?,version=version+1,updated_at=datetime('now') WHERE id=?").run(x.code, x.title_fa, x.title_en, x.short_title, x.publisher, x.edition, x.publication_year, x.isbn, x.source_url, x.cover_url, x.rights_status, x.rights_note_fa, x.rights_note_en, x.active, old.id);
+  persistNow();
+  res.json({ reference: publicReference(referenceCatalogRow(old.id)) });
+});
+r.delete("/admin/references/:id", ...learnContent, (req, res) => {
+  const old = referenceCatalogRow(req.params.id);
+  if (!old) return res.status(404).json({ error: "not_found" });
+  db.prepare("DELETE FROM reference_catalog WHERE id=?").run(old.id);
+  persistNow();
+  res.json({ ok: true });
 });
 
 /* Warm the browse pool right after boot (off the request path) so the first

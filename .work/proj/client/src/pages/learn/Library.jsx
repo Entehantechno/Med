@@ -49,14 +49,20 @@ export default function Library() {
           </div>
           <div className="ref-grid">
             {refs.map((r) => (
-              <a key={r.id || r.code} href={r.source_url || r.sourceUrl || "#"} target={r.source_url || r.sourceUrl ? "_blank" : undefined} rel="noopener noreferrer" className="ref-card" onClick={(e) => { if (!r.source_url && !r.sourceUrl) e.preventDefault(); }}>
-                <div className="ref-card-icon" aria-hidden><Icon name="book" size={22} /></div>
+              <button key={r.id || r.code} type="button" className="ref-card" style={{textAlign:"start"}} onClick={()=>{
+                const href=`/learn/reference/${r.code}`;
+                try{ window.history.pushState({}, "", href); }catch{}
+                window.dispatchEvent(new CustomEvent("medlab-go",{detail:`reference:${r.code}:`}));
+              }}>
+                {r.cover_url
+                  ? <img src={r.cover_url} alt={r.title_en||r.title_fa} style={{width:76,height:102,objectFit:"cover",borderRadius:8,border:"1px solid #e8e8e8",flexShrink:0}} loading="lazy" />
+                  : <div className="ref-card-icon" aria-hidden><Icon name="book" size={22} /></div>}
                 <div className="ref-card-body">
                   <div className="ref-card-title">{lang === "fa" ? (r.title_fa || r.title_en) : (r.title_en || r.title_fa)}</div>
                   <div className="ref-card-meta">{[r.short_title, r.edition, r.publisher].filter(Boolean).join(" • ")}</div>
-                  {(r.source_url || r.sourceUrl) && <span className="ref-card-link">{lang === "fa" ? "مشاهده ↗" : "Open ↗"}</span>}
+                  <span className="ref-card-link">{lang === "fa" ? "مشاهده رفرنس ↗" : "Open ↗"}{r.source_url || r.sourceUrl ? <span className="small muted" style={{marginInlineStart:6}}>{lang==="fa"?"(ناشر)":"(publisher)"}</span> : null}</span>
                 </div>
-              </a>
+              </button>
             ))}
           </div>
         </div>

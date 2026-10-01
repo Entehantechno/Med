@@ -314,13 +314,16 @@ export const TYPE_MAP = new Proxy(TYPE_VIEWS, {
 /* QB-style micro lesson ("درسنامه") shown after answering. */
 function referenceForMicro(micro, lang) {
   if (!micro) return null;
-  if (micro.reference && micro.reference.book_fa) {
+  if (micro.reference && (micro.reference.book_fa || micro.reference.book_en)) {
+    const r = micro.reference;
     return {
-      book: lang === "fa" ? micro.reference.book_fa : (micro.reference.book_en || micro.reference.book_fa),
-      chapter: lang === "fa" ? (micro.reference.chapter_fa || "") : (micro.reference.chapter_en || micro.reference.chapter_fa || ""),
-      page: micro.reference.page || "",
-      url: micro.reference.url || "",
-      edition: micro.reference.edition || "",
+      book: lang === "fa" ? (r.book_fa || r.book_en) : (r.book_en || r.book_fa),
+      chapter: lang === "fa" ? (r.chapter_fa || "") : (r.chapter_en || r.chapter_fa || ""),
+      page: r.page || "",
+      url: r.url || "",
+      edition: r.edition || "",
+      coverUrl: r.cover_url || r.coverUrl || "",
+      code: r.code || r.short_en || "",
     };
   }
   // Fallback: generate from source text
@@ -333,6 +336,8 @@ function referenceForMicro(micro, lang) {
       page: "",
       url: "https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",
       edition: "22e",
+      coverUrl: "/covers/harrison-22e.jpg",
+      code: "harrison",
     };
   }
   if (src) {
@@ -342,6 +347,8 @@ function referenceForMicro(micro, lang) {
       page: "",
       url: "",
       edition: "",
+      coverUrl: "",
+      code: "",
     };
   }
   return null;
@@ -374,28 +381,47 @@ export function MicroLesson({ micro, defaultOpen = false, glossary }) {
           )}
           {micro.source && <div className="micro-source"><Icon name="bookmark" size={12} /> {lang === "fa" ? "منبع: " : "Source: "}{micro.source}</div>}
           {ref && (
-            <a
-              href={ref.url || "#"}
-              target={ref.url ? "_blank" : undefined}
-              rel={ref.url ? "noopener noreferrer" : undefined}
-              className={`micro-ref-btn ${!ref.url ? "is-placeholder" : ""}`}
-              onClick={(e) => {
-                if (!ref.url) {
-                  e.preventDefault();
-                  // no external URL yet — could open internal reference drawer in future
-                }
-              }}
-              aria-label={lang === "fa" ? `مشاهده در ${ref.book}` : `View in ${ref.book}`}
-            >
-              <span className="micro-ref-icon" aria-hidden><Icon name="book" size={18} /></span>
-              <span className="micro-ref-text">
-                <span className="micro-ref-title">{lang === "fa" ? `مشاهده در ${ref.book}` : `View in ${ref.book}`}{ref.edition ? ` — ${ref.edition}` : ""}</span>
-                {(ref.chapter || ref.page) && (
-                  <span className="micro-ref-sub">{[ref.chapter, ref.page ? (lang === "fa" ? `ص ${ref.page}` : `p. ${ref.page}`) : null].filter(Boolean).join(" • ")}</span>
-                )}
-              </span>
-              <span className="micro-ref-arrow" aria-hidden>{ref.url ? "↗" : "📖"}</span>
-            </a>
+            ref.code ? (
+              <button
+                type="button"
+                className="micro-ref-btn"
+                aria-label={lang === "fa" ? `مشاهده در ${ref.book}` : `View in ${ref.book}`}
+                onClick={()=>{
+                  const href=`/learn/reference/${ref.code}${ref.page ? `?page=${encodeURIComponent(ref.page)}` : ""}`;
+                  try{ window.history.pushState({}, "", href); }catch{}
+                  window.dispatchEvent(new CustomEvent("medlab-go",{detail:`reference:${ref.code}:${ref.page||""}`}));
+                }}
+              >
+                {ref.coverUrl
+                  ? <img src={ref.coverUrl} alt={ref.book} style={{width:44,height:60,objectFit:"cover",borderRadius:6,border:"1px solid #e8e8e8",flexShrink:0}} loading="lazy" />
+                  : <span className="micro-ref-icon" aria-hidden><Icon name="book" size={18} /></span>}
+                <span className="micro-ref-text">
+                  <span className="micro-ref-title">{lang === "fa" ? `مشاهده در ${ref.book}` : `View in ${ref.book}`}{ref.edition ? ` — ${ref.edition}` : ""}</span>
+                  {(ref.chapter || ref.page) && (
+                    <span className="micro-ref-sub">{[ref.chapter, ref.page ? (lang === "fa" ? `ص ${ref.page}` : `p. ${ref.page}`) : null].filter(Boolean).join(" • ")}</span>
+                  )}
+                </span>
+                <span className="micro-ref-arrow" aria-hidden>{"›"}</span>
+              </button>
+            ) : (
+              <a
+                href={ref.url || "#"}
+                target={ref.url ? "_blank" : undefined}
+                rel={ref.url ? "noopener noreferrer" : undefined}
+                className="micro-ref-btn"
+                aria-label={lang === "fa" ? `مشاهده در ${ref.book}` : `View in ${ref.book}`}
+              >
+                <span className="micro-ref-icon" aria-hidden><Icon name="book" size={18} /></span>
+                <span className="micro-ref-text">
+                  <span className="micro-ref-title">{lang === "fa" ? `مشاهده در ${ref.book}` : `View in ${ref.book}`}{ref.edition ? ` — ${ref.edition}` : ""}</span>
+                  {(ref.chapter || ref.page) && (
+                    <span className="micro-ref-sub">{[ref.chapter, ref.page ? (lang === "fa" ? `ص ${ref.page}` : `p. ${ref.page}`) : null].filter(Boolean).join(" • ")}</span>
+                  )}
+                  <span className="small muted" style={{fontSize:11}}>{ref.url}</span>
+                </span>
+                <span className="micro-ref-arrow" aria-hidden>{"↗"}</span>
+              </a>
+            )
           )}
         </div>
       )}
