@@ -1164,6 +1164,102 @@ r.post("/vpatient/import-cards", ...P("learn.settings"), async (req, res) => {
   res.json({ ok: true, imported });
 });
 
+/* ---- Site-bank promotion: university VP case -> global bank (with admin approval) ----
+   - GET  /admin/case-promotions          list all requests with case titles
+   - POST /admin/case-promotions/:id/approve  clone uni case to global (track=learn, university_id=null)
+   - POST /admin/case-promotions/:id/reject   reject request
+   - POST /admin/cases/:id/publish-global     direct publish without request (admin shortcut)
+*/
+r.get("/case-promotions", ...P("learn.settings"), (req, res) => {
+  try {
+    const rows = db.prepare("SELECT * FROM case_promotion_requests ORDER BY id DESC LIMIT 200").all();
+    const out = rows.map((r) => {
+      let title = `#${r.case_id}`;
+      try { const c = db.prepare("SELECT data_json FROM cases WHERE id=?").get(r.case_id); if (c) { const d = JSON.parse(c.data_json); title = d.title_fa || d.title_en || title; } } catch {}
+      const uni = r.university_id ? (db.prepare("SELECT name_fa FROM universities WHERE id=?").get(r.university_id)?.name_fa || `#${r.university_id}`) : "—";
+      const requester = r.requested_by ? (db.prepare("SELECT username FROM users WHERE id=?").get(r.requested_by)?.username || `#${r.requested_by}`) : "—";
+      return { ...r, case_title: title, university_name: uni, requester_name: requester };
+    });
+    res.json(out);
+  } catch (e) { res.status(500).json({ error: "list_failed", message: String(e.message || e).slice(0,200)}); }
+});
+r.post("/case-promotions/:id/approve", ...P("learn.settings"), (req, res) => {
+  try {
+    const rid = Number(req.params.id);
+    const rq = db.prepare("SELECT * FROM case_promotion_requests WHERE id=?").get(rid);
+    if (!rq) return res.status(404).json({ error: "not found" });
+    if (rq.status !== "pending") return res.status(400).json({ error: "already_reviewed", status: rq.status });
+    const caseRow = db.prepare("SELECT * FROM cases WHERE id=?").get(rq.case_id);
+    if (!caseRow || !caseRow.active) return res.status(404).json({ error: "case not found" });
+    let d = {}; try { d = JSON.parse(caseRow.data_json); } catch { d = {}; }
+    if (d.track === "learn") return res.status(400).json({ error: "already_global" });
+    // prevent duplicate global if already promoted via this request or another
+    if (rq.global_case_id) {
+      const g = db.prepare("SELECT id FROM cases WHERE id=? AND active=1").get(rq.global_case_id);
+      if (g) return res.status(409).json({ error: "already_promoted", global_case_id: g.id });
+    }
+    const dup = db.prepare("SELECT id FROM cases WHERE active=1 AND data_json LIKE ?").get(`%\"promoted_from_case_id\":${caseRow.id}%`);
+    if (dup) return res.status(409).json({ error: "already_promoted", global_case_id: dup.id });
+    d.track = "learn";
+    d.competitive = true;
+    d.promoted_from_case_id = caseRow.id;
+    d.promoted_from_university = rq.university_id;
+    d.promoted_at = new Date().toISOString();
+    d.promoted_by = req.user.id;
+    // provenance: keep original title intact (no suffix needed; global bank shows original)
+    const info = db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id) VALUES (1,?,?,?,NULL)")
+      .run(caseRow.difficulty, caseRow.checklist_id, JSON.stringify(d));
+    db.prepare("UPDATE case_promotion_requests SET status='approved', reviewed_by=?, reviewed_at=datetime('now'), global_case_id=? WHERE id=?")
+      .run(req.user.id, info.lastInsertRowid, rid);
+    // version history for audit
+    try { db.prepare("INSERT INTO case_versions (case_id,version,data_json) VALUES (?,?,?)").run(info.lastInsertRowid, 1, JSON.stringify(d)); } catch {}
+    audit(req, "case.promote_approve", `cases:${caseRow.id}->${info.lastInsertRowid}`, { university_id: rq.university_id });
+    persistNow();
+    res.json({ ok: true, global_case_id: info.lastInsertRowid });
+  } catch (e) { res.status(500).json({ error: "approve_failed", message: String(e.message || e).slice(0,200)}); }
+});
+r.post("/case-promotions/:id/reject", ...P("learn.settings"), (req, res) => {
+  try {
+    const rid = Number(req.params.id);
+    const rq = db.prepare("SELECT * FROM case_promotion_requests WHERE id=?").get(rid);
+    if (!rq) return res.status(404).json({ error: "not found" });
+    if (rq.status !== "pending") return res.status(400).json({ error: "already_reviewed", status: rq.status });
+    const reason = String(req.body?.reason || "").slice(0,500);
+    db.prepare("UPDATE case_promotion_requests SET status='rejected', reviewed_by=?, reviewed_at=datetime('now'), reason=? WHERE id=?")
+      .run(req.user.id, reason, rid);
+    audit(req, "case.promote_reject", `promotion:${rid}`, { case_id: rq.case_id, reason });
+    persistNow();
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: "reject_failed", message: String(e.message || e).slice(0,200)}); }
+});
+r.post("/cases/:id/publish-global", ...P("learn.settings"), (req, res) => {
+  try {
+    const cid = Number(req.params.id);
+    const caseRow = db.prepare("SELECT * FROM cases WHERE id=? AND active=1").get(cid);
+    if (!caseRow) return res.status(404).json({ error: "case not found" });
+    let d = {}; try { d = JSON.parse(caseRow.data_json); } catch { d = {}; }
+    if (d.track === "learn") return res.status(400).json({ error: "already_global" });
+    const dup = db.prepare("SELECT id FROM cases WHERE active=1 AND data_json LIKE ?").get(`%\"promoted_from_case_id\":${cid}%`);
+    if (dup) return res.status(409).json({ error: "already_promoted", global_case_id: dup.id });
+    d.track = "learn";
+    d.competitive = true;
+    d.promoted_from_case_id = cid;
+    d.promoted_from_university = caseRow.university_id;
+    d.promoted_at = new Date().toISOString();
+    d.promoted_by = req.user.id;
+    d.direct_publish = true;
+    const info = db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id) VALUES (1,?,?,?,NULL)")
+      .run(caseRow.difficulty, caseRow.checklist_id, JSON.stringify(d));
+    // also close any pending request as approved
+    db.prepare("UPDATE case_promotion_requests SET status='approved', reviewed_by=?, reviewed_at=datetime('now'), global_case_id=? WHERE case_id=? AND status='pending'")
+      .run(req.user.id, info.lastInsertRowid, cid);
+    try { db.prepare("INSERT INTO case_versions (case_id,version,data_json) VALUES (?,?,?)").run(info.lastInsertRowid, 1, JSON.stringify(d)); } catch {}
+    audit(req, "case.direct_publish", `cases:${cid}->${info.lastInsertRowid}`, { university_id: caseRow.university_id });
+    persistNow();
+    res.json({ ok: true, global_case_id: info.lastInsertRowid });
+  } catch (e) { res.status(500).json({ error: "publish_failed", message: String(e.message || e).slice(0,200)}); }
+});
+
 
 function currentUniversityId(user) {
   if (!user?.id) return null;

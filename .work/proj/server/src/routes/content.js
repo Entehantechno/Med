@@ -15,13 +15,31 @@ import { studentSafeFlashcard, gradeFlashcard } from "../lib/flashcard-grade.js"
 import { studentMaySeeFlashcard, studentFlashcardAccess, caseInLiveExam } from "../lib/live-exam-content.js";
 import { sqlInList } from "../lib/http-cache.js";
 import { isLearnContent, caseIsLearn } from "../lib/content-track.js";
-import { checkStudentLimit } from "../lib/orglimits.js";
+import { policyRow, policyReadiness, referenceSnapshotForPolicy, publicReferenceSnapshot } from "../lib/reference-governance.js";
 
 const r = Router();
 const parse = (row, extra = {}) => ({ ...JSON.parse(row.data_json), id: row.id, version: row.version, difficulty: row.difficulty, university_id: row.university_id || null, ...extra });
 function tenantFilterFor(user) {
   if (user.role === "teacher" || user.role === "student") return currentUniversityId(user) || -1;
   return null;
+}
+/* A case owns an immutable reference snapshot. Editing a policy later never
+   retroactively changes a student's encounter; a case author must deliberately
+   select/rebaseline a policy in the case update endpoint. */
+function legacyReferencePolicy(universityId) {
+  return db.prepare("SELECT id FROM course_reference_policies WHERE university_id=? AND course_code='legacy-unverified'").get(universityId)?.id || null;
+}
+function approvedReferenceForCase(universityId, policyId) {
+  const p = policyRow(policyId);
+  if (!p || Number(p.university_id) !== Number(universityId)) return { error: "reference_policy_wrong_university" };
+  const ready = policyReadiness(p);
+  if (!ready.ready) return { error: "reference_policy_not_ready", readiness: ready };
+  return { policy: p, snapshot: referenceSnapshotForPolicy(p) };
+}
+function caseReferenceExtra(row) {
+  if (!row) return {};
+  const raw = row.reference_snapshot_json || (row.reference_policy_id ? JSON.stringify(referenceSnapshotForPolicy(row.reference_policy_id)) : null);
+  return raw ? { reference_policy_id: row.reference_policy_id || null, reference: publicReferenceSnapshot(raw) } : { reference_policy_id: null, reference: publicReferenceSnapshot(null) };
 }
 
 /* BUGFIX (answer leak): case payloads returned to students/learners used to be
@@ -94,6 +112,9 @@ export function canAccessCase(user, caseId) {
   if (user.role === "content_manager" || user.role === "support") return caseIsLearn(caseId);
   if (user.role !== "student") return false;
   if (caseIsLearn(caseId)) return false;
+  const tenant = currentUniversityId(user);
+  const caseTenant = db.prepare("SELECT university_id FROM cases WHERE id=?").get(caseId)?.university_id;
+  if (!tenant || Number(caseTenant) !== Number(tenant)) return false;
   const cid = Number(caseId);
   // (1) directly assigned via exam_assignments
   if (assignedCaseIds(user.id).has(cid)) return true;
@@ -104,8 +125,8 @@ export function canAccessCase(user, caseId) {
     `SELECT 1 FROM class_cases cc
        JOIN classes c ON c.id = cc.class_id
        JOIN class_members m ON m.class_id = cc.class_id
-      WHERE cc.case_id=? AND m.user_id=? AND c.active=1 LIMIT 1`
-  ).get(cid, user.id);
+      WHERE cc.case_id=? AND m.user_id=? AND c.active=1 AND c.university_id=? LIMIT 1`
+  ).get(cid, user.id, tenant);
   if (viaClass) return true;
   // (3) case belongs to a scheduled exam the student is a participant of.
   //     Exam cases are stored as a JSON array column, so scan the participant's
@@ -113,8 +134,8 @@ export function canAccessCase(user, caseId) {
   const examRows = db.prepare(
     `SELECT e.case_ids, e.starts_at, e.ends_at FROM exams e
        JOIN exam_participants p ON p.exam_id = e.id
-      WHERE p.user_id=? AND e.active=1`
-  ).all(user.id);
+      WHERE p.user_id=? AND e.active=1 AND e.university_id=?`
+  ).all(user.id, tenant);
   const now = Date.now();
   for (const row of examRows) {
     const s = row.starts_at ? new Date(row.starts_at).getTime() : null;
@@ -135,7 +156,7 @@ r.get("/cases", authRequired, (req, res) => {
   if (uni) rows = rows.filter((row) => (row.university_id || 1) === uni);
   let list = [];
   for (const row of rows) {
-    try { list.push(parse(row, { checklist_id: row.checklist_id })); }
+    try { list.push(parse(row, { checklist_id: row.checklist_id, ...caseReferenceExtra(row) })); }
     catch { /* skip a corrupt row so one bad case cannot 500 the whole list */ }
   }
   if (req.user.role === "teacher" || req.user.role === "student") {
@@ -210,7 +231,7 @@ r.get("/cases/:id", authRequired, async (req, res) => {
       }
     }
     let full;
-    try { full = parse(row, { checklist_id: row.checklist_id }); }
+    try { full = parse(row, { checklist_id: row.checklist_id, ...caseReferenceExtra(row) }); }
     catch { return res.status(404).json({ error: "not found", stage: "case" }); }
     res.json((req.user.role === "student" || req.user.role === "learner") ? studentSafeCase(full) : full);
   } catch (e) {
@@ -218,30 +239,53 @@ r.get("/cases/:id", authRequired, async (req, res) => {
   }
 });
 r.post("/cases", authRequired, requireRole("teacher", "admin"), (req, res) => {
-  const { difficulty = "medium", checklist_id = 1, ...data } = req.body || {};
+  const { difficulty = "medium", checklist_id = 1, reference_policy_id = null, ...data } = req.body || {};
   const wantLearn = req.user.role === "admin" && data.track === "learn";
   data.track = wantLearn ? "learn" : "university";
-  const uni = wantLearn ? null : (currentUniversityId(req.user) || Number(req.body?.university_id || 0) || 1);
+  const uni = wantLearn ? null : (req.user.role === "admin" ? (Number(req.body?.university_id) || currentUniversityId(req.user) || 1) : currentUniversityId(req.user));
+  if (!wantLearn && (!uni || !db.prepare("SELECT id FROM universities WHERE id=? AND active=1").get(uni))) return res.status(422).json({error:"university_required"});
+  delete data.university_id; delete data.reference; delete data.reference_snapshot; delete data.reference_snapshot_json;
+  let policyId = null, snapshot = null;
+  if (!wantLearn) {
+    // Legacy API clients can still create a case, but it is explicitly blocked
+    // from attributed microlearning until an educator chooses an approved policy.
+    policyId = Number(reference_policy_id) || legacyReferencePolicy(uni);
+    if (reference_policy_id) {
+      const ref = approvedReferenceForCase(uni, policyId);
+      if (ref.error) return res.status(422).json({ error: ref.error, readiness: ref.readiness });
+      snapshot = ref.snapshot;
+    } else if (policyId) snapshot = referenceSnapshotForPolicy(policyId);
+  }
   const info = db.prepare(
-    "INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id) VALUES (1,?,?,?,?)"
-  ).run(difficulty, checklist_id, JSON.stringify(data), uni);
-  res.json({ id: info.lastInsertRowid, version: 1, track: data.track });
+    "INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id,reference_policy_id,reference_snapshot_json) VALUES (1,?,?,?,?,?,?)"
+  ).run(difficulty, checklist_id, JSON.stringify(data), uni, policyId, snapshot ? JSON.stringify(snapshot) : null);
+  res.json({ id: info.lastInsertRowid, version: 1, track: data.track, reference: snapshot ? publicReferenceSnapshot(snapshot) : null,
+    warning: !wantLearn && !reference_policy_id ? "reference_policy_required_before_microlearning" : undefined });
 });
 r.put("/cases/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const row = db.prepare("SELECT * FROM cases WHERE id=?").get(req.params.id);
   if (!row) return res.status(404).json({ error: "not found" });
   if (!canManageUniResource(req.user, row)) return res.status(403).json({ error: "wrong_university" });
-  // archive current version (versioning)
-  db.prepare("INSERT INTO case_versions (case_id,version,data_json) VALUES (?,?,?)")
-    .run(row.id, row.version, row.data_json);
-  const { difficulty = row.difficulty, checklist_id = row.checklist_id, ...data } = req.body || {};
+  const { difficulty = row.difficulty, checklist_id = row.checklist_id, reference_policy_id, refresh_reference_snapshot = false, ...data } = req.body || {};
   const prevLearn = isLearnContent(row.data_json);
   if (req.user.role !== "admin") data.track = "university";
   else data.track = (data.track === "learn" || prevLearn) ? "learn" : "university";
+  let policyId = row.reference_policy_id || null, snapshotJson = row.reference_snapshot_json || null;
+  const policyChanged = reference_policy_id !== undefined && Number(reference_policy_id || 0) !== Number(policyId || 0);
+  if (!prevLearn && (policyChanged || refresh_reference_snapshot)) {
+    const target = policyChanged ? Number(reference_policy_id) : policyId;
+    const ref = approvedReferenceForCase(row.university_id || 1, target);
+    if (ref.error) return res.status(422).json({ error: ref.error, readiness: ref.readiness });
+    policyId = target; snapshotJson = JSON.stringify(ref.snapshot);
+  }
+  delete data.reference; delete data.reference_snapshot; delete data.reference_snapshot_json;
+  delete data.university_id;
+  db.prepare("INSERT INTO case_versions (case_id,version,data_json) VALUES (?,?,?)")
+    .run(row.id, row.version, row.data_json);
   const newVersion = row.version + 1;
-  db.prepare("UPDATE cases SET version=?,difficulty=?,checklist_id=?,data_json=?,updated_at=datetime('now') WHERE id=?")
-    .run(newVersion, difficulty, checklist_id, JSON.stringify(data), row.id);
-  res.json({ id: row.id, version: newVersion });
+  db.prepare("UPDATE cases SET version=?,difficulty=?,checklist_id=?,data_json=?,reference_policy_id=?,reference_snapshot_json=?,updated_at=datetime('now') WHERE id=?")
+    .run(newVersion, difficulty, checklist_id, JSON.stringify(data), policyId, snapshotJson, row.id);
+  res.json({ id: row.id, version: newVersion, reference: snapshotJson ? publicReferenceSnapshot(snapshotJson) : null });
 });
 r.delete("/cases/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const row = db.prepare("SELECT * FROM cases WHERE id=?").get(req.params.id);
@@ -263,6 +307,94 @@ r.get("/cases/:id/versions", authRequired, requireRole("teacher", "admin"), (req
     try { data = JSON.parse(v.data_json || "{}"); } catch { data = {}; }
     return { version: v.version, archived_at: v.archived_at, data };
   }));
+});
+
+/* ---------------- SITE-BANK (global learn VP) ----------------
+   The global bank is the platform-wide collection of VP cases with track=learn
+   (university_id NULL). Any authenticated user can browse it; teachers can
+   clone a bank case into their own university (tenant-isolated copy) and
+   request promotion of a university case to the global bank.
+   - GET /site-bank/cases           : list all active site-bank VP cases (track=learn) for any authed user
+   - GET /site-bank/cases/:id       : fetch single site-bank case
+   - POST /site-bank/cases/:id/clone: teacher clones a site-bank case into own university (tenant-isolated copy)
+   - POST /cases/:id/request-promotion: teacher requests promotion of own uni case to global bank
+   - GET  /site-bank/promotion-requests: list promotion requests (teacher: own uni, admin: all)
+-------------------------------------------------------------------- */
+r.get("/site-bank/cases", authRequired, (req, res) => {
+  try {
+    const rows = db.prepare("SELECT * FROM cases WHERE active=1").all().filter((row) => isLearnContent(row.data_json));
+    res.json(rows.map((row) => parse(row, caseReferenceExtra(row))));
+  } catch (e) {
+    res.status(500).json({ error: "site_bank_list_failed", message: String(e.message || e).slice(0, 200) });
+  }
+});
+r.get("/site-bank/cases/:id", authRequired, (req, res) => {
+  try {
+    const row = db.prepare("SELECT * FROM cases WHERE id=? AND active=1").get(req.params.id);
+    if (!row || !isLearnContent(row.data_json)) return res.status(404).json({ error: "not_found" });
+    const full = parse(row, caseReferenceExtra(row));
+    // students get safe view without diagnosis etc., teachers/admins get full
+    if (req.user.role === "student" || req.user.role === "learner") return res.json(studentSafeCase(full));
+    return res.json(full);
+  } catch (e) {
+    res.status(500).json({ error: "site_bank_fetch_failed", message: String(e.message || e).slice(0, 200) });
+  }
+});
+r.post("/site-bank/cases/:id/clone", authRequired, requireRole("teacher", "admin"), (req, res) => {
+  try {
+    const src = db.prepare("SELECT * FROM cases WHERE id=? AND active=1").get(req.params.id);
+    if (!src || !isLearnContent(src.data_json)) return res.status(404).json({ error: "not_found" });
+    const uni = req.user.role === "admin" && req.body?.university_id ? Number(req.body.university_id) : currentUniversityId(req.user);
+    if (!uni || !db.prepare("SELECT id FROM universities WHERE id=? AND active=1").get(uni)) return res.status(422).json({ error: "university_required" });
+    let data = {};
+    try { data = JSON.parse(src.data_json || "{}"); } catch { data = {}; }
+    data.track = "university";
+    // keep source reference snapshot if present, but re-validate for target uni?
+    let policyId = src.reference_policy_id || null;
+    let snapshotJson = src.reference_snapshot_json || null;
+    // If source had no policy but target has legacy, attach it so clone is usable
+    if (!policyId) {
+      policyId = legacyReferencePolicy(uni);
+      if (policyId) snapshotJson = JSON.stringify(referenceSnapshotForPolicy(policyId));
+    }
+    const info = db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id,reference_policy_id,reference_snapshot_json) VALUES (1,?,?,?, ?,?,?)")
+      .run(src.difficulty, src.checklist_id, JSON.stringify(data), uni, policyId, snapshotJson);
+    res.json({ ok: true, id: info.lastInsertRowid, university_id: uni });
+  } catch (e) {
+    res.status(500).json({ error: "clone_failed", message: String(e.message || e).slice(0, 200) });
+  }
+});
+r.post("/cases/:id/request-promotion", authRequired, requireRole("teacher", "admin"), (req, res) => {
+  try {
+    const row = db.prepare("SELECT * FROM cases WHERE id=? AND active=1").get(req.params.id);
+    if (!row) return res.status(404).json({ error: "not_found" });
+    if (isLearnContent(row.data_json)) return res.status(422).json({ error: "already_global" });
+    if (!canManageUniResource(req.user, row)) return res.status(403).json({ error: "wrong_university" });
+    const existing = db.prepare("SELECT * FROM case_promotion_requests WHERE case_id=? AND status='pending'").get(row.id);
+    if (existing) return res.status(409).json({ error: "already_pending", request: existing });
+    const approved = db.prepare("SELECT * FROM case_promotion_requests WHERE case_id=? AND status='approved'").get(row.id);
+    if (approved) return res.status(409).json({ error: "already_approved", request: approved });
+    const uni = row.university_id || currentUniversityId(req.user) || 1;
+    const reason = String(req.body?.reason || "").slice(0, 2000);
+    const info = db.prepare("INSERT INTO case_promotion_requests (case_id, university_id, requested_by, reason) VALUES (?,?,?,?)")
+      .run(row.id, uni, req.user.id, reason);
+    res.json({ ok: true, id: info.lastInsertRowid, status: "pending" });
+  } catch (e) {
+    res.status(500).json({ error: "promotion_request_failed", message: String(e.message || e).slice(0, 200) });
+  }
+});
+r.get("/site-bank/promotion-requests", authRequired, (req, res) => {
+  try {
+    if (req.user.role === "admin") {
+      const rows = db.prepare("SELECT * FROM case_promotion_requests ORDER BY id DESC LIMIT 200").all();
+      return res.json(rows);
+    }
+    const uni = currentUniversityId(req.user) || -1;
+    const rows = db.prepare("SELECT * FROM case_promotion_requests WHERE university_id=? ORDER BY id DESC LIMIT 200").all(uni);
+    res.json(rows);
+  } catch (e) {
+    res.status(500).json({ error: "promotion_list_failed", message: String(e.message || e).slice(0, 200) });
+  }
 });
 
 /* ---------------- FLASHCARDS ---------------- */
@@ -370,6 +502,8 @@ r.post("/flashcards/check", authRequired, (req, res) => {
 r.get("/flashcards/:id", authRequired, requireRole("teacher", "admin", "content_manager"), (req, res) => {
   const row = db.prepare("SELECT * FROM flashcards WHERE id=?").get(req.params.id);
   if (!row) return res.status(404).json({ error: "not_found", stage: "fetch" });
+  if (req.user.role === "teacher" && !canManageUniResource(req.user, row)) return res.status(403).json({error:"wrong_university"});
+  if (req.user.role === "content_manager" && !isLearnContent(row.data_json)) return res.status(403).json({error:"wrong_track"});
   try {
     res.json(parse(row));
   } catch (e) {
@@ -380,7 +514,7 @@ r.post("/flashcards", authRequired, requireRole("teacher", "admin"), (req, res) 
   const { difficulty = "medium", ...data } = req.body || {};
   const wantLearn = req.user.role === "admin" && data.track === "learn";
   data.track = wantLearn ? "learn" : "uni";
-  const uni = wantLearn ? null : (currentUniversityId(req.user) || Number(req.body?.university_id || 0) || 1);
+  const uni = wantLearn ? null : (req.user.role === "admin" ? (Number(req.body?.university_id) || currentUniversityId(req.user) || 1) : currentUniversityId(req.user));
   const info = db.prepare("INSERT INTO flashcards (version,difficulty,data_json,university_id) VALUES (1,?,?,?)")
     .run(difficulty, JSON.stringify(data), uni);
   res.json({ id: info.lastInsertRowid, version: 1 });
@@ -438,7 +572,7 @@ r.get("/cases-export.csv", authRequired, requireRole("teacher", "admin"), (req, 
 r.post("/cases-import", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const { csv } = req.body || {};
   if (!csv) return res.status(400).json({ error: "no csv" });
-  let uni = currentUniversityId(req.user) || Number(req.body?.university_id || 0) || 1;
+  let uni = (req.user.role === "admin" ? (Number(req.body?.university_id) || currentUniversityId(req.user) || 1) : currentUniversityId(req.user));
   if (req.user.role === "teacher") {
     uni = currentUniversityId(req.user);
     if (!uni) return res.status(400).json({ error: "university_required" });
@@ -494,7 +628,7 @@ r.post("/flashcards-import", authRequired, requireRole("teacher", "admin"), (req
   if (!csv) return res.status(400).json({ error: "no csv" });
   let rows;
   try { rows = parseCSV(csv); } catch { return res.status(400).json({ error: "invalid csv" }); }
-  let uni = currentUniversityId(req.user) || Number(req.body?.university_id || 0) || 1;
+  let uni = (req.user.role === "admin" ? (Number(req.body?.university_id) || currentUniversityId(req.user) || 1) : currentUniversityId(req.user));
   if (req.user.role === "teacher") {
     uni = currentUniversityId(req.user);
     if (!uni) return res.status(400).json({ error: "university_required" });
@@ -694,15 +828,9 @@ r.delete("/checklists/:id", authRequired, requireRole("teacher", "admin"), (req,
 
 /* ---------------- USERS ---------------- */
 
-const uniIdMemo = new Map();
 function currentUniversityId(user) {
   if (!user?.id) return null;
-  if (uniIdMemo.has(user.id)) return uniIdMemo.get(user.id);
-  let v = null;
-  try { v = db.prepare("SELECT university_id FROM users WHERE id=?").get(user.id)?.university_id || null; }
-  catch { v = null; }
-  uniIdMemo.set(user.id, v);
-  return v;
+  return db.prepare("SELECT university_id FROM users WHERE id=? AND status='active'").get(user.id)?.university_id || null;
 }
 function studentByNo(sno) {
   const sn = String(sno || "").trim();
@@ -793,12 +921,6 @@ r.post("/users", authRequired, requireRole("teacher", "admin"), async (req, res)
   let university_id = req.body?.university_id ? Number(req.body.university_id) : null;
   if (req.user.role === "teacher") university_id = currentUniversityId(req.user);
   if ((role === "student" || role === "teacher") && !university_id) return res.status(400).json({ error: "university_required", message_fa: "برای استاد و دانشجو انتخاب دانشگاه الزامی است." });
-  // Licence enforcement: refuse to grow a capped university's student roster.
-  if (role === "student") {
-    const hit = checkStudentLimit(university_id, 1);
-    if (hit) return res.status(403).json({ error: "university_student_limit", ...hit,
-      message_fa: `سقف دانشجویان این دانشگاه (${hit.max}) تکمیل است.` });
-  }
   const pwd = password && String(password).trim() ? password : uname; // default password = student number
   const pwdHash = await hashPassword(pwd);
   const tx = db.transaction(() => {
@@ -845,10 +967,7 @@ r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res
   const findByNo = db.prepare("SELECT id FROM users WHERE student_no=? OR username=?");
 
   let created = 0, skipped = 0;
-  const errors = [], duplicates = [], limitBlocked = [];
-  // Licence enforcement: bulk import must stop exactly at the university's
-  // student cap, and the operator needs to know which rows were blocked.
-  let capHit = checkStudentLimit(university_id, 0);
+  const errors = [], duplicates = [];
   const tx = db.transaction(() => {
     dataLines.forEach((line, i) => {
       const cols = line.split(/[,;\t]/).map((s) => s.trim());
@@ -862,23 +981,14 @@ r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res
       const fullName = [name, family].filter(Boolean).join(" ").trim() || sno;
       const existing = findByNo.get(sno, sno);
       if (existing) { duplicates.push({ student_no: sno, id: existing.id }); skipped++; return; } // already exists
-      if (capHit) {
-        // Once the cap is reached, every remaining NEW number is blocked at it.
-        limitBlocked.push({ student_no: sno });
-        skipped++;
-        return;
-      }
       try {
         insUser.run(sno, hashPasswordSync(sno), fullName, fullName, sno, university_id || null);
         created++;
-        capHit = checkStudentLimit(university_id, 1); // re-check for the NEXT row
       } catch (e) { errors.push(`${sno}: ${e.message}`); skipped++; }
     });
   });
   try { tx(); } catch (e) { return res.status(400).json({ error: e.message }); }
-  res.json({ created, skipped, total: dataLines.length, duplicates, limitBlocked: limitBlocked.slice(0, 50),
-    limitBlockedCount: limitBlocked.length, studentLimit: capHit && limitBlocked.length ? capHit : null,
-    errors: errors.slice(0, 20) });
+  res.json({ created, skipped, total: dataLines.length, duplicates, errors: errors.slice(0, 20) });
 });
 function t_line(i, hasHeader) { return `line ${i + 1 + (hasHeader ? 1 : 0)}`; }
 function req_no_sno() { return "missing student number"; }

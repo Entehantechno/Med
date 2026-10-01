@@ -912,6 +912,29 @@ export function initSchema() {
     created_at TEXT DEFAULT (datetime('now'))
   );
 
+  -- Canonical reference catalog (metadata-only) and per-university approved policies.
+  CREATE TABLE IF NOT EXISTS reference_catalog (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT NOT NULL UNIQUE,
+      title_fa TEXT NOT NULL DEFAULT '', title_en TEXT NOT NULL,
+      short_title TEXT NOT NULL DEFAULT '', publisher TEXT NOT NULL DEFAULT '', edition TEXT NOT NULL DEFAULT '',
+      publication_year INTEGER, isbn TEXT NOT NULL DEFAULT '', source_url TEXT NOT NULL DEFAULT '',
+      rights_status TEXT NOT NULL DEFAULT 'metadata_only', rights_note_fa TEXT NOT NULL DEFAULT '', rights_note_en TEXT NOT NULL DEFAULT '',
+      version INTEGER NOT NULL DEFAULT 1, active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now'))
+    );
+  CREATE TABLE IF NOT EXISTS course_reference_policies (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, university_id INTEGER NOT NULL,
+      course_code TEXT NOT NULL, course_name_fa TEXT NOT NULL DEFAULT '', course_name_en TEXT NOT NULL DEFAULT '',
+      specialty_fa TEXT NOT NULL DEFAULT '', specialty_en TEXT NOT NULL DEFAULT '', reference_id INTEGER,
+      source_anchor TEXT NOT NULL DEFAULT '', citation_label_fa TEXT NOT NULL DEFAULT '', citation_label_en TEXT NOT NULL DEFAULT '',
+      teaching_basis_fa TEXT NOT NULL DEFAULT '', teaching_basis_en TEXT NOT NULL DEFAULT '',
+      content_mode TEXT NOT NULL DEFAULT 'teacher_authored', status TEXT NOT NULL DEFAULT 'draft', approval_note TEXT NOT NULL DEFAULT '',
+      approved_by INTEGER, approved_at TEXT, version INTEGER NOT NULL DEFAULT 1, active INTEGER NOT NULL DEFAULT 1,
+      created_by INTEGER, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(university_id,course_code)
+    );
+
   -- Monthly usage counters per university (enforcement + admin meters).
   CREATE TABLE IF NOT EXISTS university_usage (
     university_id INTEGER NOT NULL,
@@ -1431,6 +1454,13 @@ export function initSchema() {
   // data, create one default institution and attach unscoped teachers/students.
   db.exec("INSERT OR IGNORE INTO universities (id,name_fa,name_en,city_fa,city_en,code,active) VALUES (1,'دانشگاه پیش‌فرض','Default University','','','DEFAULT',1)");
   db.exec("UPDATE users SET university_id=1 WHERE role IN ('teacher','student') AND university_id IS NULL");
+  db.exec(`CREATE TABLE IF NOT EXISTS university_storage_namespaces (
+      namespace TEXT PRIMARY KEY, university_id INTEGER NOT NULL, created_at TEXT DEFAULT (datetime('now'))
+    )`);
+  // Seed Harrison as canonical metadata-only reference (id=1 stable for tests/policies).
+  try {
+    db.exec("INSERT OR IGNORE INTO reference_catalog (id,code,title_en,short_title,publisher,edition,rights_status,active) VALUES (1,'harrison-22e','Harrison''s Principles of Internal Medicine','Harrison''s 22e','McGraw Hill','22e','metadata_only',1)");
+  } catch { /* best-effort seed */ }
   // Optional profile fields (self- or admin-editable) + identity display prefs.
   if (!ucols.includes("phone")) db.exec("ALTER TABLE users ADD COLUMN phone TEXT");
   if (!ucols.includes("bio")) db.exec("ALTER TABLE users ADD COLUMN bio TEXT");
@@ -1454,6 +1484,8 @@ export function initSchema() {
   // scheduled publishing (publish automatically at a future date/time).
   const caseTenantCols = db.prepare("PRAGMA table_info(cases)").all().map((c) => c.name);
   if (!caseTenantCols.includes("university_id")) db.exec("ALTER TABLE cases ADD COLUMN university_id INTEGER");
+  if (!caseTenantCols.includes("reference_policy_id")) db.exec("ALTER TABLE cases ADD COLUMN reference_policy_id INTEGER");
+  if (!caseTenantCols.includes("reference_snapshot_json")) db.exec("ALTER TABLE cases ADD COLUMN reference_snapshot_json TEXT");
   {
     const orphans = db.prepare("SELECT id, data_json FROM cases WHERE university_id IS NULL").all();
     const up = db.prepare("UPDATE cases SET university_id=1 WHERE id=?");
@@ -1929,6 +1961,13 @@ export function initSchema() {
     db.exec("ALTER TABLE vp_sessions ADD COLUMN start_request_id TEXT");
   }
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_vp_start_request ON vp_sessions(user_id,start_request_id) WHERE start_request_id IS NOT NULL");
+  // Reference snapshot columns for source-aware microlearning (added after initial creation)
+  if (!db.prepare("PRAGMA table_info(vp_sessions)").all().some(c => c.name === "reference_snapshot_json")) {
+    db.exec("ALTER TABLE vp_sessions ADD COLUMN reference_snapshot_json TEXT");
+  }
+  if (!db.prepare("PRAGMA table_info(attempts)").all().some(c => c.name === "reference_snapshot_json")) {
+    db.exec("ALTER TABLE attempts ADD COLUMN reference_snapshot_json TEXT");
+  }
 
   /* ---- Phase 4: protocol instruments seeded as editable templates ----------
      `template_key` marks a form that came from the study protocol, so reseeding
@@ -1997,6 +2036,24 @@ export function initSchema() {
       ON research_consents(study_id, user_id) WHERE user_id IS NOT NULL;
     CREATE INDEX IF NOT EXISTS idx_consent_study_status ON research_consents(study_id, status);
     CREATE INDEX IF NOT EXISTS idx_consent_pseudonym    ON research_consents(study_id, pseudonym);
+  `);
+
+  // ---- Site bank global promotion requests (university VP -> global bank) ----
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS case_promotion_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      case_id INTEGER NOT NULL,
+      university_id INTEGER,
+      requested_by INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending', -- pending | approved | rejected
+      reviewed_by INTEGER,
+      reviewed_at TEXT,
+      global_case_id INTEGER,
+      reason TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_promotion_case ON case_promotion_requests(case_id, status);
+    CREATE INDEX IF NOT EXISTS idx_promotion_uni ON case_promotion_requests(university_id, status);
   `);
 
   // Hot-path indexes for dashboards, exam results, class membership, learner

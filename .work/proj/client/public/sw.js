@@ -18,7 +18,7 @@
    app's VERSION.txt so old caches are cleaned automatically on every release.
    The __BUILD_VERSION__ token below is replaced during `npm run build`; if it is
    ever left un-replaced (dev), we fall back to a date so it still changes. */
-const CACHE_VERSION = "medschool-__BUILD_VERSION__";  // stamped on build
+const CACHE_VERSION = "medschool-__BUILD_VERSION__-academic-private-v1";  // stamped on build
 const SHELL_CACHE   = `${CACHE_VERSION}-shell`;    // app shell (html/offline)
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;   // hashed assets
 const API_CACHE     = `${CACHE_VERSION}-api`;      // read-only API responses
@@ -30,9 +30,7 @@ const OFFLINE_URL = "/offline.html";
 const SHELL_ASSETS = ["/", "/index.html", OFFLINE_URL, "/manifest.webmanifest", "/icon-192.png"];
 
 // Bounded caches: keep growth in check (research: cap dynamic caches).
-// The image cache holds teacher-uploaded slides/micrographs (Cache-First,
-// content-addressed by URL); raised from 80 to 220 after measuring that
-// histology courses revisit a few hundred images per term.
+// The image cache contains only public static images, never tenant uploads.
 const LIMITS = { [API_CACHE]: 60, [IMG_CACHE]: 220 };
 
 async function trimCache(name, max) {
@@ -74,7 +72,7 @@ self.addEventListener("message", (event) => {
   // notifications…) so the next person on a shared device cannot see them
   // offline. Auth/pay/admin were never cached; this clears the rest.
   if (event.data && event.data.type === "CLEAR_API_CACHE") {
-    event.waitUntil(caches.delete(API_CACHE).catch(() => {}));
+    event.waitUntil(Promise.all([caches.delete(API_CACHE), caches.delete(IMG_CACHE)]).catch(() => {}));
   }
 });
 
@@ -84,7 +82,7 @@ async function cacheFirst(request, cacheName) {
   const cached = await cache.match(request);
   if (cached) return cached;
   const resp = await fetch(request);
-  if (resp && resp.ok) {
+  if (resp && resp.ok && !/private|no-store/i.test(resp.headers.get("Cache-Control") || "")) {
     cache.put(request, resp.clone());
     if (LIMITS[cacheName]) trimCache(cacheName, LIMITS[cacheName]);
   }
@@ -96,7 +94,7 @@ async function staleWhileRevalidate(request, cacheName) {
   const cached = await cache.match(request);
   const network = fetch(request)
     .then((resp) => {
-      if (resp && resp.ok) {
+      if (resp && resp.ok && !/private|no-store/i.test(resp.headers.get("Cache-Control") || "")) {
         cache.put(request, resp.clone());
         if (LIMITS[cacheName]) trimCache(cacheName, LIMITS[cacheName]);
       }
@@ -131,6 +129,15 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return; // only handle same-origin
 
+  // University data and uploads are authorization-gated. Cache API ignores
+  // HTTP no-store unless we explicitly enforce it. Never return a previous
+  // account's data on shared devices, including while offline.
+  const publicApi = url.pathname === "/api/health" || url.pathname === "/api/pwa/config" || url.pathname.startsWith("/api/site-content/");
+  if (url.pathname.startsWith("/uploads/") || (url.pathname.startsWith("/api/") && !publicApi)) {
+    event.respondWith(fetch(request, {cache:"no-store"}));
+    return;
+  }
+
   // 1) API requests -------------------------------------------------------
   // Data must always be fresh: users create content and expect to see it
   // immediately, so we use Network-First (NOT stale-while-revalidate). When the
@@ -142,7 +149,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((resp) => {
-          if (resp && resp.ok) {
+          if (resp && resp.ok && !/private|no-store/i.test(resp.headers.get("Cache-Control") || "")) {
             const clone = resp.clone();
             caches.open(API_CACHE).then((c) => {
               c.put(request, clone);
@@ -170,8 +177,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 3) Uploaded images → Cache-First (bounded) ----------------------------
-  if (url.pathname.startsWith("/uploads/") || request.destination === "image") {
+  // 3) Public static images → Cache-First (bounded) ----------------------------
+  if (request.destination === "image") {
     event.respondWith(cacheFirst(request, IMG_CACHE).catch(() => fetch(request)));
     return;
   }

@@ -351,6 +351,7 @@ async function callSingleLLM(aiCfg, messages, opts = {}) {
 export function sanitizeCaseForPatient(caseData) {
   const {
     diagnosis_fa, diagnosis_en, objectives_fa, objectives_en,
+    reference_snapshot, reference_snapshot_json, reference_policy_id, reference,
     checklist_id, keyLabs, keyImaging, allowedResponses_fa, allowedResponses_en,
     // lab/imaging results are delivered by the "lab/radiology" responder, not
     // recited by the patient, so keep them out of the patient's chart view.
@@ -891,15 +892,32 @@ export function mockPatientReply(c, userText, lang) {
   // Remove only an opening salutation; do not swallow a clinical question
   // simply because it contains hello. Permission/intro replies remain separate.
   const q = raw.replace(/^(?:(?:سلام|وقت\s+(?:شما\s+)?بخیر|صبح\s*بخیر|عصر\s*بخیر|hello\b|hi\b|good\s+(?:morning|afternoon|evening)\b)[\s،,!?.؟]*)+/i, "").trim();
-  const say = (fa, en) => (lang === "fa" ? fa : en);
+  // Language handling: normal answers follow the query language (dynamic), translation requests follow the requested target.
+  const queryLang = /[\u0600-\u06FF]/.test(userText) ? "fa" : "en";
+  const isEnglishRequest = containsAny(q, ["به انگلیسی", "انگلیسی بگو", "translate to english", "say in english", "in english please", "to english"]) || /to\s+english/i.test(q);
+  const isPersianRequest = containsAny(q, ["به فارسی", "فارسی بگو", "translate to persian", "say in persian", "in persian please", "to persian", "به فارسی بگو"]) || /to\s+persian/i.test(q);
+  // Helper to get field in specific language without falling back to effectiveLang
+  const fieldFor = (name, l) => {
+    const v = c?.[`${name}_${l}`] ?? c?.[name] ?? c?.[`${name}_fa`] ?? c?.[`${name}_en`] ?? "";
+    return typeof v === "string" ? redactDiagnosis(v.trim(), c, l) : "";
+  };
+  if (isEnglishRequest) {
+    const en = fieldFor("chief", "en") || fieldFor("history", "en") || "chest pain";
+    return `Translation to English: ${en}`;
+  }
+  if (isPersianRequest) {
+    const fa = fieldFor("chief", "fa") || fieldFor("history", "fa") || "درد قفسه سینه";
+    return `ترجمه به فارسی: ${fa}`;
+  }
+  const say = (fa, en) => (queryLang === "fa" ? fa : en);
   const unknown = say("این جزئیات در پرونده ثبت نشده است؛ پاسخ دقیق در دسترس نیست.",
     "These details are not recorded in the chart; an accurate answer is unavailable.");
   // Conservative chart excerpts, not a second generative clinical model. Never
   // infer symptoms from a title/diagnosis or reuse a chest-pain template.
   // Do not silently switch languages when a translation is missing.
   const field = (name) => {
-    const value = c?.[`${name}_${lang}`] ?? c?.[name];
-    return typeof value === "string" ? redactDiagnosis(value.trim(), c, lang) : "";
+    const value = c?.[`${name}_${queryLang}`] ?? c?.[`${name}_${lang}`] ?? c?.[name];
+    return typeof value === "string" ? redactDiagnosis(value.trim(), c, queryLang) : "";
   };
   const recorded = (name) => field(name) || unknown;
   const excerpt = (pattern) => {
@@ -1308,11 +1326,12 @@ export async function scoreChecklistWithLLM({ base, caseData, checklist, session
 /* Optional LLM enrichment: keeps the objective checklist score, but uses the
    admin-authored evaluator + microlearning prompts to produce richer, more
    natural qualitative feedback. Falls back silently to the deterministic result. */
-export async function enrichEvaluationWithLLM({ base, caseData, session, lang, prompts, aiCfg, scope = "overall" }) {
+export async function enrichEvaluationWithLLM({ base, caseData, session, lang, prompts, aiCfg, scope = "overall", referenceSnapshot = null, referenceContract = "" }) {
   if (!aiCfg?.apiKey) return base;
   try {
     const evalPrompt = lang === "fa" ? prompts.evaluator_fa : prompts.evaluator_en;
-    const microPrompt = lang === "fa" ? prompts.micro_fa : prompts.micro_en;
+    const lessonBlocked = referenceSnapshot != null && !referenceSnapshot.ready;
+    const microPrompt = lessonBlocked ? "" : (lang === "fa" ? prompts.micro_fa : prompts.micro_en);
     // Lab reports are system artifacts, not spoken words — keep them out of the
     // transcript (they are carried in the context as orderedTests/imaging).
     // The supervising-teacher exam replies (mode "exam") are spoken to the
@@ -1371,9 +1390,12 @@ export async function enrichEvaluationWithLLM({ base, caseData, session, lang, p
       `Use case facts and recorded results; do not invent findings, drug doses, guidelines or citations. If nothing was missed, give consolidation practice without fabricating mistakes. ` +
       `Focus the lesson on at most three highest-priority gaps, with a concrete action and answered self-check for each. Aim for 250-400 words total, no repeated transcript or long generic introduction. Keep feedback arrays concise (at most four entries each); use empty strengths and missed arrays because those are already derived from the authoritative checklist. ` +
       `Finish with a concise golden summary. Do NOT change the numeric score. Write everything in ${lang === "fa" ? "Persian" : "English"}.`;
+    const governedSystem = sys + "\n\n" + referenceContract + (lessonBlocked
+      ? "\nThe reference contract overrides all lesson instructions above. Return microlearning as an empty string. Provide checklist-based feedback only, with no attributed medical lesson."
+      : "");
     const user = `TRANSCRIPT:\n${transcript}\n\nCONTEXT:\n${JSON.stringify(context)}`;
     const out = await callRealLLM(aiCfg, [
-      { role: "system", content: sys },
+      { role: "system", content: governedSystem },
       { role: "user", content: user },
     ], { temperature: 0.3, jsonMode: true, workload: "evaluation", timeoutMs: 40_000, totalTimeoutMs: 45_000 });
     const parsed = parseLooseJson(out);
@@ -1385,8 +1407,8 @@ export async function enrichEvaluationWithLLM({ base, caseData, session, lang, p
     }
     if (typeof parsed.suggestion !== "string") throw new Error("Invalid feedback suggestion");
     const rawMicro = lessonTextFrom(parsed.microlearning || parsed.micro_learning || parsed.microLesson || parsed.lesson || parsed.micro || parsed.studyNote || parsed.teaching);
-    if (typeof rawMicro !== "string" || rawMicro.trim().length <= 30) throw new Error("Invalid or empty microlearning lesson");
-    const finalMicro = rawMicro.trim();
+    if (!lessonBlocked && (typeof rawMicro !== "string" || rawMicro.trim().length <= 30)) throw new Error("Invalid or empty microlearning lesson");
+    const finalMicro = lessonBlocked ? "" : rawMicro.trim();
 
     return {
       ...base,

@@ -20,6 +20,7 @@
    All client-supplied event data is validated before it touches the database:
    a research dataset that can be polluted by a crafted request is worthless. */
 import { db, persistNow } from "../db.js";
+import { parseReferenceSnapshot, snapshotForCaseRow } from "./reference-governance.js";
 
 /* Event vocabulary. Anything outside this list is dropped. */
 export const EVENT_KINDS = new Set([
@@ -50,7 +51,7 @@ export function loggingEnabledFor(classId, examId) {
 
 /* Open a session. Called when the student enters the encounter, so the row
    exists (and the clock is server-side) even if they never finish. */
-export function startSession({ userId, caseId, classId, examId, studyId, lang, requestId = null }) {
+export function startSession({ userId, caseId, classId, examId, studyId, lang, requestId = null, referenceSnapshotJson = null }) {
   if (requestId != null && (typeof requestId !== "string" || !/^[A-Za-z0-9_-]{8,100}$/.test(requestId))) {
     return { error: "invalid_start_request_id", status: 400 };
   }
@@ -68,11 +69,13 @@ export function startSession({ userId, caseId, classId, examId, studyId, lang, r
   const logging = loggingEnabledFor(classId, examId) ? 1 : 0;
   const serverNow = Date.now();
   const info = db.prepare(
-    `INSERT INTO vp_sessions (user_id,case_id,class_id,exam_id,study_id,logging_enabled,lang,started_ms,start_request_id)
-     VALUES (?,?,?,?,?,?,?,?,?)`
+    `INSERT INTO vp_sessions (user_id,case_id,class_id,exam_id,study_id,logging_enabled,lang,started_ms,start_request_id,reference_snapshot_json)
+     VALUES (?,?,?,?,?,?,?,?,?,?)`
   ).run(Number(userId), Number(caseId), classId ? Number(classId) : null,
         examId ? Number(examId) : null, studyId ? Number(studyId) : null, logging,
-        lang === "en" ? "en" : "fa", serverNow, requestId);
+        lang === "en" ? "en" : "fa", serverNow, requestId, JSON.stringify(referenceSnapshotJson
+          ? parseReferenceSnapshot(referenceSnapshotJson)
+          : snapshotForCaseRow(db.prepare("SELECT * FROM cases WHERE id=?").get(Number(caseId)))));
   persistNow({ throwOnError: true });
   return { sessionId: info.lastInsertRowid, loggingEnabled: !!logging, serverNow };
 }

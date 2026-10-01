@@ -14,7 +14,8 @@ import { db } from "../db.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Uploaded media lives in the persistent DATA_DIR (outside the code) so it
 // survives site upgrades. See lib/paths.js.
-import { UPLOADS_DIR, ensureDataDirs } from "../lib/paths.js";
+import { UPLOADS_DIR, ensureDataDirs, ACADEMIC_DIR } from "../lib/paths.js";
+import { uploadDestination, mediaUrlFor, mediaLocation } from "../lib/academic-storage.js";
 ensureDataDirs();
 export const UPLOAD_DIR = UPLOADS_DIR;
 
@@ -106,7 +107,7 @@ function hasAudioMagic(filePath, ext) {
 }
 const audioUpload = multer({
   storage: multer.diskStorage({
-    destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+    destination: uploadDestination,
     filename: (req, file, cb) => {
       const ext = path.extname(file.originalname).toLowerCase();
       cb(null, "snd_" + Date.now() + "_" + Math.round(Math.random() * 1e6) + ext);
@@ -179,7 +180,8 @@ r.post("/audio", authRequired, requireRole("teacher", "admin"), (req, res) => {
     if (!req.file || !req.file.size) return rejectUploaded(req.file, res, "Empty upload");
     const ext = path.extname(req.file.filename).toLowerCase();
     if (!hasAudioMagic(req.file.path, ext)) return rejectUploaded(req.file, res, "Invalid audio content");
-    res.json({ url: `/uploads/${req.file.filename}`, name: req.file.originalname });
+    const url = mediaUrlFor(req, req.file.filename);
+    res.json({ url, name: req.file.originalname });
   });
 });
 
@@ -244,17 +246,27 @@ const VID = new Set([".mp4", ".webm", ".mov", ".m4v", ".ogv"]);
 const AUD = new Set([".mp3", ".wav", ".m4a", ".ogg", ".opus", ".aac"]);
 
 // GET /api/upload/library — every uploaded file + kind, size, date, usage count
+// Tenant-aware: teachers see only their university namespace; admins see platform.
 r.get("/library", authRequired, requireRole("teacher", "admin"), (req, res) => {
+  let dir = UPLOAD_DIR;
+  let prefix = "/uploads/";
+  try {
+    const loc = mediaLocation(req.user);
+    dir = loc.directory;
+    prefix = loc.prefix;
+  } catch {
+    // fallback to flat
+  }
   let files = [];
-  try { files = fs.readdirSync(UPLOAD_DIR); } catch { files = []; }
+  try { files = fs.readdirSync(dir); } catch { files = []; }
   const usage = usageMap();
   const items = files.filter((f) => !f.startsWith(".")).map((f) => {
-    let st; try { st = fs.statSync(path.join(UPLOAD_DIR, f)); } catch { return null; }
+    let st; try { st = fs.statSync(path.join(dir, f)); } catch { return null; }
     if (!st.isFile()) return null;
     const ext = path.extname(f).toLowerCase();
     const kind = IMG.has(ext) ? "image" : AUD.has(ext) ? "audio" : VID.has(ext) ? "video" : "other";
     return {
-      name: f, url: `/uploads/${f}`, kind, ext,
+      name: f, url: `${prefix}${f}`, kind, ext,
       size: st.size, mtime: st.mtime.toISOString(),
       usedBy: usage[f] ? usage[f].size : 0,
     };

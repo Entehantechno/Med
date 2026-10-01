@@ -15,13 +15,13 @@ import { caseIsLearn } from "../lib/content-track.js";
 import { DEFAULT_LAB_TESTS, DEFAULT_IMAGING, DEFAULT_PARACLINIC, cleanOrderList, catalogContainsQuery } from "../data/order-catalog-defaults.js";
 import { classAttemptInfo } from "./classes.js";
 import { examAccess } from "./exams.js";
-import { scoreSubmittedAnswers, gradeSubmittedDeck, gradeSubmittedDeckDetailed } from "../lib/flashcard-grade.js";
-import { effectiveFlashNoPenalty, resolveVpUniversity, checkVpAllowance, bumpUsage, estimateTokens } from "../lib/orglimits.js";
+import { scoreSubmittedAnswers, gradeSubmittedDeck } from "../lib/flashcard-grade.js";
 import { getVpatientConfig, awardVpatientXp, getVpatientAiEffective, getVpatientPromptsEffective, vpatientAccess } from "../lib/vpatient.js";
 import { isEnabled } from "../lib/flags.js";
 import { audit } from "../lib/audit.js";
 import { startSession, getSession, finishSession, loggingEnabledFor, serverElapsedSec } from "../lib/vplogging.js";
 import { normalizeRubric, parseClassRubric } from "../lib/grading-rubric.js";
+import { parseReferenceSnapshot, referenceSnapshotForPolicy, referencePromptContract, decorateMicrolearning, publicReferenceSnapshot } from "../lib/reference-governance.js";
 
 function resolveClassRubric(classId) {
   const global = normalizeRubric(getSetting("vp_grading", null));
@@ -70,6 +70,18 @@ function hasAccess(user, caseId, classId, examId, acceptedAt = Date.now()) {
   }
   if (user.role !== "student") return { allowed: false, reason: "not_assigned" };
   if (caseIsLearn(caseId)) return { allowed: false, reason: "wrong_track" };
+
+  const tenant = db.prepare("SELECT university_id FROM users WHERE id=?").get(user.id)?.university_id;
+  const caseTenant = db.prepare("SELECT university_id FROM cases WHERE id=?").get(caseId)?.university_id;
+  if (!tenant || (caseTenant != null && Number(caseTenant) !== Number(tenant))) return { allowed:false, reason:"wrong_university" };
+  if (classId) {
+    const classUni = db.prepare("SELECT university_id FROM classes WHERE id=?").get(classId)?.university_id;
+    if (classUni != null && Number(classUni) !== Number(tenant)) return {allowed:false,reason:"wrong_university"};
+  }
+  if (examId) {
+    const examUni = db.prepare("SELECT university_id FROM exams WHERE id=?").get(examId)?.university_id;
+    if (examUni != null && Number(examUni) !== Number(tenant)) return {allowed:false,reason:"wrong_university"};
+  }
 
   /* Research consent gates participation, not grading. If this class/exam
      belongs to a study that requires consent and this student has not given it,
@@ -273,7 +285,14 @@ function loadCase(id) {
   const row = db.prepare("SELECT * FROM cases WHERE id=?").get(id);
   if (!row) return null;
   try {
-    return { ...JSON.parse(row.data_json), id: row.id, version: row.version, checklist_id: row.checklist_id };
+    // A legacy row receives its first sealed snapshot here; current cases have
+    // one persisted by the authoring/migration flow. Never derive a session
+    // snapshot from a later policy edit when an existing case snapshot exists.
+    const referenceSnapshot = row.reference_snapshot_json
+      ? parseReferenceSnapshot(row.reference_snapshot_json)
+      : referenceSnapshotForPolicy(row.reference_policy_id);
+    return { ...JSON.parse(row.data_json), id: row.id, version: row.version, checklist_id: row.checklist_id,
+      reference_policy_id: row.reference_policy_id || null, reference_snapshot: referenceSnapshot };
   } catch {
     return null;
   }
@@ -309,11 +328,9 @@ r.post("/session-start", authRequired, (req, res) => {
   const s = startSession({
     userId: req.user.id, caseId: caseData.id,
     classId: ownerClassId, examId: ownerExamId, lang,
-    studyId, requestId,
+    studyId, requestId, referenceSnapshotJson: JSON.stringify(caseData.reference_snapshot),
   });
   if (s.error) return res.status(s.status).json({ error: s.error, stage: "session" });
-  // Meter one VP session against the owning university's quota (if capped).
-  bumpUsage(resolveVpUniversity({ classId: ownerClassId, examId: ownerExamId, userId: req.user.id }), { sessions: 1 });
   // Tell the UI which criterion this class grades on, so the student sees it
   // before finishing (extern = up to the differential dx, intern = all sections).
   let gradingScope = "overall";
@@ -406,19 +423,6 @@ r.post("/patient-reply", authRequired, async (req, res) => {
     const caseData = loadCase(caseId);
     if (!caseData) return res.status(404).json({ error: "case not found", stage: "case" });
     if (refuseInactiveCase(res, req.user, caseId)) return;
-    // University license: message & estimated-token budgets gate VP chat
-    // (billed to the class/exam owner's university, else the caller's).
-    const orgUni = resolveVpUniversity({ classId, examId, userId: req.user.id });
-    const limitHit = checkVpAllowance(orgUni);
-    if (limitHit) {
-      return res.status(403).json({
-        error: limitHit.kind === "messages" ? "university_vp_msg_limit" : "university_vp_token_limit",
-        stage: "chat", limit: limitHit,
-        message_fa: limitHit.kind === "messages"
-          ? "سهمیه‌ی ماهانه‌ی گفت‌وگو با بیمار مجازی برای دانشگاه شما تمام شده است."
-          : "سقف توکن ماهانه‌ی بیمار مجازی برای دانشگاه شما به پایان رسیده است.",
-      });
-    }
     const { aiCfg, prompts } = engineContext(req, req.body);
     const canDeliver = interactionAccessGuard(req, res, caseId, classId, examId, acc, "chat");
     const result = await patientReply({ caseData, userText: text, history, lang, prompts, aiCfg });
@@ -426,7 +430,6 @@ r.post("/patient-reply", authRequired, async (req, res) => {
     if (!String(result?.text || "").trim()) {
       return res.status(502).json({ error: "empty_reply", stage: "chat" });
     }
-    bumpUsage(orgUni, { msgs: 1, tokens: estimateTokens(text, history && history.length ? JSON.stringify(history) : "", result.text) });
     res.json(result);
   } catch (e) {
     res.status(500).json({ error: "chat_failed", stage: "chat", message: String(e.message || e).slice(0, 200) });
@@ -547,6 +550,10 @@ r.post("/evaluate", authRequired, async (req, res) => {
     return true;
   };
   const checklist = loadChecklist(caseData.checklist_id);
+  // Pin educational provenance to the session start. A later policy/catalog edit
+  // must never rewrite what this learner was taught or what is audited here.
+  const referenceSnapshot = parseReferenceSnapshot(vpSession?.reference_snapshot_json || caseData.reference_snapshot);
+  const referenceContract = referencePromptContract(referenceSnapshot, lang);
   const globalSettings = getSetting("exam", {});
   const { aiCfg, prompts } = engineContext(req, req.body);
 
@@ -604,13 +611,7 @@ r.post("/evaluate", authRequired, async (req, res) => {
   const scoringStartedAt = Date.now();
   const cached = vpSession ? retryScoreGet(sessionId, req.user.id, fingerprint) : null;
   let evalResult = cached?.result || evaluate({ caseData, checklist, session, lang, scope: gradingScope, rubric: gradingRubric });
-  if (!cached) {
-    evalResult = await scoreChecklistWithLLM({ base: evalResult, caseData, checklist, session, lang, aiCfg });
-    // Token metering: AI grading of the (often long) encounter transcript is
-    // the second-largest VP cost after chat; count it against the org budget.
-    bumpUsage(resolveVpUniversity({ classId: ownerClassId, examId: ownerExamId, userId: req.user.id }),
-      { tokens: estimateTokens(JSON.stringify(session).slice(0, 40000), JSON.stringify(evalResult).slice(0, 20000)) });
-  }
+  if (!cached) evalResult = await scoreChecklistWithLLM({ base: evalResult, caseData, checklist, session, lang, aiCfg });
   if (!recheckEvaluationAccess()) { retryScoreDrop(sessionId, req.user.id); return; }
   const scoringRoute = cached?.scoringRoute || (aiCfg.lastRoute ? { ...aiCfg.lastRoute } : null);
   if (requireAi && (evalResult.source !== "llm" || evalResult.scoreFallback)) return aiUnavailable("checklist", evalResult.scoreFallback);
@@ -620,9 +621,12 @@ r.post("/evaluate", authRequired, async (req, res) => {
   // 3) Enrich the qualitative feedback + personalized micro-lesson with the LLM.
   evalResult = await enrichEvaluationWithLLM({
     base: evalResult, caseData, session, lang, prompts, aiCfg, scope: gradingScope,
+    referenceSnapshot, referenceContract,
   });
   if (requireAi && (evalResult.feedbackSource !== "llm" || evalResult.feedbackFallback)) return aiUnavailable("lesson", evalResult.feedbackFallback);
   if (!recheckEvaluationAccess()) { retryScoreDrop(sessionId, req.user.id); return; }
+  evalResult.microlearning = decorateMicrolearning(evalResult.microlearning, referenceSnapshot, lang);
+  evalResult.reference = publicReferenceSnapshot(referenceSnapshot);
   const latestSettings = getSetting("exam", {});
   const latestExam = ownerExamId ? db.prepare("SELECT show_ai,show_micro FROM exams WHERE id=?").get(ownerExamId) : null;
   showAi = !!showAi && !!(latestExam ? latestExam.show_ai : latestSettings.showAiAnalysis);
@@ -710,14 +714,14 @@ r.post("/evaluate", authRequired, async (req, res) => {
   const info = db.transaction(() => {
   const inserted = db.prepare(
     `INSERT INTO attempts (user_id,type,case_id,class_id,exam_id,content_version,score,transcript_json,eval_json,
-       turns,tests,imaging_count,ddx_count,hints,duration_sec,lang)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+       turns,tests,imaging_count,ddx_count,hints,duration_sec,lang,reference_snapshot_json)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   ).run(
     req.user.id, "vp", caseData.id, ownerClassId, ownerExamId, caseData.version, evalResult.score,
     transcriptObj ? JSON.stringify(transcriptObj) : null, JSON.stringify(evalResult),
     studentTurns,
     (session.tests || []).length, (session.imaging || []).length, (session.ddx || []).length,
-    0, durationValidated, lang
+    0, durationValidated, lang, JSON.stringify(referenceSnapshot)
   );
 
   /* Close the session and persist the timestamped interaction log (when on).
@@ -835,11 +839,7 @@ r.post("/flashcard-result", authRequired, validateBody(flashResultSchema), (req,
       ? (examDeck.flashcard_ids || []).map(Number).filter((n) => Number.isFinite(n) && n > 0)
       : null;
     if (answerRows.length || expectedIds) {
-      // Same no-penalty policy as class decks; for scheduled exams the flag
-      // comes from the exam's university (classes are not involved here).
-      const orgUni = examDeck?.university_id || resolveVpUniversity({ userId: req.user.id });
-      const noPenalty = effectiveFlashNoPenalty(null, orgUni);
-      const deck = gradeSubmittedDeckDetailed(loadFlash, answerRows, expectedIds, { noPenalty });
+      const deck = gradeSubmittedDeck(loadFlash, answerRows, expectedIds);
       if (deck.error === "duplicate_card") return res.status(400).json({ error: "duplicate_card", stage: "evaluate" });
       if (deck.error === "answers_out_of_deck") return res.status(400).json({ error: "answers_out_of_deck", stage: "evaluate" });
       if (deck.score != null) scoreN = deck.score;

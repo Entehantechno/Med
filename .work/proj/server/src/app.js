@@ -23,7 +23,9 @@ import learnRoutes from "./routes/learn.js";
 import challengeRoutes from "./routes/challenge.js";
 import adsAdminRoutes from "./routes/ads.js";
 import adminRoutes, { publicFlagsHandler } from "./routes/admin.js";
+import academicRoutes from "./routes/academic.js";
 import universityRoutes from "./routes/universities.js";
+import { academicMedia, legacyMediaGate } from "./lib/academic-storage.js";
 import siteContentRoutes from "./routes/sitecontent.js";
 import paymentRoutes from "./routes/payments.js";
 import storeRoutes from "./routes/store.js";
@@ -443,6 +445,7 @@ export function createApp() {
   app.use("/api/questionnaires", questionnaireRoutes);
   app.use("/api/tutor", tutorRoutes);
   app.use("/api/research", researchRoutes);
+  app.use("/api/academic", academicRoutes);
   // any authenticated user can read which features are enabled (to hide/show UI)
   app.get("/api/flags", authRequired, publicFlagsHandler);
 
@@ -462,14 +465,15 @@ export function createApp() {
 
   // Serve uploaded medical images/videos safely. Dotfiles are denied and MIME
   // sniffing stays disabled; uploaded files are not executable code.
-  app.use("/uploads", express.static(UPLOAD_DIR, {
+  app.get("/uploads/academic/:namespace/:name", authOptional, academicMedia);
+  app.use("/uploads", authOptional, legacyMediaGate, express.static(UPLOAD_DIR, {
     dotfiles: "deny",
     index: false,
     maxAge: "30d",
     setHeaders(res) {
       res.setHeader("X-Content-Type-Options", "nosniff");
       res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
-      res.setHeader("Cache-Control", "public, max-age=2592000");
+      res.setHeader("Cache-Control", res.locals.tenantMedia ? "private, no-store" : "public, max-age=2592000");
       res.setHeader("Content-Security-Policy", "default-src 'none'; img-src 'self'; media-src 'self'; style-src 'none'; script-src 'none'");
       res.setHeader("X-Content-Type-Options", "nosniff");
     },
