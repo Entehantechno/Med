@@ -325,6 +325,7 @@ function StepwiseQuestion({ card, lang, showCorrect, checked, setChecked, onGrad
   const { t } = useApp();
   const fa = lang === "fa";
   const steps = card.steps || [];
+  const mediaUrl = card.media?.url || card.image || card.imageUrl || null;
   const [answers, setAnswers] = useState({});
   const [stepResults, setStepResults] = useState(null);
   const renderInput = (s, i) => {
@@ -353,6 +354,7 @@ function StepwiseQuestion({ card, lang, showCorrect, checked, setChecked, onGrad
     finally { setBusy(false); }
   };
   return <div className="stepwise-q">
+    {mediaUrl && <div className="stepwise-media" style={{ marginBottom: 14, borderRadius: 12, overflow: "hidden", border: "1px solid var(--border)" }}><img src={mediaUrl} alt="" style={{ width: "100%", display: "block", maxHeight: 320, objectFit: "contain", background: "#fff" }} /></div>}
     <LocalHints hints={hints} showHints={showHints && !checked} fa={fa} />
     {steps.length === 0 ? <div className="ddle-banner bad">{fa ? "برای این سؤال مرحله‌ای هنوز مرحله‌ای ثبت نشده است." : "No steps are configured for this stepwise question."}</div> : steps.map((s, i) => {
       const res = stepResults?.[i];

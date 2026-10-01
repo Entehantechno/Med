@@ -312,10 +312,45 @@ export const TYPE_MAP = new Proxy(TYPE_VIEWS, {
 });
 
 /* QB-style micro lesson ("درسنامه") shown after answering. */
+function referenceForMicro(micro, lang) {
+  if (!micro) return null;
+  if (micro.reference && micro.reference.book_fa) {
+    return {
+      book: lang === "fa" ? micro.reference.book_fa : (micro.reference.book_en || micro.reference.book_fa),
+      chapter: lang === "fa" ? (micro.reference.chapter_fa || "") : (micro.reference.chapter_en || micro.reference.chapter_fa || ""),
+      page: micro.reference.page || "",
+      url: micro.reference.url || "",
+      edition: micro.reference.edition || "",
+    };
+  }
+  // Fallback: generate from source text
+  const src = lang === "fa" ? (micro.source_fa || micro.source || "") : (micro.source_en || micro.source || "");
+  const isHarrison = /هاریسون|harrison/i.test(src || micro.source || "");
+  if (isHarrison) {
+    return {
+      book: lang === "fa" ? "هاریسون - اصول طب داخلی" : "Harrison's Principles of Internal Medicine",
+      chapter: src || (lang === "fa" ? "فصل مرتبط" : "Relevant chapter"),
+      page: "",
+      url: "https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",
+      edition: "22e",
+    };
+  }
+  if (src) {
+    return {
+      book: lang === "fa" ? "منابع آزمون" : "Exam References",
+      chapter: src,
+      page: "",
+      url: "",
+      edition: "",
+    };
+  }
+  return null;
+}
 export function MicroLesson({ micro, defaultOpen = false, glossary }) {
   const { lang } = useApp();
   const [open, setOpen] = useState(defaultOpen);
   if (!micro || (!micro.lead && !micro.golden && !(micro.points || []).length)) return null;
+  const ref = referenceForMicro(micro, lang);
   return (
     <div className="micro-box">
       <button className="micro-toggle" onClick={() => setOpen((v) => !v)}>
@@ -338,6 +373,30 @@ export function MicroLesson({ micro, defaultOpen = false, glossary }) {
             </div>
           )}
           {micro.source && <div className="micro-source"><Icon name="bookmark" size={12} /> {lang === "fa" ? "منبع: " : "Source: "}{micro.source}</div>}
+          {ref && (
+            <a
+              href={ref.url || "#"}
+              target={ref.url ? "_blank" : undefined}
+              rel={ref.url ? "noopener noreferrer" : undefined}
+              className={`micro-ref-btn ${!ref.url ? "is-placeholder" : ""}`}
+              onClick={(e) => {
+                if (!ref.url) {
+                  e.preventDefault();
+                  // no external URL yet — could open internal reference drawer in future
+                }
+              }}
+              aria-label={lang === "fa" ? `مشاهده در ${ref.book}` : `View in ${ref.book}`}
+            >
+              <span className="micro-ref-icon" aria-hidden><Icon name="book" size={18} /></span>
+              <span className="micro-ref-text">
+                <span className="micro-ref-title">{lang === "fa" ? `مشاهده در ${ref.book}` : `View in ${ref.book}`}{ref.edition ? ` — ${ref.edition}` : ""}</span>
+                {(ref.chapter || ref.page) && (
+                  <span className="micro-ref-sub">{[ref.chapter, ref.page ? (lang === "fa" ? `ص ${ref.page}` : `p. ${ref.page}`) : null].filter(Boolean).join(" • ")}</span>
+                )}
+              </span>
+              <span className="micro-ref-arrow" aria-hidden>{ref.url ? "↗" : "📖"}</span>
+            </a>
+          )}
         </div>
       )}
     </div>

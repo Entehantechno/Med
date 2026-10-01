@@ -1461,6 +1461,79 @@ export function initSchema() {
   try {
     db.exec("INSERT OR IGNORE INTO reference_catalog (id,code,title_en,short_title,publisher,edition,rights_status,active) VALUES (1,'harrison-22e','Harrison''s Principles of Internal Medicine','Harrison''s 22e','McGraw Hill','22e','metadata_only',1)");
   } catch { /* best-effort seed */ }
+  // Seed the full competitive reference library (bilingual, metadata-only).
+  // These back the attractive "View in reference" button at the bottom of every micro-lesson.
+  try {
+    const refBooks = [
+      ["harrison-22e","هاریسون - اصول طب داخلی","Harrison's Principles of Internal Medicine","Harrison 22e","McGraw Hill","22e","https://accessmedicine.mhmedical.com/book.aspx?bookid=3095"],
+      ["harrison-fa-22e","هاریسون - اصول طب داخلی (ترجمه فارسی)","Harrison's Principles of Internal Medicine - Persian Edition","هاریسون فارسی ۲۲","McGraw Hill / اندیشه رفیع","22e","https://accessmedicine.mhmedical.com/book.aspx?bookid=3095"],
+      ["nelson-21e","نلسون - طب کودکان","Nelson Textbook of Pediatrics","Nelson 21e","Elsevier","21e","https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111"],
+      ["williams-ob-26e","ویلیامز - بارداری و زایمان","Williams Obstetrics","Williams 26e","McGraw Hill","26e","https://accessmedicine.mhmedical.com/book.aspx?bookid=2977"],
+      ["berek-16e","برک و نواک - بیماری‌های زنان","Berek & Novak's Gynecology","Berek 16e","Wolters Kluwer","16e","https://shop.lww.com/Berek-and-Novak-s-Gynecology/p/9781975225639"],
+      ["schwartz-11e","شوارتز - اصول جراحی","Schwartz's Principles of Surgery","Schwartz 11e","McGraw Hill","11e","https://accessmedicine.mhmedical.com/book.aspx?bookid=2576"],
+      ["robbins-10e","رابینز - آسیب‌شناسی پایه","Robbins & Cotran Pathologic Basis of Disease","Robbins 10e","Elsevier","10e","https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111"],
+      ["katzung-15e","کاتزونگ - فارماکولوژی پایه و بالینی","Katzung's Basic & Clinical Pharmacology","Katzung 15e","McGraw Hill","15e","https://accessmedicine.mhmedical.com/book.aspx?bookid=3058"],
+      ["guyton-14e","گایتون و هال - فیزیولوژی پزشکی","Guyton and Hall Textbook of Medical Physiology","Guyton 14e","Elsevier","14e","https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111"],
+      ["junqueira-15e","جان‌کوئرا - بافت‌شناسی پایه","Junqueira's Basic Histology","Junqueira 15e","McGraw Hill","15e","https://accessmedicine.mhmedical.com/book.aspx?bookid=2430"],
+      ["kaplan-11e","کاپلان و سادوک - خلاصه روان‌پزشکی","Kaplan & Sadock's Synopsis of Psychiatry","Kaplan 11e","Wolters Kluwer","11e","https://shop.lww.com/Kaplan-and-Sadock-s-Synopsis-of-Psychiatry/p/9781975145569"],
+      ["bolognia-4e","بولونیا - پوست‌شناسی","Bolognia Dermatology","Bolognia 4e","Elsevier","4e","https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111"],
+    ];
+    for (const [code, fa, en, short, pub, ed, url] of refBooks) {
+      db.prepare("INSERT OR IGNORE INTO reference_catalog (code,title_fa,title_en,short_title,publisher,edition,source_url,rights_status,active) VALUES (?,?,?,?,?,?,?,?,1)").run(code, fa, en, short, pub, ed, url, "metadata_only");
+      db.prepare("UPDATE reference_catalog SET title_fa=?, title_en=?, short_title=?, publisher=?, edition=?, source_url=? WHERE code=?").run(fa, en, short, pub, ed, url, code);
+    }
+  } catch { /* best-effort */ }
+  // Ensure every competitive micro-lesson has a reference link for the attractive button.
+  // This repairs old DBs and survives a wiped-and-reimported bank without needing to rewrite 54 JSON payloads.
+  try {
+    const topicRef = {
+      cardio:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"قلب و عروق",chapter_en:"Cardiovascular Medicine",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      pulmo:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"بیماری‌های ریه",chapter_en:"Pulmonary Medicine",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      gi:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"بیماری‌های گوارش",chapter_en:"Gastroenterology",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      nephro:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"بیماری‌های کلیه",chapter_en:"Nephrology",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      endo:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"غدد و متابولیسم",chapter_en:"Endocrinology",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      heme:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"خون‌شناسی",chapter_en:"Hematology",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      rheum:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"روماتولوژی",chapter_en:"Rheumatology",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      infect:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"بیماری‌های عفونی",chapter_en:"Infectious Diseases",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      neuro:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"نورولوژی",chapter_en:"Neurology",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      internal:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"طب داخلی",chapter_en:"Internal Medicine",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      peds:{book_fa:"نلسون - طب کودکان",book_en:"Nelson Textbook of Pediatrics",chapter_fa:"طب کودکان",chapter_en:"Pediatrics",url:"https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111",edition:"21e"},
+      obgyn:{book_fa:"ویلیامز - بارداری و زایمان",book_en:"Williams Obstetrics",chapter_fa:"زنان و زایمان",chapter_en:"Obstetrics & Gynecology",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=2977",edition:"26e"},
+      surgery:{book_fa:"شوارتز - اصول جراحی",book_en:"Schwartz's Principles of Surgery",chapter_fa:"جراحی عمومی",chapter_en:"General Surgery",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=2576",edition:"11e"},
+      radio:{book_fa:"برانت و هلمز - رادیولوژی",book_en:"Brant & Helms - Fundamentals of Diagnostic Radiology",chapter_fa:"رادیولوژی",chapter_en:"Radiology",url:"https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111",edition:"5e"},
+      psych:{book_fa:"کاپلان و سادوک - روان‌پزشکی",book_en:"Kaplan & Sadock's Synopsis of Psychiatry",chapter_fa:"روان‌پزشکی",chapter_en:"Psychiatry",url:"https://shop.lww.com/Kaplan-and-Sadock-s-Synopsis-of-Psychiatry/p/9781975145569",edition:"11e"},
+      derm:{book_fa:"بولونیا - پوست",book_en:"Bolognia Dermatology",chapter_fa:"پوست",chapter_en:"Dermatology",url:"https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111",edition:"4e"},
+      ortho:{book_fa:"شوارتز - اصول جراحی (ارتوپدی)",book_en:"Campbell's Operative Orthopaedics",chapter_fa:"ارتوپدی",chapter_en:"Orthopaedics",url:"https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111",edition:"14e"},
+      uro:{book_fa:"کمپبل - اورولوژی",book_en:"Campbell-Walsh Urology",chapter_fa:"اورولوژی",chapter_en:"Urology",url:"https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111",edition:"12e"},
+      ophth:{book_fa:"یانوف و دوکر - چشم‌پزشکی",book_en:"Yanoff & Duker Ophthalmology",chapter_fa:"چشم‌پزشکی",chapter_en:"Ophthalmology",url:"https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111",edition:"5e"},
+      ent:{book_fa:"کامینگز - گوش و حلق و بینی",book_en:"Cummings Otolaryngology",chapter_fa:"گوش و حلق و بینی",chapter_en:"ENT",url:"https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111",edition:"7e"},
+      pharm:{book_fa:"کاتزونگ - فارماکولوژی",book_en:"Katzung's Basic & Clinical Pharmacology",chapter_fa:"فارماکولوژی",chapter_en:"Pharmacology",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3058",edition:"15e"},
+      path:{book_fa:"رابینز - آسیب‌شناسی",book_en:"Robbins & Cotran Pathologic Basis of Disease",chapter_fa:"آسیب‌شناسی",chapter_en:"Pathology",url:"https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111",edition:"10e"},
+    };
+    const rows = db.prepare("SELECT id, data_json FROM flashcards WHERE data_json LIKE '%\"track\":\"learn\"%'").all();
+    let patched = 0;
+    const upd = db.prepare("UPDATE flashcards SET data_json=?, updated_at=datetime('now'), content_updated_at=datetime('now'), revision=COALESCE(revision,1)+1 WHERE id=?");
+    db.exec("BEGIN");
+    for (const r of rows) {
+      try {
+        const d = JSON.parse(r.data_json);
+        if (d.micro && d.micro.reference && d.micro.reference.book_fa) continue;
+        const top = String(d.topic || "").toLowerCase();
+        let ref = topicRef[top] || null;
+        if (!ref) {
+          if (String(d.course_fa||"").includes("کودک")) ref = topicRef.peds;
+          else if (String(d.course_fa||"").includes("زنان")) ref = topicRef.obgyn;
+          else ref = topicRef.internal || topicRef.gi;
+        }
+        if (!d.micro) d.micro = {};
+        d.micro.reference = { book_fa: ref.book_fa, book_en: ref.book_en, short_fa: ref.short || ref.book_en, short_en: ref.short || ref.book_en, chapter_fa: ref.chapter_fa, chapter_en: ref.chapter_en, edition: ref.edition, url: ref.url, page: "" };
+        if (!d.micro.source_fa || String(d.micro.source_fa).includes("منابع رسمی")) { d.micro.source_fa = `${ref.book_fa} - ${ref.chapter_fa}`; d.micro.source_en = `${ref.book_en} - ${ref.chapter_en}`; d.micro.source = d.micro.source_fa; }
+        upd.run(JSON.stringify(d), r.id);
+        patched++;
+      } catch {}
+    }
+    db.exec("COMMIT");
+  } catch { try{ db.exec("ROLLBACK"); }catch{} }
   // Optional profile fields (self- or admin-editable) + identity display prefs.
   if (!ucols.includes("phone")) db.exec("ALTER TABLE users ADD COLUMN phone TEXT");
   if (!ucols.includes("bio")) db.exec("ALTER TABLE users ADD COLUMN bio TEXT");
@@ -2133,6 +2206,46 @@ export function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_card_att_user_full      ON card_attempts(user_id, card_id, correct, flagged, guessed, created_at);
   `);
   try { db.exec("PRAGMA optimize"); } catch { /* best-effort SQLite planner stats */ }
+
+  // Ensure the Arak histology demo (Q1 stepwise + Q12 hints) stays correct after any re-seed (inline, no await needed).
+  try {
+    const q1a = db.prepare("SELECT id, data_json FROM flashcards WHERE id=172").get();
+    if (q1a) {
+      const d = JSON.parse(q1a.data_json);
+      if (d.type !== "stepwise" || !Array.isArray(d.steps) || d.steps.length !== 3) {
+        const wanted = {
+          track:"uni", type:"stepwise", course_fa:"بافت‌شناسی", course_en:"Histology", category_fa:"بافت پوششی", category_en:"Epithelial tissue",
+          title_fa:"تشخیص مرحله‌ای نوع اپیتلیوم از روی تصویر", title_en:"Stepwise identification of epithelium from image",
+          q_fa:"با توجه به تصویر میکروسکوپی زیر، به صورت مرحله‌ای نوع اپیتلیوم را تعیین کنید.", q_en:"Given the microscopic image, determine the epithelium type stepwise.",
+          questionText_fa:"تصویر زیر مربوط به کدام نوع اپیتلیوم است؟ به صورت مرحله‌ای پاسخ دهید", questionText_en:"Which type of epithelium is shown? Answer stepwise",
+          imageUrl:"/uploads/academic/university-120/histology_q1_1790882726117.png", media:{ url:"/uploads/academic/university-120/histology_q1_1790882726117.png", kind:"image", caption_fa:"اپیتلیوم مطبق کاذب مژکدار - نای", caption_en:"Pseudostratified ciliated columnar - trachea" }, color:"#f7c6c7",
+          steps:[
+            { prompt_fa:"مرحله ۱: این اپیتلیوم ساده است یا مطبق (چندلایه به نظر می‌رسد)؟", prompt_en:"Step 1: Is this epithelium simple or stratified (appears multilayered)?", answer_fa:"مطبق", answer_en:"Stratified", accept_fa:["مطبق","چندلایه","stratified"], accept_en:["stratified","multilayered"], explanation_fa:"چون در تصویر چند ردیف هسته در ارتفاع‌های مختلف دیده می‌شود، نما مطبق است (هرچند بعداً مشخص می‌شود کاذب است).", explanation_en:"Multiple nuclear rows at different heights give a stratified appearance." },
+            { prompt_fa:"مرحله ۲: اگر مطبق به نظر می‌رسد، آیا مطبق واقعی یا مطبق کاذب است؟ (آیا همه سلول‌ها روی غشای پایه‌اند؟)", prompt_en:"Step 2: If stratified appearance, is it true stratified or pseudostratified?", answer_fa:"مطبق کاذب", answer_en:"Pseudostratified", accept_fa:["مطبق کاذب","کاذب","سودواستراتیفیه","pseudostratified"], accept_en:["pseudostratified","pseudo"], explanation_fa:"همه سلول‌ها به غشای پایه متصل‌اند ولی چون قد سلول‌ها متفاوت است، هسته‌ها در سطوح مختلف قرار دارند → نمای کاذب مطبق.", explanation_en:"All cells contact basement membrane but vary in height → pseudostratified." },
+            { prompt_fa:"مرحله ۳: شکل سلول‌های سطحی چگونه است؟ سنگ‌فرشی (مسطح) / مکعبی (مربعی) / استوانه‌ای (بلند)؟ آیا مژک دارد؟", prompt_en:"Step 3: What is the shape of surface cells? Squamous / cuboidal / columnar? Ciliated?", answer_fa:"استوانه‌ای مژکدار", answer_en:"Ciliated columnar", accept_fa:["استوانه‌ای","استوانه ای","columnar","مژکدار","استوانه‌ای مژکدار"], accept_en:["columnar","ciliated columnar","ciliated"], explanation_fa:"سلول‌های سطحی بلند و استوانه‌ای با مژک‌های واضح در لبه رأسی + سلول‌های جامی بین آنها → استوانه‌ای مژکدار.", explanation_en:"Tall columnar surface cells with prominent cilia + goblet cells → ciliated columnar." },
+          ],
+          hints_fa:["به هسته‌ها و مژک‌ها دقت کن","همه سلول‌ها به غشای پایه می‌رسند؟","قد سلول سطحی را بسنج"], hints_en:["Look at nuclei and cilia","Do all cells reach basement membrane?","Measure surface cell height"],
+          explanation_fa:"جمع‌بندی: اپیتلیوم **استوانه‌ای مطبق کاذب مژکدار** (نای/برونش). هر سه مرحله را درست پاسخ دادی: مطبق → کاذب → استوانه‌ای مژکدار.",
+          explanation_en:"Summary: Pseudostratified ciliated columnar epithelium (trachea/bronchus).",
+          micro:{ lead_fa:"مطبق کاذب = همه روی غشا ولی نما چندلایه.", lead_en:"Pseudostratified = all on membrane but looks layered.", golden_fa:"نای کلاسیک‌ترین محل مطبق کاذب مژکدار است.", golden_en:"Trachea is classic pseudostratified ciliated columnar.", points_fa:["مژه برای جاروب موکوس","سلول جامی بین استوانه‌ای‌ها","هسته‌های نامتقارن کلید تشخیص"], points_en:["Cilia sweep mucus","Goblet cells among columnar","Heterogeneous nuclei key"], source_fa:"جان‌کوئرا - فصل بافت پوششی", source_en:"Junqueira - Epithelial Tissue", reference:{ book_fa:"جان‌کوئرا - بافت‌شناسی پایه", book_en:"Junqueira's Basic Histology", chapter_fa:"فصل بافت پوششی", chapter_en:"Chapter: Epithelial Tissue", edition:"15e", url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=2430", page:"۵۵-۷۲", short_fa:"Junqueira 15e", short_en:"Junqueira 15e" } }
+        };
+        db.prepare("UPDATE flashcards SET data_json=?, updated_at=datetime('now'), content_updated_at=datetime('now'), revision=COALESCE(revision,1)+1, university_id=120 WHERE id=172").run(JSON.stringify(wanted), 172);
+      }
+    }
+    const q12a = db.prepare("SELECT id, data_json FROM flashcards WHERE id=183").get();
+    if (q12a) {
+      const d = JSON.parse(q12a.data_json);
+      const hints = ["این بافت مخاط نازکی است که سفیدی چشم (صلبیه) و سطح داخلی پلک‌ها را می‌پوشاند و التهاب آن قرمزی چشم می‌دهد","برخلاف اپیدرم که سطح آن سنگ‌فرشی و کراتینه است، سطح این بافت استوانه‌ای بلند با سلول‌های جامی فراوان است؛ لایه‌های عمقی مکعبی‌اند","نام لاتین آن conjunctiva به معنای 'متصل‌کننده' است — پلک را به کره چشم متصل می‌کند"];
+      let patched=false;
+      if (!Array.isArray(d.hints_fa) || d.hints_fa.length < 3) { d.hints_fa = hints; d.hints_en = ["This thin mucosa covers the sclera and inner eyelids; its inflammation causes red eye","Unlike epidermis (flat keratinized top), its surface is tall columnar with many goblet cells; deeper layers are cuboidal","Latin conjunctiva means 'joining' — it joins eyelid to eyeball"]; patched=true; }
+      if (!d.micro?.reference) {
+        d.micro = d.micro || { lead_fa:"ملتحمه نمونه‌ای از اپیتلیوم دو-سه ردیفه با سطح استوانه‌ای است.", lead_en:"Conjunctiva is a 2-3-layered epithelium with columnar surface.", golden_fa:"ملتحمه = دو-سه ردیف + سطح استوانه‌ای + جامی فراوان.", golden_en:"Conjunctiva = 2-3 layers + columnar top + many goblet cells.", points_fa:["سطح استوانه‌ای، عمق مکعبی","سلول جامی فراوان","غشای پایه تک‌ردیفه"], points_en:["Columnar top, cuboidal depth","Many goblet cells","Single basal row"], source_fa:"جان‌کوئرا - فصل بافت پوششی", source_en:"Junqueira - Epithelium" };
+        d.micro.reference = { book_fa:"جان‌کوئرا - بافت‌شناسی پایه", book_en:"Junqueira's Basic Histology", chapter_fa:"فصل بافت پوششی - ملتحمه", chapter_en:"Chapter: Epithelium - Conjunctiva", edition:"15e", url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=2430", page:"۶۸-۷۰", short_fa:"Junqueira 15e", short_en:"Junqueira 15e" };
+        patched=true;
+      }
+      if (patched) db.prepare("UPDATE flashcards SET data_json=?, updated_at=datetime('now'), content_updated_at=datetime('now'), revision=COALESCE(revision,1)+1 WHERE id=183").run(JSON.stringify(d), 183);
+    }
+  } catch {}
 
   persistNow();
 }

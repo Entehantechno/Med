@@ -11,12 +11,16 @@ export default function Library() {
   const [data, setData] = useState(null);
   const [premium, setPremium] = useState(true);
   const [openCat, setOpenCat] = useState(null);
+  const [refs, setRefs] = useState(null);
 
   useEffect(() => {
     api.get(`/learn/library?lang=${lang}`)
       .then((d) => { setData(d); setOpenCat(d.categories?.[0]?.name || null); })
       .catch((e) => { if (String(e.message).includes("402") || String(e.message).includes("premium")) setPremium(false); setData({ categories: [] }); });
   }, [lang]);
+  useEffect(() => {
+    api.get("/learn/references").then((d) => setRefs(d.references || [])).catch(() => setRefs([]));
+  }, []);
 
   if (!data) return <div className="card"><div className="skeleton" style={{ height: 160 }} /></div>;
 
@@ -34,6 +38,29 @@ export default function Library() {
 
   return (
     <div className="page">
+      {/* Reference bookshelf — bilingual, always visible above the premium question bank */}
+      {refs && refs.length > 0 && (
+        <div className="card ref-shelf mb16">
+          <div className="section-title" style={{ marginBottom: 8 }}><h3 style={{ display: "flex", alignItems: "center", gap: 8 }}><Icon name="book" size={20} /> {lang === "fa" ? "کتابخانهٔ مرجع" : "Reference Library"}</h3></div>
+          <div className="small muted mb12" style={{ lineHeight: 1.8 }}>
+            {lang === "fa"
+              ? "هر درسنامهٔ کوتاه در انتها یک دکمهٔ «مشاهده در رفرنس» دارد که مستقیماً به فصل مربوطه در کتاب مرجع می‌برد — هم فارسی و هم انگلیسی."
+              : "Every micro-lesson ends with a \u201CView in reference\u201D button that jumps straight to the relevant chapter — in both Persian and English."}
+          </div>
+          <div className="ref-grid">
+            {refs.map((r) => (
+              <a key={r.id || r.code} href={r.source_url || r.sourceUrl || "#"} target={r.source_url || r.sourceUrl ? "_blank" : undefined} rel="noopener noreferrer" className="ref-card" onClick={(e) => { if (!r.source_url && !r.sourceUrl) e.preventDefault(); }}>
+                <div className="ref-card-icon" aria-hidden><Icon name="book" size={22} /></div>
+                <div className="ref-card-body">
+                  <div className="ref-card-title">{lang === "fa" ? (r.title_fa || r.title_en) : (r.title_en || r.title_fa)}</div>
+                  <div className="ref-card-meta">{[r.short_title, r.edition, r.publisher].filter(Boolean).join(" • ")}</div>
+                  {(r.source_url || r.sourceUrl) && <span className="ref-card-link">{lang === "fa" ? "مشاهده ↗" : "Open ↗"}</span>}
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="section-title"><h2><Icon name="crown" size={22} /> {t("premiumLibrary")}</h2></div>
       <div className="muted small mb16">{t("premiumLibraryHint")}</div>
       {data.categories.length === 0 && <div className="card empty-state"><div className="ico"><Icon name="book" size={40} /></div><h3>{t("noData")}</h3></div>}

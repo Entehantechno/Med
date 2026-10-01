@@ -2868,6 +2868,13 @@ function normalizeOfficialQuestion(q, meta = {}) {
         options_en: Array.isArray(q.micro.options_en) ? q.micro.options_en : [],
         source_fa: q.micro.source_fa || "", source_en: q.micro.source_en || "",
         media: q.micro.media || null,
+        // bilingual reference link for the attractive "View in reference" button at the bottom of every micro-lesson
+        ...(q.micro.reference ? { reference: {
+          book_fa: q.micro.reference.book_fa || "", book_en: q.micro.reference.book_en || "",
+          chapter_fa: q.micro.reference.chapter_fa || "", chapter_en: q.micro.reference.chapter_en || "",
+          edition: q.micro.reference.edition || "", url: q.micro.reference.url || "", page: q.micro.reference.page || "",
+          short_fa: q.micro.reference.short_fa || "", short_en: q.micro.reference.short_en || "",
+        } } : {}),
       },
     } : {}),
     image: q.image || "",

@@ -29,7 +29,16 @@ export function serializeMicro(d, lang) {
     golden,
     points: ((lang === "fa" ? m.points_fa : m.points_en) || []).map((p) => stripCrossRefs(p)).filter(Boolean),
     options: ((lang === "fa" ? m.options_fa : m.options_en) || []).map((p) => stripCrossRefs(p)).filter(Boolean),
-    source: lang === "fa" ? m.source_fa : m.source_en,
+    source: lang === "fa" ? (m.source_fa || m.source || "") : (m.source_en || m.source || ""),
+    source_fa: m.source_fa || m.source || "",
+    source_en: m.source_en || m.source || "",
+    // bilingual reference for the attractive button at the bottom of every micro-lesson
+    reference: m.reference ? {
+      book_fa: m.reference.book_fa || "", book_en: m.reference.book_en || "",
+      chapter_fa: m.reference.chapter_fa || "", chapter_en: m.reference.chapter_en || "",
+      edition: m.reference.edition || "", url: m.reference.url || "", page: m.reference.page || "",
+      short_fa: m.reference.short_fa || "", short_en: m.reference.short_en || "",
+    } : null,
     // درسنامه can carry an image / uploaded video / Aparat|YouTube embed
     media: serializeMedia(m.media, lang),
   };
@@ -129,6 +138,22 @@ export function serializeCard(c, lang) {
       text: lang === "fa" ? (f.fa || f.en) : (f.en || f.fa),
       belongs: f.belongs === "A" || f.belongs === "B" || f.belongs === "both" ? f.belongs : "A",
     }));
+    return base;
+  }
+  if (type === "stepwise") {
+    base.steps = Array.isArray(d.steps) ? d.steps.map((s, i) => ({
+      prompt_fa: s.prompt_fa || "", prompt_en: s.prompt_en || s.prompt_fa || "",
+      answer_fa: s.answer_fa || "", answer_en: s.answer_en || s.answer_fa || "",
+      accept_fa: Array.isArray(s.accept_fa) ? s.accept_fa : (s.accept_fa ? [s.accept_fa] : []),
+      accept_en: Array.isArray(s.accept_en) ? s.accept_en : (s.accept_en ? [s.accept_en] : []),
+      explanation_fa: s.explanation_fa || "", explanation_en: s.explanation_en || "",
+      hint_fa: s.hint_fa || "", hint_en: s.hint_en || "",
+      answerType: s.answerType || s.type || "autocomplete",
+      options_fa: Array.isArray(s.options_fa) ? s.options_fa : [],
+      options_en: Array.isArray(s.options_en) ? s.options_en : [],
+    })) : [];
+    // include question text from d.q_* as the main stem above the steps
+    base.q = pick(d, "q", lang) || pick(d, "title", lang) || pick(d, "questionText", lang);
     return base;
   }
   // default mcq

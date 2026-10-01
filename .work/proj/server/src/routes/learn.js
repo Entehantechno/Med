@@ -18,6 +18,7 @@ import { recordAnswers, performanceDashboard, mistakeCardIds, flaggedCardIds, di
 import { emojiForTopic } from "../lib/topicemoji.js";
 import { serializeCard } from "../lib/cardserialize.js";
 import { glossaryPayload } from "../lib/glossary.js";
+import { listReferenceCatalog } from "../lib/reference-governance.js";
 import { lessonSummary, programSummaries } from "../lib/chaptersummary.js";
 import { cardFacets, buildFacetIndex, matchFacets, sortCards, fullYear, cardIsBankOnly } from "../lib/cardfacets.js";
 import { notify, vapidPublicKey, pushConfigured } from "../lib/notify.js";
@@ -2013,6 +2014,16 @@ r.post("/vpatient/daily-reward", ...learner, async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: "vpatient_boot_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
+});
+
+/* ---------------- reference library (bilingual, per-question link) ----------------
+   Shows the canonical reference catalog that backs each micro-lesson's
+   «مشاهده در رفرنس» button. Same data as /api/academic/references but
+   learner-accessible (no manager gate) — the catalog is metadata-only. */
+r.get("/references", ...learner, (req, res) => {
+  const all = listReferenceCatalog({ activeOnly: true });
+  // publicReference is already the sanitized shape; listReferenceCatalog returns it
+  res.json({ references: all });
 });
 
 /* Warm the browse pool right after boot (off the request path) so the first
