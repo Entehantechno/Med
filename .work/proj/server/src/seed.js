@@ -246,6 +246,17 @@ insCase.run(3, 1, "medium", 1, JSON.stringify({
   objectives_en: "Suspect PE and order D-dimer and CTPA",
 }));
 
+// ---- Emergency Ten: high-yield internal-medicine cases (all in Emergency) ----
+// Imported from vp-emergency-ten.js so upgrades and fresh seeds share one source of truth.
+{
+  const { EMERGENCY_TEN } = await import("./data/vp-emergency-ten.js");
+  for (const c of EMERGENCY_TEN) {
+    // Use auto-increment id (do NOT hardcode) so existing custom cases never collide.
+    db.prepare(`INSERT INTO cases (version,difficulty,checklist_id,data_json,active) VALUES (1,?,?,?,1)`)
+      .run(c.difficulty, c.checklist_id, JSON.stringify(c.data));
+  }
+}
+
 // ---- Flashcards (MULTIPLE CHOICE + progressive hints) ----
 const insCard = db.prepare(
   `INSERT INTO flashcards (id,version,difficulty,data_json,active) VALUES (?,?,?,?,1)`
