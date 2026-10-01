@@ -366,7 +366,7 @@ export default function LearnCards({ jump, onJumpConsumed } = {}) {
                 <label className="field"><span>{t("questionTypeLabel")}</span>
                   <select value={fil.qtype} onChange={(e) => setF("qtype", e.target.value)}>
                     <option value="">{t("anyValue")}</option>
-                    {(facets.qtype || []).map((o) => <option key={o.value} value={o.value}>{({mcq:t("qtMcq"),truefalse:t("qtTruefalse"),fill:t("qtFill"),match:t("qtMatch"),order:t("qtOrder"),compare:"تمایز بالینی"}[o.value]||o.label)} ({o.count})</option>)}
+                    {(facets.qtype || []).map((o) => <option key={o.value} value={o.value}>{({mcq:t("qtMcq"),truefalse:t("qtTruefalse"),fill:t("qtFill"),match:t("qtMatch"),order:t("qtOrder"),compare: lang==="fa"?"تمایز بالینی":(t("qtCompare")||"Clinical compare")} [o.value]||o.label)} ({o.count})</option>)}
                   </select></label>
                 <label className="field"><span>{t("chapterLabel")}</span>
                   <select value={fil.chapter} onChange={(e) => { setF("chapter", e.target.value); setF("concept", ""); }}>

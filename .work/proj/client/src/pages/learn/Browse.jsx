@@ -88,7 +88,7 @@ export default function Browse() {
       style: { case: t("styleCase"), recall: t("styleRecall"), negative: t("styleNegative"), image: t("styleImage") },
       difficulty: { easy: t("easy"), medium: t("medium"), hard: t("hard") },
       examType: { "دستیاری": t("examTypeResidency"), "پره‌انترنی": t("examTypePreint") },
-      qtype: { mcq: t("qtMcq"), truefalse: t("qtTruefalse"), fill: t("qtFill"), match: t("qtMatch"), order: t("qtOrder"), compare: "تمایز بالینی", image: t("qtMcq") },
+      qtype: { mcq: t("qtMcq"), truefalse: t("qtTruefalse"), fill: t("qtFill"), match: t("qtMatch"), order: t("qtOrder"), compare: t("qtCompare"), image: t("qtMcq") },
       origin: { official_exam: t("originOfficial"), demo_seed: t("originDemo"), authored: t("originAuthored") },
     };
     return map[facet]?.[v] || v;

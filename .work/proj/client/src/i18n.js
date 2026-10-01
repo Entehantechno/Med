@@ -749,7 +749,7 @@ export const I18N = {
     youWon: "بردی! 🏆", youLost: "این بار باختی", tie: "مساوی", waitOpponent: "منتظر حریف…",
     // question types (admin editor)
     questionTypeLabel: "نوع سوال", qtMcq: "چهارگزینه‌ای", qtTruefalse: "درست/غلط",
-    qtFill: "جای خالی", qtMatch: "تطبیق جفت‌ها", qtOrder: "مرتب‌سازی",
+    qtFill: "جای خالی", qtMatch: "تطبیق جفت‌ها", qtOrder: "مرتب‌سازی", qtCompare: "تمایز بالینی",
     qtKf: "کی‌اف (Key Feature)", qtPuzzle: "پازل نام‌گذاری تصویر", qtDrawing: "نقاشی / رسم", qtHotspot: "کلیک روی تصویر", qtStepwise: "مرحله‌به‌مرحله",
     drawingReviews: "بررسی نقاشی‌ها", kfVignette: "شرح حال کوتاه (vignette)", kfItems: "سؤال‌های کی‌اف",
     puzzleAnswer: "برچسب ساختار", puzzleExtra: "برچسب‌های گمراه‌کننده",
@@ -1579,7 +1579,7 @@ export const I18N = {
     youWon: "You won! 🏆", youLost: "You lost this time", tie: "Tie", waitOpponent: "Waiting for opponent…",
     // question types (admin editor)
     questionTypeLabel: "Question type", qtMcq: "Multiple choice", qtTruefalse: "True/False",
-    qtFill: "Fill in the blank", qtMatch: "Match pairs", qtOrder: "Order / word bank",
+    qtFill: "Fill in the blank", qtMatch: "Match pairs", qtOrder: "Order / word bank", qtCompare: "Clinical compare",
     qtKf: "Key Feature (KF)", qtPuzzle: "Image-label puzzle", qtDrawing: "Drawing / sketch", qtHotspot: "Image hotspot", qtStepwise: "Stepwise",
     drawingReviews: "Drawing reviews", kfVignette: "Short vignette", kfItems: "Key-feature items",
     puzzleAnswer: "Structure label", puzzleExtra: "Distractor labels",
