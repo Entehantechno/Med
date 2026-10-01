@@ -65,6 +65,7 @@ export default function ReferenceViewer({ code: propCode, initialPage, onBack })
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             {sourceUrl && <a className="btn btn-primary" href={externalHref} target="_blank" rel="noopener noreferrer"><Icon name="book" size={15} /> {fa ? "باز کردن در سایت ناشر" : "Open on publisher site"} ↗</a>}
+            {ref.pdf_url && <a className="btn btn-ghost" href={`${ref.pdf_url}${page ? `#page=${page}` : ""}`} target="_blank" rel="noopener noreferrer"><Icon name="book" size={15} /> {fa ? "مشاهده PDF" : "Open PDF"}{page ? ` — ${fa?`ص ${page}`:`p. ${page}`}` : ""} ↗</a>}
             {page && sourceUrl && <span className="small muted" style={{ alignSelf: "center" }}>{fa ? `صفحهٔ پیش‌فرض: ${page}` : `Default: page ${page}`}</span>}
           </div>
           {!sourceUrl && <div className="small muted" style={{ marginTop: 8 }}>{fa ? "لینک ناشر برای این رفرنس فعلاً ثبت نشده است." : "No publisher link configured for this reference yet."}</div>}

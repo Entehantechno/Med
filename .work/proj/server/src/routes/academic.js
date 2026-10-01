@@ -94,7 +94,7 @@ r.post("/references", ...platform, (req, res) => {
   if (db.prepare("SELECT 1 FROM reference_catalog WHERE code=?").get(x.code))
     return res.status(409).json({ error: "reference_code_exists" });
   const q = db.prepare(
-    "INSERT INTO reference_catalog (code,title_fa,title_en,short_title,publisher,edition,publication_year,isbn,source_url,cover_url,rights_status,rights_note_fa,rights_note_en,active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+    "INSERT INTO reference_catalog (code,title_fa,title_en,short_title,publisher,edition,publication_year,isbn,source_url,cover_url,pdf_url,rights_status,rights_note_fa,rights_note_en,active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
   );
   const out = q.run(
     x.code,
@@ -107,6 +107,7 @@ r.post("/references", ...platform, (req, res) => {
     x.isbn,
     x.source_url,
     x.cover_url,
+    x.pdf_url,
     x.rights_status,
     x.rights_note_fa,
     x.rights_note_en,
@@ -130,7 +131,7 @@ r.put("/references/:id", ...platform, (req, res) => {
     .get(x.code, old.id);
   if (dup) return res.status(409).json({ error: "reference_code_exists" });
   db.prepare(
-    "UPDATE reference_catalog SET code=?,title_fa=?,title_en=?,short_title=?,publisher=?,edition=?,publication_year=?,isbn=?,source_url=?,cover_url=?,rights_status=?,rights_note_fa=?,rights_note_en=?,active=?,version=version+1,updated_at=datetime('now') WHERE id=?",
+    "UPDATE reference_catalog SET code=?,title_fa=?,title_en=?,short_title=?,publisher=?,edition=?,publication_year=?,isbn=?,source_url=?,cover_url=?,pdf_url=?,rights_status=?,rights_note_fa=?,rights_note_en=?,active=?,version=version+1,updated_at=datetime('now') WHERE id=?",
   ).run(
     x.code,
     x.title_fa,
@@ -142,6 +143,7 @@ r.put("/references/:id", ...platform, (req, res) => {
     x.isbn,
     x.source_url,
     x.cover_url,
+    x.pdf_url,
     x.rights_status,
     x.rights_note_fa,
     x.rights_note_en,

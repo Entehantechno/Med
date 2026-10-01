@@ -59,8 +59,8 @@ export default function Library() {
                   : <div className="ref-card-icon" aria-hidden><Icon name="book" size={22} /></div>}
                 <div className="ref-card-body">
                   <div className="ref-card-title">{lang === "fa" ? (r.title_fa || r.title_en) : (r.title_en || r.title_fa)}</div>
-                  <div className="ref-card-meta">{[r.short_title, r.edition, r.publisher].filter(Boolean).join(" • ")}</div>
-                  <span className="ref-card-link">{lang === "fa" ? "مشاهده رفرنس ↗" : "Open ↗"}{r.source_url || r.sourceUrl ? <span className="small muted" style={{marginInlineStart:6}}>{lang==="fa"?"(ناشر)":"(publisher)"}</span> : null}</span>
+                  <div className="ref-card-meta">{[r.short_title, r.edition, r.publisher].filter(Boolean).join(" • ")}{r.pdf_url ? ` • ${lang==="fa"?"PDF دارد":"has PDF"}` : ""}</div>
+                  <span className="ref-card-link">{lang === "fa" ? "مشاهده رفرنس ↗" : "Open ↗"}{r.source_url || r.sourceUrl ? <span className="small muted" style={{marginInlineStart:6}}>{lang==="fa"?"(ناشر)":"(publisher)"}</span> : null}{r.pdf_url ? <span className="chip" style={{marginInlineStart:6, background:"#e6ffed", border:"1px solid #b7ebc3", padding:"1px 6px", borderRadius:999, fontSize:11}}>PDF</span> : null}</span>
                 </div>
               </button>
             ))}

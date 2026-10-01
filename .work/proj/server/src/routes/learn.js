@@ -2046,7 +2046,7 @@ r.post("/admin/references", ...learnContent, (req, res) => {
   const x = normalizeReferenceInput(req.body || {});
   if (!x.code || !x.title_en) return res.status(400).json({ error: "reference_code_and_title_required" });
   if (db.prepare("SELECT 1 FROM reference_catalog WHERE code=?").get(x.code)) return res.status(409).json({ error: "reference_code_exists" });
-  const out = db.prepare("INSERT INTO reference_catalog (code,title_fa,title_en,short_title,publisher,edition,publication_year,isbn,source_url,cover_url,rights_status,rights_note_fa,rights_note_en,active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)").run(x.code, x.title_fa, x.title_en, x.short_title, x.publisher, x.edition, x.publication_year, x.isbn, x.source_url, x.cover_url, x.rights_status, x.rights_note_fa, x.rights_note_en, x.active);
+  const out = db.prepare("INSERT INTO reference_catalog (code,title_fa,title_en,short_title,publisher,edition,publication_year,isbn,source_url,cover_url,pdf_url,rights_status,rights_note_fa,rights_note_en,active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").run(x.code, x.title_fa, x.title_en, x.short_title, x.publisher, x.edition, x.publication_year, x.isbn, x.source_url, x.cover_url, x.pdf_url, x.rights_status, x.rights_note_fa, x.rights_note_en, x.active);
   persistNow();
   res.status(201).json({ reference: publicReference(referenceCatalogRow(out.lastInsertRowid)) });
 });
@@ -2057,7 +2057,7 @@ r.put("/admin/references/:id", ...learnContent, (req, res) => {
   if (!x.code || !x.title_en) return res.status(400).json({ error: "reference_code_and_title_required" });
   const dup = db.prepare("SELECT id FROM reference_catalog WHERE code=? AND id<>?").get(x.code, old.id);
   if (dup) return res.status(409).json({ error: "reference_code_exists" });
-  db.prepare("UPDATE reference_catalog SET code=?,title_fa=?,title_en=?,short_title=?,publisher=?,edition=?,publication_year=?,isbn=?,source_url=?,cover_url=?,rights_status=?,rights_note_fa=?,rights_note_en=?,active=?,version=version+1,updated_at=datetime('now') WHERE id=?").run(x.code, x.title_fa, x.title_en, x.short_title, x.publisher, x.edition, x.publication_year, x.isbn, x.source_url, x.cover_url, x.rights_status, x.rights_note_fa, x.rights_note_en, x.active, old.id);
+  db.prepare("UPDATE reference_catalog SET code=?,title_fa=?,title_en=?,short_title=?,publisher=?,edition=?,publication_year=?,isbn=?,source_url=?,cover_url=?,pdf_url=?,rights_status=?,rights_note_fa=?,rights_note_en=?,active=?,version=version+1,updated_at=datetime('now') WHERE id=?").run(x.code, x.title_fa, x.title_en, x.short_title, x.publisher, x.edition, x.publication_year, x.isbn, x.source_url, x.cover_url, x.pdf_url, x.rights_status, x.rights_note_fa, x.rights_note_en, x.active, old.id);
   persistNow();
   res.json({ reference: publicReference(referenceCatalogRow(old.id)) });
 });

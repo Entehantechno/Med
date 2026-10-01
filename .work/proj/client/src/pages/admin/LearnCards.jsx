@@ -578,10 +578,13 @@ function CardModalInner({ card, onClose, onSaved }) {
       lead_fa: d.micro?.lead_fa || "", golden_fa: d.micro?.golden_fa || "",
       points_fa: (d.micro?.points_fa || []).join("\n"), source_fa: d.micro?.source_fa || "",
       media: mediaState(d.micro?.media),         // درسنامه media
-      // competitive reference link (bilingual)
-      refCode: d.micro?.reference?.code || d.micro?.reference?.short_en || d.micro?.reference?.book_en || "",
-      refChapter: d.micro?.reference?.chapter_fa || d.micro?.reference?.chapter_en || "",
-      refPage: d.micro?.reference?.page || "",
+      // competitive reference links — هر سوال دو رفرنس (FA + EN)
+      refCodeFa: (d.micro?.reference_fa?.code || d.micro?.reference?.code || d.micro?.references?.[0]?.code || d.micro?.reference?.short_en || d.micro?.reference?.book_en || ""),
+      refChapterFa: (d.micro?.reference_fa?.chapter_fa || d.micro?.reference?.chapter_fa || d.micro?.references?.[0]?.chapter_fa || ""),
+      refPageFa: (d.micro?.reference_fa?.page || d.micro?.reference?.page || d.micro?.references?.[0]?.page || ""),
+      refCodeEn: (d.micro?.reference_en?.code || d.micro?.referenceEn?.code || d.micro?.references?.[1]?.code || ""),
+      refChapterEn: (d.micro?.reference_en?.chapter_en || d.micro?.referenceEn?.chapter_en || d.micro?.references?.[1]?.chapter_en || ""),
+      refPageEn: (d.micro?.reference_en?.page || d.micro?.referenceEn?.page || d.micro?.references?.[1]?.page || ""),
     },
     // پاسخنامه — dedicated answer explanation (text + media)
     explain: {
@@ -609,13 +612,25 @@ function CardModalInner({ card, onClose, onSaved }) {
     const microMedia = mediaPayload(f.micro.media);
     const explainMedia = mediaPayload(f.explain.media);
     const mnemMedia = mediaPayload(f.mnemonic.media);
-    // resolve selected reference to full object for micro
-    const selRef = refs.find(r=>r.code===f.micro.refCode) || refs.find(r=>r.short_title===f.micro.refCode) || null;
-    const microRef = (f.micro.refCode || f.micro.refChapter || f.micro.refPage) ? {
-      ...(selRef ? { book_fa: selRef.title_fa, book_en: selRef.title_en, short_fa: selRef.short_title, short_en: selRef.short_title, url: selRef.source_url, edition: selRef.edition, code: selRef.code } : { book_fa: f.micro.refCode, book_en: f.micro.refCode, url: "" }),
-      chapter_fa: f.micro.refChapter || "", chapter_en: f.micro.refChapter || "",
-      page: f.micro.refPage || "",
-    } : undefined;
+    // resolve selected references (FA + EN) to full objects for micro — هر سوال دو رفرنس
+    const buildRef = (codeKey, chapKey, pageKey) => {
+      const code = f.micro[codeKey] || "";
+      const chap = f.micro[chapKey] || "";
+      const pg = f.micro[pageKey] || "";
+      if (!code && !chap && !pg) return undefined;
+      const sel = refs.find(r=>r.code===code) || refs.find(r=>r.short_title===code) || null;
+      return {
+        ...(sel ? { book_fa: sel.title_fa, book_en: sel.title_en, short_fa: sel.short_title, short_en: sel.short_title, url: sel.source_url, pdf_url: sel.pdf_url || "", cover_url: sel.cover_url || "", edition: sel.edition, code: sel.code } : { book_fa: code, book_en: code, url: "", pdf_url: "", cover_url: "" }),
+        chapter_fa: chap || "", chapter_en: chap || "",
+        page: pg || "",
+      };
+    };
+    const microRefFa = buildRef("refCodeFa","refChapterFa","refPageFa");
+    const microRefEn = buildRef("refCodeEn","refChapterEn","refPageEn");
+    // fallback: اگر فقط قدیمی refCode پر شده بود، آن را به Fa نگاشت کن
+    const microRef = microRefFa || (f.micro.refCode ? buildRef("refCode","refChapter","refPage") : undefined);
+    const effectiveFa = microRefFa || microRef;
+    const effectiveEn = microRefEn;
     const payload = {
       type: f.type, q_fa: f.q_fa, q_en: f.q_en, difficulty: f.difficulty, premium: f.premium, category: f.category,
       hints_fa: f.hints_fa ? f.hints_fa.split("\n").filter(Boolean) : [],
@@ -624,12 +639,15 @@ function CardModalInner({ card, onClose, onSaved }) {
       media: qMedia,
       // keep the legacy `image` in sync only when the question media is a plain image
       image: (qMedia && (qMedia.kind === "image" || !qMedia.kind)) ? qMedia.url : "",
-      micro: (f.micro.lead_fa || f.micro.golden_fa || f.micro.points_fa || microMedia || microRef) ? {
+      micro: (f.micro.lead_fa || f.micro.golden_fa || f.micro.points_fa || microMedia || effectiveFa || effectiveEn) ? {
         lead_fa: f.micro.lead_fa, lead_en: f.micro.lead_fa, golden_fa: f.micro.golden_fa, golden_en: f.micro.golden_fa,
         points_fa: f.micro.points_fa.split("\n").filter(Boolean), points_en: f.micro.points_fa.split("\n").filter(Boolean),
-        source_fa: f.micro.source_fa || (microRef ? `${microRef.book_fa} - ${microRef.chapter_fa}` : ""), source_en: f.micro.source_fa || (microRef ? `${microRef.book_en} - ${microRef.chapter_en}` : ""), options_fa: [], options_en: [],
+        source_fa: f.micro.source_fa || (effectiveFa ? `${effectiveFa.book_fa} - ${effectiveFa.chapter_fa}` : ""), source_en: f.micro.source_fa || (effectiveEn ? `${effectiveEn.book_en} - ${effectiveEn.chapter_en}` : (effectiveFa ? `${effectiveFa.book_en} - ${effectiveFa.chapter_en}` : "")), options_fa: [], options_en: [],
         media: microMedia,
-        reference: microRef,
+        reference: effectiveFa,
+        reference_en: effectiveEn,
+        reference_fa: effectiveFa,
+        references: [effectiveFa, effectiveEn].filter(Boolean),
       } : undefined,
       // پاسخنامه (answer explanation)
       explain: (f.explain.text_fa || explainMedia) ? {
@@ -767,19 +785,38 @@ function CardModalInner({ card, onClose, onSaved }) {
       <div className="field"><label>{t("microGolden")}</label><input value={f.micro.golden_fa} onChange={(e) => set("micro", { ...f.micro, golden_fa: e.target.value })} /></div>
       <div className="field"><label>{t("microPoints")}</label><textarea value={f.micro.points_fa} onChange={(e) => set("micro", { ...f.micro, points_fa: e.target.value })} placeholder={t("onePerLine")} /></div>
       <div className="field"><label>{t("microSource")}</label><input value={f.micro.source_fa} onChange={(e) => set("micro", { ...f.micro, source_fa: e.target.value })} /></div>
-      {/* رقابتی: انتخاب رفرنس اختصاصی + فصل/صفحه — ذخیره در micro.reference */}
-      <div className="grid grid-3">
-        <div className="field"><label>{lang==="fa"?"کتاب مرجع":"Reference"}</label>
-          <select value={f.micro.refCode||""} onChange={e=>set("micro",{...f.micro, refCode:e.target.value})}>
-            <option value="">{lang==="fa"?"— بدون رفرنس —":"— No reference —"}</option>
-            {refs.map(r=><option key={r.code} value={r.code}>{lang==="fa"?r.title_fa:r.title_en} — {r.short_title}{r.edition?` (${r.edition})`:""}</option>)}
-          </select>
-          {(()=>{ const sel=refs.find(r=>r.code===f.micro.refCode); return sel?.cover_url ? <div className="small muted" style={{display:"flex",gap:8,alignItems:"center",marginTop:6}}><img src={sel.cover_url} alt="" style={{width:36,height:50,objectFit:"cover",borderRadius:4,border:"1px solid #e8e8e8"}}/><span className="small muted">{sel.publisher||""}</span></div>:null; })()}
+      {/* رقابتی: دو رفرنس اختصاصی — فارسی + انگلیسی — هر سوال دو رفرنس */}
+      <div className="small muted mb4" style={{fontWeight:700}}><Icon name="book" size={13}/> {lang==="fa" ? "ارجاع رقابتی — فارسی / انگلیسی (هر سوال دو رفرنس)" : "Competitive citations — Persian / English (two per question)"}</div>
+      <div className="card" style={{padding:12, background:"#f8fafc", border:"1px solid #e2e8f0"}}>
+        <div className="small muted mb6" style={{fontWeight:700}}>{lang==="fa" ? "رفرنس فارسی" : "Persian reference"}</div>
+        <div className="grid grid-3">
+          <div className="field"><label>{lang==="fa"?"کتاب (FA)":"Book (FA)"}</label>
+            <select value={f.micro.refCodeFa||""} onChange={e=>set("micro",{...f.micro, refCodeFa:e.target.value})}>
+              <option value="">{lang==="fa"?"— بدون رفرنس —":"— No reference —"}</option>
+              {refs.map(r=><option key={r.code} value={r.code}>{r.title_fa} — {r.short_title}{r.edition?` (${r.edition})`:""}</option>)}
+            </select>
+            {(()=>{ const sel=refs.find(r=>r.code===f.micro.refCodeFa); return sel ? <div className="small muted" style={{display:"flex",gap:8,alignItems:"center",marginTop:6}}><img src={sel.cover_url || `/covers/${sel.code}.jpg`} alt="" style={{width:36,height:50,objectFit:"cover",borderRadius:4,border:"1px solid #e8e8e8"}}/><span>{[sel.publisher, sel.pdf_url ? (lang==="fa"?"PDF دارد":"has PDF") : ""].filter(Boolean).join(" • ")}</span></div>:null; })()}
+          </div>
+          <div className="field"><label>{lang==="fa"?"فصل (FA)":"Chapter (FA)"}</label><input value={f.micro.refChapterFa||""} onChange={e=>set("micro",{...f.micro, refChapterFa:e.target.value})} placeholder="فصل ۳۱۵ — شوک" /></div>
+          <div className="field"><label>{lang==="fa"?"صفحه (FA)":"Page (FA)"}</label><input value={f.micro.refPageFa||""} onChange={e=>set("micro",{...f.micro, refPageFa:e.target.value})} placeholder="2150" /></div>
         </div>
-        <div className="field"><label>{lang==="fa"?"فصل":"Chapter"}</label><input value={f.micro.refChapter||""} onChange={e=>set("micro",{...f.micro, refChapter:e.target.value})} placeholder={lang==="fa"?"مثلاً فصل ۳۱۵ — شوک":"e.g. Ch. 315 — Shock"} /></div>
-        <div className="field"><label>{lang==="fa"?"صفحه":"Page"}</label><input value={f.micro.refPage||""} onChange={e=>set("micro",{...f.micro, refPage:e.target.value})} placeholder="e.g. 2150" /></div>
+        {f.micro.refCodeFa && <div className="small muted" style={{marginTop:4}}>{(()=>{ const sel=refs.find(r=>r.code===f.micro.refCodeFa); if(!sel) return null; return <span style={{display:"flex",gap:10, flexWrap:"wrap"}}>{sel.source_url && <a href={sel.source_url} target="_blank" rel="noreferrer">{lang==="fa"?"ناشر":"Publisher"} ↗</a>}{sel.pdf_url && <a href={sel.pdf_url} target="_blank" rel="noreferrer">{lang==="fa"?"PDF":"PDF"} ↗</a>}</span>; })()}</div>}
       </div>
-      {f.micro.refCode && <div className="small muted" style={{marginTop:4}}>{(() => { const sel=refs.find(r=>r.code===f.micro.refCode); return sel?.source_url ? <a href={sel.source_url} target="_blank" rel="noreferrer" className="small">{lang==="fa"?"مشاهده در سایت ناشر":"Open on publisher site"} ↗</a> : null; })()}</div>}
+      <div className="card" style={{padding:12, background:"#fff", border:"1px solid #e2e8f0", marginTop:8}}>
+        <div className="small muted mb6" style={{fontWeight:700}}>{lang==="fa" ? "رفرنس انگلیسی" : "English reference"}</div>
+        <div className="grid grid-3">
+          <div className="field"><label>{lang==="fa"?"کتاب (EN)":"Book (EN)"}</label>
+            <select value={f.micro.refCodeEn||""} onChange={e=>set("micro",{...f.micro, refCodeEn:e.target.value})}>
+              <option value="">{lang==="fa"?"— بدون رفرنس —":"— No reference —"}</option>
+              {refs.map(r=><option key={r.code} value={r.code}>{r.title_en} — {r.short_title}{r.edition?` (${r.edition})`:""}</option>)}
+            </select>
+            {(()=>{ const sel=refs.find(r=>r.code===f.micro.refCodeEn); return sel ? <div className="small muted" style={{display:"flex",gap:8,alignItems:"center",marginTop:6}}><img src={sel.cover_url || `/covers/${sel.code}.jpg`} alt="" style={{width:36,height:50,objectFit:"cover",borderRadius:4,border:"1px solid #e8e8e8"}}/><span>{[sel.publisher, sel.pdf_url ? "has PDF" : ""].filter(Boolean).join(" • ")}</span></div>:null; })()}
+          </div>
+          <div className="field"><label>{lang==="fa"?"فصل (EN)":"Chapter (EN)"}</label><input value={f.micro.refChapterEn||""} onChange={e=>set("micro",{...f.micro, refChapterEn:e.target.value})} placeholder="Ch. 315 — Shock" /></div>
+          <div className="field"><label>{lang==="fa"?"صفحه (EN)":"Page (EN)"}</label><input value={f.micro.refPageEn||""} onChange={e=>set("micro",{...f.micro, refPageEn:e.target.value})} placeholder="2150" /></div>
+        </div>
+        {f.micro.refCodeEn && <div className="small muted" style={{marginTop:4}}>{(()=>{ const sel=refs.find(r=>r.code===f.micro.refCodeEn); if(!sel) return null; return <span style={{display:"flex",gap:10, flexWrap:"wrap"}}>{sel.source_url && <a href={sel.source_url} target="_blank" rel="noreferrer">Publisher ↗</a>}{sel.pdf_url && <a href={sel.pdf_url} target="_blank" rel="noreferrer">PDF ↗</a>}</span>; })()}</div>}
+      </div>
       <MediaUpload value={f.micro.media} onChange={(v) => set("micro", { ...f.micro, media: v })} label={`${t("microMedia")} (${t("optional")})`} />
 
       <div className="divider" />

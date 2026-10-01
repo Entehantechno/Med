@@ -87,6 +87,28 @@ const videoUpload = multer({
   },
 });
 
+/* --- PDF upload (competitive reference PDFs) --- */
+const PDF_ALLOWED = new Set([".pdf"]);
+const PDF_MIME = new Set(["application/pdf"]);
+function hasPdfMagic(filePath) {
+  const b = readHead(filePath, 8);
+  return b.subarray(0, 4).toString("ascii") === "%PDF";
+}
+const pdfUpload = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, "pdf_" + Date.now() + "_" + Math.round(Math.random() * 1e6) + ext);
+    },
+  }),
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB per PDF
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (PDF_ALLOWED.has(ext) && PDF_MIME.has(file.mimetype)) cb(null, true); else cb(new Error("Unsupported PDF type"));
+  },
+});
+
 /* --- audio upload (virtual-patient auscultation recordings: lung / heart) --- */
 const AUDIO_ALLOWED = new Set([".mp3", ".wav", ".m4a", ".ogg", ".opus", ".aac"]);
 const AUDIO_MIME = new Set([
@@ -192,6 +214,16 @@ r.post("/video", authRequired, requireRole("teacher", "admin"), (req, res) => {
     if (!req.file || !req.file.size) return rejectUploaded(req.file, res, "Empty upload");
     const ext = path.extname(req.file.filename).toLowerCase();
     if (!hasVideoMagic(req.file.path, ext)) return rejectUploaded(req.file, res, "Invalid video content");
+    res.json({ url: `/uploads/${req.file.filename}`, name: req.file.originalname });
+  });
+});
+
+// POST /api/upload/pdf  (multipart/form-data, field name: "pdf") — competitive reference PDFs
+r.post("/pdf", authRequired, requireRole("teacher", "admin"), (req, res) => {
+  pdfUpload.single("pdf")(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file || !req.file.size) return rejectUploaded(req.file, res, "Empty upload");
+    if (!hasPdfMagic(req.file.path)) return rejectUploaded(req.file, res, "Invalid PDF content");
     res.json({ url: `/uploads/${req.file.filename}`, name: req.file.originalname });
   });
 });

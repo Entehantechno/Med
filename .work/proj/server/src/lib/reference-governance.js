@@ -97,6 +97,7 @@ export function publicReference(row) {
     isbn: row.isbn || "",
     source_url: row.source_url || "",
     cover_url: row.cover_url || (row.code ? `/covers/${row.code}.jpg` : ""),
+    pdf_url: row.pdf_url || "",
     rights_status: row.rights_status || "metadata_only",
     rights_note_fa: row.rights_note_fa || "",
     rights_note_en: row.rights_note_en || "",
@@ -256,6 +257,7 @@ export function normalizeReferenceInput(v = {}) {
     isbn: text(v.isbn, 64),
     source_url: text(v.source_url, 1000),
     cover_url: text(v.cover_url || v.coverUrl || "", 1000),
+    pdf_url: text(v.pdf_url || v.pdfUrl || "", 1000),
     rights_status: REFERENCE_RIGHTS.has(v.rights_status)
       ? v.rights_status
       : "metadata_only",
