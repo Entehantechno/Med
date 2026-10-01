@@ -1521,6 +1521,26 @@ export function initSchema() {
   }
   if (!flashTenantCols.includes("last_editor_id")) db.exec("ALTER TABLE flashcards ADD COLUMN last_editor_id INTEGER");
   if (!flashTenantCols.includes("last_action")) db.exec("ALTER TABLE flashcards ADD COLUMN last_action TEXT DEFAULT 'created'");
+  // Per-teacher isolation: teacher sees only own questions/patients, کارشناس آموزش (is_expert) sees all of university
+  try { const fcols2 = db.prepare("PRAGMA table_info(flashcards)").all().map((c) => c.name); if (!fcols2.includes("created_by")) db.exec("ALTER TABLE flashcards ADD COLUMN created_by INTEGER"); } catch { /* */ }
+  try { const ccols2 = db.prepare("PRAGMA table_info(cases)").all().map((c) => c.name); if (!ccols2.includes("created_by")) db.exec("ALTER TABLE cases ADD COLUMN created_by INTEGER"); } catch { /* */ }
+  try { const ucolsX = db.prepare("PRAGMA table_info(users)").all().map((c) => c.name); if (!ucolsX.includes("is_expert")) db.exec("ALTER TABLE users ADD COLUMN is_expert INTEGER DEFAULT 0"); } catch { /* */ }
+  try { db.exec("UPDATE flashcards SET created_by = last_editor_id WHERE created_by IS NULL AND last_editor_id IS NOT NULL"); } catch { /* */ }
+  try { db.exec("UPDATE users SET is_expert=0 WHERE is_expert IS NULL"); } catch { /* */ }
+  try {
+    const remCases = db.prepare("SELECT id, university_id FROM cases WHERE created_by IS NULL AND university_id IS NOT NULL").all();
+    for (const row of remCases) {
+      const t = db.prepare("SELECT id FROM users WHERE role='teacher' AND university_id=? ORDER BY id LIMIT 1").get(row.university_id);
+      if (t) try { db.prepare("UPDATE cases SET created_by=? WHERE id=?").run(t.id, row.id); } catch { /* */ }
+    }
+  } catch { /* */ }
+  try {
+    const remFlash = db.prepare("SELECT id, university_id FROM flashcards WHERE created_by IS NULL AND university_id IS NOT NULL").all();
+    for (const row of remFlash) {
+      const t = db.prepare("SELECT id FROM users WHERE role='teacher' AND university_id=? ORDER BY id LIMIT 1").get(row.university_id);
+      if (t) try { db.prepare("UPDATE flashcards SET created_by=? WHERE id=?").run(t.id, row.id); } catch { /* */ }
+    }
+  } catch { /* */ }
 
   // Per-card change log. Keeps the WHAT (which fields), the WHO and the WHEN
   // so the admin can open any question and read its history, and so the
@@ -2087,6 +2107,9 @@ export function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_exams_uni_active        ON exams(university_id, active, id DESC);
     CREATE INDEX IF NOT EXISTS idx_cases_uni_active        ON cases(university_id, active, id);
     CREATE INDEX IF NOT EXISTS idx_flashcards_uni_active   ON flashcards(university_id, active, id);
+    CREATE INDEX IF NOT EXISTS idx_cases_created_by        ON cases(created_by);
+    CREATE INDEX IF NOT EXISTS idx_flashcards_created_by   ON flashcards(created_by);
+    CREATE INDEX IF NOT EXISTS idx_users_is_expert         ON users(university_id, is_expert);
     CREATE INDEX IF NOT EXISTS idx_class_members_class_user ON class_members(class_id, user_id);
     CREATE INDEX IF NOT EXISTS idx_class_cases_class_case   ON class_cases(class_id, case_id);
     CREATE INDEX IF NOT EXISTS idx_class_flash_class_card   ON class_flashcards(class_id, flashcard_id);

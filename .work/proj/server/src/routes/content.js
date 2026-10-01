@@ -68,9 +68,21 @@ function studentSafeCase(full) {
   }
   return safe;
 }
+function isUniversityExpert(user) {
+  if (!user || user.role !== "teacher") return false;
+  try {
+    const row = db.prepare("SELECT is_expert FROM users WHERE id=?").get(user.id);
+    return row && Number(row.is_expert) === 1;
+  } catch { return false; }
+}
 function canManageUniResource(user, row) {
   if (isLearnContent(row?.data_json)) return user.role === "admin";
-  return user.role === "admin" || (user.role === "teacher" && (row.university_id || 1) === currentUniversityId(user));
+  if (user.role === "admin") return true;
+  if (user.role !== "teacher") return false;
+  if ((row.university_id || 1) !== currentUniversityId(user)) return false;
+  if (isUniversityExpert(user)) return true;
+  if (row.created_by == null) return true;
+  return Number(row.created_by) === Number(user.id);
 }
 function canManageStudentAccount(actor, target) {
   if (!target) return false;
@@ -154,6 +166,9 @@ r.get("/cases", authRequired, (req, res) => {
   let rows = db.prepare("SELECT * FROM cases WHERE active=1 ORDER BY id").all();
   const uni = tenantFilterFor(req.user);
   if (uni) rows = rows.filter((row) => (row.university_id || 1) === uni);
+  if (req.user.role === "teacher" && !isUniversityExpert(req.user)) {
+    rows = rows.filter((row) => isLearnContent(row.data_json) || row.created_by == null || Number(row.created_by) === Number(req.user.id));
+  }
   let list = [];
   for (const row of rows) {
     try { list.push(parse(row, { checklist_id: row.checklist_id, ...caseReferenceExtra(row) })); }
@@ -257,8 +272,9 @@ r.post("/cases", authRequired, requireRole("teacher", "admin"), (req, res) => {
     } else if (policyId) snapshot = referenceSnapshotForPolicy(policyId);
   }
   const info = db.prepare(
-    "INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id,reference_policy_id,reference_snapshot_json) VALUES (1,?,?,?,?,?,?)"
-  ).run(difficulty, checklist_id, JSON.stringify(data), uni, policyId, snapshot ? JSON.stringify(snapshot) : null);
+    "INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id,created_by,reference_policy_id,reference_snapshot_json) VALUES (1,?,?,?, ?,?,?,?)"
+  ).run(difficulty, checklist_id, JSON.stringify(data), uni, req.user.id, policyId, snapshot ? JSON.stringify(snapshot) : null);
+  persistNow();
   res.json({ id: info.lastInsertRowid, version: 1, track: data.track, reference: snapshot ? publicReferenceSnapshot(snapshot) : null,
     warning: !wantLearn && !reference_policy_id ? "reference_policy_required_before_microlearning" : undefined });
 });
@@ -357,8 +373,9 @@ r.post("/site-bank/cases/:id/clone", authRequired, requireRole("teacher", "admin
       policyId = legacyReferencePolicy(uni);
       if (policyId) snapshotJson = JSON.stringify(referenceSnapshotForPolicy(policyId));
     }
-    const info = db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id,reference_policy_id,reference_snapshot_json) VALUES (1,?,?,?, ?,?,?)")
-      .run(src.difficulty, src.checklist_id, JSON.stringify(data), uni, policyId, snapshotJson);
+    const info = db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id,created_by,reference_policy_id,reference_snapshot_json) VALUES (1,?,?,?, ?,?,?,?)")
+      .run(src.difficulty, src.checklist_id, JSON.stringify(data), uni, req.user.id, policyId, snapshotJson);
+    persistNow();
     res.json({ ok: true, id: info.lastInsertRowid, university_id: uni });
   } catch (e) {
     res.status(500).json({ error: "clone_failed", message: String(e.message || e).slice(0, 200) });
@@ -429,6 +446,9 @@ r.get("/flashcards", authRequired, (req, res) => {
   }
   const uniId = tenantFilterFor(req.user);
   if (uniId) rows = rows.filter((row) => (row.university_id || 1) === uniId);
+  if (req.user.role === "teacher" && !isUniversityExpert(req.user)) {
+    rows = rows.filter((row) => isLearnContent(row.data_json) || row.created_by == null || Number(row.created_by) === Number(req.user.id));
+  }
   const list = [];
   if (req.user.role === "learner") {
     for (const row of rows) {
@@ -493,6 +513,9 @@ r.post("/flashcards/check", authRequired, (req, res) => {
       if (full.track === "learn") return res.status(403).json({ error: "wrong_track", stage: "evaluate" });
       const uni = currentUniversityId(req.user);
       if ((row.university_id || 1) !== uni) return res.status(403).json({ error: "wrong_university", stage: "evaluate" });
+      if (!isUniversityExpert(req.user) && row.created_by != null && Number(row.created_by) !== Number(req.user.id)) {
+        return res.status(403).json({ error: "wrong_owner", stage: "evaluate" });
+      }
     }
     res.json(gradeFlashcard(full, req.body || {}, { allowLegacy }));
   } catch (e) {
@@ -515,8 +538,9 @@ r.post("/flashcards", authRequired, requireRole("teacher", "admin"), (req, res) 
   const wantLearn = req.user.role === "admin" && data.track === "learn";
   data.track = wantLearn ? "learn" : "uni";
   const uni = wantLearn ? null : (req.user.role === "admin" ? (Number(req.body?.university_id) || currentUniversityId(req.user) || 1) : currentUniversityId(req.user));
-  const info = db.prepare("INSERT INTO flashcards (version,difficulty,data_json,university_id) VALUES (1,?,?,?)")
-    .run(difficulty, JSON.stringify(data), uni);
+  const info = db.prepare("INSERT INTO flashcards (version,difficulty,data_json,university_id,created_by,last_editor_id,last_action,created_at,content_updated_at) VALUES (1,?,?,?, ?,?, 'created', datetime('now'), datetime('now'))")
+    .run(difficulty, JSON.stringify(data), uni, req.user.id, req.user.id);
+  persistNow();
   res.json({ id: info.lastInsertRowid, version: 1 });
 });
 r.put("/flashcards/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -530,8 +554,9 @@ r.put("/flashcards/:id", authRequired, requireRole("teacher", "admin"), (req, re
   if (req.user.role !== "admin") data.track = "uni";
   else data.track = (data.track === "learn" || prevLearn) ? "learn" : "uni";
   const newVersion = row.version + 1;
-  db.prepare("UPDATE flashcards SET version=?,difficulty=?,data_json=?,updated_at=datetime('now') WHERE id=?")
-    .run(newVersion, difficulty, JSON.stringify(data), row.id);
+  db.prepare("UPDATE flashcards SET version=?,difficulty=?,data_json=?,updated_at=datetime('now'),content_updated_at=datetime('now'),last_editor_id=?,last_action='edited',revision=COALESCE(revision,1)+1 WHERE id=?")
+    .run(newVersion, difficulty, JSON.stringify(data), req.user.id, row.id);
+  persistNow();
   res.json({ id: row.id, version: newVersion });
 });
 r.delete("/flashcards/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -556,6 +581,7 @@ r.get("/cases-export.csv", authRequired, requireRole("teacher", "admin"), (req, 
   let raw = db.prepare("SELECT * FROM cases WHERE active=1 ORDER BY id").all();
   const uni = tenantFilterFor(req.user);
   if (uni) raw = raw.filter((row) => (row.university_id || 1) === uni);
+  if (req.user.role === "teacher" && !isUniversityExpert(req.user)) raw = raw.filter((row) => row.created_by == null || Number(row.created_by) === Number(req.user.id));
   const rows = raw
     .map((row) => { try { const d = JSON.parse(row.data_json); return { ...d, difficulty: row.difficulty }; } catch { return null; } })
     .filter(Boolean)
@@ -579,7 +605,7 @@ r.post("/cases-import", authRequired, requireRole("teacher", "admin"), (req, res
   }
   let rows;
   try { rows = parseCSV(csv); } catch { return res.status(400).json({ error: "invalid csv" }); }
-  const ins = db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id) VALUES (1,?,1,?,?)");
+  const ins = db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id,created_by) VALUES (1,?,1,?,?,?)");
   let count = 0;
   const tx = db.transaction(() => {
     for (const row of rows) {
@@ -587,7 +613,7 @@ r.post("/cases-import", authRequired, requireRole("teacher", "admin"), (req, res
       const { difficulty = "medium", age, ...rest } = row;
       const data = { ...rest, age: +age || 0,
         vitals: { bp: "120/80", hr: "75", rr: "16", temp: "37", spo2: "98%" }, images: [] };
-      ins.run(difficulty, JSON.stringify(data), uni);
+      ins.run(difficulty, JSON.stringify(data), uni, req.user.id);
       count++;
     }
   });
@@ -601,6 +627,7 @@ r.get("/flashcards-export.csv", authRequired, requireRole("teacher", "admin"), (
   let raw = db.prepare("SELECT * FROM flashcards WHERE active=1 ORDER BY id").all();
   const uni = tenantFilterFor(req.user);
   if (uni) raw = raw.filter((row) => (row.university_id || 1) === uni);
+  if (req.user.role === "teacher" && !isUniversityExpert(req.user)) raw = raw.filter((row) => row.created_by == null || Number(row.created_by) === Number(req.user.id));
   const rows = raw
     .filter((row) => { try { return JSON.parse(row.data_json).track !== "learn"; } catch { return true; } })
     .map((row) => {
@@ -633,7 +660,7 @@ r.post("/flashcards-import", authRequired, requireRole("teacher", "admin"), (req
     uni = currentUniversityId(req.user);
     if (!uni) return res.status(400).json({ error: "university_required" });
   }
-  const ins = db.prepare("INSERT INTO flashcards (version,difficulty,data_json,university_id) VALUES (1,?,?,?)");
+  const ins = db.prepare("INSERT INTO flashcards (version,difficulty,data_json,university_id,created_by,last_editor_id,last_action,created_at,content_updated_at) VALUES (1,?,?,?, ?,?, 'created', datetime('now'), datetime('now'))");
   let count = 0;
   const tx = db.transaction(() => {
     for (const row of rows) {
@@ -658,7 +685,7 @@ r.post("/flashcards-import", authRequired, requireRole("teacher", "admin"), (req
         hints_fa: (row.hints_fa || "").split("|").map((s) => s.trim()).filter(Boolean),
         hints_en: (row.hints_en || "").split("|").map((s) => s.trim()).filter(Boolean),
       };
-      ins.run(row.difficulty || "medium", JSON.stringify(data), uni);
+      ins.run(row.difficulty || "medium", JSON.stringify(data), uni, req.user.id, req.user.id);
       count++;
     }
   });
