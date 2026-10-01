@@ -1056,11 +1056,20 @@ function browsePool() {
             json_extract(data_json, '$.title_en') AS title_en,
             json_extract(data_json, '$.premium') AS premium,
             json_extract(data_json, '$.topic') AS topic,
+            json_extract(data_json, '$.type') AS qtype,
+            json_extract(data_json, '$.category') AS category,
             json_extract(data_json, '$.difficulty') AS d_difficulty,
             json_extract(data_json, '$.content_origin') AS content_origin,
             json_extract(data_json, '$.source_meta') AS source_meta,
-            (SELECT group_concat(COALESCE(json_extract(o.value,'$.fa'),'') || ' ' || COALESCE(json_extract(o.value,'$.en'),''), ' ')
-               FROM json_each(COALESCE(json_extract(data_json,'$.options'), '[]')) o) AS opts_text
+            (SELECT group_concat(COALESCE(json_extract(o.value,'$.fa'),'') || ' ' || COALESCE(json_extract(o.value,'$.en'),'') || ' ' || COALESCE(json_extract(o.value,'$.why'),''), ' ')
+               FROM json_each(COALESCE(json_extract(data_json,'$.options'), '[]')) o) AS opts_text,
+            (SELECT group_concat(COALESCE(v,''),' ') FROM json_each(COALESCE(json_extract(data_json,'$.hints_fa'),'[]')) e, json_each(e.value) v) AS hints_text,
+            json_extract(data_json, '$.micro.lead_fa') AS micro_lead,
+            json_extract(data_json, '$.micro.golden_fa') AS micro_golden,
+            (SELECT group_concat(COALESCE(v,''),' ') FROM json_each(COALESCE(json_extract(data_json,'$.micro.points_fa'),'[]')) e, json_each(e.value) v) AS micro_points,
+            json_extract(data_json, '$.micro.source_fa') AS micro_source,
+            json_extract(data_json, '$.explain.text_fa') AS explain_text,
+            json_extract(data_json, '$.mnemonic.scene_fa') AS mnemonic_scene
        FROM flashcards
       WHERE active=1 AND json_valid(data_json) AND json_extract(data_json, '$.track') = 'learn'`
   ).all();
@@ -1068,15 +1077,15 @@ function browsePool() {
   for (const c of rows) {
     let sm = {};
     if (c.source_meta) { try { sm = JSON.parse(c.source_meta) || {}; } catch { sm = {}; } }
-    const d = { source_meta: sm, content_origin: c.content_origin || undefined, difficulty: c.d_difficulty || undefined };
+    const d = { source_meta: sm, content_origin: c.content_origin || undefined, difficulty: c.d_difficulty || undefined, type: c.qtype || sm.question_type || "" };
     const facets = cardFacets(d, { ...c, updated_at: c.content_updated_at || c.updated_at });
     // Pre-lowercase the searchable stem once instead of rebuilding and
     // lowercasing it for every card on every keystroke.
     // Normalised once (ی/ک/ه, digits, ZWNJ, diacritics) so every keystroke is
     // a plain indexOf over pre-cleaned text; `extra` = weaker fields.
-    const hay = normalizeText(`${c.q_fa || ""} ${c.q_en || ""} ${c.title_fa || ""} ${c.title_en || ""}`);
-    const extra = normalizeText(`${sm.chapter_fa || ""} ${sm.chapter_en || ""} ${sm.concept_fa || ""} ${sm.concept_en || ""} ${c.opts_text || ""}`);
-    const data = { q_fa: c.q_fa || "", q_en: c.q_en || "", title_fa: c.title_fa || "", title_en: c.title_en || "", topic: c.topic || "" };
+    const hay = normalizeText(`${c.q_fa || ""} ${c.q_en || ""} ${c.title_fa || ""} ${c.title_en || ""} ${c.category || ""}`);
+    const extra = normalizeText(`${sm.chapter_fa || ""} ${sm.chapter_en || ""} ${sm.concept_fa || ""} ${sm.concept_en || ""} ${sm.subject_fa || ""} ${sm.label_fa || ""} ${sm.exam_type || ""} ${c.qtype || ""} ${c.opts_text || ""} ${c.hints_text || ""} ${c.micro_lead || ""} ${c.micro_golden || ""} ${c.micro_points || ""} ${c.micro_source || ""} ${c.explain_text || ""} ${c.mnemonic_scene || ""}`);
+    const data = { q_fa: c.q_fa || "", q_en: c.q_en || "", title_fa: c.title_fa || "", title_en: c.title_en || "", topic: c.topic || "", type: c.qtype || "" };
     all.push({ id: c.id, facets, premium: c.premium === 1 || c.premium === true || c.premium === "true", data, hay, extra });
   }
   browsePoolCache = { sig, all };
@@ -1110,7 +1119,7 @@ r.get("/browse", ...learner, flagGate("bank_browse"), (req, res) => {
     subject: asList(q.subject), chapter: asList(q.chapter), concept: asList(q.concept),
     year: asList(q.year), month: asList(q.month), sitting: asList(q.sitting),
     scope: asList(q.scope), style: asList(q.style), difficulty: asList(q.difficulty),
-    exam: asList(q.exam), examType: asList(q.examType),
+    exam: asList(q.exam), examType: asList(q.examType), qtype: asList(q.qtype), origin: asList(q.origin),
     yearFrom: q.yearFrom, yearTo: q.yearTo,
     updatedFrom: q.updatedFrom, updatedTo: q.updatedTo,
   };
@@ -1130,7 +1139,7 @@ r.get("/browse", ...learner, flagGate("bank_browse"), (req, res) => {
   // active filter. This is the standard faceted-search behaviour — after
   // choosing a subject, the year counts reflect that subject rather than the
   // whole bank, so a learner never picks an option that returns nothing.
-  const facetKeys = ["subject", "chapter", "concept", "year", "month", "sitting", "scope", "style", "difficulty", "exam", "examType"];
+  const facetKeys = ["subject", "chapter", "concept", "year", "month", "sitting", "scope", "style", "difficulty", "exam", "examType", "qtype", "origin"];
   const facets = {};
   // When a facet is NOT one of the active filters, "the pool narrowed by every
   // other filter" is just the current hit set, so all such facets share one

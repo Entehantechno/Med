@@ -20,8 +20,8 @@ const EMPTY_FILTERS = {
   subject: "", section: "", type: "", difficulty: "", media: "", content: "",
   premium: "", active: "", used: "", category: "", from: "", to: "",
   // --- exam provenance (imported past-exam questions) ---
-  origin: "", examSubject: "", chapter: "", concept: "", year: "", month: "",
-  sitting: "", style: "", exam: "",
+  origin: "", examSubject: "", examType: "", chapter: "", concept: "", year: "", month: "",
+  sitting: "", scope: "", style: "", exam: "", qtype: "",
   // --- modification tracking ---
   changedFrom: "", changedTo: "", lastAction: "",
 };
@@ -111,12 +111,15 @@ export default function LearnCards({ jump, onJumpConsumed } = {}) {
       const f = c.facets || {};
       if (fil.origin && f.origin !== fil.origin) return false;
       if (fil.examSubject && f.subject !== fil.examSubject) return false;
+      if (fil.examType && f.examType !== fil.examType) return false;
       if (fil.chapter && f.chapter !== fil.chapter) return false;
       if (fil.concept && f.concept !== fil.concept) return false;
       if (fil.year && f.year !== fil.year) return false;
       if (fil.month && f.month !== fil.month) return false;
       if (fil.sitting && f.sitting !== fil.sitting) return false;
+      if (fil.scope && f.scope !== fil.scope) return false;
       if (fil.style && f.style !== fil.style) return false;
+      if (fil.qtype && f.qtype !== fil.qtype) return false;
       if (fil.exam && f.examLabel !== fil.exam) return false;
 
       // ---- modification window: uses content_updated_at, not any write ----
@@ -349,6 +352,21 @@ export default function LearnCards({ jump, onJumpConsumed } = {}) {
                   <select value={fil.examSubject} onChange={(e) => { setF("examSubject", e.target.value); setF("chapter", ""); setF("concept", ""); }}>
                     <option value="">{t("anyValue")}</option>
                     {(facets.subject || []).map((o) => <option key={o.value} value={o.value}>{o.label} ({o.count})</option>)}
+                  </select></label>
+                <label className="field"><span>{t("examTypeLabel")}</span>
+                  <select value={fil.examType} onChange={(e) => setF("examType", e.target.value)}>
+                    <option value="">{t("anyValue")}</option>
+                    {(facets.examType || []).map((o) => <option key={o.value} value={o.value}>{o.label} ({o.count})</option>)}
+                  </select></label>
+                <label className="field"><span>{t("scopeLabel")}</span>
+                  <select value={fil.scope} onChange={(e) => setF("scope", e.target.value)}>
+                    <option value="">{t("anyValue")}</option>
+                    {(facets.scope || []).map((o) => <option key={o.value} value={o.value}>{o.label} ({o.count})</option>)}
+                  </select></label>
+                <label className="field"><span>{t("questionTypeLabel")}</span>
+                  <select value={fil.qtype} onChange={(e) => setF("qtype", e.target.value)}>
+                    <option value="">{t("anyValue")}</option>
+                    {(facets.qtype || []).map((o) => <option key={o.value} value={o.value}>{({mcq:t("qtMcq"),truefalse:t("qtTruefalse"),fill:t("qtFill"),match:t("qtMatch"),order:t("qtOrder"),compare:"تمایز بالینی"}[o.value]||o.label)} ({o.count})</option>)}
                   </select></label>
                 <label className="field"><span>{t("chapterLabel")}</span>
                   <select value={fil.chapter} onChange={(e) => { setF("chapter", e.target.value); setF("concept", ""); }}>

@@ -2224,7 +2224,7 @@ r.get("/learn-cards", ...P("learn.content"), (req, res) => {
       // normalised search text (stem fa+en, options, chapter, category, editor)
       // for the server-side `?q=` — built once per cache generation.
       hay: normalizeText(`${d.q_fa || ""} ${d.q_en || ""} ${d.title_fa || ""} ${d.title_en || ""} #${c.id}`),
-      extra: normalizeText(`${(d.options || []).map((o) => `${o?.fa || ""} ${o?.en || ""}`).join(" ")} ${d.category || ""} ${d.source_meta?.chapter_fa || ""} ${d.source_meta?.chapter_en || ""} ${d.source_meta?.concept_fa || ""} ${d.explain?.text_fa || ""} ${d.explain?.text_en || ""} ${c.last_editor_name || ""}`),
+      extra: normalizeText(`${(d.options || []).map((o) => `${o?.fa || ""} ${o?.en || ""} ${o?.why || ""}`).join(" ")} ${d.category || ""} ${d.source_meta?.chapter_fa || ""} ${d.source_meta?.chapter_en || ""} ${d.source_meta?.concept_fa || ""} ${d.source_meta?.subject_fa || ""} ${d.source_meta?.label_fa || ""} ${d.source_meta?.exam_type || ""} ${(d.hints_fa||[]).join(" ")} ${d.micro?.lead_fa || ""} ${d.micro?.golden_fa || ""} ${(d.micro?.points_fa||[]).join(" ")} ${d.micro?.source_fa || ""} ${d.explain?.text_fa || ""} ${d.explain?.text_en || ""} ${d.mnemonic?.scene_fa || ""} ${(d.mnemonic?.hooks_fa||[]).join(" ")} ${c.last_editor_name || ""} ${d.type || ""}`),
       // NOTE: the full card body (`data`) is NOT sent in the list by default.
       // With 11 600 cards it made this response 87 MB (4.3 MB brotli) and froze
       // the admin tab for ~10 s on every open; the editor fetches ONE card
@@ -2257,7 +2257,7 @@ function respondLearnCards(req, res, built) {
     subject: asList(q.subject_fa), chapter: asList(q.chapter), concept: asList(q.concept),
     year: asList(q.year), month: asList(q.month), sitting: asList(q.sitting),
     scope: asList(q.scope), style: asList(q.style), origin: asList(q.origin),
-    difficulty: asList(q.difficulty), exam: asList(q.exam),
+    difficulty: asList(q.difficulty), exam: asList(q.exam), examType: asList(q.examType), qtype: asList(q.qtype),
     yearFrom: q.yearFrom, yearTo: q.yearTo,
     updatedFrom: q.updatedFrom, updatedTo: q.updatedTo,
     createdFrom: q.createdFrom, createdTo: q.createdTo,

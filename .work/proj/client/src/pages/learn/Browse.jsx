@@ -32,6 +32,8 @@ const FACETS = [
   { key: "exam", label: "examSittingLabel" },
   { key: "style", label: "styleLabel", localize: true },
   { key: "difficulty", label: "difficulty", localize: true },
+  { key: "qtype", label: "questionTypeLabel", localize: true },
+  { key: "origin", label: "originLabel", localize: true },
 ];
 const PRIMARY = ["subject", "examType", "chapter", "year"];   // open by default; the rest sit under "more"
 const EMPTY = Object.fromEntries(FACETS.map((f) => [f.key, []]));
@@ -86,6 +88,8 @@ export default function Browse() {
       style: { case: t("styleCase"), recall: t("styleRecall"), negative: t("styleNegative"), image: t("styleImage") },
       difficulty: { easy: t("easy"), medium: t("medium"), hard: t("hard") },
       examType: { "دستیاری": t("examTypeResidency"), "پره‌انترنی": t("examTypePreint") },
+      qtype: { mcq: t("qtMcq"), truefalse: t("qtTruefalse"), fill: t("qtFill"), match: t("qtMatch"), order: t("qtOrder"), compare: "تمایز بالینی", image: t("qtMcq") },
+      origin: { official_exam: t("originOfficial"), demo_seed: t("originDemo"), authored: t("originAuthored") },
     };
     return map[facet]?.[v] || v;
   };

@@ -98,6 +98,8 @@ export function cardFacets(d = {}, row = {}) {
   const origin = cardOrigin(d);
   const year = sm.year || "";
   const month = sm.month || "";
+  // question type is stored at top-level data_json.type (mcq/truefalse/fill/match/order/compare)
+  const qtype = d.type || sm.question_type || "";
   return {
     origin,
     official: origin === "official_exam",
@@ -128,6 +130,7 @@ export function cardFacets(d = {}, row = {}) {
     track: sm.subject_track || "",
     license: sm.license || "",
     tags: Array.isArray(sm.tags) ? sm.tags : [],
+    qtype,
 
     // --- authoring / freshness ---
     difficulty: row.difficulty || d.difficulty || "medium",
@@ -150,7 +153,7 @@ export function buildFacetIndex(cards, lang = "fa") {
     subject: new Map(), chapter: new Map(), concept: new Map(),
     year: new Map(), month: new Map(), sitting: new Map(), scope: new Map(),
     style: new Map(), origin: new Map(), difficulty: new Map(), exam: new Map(),
-    examType: new Map(),
+    examType: new Map(), qtype: new Map(),
   };
   const bump = (m, key, label, extra) => {
     if (!key) return;
@@ -175,6 +178,7 @@ export function buildFacetIndex(cards, lang = "fa") {
     bump(bag.difficulty, f.difficulty, f.difficulty);
     bump(bag.exam, f.examLabel, (en && f.examLabelEn) || f.examLabel, { sortKey: f.sittingKey || 0 });
     bump(bag.examType, f.examType, f.examType, { keyless: f.keyless === true });
+    bump(bag.qtype, f.qtype, f.qtype);
   }
   const out = {};
   for (const k of Object.keys(bag)) {
@@ -214,6 +218,7 @@ export function matchFacets(f, filt = {}) {
   if (!oneOf(f.difficulty, filt.difficulty)) return false;
   if (!oneOf(f.examLabel, filt.exam)) return false;
   if (!oneOf(f.examType, filt.examType)) return false;
+  if (!oneOf(f.qtype, filt.qtype)) return false;
 
   // exam-year range, inclusive; uses the absolute year so ۹۸ < ۱۴۰۰ compares right
   if (has(filt.yearFrom) && (f.yearNum ?? 0) < fullYear(filt.yearFrom)) return false;
