@@ -84,13 +84,20 @@ export default function LearnApp() {
   const [vpatientOn, setVpatientOn] = useState(false); // admin-enabled virtual patient (competitive)
 
   // navigate while remembering where we came from (capped to avoid unbounded growth)
-  const setTab = (next) => { setMoreOpen(false); if (next !== "browse" && /^#browse/.test(window.location.hash)) window.history.replaceState(null, "", window.location.pathname); setTabState((cur) => { if (next !== cur) setHistory((h) => [...h, cur].slice(-50)); return next; }); };
+  const setTab = (next) => {
+    setMoreOpen(false);
+    if (next !== "browse" && /^#browse/.test(window.location.hash)) window.history.replaceState(null, "", window.location.pathname);
+    setTabState((cur) => {
+      if (cur !== next) queueMicrotask(() => setHistory((h) => [...h, cur].slice(-50)));
+      return next;
+    });
+  };
   // jump straight to a specific topic on the learning path (e.g. from the
   // placement "start here" recommendation) — the path scrolls to + highlights it.
   const goToTopic = (slug) => { setPathFocus(slug || null); setTab("path"); };
   const goBack = () => setHistory((h) => {
-    if (h.length === 0) { setTabState("home"); return h; }
-    const prev = h[h.length - 1]; setTabState(prev); return h.slice(0, -1);
+    if (h.length === 0) { queueMicrotask(() => setTabState("home")); return h; }
+    const prev = h[h.length - 1]; queueMicrotask(() => setTabState(prev)); return h.slice(0, -1);
   });
 
   const loadProfile = useCallback(async () => {

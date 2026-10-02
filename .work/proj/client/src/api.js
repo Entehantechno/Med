@@ -37,7 +37,15 @@ async function req(method, path, body, opts = {}) {
     if (timer) clearTimeout(timer);
   }
   if (res.status === 304) return undefined;
-  if (res.status === 401) { setToken(null); }
+  if (res.status === 401) {
+    const hadToken = !!token;
+    setToken(null);
+    // Only toast for real sessions (not the initial /auth/me probe without a token)
+    if (hadToken && path !== "/auth/me" && path !== "/auth/login" && typeof window !== "undefined") {
+      try { window.dispatchEvent(new CustomEvent("medlab-toast", { detail: path === "/auth/me" ? "" : (document.documentElement.lang === "fa" ? "نشست شما منقضی شد — دوباره وارد شوید." : "Session expired — please sign in again.") })); } catch {}
+      try { window.dispatchEvent(new CustomEvent("medlab-auth-expired")); } catch {}
+    }
+  }
   const ct = res.headers.get("content-type") || "";
   let data;
   try {

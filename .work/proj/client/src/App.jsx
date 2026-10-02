@@ -60,17 +60,22 @@ function AppInner() {
   const [publicConfig, setPublicConfig] = useState(null);
 
   // Poll the public site config so maintenance mode reflects for everyone
-  // (admins are exempt and keep full access).
+  // (admins are exempt and keep full access). Pauses when tab is hidden to save battery.
   useEffect(() => {
     let alive = true;
-    const load = () => api.get("/site-content/config").then((c) => {
-      if (!alive) return;
-      setPublicConfig(c);
-      setMaintenance(c.maintenance || { on: false });
-    }).catch(() => {});
+    const load = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "hidden") return;
+      api.get("/site-content/config").then((c) => {
+        if (!alive) return;
+        setPublicConfig(c);
+        setMaintenance(c.maintenance || { on: false });
+      }).catch(() => {});
+    };
     load();
     const id = setInterval(load, 60000);
-    return () => { alive = false; clearInterval(id); };
+    const onVis = () => { if (document.visibilityState === "visible") load(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => { alive = false; clearInterval(id); document.removeEventListener("visibilitychange", onVis); };
   }, [user]);
 
   // Idle prefetch for the learner shell / student university routes when logged in
