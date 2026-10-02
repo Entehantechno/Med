@@ -96,7 +96,15 @@ function hasPdfMagic(filePath) {
 }
 const pdfUpload = multer({
   storage: multer.diskStorage({
-    destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+    destination: (req, file, cb) => {
+      // Reference PDFs are global (library + per-question citations). Store under
+      // platform/ so they bypass the tenant flat-file gate and are accessible
+      // to all students — covers are already global in /covers. Use platform
+      // for every role so library is not tenant-sharded.
+      const dir = path.join(UPLOAD_DIR, "platform");
+      try { fs.mkdirSync(dir, { recursive: true, mode: 0o700 }); } catch {}
+      cb(null, dir);
+    },
     filename: (req, file, cb) => {
       const ext = path.extname(file.originalname).toLowerCase();
       cb(null, "pdf_" + Date.now() + "_" + Math.round(Math.random() * 1e6) + ext);
@@ -224,7 +232,8 @@ r.post("/pdf", authRequired, requireRole("teacher", "admin"), (req, res) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file || !req.file.size) return rejectUploaded(req.file, res, "Empty upload");
     if (!hasPdfMagic(req.file.path)) return rejectUploaded(req.file, res, "Invalid PDF content");
-    res.json({ url: `/uploads/${req.file.filename}`, name: req.file.originalname });
+    // Stored under platform/ so library + micro-lesson are globally accessible (bypasses flat gate)
+    res.json({ url: `/uploads/platform/${req.file.filename}`, name: req.file.originalname });
   });
 });
 
@@ -256,7 +265,23 @@ function usageMap() {
     scanMedia(d.explain?.media, c.id);
     scanMedia(d.mnemonic?.media, c.id);
     bump(d.mnemonic?.image, c.id);
+    // Competitive references: each card can have two PDFs (FA+EN) stored in micro
+    scanMedia(d.micro?.reference?.pdf_url || d.micro?.reference?.pdfUrl, c.id);
+    scanMedia(d.micro?.reference_en?.pdf_url || d.micro?.reference_en?.pdfUrl, c.id);
+    scanMedia(d.micro?.reference_fa?.pdf_url || d.micro?.reference_fa?.pdfUrl, c.id);
+    if (Array.isArray(d.micro?.references)) for (const r of d.micro.references) scanMedia(r.pdf_url || r.pdfUrl, c.id);
+    if (Array.isArray(d.micro?.references)) for (const r of d.micro.references) scanMedia(r.url, c.id);
+    scanMedia(d.micro?.reference?.url, c.id);
+    scanMedia(d.micro?.reference_en?.url, c.id);
+    scanMedia(d.micro?.reference_fa?.url, c.id);
   }
+  // Reference catalog PDFs themselves count as in-use when active
+  try {
+    for (const r of db.prepare("SELECT id, pdf_url, cover_url FROM reference_catalog WHERE pdf_url<>'' OR cover_url<>''").all()) {
+      bump(r.pdf_url, `refcat:${r.id}`);
+      bump(r.cover_url, `refcat:${r.id}`);
+    }
+  } catch {}
   // Virtual patients: medical images, orderable-result images, and the
   // lung/heart auscultation recordings (an in-use sound must not be deletable).
   let caseRows = [];
@@ -278,31 +303,53 @@ const VID = new Set([".mp4", ".webm", ".mov", ".m4v", ".ogv"]);
 const AUD = new Set([".mp3", ".wav", ".m4a", ".ogg", ".opus", ".aac"]);
 
 // GET /api/upload/library — every uploaded file + kind, size, date, usage count
-// Tenant-aware: teachers see only their university namespace; admins see platform.
+// Tenant-aware: teachers see only their university namespace; admins see platform + legacy flat.
 r.get("/library", authRequired, requireRole("teacher", "admin"), (req, res) => {
-  let dir = UPLOAD_DIR;
-  let prefix = "/uploads/";
-  try {
-    const loc = mediaLocation(req.user);
-    dir = loc.directory;
-    prefix = loc.prefix;
-  } catch {
-    // fallback to flat
+  const isAdmin = req.user?.role === "admin";
+  let dirs = [];
+  let prefixMap = new Map();
+  if (isAdmin) {
+    // Admin sees both legacy flat (bundled demo + old uploads) and platform (new reference PDFs)
+    const flat = UPLOAD_DIR;
+    const platform = path.join(UPLOAD_DIR, "platform");
+    dirs = [flat, platform];
+    prefixMap.set(flat, "/uploads/");
+    prefixMap.set(platform, "/uploads/platform/");
+  } else {
+    let dir = UPLOAD_DIR;
+    let prefix = "/uploads/";
+    try {
+      const loc = mediaLocation(req.user);
+      dir = loc.directory;
+      prefix = loc.prefix;
+    } catch {
+      // fallback to flat
+    }
+    dirs = [dir];
+    prefixMap.set(dir, prefix);
   }
-  let files = [];
-  try { files = fs.readdirSync(dir); } catch { files = []; }
   const usage = usageMap();
-  const items = files.filter((f) => !f.startsWith(".")).map((f) => {
-    let st; try { st = fs.statSync(path.join(dir, f)); } catch { return null; }
-    if (!st.isFile()) return null;
-    const ext = path.extname(f).toLowerCase();
-    const kind = IMG.has(ext) ? "image" : AUD.has(ext) ? "audio" : VID.has(ext) ? "video" : "other";
-    return {
-      name: f, url: `${prefix}${f}`, kind, ext,
-      size: st.size, mtime: st.mtime.toISOString(),
-      usedBy: usage[f] ? usage[f].size : 0,
-    };
-  }).filter(Boolean).sort((a, b) => b.mtime.localeCompare(a.mtime));
+  const seen = new Set();
+  const items = [];
+  for (const dir of dirs) {
+    let files = [];
+    try { files = fs.readdirSync(dir); } catch { files = []; }
+    for (const f of files) {
+      if (f.startsWith(".")) continue;
+      if (seen.has(f)) continue; // de-dup by filename (platform shadows flat)
+      let st; try { st = fs.statSync(path.join(dir, f)); } catch { continue; }
+      if (!st.isFile()) continue;
+      const ext = path.extname(f).toLowerCase();
+      const kind = IMG.has(ext) ? "image" : AUD.has(ext) ? "audio" : VID.has(ext) ? "video" : (ext === ".pdf" ? "pdf" : "other");
+      seen.add(f);
+      items.push({
+        name: f, url: `${prefixMap.get(dir)}${f}`, kind, ext,
+        size: st.size, mtime: st.mtime.toISOString(),
+        usedBy: usage[f] ? usage[f].size : 0,
+      });
+    }
+  }
+  items.sort((a, b) => b.mtime.localeCompare(a.mtime));
   res.json({ items, total: items.length });
 });
 
@@ -310,14 +357,20 @@ r.get("/library", authRequired, requireRole("teacher", "admin"), (req, res) => {
 r.delete("/library/:name", authRequired, requireRole("admin"), (req, res) => {
   const name = path.basename(req.params.name || "");   // prevent path traversal
   if (!name || name.startsWith(".")) return res.status(400).json({ error: "bad name" });
-  const full = path.join(UPLOAD_DIR, name);
-  const root = UPLOAD_DIR.endsWith(path.sep) ? UPLOAD_DIR : UPLOAD_DIR + path.sep;
-  if (!(full === UPLOAD_DIR || full.startsWith(root)) || !fs.existsSync(full)) return res.status(404).json({ error: "not found" });
   const usage = usageMap();
   if (usage[name] && usage[name].size > 0) {
     return res.status(409).json({ error: "in use", usedBy: usage[name].size });
   }
-  try { fs.unlinkSync(full); } catch (e) { return res.status(500).json({ error: e.message }); }
+  // Admin library aggregates flat + platform — try both locations
+  const candidates = [path.join(UPLOAD_DIR, name), path.join(UPLOAD_DIR, "platform", name)];
+  let found = null;
+  for (const p of candidates) {
+    const root = UPLOAD_DIR.endsWith(path.sep) ? UPLOAD_DIR : UPLOAD_DIR + path.sep;
+    if (!(p === UPLOAD_DIR || p.startsWith(root))) continue;
+    if (fs.existsSync(p) && fs.statSync(p).isFile()) { found = p; break; }
+  }
+  if (!found) return res.status(404).json({ error: "not found" });
+  try { fs.unlinkSync(found); } catch (e) { return res.status(500).json({ error: e.message }); }
   res.json({ ok: true });
 });
 

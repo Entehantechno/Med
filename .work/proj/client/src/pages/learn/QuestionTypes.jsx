@@ -334,9 +334,12 @@ function refsForMicro(micro, lang) {
   if (micro.reference && !micro.reference_fa) pushRef(micro.reference, "fa");
   if (micro.reference_en || micro.referenceEn) pushRef(micro.reference_en || micro.referenceEn, "en");
   if (Array.isArray(micro.references)) micro.references.forEach((r,i)=> pushRef(r, i===0?"fa":"en"));
-  // de-dup by code
-  const seen=new Set(); const uniq=out.filter(x=>{ if(seen.has(x.code)) return false; seen.add(x.code); return true; });
-  if (uniq.length) return uniq;
+  // de-dup by composite key (same book+page+chapter+pdf would be duplicate; same book but different page/chapter is kept)
+  const seen=new Set(); const uniq=out.filter(x=>{
+    const key=`${x.code}::${x.page||""}::${x.chapter||""}::${x.pdfUrl||""}`;
+    if(seen.has(key)) return false; seen.add(key); return true;
+  });
+  if (uniq.length) return uniq.slice(0,2); // at most 2 (FA+EN) per spec
   // Fallback: generate from source text
   const src = lang === "fa" ? (micro.source_fa || micro.source || "") : (micro.source_en || micro.source || "");
   const isHarrison = /هاریسون|harrison/i.test(src || micro.source || "");

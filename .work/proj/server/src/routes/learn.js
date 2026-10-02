@@ -1063,10 +1063,10 @@ function browsePool() {
             json_extract(data_json, '$.source_meta') AS source_meta,
             (SELECT group_concat(COALESCE(json_extract(o.value,'$.fa'),'') || ' ' || COALESCE(json_extract(o.value,'$.en'),'') || ' ' || COALESCE(json_extract(o.value,'$.why'),''), ' ')
                FROM json_each(COALESCE(json_extract(data_json,'$.options'), '[]')) o) AS opts_text,
-            (SELECT group_concat(COALESCE(v,''),' ') FROM json_each(COALESCE(json_extract(data_json,'$.hints_fa'),'[]')) e, json_each(e.value) v) AS hints_text,
+            (SELECT group_concat(COALESCE(e.value,''),' ') FROM json_each(COALESCE(json_extract(data_json,'$.hints_fa'),'[]')) e) AS hints_text,
             json_extract(data_json, '$.micro.lead_fa') AS micro_lead,
             json_extract(data_json, '$.micro.golden_fa') AS micro_golden,
-            (SELECT group_concat(COALESCE(v,''),' ') FROM json_each(COALESCE(json_extract(data_json,'$.micro.points_fa'),'[]')) e, json_each(e.value) v) AS micro_points,
+            (SELECT group_concat(COALESCE(e.value,''),' ') FROM json_each(COALESCE(json_extract(data_json,'$.micro.points_fa'),'[]')) e) AS micro_points,
             json_extract(data_json, '$.micro.source_fa') AS micro_source,
             json_extract(data_json, '$.explain.text_fa') AS explain_text,
             json_extract(data_json, '$.mnemonic.scene_fa') AS mnemonic_scene

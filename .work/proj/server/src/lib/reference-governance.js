@@ -243,6 +243,14 @@ export function listUniversityPolicies(
     .all(Number(universityId));
   return rows.map((p) => publicPolicy(p));
 }
+function safeUrl(v, max=1000){
+  const s = text(v, max);
+  if(!s) return "";
+  // allow only relative path (/, /covers, /pdfs, /uploads) or http/https
+  if(s.startsWith("/") && !s.startsWith("//") && !s.includes("\\") && !s.includes("\0") && !/[\s<>"]/.test(s)) return s;
+  if(/^https?:\/\/[^\s<>"']+$/i.test(s)) return s;
+  return "";
+}
 export function normalizeReferenceInput(v = {}) {
   return {
     code: code(v.code, 100),
@@ -255,9 +263,9 @@ export function normalizeReferenceInput(v = {}) {
       ? Number(v.publication_year)
       : null,
     isbn: text(v.isbn, 64),
-    source_url: text(v.source_url, 1000),
-    cover_url: text(v.cover_url || v.coverUrl || "", 1000),
-    pdf_url: text(v.pdf_url || v.pdfUrl || "", 1000),
+    source_url: safeUrl(v.source_url, 1000),
+    cover_url: safeUrl(v.cover_url || v.coverUrl || "", 1000),
+    pdf_url: safeUrl(v.pdf_url || v.pdfUrl || "", 1000),
     rights_status: REFERENCE_RIGHTS.has(v.rights_status)
       ? v.rights_status
       : "metadata_only",

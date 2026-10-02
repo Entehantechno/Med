@@ -63,11 +63,13 @@ export default function CompetitiveReferences() {
 function RefModal({ data, onClose, onSave }){
   const { lang } = useApp();
   const fa = lang==="fa";
-  const [f,setF]=useState({
-    code:"", title_fa:"", title_en:"", short_title:"", publisher:"", edition:"", source_url:"", cover_url:"", pdf_url:"", rights_status:"metadata_only", active:1,
-    ...data,
-    cover_url: data.cover_url || (data.code ? `/covers/${data.code}.jpg` : ""),
-    pdf_url: data.pdf_url || "",
+  const [f,setF]=useState(()=>{
+    const base={ code:"", title_fa:"", title_en:"", short_title:"", publisher:"", edition:"", source_url:"", rights_status:"metadata_only", active:1, ...data };
+    return {
+      ...base,
+      cover_url: data.cover_url || base.cover_url || (data.code || base.code ? `/covers/${(data.code||base.code)}.jpg` : ""),
+      pdf_url: data.pdf_url || base.pdf_url || "",
+    };
   });
   const [pdfBusy,setPdfBusy]=useState(false);
   const set=(k,v)=>setF(s=>({...s,[k]:v}));
@@ -76,7 +78,9 @@ function RefModal({ data, onClose, onSave }){
     setPdfBusy(true);
     try{
       const fd=new FormData(); fd.append("pdf", file);
-      const r=await fetch("/api/upload/pdf",{method:"POST", body: fd, headers:{ Authorization:`Bearer ${localStorage.getItem("token")||""}`}});
+      // token key is medlab_token (see api.js getToken); use helper key for upload
+      const tok = (()=>{ try{ return localStorage.getItem("medlab_token")||"";}catch{return "";} })();
+      const r=await fetch("/api/upload/pdf",{method:"POST", body: fd, headers: tok ? { Authorization:`Bearer ${tok}` } : {}});
       const j=await r.json();
       if(!r.ok) throw new Error(j.error||"upload failed");
       set("pdf_url", j.url);
