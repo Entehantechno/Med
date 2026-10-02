@@ -4749,11 +4749,53 @@ function AdsManager() {
               <div className="small muted mt8">{t("adTargetHint")}</div>
             </div>
           )}
-          {/* Live preview of how the ad card will look */}
-          <div className="ad-preview mb8" style={{ background: edit.bg || "#2f7fd1" }}>
+          {/* ── Live PREVIEW: accurate learner motion preview (same shell as MotionAd) + legacy flat fallback ── */}
+          <div className="small muted mb8">👁 {lang === "fa" ? "پیش‌نمایش زنده (همان چیزی‌ست که کاربر می‌بیند)" : "Live preview — exactly what learners see"}</div>
+          {(() => {
+            const hexR = (hex, a) => { try { let h = String(hex||"").replace("#","").trim(); if(h.length===3) h=h.split("").map(c=>c+c).join(""); if(h.length!==6) return `rgba(47,127,209,${a})`; return `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${a})`; } catch { return `rgba(47,127,209,${a})`; } };
+            const drk = (hex, amt=.28) => { try { let h=String(hex||"").replace("#","").trim(); if(h.length===3) h=h.split("").map(c=>c+c).join(""); if(h.length!==6) return hex; const r=Math.round(parseInt(h.slice(0,2),16)*(1-amt)),g=Math.round(parseInt(h.slice(2,4),16)*(1-amt)),b=Math.round(parseInt(h.slice(4,6),16)*(1-amt)); return `#${r.toString(16).padStart(2,"0")}${g.toString(16).padStart(2,"0")}${b.toString(16).padStart(2,"0")}`; } catch { return hex; } };
+            const bg = edit.bg || "#2f7fd1";
+            const isCustom = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(bg);
+            const variantPreview = edit.slot === "lesson-intro" ? "intro" : edit.slot === "between-lessons" ? "between" : "path";
+            const tit = (lang==="fa"? edit.title_fa: edit.title_en) || (lang==="fa"?"عنوان موشن‌گرافی":"Motion title");
+            const bod = (lang==="fa"? edit.body_fa: edit.body_en) || (lang==="fa"?"متن تبلیغ اینجا — جذاب، کوتاه، متمرکز بر فایده.":"Ad body here — benefit-focused, short, punchy.");
+            const cta = (lang==="fa"? edit.cta_fa: edit.cta_en) || (lang==="fa"?"ادامه":"Continue");
+            const kicker = edit.sponsor ? `${lang==="fa"?"حمایت‌شده":"Sponsored"} · ${edit.sponsor}` : lang==="fa"?"پیش‌نمایش مسیر":"Path preview";
+            const fmtBadge = edit.format==="rewarded" ? (lang==="fa"?"🎁 جایزه‌دار":"🎁 Rewarded") : edit.format==="interstitial" ? (lang==="fa"?"قابل رد شدن":"Skippable") : edit.format==="sponsored" ? (lang==="fa"?"اسپانسری":"Sponsored") : edit.format==="prelesson" ? (lang==="fa"?"اسپانسر پیش‌درس":"Pre-lesson") : null;
+            const gold = variantPreview==="between" || (isCustom && /f|e.*b|c.*8/i.test(bg.toLowerCase()));
+            return (
+              <div className={`motion-ad${!isCustom && variantPreview==="between" ? " motion-ad--gold" : !isCustom && variantPreview==="intro" ? " motion-ad--teal" : ""}${variantPreview==="intro"?" motion-ad--intro":" motion-ad--compact"}`} dir={lang==="fa"?"rtl":"ltr"} style={{ marginBottom: 12 }}>
+                {fmtBadge && <span className="motion-ad__format-badge">{fmtBadge}{edit.format==="rewarded" && edit.reward_gems ? ` · +${edit.reward_gems} 💎` : ""}</span>}
+                <span className="motion-ad__tag">{lang==="fa"?"تبلیغ":"Ad"}</span>
+                <div className="motion-ad__bg" aria-hidden="true" style={isCustom ? { background: `radial-gradient(680px 420px at 16% 14%, ${hexR(bg,0.24)}, transparent 60%), radial-gradient(600px 360px at 90% 86%, ${hexR(bg,0.14)}, transparent 64%), linear-gradient(135deg, ${bg} 0%, ${hexR(bg,0.9)} 30%, ${drk(bg,0.22)} 58%, ${drk(bg,0.45)} 100%)`, backgroundSize:"auto,auto,200% 200%" } : undefined} />
+                <div className="motion-ad__grid" aria-hidden="true" />
+                <div className="motion-ad__grain" aria-hidden="true" />
+                <div className="motion-ad__orb motion-ad__orb--1" aria-hidden="true" style={isCustom ? { background:`radial-gradient(circle at 30% 30%, ${hexR(bg,0.42)}, transparent 72%)`} : undefined} />
+                <div className="motion-ad__orb motion-ad__orb--2" aria-hidden="true" />
+                <div className="motion-ad__shine" aria-hidden="true" />
+                <div className="motion-ad__inner">
+                  <div className="motion-ad__media" aria-hidden="true">{edit.image ? <img src={edit.image} alt="" style={{ width:"100%",height:"100%",objectFit:"cover"}} /> : <span>✦</span>}</div>
+                  <div className="motion-ad__text">
+                    <span className="motion-ad__kicker">{kicker}</span>
+                    <h4 className="motion-ad__title motion-ad__title--grad">{tit}</h4>
+                    <p className="motion-ad__body">{bod}</p>
+                    <div className="motion-ad__bullets">
+                      <span className="motion-ad__pill">⏱ {lang==="fa"?"موشن ۱۰ ثانیه":"10s motion"}</span>
+                      <span className="motion-ad__pill">✨ {bg}</span>
+                      {edit.sponsor && <span className="motion-ad__pill">{edit.sponsor}</span>}
+                    </div>
+                    <span className={`motion-ad__cta${gold?" motion-ad__cta--gold":""}`} style={{ display:"inline-flex", marginTop:12 }}>{cta} <span aria-hidden="true">→</span></span>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+          {/* legacy flat preview kept as secondary for quick color check */}
+          <div className="ad-preview mb8" style={{ background: edit.bg || "#2f7fd1", opacity:.88 }}>
             <div className="ad-preview-title">{(lang === "fa" ? edit.title_fa : edit.title_en) || (lang === "fa" ? "عنوان تبلیغ" : "Ad title")}</div>
             <div className="ad-preview-body">{(lang === "fa" ? edit.body_fa : edit.body_en) || "…"}</div>
             {(edit.cta_fa || edit.cta_en) && <span className="ad-preview-cta">{lang === "fa" ? edit.cta_fa : edit.cta_en}</span>}
+            <div className="small muted mt8" style={{ color:"rgba(255,255,255,.82)" }}>{lang==="fa" ? "↑ پیش‌نمایش فلت قدیمی — پیش‌نمایش موشن بالا دقیق‌تر است" : "↑ flat fallback — motion preview above is accurate"}</div>
           </div>
           <div className="grid grid-2">
             <div className="field"><label>عنوان (فا)</label><input value={edit.title_fa} onChange={(e) => setEdit({ ...edit, title_fa: e.target.value })} /></div>

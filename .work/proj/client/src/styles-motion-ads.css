@@ -30,7 +30,9 @@
     inset 0 1px 0 rgba(255,255,255,.22);
   background: #0f1e3a;
   min-height: 0;
+  animation: motionEntrance .55s var(--motion-ease-out) both;
 }
+@keyframes motionEntrance { from{opacity:0; transform:translateY(10px) scale(.98)} to{opacity:1; transform:none} }
 .motion-ad::selection { background: rgba(255,255,255,.22); }
 
 /* animated gradient bg — shifted via background-position */
@@ -220,6 +222,16 @@
   backdrop-filter: blur(8px);
   padding: 2px 8px; border-radius: 999px;
 }
+.motion-ad__format-badge {
+  position: absolute; top: 10px; inset-inline-start: 12px; z-index: 5;
+  font-size: .62rem; font-weight: 800; letter-spacing: .04em;
+  color: #1e293b;
+  background: rgba(255,255,255,.92); border: 1px solid rgba(255,255,255,.9);
+  padding: 2px 8px; border-radius: 999px;
+  box-shadow: 0 6px 14px -8px rgba(0,0,0,.25);
+}
+.motion-ad__format-badge--reward { background: linear-gradient(180deg,#fff7cc,#ffe27a); color:#3f2506; border-color:#ffe9a8; }
+.motion-ad__pill--reward { background: linear-gradient(180deg,#fff7cc,#ffe27a) !important; color:#3f2506 !important; border-color:#ffe9a8 !important; }
 
 /* ========== VARIANTS SIZING ========== */
 .motion-ad--compact .motion-ad__inner { padding: 14px 14px; }
@@ -254,6 +266,7 @@
     inset 0 1px 0 rgba(255,255,255,.35);
   isolation: isolate;
   background: #1a1206;
+  animation: motionEntrance .55s var(--motion-ease-out) both;
 }
 .premium-banner__bg {
   position: absolute; inset: -36%;
@@ -442,7 +455,7 @@
   .motion-ad__orb, .premium-banner__orb,
   .motion-ad__shine::after, .premium-banner__shine::after,
   .motion-ad__ecg path, .motion-ad__progress > span,
-  .motion-ad__float-badge, .premium-banner__icon {
+  .motion-ad__float-badge, .premium-banner__icon, .motion-ad {
     animation: none !important;
   }
   .motion-ad__shine, .premium-banner__shine { display:none; }

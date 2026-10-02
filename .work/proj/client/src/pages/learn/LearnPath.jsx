@@ -80,6 +80,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
   const fa = lang === "fa";
   const [topics, setTopics] = useState(null);
   const [ads, setAds] = useState([]);
+  const [sideAds, setSideAds] = useState([]);
   const [isPremium, setIsPremium] = useState(false);
   const [celebrate, setCelebrate] = useState(false);   // fire confetti once per newly-completed unit
   const [mascots, setMascots] = useState(currentMascots());  // admin-editable character config
@@ -142,6 +143,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
       } catch { /* celebration is best-effort */ }
     }).catch(() => setTopics([]));
     api.get(`/learn/ads?slot=path&lang=${lang}`).then((d) => setAds(d.ads || [])).catch(() => {});
+    api.get(`/learn/ads?slot=sidebar&lang=${lang}`).then((d) => setSideAds(d.ads || [])).catch(() => {});
   }, [lang, reloadKey]);
 
   // auto-clear the celebration flag after the shower finishes
@@ -259,6 +261,12 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
           </div>
         )}
       </div>
+      {/* Sidebar-slot motion ad — visible inline on path (hidden for premium); this guarantees the admin's \"sidebar\" slot is never wasted */}
+      {!isPremium && sideAds.length > 0 && (
+        <div className="mb16 motion-sidebar-strip" aria-label={fa ? "تبلیغ کناری" : "Sidebar promotion"}>
+          <MotionAd ad={sideAds[0]} variant="path" />
+        </div>
+      )}
 
       {topics.map((topic, ti) => {
         const parentHead = topic.parent !== lastParent ? topic.parent : null;

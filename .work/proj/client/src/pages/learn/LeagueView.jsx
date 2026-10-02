@@ -6,16 +6,19 @@ import Avatar from "../../components/Avatar.jsx";
 import { TierBadge } from "./TierBadge.jsx";
 import Podium from "./Podium.jsx";
 import { PremiumMini } from "./PremiumBanner.jsx";
+import { MotionAd } from "./MotionAd.jsx";
 
 export default function LeagueView() {
   const { t, lang } = useApp();
   const [data, setData] = useState(null);
   const [isPremium, setIsPremium] = useState(false);
+  const [ad, setAd] = useState(null);
   const [tour, setTour] = useState(null);
   useEffect(() => {
     api.get(`/learn/league?lang=${lang}`).then(setData).catch(() => setData({ members: [] }));
     api.get(`/learn/tournament?lang=${lang}`).then(setTour).catch(() => setTour(null));
     api.get("/learn/profile").then((d) => setIsPremium(!!(d.profile?.premium_effective ?? d.profile?.premium))).catch(() => {});
+    api.get(`/learn/ads?slot=leaderboard&lang=${lang}`).then((d) => setAd(d.ads?.[0] || null)).catch(() => {});
   }, [lang]);
   if (!data) return <div className="card"><div className="skeleton" style={{ height: 200 }} /></div>;
 
@@ -103,8 +106,10 @@ export default function LeagueView() {
         <span><span style={{ display: "inline-block", width: 12, height: 12, background: "var(--green)", borderRadius: 3, verticalAlign: "middle" }} /> {t("promoteZone")}</span>
         <span><span style={{ display: "inline-block", width: 12, height: 12, background: "var(--danger)", borderRadius: 3, verticalAlign: "middle" }} /> {t("relegateZone")}</span>
       </div>
-      {/* premium banner in leaderboard slot — elegant gold upsell (hidden for premium) */}
-      {!isPremium && <div className="mt16"><PremiumMini /></div>}
+      {/* leaderboard slot: motion ad when admin created one, otherwise premium upsell (hidden for premium) */}
+      {!isPremium && (
+        <div className="mt16">{ad ? <MotionAd ad={ad} variant="path" /> : <PremiumMini />}</div>
+      )}
     </div>
   );
 }

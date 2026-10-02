@@ -21,11 +21,13 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
   const [placement, setPlacement] = useState(null);   // entry placement-test status
   const [recoHidden, setRecoHidden] = useState(false); // learner hid the "start here" tip
   const [showWelcome, setShowWelcome] = useState(false);
+  const [sideAds, setSideAds] = useState([]);
 
   const reload = () => {
     api.get(`/learn/home?lang=${lang}`).then((d) => { setData(d); onProfile?.(d.profile); onHomeStats?.(d); }).catch(() => setData({}));
     api.get(`/learn/streak?lang=${lang}`).then((d) => setStreak(d.status)).catch(() => {});
     api.get(`/learn/placement?lang=${lang}`).then(setPlacement).catch(() => setPlacement(null));
+    api.get(`/learn/ads?slot=sidebar&lang=${lang}`).then((d) => setSideAds(d.ads || [])).catch(() => setSideAds([]));
   };
   useEffect(() => { reload(); }, [lang]);
 
@@ -210,7 +212,7 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
           onReward={(prof) => { if (prof) { onProfile?.(prof); setData((d) => d ? { ...d, profile: prof } : d); } }} />
       )}
 
-      {/* premium hero — beautiful motion upsell for non-premium */}
+      {/* premium hero — beautiful motion upsell for non-premium (home slot motion when available) */}
       {!(p.premium_effective ?? p.premium) && (
         <div className="mb16">
           {data?.ads?.length > 0 ? (
@@ -220,8 +222,12 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
           )}
         </div>
       )}
-      {/* secondary ad slot: curated motion when admin ad was used as hero */}
-      {!(p.premium_effective ?? p.premium) && data?.ads?.length > 0 && (
+      {/* sidebar-slot secondary motion (ensures sidebar ads are visible on home) */}
+      {!(p.premium_effective ?? p.premium) && sideAds.length > 0 && (
+        <div className="mb16"><MotionAd ad={sideAds[0]} variant="path" /></div>
+      )}
+      {/* curated premium inline when an admin ad was used as hero — no double motion */}
+      {!(p.premium_effective ?? p.premium) && data?.ads?.length > 0 && !sideAds.length && (
         <div className="mb16"><PremiumInline /></div>
       )}
 

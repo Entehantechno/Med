@@ -1,4 +1,6 @@
 import { useApp } from "../../context.jsx";
+import { useEffect, useState } from "react";
+import { api } from "../../api.js";
 
 /* ──────────────────────────────────────────────────────────────
    PREMIUM BANNERS — bilingual high-end motion upsell
@@ -9,12 +11,43 @@ import { useApp } from "../../context.jsx";
      mini    — slim leaderboard/home strip
    Palette: warm gold/amber, crown, glass, shine sweep, orbs.
    Fonts: Estedad 900 for title · Vazirmatn for body.
+   Pricing: live from getPlans() (/pay/plans or admin pricing) — so the
+   banner never drifts from checkout. Falls back to defaults.
    ────────────────────────────────────────────────────────────── */
 
 function useLang() {
   const { lang } = useApp();
   return lang === "fa" ? "fa" : "en";
 }
+
+function usePlansToman() {
+  const [plans, setPlans] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    // learner-visible pricing source: /api/pay/plans (authed) with fallback to /api/admin/pricing attempt
+    api.get("/pay/plans").then((d) => {
+      if (!alive) return;
+      if (d?.monthly || d?.plans?.monthly) setPlans(d.plans || d);
+    }).catch(() => {
+      api.get("/admin/pricing").then((d) => { if (alive && (d.monthly || d.yearly)) setPlans(d); }).catch(() => {});
+    });
+    return () => { alive = false; };
+  }, []);
+  return plans;
+}
+function fmtToman(rial) {
+  try { return Math.round(Number(rial) / 10).toLocaleString("fa-IR"); }
+  catch { return String(Math.round(Number(rial) / 10)); }
+}
+function fmtUSD(rial) {
+  // rough display helper for en: show as $ when rial is tiny is not meaningful;
+  // we show monthly $ equiv = rial / 10 / 420000 (~USD via free rate) capped.
+  // Simpler: show toman even in en with $ prefix if needed? We show toman.
+  return Math.round(Number(rial) / 10).toLocaleString("en-US");
+}
+
+const FALLBACK_MONTHLY_RIAL = 990000; // 99k toman
+const FALLBACK_YEARLY_RIAL  = 7900000; // 790k toman
 
 const COPY = {
   fa: {
@@ -25,8 +58,6 @@ const COPY = {
       pills: ["♾️ قلب نامحدود", "🚫 بدون تبلیغ", "📚 ۱۱٬۶۰۰ سؤال", "🧠 FSRS"],
       cta: "فعال‌سازی پلاس",
       ghost: "مشاهدهٔ پلن‌ها",
-      price: "از ۲۹٬۰۰۰ تومان / ماه",
-      off: "تا ۴۰٪ تخفیف",
     },
     inline: {
       kicker: "👑 پلاس",
@@ -61,8 +92,6 @@ const COPY = {
       pills: ["♾️ Unlimited hearts", "🚫 No ads", "📚 11.6k Qs", "🧠 FSRS"],
       cta: "Unlock Plus",
       ghost: "View plans",
-      price: "From $3.9 / month",
-      off: "Up to 40% off",
     },
     inline: {
       kicker: "👑 Plus",
@@ -99,10 +128,29 @@ export function PremiumBanner({ variant = "inline", onGhost, priceNote, offNote 
   const lang = useLang();
   const fa = lang === "fa";
   const c = (COPY[lang][variant] || COPY[lang].inline);
+  const plans = usePlansToman();
+  const monthlyRial = plans?.monthly ?? plans?.monthlyRial ?? plans?.monthly_amount ?? FALLBACK_MONTHLY_RIAL;
+  const yearlyRial  = plans?.yearly  ?? plans?.yearlyRial  ?? plans?.yearly_amount  ?? FALLBACK_YEARLY_RIAL;
+  const tomanFa = fmtToman(monthlyRial);
+  const tomanEn = fmtUSD(monthlyRial);
+  const yearlyFa = fmtToman(yearlyRial);
+  const yearlyEn = fmtUSD(yearlyRial);
+  const savePct = yearlyRial && monthlyRial ? Math.max(0, Math.round((1 - (yearlyRial / 12) / monthlyRial) * 100)) : 0;
+
+  const livePriceFa = `از ${tomanFa} تومان / ماه`;
+  const liveOffFa   = yearlyRial ? `سالانه ${yearlyFa} — تا ${savePct || 40}٪ صرفه‌جویی` : "تا ۴۰٪ تخفیف";
+  const livePriceEn = `From ${tomanEn} Toman / mo`;
+  const liveOffEn   = yearlyRial ? `Yearly ${yearlyEn} — save ${savePct || 40}%` : "Up to 40% off";
+
+  const livePrice = fa ? livePriceFa : livePriceEn;
+  const liveOff   = fa ? liveOffFa   : liveOffEn;
+
   const sizeCls =
     variant === "hero" ? " premium-banner--hero" :
     variant === "mini" ? " premium-banner--compact" :
     variant === "inline" ? " premium-banner--compact" : "";
+
+  const showPrice = variant === "hero";
 
   return (
     <div className={`premium-banner${sizeCls}`} role="group" aria-label={c.title.replace(/<[^>]*>/g, "")} dir={fa ? "rtl" : "ltr"}>
@@ -127,10 +175,10 @@ export function PremiumBanner({ variant = "inline", onGhost, priceNote, offNote 
             </div>
           )}
 
-          {(priceNote !== false && (priceNote || c.price)) && (
+          {showPrice && priceNote !== false && (
             <div className="premium-banner__price">
-              <b>{priceNote || c.price}</b>
-              {offNote !== false && <small>{offNote || c.off}</small>}
+              <b>{priceNote || livePrice}</b>
+              {offNote !== false && <small>{offNote || liveOff}</small>}
             </div>
           )}
         </div>

@@ -42,6 +42,12 @@ export function getPlans() {
   return out;
 }
 
+/* Public pricing for banners/upsells (auth required is enough; no role needed). */
+r.get(\"/plans\", authRequired, (req, res) => {
+  const plans = getPlans();
+  res.json({ plans: { monthly: plans.monthly.amount, yearly: plans.yearly.amount, monthlyDays: plans.monthly.days, yearlyDays: plans.yearly.days }, monthly: plans.monthly.amount, yearly: plans.yearly.amount });
+});
+
 /* Start checkout: create a pending transaction and return the gateway URL. */
 r.post("/subscribe", authRequired, requireRole("learner"), async (req, res) => {
   if (!isEnabled("premium")) return res.status(403).json({ error: "feature disabled", flag: "premium" });

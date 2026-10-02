@@ -3,11 +3,12 @@ import { api } from "../../api.js";
 
 /* ──────────────────────────────────────────────────────────
    MOTION AD — bilingual high-end motion-graphic ad card
-   Used in learning-path slots: path, lesson-intro, between-lessons
+   Used in learning-path slots: path, lesson-intro, between-lessons, home, sidebar …
    Variants: path (inline) · intro (hero) · between (celebrate)
    Each variant has its own palette, typography and micro-motion.
    Click records via /learn/ads/:id/click but visuals are always
    premium — even for the built-in curated promos (no admin ad).
+   Zero external deps, GPU-accelerated, reduced-motion safe.
    ────────────────────────────────────────────────────────── */
 
 function useLang() {
@@ -72,10 +73,33 @@ const CURATED = {
 
 // curated variant palette mapping
 const VARIANT_CFG = {
-  path:    { theme: "",      size: "compact" }, // compact inline
-  intro:   { theme: "teal",  size: "intro" },   // immersive hero intro
-  between: { theme: "gold",  size: "" },        // warm celebrate
+  path:    { theme: "",      size: "compact", grad: null }, // compact inline — uses default navy
+  intro:   { theme: "teal",  size: "intro",  grad: null },   // immersive hero intro
+  between: { theme: "gold",  size: "",       grad: null },        // warm celebrate
 };
+
+function hexToRgba(hex, a = 1) {
+  try {
+    let h = String(hex || "").replace("#", "").trim();
+    if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+    if (h.length !== 6) return `rgba(47,127,209,${a})`;
+    const r = parseInt(h.slice(0, 2), 16);
+    const g = parseInt(h.slice(2, 4), 16);
+    const b = parseInt(h.slice(4, 6), 16);
+    return `rgba(${r},${g},${b},${a})`;
+  } catch { return `rgba(47,127,209,${a})`; }
+}
+function darkenHex(hex, amt = 0.32) {
+  try {
+    let h = String(hex || "").replace("#", "").trim();
+    if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+    if (h.length !== 6) return hex;
+    const r = Math.max(0, Math.min(255, Math.round(parseInt(h.slice(0, 2), 16) * (1 - amt))));
+    const g = Math.max(0, Math.min(255, Math.round(parseInt(h.slice(2, 4), 16) * (1 - amt))));
+    const b = Math.max(0, Math.min(255, Math.round(parseInt(h.slice(4, 6), 16) * (1 - amt))));
+    return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
+  } catch { return hex; }
+}
 
 export function MotionAd({ ad, variant = "path", onCta }) {
   const lang = useLang();
@@ -88,7 +112,20 @@ export function MotionAd({ ad, variant = "path", onCta }) {
   const title = ad?.title || curated.title;
   const body = ad?.body || curated.body;
   const ctaLabel = ad?.cta || curated.cta;
-  const kicker = ad?.sponsor ? `${fa ? "حمایت‌شده" : "Sponsored"} · ${ad.sponsor}` : curated.kicker;
+  const sponsorName = ad?.sponsor || "";
+  const format = ad?.format || "banner";
+  const rewardGems = ad?.reward_gems || 0;
+  const skippable = ad?.skippable_after ?? 5;
+  const duration = ad?.duration_s ?? 15;
+  const kicker = sponsorName
+    ? `${fa ? "حمایت‌شده" : "Sponsored"} · ${sponsorName}`
+    : curated.kicker;
+  // format-aware kicker augmentation
+  const formatBadge =
+    format === "rewarded" ? (fa ? "🎁 جایزه‌دار" : "🎁 Rewarded") :
+    format === "interstitial" ? (fa ? "قابل رد │" : "Skippable") :
+    format === "sponsored" ? (fa ? "اسپانسری" : "Sponsored") :
+    format === "prelesson" ? (fa ? "اسپانسر پیش‌درس" : "Pre-lesson") : null;
   const pills = ad?.pills || curated.pills;
   const mediaIcon = ad?.image ? null : curated.media; // image overrides icon
   const href = ad?.url || null;
@@ -98,22 +135,54 @@ export function MotionAd({ ad, variant = "path", onCta }) {
     if (onCta) onCta();
   };
 
-  const themeCls = cfg.theme ? ` motion-ad--${cfg.theme}` : "";
+  // ── admin bg respect ──
+  // When the admin picked a bg color we tint the whole motion gradient to that hue
+  // (so their choice is immediately visible to learners). Otherwise we keep the
+  // per-variant curated palette. We build a subtle 3-layer gradient from ad.bg.
+  const customBg = ad?.bg && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(ad.bg.trim()) ? ad.bg.trim() : null;
+  const bgStyle = customBg
+    ? {
+        background: [
+          `radial-gradient(720px 460px at 16% 14%, ${hexToRgba(customBg, 0.26)}, transparent 60%)`,
+          `radial-gradient(620px 380px at 92% 86%, ${hexToRgba(customBg, 0.16)}, transparent 64%)`,
+          `radial-gradient(520px 300px at 50% -6%, ${hexToRgba("#ffffff", 0.08)}, transparent 66%)`,
+          `linear-gradient(135deg, ${customBg} 0%, ${hexToRgba(customBg, 0.92)} 28%, ${darkenHex(customBg, 0.22)} 58%, ${darkenHex(customBg, 0.45)} 100%)`,
+        ].join(","),
+        backgroundSize: "auto,auto,auto,200% 200%",
+      }
+    : undefined;
+  // orb tints also follow custom bg
+  const orb1Style = customBg ? { background: `radial-gradient(circle at 30% 30%, ${hexToRgba(customBg, 0.42)}, transparent 72%)` } : undefined;
+  const orb2Style = customBg ? { background: `radial-gradient(circle at 40% 40%, ${hexToRgba(darkenHex(customBg, 0.12), 0.32)}, transparent 72%)` } : undefined;
+
+  // CTA gold when variant is gold OR custom bg is amber/gold-ish; otherwise dark/white
+  const ctaGold = cfg.theme === "gold" || (customBg && /^#f|#e.*b|#c.*8/i.test(customBg.toLowerCase()));
+
+  const themeCls = customBg ? "" : cfg.theme ? ` motion-ad--${cfg.theme}` : "";
   const sizeCls = cfg.size ? ` motion-ad--${cfg.size}` : "";
 
   return (
     <div className={`motion-ad${themeCls}${sizeCls}`} role="group" aria-label={title} dir={fa ? "rtl" : "ltr"}>
+      {formatBadge && variant !== "intro" && (
+        <span className="motion-ad__format-badge" aria-hidden="true">{formatBadge}{format === "rewarded" && rewardGems ? ` · +${rewardGems} 💎` : ""}{format === "interstitial" ? ` ${skippable}s` : ""}</span>
+      )}
+      {(format === "rewarded" || format === "prelesson") && variant === "intro" && rewardGems > 0 && (
+        <span className="motion-ad__format-badge motion-ad__format-badge--reward" aria-hidden="true">🎁 +{rewardGems} {fa ? "جم جایزه" : "gems"}{duration ? ` · ${duration}s` : ""}</span>
+      )}
+      {format === "interstitial" && variant === "intro" && (
+        <span className="motion-ad__format-badge" aria-hidden="true">{fa ? `قابل رد شدن بعد ${skippable} ثانیه` : `Skippable after ${skippable}s`}</span>
+      )}
       <span className="motion-ad__tag">{fa ? "تبلیغ" : "Ad"}</span>
-      <div className="motion-ad__bg" aria-hidden="true" />
+      <div className="motion-ad__bg" aria-hidden="true" style={bgStyle} />
       <div className="motion-ad__grid" aria-hidden="true" />
       <div className="motion-ad__grain" aria-hidden="true" />
-      <div className="motion-ad__orb motion-ad__orb--1" aria-hidden="true" />
-      <div className="motion-ad__orb motion-ad__orb--2" aria-hidden="true" />
+      <div className="motion-ad__orb motion-ad__orb--1" aria-hidden="true" style={orb1Style} />
+      <div className="motion-ad__orb motion-ad__orb--2" aria-hidden="true" style={orb2Style} />
       <div className="motion-ad__orb motion-ad__orb--3" aria-hidden="true" />
       <div className="motion-ad__shine" aria-hidden="true" />
 
       {/* subtle floating contextual badges for premium feel */}
-      {variant === "path" && (
+      {variant === "path" && !customBg && (
         <div className="motion-ad__float-badges" aria-hidden="true">
           <span className="motion-ad__float-badge motion-ad__float-badge--a">✦ FSRS</span>
         </div>
@@ -131,7 +200,7 @@ export function MotionAd({ ad, variant = "path", onCta }) {
 
         {/* copy */}
         <div className="motion-ad__text">
-          <span className="motion-ad__kicker">{kicker}</span>
+          <span className="motion-ad__kicker">{kicker}{formatBadge && variant === "intro" ? ` · ${formatBadge}` : ""}</span>
           <h4 className="motion-ad__title motion-ad__title--grad">{title}</h4>
           <p className="motion-ad__body">{body}</p>
 
@@ -151,14 +220,17 @@ export function MotionAd({ ad, variant = "path", onCta }) {
             {pills.map((p, i) => (
               <span key={i} className="motion-ad__pill">{p}</span>
             ))}
+            {format === "rewarded" && rewardGems > 0 && (
+              <span className="motion-ad__pill motion-ad__pill--reward">💎 {fa ? `${rewardGems} جم` : `${rewardGems} gems`}</span>
+            )}
           </div>
 
           {href ? (
-            <a className={`motion-ad__cta${cfg.theme === "gold" ? " motion-ad__cta--gold" : ""}`} href={href} target="_blank" rel="noreferrer" onClick={onClick}>
+            <a className={`motion-ad__cta${ctaGold ? " motion-ad__cta--gold" : ""}`} href={href} target="_blank" rel="noreferrer" onClick={onClick}>
               {ctaLabel} <span aria-hidden="true">↗</span>
             </a>
           ) : (
-            <button type="button" className={`motion-ad__cta${cfg.theme === "gold" ? " motion-ad__cta--gold" : ""}`} onClick={onClick}>
+            <button type="button" className={`motion-ad__cta${ctaGold ? " motion-ad__cta--gold" : ""}`} onClick={onClick}>
               {ctaLabel} <span aria-hidden="true">→</span>
             </button>
           )}
