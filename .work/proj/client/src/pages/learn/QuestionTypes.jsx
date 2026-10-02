@@ -7,6 +7,7 @@ import MediaEmbed from "../../components/MediaEmbed.jsx";
 import Emphasis from "../../components/Emphasis.jsx";
 import GlossaryText from "../../components/GlossaryText.jsx";
 import { normFa } from "../../components/SearchBox.jsx";
+import { api } from "../../api.js";
 
 /* Each question type exposes: render UI + report whether the current answer is correct
    via onReady(canCheck) and, on check, the parent reads `getCorrect()`.
@@ -17,6 +18,33 @@ function shuffle(arr) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
   return a;
+}
+
+/* Anki-style bury/suspend (FSRS) — tiny inline controls for the review queue. */
+function BurySuspendRow({ cardId, onDone }) {
+  const { lang } = useApp();
+  const fa = lang === "fa";
+  const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState(null);
+  const act = async (kind) => {
+    if (busy) return;
+    setBusy(kind);
+    try {
+      if (kind === "bury") await api.post("/learn/review/bury", { cardId });
+      else if (kind === "suspend") await api.post("/learn/review/suspend", { cardId });
+      setMsg(kind === "bury" ? (fa ? "تا فردا مخفی شد" : "Buried until tomorrow") : (fa ? "تعلیق شد" : "Suspended"));
+      onDone?.(kind);
+    } catch (e) {
+      setMsg(e.message || "خطا");
+    } finally { setBusy(null); setTimeout(() => setMsg(""), 2500); }
+  };
+  return (
+    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
+      <button type="button" className="btn btn-ghost btn-sm" disabled={!!busy} onClick={() => act("bury")} title={fa ? "این کارت را تا فردا مخفی کن (bury)" : "Bury until tomorrow"}>⏸ {fa ? "مخفی تا فردا" : "Bury"}</button>
+      <button type="button" className="btn btn-ghost btn-sm" disabled={!!busy} onClick={() => act("suspend")} title={fa ? "تعلیق کامل — تا وقتی خودت برگردانی نمایش داده نمی‌شود" : "Suspend indefinitely"}>🚫 {fa ? "تعلیق" : "Suspend"}</button>
+      {msg && <span className="small muted">{msg}</span>}
+    </div>
+  );
 }
 
 /* MCQ */
@@ -311,144 +339,58 @@ export const TYPE_MAP = new Proxy(TYPE_VIEWS, {
   },
 });
 
-/* QB-style micro lesson ("درسنامه") shown after answering. — each question has TWO references (FA + EN) */
-function refsForMicro(micro, lang) {
-  if (!micro) return [];
-  const out = [];
-  const pushRef = (r, fallbackLang) => {
-    if (!r || !(r.book_fa || r.book_en || r.code)) return;
-    out.push({
-      book: lang === "fa" ? (r.book_fa || r.book_en) : (r.book_en || r.book_fa),
-      chapter: lang === "fa" ? (r.chapter_fa || "") : (r.chapter_en || r.chapter_fa || ""),
-      page: r.page || "",
-      url: r.url || "",
-      pdfUrl: r.pdf_url || r.pdfUrl || "",
-      edition: r.edition || "",
-      coverUrl: r.cover_url || r.coverUrl || "",
-      code: r.code || r.short_en || "",
-      lang: fallbackLang || (r.code?.includes("-fa") ? "fa" : "en"),
-    });
-  };
-  // new dual fields
-  if (micro.reference_fa || micro.referenceFa) pushRef(micro.reference_fa || micro.referenceFa, "fa");
-  if (micro.reference && !micro.reference_fa) pushRef(micro.reference, "fa");
-  if (micro.reference_en || micro.referenceEn) pushRef(micro.reference_en || micro.referenceEn, "en");
-  if (Array.isArray(micro.references)) micro.references.forEach((r,i)=> pushRef(r, i===0?"fa":"en"));
-  // de-dup by composite key (same book+page+chapter+pdf would be duplicate; same book but different page/chapter is kept)
-  const seen=new Set(); const uniq=out.filter(x=>{
-    const key=`${x.code}::${x.page||""}::${x.chapter||""}::${x.pdfUrl||""}`;
-    if(seen.has(key)) return false; seen.add(key); return true;
-  });
-  if (uniq.length) return uniq.slice(0,2); // at most 2 (FA+EN) per spec
-  // Fallback: generate from source text
-  const src = lang === "fa" ? (micro.source_fa || micro.source || "") : (micro.source_en || micro.source || "");
-  const isHarrison = /هاریسون|harrison/i.test(src || micro.source || "");
-  if (isHarrison) {
-    return [{
-      book: lang === "fa" ? "هاریسون - اصول طب داخلی" : "Harrison's Principles of Internal Medicine",
-      chapter: src || (lang === "fa" ? "فصل مرتبط" : "Relevant chapter"),
-      page: "",
-      url: "https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",
-      pdfUrl: "",
-      edition: "22e",
-      coverUrl: "/covers/harrison-22e.jpg",
-      code: "harrison-22e",
-      lang,
-    }];
-  }
-  if (src) {
-    return [{
-      book: lang === "fa" ? "منابع آزمون" : "Exam References",
-      chapter: src,
-      page: "",
-      url: "",
-      pdfUrl: "",
-      edition: "",
-      coverUrl: "",
-      code: "",
-      lang,
-    }];
-  }
-  return [];
-}
-function referenceForMicro(micro, lang){ const a=refsForMicro(micro,lang); return a[0]||null; }
+/* QB-style micro lesson ("درسنامه") shown after answering. */
 export function MicroLesson({ micro, defaultOpen = false, glossary }) {
   const { lang } = useApp();
+  const fa = lang === "fa";
   const [open, setOpen] = useState(defaultOpen);
-  if (!micro || (!micro.lead && !micro.golden && !(micro.points || []).length)) return null;
-  const refs = refsForMicro(micro, lang);
+  const [hy, setHy] = useState(false);
+  if (!micro || (!micro.lead && !micro.golden && !(micro.points || []).length && !micro.high_yield && !micro.highYield)) return null;
+  const hasHighYield = !!(micro.high_yield || micro.highYield || micro.golden);
+  const radar = micro.learning_radar || micro.learningRadar;
   return (
     <div className="micro-box">
       <button className="micro-toggle" onClick={() => setOpen((v) => !v)}>
-        <Icon name="book" size={16} /> {lang === "fa" ? "درسنامهٔ کوتاه" : "Quick lesson"} <span style={{ marginInlineStart: "auto" }}>{open ? "▾" : "▸"}</span>
+        <Icon name="book" size={16} /> {fa ? "درسنامهٔ کوتاه" : "Quick lesson"} <span style={{ marginInlineStart: "auto" }}>{open ? "▾" : "▸"}</span>
       </button>
       {open && (
         <div className="micro-body">
-          {micro.media && <MediaEmbed media={micro.media} className="micro-media" />}
-          {micro.lead && <GlossaryText as="div" className="micro-lead" text={micro.lead} glossary={glossary} />}
-          {micro.golden && (
-            <div className="micro-golden"><Icon name="medal" size={15} /> <b>{lang === "fa" ? "نکتهٔ طلایی: " : "Golden point: "}</b><GlossaryText text={micro.golden} glossary={glossary} /></div>
+          {hasHighYield && (
+            <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap", alignItems: "center" }}>
+              <button type="button" className={`btn btn-sm ${hy ? "btn-accent" : "btn-ghost"}`} onClick={() => setHy((v) => !v)} title={fa ? "فقط نکات طلایی" : "High-Yield only"}>
+                ⚡ {fa ? (hy ? "نمای کامل" : "High-Yield") : (hy ? "Full" : "High-Yield")}
+              </button>
+              {radar && <span className="tag" style={{ background: "#fef3c7", border: "1px solid #fcd34d", color: "#92400e" }}>🔴 {fa ? "نیاز به مرور — قبلاً اشتباه زدی" : "Learning Radar — review needed"}</span>}
+            </div>
           )}
-          {micro.points?.length > 0 && (
-            <ul className="micro-points">{micro.points.map((p, i) => <GlossaryText as="li" key={i} text={p} glossary={glossary} />)}</ul>
+          {!hy ? (
+            <>
+              {micro.media && <MediaEmbed media={micro.media} className="micro-media" />}
+              {micro.lead && <GlossaryText as="div" className="micro-lead" text={micro.lead} glossary={glossary} />}
+              {micro.golden && (
+                <div className="micro-golden"><Icon name="medal" size={15} /> <b>{fa ? "نکتهٔ طلایی: " : "Golden point: "}</b><GlossaryText text={micro.golden} glossary={glossary} /></div>
+              )}
+              {micro.points?.length > 0 && (
+                <ul className="micro-points">{micro.points.map((p, i) => <GlossaryText as="li" key={i} text={p} glossary={glossary} />)}</ul>
+              )}
+            </>
+          ) : (
+            <>
+              {micro.golden && (
+                <div className="micro-golden" style={{ background: "#fffbeb", borderColor: "#fcd34d" }}><Icon name="medal" size={15} /> <b>{fa ? "High-Yield: " : "High-Yield: "}</b><GlossaryText text={micro.golden} glossary={glossary} /></div>
+              )}
+              {micro.points?.[0] && <div className="micro-lead" style={{ fontSize: "0.95em" }}><GlossaryText text={micro.points[0]} glossary={glossary} /></div>}
+              <div className="small muted" style={{ marginTop: 6 }}>{fa ? "— حالت High-Yield فقط نکتهٔ طلایی و اولین نکته را نشان می‌دهد" : "— High-Yield shows only the golden point and first bullet"}</div>
+            </>
           )}
-          {micro.options?.length > 0 && (
+          {micro.options?.length > 0 && !hy && (
             <div className="micro-opts">
-              <div className="micro-sub">{lang === "fa" ? "بررسی گزینه‌ها:" : "Option analysis:"}</div>
+              <div className="micro-sub">{fa ? "بررسی گزینه‌ها:" : "Option analysis:"}</div>
               {micro.options.map((o, i) => <GlossaryText as="div" key={i} className="micro-opt-line" text={o} glossary={glossary} />)}
             </div>
           )}
-          {micro.source && <div className="micro-source"><Icon name="bookmark" size={12} /> {lang === "fa" ? "منبع: " : "Source: "}{micro.source}</div>}
-          {refs.length>0 && (
-            <div style={{display:"flex", flexDirection:"column", gap:8, marginTop:6}}>
-              {refs.map((ref,idx)=> (
-                ref.code ? (
-                  <button
-                    key={idx}
-                    type="button"
-                    className="micro-ref-btn"
-                    aria-label={lang === "fa" ? `مشاهده در ${ref.book}` : `View in ${ref.book}`}
-                    onClick={()=>{
-                      const href=`/learn/reference/${ref.code}${ref.page ? `?page=${encodeURIComponent(ref.page)}` : ""}`;
-                      try{ window.history.pushState({}, "", href); }catch{}
-                      window.dispatchEvent(new CustomEvent("medlab-go",{detail:`reference:${ref.code}:${ref.page||""}`}));
-                    }}
-                  >
-                    {ref.coverUrl
-                      ? <img src={ref.coverUrl} alt={ref.book} style={{width:44,height:60,objectFit:"cover",borderRadius:6,border:"1px solid #e8e8e8",flexShrink:0}} loading="lazy" />
-                      : <span className="micro-ref-icon" aria-hidden><Icon name="book" size={18} /></span>}
-                    <span className="micro-ref-text">
-                      <span className="micro-ref-title">{lang === "fa" ? `مشاهده در ${ref.book}` : `View in ${ref.book}`}{ref.edition ? ` — ${ref.edition}` : ""} {(refs.length>1 && (ref.lang==="fa" ? " (FA)" : " (EN)")) || ""}</span>
-                      {(ref.chapter || ref.page) && (
-                        <span className="micro-ref-sub">{[ref.chapter, ref.page ? (lang === "fa" ? `ص ${ref.page}` : `p. ${ref.page}`) : null].filter(Boolean).join(" • ")}</span>
-                      )}
-                      {ref.pdfUrl && <span className="small muted" style={{fontSize:11}}>PDF • {ref.pdfUrl.split("/").pop()}</span>}
-                    </span>
-                    <span className="micro-ref-arrow" aria-hidden>{"›"}</span>
-                  </button>
-                ) : (
-                  <a
-                    key={idx}
-                    href={ref.url || "#"}
-                    target={ref.url ? "_blank" : undefined}
-                    rel={ref.url ? "noopener noreferrer" : undefined}
-                    className="micro-ref-btn"
-                    aria-label={lang === "fa" ? `مشاهده در ${ref.book}` : `View in ${ref.book}`}
-                  >
-                    <span className="micro-ref-icon" aria-hidden><Icon name="book" size={18} /></span>
-                    <span className="micro-ref-text">
-                      <span className="micro-ref-title">{lang === "fa" ? `مشاهده در ${ref.book}` : `View in ${ref.book}`}{ref.edition ? ` — ${ref.edition}` : ""}</span>
-                      {(ref.chapter || ref.page) && (
-                        <span className="micro-ref-sub">{[ref.chapter, ref.page ? (lang === "fa" ? `ص ${ref.page}` : `p. ${ref.page}`) : null].filter(Boolean).join(" • ")}</span>
-                      )}
-                      <span className="small muted" style={{fontSize:11}}>{ref.url}</span>
-                    </span>
-                    <span className="micro-ref-arrow" aria-hidden>{"↗"}</span>
-                  </a>
-                )
-              ))}
-            </div>
-          )}
+          {micro.high_yield && !hy && <GlossaryText as="div" className="small muted" text={micro.high_yield} glossary={glossary} />}
+          {micro.source && <div className="micro-source"><Icon name="bookmark" size={12} /> {fa ? "منبع: " : "Source: "}{micro.source}</div>}
         </div>
       )}
     </div>

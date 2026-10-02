@@ -16,6 +16,8 @@ export default function Review({ onProfile, go }) {
   const [reviewed, setReviewed] = useState(0);
   const [done, setDone] = useState(false);
   const [stats, setStats] = useState(null);
+  const [buryMsg, setBuryMsg] = useState("");
+  const [buryBusy, setBuryBusy] = useState(null);
 
   useEffect(() => {
     setCards(null); setIdx(0); setRevealed(false); setReviewed(0); setDone(false);
@@ -78,6 +80,22 @@ export default function Review({ onProfile, go }) {
     else setDone(true);
   };
 
+  const handleBury = async (kind) => {
+    if (buryBusy) return; setBuryBusy(kind);
+    try {
+      const url = kind === "bury" ? "/learn/review/bury" : "/learn/review/suspend";
+      await api.post(url, { cardId: card.id });
+      setBuryMsg(kind === "bury" ? (lang === "fa" ? "تا فردا مخفی شد" : "Buried") : (lang === "fa" ? "تعلیق شد" : "Suspended"));
+      // remove card from queue and advance
+      const next = cards.filter((_, i) => i !== idx);
+      setCards(next);
+      if (next.length === 0) setDone(true);
+      else if (idx >= next.length) { setIdx(0); setRevealed(false); }
+      else setRevealed(false);
+      setTimeout(() => setBuryMsg(""), 2500);
+    } catch (e) { setBuryMsg(e.message || "خطا"); } finally { setBuryBusy(null); }
+  };
+
   const nextSaved = () => {
     if (idx + 1 < cards.length) { setIdx(idx + 1); setRevealed(false); }
     else setDone(true);
@@ -121,6 +139,13 @@ export default function Review({ onProfile, go }) {
           <button className="btn btn-primary btn-block" onClick={() => setRevealed(true)}>
             <Icon name="check" size={16} /> {t("showAnswer")}
           </button>
+          {mode === "due" && (
+            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 8, flexWrap: "wrap" }}>
+              <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("bury")}>⏸ {lang === "fa" ? "مخفی تا فردا" : "Bury"}</button>
+              <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("suspend")}>🚫 {lang === "fa" ? "تعلیق" : "Suspend"}</button>
+              {buryMsg && <span className="small muted">{buryMsg}</span>}
+            </div>
+          )}
           </div>
         ) : mode === "saved" ? (
           <div className="lesson-cta mt16">
@@ -136,6 +161,11 @@ export default function Review({ onProfile, go }) {
               <button className="btn grade-hard" aria-label={t("gHard")} onClick={() => grade(1)}><span className="grade-lbl">{t("gHard")}</span>{card.preview && <span className="grade-iv">{ivLabel(card.preview.hard)}</span>}</button>
               <button className="btn grade-good" aria-label={t("gGood")} onClick={() => grade(2)}><span className="grade-lbl">{t("gGood")}</span>{card.preview && <span className="grade-iv">{ivLabel(card.preview.good)}</span>}</button>
               <button className="btn grade-easy" aria-label={t("gEasy")} onClick={() => grade(3)}><span className="grade-lbl">{t("gEasy")}</span>{card.preview && <span className="grade-iv">{ivLabel(card.preview.easy)}</span>}</button>
+            </div>
+            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 8, flexWrap: "wrap" }}>
+              <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("bury")}>⏸ {lang === "fa" ? "مخفی تا فردا" : "Bury"}</button>
+              <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("suspend")}>🚫 {lang === "fa" ? "تعلیق" : "Suspend"}</button>
+              {buryMsg && <span className="small muted">{buryMsg}</span>}
             </div>
           </div>
         )}

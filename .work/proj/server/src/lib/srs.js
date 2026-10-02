@@ -117,7 +117,7 @@ export function previewSchedule(userId, cardId) {
   return { again: p[1], hard: p[2], good: p[3], easy: p[4] };
 }
 
-/* Cards due for review today (or overdue). */
+/* Cards due for review today (or overdue). — respects bury/suspend (Anki-style). */
 export function dueCards(userId, limit = 20) {
   const today = tehranDay();
   return db.prepare(`
@@ -125,13 +125,40 @@ export function dueCards(userId, limit = 20) {
     FROM srs_state s
     JOIN flashcards f ON f.id = s.card_id AND f.active = 1
     WHERE s.user_id = ? AND s.due <= ?
+      AND COALESCE(s.suspended,0)=0
+      AND (s.buried_until IS NULL OR s.buried_until <= ?)
     ORDER BY s.due ASC, s.interval_days ASC
-    LIMIT ?`).all(userId, today, limit);
+    LIMIT ?`).all(userId, today, today, limit);
 }
 
 export function dueCount(userId) {
   const today = tehranDay();
-  return db.prepare("SELECT COUNT(*) AS c FROM srs_state s WHERE s.user_id=? AND s.due<=?").get(userId, today).c;
+  return db.prepare("SELECT COUNT(*) AS c FROM srs_state s WHERE s.user_id=? AND s.due<=? AND COALESCE(s.suspended,0)=0 AND (s.buried_until IS NULL OR s.buried_until <= ?)").get(userId, today, today).c;
+}
+
+/* Anki-style controls: bury until tomorrow, suspend indefinitely, unsuspend. */
+export function buryCard(userId, cardId) {
+  const tomorrow = addDays(tehranDay(), 1);
+  ensureTracked(userId, cardId);
+  db.prepare("UPDATE srs_state SET buried_until=? WHERE user_id=? AND card_id=?").run(tomorrow, userId, cardId);
+  persistNow();
+  return { buried_until: tomorrow };
+}
+export function suspendCard(userId, cardId) {
+  ensureTracked(userId, cardId);
+  db.prepare("UPDATE srs_state SET suspended=1 WHERE user_id=? AND card_id=?").run(userId, cardId);
+  persistNow();
+  return { suspended: true };
+}
+export function unsuspendCard(userId, cardId) {
+  db.prepare("UPDATE srs_state SET suspended=0, buried_until=NULL WHERE user_id=? AND card_id=?").run(userId, cardId);
+  persistNow();
+  return { suspended: false };
+}
+export function unsuspendAll(userId) {
+  db.prepare("UPDATE srs_state SET suspended=0, buried_until=NULL WHERE user_id=? AND suspended=1").run(userId);
+  persistNow();
+  return { ok: true };
 }
 
 /* Ensure a card is tracked (called when a learner first sees it in a lesson). */

@@ -77,6 +77,9 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
   const [fbMsg, setFbMsg] = useState("");           // varied encouragement line
   const [hearts, setHearts] = useState(5);
   const [premium, setPremium] = useState(false);
+  const [buryMsg, setBuryMsg] = useState("");
+  const [buryBusy, setBuryBusy] = useState(null);
+  useEffect(() => { setBuryMsg(""); setBuryBusy(null); }, [idx]);
   const [showLabModal, setShowLabModal] = useState(false);
   const [stemZoom, setStemZoom] = useState(() => Number(localStorage.getItem("med_stem_zoom") || 1));
   const adjustZoom = (d) => {
@@ -414,9 +417,20 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
               )}
             </div>
           )}
-          <div style={{ display: "flex", justifyContent: "center", marginTop: 10, gap: 8, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", justifyContent: "center", marginTop: 10, gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             {flag("notes") && <NoteButton cardId={card.id} />}
             {flag("learner_cards") && flag("save_flashcard") && <SaveFlashcardButton cardId={card.id} premium={premium} onPremium={() => onPremiumWanted?.()} />}
+            <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={async () => {
+              if (buryBusy) return; setBuryBusy("bury");
+              try { await api.post("/learn/review/bury", { cardId: card.id }); setBuryMsg(lang === "fa" ? "تا فردا مخفی شد" : "Buried until tomorrow"); setTimeout(() => setBuryMsg(""), 2500); }
+              catch (e) { setBuryMsg(e.message || "خطا"); } finally { setBuryBusy(null); }
+            }} title={lang === "fa" ? "مخفی تا فردا (bury)" : "Bury until tomorrow"}>⏸ {lang === "fa" ? "مخفی" : "Bury"}</button>
+            <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={async () => {
+              if (buryBusy) return; setBuryBusy("suspend");
+              try { await api.post("/learn/review/suspend", { cardId: card.id }); setBuryMsg(lang === "fa" ? "تعلیق شد — دیگر نمایش داده نمی‌شود" : "Suspended"); setTimeout(() => setBuryMsg(""), 2500); }
+              catch (e) { setBuryMsg(e.message || "خطا"); } finally { setBuryBusy(null); }
+            }} title={lang === "fa" ? "تعلیق کامل" : "Suspend"}>🚫 {lang === "fa" ? "تعلیق" : "Suspend"}</button>
+            {buryMsg && <span className="small muted">{buryMsg}</span>}
           </div>
         </>
       )}

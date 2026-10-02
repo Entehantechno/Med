@@ -18,12 +18,10 @@ import { recordAnswers, performanceDashboard, mistakeCardIds, flaggedCardIds, di
 import { emojiForTopic } from "../lib/topicemoji.js";
 import { serializeCard } from "../lib/cardserialize.js";
 import { glossaryPayload } from "../lib/glossary.js";
-import { listReferenceCatalog, normalizeReferenceInput, publicReference, referenceCatalogRow } from "../lib/reference-governance.js";
 import { lessonSummary, programSummaries } from "../lib/chaptersummary.js";
-import { requirePerm } from "../lib/rbac.js";
 import { cardFacets, buildFacetIndex, matchFacets, sortCards, fullYear, cardIsBankOnly } from "../lib/cardfacets.js";
 import { notify, vapidPublicKey, pushConfigured } from "../lib/notify.js";
-import { review as srsReview, dueCards, dueCount, ensureTracked, lapseWrongCards, previewSchedule, srsStats, tehranDay } from "../lib/srs.js";
+import { review as srsReview, dueCards, dueCount, ensureTracked, lapseWrongCards, previewSchedule, srsStats, tehranDay, buryCard, suspendCard, unsuspendCard } from "../lib/srs.js";
 import { checkMasteryForCards, masteryOverview } from "../lib/mastery.js";
 import { getCalmSettings, setCalmSettings, effectiveReviewCap, takeRestDay, calmOptOutLeagues } from "../lib/calm.js";
 import { isEnabled } from "../lib/flags.js";
@@ -252,6 +250,11 @@ r.get("/lesson/:nodeId", ...learner, (req, res) => {
     .map((c) => ({ ...serializeCard(c, lang), crowd: crowdForCard(c.id), hasHint: peerCfg().hint !== false && hasHint(c) }))
     .filter((c) => String(c.q || "").trim());
   cards = withOptionStats(cards);
+  // Learning Radar (AMBOSS-style): mark cards the learner previously got wrong
+  try {
+    const wrongIds = new Set(db.prepare("SELECT DISTINCT card_id FROM card_attempts WHERE user_id=? AND correct=0").all(req.user.id).map((r) => r.card_id));
+    for (const c of cards) if (wrongIds.has(c.id) && c.micro) c.micro.learning_radar = 1;
+  } catch { /* best-effort */ }
   // Duolingo-style: present questions in a random order each attempt.
   // Language switch sends ?ids= so the same deck (and order) is restored.
   if (!keepOrder) {
@@ -1056,20 +1059,11 @@ function browsePool() {
             json_extract(data_json, '$.title_en') AS title_en,
             json_extract(data_json, '$.premium') AS premium,
             json_extract(data_json, '$.topic') AS topic,
-            json_extract(data_json, '$.type') AS qtype,
-            json_extract(data_json, '$.category') AS category,
             json_extract(data_json, '$.difficulty') AS d_difficulty,
             json_extract(data_json, '$.content_origin') AS content_origin,
             json_extract(data_json, '$.source_meta') AS source_meta,
-            (SELECT group_concat(COALESCE(json_extract(o.value,'$.fa'),'') || ' ' || COALESCE(json_extract(o.value,'$.en'),'') || ' ' || COALESCE(json_extract(o.value,'$.why'),''), ' ')
-               FROM json_each(COALESCE(json_extract(data_json,'$.options'), '[]')) o) AS opts_text,
-            (SELECT group_concat(COALESCE(e.value,''),' ') FROM json_each(COALESCE(json_extract(data_json,'$.hints_fa'),'[]')) e) AS hints_text,
-            json_extract(data_json, '$.micro.lead_fa') AS micro_lead,
-            json_extract(data_json, '$.micro.golden_fa') AS micro_golden,
-            (SELECT group_concat(COALESCE(e.value,''),' ') FROM json_each(COALESCE(json_extract(data_json,'$.micro.points_fa'),'[]')) e) AS micro_points,
-            json_extract(data_json, '$.micro.source_fa') AS micro_source,
-            json_extract(data_json, '$.explain.text_fa') AS explain_text,
-            json_extract(data_json, '$.mnemonic.scene_fa') AS mnemonic_scene
+            (SELECT group_concat(COALESCE(json_extract(o.value,'$.fa'),'') || ' ' || COALESCE(json_extract(o.value,'$.en'),''), ' ')
+               FROM json_each(COALESCE(json_extract(data_json,'$.options'), '[]')) o) AS opts_text
        FROM flashcards
       WHERE active=1 AND json_valid(data_json) AND json_extract(data_json, '$.track') = 'learn'`
   ).all();
@@ -1077,15 +1071,15 @@ function browsePool() {
   for (const c of rows) {
     let sm = {};
     if (c.source_meta) { try { sm = JSON.parse(c.source_meta) || {}; } catch { sm = {}; } }
-    const d = { source_meta: sm, content_origin: c.content_origin || undefined, difficulty: c.d_difficulty || undefined, type: c.qtype || sm.question_type || "" };
+    const d = { source_meta: sm, content_origin: c.content_origin || undefined, difficulty: c.d_difficulty || undefined };
     const facets = cardFacets(d, { ...c, updated_at: c.content_updated_at || c.updated_at });
     // Pre-lowercase the searchable stem once instead of rebuilding and
     // lowercasing it for every card on every keystroke.
     // Normalised once (ی/ک/ه, digits, ZWNJ, diacritics) so every keystroke is
     // a plain indexOf over pre-cleaned text; `extra` = weaker fields.
-    const hay = normalizeText(`${c.q_fa || ""} ${c.q_en || ""} ${c.title_fa || ""} ${c.title_en || ""} ${c.category || ""}`);
-    const extra = normalizeText(`${sm.chapter_fa || ""} ${sm.chapter_en || ""} ${sm.concept_fa || ""} ${sm.concept_en || ""} ${sm.subject_fa || ""} ${sm.label_fa || ""} ${sm.exam_type || ""} ${c.qtype || ""} ${c.opts_text || ""} ${c.hints_text || ""} ${c.micro_lead || ""} ${c.micro_golden || ""} ${c.micro_points || ""} ${c.micro_source || ""} ${c.explain_text || ""} ${c.mnemonic_scene || ""}`);
-    const data = { q_fa: c.q_fa || "", q_en: c.q_en || "", title_fa: c.title_fa || "", title_en: c.title_en || "", topic: c.topic || "", type: c.qtype || "" };
+    const hay = normalizeText(`${c.q_fa || ""} ${c.q_en || ""} ${c.title_fa || ""} ${c.title_en || ""}`);
+    const extra = normalizeText(`${sm.chapter_fa || ""} ${sm.chapter_en || ""} ${sm.concept_fa || ""} ${sm.concept_en || ""} ${c.opts_text || ""}`);
+    const data = { q_fa: c.q_fa || "", q_en: c.q_en || "", title_fa: c.title_fa || "", title_en: c.title_en || "", topic: c.topic || "" };
     all.push({ id: c.id, facets, premium: c.premium === 1 || c.premium === true || c.premium === "true", data, hay, extra });
   }
   browsePoolCache = { sig, all };
@@ -1119,7 +1113,7 @@ r.get("/browse", ...learner, flagGate("bank_browse"), (req, res) => {
     subject: asList(q.subject), chapter: asList(q.chapter), concept: asList(q.concept),
     year: asList(q.year), month: asList(q.month), sitting: asList(q.sitting),
     scope: asList(q.scope), style: asList(q.style), difficulty: asList(q.difficulty),
-    exam: asList(q.exam), examType: asList(q.examType), qtype: asList(q.qtype), origin: asList(q.origin),
+    exam: asList(q.exam), examType: asList(q.examType),
     yearFrom: q.yearFrom, yearTo: q.yearTo,
     updatedFrom: q.updatedFrom, updatedTo: q.updatedTo,
   };
@@ -1139,7 +1133,7 @@ r.get("/browse", ...learner, flagGate("bank_browse"), (req, res) => {
   // active filter. This is the standard faceted-search behaviour — after
   // choosing a subject, the year counts reflect that subject rather than the
   // whole bank, so a learner never picks an option that returns nothing.
-  const facetKeys = ["subject", "chapter", "concept", "year", "month", "sitting", "scope", "style", "difficulty", "exam", "examType", "qtype", "origin"];
+  const facetKeys = ["subject", "chapter", "concept", "year", "month", "sitting", "scope", "style", "difficulty", "exam", "examType"];
   const facets = {};
   // When a facet is NOT one of the active filters, "the pool narrowed by every
   // other filter" is just the current hit set, so all such facets share one
@@ -1811,6 +1805,39 @@ r.post("/review/grade", ...learner, flagGate("srs_review"), (req, res) => {
   progressQuests(req.user.id, "review", 1);
   res.json({ sched, profile });
 });
+// Anki-style bury / suspend (FSRS) — premium-friendly, no extra cost
+r.post("/review/bury", ...learner, flagGate("srs_review"), (req, res) => {
+  const cardId = parseInt(req.body?.cardId, 10);
+  if (!cardId) return res.status(400).json({ error: "no card" });
+  const out = buryCard(req.user.id, cardId);
+  res.json(out);
+});
+r.post("/review/suspend", ...learner, flagGate("srs_review"), (req, res) => {
+  const cardId = parseInt(req.body?.cardId, 10);
+  if (!cardId) return res.status(400).json({ error: "no card" });
+  const out = suspendCard(req.user.id, cardId);
+  res.json(out);
+});
+r.post("/review/unsuspend", ...learner, flagGate("srs_review"), (req, res) => {
+  const cardId = parseInt(req.body?.cardId, 10);
+  if (cardId) {
+    const out = unsuspendCard(req.user.id, cardId);
+    return res.json(out);
+  }
+  // no cardId → unsuspend all
+  db.prepare("UPDATE srs_state SET suspended=0, buried_until=NULL WHERE user_id=? AND suspended=1").run(req.user.id);
+  persistNow();
+  res.json({ ok: true });
+});
+r.get("/review/suspended", ...learner, (req, res) => {
+  const rows = db.prepare("SELECT card_id FROM srs_state WHERE user_id=? AND suspended=1 LIMIT 100").all(req.user.id);
+  const lang = L(req);
+  const cards = rows.map((r) => {
+    const c = db.prepare("SELECT id, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(r.card_id);
+    return c ? serializeCard(c, lang) : null;
+  }).filter(Boolean);
+  res.json({ cards, count: cards.length });
+});
 
 /* ---------------- notifications (in-app bell feed) ---------------- */
 r.get("/notifications", ...learner, (req, res) => {
@@ -2024,49 +2051,6 @@ r.post("/vpatient/daily-reward", ...learner, async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: "vpatient_boot_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
-});
-
-/* ---------------- reference library (bilingual, per-question link) ----------------
-   Shows the canonical reference catalog that backs each micro-lesson's
-   «مشاهده در رفرنس» button. Same data as /api/academic/references but
-   learner-accessible (no manager gate) — the catalog is metadata-only. */
-r.get("/references", ...learner, (req, res) => {
-  const all = listReferenceCatalog({ activeOnly: true });
-  // publicReference is already the sanitized shape; listReferenceCatalog returns it
-  res.json({ references: all });
-});
-// Competitive reference admin — CRUD for the same catalog but gated by learn.content (content manager)
-// so the competitive track can curate its own bookshelf without touching the academic governance.
-const learnContent = [authRequired, requirePerm("learn.content")];
-r.get("/admin/references", ...learnContent, (req, res) => {
-  const all = listReferenceCatalog({ activeOnly: false });
-  res.json({ references: all });
-});
-r.post("/admin/references", ...learnContent, (req, res) => {
-  const x = normalizeReferenceInput(req.body || {});
-  if (!x.code || !x.title_en) return res.status(400).json({ error: "reference_code_and_title_required" });
-  if (db.prepare("SELECT 1 FROM reference_catalog WHERE code=?").get(x.code)) return res.status(409).json({ error: "reference_code_exists" });
-  const out = db.prepare("INSERT INTO reference_catalog (code,title_fa,title_en,short_title,publisher,edition,publication_year,isbn,source_url,cover_url,pdf_url,rights_status,rights_note_fa,rights_note_en,active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").run(x.code, x.title_fa, x.title_en, x.short_title, x.publisher, x.edition, x.publication_year, x.isbn, x.source_url, x.cover_url, x.pdf_url, x.rights_status, x.rights_note_fa, x.rights_note_en, x.active);
-  persistNow();
-  res.status(201).json({ reference: publicReference(referenceCatalogRow(out.lastInsertRowid)) });
-});
-r.put("/admin/references/:id", ...learnContent, (req, res) => {
-  const old = referenceCatalogRow(req.params.id);
-  if (!old) return res.status(404).json({ error: "not_found" });
-  const x = normalizeReferenceInput({ ...old, ...(req.body || {}) });
-  if (!x.code || !x.title_en) return res.status(400).json({ error: "reference_code_and_title_required" });
-  const dup = db.prepare("SELECT id FROM reference_catalog WHERE code=? AND id<>?").get(x.code, old.id);
-  if (dup) return res.status(409).json({ error: "reference_code_exists" });
-  db.prepare("UPDATE reference_catalog SET code=?,title_fa=?,title_en=?,short_title=?,publisher=?,edition=?,publication_year=?,isbn=?,source_url=?,cover_url=?,pdf_url=?,rights_status=?,rights_note_fa=?,rights_note_en=?,active=?,version=version+1,updated_at=datetime('now') WHERE id=?").run(x.code, x.title_fa, x.title_en, x.short_title, x.publisher, x.edition, x.publication_year, x.isbn, x.source_url, x.cover_url, x.pdf_url, x.rights_status, x.rights_note_fa, x.rights_note_en, x.active, old.id);
-  persistNow();
-  res.json({ reference: publicReference(referenceCatalogRow(old.id)) });
-});
-r.delete("/admin/references/:id", ...learnContent, (req, res) => {
-  const old = referenceCatalogRow(req.params.id);
-  if (!old) return res.status(404).json({ error: "not_found" });
-  db.prepare("DELETE FROM reference_catalog WHERE id=?").run(old.id);
-  persistNow();
-  res.json({ ok: true });
 });
 
 /* Warm the browse pool right after boot (off the request path) so the first
