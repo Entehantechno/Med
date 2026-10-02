@@ -21,6 +21,18 @@ const SECTION_THEME = {
   other:    "#647184",
 };
 const sectionColor = (parent) => SECTION_THEME[parent] || SECTION_THEME.other;
+// Choose white or dark text for a given background hex for WCAG contrast.
+function contrastText(hex) {
+  try {
+    const h = String(hex || "").replace("#", "").trim();
+    if (h.length !== 6 && h.length !== 3) return "#fff";
+    const r = parseInt(h.length === 3 ? h[0]+h[0] : h.slice(0,2), 16);
+    const g = parseInt(h.length === 3 ? h[1]+h[1] : h.slice(2,4), 16);
+    const b = parseInt(h.length === 3 ? h[2]+h[2] : h.slice(4,6), 16);
+    const lum = (0.299*r + 0.587*g + 0.114*b) / 255;
+    return lum > 0.62 ? "#1e293b" : "#fff";
+  } catch { return "#fff"; }
+}
 
 /* Redesigned learning path — a Duolingo-style winding node path grouped into
    colored UNIT headers. Research-informed 2025 improvements:
@@ -220,7 +232,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
           <div className="ppc-mini">
             <span className="ppc-mini-title">{currentTopic?.emoji || "📘"} {currentNode.title}</span>
             <span className="ppc-mini-pct">{totalPct}%</span>
-            <button className="btn btn-primary btn-sm" onClick={startCurrent}><Icon name="play" size={13} /> {fa ? "ادامه" : "Continue"}</button>
+            <button type="button" className="btn btn-primary btn-sm" onClick={startCurrent}><Icon name="play" size={13} /> {fa ? "ادامه" : "Continue"}</button>
           </div>
         )}
         <div className="ppc-top">
@@ -237,8 +249,8 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
               {currentNode.subtitle && <div className="ppc-continue-subtitle small muted">{currentNode.subtitle}</div>}
             </div>
             <div className="ppc-continue-actions">
-              <button className="btn btn-ghost btn-sm" onClick={jumpToCurrent}>{fa ? "نمایش روی مسیر" : "Show on path"}</button>
-              <button className="btn btn-primary" onClick={startCurrent}><Icon name="play" size={15} /> {fa ? "ادامهٔ یادگیری" : "Continue"}</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={jumpToCurrent}>{fa ? "نمایش روی مسیر" : "Show on path"}</button>
+              <button type="button" className="btn btn-primary" onClick={startCurrent}><Icon name="play" size={15} /> {fa ? "ادامهٔ یادگیری" : "Continue"}</button>
             </div>
           </div>
         )}
@@ -282,7 +294,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
 
             {/* ---- Unit header (colored banner) — clean & Duolingo-like:
                  icon + title + a small progress count. No extra clutter. ---- */}
-            <div className={`unit-header ${complete ? "unit-header-done" : ""}`} style={{ background: topic.color || "var(--grad-primary)" }}>
+            <div className={`unit-header ${complete ? "unit-header-done" : ""}`} style={{ background: topic.color || "var(--grad-primary)", color: contrastText(topic.color || "#2569b0") }}>
               <div className="unit-header-ico">
                 {topic.emoji ? <span className="node-emoji">{topic.emoji}</span> : <Icon name={topic.icon} size={22} />}
               </div>
@@ -327,7 +339,8 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
                   const isCurrent = n.id === currentId;
                   // gentle winding S-curve (Duolingo-style): a smooth 6-step
                   // left↔right sway so the eye follows the path down the column.
-                  const sway = [0, 46, 74, 46, 0, -46, -74, -46];
+                  // Reduced from 74 to 52 for narrow phones (320 px) — CSS further scales to 0.45×.
+                  const sway = [0, 32, 52, 32, 0, -32, -52, -32];
                   const offset = sway[ni % sway.length];
                   const goPremium = () => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }));
                   const openNode = () => {
@@ -344,7 +357,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
                   return (
                     <div className={`unit-node-row ${n.done ? "row-done" : ""}`} key={n.id} style={{ "--offset": `${offset}px`, "--i": ni }} ref={isCurrent ? currentRef : null}>
                       <div className="unit-node-main-wrap">
-                        <button
+                        <button type="button"
                           className={`unit-node node ${n.done ? "done" : ""} ${n.locked ? "locked" : ""} ${n.kind === "boss" ? "boss" : ""} ${n.legendary ? "legendary" : ""} ${isCurrent ? "current" : ""}`}
                           aria-disabled={n.locked}
                           aria-current={isCurrent ? "step" : undefined}

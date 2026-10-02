@@ -39,8 +39,8 @@ export default function Review({ onProfile, go }) {
 
   const Tabs = () => (
     <div className="tabs mb16">
-      <button className={`tab ${mode === "due" ? "active" : ""}`} onClick={() => setMode("due")}><Icon name="repeat" size={15} /> {t("dueCardsTab")}</button>
-      <button className={`tab ${mode === "saved" ? "active" : ""}`} onClick={() => setMode("saved")}><Icon name="star" size={15} /> {t("savedCardsTab")}</button>
+      <button type="button" className={`tab ${mode === "due" ? "active" : ""}`} onClick={() => setMode("due")}><Icon name="repeat" size={15} /> {t("dueCardsTab")}</button>
+      <button type="button" className={`tab ${mode === "saved" ? "active" : ""}`} onClick={() => setMode("saved")}><Icon name="star" size={15} /> {t("savedCardsTab")}</button>
     </div>
   );
 
@@ -59,13 +59,13 @@ export default function Review({ onProfile, go }) {
           {mode === "due" && (
             <>
               <div className="muted small mt8">{t("reviewEmptyHint")}</div>
-              {go && <button className="btn btn-primary empty-cta" onClick={() => go("path")}>
+              {go && <button type="button" className="btn btn-primary empty-cta" onClick={() => go("path")}>
                 <Icon name="play" size={16} /> {t("continueLearning")}
               </button>}
             </>
           )}
           {mode === "saved" && go && (
-            <button className="btn btn-ghost empty-cta" onClick={() => go("path")}>
+            <button type="button" className="btn btn-ghost empty-cta" onClick={() => go("path")}>
               <Icon name="play" size={16} /> {t("continueLearning")}
             </button>
           )}
@@ -139,7 +139,7 @@ export default function Review({ onProfile, go }) {
 
         {!revealed ? (
           <div className="lesson-cta mt16">
-          <button className="btn btn-primary btn-block" onClick={() => setRevealed(true)}>
+          <button type="button" className="btn btn-primary btn-block" onClick={() => setRevealed(true)}>
             <Icon name="check" size={16} /> {t("showAnswer")}
           </button>
           {mode === "due" && (
@@ -153,7 +153,7 @@ export default function Review({ onProfile, go }) {
           </div>
         ) : mode === "saved" ? (
           <div className="lesson-cta mt16">
-          <button className="btn btn-accent btn-block" onClick={nextSaved}>
+          <button type="button" className="btn btn-accent btn-block" onClick={nextSaved}>
             {idx + 1 < cards.length ? t("next") : t("finish")}
           </button>
           </div>
@@ -161,10 +161,10 @@ export default function Review({ onProfile, go }) {
           <div className="lesson-cta mt16">
             <div className="small muted mb8" style={{ textAlign: "center" }}>{t("howWell")}</div>
             <div className="grade-row">
-              <button className="btn grade-again" aria-label={t("gAgain")} onClick={() => grade(0)}><span className="grade-lbl">{t("gAgain")}</span>{card.preview && <span className="grade-iv">{ivLabel(card.preview.again)}</span>}</button>
-              <button className="btn grade-hard" aria-label={t("gHard")} onClick={() => grade(1)}><span className="grade-lbl">{t("gHard")}</span>{card.preview && <span className="grade-iv">{ivLabel(card.preview.hard)}</span>}</button>
-              <button className="btn grade-good" aria-label={t("gGood")} onClick={() => grade(2)}><span className="grade-lbl">{t("gGood")}</span>{card.preview && <span className="grade-iv">{ivLabel(card.preview.good)}</span>}</button>
-              <button className="btn grade-easy" aria-label={t("gEasy")} onClick={() => grade(3)}><span className="grade-lbl">{t("gEasy")}</span>{card.preview && <span className="grade-iv">{ivLabel(card.preview.easy)}</span>}</button>
+              <button type="button" className="btn grade-again" aria-label={t("gAgain")} onClick={() => grade(0)}><span className="grade-lbl">{t("gAgain")}</span>{card.preview && <span className="grade-iv">{ivLabel(card.preview.again)}</span>}</button>
+              <button type="button" className="btn grade-hard" aria-label={t("gHard")} onClick={() => grade(1)}><span className="grade-lbl">{t("gHard")}</span>{card.preview && <span className="grade-iv">{ivLabel(card.preview.hard)}</span>}</button>
+              <button type="button" className="btn grade-good" aria-label={t("gGood")} onClick={() => grade(2)}><span className="grade-lbl">{t("gGood")}</span>{card.preview && <span className="grade-iv">{ivLabel(card.preview.good)}</span>}</button>
+              <button type="button" className="btn grade-easy" aria-label={t("gEasy")} onClick={() => grade(3)}><span className="grade-lbl">{t("gEasy")}</span>{card.preview && <span className="grade-iv">{ivLabel(card.preview.easy)}</span>}</button>
             </div>
             <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
               {features.bury && features.bury_show_in_review !== false && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("bury")}>⏸ {lang === "fa" ? "مخفی تا فردا" : "Bury"}</button>}

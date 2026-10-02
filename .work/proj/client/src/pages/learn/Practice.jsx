@@ -46,7 +46,7 @@ export default function Practice({ onProfile, onBack }) {
   if (!summary) return <div className="card"><div className="skeleton" style={{ height: 180 }} /></div>;
   if (!summary.enabled) return (
     <div className="card empty-state"><div className="ico">🎯</div><h3>{t("practiceDisabled")}</h3>
-      <button className="btn btn-ghost mt16" onClick={onBack}>{t("back")}</button></div>
+      <button type="button" className="btn btn-ghost mt16" onClick={onBack}>{t("back")}</button></div>
   );
 
   /* ---------- landing ---------- */
@@ -89,12 +89,12 @@ export default function Practice({ onProfile, onBack }) {
         )}
 
         {summary.hasData
-          ? <button className="btn btn-primary btn-block" disabled={busy} onClick={start}>
+          ? <button type="button" className="btn btn-primary btn-block" disabled={busy} onClick={start}>
               <Icon name="play" size={16} /> {t("practiceStart").replace("{n}", summary.sessionSize)}
             </button>
           : <div className="card empty-state"><div className="ico">✅</div><h3>{t("practiceNoData")}</h3>
               <div className="small muted">{t("practiceNoDataHint")}</div></div>}
-        <button className="btn btn-ghost btn-block mt8" onClick={onBack}>{t("back")}</button>
+        <button type="button" className="btn btn-ghost btn-block mt8" onClick={onBack}>{t("back")}</button>
       </div>
     );
   }
@@ -111,8 +111,8 @@ export default function Practice({ onProfile, onBack }) {
           <div className="big"><StatNum value={correct} duration={1000} />/{cards.length}</div>
           <div className="small muted"><StatNum value={acc} duration={1000} delay={300} />% {t("accuracy")}</div>
         </div>
-        <button className="btn btn-accent btn-block mt16" onClick={() => { load(); setPhase("intro"); }}><Icon name="repeat" size={16} /> {t("practiceAgain")}</button>
-        <button className="btn btn-primary btn-block mt8" onClick={onBack}><Icon name="check" size={16} /> {t("back")}</button>
+        <button type="button" className="btn btn-accent btn-block mt16" onClick={() => { load(); setPhase("intro"); }}><Icon name="repeat" size={16} /> {t("practiceAgain")}</button>
+        <button type="button" className="btn btn-primary btn-block mt8" onClick={onBack}><Icon name="check" size={16} /> {t("back")}</button>
       </div>
     );
   }
@@ -144,7 +144,7 @@ export default function Practice({ onProfile, onBack }) {
   return (
     <div className="lesson-wrap">
       <div className="lesson-top">
-        <button className="btn btn-ghost btn-sm icon-btn" onClick={onBack} title={t("back")}><Icon name="logout" size={16} /></button>
+        <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onBack} title={t("back")}><Icon name="logout" size={16} /></button>
         <div className="pbar"><span style={{ width: `${progress}%` }} /></div>
         <span className="hud-chip" style={{ fontSize: ".95rem" }}>🎯 {correct}/{cards.length}</span>
       </div>
@@ -164,8 +164,8 @@ export default function Practice({ onProfile, onBack }) {
       )}
       <div className="mt16">
         {!checked
-          ? <button className="btn btn-primary btn-block" disabled={!canCheck} onClick={check}>{t("checkAns")}</button>
-          : <button className="btn btn-accent btn-block" onClick={next}>{idx + 1 < cards.length ? t("nextQ") : t("lessonComplete")}</button>}
+          ? <button type="button" className="btn btn-primary btn-block" disabled={!canCheck} onClick={check}>{t("checkAns")}</button>
+          : <button type="button" className="btn btn-accent btn-block" onClick={next}>{idx + 1 < cards.length ? t("nextQ") : t("lessonComplete")}</button>}
       </div>
     </div>
   );

@@ -76,8 +76,8 @@ export default function MediaLibrary() {
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <input ref={imgRef} type="file" accept="image/*" style={{ display: "none" }} onChange={(e) => upload(e.target.files?.[0], false)} />
           <input ref={vidRef} type="file" accept="video/*" style={{ display: "none" }} onChange={(e) => upload(e.target.files?.[0], true)} />
-          <button className="btn btn-primary btn-sm" disabled={busy} onClick={() => imgRef.current?.click()}><Icon name="image" size={14} /> {lang === "fa" ? "آپلود تصویر" : "Upload image"}</button>
-          <button className="btn btn-primary btn-sm" disabled={busy} onClick={() => vidRef.current?.click()}><Icon name="play" size={14} /> {lang === "fa" ? "آپلود ویدیو" : "Upload video"}</button>
+          <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => imgRef.current?.click()}><Icon name="image" size={14} /> {lang === "fa" ? "آپلود تصویر" : "Upload image"}</button>
+          <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => vidRef.current?.click()}><Icon name="play" size={14} /> {lang === "fa" ? "آپلود ویدیو" : "Upload video"}</button>
         </div>
       </div>
       <div className="muted small mb16">{t("mediaLibraryHint")}</div>
@@ -122,8 +122,8 @@ export default function MediaLibrary() {
                   : <span className="mli-unused muted">{t("mediaUnused")}</span>}
               </div>
               <div className="mli-actions">
-                <button className="btn btn-ghost btn-sm" onClick={() => copyUrl(it.url)} title={t("copyUrl")}><Icon name="bookmark" size={13} /> {t("copyUrl")}</button>
-                <button className={`btn btn-sm ${it.usedBy > 0 ? "btn-ghost" : "btn-danger"}`} disabled={it.usedBy > 0} onClick={() => del(it)} title={it.usedBy > 0 ? t("mediaProtected") : t("delete")}>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={() => copyUrl(it.url)} title={t("copyUrl")}><Icon name="bookmark" size={13} /> {t("copyUrl")}</button>
+                <button type="button" className={`btn btn-sm ${it.usedBy > 0 ? "btn-ghost" : "btn-danger"}`} disabled={it.usedBy > 0} onClick={() => del(it)} title={it.usedBy > 0 ? t("mediaProtected") : t("delete")}>
                   <Icon name="trash" size={13} />
                 </button>
               </div>

@@ -205,19 +205,19 @@ export default function LearnCards({ jump, onJumpConsumed } = {}) {
     <div className="page">
       <div className="section-title"><h2><Icon name="flask" size={22} /> {t("learnCards")}</h2>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className={`btn btn-sm ${showFilters || activeFilterCount ? "btn-primary" : "btn-ghost"}`} onClick={() => setShowFilters((v) => !v)}>
+          <button type="button" className={`btn btn-sm ${showFilters || activeFilterCount ? "btn-primary" : "btn-ghost"}`} onClick={() => setShowFilters((v) => !v)}>
             <Icon name="settings" size={14} /> {t("filters")}{activeFilterCount ? ` (${activeFilterCount})` : ""}
           </button>
-          <button className="btn btn-ghost btn-sm" onClick={exportBundle}><Icon name="download" size={14} /> {t("exportBundle")}</button>
-          <button className="btn btn-ghost btn-sm" onClick={() => setBundleImport(true)}><Icon name="upload" size={14} /> {t("importBundle")}</button>
-          <button className="btn btn-ghost btn-sm" onClick={() => setImporting(true)}><Icon name="upload" size={14} /> {t("bulkImport")}</button>
-          <button className="btn btn-ghost btn-sm" onClick={() => setBulk(true)}><Icon name="download" size={14} /> {t("bulkCreate")}</button>
-          <button className="btn btn-primary btn-sm" onClick={() => setEdit({})}><Icon name="edit" size={14} /> {t("newCard")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={exportBundle}><Icon name="download" size={14} /> {t("exportBundle")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setBundleImport(true)}><Icon name="upload" size={14} /> {t("importBundle")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setImporting(true)}><Icon name="upload" size={14} /> {t("bulkImport")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setBulk(true)}><Icon name="download" size={14} /> {t("bulkCreate")}</button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setEdit({})}><Icon name="edit" size={14} /> {t("newCard")}</button>
         </div>
       </div>
       <div className="muted small mb16">{t("learnCardsHint")}</div>
       <div className="mb16">
-        <button className="btn btn-sm btn-ghost" onClick={async () => {
+        <button type="button" className="btn btn-sm btn-ghost" onClick={async () => {
           if (!window.confirm(lang === "fa"
             ? "در هر درسی که سؤال شناسنامه‌دار رسمی دارد، کارت‌های دمو و بدون مرجع حذف شوند؟"
             : "In every subject that has official identified questions, delete demo and unsigned cards?")) return;
@@ -241,20 +241,20 @@ export default function LearnCards({ jump, onJumpConsumed } = {}) {
             </span>
           </div>
           <div className="lc-demo-actions">
-            <button className="btn btn-sm btn-ghost" onClick={() => { setFil({ ...EMPTY_FILTERS, origin: "demo_seed" }); setShowFilters(true); }}>
+            <button type="button" className="btn btn-sm btn-ghost" onClick={() => { setFil({ ...EMPTY_FILTERS, origin: "demo_seed" }); setShowFilters(true); }}>
               {t("demoCardsShow")}
             </button>
-            <button className="btn btn-sm" onClick={async () => {
+            <button type="button" className="btn btn-sm" onClick={async () => {
               if (!window.confirm(t("demoCardsHideConfirm"))) return;
               await api.post("/admin/demo-cards/purge", { mode: "deactivate" });
               toast(t("demoCardsDone")); load(); loadDemo();
             }}>{t("demoCardsHide")}</button>
-            <button className="btn btn-sm btn-danger" onClick={async () => {
+            <button type="button" className="btn btn-sm btn-danger" onClick={async () => {
               if (!window.confirm(t("demoCardsDeleteConfirm").replace("{n}", demoInfo.count))) return;
               const r = await api.post("/admin/demo-cards/purge", { mode: "delete" });
               toast(t("demoCardsDeleted").replace("{n}", r.affected)); load(); loadDemo();
             }}><Icon name="trash" size={13} /> {t("demoCardsDelete")}</button>
-            <button className="btn btn-sm btn-danger" onClick={async () => {
+            <button type="button" className="btn btn-sm btn-danger" onClick={async () => {
               if (!window.confirm(lang === "fa"
                 ? "در هر درسی که سؤال شناسنامه‌دار رسمی دارد، کارت‌های دمو و بدون مرجع حذف شوند؟"
                 : "In every subject that has official identified questions, delete demo and unsigned cards?")) return;
@@ -428,7 +428,7 @@ export default function LearnCards({ jump, onJumpConsumed } = {}) {
           </div>
           <div className="lc-filter-foot">
             <span className="muted small">{t("showingOf").replace("{n}", filtered.length).replace("{total}", cards.length)}</span>
-            {activeFilterCount > 0 && <button className="btn btn-ghost btn-sm" onClick={() => setFil(EMPTY_FILTERS)}><Icon name="close" size={13} /> {t("clearFilters")}</button>}
+            {activeFilterCount > 0 && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setFil(EMPTY_FILTERS)}><Icon name="close" size={13} /> {t("clearFilters")}</button>}
           </div>
         </div>
       )}
@@ -438,12 +438,12 @@ export default function LearnCards({ jump, onJumpConsumed } = {}) {
         <div className="card lc-bulkbar mb16">
           <span className="lc-bulk-count"><Icon name="check" size={14} /> {t("bulkSelected").replace("{n}", sel.size)}</span>
           <div className="lc-bulk-actions">
-            <button className="btn btn-sm btn-ghost" disabled={bulkBusy} onClick={() => bulkAction("activate")}><Icon name="check" size={13} /> {t("bulkActivate")}</button>
-            <button className="btn btn-sm btn-ghost" disabled={bulkBusy} onClick={() => bulkAction("deactivate")}><Icon name="lock" size={13} /> {t("bulkDeactivate")}</button>
-            <button className="btn btn-sm btn-ghost" disabled={bulkBusy} onClick={() => bulkAction("premium")}><Icon name="crown" size={13} /> {t("bulkPremium")}</button>
-            <button className="btn btn-sm btn-ghost" disabled={bulkBusy} onClick={() => bulkAction("free")}>{t("bulkFree")}</button>
-            <button className="btn btn-sm btn-danger" disabled={bulkBusy} onClick={() => bulkAction("delete")}><Icon name="trash" size={13} /> {t("bulkDelete")}</button>
-            <button className="btn btn-sm btn-ghost" onClick={() => setSel(new Set())}><Icon name="close" size={13} /> {t("bulkClear")}</button>
+            <button type="button" className="btn btn-sm btn-ghost" disabled={bulkBusy} onClick={() => bulkAction("activate")}><Icon name="check" size={13} /> {t("bulkActivate")}</button>
+            <button type="button" className="btn btn-sm btn-ghost" disabled={bulkBusy} onClick={() => bulkAction("deactivate")}><Icon name="lock" size={13} /> {t("bulkDeactivate")}</button>
+            <button type="button" className="btn btn-sm btn-ghost" disabled={bulkBusy} onClick={() => bulkAction("premium")}><Icon name="crown" size={13} /> {t("bulkPremium")}</button>
+            <button type="button" className="btn btn-sm btn-ghost" disabled={bulkBusy} onClick={() => bulkAction("free")}>{t("bulkFree")}</button>
+            <button type="button" className="btn btn-sm btn-danger" disabled={bulkBusy} onClick={() => bulkAction("delete")}><Icon name="trash" size={13} /> {t("bulkDelete")}</button>
+            <button type="button" className="btn btn-sm btn-ghost" onClick={() => setSel(new Set())}><Icon name="close" size={13} /> {t("bulkClear")}</button>
           </div>
         </div>
       )}
@@ -496,10 +496,10 @@ export default function LearnCards({ jump, onJumpConsumed } = {}) {
           { key: "usedIn", label: t("usedIn"), sortable: false, render: (c) => c.usedIn.length ? c.usedIn.join("، ") : <span className="muted small">—</span> },
           { key: "actions", label: "", sortable: false, thStyle: { textAlign: "end" }, render: (c) => (
             <span style={{ display: "flex", gap: 4, justifyContent: "flex-end", whiteSpace: "nowrap" }}>
-              <button className={`btn btn-sm ${c.premium ? "btn-accent" : "btn-ghost"}`} onClick={() => togglePremium(c)} title={t("premiumCard")}><Icon name="crown" size={13} /></button>
-              <button className="btn btn-sm btn-ghost" onClick={() => setEdit(c)} title={t("edit")}><Icon name="edit" size={13} /></button>
-              <button className="btn btn-sm btn-ghost" onClick={() => toggleActive(c)} title={c.active ? t("disable") : t("enable")}>{c.active ? <Icon name="lock" size={13} /> : <Icon name="check" size={13} />}</button>
-              <button className="btn btn-sm btn-danger" onClick={() => del(c.id)} title={t("delete")}><Icon name="trash" size={13} /></button>
+              <button type="button" className={`btn btn-sm ${c.premium ? "btn-accent" : "btn-ghost"}`} onClick={() => togglePremium(c)} title={t("premiumCard")}><Icon name="crown" size={13} /></button>
+              <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEdit(c)} title={t("edit")}><Icon name="edit" size={13} /></button>
+              <button type="button" className="btn btn-sm btn-ghost" onClick={() => toggleActive(c)} title={c.active ? t("disable") : t("enable")}>{c.active ? <Icon name="lock" size={13} /> : <Icon name="check" size={13} />}</button>
+              <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)} title={t("delete")}><Icon name="trash" size={13} /></button>
             </span>) },
         ]}
       />
@@ -722,7 +722,7 @@ function CardModalInner({ card, onClose, onSaved }) {
               <input value={o.en} onChange={(e) => setOpt(i, "en", e.target.value)} placeholder="EN" style={{ flex: 1 }} />
             </div>
           ))}
-          <button className="btn btn-ghost btn-sm" onClick={() => set("options", [...f.options, { fa: "", en: "", correct: false }])}>+ {t("option")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => set("options", [...f.options, { fa: "", en: "", correct: false }])}>+ {t("option")}</button>
         </div>
       </>)}
 
@@ -744,7 +744,7 @@ function CardModalInner({ card, onClose, onSaved }) {
               <input value={p.r} onChange={(e) => setPair(i, "r", e.target.value)} placeholder={t("right")} style={{ flex: 1 }} />
             </div>
           ))}
-          <button className="btn btn-ghost btn-sm" onClick={() => set("pairs", [...f.pairs, { l: "", r: "" }])}>+ {t("pair")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => set("pairs", [...f.pairs, { l: "", r: "" }])}>+ {t("pair")}</button>
         </div>
       )}
       {f.type === "order" && (
@@ -888,8 +888,8 @@ function BulkModal({ onClose, onDone }) {
       <div className="field"><label>{t("pasteOrEdit")}</label>
         <textarea style={{ minHeight: 180, direction: "rtl" }} value={text} onChange={(e) => setText(e.target.value)} placeholder={example} /></div>
       <div className="modal-actions">
-        <button className="btn btn-ghost" onClick={onClose}>{t("close")}</button>
-        <button className="btn btn-primary" disabled={busy} onClick={submit}>{busy ? t("loading") : t("import")}</button>
+        <button type="button" className="btn btn-ghost" onClick={onClose}>{t("close")}</button>
+        <button type="button" className="btn btn-primary" disabled={busy} onClick={submit}>{busy ? t("loading") : t("import")}</button>
       </div>
     </Modal>
   );
@@ -937,7 +937,7 @@ function BundleImportModal({ onClose, onDone }) {
     <Modal title={t("importBundle")} onClose={onClose}>
       <div className="small muted mb8">{t("importBundleHint")}</div>
       <input ref={fileRef} type="file" accept="application/json,.json" style={{ display: "none" }} onChange={onFile} />
-      <button className="btn btn-ghost btn-block" onClick={() => fileRef.current?.click()}>
+      <button type="button" className="btn btn-ghost btn-block" onClick={() => fileRef.current?.click()}>
         <Icon name="upload" size={15} /> {t("chooseBundleFile")}
       </button>
       {err && <div className="err-banner mt8" style={{ margin: "8px 0 0" }}>{err}</div>}
@@ -955,8 +955,8 @@ function BundleImportModal({ onClose, onDone }) {
         </div>
       )}
       <div className="modal-actions">
-        <button className="btn btn-ghost" onClick={onClose}>{t("close")}</button>
-        <button className="btn btn-primary" disabled={busy || !bundle || !preview?.valid} onClick={commit}>
+        <button type="button" className="btn btn-ghost" onClick={onClose}>{t("close")}</button>
+        <button type="button" className="btn btn-primary" disabled={busy || !bundle || !preview?.valid} onClick={commit}>
           {busy ? t("loading") : t("import")}
         </button>
       </div>

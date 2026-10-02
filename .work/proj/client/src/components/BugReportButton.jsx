@@ -41,8 +41,8 @@ export default function BugReportButton({ cardId, size = "sm" }) {
         <select className="input" value={severity} onChange={e => setSeverity(e.target.value)} style={{ maxWidth: 130 }}>
           <option value="low">low</option><option value="medium">medium</option><option value="high">high</option><option value="critical">critical</option>
         </select>
-        <button className="btn btn-primary btn-sm" onClick={submit} disabled={sending || done}>{done ? "✓" : (fa ? "ارسال" : "Send")}</button>
-        <button className="btn btn-ghost btn-sm" onClick={() => setOpen(false)}>{fa ? "انصراف" : "Cancel"}</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={submit} disabled={sending || done}>{done ? "✓" : (fa ? "ارسال" : "Send")}</button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOpen(false)}>{fa ? "انصراف" : "Cancel"}</button>
       </div>
       {done && <div className="small" style={{ color: "var(--green)", marginTop: 6 }}>{fa ? "گزارش ثبت شد — متشکریم!" : "Report sent — thanks!"}</div>}
     </div>

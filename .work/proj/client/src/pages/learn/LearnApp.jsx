@@ -295,7 +295,7 @@ export default function LearnApp() {
         <div className="ico">🔒</div>
         <h3>{lang === "fa" ? "این قابلیت فعلاً غیرفعال است" : "This feature is currently off"}</h3>
         <div className="muted small">{lang === "fa" ? "مدیر سایت این بخش را خاموش کرده است." : "The site admin has switched this section off."}</div>
-        <button className="btn btn-primary mt16" onClick={() => setTab("home")}>{t("learnHome")}</button>
+        <button type="button" className="btn btn-primary mt16" onClick={() => setTab("home")}>{t("learnHome")}</button>
       </div></div>
     );
   else if (tab === "lesson" && lessonNode)
@@ -353,7 +353,7 @@ export default function LearnApp() {
         <div className={`learn-topline${tab === "home" ? " on-home" : ""}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div className="learn-topline-main" style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {history.length > 0 && (
-              <button className="btn btn-ghost btn-sm" onClick={goBack} title={t("back")}>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={goBack} title={t("back")}>
                 <Icon name={lang === "fa" ? "chevronRight" : "chevronLeft"} size={16} /> {t("back")}
               </button>
             )}
@@ -369,7 +369,7 @@ export default function LearnApp() {
               <div className="program-switch">
                 <div className="learn-nav-title">{t("program")}</div>
                 {programs.map((p) => (
-                  <button key={p.slug} className={`program-opt ${activeProgram === p.slug ? "active" : ""}`}
+                  <button type="button" key={p.slug} className={`program-opt ${activeProgram === p.slug ? "active" : ""}`}
                     onClick={() => switchProgram(p.slug)} title={p.label}>
                     <span className="program-emoji">{p.emoji}</span>
                     <span className="program-label">{p.label}</span>
@@ -377,22 +377,21 @@ export default function LearnApp() {
                 ))}
               </div>
             )}
-            {navSections.map((sec) => {
-              // Groups are open by default (nothing hidden); the learner can
-              // collapse any group to declutter, and that choice persists. A group
-              // holding the active tab is always shown.
+            {navSections.map((sec, sIdx) => {
+              // Collapsed by default except the first group and the active one
+              // — 30+ flat items open at once were overwhelming on first paint.
               const hasActive = sec.items.some(([id]) => tab === id || (id === "path" && tab === "lesson"));
-              const open = hasActive ? true : (navOpen[sec.title] ?? true);
+              const open = hasActive ? true : (navOpen[sec.title] ?? sIdx === 0);
               return (
                 <div className={`learn-nav-group ${open ? "open" : "collapsed"}`} key={sec.title}>
-                  <button className="learn-nav-title" onClick={() => setNavOpen((o) => ({ ...o, [sec.title]: !open }))} aria-expanded={open}>
+                  <button type="button" className="learn-nav-title" onClick={() => setNavOpen((o) => ({ ...o, [sec.title]: !open }))} aria-expanded={open}>
                     <span>{sec.title}</span>
                     <Icon name={open ? "chevronUp" : "chevronDown"} size={14} />
                   </button>
                   {/* Items are always in the DOM (so mobile's horizontal bar shows
                       them all); on desktop a collapsed group hides them via CSS. */}
                   {sec.items.map(([id, ico, label]) => (
-                    <button key={id} className={`nav-item ${tab === id || (id === "path" && tab === "lesson") ? "active" : ""}`} onClick={() => setTab(id)}>
+                    <button type="button" key={id} className={`nav-item ${tab === id || (id === "path" && tab === "lesson") ? "active" : ""}`} onClick={() => setTab(id)}>
                       <Icon name={ico} size={18} /> {label}
                     </button>
                   ))}

@@ -33,14 +33,14 @@ export default function StudentExams({ go, home }) {
       <div className="container">
         <div className="section-title">
           <h2><Icon name="exam" size={16} /> {t("myExams")}</h2>
-          <button className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
         </div>
         {loadErr ? (
           <div className="card empty-state">
             <div className="ico"><Icon name="warn" size={30} /></div>
             <h3>{lang === "fa" ? "«بارگذاری آزمون‌ها» قطع شد" : "[Loading exams] failed"}</h3>
             <div className="muted small mt8">{loadFailText(loadErr, lang)}</div>
-            <button className="btn btn-primary mt16" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Try again"}</button>
+            <button type="button" className="btn btn-primary mt16" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Try again"}</button>
           </div>
         ) : exams.length === 0 ? (
           <div className="card empty-state">
@@ -61,7 +61,7 @@ export default function StudentExams({ go, home }) {
                   <span className="tag"><Icon name="clock" size={16} /> {e.duration_min} {t("min")}</span>
                   <span className="tag">{t("attemptsUsedShort")}: {e.attemptsUsed ?? 0}/{e.max_attempts}</span>
                 </div>
-                <button className="btn btn-primary btn-block mt16"
+                <button type="button" className="btn btn-primary btn-block mt16"
                   disabled={e.state !== "open"}
                   style={e.state !== "open" ? { opacity: .5, cursor: "not-allowed" } : {}}
                   onClick={() => e.state === "open" && setOpenId(e.id)}>
@@ -114,8 +114,8 @@ function ExamDetail({ examId, go, back, home }) {
             <h3>{lang === "fa" ? "«بارگذاری آزمون» قطع شد" : "[Loading the exam] failed"}</h3>
             <div className="muted small mt8">{loadFailText(loadErr, lang)}</div>
             <div className="row gap8 mt16" style={{ justifyContent: "center" }}>
-              <button className="btn btn-primary" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Try again"}</button>
-              <button className="btn btn-ghost" onClick={back}>{lang === "fa" ? "بازگشت" : "Back"}</button>
+              <button type="button" className="btn btn-primary" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Try again"}</button>
+              <button type="button" className="btn btn-ghost" onClick={back}>{lang === "fa" ? "بازگشت" : "Back"}</button>
             </div>
           </div>
         </div>
@@ -129,7 +129,7 @@ function ExamDetail({ examId, go, back, home }) {
       <div className="app"><TopBar onHome={home} />
         <div className="container">
           <div className="section-title"><h2>{biField(data, "title", lang)}</h2>
-            <button className="btn btn-ghost btn-sm" onClick={back}>← {t("back")}</button></div>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={back}>← {t("back")}</button></div>
           <div className="card empty-state"><div className="ico"><Icon name="lock" size={30} /></div>
             <h3>{data.lockReason === "attempts" ? t("examAttemptsExhausted") : t("examLocked")}</h3></div>
         </div>
@@ -147,7 +147,7 @@ function ExamDetail({ examId, go, back, home }) {
       <div className="container">
         <div className="section-title">
           <h2><Icon name="exam" size={16} /> {biField(data, "title", lang)}</h2>
-          <button className="btn btn-ghost btn-sm" onClick={back}>← {t("back")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={back}>← {t("back")}</button>
         </div>
         <div className="card mb16">
           <p className="muted">{biField(data, "desc", lang)}</p>
@@ -166,7 +166,7 @@ function ExamDetail({ examId, go, back, home }) {
                   <strong>{biField(c, "title", lang)}</strong> <span className="badge-ver">v{c.version}</span>
                   <div className="case-meta"><Pill kind={c.difficulty}>{t(c.difficulty)}</Pill></div>
                 </div>
-                <button className="btn btn-primary" disabled={vpExhausted}
+                <button type="button" className="btn btn-primary" disabled={vpExhausted}
                   style={vpExhausted ? { opacity: .5, cursor: "not-allowed" } : {}}
                   onClick={() => !vpExhausted && go("exam", { caseId: c.case_id, examId, examDuration: data.duration_min, antiCheat: data.anti_cheat })}>
                   {t("startVp")}

@@ -81,7 +81,7 @@ export default function ProfileCard() {
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 8 }}>
-        <button className="btn btn-primary btn-sm" disabled={busy} onClick={save}>{t("save")}</button>
+        <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={save}>{t("save")}</button>
         {msg && <span className="small muted">{msg}</span>}
       </div>
     </div>

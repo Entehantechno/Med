@@ -50,7 +50,7 @@ export default function BugHunt() {
   return (
     <div className="page">
       <div className="section-title"><h2>🐛 {fa ? "سامانهٔ باگیابی تکرارشونده" : "Recurring Bug Hunt"}</h2>
-        <button className="btn btn-primary btn-sm" onClick={doScan} disabled={busy}>{busy ? "…" : (fa ? "اسکن فوری" : "Run scan now")}</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={doScan} disabled={busy}>{busy ? "…" : (fa ? "اسکن فوری" : "Run scan now")}</button>
       </div>
 
       {stats && (
@@ -86,7 +86,7 @@ export default function BugHunt() {
           </select>
         </div>
         <textarea className="input mt8" rows={3} placeholder={fa ? "شرح کامل باگ" : "Full description"} value={newBug.description} onChange={e => setNewBug({ ...newBug, description: e.target.value })} maxLength={5000} />
-        <button className="btn btn-accent btn-sm mt8" onClick={submitManual}>{fa ? "ثبت" : "Submit"}</button>
+        <button type="button" className="btn btn-accent btn-sm mt8" onClick={submitManual}>{fa ? "ثبت" : "Submit"}</button>
       </div>
 
       {/* reports table */}
@@ -105,9 +105,9 @@ export default function BugHunt() {
                   <td>{r.kind}</td>
                   <td className="small muted">{new Date(r.created_at).toLocaleDateString(fa ? "fa-IR" : "en-US")}</td>
                   <td style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                    {r.status === "open" && <button className="btn btn-ghost btn-sm" onClick={() => updateStatus(r.id, "triaged")}>{fa ? "بررسی" : "Triage"}</button>}
-                    {r.status !== "fixed" && <button className="btn btn-ghost btn-sm" onClick={() => updateStatus(r.id, "fixed")}>{fa ? "حل‌شده" : "Fixed"}</button>}
-                    {r.status !== "closed" && <button className="btn btn-ghost btn-sm" onClick={() => updateStatus(r.id, "closed")}>{fa ? "بستن" : "Close"}</button>}
+                    {r.status === "open" && <button type="button" className="btn btn-ghost btn-sm" onClick={() => updateStatus(r.id, "triaged")}>{fa ? "بررسی" : "Triage"}</button>}
+                    {r.status !== "fixed" && <button type="button" className="btn btn-ghost btn-sm" onClick={() => updateStatus(r.id, "fixed")}>{fa ? "حل‌شده" : "Fixed"}</button>}
+                    {r.status !== "closed" && <button type="button" className="btn btn-ghost btn-sm" onClick={() => updateStatus(r.id, "closed")}>{fa ? "بستن" : "Close"}</button>}
                   </td>
                 </tr>
               ))}

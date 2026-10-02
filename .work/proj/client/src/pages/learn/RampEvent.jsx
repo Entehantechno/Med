@@ -68,7 +68,7 @@ export default function RampEvent({ onProfile, onBack }) {
   if (!def.enabled) return (
     <div className="card empty-state"><div className="ico">🎯</div>
       <h3>{t("eventDisabled")}</h3>
-      <button className="btn btn-ghost mt16" onClick={onBack}>{t("back")}</button></div>
+      <button type="button" className="btn btn-ghost mt16" onClick={onBack}>{t("back")}</button></div>
   );
 
   if (phase === "intro") return (
@@ -82,10 +82,10 @@ export default function RampEvent({ onProfile, onBack }) {
           <li>➕ {t("eventPerCorrect")}: +{def.xp_per_correct} XP</li>
           <li>🏆 {t("eventFlawless")}: +{def.bonus_all_correct} XP</li>
         </ul>
-        <button className="btn btn-primary btn-block" disabled={busy} onClick={start}>
+        <button type="button" className="btn btn-primary btn-block" disabled={busy} onClick={start}>
           <Icon name="play" size={16} /> {t("eventStart")}
         </button>
-        <button className="btn btn-ghost btn-block mt8" onClick={onBack}>{t("back")}</button>
+        <button type="button" className="btn btn-ghost btn-block mt8" onClick={onBack}>{t("back")}</button>
       </div>
     </div>
   );
@@ -104,8 +104,8 @@ export default function RampEvent({ onProfile, onBack }) {
             {flawless && <div className="reward-chip"><div className="rv" style={{ color: "var(--gold)" }}>🏆</div><div className="small muted">{t("eventFlawless")}</div></div>}
           </div>
         </div>
-        <button className="btn btn-accent btn-block mt16" onClick={() => setPhase("intro")}><Icon name="repeat" size={16} /> {t("tryAgain")}</button>
-        <button className="btn btn-primary btn-block mt8" onClick={onBack}><Icon name="check" size={16} /> {t("continueLearning")}</button>
+        <button type="button" className="btn btn-accent btn-block mt16" onClick={() => setPhase("intro")}><Icon name="repeat" size={16} /> {t("tryAgain")}</button>
+        <button type="button" className="btn btn-primary btn-block mt8" onClick={onBack}><Icon name="check" size={16} /> {t("continueLearning")}</button>
       </div>
     );
   }
@@ -132,7 +132,7 @@ export default function RampEvent({ onProfile, onBack }) {
   return (
     <div className="lesson-wrap">
       <div className="lesson-top">
-        <button className="btn btn-ghost btn-sm icon-btn" onClick={() => finish(correctRef.current)} title={t("back")}><Icon name="logout" size={16} /></button>
+        <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={() => finish(correctRef.current)} title={t("back")}><Icon name="logout" size={16} /></button>
         <div className={`pbar ${left <= 15 ? "danger" : ""}`}><span style={{ width: `${timePct}%`, background: left <= 15 ? "var(--flame)" : undefined }} /></div>
         <span className="hud-chip" style={{ fontSize: ".95rem" }}>⏱️ {left}s</span>
       </div>
@@ -147,8 +147,8 @@ export default function RampEvent({ onProfile, onBack }) {
       )}
       <div className="mt16">
         {!checked
-          ? <button className="btn btn-primary btn-block" disabled={!canCheck} onClick={check}>{t("checkAns")}</button>
-          : <button className="btn btn-accent btn-block" onClick={next}>{t("nextQ")}</button>}
+          ? <button type="button" className="btn btn-primary btn-block" disabled={!canCheck} onClick={check}>{t("checkAns")}</button>
+          : <button type="button" className="btn btn-accent btn-block" onClick={next}>{t("nextQ")}</button>}
       </div>
     </div>
   );

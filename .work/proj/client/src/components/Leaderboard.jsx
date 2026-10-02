@@ -57,7 +57,7 @@ export default function Leaderboard({ examId, meUserId, onClose }) {
       {reveal && winnerHasScore && <Confetti />}
       <div className="lb-head">
         <h3><Icon name="trophy" size={16} /> {lang === "fa" ? data.exam.title_fa : data.exam.title_en}</h3>
-        {onClose && <button className="btn btn-ghost btn-sm" onClick={onClose}>{t("close")}</button>}
+        {onClose && <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>{t("close")}</button>}
       </div>
 
       {ranked.length === 0 ? (

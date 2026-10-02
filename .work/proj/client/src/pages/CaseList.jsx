@@ -25,7 +25,7 @@ export default function CaseList({ go, home }) {
       <div className="container">
         <div className="section-title">
           <h2>{t("caseList")}</h2>
-          <button className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
         </div>
 
         {loadErr ? (
@@ -33,7 +33,7 @@ export default function CaseList({ go, home }) {
             <div style={{ fontSize: 44 }}><Icon name="warn" size={30} /></div>
             <h3 className="mt8">{lang === "fa" ? "«بارگذاری فهرست پرونده‌ها» قطع شد" : "[Loading the case list] failed"}</h3>
             <div className="muted small mt8">{loadFailText(loadErr, lang)}</div>
-            <button className="btn btn-primary mt16" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Try again"}</button>
+            <button type="button" className="btn btn-primary mt16" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Try again"}</button>
           </div>
         ) : cases.length === 0 ? (
           <div className="card center" style={{ padding: 40 }}>
@@ -64,7 +64,7 @@ export default function CaseList({ go, home }) {
                     </div>
                     {biField(c, "title", lang) && <div className="small muted mt8">{t("chief")}: {biField(c, "chief", lang)}</div>}
                   </div>
-                  <button className="btn btn-primary" disabled={exhausted}
+                  <button type="button" className="btn btn-primary" disabled={exhausted}
                     style={exhausted ? { opacity: .5, cursor: "not-allowed" } : {}}
                     onClick={() => !exhausted && go("exam", { caseId: c.id })}>
                     {t("startCase")}

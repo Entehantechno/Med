@@ -60,7 +60,7 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
           <div className="home-hero-cta">
             <div className="hhc-title">{goalPct >= 100 ? `🎉 ${t("todayGoal")} ✓` : t("todayGoal")}</div>
             <div className="hhc-sub small">{streak?.atRisk ? `⚠️ ${t("streakAtRisk")}` : t("keepStreak")}</div>
-            <button className="btn btn-accent btn-lg btn-block" onClick={() => {
+            <button type="button" className="btn btn-accent btn-lg btn-block" onClick={() => {
               if (data?.resume?.nodeId && openLesson) openLesson(data.resume.nodeId);
               else go("path");
             }}>
@@ -94,9 +94,9 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
             <div className="small muted">{placement.offerText || t("placementOfferBody")}</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <button className="btn btn-primary btn-sm" onClick={() => go("placement")}><Icon name="play" size={14} /> {t("placementStart")}</button>
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => go("placement")}><Icon name="play" size={14} /> {t("placementStart")}</button>
             {placement.dismissible && (
-              <button className="btn btn-ghost btn-sm" style={{ fontSize: ".78rem" }}
+              <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: ".78rem" }}
                 onClick={async () => { await api.post("/learn/placement/dismiss", {}).catch(() => {}); setPlacement((p) => ({ ...p, dismissed: true })); }}>
                 {t("placementNotNow")}
               </button>
@@ -121,11 +121,11 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
             )}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <button className="btn btn-primary btn-sm"
+            <button type="button" className="btn btn-primary btn-sm"
               onClick={() => (goToTopic ? goToTopic(placement.recommendation.startTopicSlug) : go("path"))}>
               <Icon name="play" size={14} /> {t("placementStartHere")}
             </button>
-            <button className="btn btn-ghost btn-sm" style={{ fontSize: ".78rem" }} onClick={() => setRecoHidden(true)}>
+            <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: ".78rem" }} onClick={() => setRecoHidden(true)}>
               {t("dismiss") || t("placementNotNow")}
             </button>
           </div>
@@ -140,7 +140,7 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
             <div style={{ fontWeight: 800 }}>{t("dxTitle")}</div>
             <div className="small muted">{t("dxTeaser")}</div>
           </div>
-          <button className="btn btn-accent btn-sm" onClick={() => go("dxChallenge")}><Icon name="play" size={14} /> {t("dxPlay")}</button>
+          <button type="button" className="btn btn-accent btn-sm" onClick={() => go("dxChallenge")}><Icon name="play" size={14} /> {t("dxPlay")}</button>
         </div>
       )}
 
@@ -175,7 +175,7 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
             </div>
             <div className="small muted">{t("questsHub")}</div>
           </div>
-          <button className="btn btn-accent btn-sm" onClick={() => go("quests")}><Icon name="target" size={14} /> {t("questsHub")}</button>
+          <button type="button" className="btn btn-accent btn-sm" onClick={() => go("quests")}><Icon name="target" size={14} /> {t("questsHub")}</button>
         </div>
       )}
 
@@ -187,7 +187,7 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
             <div style={{ fontWeight: 800 }}>{data.dueReviews} {t("dueCount")}</div>
             <div className="small muted">{t("reviewDesc")}</div>
           </div>
-          <button className="btn btn-accent btn-sm" onClick={() => go("review")}><Icon name="repeat" size={14} /> {t("review")}</button>
+          <button type="button" className="btn btn-accent btn-sm" onClick={() => go("review")}><Icon name="repeat" size={14} /> {t("review")}</button>
         </div>
       )}
 
@@ -200,7 +200,7 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
             <div style={{ fontWeight: 800 }}>{t("rewardedCtaTitle")}</div>
             <div className="small muted">{t("rewardedCtaBody")}</div>
           </div>
-          <button className="btn btn-accent btn-sm" onClick={() => setShowRewarded(true)}><Icon name="play" size={14} /> {t("rewardedWatch")}</button>
+          <button type="button" className="btn btn-accent btn-sm" onClick={() => setShowRewarded(true)}><Icon name="play" size={14} /> {t("rewardedWatch")}</button>
         </div>
       )}
       {showRewarded && (
@@ -214,7 +214,7 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
       {/* national ranking preview */}
       {flag("ranking") && <div className="card">
         <div className="section-title"><h4><Icon name="chart" size={18} /> {t("topLearners")}</h4>
-          <button className="btn btn-ghost btn-sm" onClick={() => go("ranking")}>{t("ranking")}</button></div>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => go("ranking")}>{t("ranking")}</button></div>
         {(data?.topCountry || []).map((r) => (
           <div key={r.user_id} className="case-item" style={{ marginTop: 8 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>

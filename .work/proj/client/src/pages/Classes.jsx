@@ -29,14 +29,14 @@ export default function Classes({ go, home }) {
       <div className="container">
         <div className="section-title">
           <h2><Icon name="class" size={16} /> {t("myClasses")}</h2>
-          <button className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
         </div>
         {loadErr ? (
           <div className="card empty-state">
             <div className="ico"><Icon name="warn" size={30} /></div>
             <h3>{lang === "fa" ? "«بارگذاری کلاس‌ها» قطع شد" : "[Loading classes] failed"}</h3>
             <div className="muted small mt8">{loadFailText(loadErr, lang)}</div>
-            <button className="btn btn-primary mt16" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Try again"}</button>
+            <button type="button" className="btn btn-primary mt16" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Try again"}</button>
           </div>
         ) : classes.length === 0 ? (
           <div className="card empty-state">
@@ -47,7 +47,7 @@ export default function Classes({ go, home }) {
         ) : (
           <div className="grid grid-2">
             {classes.map((c) => (
-              <button className="card mod-card mod-card-row" key={c.id} onClick={() => setOpenId(c.id)}>
+              <button type="button" className="card mod-card mod-card-row" key={c.id} onClick={() => setOpenId(c.id)}>
                 <div className="mod-ico" style={{ background: "var(--grad-purple)" }}><Icon name="class" size={26} /></div>
                 <div className="mod-card-body">
                   <h3>{biField(c, "name", lang)}</h3>
@@ -88,8 +88,8 @@ function ClassDetail({ classId, go, back, home }) {
             <h3>{lang === "fa" ? "«بارگذاری کلاس» قطع شد" : "[Loading the class] failed"}</h3>
             <div className="muted small mt8">{loadFailText(loadErr, lang)}</div>
             <div className="row gap8 mt16" style={{ justifyContent: "center" }}>
-              <button className="btn btn-primary" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Try again"}</button>
-              <button className="btn btn-ghost" onClick={back}>{lang === "fa" ? "بازگشت" : "Back"}</button>
+              <button type="button" className="btn btn-primary" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Try again"}</button>
+              <button type="button" className="btn btn-ghost" onClick={back}>{lang === "fa" ? "بازگشت" : "Back"}</button>
             </div>
           </div>
         </div>
@@ -106,7 +106,7 @@ function ClassDetail({ classId, go, back, home }) {
       <div className="container">
         <div className="section-title">
           <h2><Icon name="class" size={16} /> {biField(cl, "name", lang)}</h2>
-          <button className="btn btn-ghost btn-sm" onClick={back}>← {t("back")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={back}>← {t("back")}</button>
         </div>
 
         <div className="grid grid-2 mb16">
@@ -140,7 +140,7 @@ function ClassDetail({ classId, go, back, home }) {
                     {c.best != null && <span className="tag" style={{ color: "var(--ok)", borderColor: "var(--ok)" }}>{t("bestScore")}: {c.best}</span>}
                   </div>
                 </div>
-                <button className="btn btn-primary" disabled={exhausted}
+                <button type="button" className="btn btn-primary" disabled={exhausted}
                   style={exhausted ? { opacity: .5, cursor: "not-allowed" } : {}}
                   onClick={() => !exhausted && go("exam", { caseId: c.case_id, classId })}>
                   {c.best != null ? t("retake") : t("startClassCase")}
@@ -172,7 +172,7 @@ function ClassDetail({ classId, go, back, home }) {
                       {f.best != null && <span className="tag" style={{ color: "var(--ok)", borderColor: "var(--ok)" }}>{t("bestScore")}: {f.best}</span>}
                     </div>
                   </div>
-                  <button className="btn btn-primary" disabled={exhausted}
+                  <button type="button" className="btn btn-primary" disabled={exhausted}
                     style={exhausted ? { opacity: .5, cursor: "not-allowed" } : {}}
                     onClick={() => !exhausted && go("flashcards", { flashcardIds: [f.flashcard_id], classId, classFlashcardId: f.flashcard_id, noPenalty: !!data.class?.flashNoPenalty })}>
                     {f.best != null ? t("retake") : t("startClassCase")}

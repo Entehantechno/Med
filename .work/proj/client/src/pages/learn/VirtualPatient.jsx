@@ -49,7 +49,7 @@ export default function VirtualPatient({ onProfile, onBack, initialCaseId = null
           <div style={{ fontSize: 44 }}><Icon name="warn" size={34} /></div>
           <h3 className="mt8">{fa ? "«بارگذاری فهرست بیماران» قطع شد" : "[Loading case list] failed"}</h3>
           <div className="muted small mt8">{fa ? "اتصال برقرار نشد. دوباره تلاش کنید." : "Could not reach the server. Please try again."}</div>
-          <button className="btn btn-primary mt16" onClick={load}>{fa ? "تلاش دوباره" : "Try again"}</button>
+          <button type="button" className="btn btn-primary mt16" onClick={load}>{fa ? "تلاش دوباره" : "Try again"}</button>
         </div>
       </div>
     );
@@ -94,7 +94,7 @@ export default function VirtualPatient({ onProfile, onBack, initialCaseId = null
     <div className="page">
       <div className="section-title">
         <h2><Icon name="patient" size={22} /> {t("vpTitle")}</h2>
-        {onBack && <button className="btn btn-ghost btn-sm" onClick={onBack}>← {t("back")}</button>}
+        {onBack && <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}>← {t("back")}</button>}
       </div>
       <p className="muted mb16" style={{ maxWidth: 620 }}>
         {fa ? "یک بیمار را انتخاب کن، شرح‌حال بگیر، آزمایش و تصویربرداری درخواست کن، تشخیص بده و در پایان ارزیابی بگیر."
@@ -111,7 +111,7 @@ export default function VirtualPatient({ onProfile, onBack, initialCaseId = null
               <div className="small muted">{dailyCase.title || dailyCase.chief} · {dailyCase.specialty}</div>
               {data.daily_gems > 0 && <div className="small" style={{ color: "var(--gold)", marginTop: 2 }}>+{data.daily_gems} {t("gems")}</div>}
             </div>
-            <button className="btn btn-primary" onClick={() => setCaseId(dailyCase.id)}>{fa ? "شروع بیمار امروز" : "Start today's case"}</button>
+            <button type="button" className="btn btn-primary" onClick={() => setCaseId(dailyCase.id)}>{fa ? "شروع بیمار امروز" : "Start today's case"}</button>
           </div>
         </div>
       )}
@@ -136,7 +136,7 @@ export default function VirtualPatient({ onProfile, onBack, initialCaseId = null
                 </div>
                 {c.title && c.chief && <div className="small muted mt8">{t("chief")}: {c.chief}</div>}
               </div>
-              <button className="btn btn-primary" onClick={() => setCaseId(c.id)}>{fa ? "شروع" : "Start"}</button>
+              <button type="button" className="btn btn-primary" onClick={() => setCaseId(c.id)}>{fa ? "شروع" : "Start"}</button>
             </div>
           ))}
         </div>

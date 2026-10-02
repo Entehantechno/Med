@@ -73,7 +73,7 @@ export default function InviteFriends({ onProfile }) {
         <div className="small muted mb8">{t("inviteYourCode")}</div>
         <div className="invite-code-row">
           <div className="invite-code">{d.code}</div>
-          <button className="btn btn-primary" onClick={() => copy(link)}>
+          <button type="button" className="btn btn-primary" onClick={() => copy(link)}>
             <Icon name={copied ? "check" : "download"} size={15} /> {copied ? t("copied") : t("inviteCopyLink")}
           </button>
         </div>
@@ -85,7 +85,7 @@ export default function InviteFriends({ onProfile }) {
         <div style={{ fontWeight: 800, marginBottom: 10 }}>📣 {t("inviteShareVia")}</div>
         <div className="invite-share-grid">
           {channels.map((c) => (
-            <button key={c.id} className="invite-share-btn" onClick={() => onChannel(c)}>
+            <button type="button" key={c.id} className="invite-share-btn" onClick={() => onChannel(c)}>
               <span className="ish-emoji">{c.emoji}</span>
               <span>{c.label}</span>
             </button>
@@ -162,7 +162,7 @@ function StoryCard({ code, brand, site, fa, onShared }) {
   return (
     <div className="story-card-wrap">
       <img className="story-card-img" src={dataUrl} alt="story card" />
-      <button className="btn btn-accent" onClick={download}><Icon name="download" size={15} /> {fa ? "ذخیرهٔ کارت استوری" : "Save story card"}</button>
+      <button type="button" className="btn btn-accent" onClick={download}><Icon name="download" size={15} /> {fa ? "ذخیرهٔ کارت استوری" : "Save story card"}</button>
     </div>
   );
 }

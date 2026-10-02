@@ -133,7 +133,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
             <div className="ico"><Icon name="warn" size={30} /></div>
             <h3>{lang === "fa" ? "«بارگذاری فلش‌کارت» قطع شد" : "[Loading flashcards] failed"}</h3>
             <div className="muted small mt8">{loadFailText(loadErr, lang)}</div>
-            <button className="btn btn-primary mt16" onClick={() => { setAllCards(null); setLoadErr(""); setBootNonce((n) => n + 1); }}>
+            <button type="button" className="btn btn-primary mt16" onClick={() => { setAllCards(null); setLoadErr(""); setBootNonce((n) => n + 1); }}>
               {lang === "fa" ? "تلاش دوباره" : "Try again"}
             </button>
           </div>
@@ -152,7 +152,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
             <div className="muted small mt8">{lang === "fa"
               ? "فهرست کارت‌های این آزمون خالی است. به استاد بگویید."
               : "This exam has an empty flashcard list. Tell your instructor."}</div>
-            <button className="btn btn-ghost mt16" onClick={home}>{lang === "fa" ? "بازگشت" : "Back"}</button>
+            <button type="button" className="btn btn-ghost mt16" onClick={home}>{lang === "fa" ? "بازگشت" : "Back"}</button>
           </div>
         </div>
     ));
@@ -176,7 +176,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
           <div className="card empty-state">
             <div className="ico"><Icon name="warn" size={30} /></div>
             <h3>{lang === "fa" ? "«آزمون فلش‌کارت» — کارتی برای نمایش نیست" : "[Flashcard exam] — no card to show"}</h3>
-            <button className="btn btn-ghost mt16" onClick={home}>{lang === "fa" ? "بازگشت" : "Back"}</button>
+            <button type="button" className="btn btn-ghost mt16" onClick={home}>{lang === "fa" ? "بازگشت" : "Back"}</button>
           </div>
         </div>
     ));
@@ -372,7 +372,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
                 <div className="timer">{fmtT(timeLeft)}</div>
               </div>
             )}
-            <button className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
           </div>
         </div>
         <div className="ddle-wrap">
@@ -454,7 +454,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
                   else if (state.tried.includes(i)) cls += " wrong";
                   else if (done) cls += " dim";
                   return (
-                    <button key={i} className={cls} disabled={done || state.tried.includes(i)} onClick={() => choose(i)}>
+                    <button type="button" key={i} className={cls} disabled={done || state.tried.includes(i)} onClick={() => choose(i)}>
                       <span className="mc-letter">{letters[i]}</span>
                       <span className="mc-opt-body">
                         {opt.imageUrl && <img className="mc-opt-img" src={opt.imageUrl} alt="" />}
@@ -504,7 +504,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
             </>)}
 
             {done && (
-              <button className="btn btn-accent btn-block mt16" onClick={next}>
+              <button type="button" className="btn btn-accent btn-block mt16" onClick={next}>
                 {idx < cards.length - 1 ? `${t("nextCard")} →` : `${(examId ? t("examDone") : t("flashDone"))} →`}
               </button>
             )}
@@ -513,7 +513,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
       </div>
       {zoomSrc && (
         <div className="img-zoom-back" onClick={() => setZoomSrc(null)}>
-          <button className="img-zoom-close" onClick={() => setZoomSrc(null)}>×</button>
+          <button type="button" className="img-zoom-close" onClick={() => setZoomSrc(null)}>×</button>
           <img src={zoomSrc} alt="" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
@@ -549,13 +549,13 @@ function DeckPicker({ allCards, onStart, home, embedded = false }) {
       <div className="container">
         <div className="section-title">
           <h2><Icon name="flask" size={16} /> {t("flashTitle")}</h2>
-          <button className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
         </div>
         <div className="card mb16" style={{ textAlign: "center" }}>
           <div className="mod-ico" style={{ margin: "0 auto 12px", background: "var(--grad-primary)" }}><Icon name="catalog" size={30} /></div>
           <h3>{t("pickDeck")}</h3>
           <p className="muted small">{t("pickDeckDesc")}</p>
-          <button className="btn btn-primary mt16" onClick={() => onStart(allCards)}>▶ {t("practiceAll")} ({allCards.length})</button>
+          <button type="button" className="btn btn-primary mt16" onClick={() => onStart(allCards)}>▶ {t("practiceAll")} ({allCards.length})</button>
         </div>
         <div className="grid grid-2">
           {entries.map(([course, deck]) => (
@@ -607,14 +607,14 @@ function Summary({ cards, results, totalHints, onRestart, onPick, home, examId, 
 
           {competition && examId && (
             <div className="mt16">
-              <button className="btn btn-accent" onClick={() => setShowLb((v) => !v)}><Icon name="trophy" size={16} /> {t("viewLeaderboard")}</button>
+              <button type="button" className="btn btn-accent" onClick={() => setShowLb((v) => !v)}><Icon name="trophy" size={16} /> {t("viewLeaderboard")}</button>
             </div>
           )}
 
           <div className="mt16" style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-            {!examId && <button className="btn btn-primary" onClick={onRestart}><Icon name="restart" size={16} /> {t("start")}</button>}
-            {!examId && <button className="btn btn-ghost" onClick={onPick}><Icon name="catalog" size={16} /> {t("pickDeck")}</button>}
-            <button className="btn btn-ghost" onClick={home}>{t("back")}</button>
+            {!examId && <button type="button" className="btn btn-primary" onClick={onRestart}><Icon name="restart" size={16} /> {t("start")}</button>}
+            {!examId && <button type="button" className="btn btn-ghost" onClick={onPick}><Icon name="catalog" size={16} /> {t("pickDeck")}</button>}
+            <button type="button" className="btn btn-ghost" onClick={home}>{t("back")}</button>
           </div>
         </div>
 

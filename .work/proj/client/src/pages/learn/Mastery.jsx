@@ -21,7 +21,7 @@ export default function Mastery({ onBack }) {
     <div className="page">
       <div className="section-title">
         <h2><Icon name="medal" size={22} /> {t("masteryTitle")}</h2>
-        {onBack && <button className="btn btn-ghost btn-sm" onClick={onBack}>← {t("back")}</button>}
+        {onBack && <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}>← {t("back")}</button>}
       </div>
       <div className="muted small mb16">{t("masteryHint")}</div>
 

@@ -200,7 +200,7 @@ function ImpersonationBanner() {
   return (
     <div className="imp-banner">
       <span>{t("impersonating")}: {lang === "fa" ? user.name_fa : user.name_en}</span>
-      <button onClick={exit}>{t("exitImpersonate")}</button>
+      <button type="button" onClick={exit}>{t("exitImpersonate")}</button>
     </div>
   );
 }

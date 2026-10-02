@@ -121,7 +121,7 @@ export default function LabValuesModal({ isOpen, onClose, lang = "fa" }) {
               <p className="small muted">{fa ? "مرجع سریع مقادیر مرجع و نکات کلیدی آزمون‌های پزشکی (USMLE / دستیاری / پره‌انترنی)" : "Quick reference & high-yield pearls for medical licensing exams"}</p>
             </div>
           </div>
-          <button className="btn btn-ghost btn-sm lab-modal-close" onClick={onClose} aria-label="Close" title={fa ? "بستن (Esc)" : "Close (Esc)"}>
+          <button type="button" className="btn btn-ghost btn-sm lab-modal-close" onClick={onClose} aria-label="Close" title={fa ? "بستن (Esc)" : "Close (Esc)"}>
             <Icon name="close" size={16} />
           </button>
         </div>
@@ -203,7 +203,7 @@ export default function LabValuesModal({ isOpen, onClose, lang = "fa" }) {
           <span className="small muted">
             {fa ? `نمایش ${filtered.length} مورد از ${LAB_DATA.length} مقدار مرجع استاندارد` : `Showing ${filtered.length} of ${LAB_DATA.length} standard reference ranges`}
           </span>
-          <button className="btn btn-primary btn-sm" onClick={onClose}>
+          <button type="button" className="btn btn-primary btn-sm" onClick={onClose}>
             {fa ? "بازگشت به آزمون" : "Back to Lesson"}
           </button>
         </div>

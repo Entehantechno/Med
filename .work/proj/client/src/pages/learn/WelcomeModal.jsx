@@ -44,7 +44,7 @@ export default function WelcomeModal({ user, onDone }) {
   return (
     <div className="welcome-overlay">
       <div className="welcome-card">
-        <button className="welcome-skip" onClick={skip}>{fa ? "رد کردن" : "Skip"}</button>
+        <button type="button" className="welcome-skip" onClick={skip}>{fa ? "رد کردن" : "Skip"}</button>
         {/* progress dots */}
         <div className="welcome-dots">
           {[0, 1, 2].map((i) => <span key={i} className={i <= step ? "on" : ""} />)}
@@ -57,7 +57,7 @@ export default function WelcomeModal({ user, onDone }) {
             <p>{fa
               ? "MED School یادگیری پزشکی را به یک برنامهٔ منظم روزانه تبدیل می‌کند: درس‌های کوتاه و هدفمند، مرور فاصله‌دار، رتبه‌بندی کشوری و چالش روز. بیا در چند ثانیه شروع کنیم."
               : "MED School turns medical study into a disciplined daily routine: short focused lessons, spaced repetition, a national ranking and a daily challenge. Let's set you up in a few seconds."}</p>
-            <button className="btn btn-primary btn-block btn-lg" onClick={() => setStep(1)}>
+            <button type="button" className="btn btn-primary btn-block btn-lg" onClick={() => setStep(1)}>
               {fa ? "شروع کنیم" : "Let's go"} <Icon name={fa ? "chevronLeft" : "chevronRight"} size={18} />
             </button>
           </div>
@@ -70,12 +70,12 @@ export default function WelcomeModal({ user, onDone }) {
             <p className="small muted">{fa ? "کمک می‌کند تجربه را برایت شخصی‌تر کنیم." : "This helps us personalize your experience."}</p>
             <div className="welcome-choices">
               {reasons.map((r) => (
-                <button key={r.id} className={`welcome-choice ${why === r.id ? "sel" : ""}`} onClick={() => setWhy(r.id)}>
+                <button type="button" key={r.id} className={`welcome-choice ${why === r.id ? "sel" : ""}`} onClick={() => setWhy(r.id)}>
                   <span className="wc-emoji">{r.emoji}</span> {fa ? r.fa : r.en}
                 </button>
               ))}
             </div>
-            <button className="btn btn-primary btn-block btn-lg" disabled={!why} onClick={() => setStep(2)}>
+            <button type="button" className="btn btn-primary btn-block btn-lg" disabled={!why} onClick={() => setStep(2)}>
               {fa ? "بعدی" : "Next"} <Icon name={fa ? "chevronLeft" : "chevronRight"} size={18} />
             </button>
           </div>
@@ -88,12 +88,12 @@ export default function WelcomeModal({ user, onDone }) {
             <p className="small muted">{fa ? "هر روز به این هدف برس تا استریکت زنده بماند. بعداً قابل تغییر است." : "Hit it daily to keep your streak alive. You can change it later."}</p>
             <div className="welcome-choices">
               {GOALS.map((g) => (
-                <button key={g.value} className={`welcome-choice ${goal === g.value ? "sel" : ""}`} onClick={() => setGoal(g.value)}>
+                <button type="button" key={g.value} className={`welcome-choice ${goal === g.value ? "sel" : ""}`} onClick={() => setGoal(g.value)}>
                   <span className="wc-emoji">{g.emoji}</span> {fa ? g.fa : g.en} <span className="wc-xp">{g.value} XP</span>
                 </button>
               ))}
             </div>
-            <button className="btn btn-accent btn-block btn-lg" disabled={busy} onClick={finish}>
+            <button type="button" className="btn btn-accent btn-block btn-lg" disabled={busy} onClick={finish}>
               🚀 {fa ? "بزن بریم!" : "Start learning!"}
             </button>
           </div>

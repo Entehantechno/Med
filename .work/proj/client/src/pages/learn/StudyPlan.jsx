@@ -61,7 +61,7 @@ export default function StudyPlan({ onBack, openMindmap }) {
             <input type="checkbox" checked={useAi} onChange={(e) => setUseAi(e.target.checked)} style={{ width: 18, height: 18 }} />
           </label>
         )}
-        <button className="btn btn-accent btn-block mt8" disabled={busy} onClick={generate}>
+        <button type="button" className="btn btn-accent btn-block mt8" disabled={busy} onClick={generate}>
           <Icon name="target" size={16} /> {plan ? t("studyPlanRegen") : t("studyPlanGen")}
         </button>
       </div>
@@ -116,7 +116,7 @@ export default function StudyPlan({ onBack, openMindmap }) {
         </>
       )}
 
-      <button className="btn btn-ghost btn-block mt16" onClick={onBack}>{t("back")}</button>
+      <button type="button" className="btn btn-ghost btn-block mt16" onClick={onBack}>{t("back")}</button>
     </div>
   );
 }

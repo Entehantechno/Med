@@ -12,7 +12,7 @@
 
    The public API keeps `mood` + `size`; new optional props: `src` (image URL
    override) and `speed`. Images are decorative (aria-hidden). The tap handler
-   lives on a <button> wrapper only when the character is interactive so it
+   lives on a <button type="button"> wrapper only when the character is interactive so it
    stays keyboard-free noise for screen readers (button has aria-hidden too).
    ========================================================================== */
 

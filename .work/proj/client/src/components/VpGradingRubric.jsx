@@ -127,7 +127,7 @@ export function VpGradingPanel() {
     api.get("/settings/vp_grading").then((d) => setR(mergeRubric(d))).catch((e) => { setLoadErr(String(e.message || e)); setR({ __err: true }); });
   };
   useEffect(() => { load(); }, []);
-  if (r?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری ملاک نمره‌دهی شکست خورد" : "Could not load grading settings")}</h3><button className="btn btn-ghost mt16" onClick={() => { setR(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (r?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری ملاک نمره‌دهی شکست خورد" : "Could not load grading settings")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setR(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!r) return <Spinner />;
   const save = async () => {
     setBusy(true);
@@ -142,8 +142,8 @@ export function VpGradingPanel() {
       <div className="section-title">
         <h4><Icon name="target" size={16} /> {t("vpGrading")}</h4>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn btn-ghost btn-sm" onClick={() => setR(emptyRubric())}>{t("vpGradingReset")}</button>
-          <button className="btn btn-primary btn-sm" disabled={busy} onClick={save}>{t("save")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setR(emptyRubric())}>{t("vpGradingReset")}</button>
+          <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={save}>{t("save")}</button>
         </div>
       </div>
       <p className="small muted mb16">{t("vpGradingHint")}</p>

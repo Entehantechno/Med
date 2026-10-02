@@ -43,7 +43,7 @@ export default function Certificates() {
       {d.certificates.length > 0 && (
         <div className="cert-grid">
           {d.certificates.map((c) => (
-            <button key={c.serial} className="cert-mini" onClick={() => setView(c)}>
+            <button type="button" key={c.serial} className="cert-mini" onClick={() => setView(c)}>
               <div className="cert-mini-ribbon">🎓</div>
               <div className="cert-mini-title">{c.title}</div>
               <div className="cert-mini-org">{c.org}</div>
@@ -65,7 +65,7 @@ export default function Certificates() {
               </div>
               <div className="cert-bar"><div className="cert-bar-fill" style={{ width: `${p.pct}%` }} /></div>
               {p.pct >= 100
-                ? <button className="btn btn-primary btn-sm" style={{ marginTop: 10 }} onClick={() => claim(p.kind)}>{fa ? "دریافت گواهی 🎓" : "Claim certificate 🎓"}</button>
+                ? <button type="button" className="btn btn-primary btn-sm" style={{ marginTop: 10 }} onClick={() => claim(p.kind)}>{fa ? "دریافت گواهی 🎓" : "Claim certificate 🎓"}</button>
                 : <div className="small muted" style={{ marginTop: 8 }}>{fa ? "با تکمیل ۱۰۰٪ مسیر، گواهی فعال می‌شود." : "Reach 100% to unlock the certificate."}</div>}
             </div>
           ))}
@@ -122,7 +122,7 @@ function CertificateView({ cert, onBack }) {
 
   return (
     <div className="page">
-      <button className="blog-back" onClick={onBack}>← {fa ? "بازگشت" : "Back"}</button>
+      <button type="button" className="blog-back" onClick={onBack}>← {fa ? "بازگشت" : "Back"}</button>
 
       <div className="cert-sheet" id="cert-print">
         <div className="cert-border">
@@ -153,11 +153,11 @@ function CertificateView({ cert, onBack }) {
       </div>
 
       <div className="cert-actions no-print">
-        <button className="btn btn-primary" onClick={print}><Icon name="download" size={15} /> {fa ? "چاپ / ذخیرهٔ PDF" : "Print / Save PDF"}</button>
-        <button className="btn" onClick={copyLink}><Icon name="link" size={15} /> {fa ? "کپی لینک استعلام" : "Copy verify link"}</button>
-        <button className="btn cert-btn-li" onClick={linkedin}>in</button>
-        <button className="btn cert-btn-tg" onClick={telegram}>✈️</button>
-        <button className="btn cert-btn-wa" onClick={whatsapp}>🟢</button>
+        <button type="button" className="btn btn-primary" onClick={print}><Icon name="download" size={15} /> {fa ? "چاپ / ذخیرهٔ PDF" : "Print / Save PDF"}</button>
+        <button type="button" className="btn" onClick={copyLink}><Icon name="link" size={15} /> {fa ? "کپی لینک استعلام" : "Copy verify link"}</button>
+        <button type="button" className="btn cert-btn-li" onClick={linkedin}>in</button>
+        <button type="button" className="btn cert-btn-tg" onClick={telegram}>✈️</button>
+        <button type="button" className="btn cert-btn-wa" onClick={whatsapp}>🟢</button>
       </div>
       <div className="small muted no-print" style={{ marginTop: 10 }}>
         {fa ? "هر کسی می‌تواند با این لینک اصالت گواهی شما را تأیید کند:" : "Anyone can confirm your certificate with this link:"}

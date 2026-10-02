@@ -59,8 +59,8 @@ export default function PathManager() {
     <div className="page">
       <div className="section-title"><h2><Icon name="book" size={22} /> {t("pathManager")}</h2>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="btn btn-accent btn-sm" onClick={() => setOfficialImport(true)}><Icon name="download" size={14} /> {lang === "fa" ? "ورود سؤال‌های رسمی/سال‌های قبل" : "Import past-exam questions"}</button>
-          <button className="btn btn-primary btn-sm" onClick={() => setTopicEdit({ program })}><Icon name="book" size={14} /> {t("newTopic")}</button>
+          <button type="button" className="btn btn-accent btn-sm" onClick={() => setOfficialImport(true)}><Icon name="download" size={14} /> {lang === "fa" ? "ورود سؤال‌های رسمی/سال‌های قبل" : "Import past-exam questions"}</button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setTopicEdit({ program })}><Icon name="book" size={14} /> {t("newTopic")}</button>
         </div>
       </div>
       <div className="muted small mb16">{t("pathManagerHint")}</div>
@@ -72,7 +72,7 @@ export default function PathManager() {
       {programs.length > 1 && (
         <div className="ad-slot-tabs mb16">
           {programs.map((p) => (
-            <button key={p.slug} className={`btn btn-sm ${program === p.slug ? "btn-primary" : "btn-ghost"}`} onClick={() => setProgram(p.slug)}>
+            <button type="button" key={p.slug} className={`btn btn-sm ${program === p.slug ? "btn-primary" : "btn-ghost"}`} onClick={() => setProgram(p.slug)}>
               <span style={{ fontSize: "1.05rem" }}>{p.emoji}</span> {lang === "fa" ? p.fa : p.en} ({p.topics})
             </button>
           ))}
@@ -97,8 +97,8 @@ export default function PathManager() {
               <div style={{ fontWeight: 800 }}>{lang === "en" ? (topic.name_en || topic.name_fa) : (topic.name_fa || topic.name_en)}</div>
               <div className="small muted">{topic.nodes.length} {t("lessonsCount")} · {topic.slug}</div>
             </div>
-            <button className="btn btn-sm btn-ghost" onClick={(e) => { e.stopPropagation(); setTopicEdit(topic); }} title={t("edit")}><Icon name="edit" size={13} /></button>
-            <button className="btn btn-sm btn-danger" onClick={(e) => { e.stopPropagation(); delTopic(topic.id); }} title={t("delete")}><Icon name="trash" size={13} /></button>
+            <button type="button" className="btn btn-sm btn-ghost" onClick={(e) => { e.stopPropagation(); setTopicEdit(topic); }} title={t("edit")}><Icon name="edit" size={13} /></button>
+            <button type="button" className="btn btn-sm btn-danger" onClick={(e) => { e.stopPropagation(); delTopic(topic.id); }} title={t("delete")}><Icon name="trash" size={13} /></button>
             <Icon name={open[topic.id] ? "chevronUp" : "chevronDown"} size={16} />
           </div>
 
@@ -116,13 +116,13 @@ export default function PathManager() {
                     <div style={{ fontWeight: 700 }}>{lang === "fa" ? n.title_fa : n.title_en || "—"}</div>
                     <div className="small muted">{n.cardCount} {t("questionsCount")} · {n.xp_reward} XP · {t(n.kind)}</div>
                   </div>
-                  <button className="btn btn-sm btn-ghost" onClick={() => setCardsFor({ ...n, topicName: lang === "fa" ? topic.name_fa : topic.name_en })} title={t("chooseQuestions")}><Icon name="check" size={13} /></button>
-                  <button className="btn btn-sm btn-ghost" onClick={() => setDesignFor(n)} title={t("designQuestion")}><Icon name="edit" size={13} /> +</button>
-                  <button className="btn btn-sm btn-ghost" onClick={() => setNodeEdit(n)} title={t("edit")}><Icon name="settings" size={13} /></button>
-                  <button className="btn btn-sm btn-danger" onClick={() => delNode(n.id)} title={t("delete")}><Icon name="trash" size={13} /></button>
+                  <button type="button" className="btn btn-sm btn-ghost" onClick={() => setCardsFor({ ...n, topicName: lang === "fa" ? topic.name_fa : topic.name_en })} title={t("chooseQuestions")}><Icon name="check" size={13} /></button>
+                  <button type="button" className="btn btn-sm btn-ghost" onClick={() => setDesignFor(n)} title={t("designQuestion")}><Icon name="edit" size={13} /> +</button>
+                  <button type="button" className="btn btn-sm btn-ghost" onClick={() => setNodeEdit(n)} title={t("edit")}><Icon name="settings" size={13} /></button>
+                  <button type="button" className="btn btn-sm btn-danger" onClick={() => delNode(n.id)} title={t("delete")}><Icon name="trash" size={13} /></button>
                 </div>
               ))}
-              <button className="btn btn-ghost btn-sm mt8" onClick={() => setNodeEdit({ topic_id: topic.id, kind: "lesson", xp_reward: 20 })}>
+              <button type="button" className="btn btn-ghost btn-sm mt8" onClick={() => setNodeEdit({ topic_id: topic.id, kind: "lesson", xp_reward: 20 })}>
                 + {t("newLesson")}
               </button>
             </div>
@@ -185,8 +185,8 @@ function OfficialQuestionImportModal({ program, onClose, onImported }) {
     {err && <div className="err-banner mb8">{err}</div>}
     <textarea dir="ltr" value={text} onChange={(e) => setText(e.target.value)} style={{ width: "100%", minHeight: 300, fontFamily: "monospace", fontSize: ".78rem" }} />
     <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 10 }}>
-      <button className="btn btn-ghost" onClick={dryRun}>{fa ? "Dry-run / پیش‌نمایش" : "Dry-run / preview"}</button>
-      <button className="btn btn-primary" onClick={commit} disabled={!preview}>{fa ? "ثبت نهایی import" : "Commit import"}</button>
+      <button type="button" className="btn btn-ghost" onClick={dryRun}>{fa ? "Dry-run / پیش‌نمایش" : "Dry-run / preview"}</button>
+      <button type="button" className="btn btn-primary" onClick={commit} disabled={!preview}>{fa ? "ثبت نهایی import" : "Commit import"}</button>
     </div>
     {preview && <div className="card mt16" style={{ background: "var(--panel2)" }}>
       <h4>{fa ? "نتیجه" : "Result"}</h4>

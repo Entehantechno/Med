@@ -19,7 +19,7 @@ export default function Notes({ onBack }) {
   return (
     <div className="page">
       <div className="section-title"><h2><Icon name="edit" size={22} /> {t("myNotes")}</h2>
-        {onBack && <button className="btn btn-ghost btn-sm" onClick={onBack}>← {t("back")}</button>}</div>
+        {onBack && <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}>← {t("back")}</button>}</div>
       {notes.length === 0
         ? <div className="card empty-state"><div className="ico"><Icon name="edit" size={40} /></div>
             <h3>{t("noNotes")}</h3><div className="small muted">{t("noNotesHint")}</div></div>
@@ -27,7 +27,7 @@ export default function Notes({ onBack }) {
           <div className="card mb8" key={n.card_id}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start" }}>
               <div style={{ fontWeight: 700, flex: 1, minWidth: 0 }}>{n.question}</div>
-              <button className={`btn btn-sm ${n.highlight ? "btn-accent" : "btn-ghost"}`}
+              <button type="button" className={`btn btn-sm ${n.highlight ? "btn-accent" : "btn-ghost"}`}
                 onClick={() => save(n.card_id, n.note, !n.highlight)} title={t("highlight")}>
                 <Icon name="star" size={14} />
               </button>
@@ -58,7 +58,7 @@ export function NoteButton({ cardId }) {
 
   return (
     <>
-      <button className="btn btn-ghost btn-sm" onClick={openEditor} title={t("addNote")}>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={openEditor} title={t("addNote")}>
         <Icon name="edit" size={14} /> {t("note")}
       </button>
       {open && (
@@ -71,8 +71,8 @@ export function NoteButton({ cardId }) {
             </label>
             <textarea style={{ minHeight: 100 }} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t("notePlaceholder")} />
             <div className="modal-actions">
-              <button className="btn btn-ghost" onClick={() => setOpen(false)}>{t("close")}</button>
-              <button className="btn btn-primary" onClick={save}>{t("save")}</button>
+              <button type="button" className="btn btn-ghost" onClick={() => setOpen(false)}>{t("close")}</button>
+              <button type="button" className="btn btn-primary" onClick={save}>{t("save")}</button>
             </div>
           </div>
         </div>

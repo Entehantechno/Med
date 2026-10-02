@@ -108,7 +108,7 @@ export default function ExamSim({ onProfile, onBack, onPremium }) {
           <div className="muted small mb8">{t("examSimTopicsHint")}</div>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
             {topics.map((tp) => (
-              <button key={tp.slug} className={`btn btn-sm ${chosen.includes(tp.slug) ? "btn-primary" : "btn-ghost"}`}
+              <button type="button" key={tp.slug} className={`btn btn-sm ${chosen.includes(tp.slug) ? "btn-primary" : "btn-ghost"}`}
                 onClick={() => toggleTopic(tp.slug)}>
                 <span style={{ fontSize: "1.1rem" }}>{tp.emoji}</span> {tp.title}
               </button>
@@ -120,13 +120,13 @@ export default function ExamSim({ onProfile, onBack, onPremium }) {
           <div style={{ fontWeight: 800, marginBottom: 8 }}>{t("examSimCount")}</div>
           <div style={{ display: "flex", gap: 8 }}>
             {[10, 20, 30, 40].map((n) => (
-              <button key={n} className={`btn btn-sm ${count === n ? "btn-primary" : "btn-ghost"}`} onClick={() => setCount(n)}>{n}</button>
+              <button type="button" key={n} className={`btn btn-sm ${count === n ? "btn-primary" : "btn-ghost"}`} onClick={() => setCount(n)}>{n}</button>
             ))}
           </div>
           <div className="muted small mt8">⏱️ {t("examSimTime")}: {count} {t("minutesShort")}</div>
         </div>
 
-        <button className="btn btn-accent btn-block" disabled={busy} onClick={start}>
+        <button type="button" className="btn btn-accent btn-block" disabled={busy} onClick={start}>
           <Icon name="play" size={16} /> {t("examSimStart")}
         </button>
 
@@ -141,7 +141,7 @@ export default function ExamSim({ onProfile, onBack, onPremium }) {
             ))}
           </div>
         )}
-        <button className="btn btn-ghost btn-block mt16" onClick={onBack}>{t("back")}</button>
+        <button type="button" className="btn btn-ghost btn-block mt16" onClick={onBack}>{t("back")}</button>
       </div>
     );
   }
@@ -168,8 +168,8 @@ export default function ExamSim({ onProfile, onBack, onPremium }) {
           <PeerPercentile peer={result.peer} onPremium={onPremium} />
           <div className="muted small mt16" style={{ maxWidth: 460 }}>{t("passProbabilityNote")}</div>
           <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-            <button className="btn btn-primary" onClick={() => { setPhase("setup"); setResult(null); }}>{t("examSimAgain")}</button>
-            <button className="btn btn-ghost" onClick={onBack}>{t("back")}</button>
+            <button type="button" className="btn btn-primary" onClick={() => { setPhase("setup"); setResult(null); }}>{t("examSimAgain")}</button>
+            <button type="button" className="btn btn-ghost" onClick={onBack}>{t("back")}</button>
           </div>
         </div>
       </div>
@@ -197,10 +197,10 @@ export default function ExamSim({ onProfile, onBack, onPremium }) {
       </div>
 
       <div className="lesson-actions" style={{ display: "flex", gap: 8 }}>
-        <button className="btn btn-ghost" disabled={idx === 0} onClick={() => go(-1)}><Icon name="chevronRight" size={15} /> {t("prev")}</button>
+        <button type="button" className="btn btn-ghost" disabled={idx === 0} onClick={() => go(-1)}><Icon name="chevronRight" size={15} /> {t("prev")}</button>
         {idx + 1 < sim.cards.length
-          ? <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => go(1)}>{t("nextQ")} <Icon name="chevronLeft" size={15} /></button>
-          : <button className="btn btn-accent" style={{ flex: 1 }} disabled={busy} onClick={() => finishExam(false)}><Icon name="check" size={15} /> {t("examSimSubmit")}</button>}
+          ? <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={() => go(1)}>{t("nextQ")} <Icon name="chevronLeft" size={15} /></button>
+          : <button type="button" className="btn btn-accent" style={{ flex: 1 }} disabled={busy} onClick={() => finishExam(false)}><Icon name="check" size={15} /> {t("examSimSubmit")}</button>}
       </div>
       <div className="muted small center mt8">{t("answered")}: {answeredCount}/{sim.cards.length}</div>
     </div>

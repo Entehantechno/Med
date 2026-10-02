@@ -51,7 +51,7 @@ export default function StudentHome({ go }) {
           <div className="ico"><Icon name="warn" size={30} /></div>
           <h3>{lang === "fa" ? "«بارگذاری خانه» قطع شد" : "[Loading home] failed"}</h3>
           <div className="muted small mt8">{loadFailText(loadErr, lang)}</div>
-          <button className="btn btn-primary mt16" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Try again"}</button>
+          <button type="button" className="btn btn-primary mt16" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Try again"}</button>
         </div>
       </div>
     </div>
@@ -96,7 +96,7 @@ export default function StudentHome({ go }) {
                       <span className="tag"><Icon name="clock" size={16} /> {fmtDateTime(e.ends_at, lang)}</span>
                     </div>
                   </div>
-                  <button className="btn btn-accent" onClick={() => go("exams")}>{t("enterExam")}</button>
+                  <button type="button" className="btn btn-accent" onClick={() => go("exams")}>{t("enterExam")}</button>
                 </div>
               ))}
             </div>
@@ -112,7 +112,7 @@ export default function StudentHome({ go }) {
         ) : (
           <div className={`grid grid-${Math.min(modules.length, 3)} mb16`}>
             {modules.map((m) => (
-              <button className="card mod-card mod-card-row" key={m.key} onClick={() => go(m.key)}>
+              <button type="button" className="card mod-card mod-card-row" key={m.key} onClick={() => go(m.key)}>
                 <div className="mod-ico" style={{ background: m.bg, position: "relative" }}><Icon name={m.ico} size={26} />
                   {m.badge > 0 && <span style={{ position: "absolute", top: -6, insetInlineEnd: -6,
                     background: "var(--ok)", color: "#fff", borderRadius: 999, fontSize: ".62rem",
@@ -130,11 +130,11 @@ export default function StudentHome({ go }) {
         {/* At-a-glance counters that ALSO navigate — a student can always reach
             their exams / classes / progress straight from the home. */}
         <div className="grid grid-3">
-          <button className="card stat-card stat-card-link" onClick={() => go("exams")}>
+          <button type="button" className="card stat-card stat-card-link" onClick={() => go("exams")}>
             <div className="num"><StatNum value={data.exams.length} /></div><div className="lbl">{t("myExams")}</div></button>
-          <button className="card stat-card stat-card-link" onClick={() => go("classes")}>
+          <button type="button" className="card stat-card stat-card-link" onClick={() => go("classes")}>
             <div className="num"><StatNum value={data.classes.length} /></div><div className="lbl">{t("myClasses")}</div></button>
-          <button className="card stat-card stat-card-link" onClick={() => go("classes")}>
+          <button type="button" className="card stat-card stat-card-link" onClick={() => go("classes")}>
             <div className="num"><StatNum value={data.mine.length} /></div><div className="lbl">{t("myProgress")}</div></button>
         </div>
       </div>

@@ -53,7 +53,7 @@ export default function Challenge() {
           <div style={{ color: outcome?.iWon ? "var(--xp)" : "var(--muted)" }}><Icon name="trophy" size={56} /></div>
           <h2 style={{ border: "none" }}>{outcome?.finished ? (outcome.iWon ? t("youWon") : outcome.tie ? t("tie") : t("youLost")) : t("waitOpponent")}</h2>
           <div className="big">{outcome?.myScore}</div>
-          <button className="btn btn-primary mt16" onClick={() => setView("list")}>{t("back")}</button>
+          <button type="button" className="btn btn-primary mt16" onClick={() => setView("list")}>{t("back")}</button>
         </div>
       </div>
     );
@@ -64,7 +64,7 @@ export default function Challenge() {
       <div className="muted small mb16">{t("challengeDesc")}</div>
 
       {/* Quick match — auto-matchmaking (competitors require sharing a code) */}
-      <button className="btn btn-accent btn-block mb16 quick-match-btn" onClick={quickMatch}>
+      <button type="button" className="btn btn-accent btn-block mb16 quick-match-btn" onClick={quickMatch}>
         <Icon name="bolt" size={16} /> {t("quickMatch")}
       </button>
 
@@ -74,7 +74,7 @@ export default function Challenge() {
           <div className="small muted mb8">{t("pickTopicChallenge")}</div>
           <div className="ch-topics">
             {topics.slice(0, 6).map((tp) => (
-              <button key={tp.id} className="btn btn-ghost btn-sm ch-topic-pill" onClick={() => create(tp.id)}>{tp.name}</button>
+              <button type="button" key={tp.id} className="btn btn-ghost btn-sm ch-topic-pill" onClick={() => create(tp.id)}>{tp.name}</button>
             ))}
           </div>
         </div>
@@ -82,7 +82,7 @@ export default function Challenge() {
           <h4 className="mb8"><Icon name="users" size={16} /> {t("joinChallenge")}</h4>
           <div style={{ display: "flex", gap: 8 }}>
             <input value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())} placeholder={t("enterCode")} style={{ fontFamily: "monospace", letterSpacing: 2 }} />
-            <button className="btn btn-accent" onClick={join}>{t("join")}</button>
+            <button type="button" className="btn btn-accent" onClick={join}>{t("join")}</button>
           </div>
         </div>
       </div>
@@ -108,7 +108,7 @@ export default function Challenge() {
             <div className="vs-name">{c.opponentName || (lang === "fa" ? "منتظر حریف" : "Waiting…")}</div>
             <div className="vs-score">{c.otherScore || "—"}</div>
           </div>
-          {(c.status === "active" && !c.myDone) && <button className="btn btn-primary btn-sm" onClick={() => play(c.id)}>{t("play")}</button>}
+          {(c.status === "active" && !c.myDone) && <button type="button" className="btn btn-primary btn-sm" onClick={() => play(c.id)}>{t("play")}</button>}
           {(c.status === "open" && c.role === "creator") && <span className="tag">{t("shareCode")}</span>}
         </div>
       ))}
@@ -156,8 +156,8 @@ function ChallengePlay({ data, onDone }) {
       {checked && card.micro && <MicroLesson micro={card.micro} defaultOpen={false} />}
       <div className="mt16">
         {!checked
-          ? <button className="btn btn-primary btn-block" disabled={!canCheck} onClick={check}>{t("checkAns")}</button>
-          : <button className="btn btn-accent btn-block" onClick={next}>{idx + 1 < cards.length ? t("nextQ") : t("finishExam")}</button>}
+          ? <button type="button" className="btn btn-primary btn-block" disabled={!canCheck} onClick={check}>{t("checkAns")}</button>
+          : <button type="button" className="btn btn-accent btn-block" onClick={next}>{idx + 1 < cards.length ? t("nextQ") : t("finishExam")}</button>}
       </div>
     </div>
   );

@@ -24,7 +24,7 @@ export default function Mistakes({ onProfile, onBack }) {
         <div className="ico"><Icon name="check" size={40} /></div>
         <h3>{t("noMistakes")}</h3>
         <div className="small muted">{t("noMistakesHint")}</div>
-        <button className="btn btn-ghost mt16" onClick={onBack}>{t("back")}</button>
+        <button type="button" className="btn btn-ghost mt16" onClick={onBack}>{t("back")}</button>
       </div>
     );
 
@@ -33,7 +33,7 @@ export default function Mistakes({ onProfile, onBack }) {
       <div className="card empty-state">
         <div className="ico">🎉</div>
         <h3>{t("mistakesCleared")}</h3>
-        <button className="btn btn-primary mt16" onClick={onBack}>{t("back")}</button>
+        <button type="button" className="btn btn-primary mt16" onClick={onBack}>{t("back")}</button>
       </div>
     );
 
@@ -57,7 +57,7 @@ export default function Mistakes({ onProfile, onBack }) {
   return (
     <div className="lesson-wrap">
       <div className="lesson-top">
-        <button className="btn btn-ghost btn-sm icon-btn" onClick={onBack} title={t("back")}><Icon name="logout" size={16} /></button>
+        <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onBack} title={t("back")}><Icon name="logout" size={16} /></button>
         <div className="pbar"><span style={{ width: `${Math.round((idx / cards.length) * 100)}%` }} /></div>
         <span className="tag"><Icon name="warn" size={13} /> {idx + 1}/{cards.length}</span>
       </div>
@@ -72,8 +72,8 @@ export default function Mistakes({ onProfile, onBack }) {
       </div>
       <div className="lesson-actions">
         {!checked
-          ? <button className="btn btn-primary btn-block" disabled={!canCheck} onClick={check}>{t("check")}</button>
-          : <button className="btn btn-accent btn-block" onClick={next}>{idx + 1 < cards.length ? t("next") : t("finish")}</button>}
+          ? <button type="button" className="btn btn-primary btn-block" disabled={!canCheck} onClick={check}>{t("check")}</button>
+          : <button type="button" className="btn btn-accent btn-block" onClick={next}>{idx + 1 < cards.length ? t("next") : t("finish")}</button>}
       </div>
     </div>
   );

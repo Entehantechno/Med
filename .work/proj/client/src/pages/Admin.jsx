@@ -70,8 +70,8 @@ function CsvTools({ kind, onImported }) {
   return (
     <div style={{ display: "flex", gap: 8 }}>
       <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={upload} style={{ display: "none" }} />
-      <button className="btn btn-ghost btn-sm" onClick={() => fileRef.current?.click()}><Icon name="upload" size={16} /> {t("importCsv")}</button>
-      <button className="btn btn-ghost btn-sm" onClick={download}><Icon name="download" size={16} /> {t("exportCsv")}</button>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={() => fileRef.current?.click()}><Icon name="upload" size={16} /> {t("importCsv")}</button>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={download}><Icon name="download" size={16} /> {t("exportCsv")}</button>
     </div>
   );
 }
@@ -92,14 +92,14 @@ function AdminBell() {
   const kindIcon = (k) => (k === "admin_digest" ? "📊" : k === "admin_alert" ? "⚠️" : "🔔");
   return (
     <div style={{ position: "relative" }}>
-      <button className="btn btn-ghost btn-sm" onClick={toggle} title={t("adminNotifs")} style={{ position: "relative" }}>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={toggle} title={t("adminNotifs")} style={{ position: "relative" }}>
         <Icon name="bell" size={18} />
         {d.unseen > 0 && <span style={{ position: "absolute", top: -4, insetInlineEnd: -4, background: "var(--flame,#e0533d)", color: "#fff", borderRadius: 10, fontSize: 10, fontWeight: 800, minWidth: 16, height: 16, lineHeight: "16px", textAlign: "center", padding: "0 3px" }}>{d.unseen}</span>}
       </button>
       {open && (
         <div className="card" style={{ position: "absolute", insetInlineEnd: 0, top: "110%", zIndex: 50, width: 340, maxWidth: "88vw", maxHeight: 420, overflowY: "auto", boxShadow: "0 10px 30px rgba(0,0,0,.18)" }}>
           <div className="section-title" style={{ marginBottom: 8 }}><h4 style={{ fontSize: ".95rem" }}>{t("adminNotifs")}</h4>
-            <button className="btn btn-ghost btn-sm" onClick={() => setOpen(false)}><Icon name="close" size={13} /></button></div>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOpen(false)}><Icon name="close" size={13} /></button></div>
           {d.notifications.length === 0 ? <div className="small muted center" style={{ padding: 14 }}>{t("adminNoNotifs")}</div> :
             d.notifications.map((n) => (
               <div key={n.id} className="small" style={{ padding: "8px 6px", borderBottom: "1px solid var(--border,#eee)", opacity: n.seen ? 0.7 : 1 }}>
@@ -223,7 +223,7 @@ export default function Admin({ home }) {
         <div className="section-title">
           <h2>{t("adminPanel")}</h2>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <button className="btn btn-ghost btn-sm" onClick={() => setCmdOpen(true)} title="Ctrl+K"><Icon name="search" size={14}/> Ctrl+K</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setCmdOpen(true)} title="Ctrl+K"><Icon name="search" size={14}/> Ctrl+K</button>
             <AdminBell />
             <Pill kind={isAdmin ? "active" : "medium"}>{t(user.role)}</Pill>
           </div>
@@ -234,17 +234,17 @@ export default function Admin({ home }) {
           <div className="admin-mode-panel">
             <div className="mode-switch">
               {hasGeneral && (
-                <button className={mode === "general" ? "active" : ""} onClick={() => switchMode("general")}>
+                <button type="button" className={mode === "general" ? "active" : ""} onClick={() => switchMode("general")}>
                   <Icon name="settings" size={18} /> {t("generalTab")}
                 </button>
               )}
               {hasUni && (
-                <button className={mode === "uni" ? "active" : ""} onClick={() => switchMode("uni")}>
+                <button type="button" className={mode === "uni" ? "active" : ""} onClick={() => switchMode("uni")}>
                   <Icon name="class" size={18} /> {t("uniTab")}
                 </button>
               )}
               {hasLearn && (
-                <button className={mode === "learn" ? "active" : ""} onClick={() => switchMode("learn")}>
+                <button type="button" className={mode === "learn" ? "active" : ""} onClick={() => switchMode("learn")}>
                   <Icon name="medal" size={18} /> {t("competitiveTab")}
                 </button>
               )}
@@ -260,7 +260,7 @@ export default function Admin({ home }) {
         <div className="admin-layout">
           {/* Mobile: the long admin menu becomes a tidy dropdown. This button
               shows the current section and toggles the full list open/closed. */}
-          <button className="sidenav-mobile-toggle" aria-expanded={mobileNavOpen}
+          <button type="button" className="sidenav-mobile-toggle" aria-expanded={mobileNavOpen}
             onClick={() => setMobileNavOpen((o) => !o)}>
             <span><Icon name="menu" size={16} /> {t(tab) || t("adminPanel")}</span>
             <Icon name={mobileNavOpen ? "chevronUp" : "chevronDown"} size={15} />
@@ -271,7 +271,7 @@ export default function Admin({ home }) {
               <Icon name="search" size={15} />
               <input value={navQuery} onChange={(e) => setNavQuery(e.target.value)}
                 placeholder={t("searchPlaceholder") || "جستجو…"} />
-              {navQuery && <button className="dt-clear" onClick={() => setNavQuery("")}><Icon name="close" size={13} /></button>}
+              {navQuery && <button type="button" className="dt-clear" onClick={() => setNavQuery("")}><Icon name="close" size={13} /></button>}
             </div>
             {navSections.map((sec) => {
               const nq = navQuery.trim().toLowerCase();
@@ -284,14 +284,14 @@ export default function Admin({ home }) {
               const open = nq || hasActive ? true : (secOpen[sec.title] ?? true);
               return (
                 <div className={`sidenav-group ${open ? "open" : "collapsed"}`} key={sec.title}>
-                  <button className="sidenav-title" onClick={() => setSecOpen((o) => ({ ...o, [sec.title]: !open }))} aria-expanded={open}>
+                  <button type="button" className="sidenav-title" onClick={() => setSecOpen((o) => ({ ...o, [sec.title]: !open }))} aria-expanded={open}>
                     <span>{sec.title}</span>
                     <Icon name={open ? "chevronUp" : "chevronDown"} size={13} />
                   </button>
                   {/* items stay in the DOM (mobile shows them in a scroller); on
                       desktop a collapsed group hides them via CSS */}
                   {visItems.map(([id, ic]) => (
-                    <button key={id} className={`nav-tab-btn ${tab === id ? "active" : ""}`} onClick={() => pickTab(id)}><Icon name={ic} size={18} /> {t(id)}</button>
+                    <button type="button" key={id} className={`nav-tab-btn ${tab === id ? "active" : ""}`} onClick={() => pickTab(id)}><Icon name={ic} size={18} /> {t(id)}</button>
                   ))}
                 </div>
               );
@@ -505,7 +505,7 @@ function UsersManager({ scope = "all" }) {
 
   if (detail) return <UserDetail id={detail} onBack={() => { setDetail(null); load(); }} />;
   if (!users) return <Spinner />;
-  if (loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr}</h3><button className="btn btn-ghost mt16" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr}</h3><button type="button" className="btn btn-ghost mt16" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
 
   const heading = scope === "uni" ? t("uniUsersScope") : scope === "competitive" ? t("competitiveUsersScope") : t("allUsersScope");
   const showAssignments = showUniTools;
@@ -514,9 +514,9 @@ function UsersManager({ scope = "all" }) {
     <div className="page">
       <div className="section-title"><h4><Icon name="users" size={18} /> {t("usersTab")}</h4>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {showUniTools && <button className="btn btn-ghost btn-sm" onClick={() => setImporting(true)}><Icon name="download" size={14} /> {t("importStudents")}</button>}
-          {showUniTools && <button className="btn btn-ghost btn-sm" onClick={() => setAdding(true)}><Icon name="user" size={14} /> {t("addStudent")}</button>}
-          <button className="btn btn-primary btn-sm" onClick={() => setCreating(true)}><Icon name="user" size={14} /> {t("newUser")}</button>
+          {showUniTools && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setImporting(true)}><Icon name="download" size={14} /> {t("importStudents")}</button>}
+          {showUniTools && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAdding(true)}><Icon name="user" size={14} /> {t("addStudent")}</button>}
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setCreating(true)}><Icon name="user" size={14} /> {t("newUser")}</button>
         </div>
       </div>
       <div className="small muted mb8">{heading}</div>
@@ -537,7 +537,7 @@ function UsersManager({ scope = "all" }) {
         rowKey={(u) => u.id}
         columns={[
           { key: "name", label: t("name"), sortValue: (u) => lang === "fa" ? u.name_fa : u.name_en,
-            render: (u) => (<><button className="btn-link" onClick={() => setDetail(u.id)} style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontWeight: 700, padding: 0 }}>{lang === "fa" ? u.name_fa : u.name_en}</button><div className="small muted">{u.username}</div></>) },
+            render: (u) => (<><button type="button" className="btn-link" onClick={() => setDetail(u.id)} style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontWeight: 700, padding: 0 }}>{lang === "fa" ? u.name_fa : u.name_en}</button><div className="small muted">{u.username}</div></>) },
           { key: "student_no", label: t("studentNo"), render: (u) => u.student_no || "—" },
           { key: "role", label: t("role"), sortValue: (u) => u.role, render: (u) => <Pill kind={u.role === "admin" ? "active" : "medium"}>{t(u.role)}</Pill> },
           ...(showAssignments ? [{ key: "assignments", label: t("assignments"), sortable: false, render: (u) => u.role === "student"
@@ -546,13 +546,13 @@ function UsersManager({ scope = "all" }) {
           { key: "status", label: t("statusCol"), sortValue: (u) => u.status, render: (u) => <span className={`pill pill-${u.status === "active" ? "active" : "danger"}`}>{t(u.status === "active" ? "active" : "inactive")}</span> },
           { key: "actions", label: "", sortable: false, thStyle: { textAlign: "end" },
             render: (u) => (<span style={{ display: "flex", gap: 4, justifyContent: "flex-end", whiteSpace: "nowrap" }}>
-              {showUniTools && u.role === "student" && <button className="btn btn-sm btn-ghost" onClick={() => setAccess(u)} title={t("manageAccess")}><Icon name="key" size={13} /></button>}
-              <button className="btn btn-sm btn-ghost" onClick={() => setEditing(u)} title={t("editUser")}><Icon name="edit" size={13} /></button>
-              <button className="btn btn-sm btn-ghost" onClick={() => impersonate(u)} title={t("impersonate")}><Icon name="user" size={13} /></button>
+              {showUniTools && u.role === "student" && <button type="button" className="btn btn-sm btn-ghost" onClick={() => setAccess(u)} title={t("manageAccess")}><Icon name="key" size={13} /></button>}
+              <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(u)} title={t("editUser")}><Icon name="edit" size={13} /></button>
+              <button type="button" className="btn btn-sm btn-ghost" onClick={() => impersonate(u)} title={t("impersonate")}><Icon name="user" size={13} /></button>
               {u.status === "active"
-                ? <button className="btn btn-sm btn-warn" onClick={() => setStatus(u, "inactive")} title={t("ban")}><Icon name="lock" size={13} /></button>
-                : <button className="btn btn-sm btn-accent" onClick={() => setStatus(u, "active")} title={t("activate")}><Icon name="check" size={13} /></button>}
-              <button className="btn btn-sm btn-danger" onClick={() => del(u)} title={t("deleteUser")}><Icon name="trash" size={13} /></button>
+                ? <button type="button" className="btn btn-sm btn-warn" onClick={() => setStatus(u, "inactive")} title={t("ban")}><Icon name="lock" size={13} /></button>
+                : <button type="button" className="btn btn-sm btn-accent" onClick={() => setStatus(u, "active")} title={t("activate")}><Icon name="check" size={13} /></button>}
+              <button type="button" className="btn btn-sm btn-danger" onClick={() => del(u)} title={t("deleteUser")}><Icon name="trash" size={13} /></button>
             </span>) },
         ]}
       />
@@ -652,10 +652,10 @@ function StudentImportModal({ onClose, onDone }) {
       </div>
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-        <button className="btn btn-ghost btn-sm" onClick={() => fileRef.current?.click()}>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => fileRef.current?.click()}>
           <Icon name="download" size={14} /> {t("chooseFile")}
         </button>
-        <button className="btn btn-ghost btn-sm" onClick={() => setText(template)}>{t("useTemplate")}</button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setText(template)}>{t("useTemplate")}</button>
         <input ref={fileRef} type="file" accept=".csv,text/csv,.txt" onChange={onFile} style={{ display: "none" }} />
       </div>
 
@@ -675,11 +675,11 @@ function StudentImportModal({ onClose, onDone }) {
       )}
 
       <div className="modal-actions">
-        <button className="btn btn-ghost" onClick={onClose}>{t("close")}</button>
-        <button className="btn btn-primary" onClick={submit} disabled={busy}>
+        <button type="button" className="btn btn-ghost" onClick={onClose}>{t("close")}</button>
+        <button type="button" className="btn btn-primary" onClick={submit} disabled={busy}>
           {busy ? t("loading") : t("import")}
         </button>
-        {result && <button className="btn btn-accent" onClick={onDone}>{t("done")}</button>}
+        {result && <button type="button" className="btn btn-accent" onClick={onDone}>{t("done")}</button>}
       </div>
     </Modal>
   );
@@ -741,7 +741,7 @@ function Cases() {
     api.get("/cases").then((d) => setCases(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setCases({ __err: true }); });
   };
   useEffect(() => { load(); }, []);
-  if (cases?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (lang === "fa" ? "بارگذاری کیس‌ها شکست خورد" : "Could not load cases")}</h3><button className="btn btn-ghost mt16" onClick={() => { setCases(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (cases?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (lang === "fa" ? "بارگذاری کیس‌ها شکست خورد" : "Could not load cases")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCases(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!cases) return <Spinner />;
   const del = async (id) => { if (confirm(t("confirmDelete"))) { await api.del(`/cases/${id}`); load(); } };
   const save = async (data, id) => {
@@ -753,7 +753,7 @@ function Cases() {
       <div className="section-title"><h4>{t("cases")}</h4>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <CsvTools kind="cases" onImported={load} />
-          <button className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newCase")}</button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newCase")}</button>
         </div></div>
       <div className="small muted mb16"><Icon name="bookmark" size={16} /> {t("versionNote")}</div>
       <DataTable
@@ -767,8 +767,8 @@ function Cases() {
           { key: "difficulty", label: t("difficulty"), sortValue: (c) => c.difficulty, render: (c) => <Pill kind={c.difficulty}>{t(c.difficulty)}</Pill> },
           { key: "actions", label: "", sortable: false, thStyle: { textAlign: "end" }, render: (c) => (
             <span style={{ display: "flex", gap: 4, justifyContent: "flex-end", whiteSpace: "nowrap" }}>
-              <button className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}>{t("edit")}</button>
-              <button className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button>
+              <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}>{t("edit")}</button>
+              <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button>
             </span>) },
         ]}
       />
@@ -1020,7 +1020,7 @@ function Flashcards() {
     api.get("/flashcards").then((d) => setCards(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setCards({ __err: true }); });
   };
   useEffect(() => { load(); }, []);
-  if (cards?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (lang === "fa" ? "بارگذاری فلش‌کارت‌ها شکست خورد" : "Could not load flashcards")}</h3><button className="btn btn-ghost mt16" onClick={() => { setCards(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (cards?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (lang === "fa" ? "بارگذاری فلش‌کارت‌ها شکست خورد" : "Could not load flashcards")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCards(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!cards) return <Spinner />;
   const del = async (id) => { if (confirm(t("confirmDelete"))) { await api.del(`/flashcards/${id}`); load(); } };
   const save = async (data, id) => {
@@ -1032,7 +1032,7 @@ function Flashcards() {
       <div className="section-title"><h4>{t("flashcards")}</h4>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <CsvTools kind="flashcards" onImported={load} />
-          <button className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newFlashcard")}</button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newFlashcard")}</button>
         </div></div>
       <div className="small muted mb16"><Icon name="bookmark" size={16} /> {t("versionNote")}</div>
       <DataTable
@@ -1047,8 +1047,8 @@ function Flashcards() {
           { key: "hints", label: t("hints"), sortValue: (c) => ((lang === "fa" ? c.hints_fa : c.hints_en) || []).length, render: (c) => ((lang === "fa" ? c.hints_fa : c.hints_en) || []).length },
           { key: "actions", label: "", sortable: false, thStyle: { textAlign: "end" }, render: (c) => (
             <span style={{ display: "flex", gap: 4, justifyContent: "flex-end", whiteSpace: "nowrap" }}>
-              <button className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}>{t("edit")}</button>
-              <button className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button>
+              <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}>{t("edit")}</button>
+              <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button>
             </span>) },
         ]}
       />
@@ -1810,7 +1810,7 @@ function Checklists() {
     api.get("/checklists").then((d) => setLists(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setLists({ __err: true }); });
   };
   useEffect(() => { load(); api.get("/checklists-meta").then(setMeta).catch(() => {}); }, []);
-  if (lists?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری چک‌لیست‌ها شکست خورد" : "Could not load checklists")}</h3><button className="btn btn-ghost mt16" onClick={() => { setLists(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (lists?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری چک‌لیست‌ها شکست خورد" : "Could not load checklists")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setLists(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!lists) return <Spinner />;
 
   const addChecklist = async () => {
@@ -1822,7 +1822,7 @@ function Checklists() {
     <div>
       <div className="section-title">
         <h4><Icon name="check" size={16} /> {fa ? "چک‌لیست‌های ارزیابی (OSCE)" : "Assessment checklists (OSCE)"}</h4>
-        <button className="btn btn-primary btn-sm" onClick={addChecklist}>+ {fa ? "چک‌لیست جدید" : "New checklist"}</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={addChecklist}>+ {fa ? "چک‌لیست جدید" : "New checklist"}</button>
       </div>
       <div className="small muted mb16">
         {fa
@@ -1922,9 +1922,9 @@ function ChecklistEditor({ ch, meta = { sections: [], internalHistory: [] }, onS
                 <td><input type="number" min="1" value={it.weight} onChange={(e) => setItem(idx, "weight", e.target.value)} style={{ width: 60 }} /></td>
                 <td><input value={keysText(it)} onChange={(e) => setItem(idx, "keys", e.target.value)} placeholder={fa ? "مثال: درد، بازو، pain" : "e.g. pain, arm"} style={{ minWidth: 150 }} /></td>
                 <td style={{ whiteSpace: "nowrap" }}>
-                  <button className="btn btn-sm btn-ghost" title={fa ? "بالا" : "Up"} onClick={() => move(idx, -1)}><Icon name="chevronUp" size={13} /></button>
-                  <button className="btn btn-sm btn-ghost" title={fa ? "پایین" : "Down"} onClick={() => move(idx, 1)}><Icon name="chevronDown" size={13} /></button>
-                  <button className="btn btn-sm btn-danger" title={fa ? "حذف" : "Delete"} onClick={() => removeItem(idx)}><Icon name="close" size={13} /></button>
+                  <button type="button" className="btn btn-sm btn-ghost" title={fa ? "بالا" : "Up"} onClick={() => move(idx, -1)}><Icon name="chevronUp" size={13} /></button>
+                  <button type="button" className="btn btn-sm btn-ghost" title={fa ? "پایین" : "Down"} onClick={() => move(idx, 1)}><Icon name="chevronDown" size={13} /></button>
+                  <button type="button" className="btn btn-sm btn-danger" title={fa ? "حذف" : "Delete"} onClick={() => removeItem(idx)}><Icon name="close" size={13} /></button>
                 </td>
               </tr>
             ))}
@@ -1948,15 +1948,15 @@ function ChecklistEditor({ ch, meta = { sections: [], internalHistory: [] }, onS
       })()}
 
       <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-        <button className="btn btn-sm btn-ghost" onClick={addItem}>+ {fa ? "افزودن مورد" : "Add item"}</button>
+        <button type="button" className="btn btn-sm btn-ghost" onClick={addItem}>+ {fa ? "افزودن مورد" : "Add item"}</button>
         <select className="btn btn-sm btn-ghost" defaultValue="" onChange={(e) => { if (e.target.value) { addHistoryForm(e.target.value); e.target.value = ""; } }}
           title={fa ? "افزودن فرم کامل شرح‌حالِ یک تخصص (همه به بخش شرح‌حال)" : "Insert a specialty's full history form"}
           style={{ maxWidth: 220 }}>
           <option value="">➕ {fa ? "افزودن فرم شرح‌حال…" : "Add history form…"}</option>
           {forms.map((f) => <option key={f.key} value={f.key}>{fa ? f.fa : f.en} ({f.items?.length})</option>)}
         </select>
-        <button className="btn btn-sm btn-primary" disabled={busy} onClick={save}><Icon name="check" size={14} /> {fa ? "ذخیره" : "Save"}</button>
-        <button className="btn btn-sm btn-danger" onClick={del} style={{ marginInlineStart: "auto" }}><Icon name="close" size={14} /> {fa ? "حذف چک‌لیست" : "Delete checklist"}</button>
+        <button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={save}><Icon name="check" size={14} /> {fa ? "ذخیره" : "Save"}</button>
+        <button type="button" className="btn btn-sm btn-danger" onClick={del} style={{ marginInlineStart: "auto" }}><Icon name="close" size={14} /> {fa ? "حذف چک‌لیست" : "Delete checklist"}</button>
       </div>
     </div>
   );
@@ -2021,10 +2021,10 @@ function AiSection() {
   return (
     <div>
       <div className="subtabs mb16" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button className={`btn btn-sm ${sub === "config" ? "btn-primary" : "btn-ghost"}`} onClick={() => setSub("config")}>
+        <button type="button" className={`btn btn-sm ${sub === "config" ? "btn-primary" : "btn-ghost"}`} onClick={() => setSub("config")}>
           <Icon name="ai" size={15} /> {t("aiConfig")}
         </button>
-        <button className={`btn btn-sm ${sub === "prompts" ? "btn-primary" : "btn-ghost"}`} onClick={() => setSub("prompts")}>
+        <button type="button" className={`btn btn-sm ${sub === "prompts" ? "btn-primary" : "btn-ghost"}`} onClick={() => setSub("prompts")}>
           <Icon name="brain" size={15} /> {t("prompts")}
         </button>
       </div>
@@ -2051,7 +2051,7 @@ export function AiConfig() {
     api.get("/exam/ai-providers").then((d) => setProviders(normalizeAiProviders(d))).catch(() => setProviders(FALLBACK_AI_PROVIDERS));
   };
   useEffect(() => { loadAi(); }, []);
-  if (cfg?.__err || aiLoadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{aiLoadErr || (fa ? "بارگذاری تنظیمات هوش مصنوعی شکست خورد" : "Could not load AI settings")}</h3><button className="btn btn-ghost mt16" onClick={() => { setCfg(null); loadAi(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (cfg?.__err || aiLoadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{aiLoadErr || (fa ? "بارگذاری تنظیمات هوش مصنوعی شکست خورد" : "Could not load AI settings")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCfg(null); loadAi(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!cfg) return <Spinner />;
   const editCfg = (update) => {
     setTestMsg(""); setTestDetail(null);
@@ -2110,11 +2110,11 @@ export function AiConfig() {
       </div>
       </fieldset>
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-        <button className="btn btn-primary" onClick={() => save()} disabled={saving || testing}>{saving ? "…" : t("save")}</button>
-        <button className="btn btn-accent" onClick={test} disabled={testing || saving}>
+        <button type="button" className="btn btn-primary" onClick={() => save()} disabled={saving || testing}>{saving ? "…" : t("save")}</button>
+        <button type="button" className="btn btn-accent" onClick={test} disabled={testing || saving}>
           {testing ? (fa ? "در حال آزمایش…" : "Testing…") : (fa ? "آزمایش بیمار مجازی با API" : "Test virtual patient with API")}
         </button>
-        {!cfg.routingEnabled && !!cfg.apiKey && <button className="btn btn-ghost" onClick={clearKey} disabled={saving || testing}>{t("aiClearKey")}</button>}
+        {!cfg.routingEnabled && !!cfg.apiKey && <button type="button" className="btn btn-ghost" onClick={clearKey} disabled={saving || testing}>{t("aiClearKey")}</button>}
         {testMsg && <span className={`pill ${testDetail?.connected ? "pill-active" : "pill-medium"}`}>● {testMsg}</span>}
       </div>
       {/* live sample so the admin SEES the AI working before activating */}
@@ -2153,7 +2153,7 @@ function Prompts() {
     api.get("/prompts").then(setP).catch((e) => { setLoadErr(String(e.message || e)); setP({ __err: true }); });
   };
   useEffect(() => { loadP(); }, []);
-  if (p?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری پرامپت‌ها شکست خورد" : "Could not load prompts")}</h3><button className="btn btn-ghost mt16" onClick={() => { setP(null); loadP(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (p?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری پرامپت‌ها شکست خورد" : "Could not load prompts")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setP(null); loadP(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!p) return <Spinner />;
   const set = (k, v) => setP((s) => ({ ...s, [k]: v }));
   const save = async () => { await api.put("/prompts", p); toast(t("saved")); };
@@ -2202,7 +2202,7 @@ function Prompts() {
         <textarea style={{ minHeight: 90 }} value={p.micro_fa || ""} onChange={(e) => set("micro_fa", e.target.value)} /></div>
       <div className="field"><label>{t("promptMicro")} (EN)</label>
         <textarea style={{ minHeight: 90 }} value={p.micro_en || ""} onChange={(e) => set("micro_en", e.target.value)} /></div>
-      <button className="btn btn-primary" onClick={save}>{t("save")}</button>
+      <button type="button" className="btn btn-primary" onClick={save}>{t("save")}</button>
     </div>
   );
 }
@@ -2218,7 +2218,7 @@ function Reports() {
     api.get("/reports/attempts?research=1").then((d) => setRows(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setRows({ __err: true }); });
   };
   useEffect(() => { load(); }, []);
-  if (rows?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (lang === "fa" ? "بارگذاری گزارش پژوهشی شکست خورد" : "Could not load research reports")}</h3><button className="btn btn-ghost mt16" onClick={() => { setRows(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (rows?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (lang === "fa" ? "بارگذاری گزارش پژوهشی شکست خورد" : "Could not load research reports")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setRows(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!rows) return <Spinner />;
   const exportCsv = async () => {
     const res = await fetch("/api/reports/export.csv?research=1", { credentials: "same-origin", headers: { Authorization: `Bearer ${getToken()}` } });
@@ -2234,7 +2234,7 @@ function Reports() {
   return (
     <div className="card">
       <div className="section-title"><h4><Icon name="chart" size={16} /> {t("reports")}</h4>
-        <button className="btn btn-accent btn-sm" onClick={exportCsv}><Icon name="download" size={16} /> {t("exportResearchCsv")}</button></div>
+        <button type="button" className="btn btn-accent btn-sm" onClick={exportCsv}><Icon name="download" size={16} /> {t("exportResearchCsv")}</button></div>
       <div className="small muted mb16"><Icon name="flask" size={16} /> {t("researchNote")}</div>
       <div className="table-wrap"><table><thead><tr>
         <th>{t("name")}</th><th>{t("caseTitle")}</th><th>Type</th><th>{t("finalScore")}</th>
@@ -2246,7 +2246,7 @@ function Reports() {
             <td>{a.type === "vp" ? <Icon name="patient" size={16} /> : <Icon name="flask" size={16} />}</td>
             <td><b>{a.score}</b></td><td>{a.turns}</td><td>{a.tests}</td><td>{a.hints}</td>
             <td>{a.content_version}</td><td>{fmtDateTime(a.created_at, lang)}</td>
-            <td style={{ textAlign: "end" }}><button className="btn btn-sm btn-danger" onClick={() => del(a.id)}>{t("delete")}</button></td>
+            <td style={{ textAlign: "end" }}><button type="button" className="btn btn-sm btn-danger" onClick={() => del(a.id)}>{t("delete")}</button></td>
           </tr>
         ))}
         {!rows.length && <tr><td colSpan={10} className="small muted center" style={{ padding: 18 }}>{lang === "fa" ? "فقط داده‌های کلاس/آزمون‌هایی که به پژوهش وصل شده‌اند اینجا می‌آید." : "Only attempts from research-linked classes/exams appear here."}</td></tr>}
@@ -2282,8 +2282,8 @@ function Classes() {
   return (
     <div className="card">
       <div className="section-title"><h4><Icon name="class" size={16} /> {t("classes")}</h4>
-        <button className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newClass")}</button></div>
-      {loadErr && <div className="err-banner mb8">{loadErr} <button className="btn btn-ghost btn-sm" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>}
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newClass")}</button></div>
+      {loadErr && <div className="err-banner mb8">{loadErr} <button type="button" className="btn btn-ghost btn-sm" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>}
       <div className="table-wrap"><table>
         <thead><tr><th>{t("className")}</th><th>{t("classCode")}</th><th>{t("casesCount")}</th><th>{t("students")}</th><th></th></tr></thead>
         <tbody>{classes.map((c) => (
@@ -2292,8 +2292,8 @@ function Classes() {
             <td><span className="tag">{c.code}</span></td>
             <td>{c.nCases}</td><td>{c.nStudents}</td>
             <td style={{ textAlign: "end", whiteSpace: "nowrap" }}>
-              <button className="btn btn-sm btn-primary" onClick={() => setOpenId(c.id)}>{t("classSettings")}</button>
-              <button className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button>
+              <button type="button" className="btn btn-sm btn-primary" onClick={() => setOpenId(c.id)}>{t("classSettings")}</button>
+              <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button>
             </td>
           </tr>
         ))}</tbody></table></div>
@@ -2489,7 +2489,7 @@ function ClassProgress({ classId, cases = [] }) {
     api.get(`/classes/${classId}/progress`).then((x) => { setD(x); }).catch((e) => { setLoadErr(String(e.message || e)); setD({ __err: true }); });
   };
   useEffect(() => { load(); }, [classId]);
-  if (d?.__err || loadErr) return <div className="card mb16"><div className="err-banner">{loadErr || (fa ? "بارگذاری پیشرفت شکست خورد" : "Could not load progress")}<button className="btn btn-ghost btn-sm" onClick={() => { setD(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div></div>;
+  if (d?.__err || loadErr) return <div className="card mb16"><div className="err-banner">{loadErr || (fa ? "بارگذاری پیشرفت شکست خورد" : "Could not load progress")}<button type="button" className="btn btn-ghost btn-sm" onClick={() => { setD(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div></div>;
   if (!d) return <div className="card mb16"><div className="skeleton" style={{ height: 80 }} /></div>;
 
   const assignRemedial = async (userIds) => {
@@ -2535,7 +2535,7 @@ function ClassProgress({ classId, cases = [] }) {
             ? <span className="tag" style={{ background: "var(--bad,#c0392b)", color: "#fff" }}>{fa ? "بله" : "yes"}</span>
             : <span className="small muted">—</span> },
         { key: "actions", label: "", sortable: false, render: (x) => (
-          <button className="btn btn-ghost btn-sm" onClick={() => setPick(pick === x.userId ? null : x.userId)}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setPick(pick === x.userId ? null : x.userId)}>
             {fa ? "نمایش پروفایل" : "Profile"}
           </button>) },
       ]} />
@@ -2546,7 +2546,7 @@ function ClassProgress({ classId, cases = [] }) {
           <option value="">{fa ? "— سناریوی جبرانی —" : "— remedial scenario —"}</option>
           {cases.map((c) => <option key={c.id} value={c.id}>{c.title_fa || c.title_en || `#${c.id}`}</option>)}
         </select>
-        <button className="btn btn-primary btn-sm" onClick={() => assignRemedial(null)} disabled={busy || !low.length}>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => assignRemedial(null)} disabled={busy || !low.length}>
           {fa ? `انتساب جبرانی به ${low.length} دانشجو` : `Assign remedial to ${low.length}`}
         </button>
         {!low.length && <span className="small muted">{fa ? "هیچ دانشجویی زیر آستانه نیست." : "Nobody is below the threshold."}</span>}
@@ -2558,7 +2558,7 @@ function ClassProgress({ classId, cases = [] }) {
           <div className="section-title" style={{ marginBottom: 8 }}>
             <h4>{row.name} <span className="tag">{row.studentNo}</span></h4>
             {row.needsRemedial && (
-              <button className="btn btn-ghost btn-sm" onClick={() => assignRemedial([row.userId])} disabled={busy}>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => assignRemedial([row.userId])} disabled={busy}>
                 {fa ? "جبرانی برای همین دانشجو" : "Remedial for this student"}
               </button>
             )}
@@ -2618,7 +2618,7 @@ function ClassManage({ classId, back }) {
     api.get("/flashcards").then((d) => setAllFlash(Array.isArray(d) ? d : [])).catch((e) => { setAllFlash([]); setBankErr(String(e.message || e)); });
     api.get("/users").then((u) => setAllStudents((Array.isArray(u) ? u : []).filter((x) => x.role === "student"))).catch((e) => { setAllStudents([]); setBankErr(String(e.message || e)); });
   }, [classId]);
-  if (loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr}</h3><button className="btn btn-ghost mt16" onClick={() => { setData(null); setInfo(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button> <button className="btn btn-ghost mt16" onClick={back}>{fa ? "بازگشت" : "Back"}</button></div>;
+  if (loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setData(null); setInfo(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button> <button type="button" className="btn btn-ghost mt16" onClick={back}>{fa ? "بازگشت" : "Back"}</button></div>;
   if (!data || !info) return <Spinner />;
   const { class: cl, cases, flashcards = [], members } = data;
   const setF = (k, v) => setInfo((s) => ({ ...s, [k]: v }));
@@ -2628,7 +2628,7 @@ function ClassManage({ classId, back }) {
     <div className="card">
       <div className="section-title">
         <h4><Icon name="settings" size={16} /> {t("classSettings")} — {biField(cl, "name", lang)} <span className="tag">{cl.code}</span></h4>
-        <button className="btn btn-ghost btn-sm" onClick={back}>← {t("back")}</button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={back}>← {t("back")}</button>
       </div>
       {bankErr && <div className="err-banner mb8">{bankErr}</div>}
 
@@ -2693,7 +2693,7 @@ function ClassManage({ classId, back }) {
         <div className="grid grid-2" style={{ alignItems: "end" }}>
           <div className="field"><label>{t("maxAttemptsField")}</label>
             <input type="number" min="1" value={info.maxAttempts} onChange={(e) => setF("maxAttempts", +e.target.value || 1)} /></div>
-          <div className="field"><button className="btn btn-primary" onClick={saveInfo}>{t("save")}</button></div>
+          <div className="field"><button type="button" className="btn btn-primary" onClick={saveInfo}>{t("save")}</button></div>
         </div>
         <div className="grid grid-2">
           <label className="toggle-row"><span>{lang === "fa" ? "صفحه زنده رقابت کلاس" : "Live classroom competition board"}</span><input type="checkbox" checked={!!info.liveBoardEnabled} onChange={(e)=>setF("liveBoardEnabled", e.target.checked)} /></label>
@@ -2735,7 +2735,7 @@ function ClassManage({ classId, back }) {
       <div className="grid grid-3 mb16">
         <div className="card" style={{ background: "var(--panel2)" }}>
           <div className="section-title"><h4><Icon name="patient" size={16} /> {t("classCases")}</h4>
-            <button className="btn btn-sm btn-primary" onClick={() => {
+            <button type="button" className="btn btn-sm btn-primary" onClick={() => {
               if (bankErr) { toast(fa ? "بانک کیس بارگذاری نشد." : "Could not load the case bank."); return; }
               setEditCases(true);
             }}>{t("manage")}</button></div>
@@ -2745,7 +2745,7 @@ function ClassManage({ classId, back }) {
         </div>
         <div className="card" style={{ background: "var(--panel2)" }}>
           <div className="section-title"><h4><Icon name="flask" size={16} /> {t("classFlashcards")}</h4>
-            <button className="btn btn-sm btn-primary" onClick={() => setEditFlash(true)}>{t("manage")}</button></div>
+            <button type="button" className="btn btn-sm btn-primary" onClick={() => setEditFlash(true)}>{t("manage")}</button></div>
           {flashcards.length ? flashcards.map((f) => (
             <div className="info-row" key={f.flashcard_id}><span>{biField(f, "title", lang) || `#${f.flashcard_id}`}</span>
               <span className={`tag ${f.graded ? "" : "muted"}`}>{f.graded ? `${t("gradedShort")} · ${t("weightField")} ${f.weight}` : t("practiceShort")}</span></div>
@@ -2753,7 +2753,7 @@ function ClassManage({ classId, back }) {
         </div>
         <div className="card" style={{ background: "var(--panel2)" }}>
           <div className="section-title"><h4><Icon name="users" size={16} /> {t("classMembers")}</h4>
-            <button className="btn btn-sm btn-primary" onClick={() => setEditMembers(true)}>{t("manage")}</button></div>
+            <button type="button" className="btn btn-sm btn-primary" onClick={() => setEditMembers(true)}>{t("manage")}</button></div>
           <div className="small muted">{members.length} {t("students")}</div>
         </div>
       </div>
@@ -2838,7 +2838,7 @@ function ClassResults() {
       {classes.length === 0 ? <div className="small muted center" style={{ padding: 20 }}>{loadErr ? (lang === "fa" ? "بارگذاری کلاس‌ها شکست خورد" : "Could not load classes") : t("noClassesYet")}</div> : (
         <div className="grid grid-2">
           {classes.map((c) => (
-            <button key={c.id} className="card mod-card mod-card-row" onClick={() => setOpenId(c.id)}>
+            <button type="button" key={c.id} className="card mod-card mod-card-row" onClick={() => setOpenId(c.id)}>
               <div className="mod-ico" style={{ background: "var(--grad-primary)" }}><Icon name="class" size={22} /></div>
               <div className="mod-card-body">
                 <h3>{biField(c, "name", lang)}</h3>
@@ -2892,7 +2892,7 @@ function TeachingAnalyticsPanel({ kind, id }) {
   const trend = Array.isArray(d.trend) ? d.trend : [];
   const trendMax = Math.max(1, ...trend.map((x) => x.attempts || 0));
   return <div className="card teaching-analytics mb16">
-    <div className="section-title"><h4><Icon name="chart" size={16} /> {fa ? "تحلیل آموزشی برای تصمیم‌گیری استاد" : "Teaching analytics for instructor decisions"}</h4><button className="btn btn-ghost btn-sm" onClick={exportItemsCsv}><Icon name="download" size={14} /> {fa ? "خروجی CSV تحلیل سؤال‌ها" : "Item analysis CSV"}</button></div>
+    <div className="section-title"><h4><Icon name="chart" size={16} /> {fa ? "تحلیل آموزشی برای تصمیم‌گیری استاد" : "Teaching analytics for instructor decisions"}</h4><button type="button" className="btn btn-ghost btn-sm" onClick={exportItemsCsv}><Icon name="download" size={14} /> {fa ? "خروجی CSV تحلیل سؤال‌ها" : "Item analysis CSV"}</button></div>
     <div className="grid grid-3 mb16">
       <div className="card stat-card"><div className="num">{d.summary?.students || 0}</div><div className="lbl">{fa ? "دانشجو" : "Students"}</div></div>
       <div className="card stat-card"><div className="num">{d.summary?.attempts || 0}</div><div className="lbl">{fa ? "تلاش ثبت‌شده" : "Attempts"}</div></div>
@@ -2936,7 +2936,7 @@ function ClassGradebook({ classId, back }) {
     setLoadErr("");
     api.get(`/classes/${classId}`).then(setData).catch((e) => { setLoadErr(String(e.message || e)); setData({ __err: true }); });
   }, [classId]);
-  if (data?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری کارنامه شکست خورد" : "Could not load the gradebook")}</h3><button className="btn btn-ghost mt16" onClick={() => { setData(null); setLoadErr(""); api.get(`/classes/${classId}`).then(setData).catch((e) => { setLoadErr(String(e.message || e)); setData({ __err: true }); }); }}>{fa ? "تلاش دوباره" : "Retry"}</button><button className="btn btn-ghost mt16" onClick={back}>{fa ? "بازگشت" : "Back"}</button></div>;
+  if (data?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری کارنامه شکست خورد" : "Could not load the gradebook")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setData(null); setLoadErr(""); api.get(`/classes/${classId}`).then(setData).catch((e) => { setLoadErr(String(e.message || e)); setData({ __err: true }); }); }}>{fa ? "تلاش دوباره" : "Retry"}</button><button type="button" className="btn btn-ghost mt16" onClick={back}>{fa ? "بازگشت" : "Back"}</button></div>;
   if (!data) return <Spinner />;
   const { class: cl, cases = [], flashcards = [], members = [] } = data;
   const avg = members.length ? Math.round(members.reduce((s, m) => s + (m.grade || 0), 0) / members.length) : 0;
@@ -2958,10 +2958,10 @@ function ClassGradebook({ classId, back }) {
       <div className="section-title">
         <h4><Icon name="chart" size={16} /> {t("gradebook")} — {biField(cl, "name", lang)} <span className="tag">{cl.code}</span></h4>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="btn btn-primary btn-sm" onClick={()=>setLiveOpen(true)}><Icon name="trophy" size={14} /> {fa ? "صفحه زنده رقابت" : "Live board"}</button>
-          <button className="btn btn-accent btn-sm" onClick={()=>setDrawingOpen(true)}><Icon name="image" size={14} /> {fa ? "بررسی تصاویر" : "Review drawings"}</button>
-          <button className="btn btn-ghost btn-sm" onClick={exportCsv}><Icon name="download" size={14} /> {fa ? "خروجی CSV" : "Export CSV"}</button>
-          <button className="btn btn-ghost btn-sm" onClick={back}>← {t("back")}</button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={()=>setLiveOpen(true)}><Icon name="trophy" size={14} /> {fa ? "صفحه زنده رقابت" : "Live board"}</button>
+          <button type="button" className="btn btn-accent btn-sm" onClick={()=>setDrawingOpen(true)}><Icon name="image" size={14} /> {fa ? "بررسی تصاویر" : "Review drawings"}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={exportCsv}><Icon name="download" size={14} /> {fa ? "خروجی CSV" : "Export CSV"}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={back}>← {t("back")}</button>
         </div>
       </div>
       <div className="small muted mb16">{t("gradingCriterion")}: <b>{roleLabel}</b></div>
@@ -2992,7 +2992,7 @@ function ClassGradebook({ classId, back }) {
                   <div className="small muted mt8">{num(doneItems)}/{num(totalItems)} {t("completed")}</div>
                 </td>
                 <td><b style={{ color: "var(--accent)", fontSize: "1.05rem" }}>{num(m.grade)}</b></td>
-                <td><button className="btn btn-sm btn-ghost" onClick={() => setReview(m)} title={t("reviewAiScoring")}><Icon name="chat" size={13} /> {t("viewConversations")}</button></td>
+                <td><button type="button" className="btn btn-sm btn-ghost" onClick={() => setReview(m)} title={t("reviewAiScoring")}><Icon name="chat" size={13} /> {t("viewConversations")}</button></td>
               </tr>
             );
           })}</tbody></table></div>
@@ -3045,7 +3045,7 @@ function DrawingReviewsPanel({ scope, id, inbox }) {
   };
   return <>
     <div className="small muted mb8">{fa ? "این صفحه هر چند ثانیه تازه می‌شود. نمره نقاشی فقط بعد از تأیید استاد به نمره دانشجو اضافه می‌شود." : "This page auto-refreshes. Drawing points are added only after teacher approval."}</div>
-    {drawErr ? <div className="card empty-state"><div className="ico">⚠️</div><h3>{drawErr}</h3><button className="btn btn-ghost mt16" onClick={load}>{fa ? "تلاش دوباره" : "Retry"}</button></div> : !rows ? <Spinner /> : rows.length === 0 ? <div className="card empty-state"><div className="ico">🖼️</div><h3>{fa ? "هنوز نقاشی‌ای ثبت نشده است" : "No drawings submitted yet"}</h3></div> : <div className="drawing-review-list">
+    {drawErr ? <div className="card empty-state"><div className="ico">⚠️</div><h3>{drawErr}</h3><button type="button" className="btn btn-ghost mt16" onClick={load}>{fa ? "تلاش دوباره" : "Retry"}</button></div> : !rows ? <Spinner /> : rows.length === 0 ? <div className="card empty-state"><div className="ico">🖼️</div><h3>{fa ? "هنوز نقاشی‌ای ثبت نشده است" : "No drawings submitted yet"}</h3></div> : <div className="drawing-review-list">
       {rows.map((r) => {
         const key = `${r.attemptId}:${r.answerIndex}`;
         const pending = r.status !== "approved" && r.status !== "rejected";
@@ -3079,8 +3079,8 @@ function DrawingReviewsPanel({ scope, id, inbox }) {
             {r.assist?.suggestedPct != null && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setScoreOverrides((o) => ({ ...o, [key]: r.assist.suggestedPct }))}>🤖 {fa ? `پیشنهاد ${r.assist.suggestedPct}` : `Suggest ${r.assist.suggestedPct}`}</button>}
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-            <button className="btn btn-accent btn-sm" disabled={busy === key || !pending} onClick={() => decide(r, "approved")}>✅ {fa ? "تأیید و ثبت نمره" : "Approve & score"}</button>
-            <button className="btn btn-danger btn-sm" disabled={busy === key || !pending} onClick={() => decide(r, "rejected")}>✕ {fa ? "رد نقاشی" : "Reject"}</button>
+            <button type="button" className="btn btn-accent btn-sm" disabled={busy === key || !pending} onClick={() => decide(r, "approved")}>✅ {fa ? "تأیید و ثبت نمره" : "Approve & score"}</button>
+            <button type="button" className="btn btn-danger btn-sm" disabled={busy === key || !pending} onClick={() => decide(r, "rejected")}>✕ {fa ? "رد نقاشی" : "Reject"}</button>
           </div>
         </div>;
       })}
@@ -3122,17 +3122,17 @@ function ClassLiveBoard({ classId, onClose }) {
   const openDetail = async (row) => { setDetailFor(row); setDetail(null); try { setDetail(await api.get(`/classes/${classId}/live-board/${row.user_id}/details`)); } catch (e) { setDetail({ __err: true, message: String(e.message || e), attempts: [] }); } };
   const shell = (content) => full ? <div className="live-board-full">{content}</div> : <Modal title={fa ? "صفحه زنده رقابت کلاس" : "Live classroom board"} onClose={onClose} wide>{content}</Modal>;
   if (!data) return shell(<Spinner />);
-  if (data.__err || boardErr) return shell(<div className="card empty-state"><div className="ico">⚠️</div><h3>{boardErr || (fa ? "بارگذاری صفحه زنده شکست خورد" : "Live board failed")}</h3><button className="btn btn-ghost mt16" onClick={load}>{fa ? "تلاش دوباره" : "Retry"}</button></div>);
+  if (data.__err || boardErr) return shell(<div className="card empty-state"><div className="ico">⚠️</div><h3>{boardErr || (fa ? "بارگذاری صفحه زنده شکست خورد" : "Live board failed")}</h3><button type="button" className="btn btn-ghost mt16" onClick={load}>{fa ? "تلاش دوباره" : "Retry"}</button></div>);
   const cl = data.class || {}, rows = data.ranked || [];
   const medal = (r) => r === 1 ? "🥇" : r === 2 ? "🥈" : r === 3 ? "🥉" : r;
   const content = <div className="live-board">
     <div className="live-board-header">
       <div className="live-board-title"><h2 style={{ margin: 0 }}>{fa ? cl.name_fa : cl.name_en}</h2><div className="small muted">{fa ? "به‌روزرسانی خودکار هر ۵ ثانیه؛ برای دیدن پاسخ‌ها روی نام دانشجو بزنید." : "Auto-refreshes every 5 seconds; click a student name to see answers."} · {(data.updatedAt || "").slice(11,19)}</div></div>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><button className="btn btn-ghost btn-sm" onClick={load}>{fa ? "به‌روزرسانی" : "Refresh"}</button><button className="btn btn-primary btn-sm" onClick={()=>setFull(!full)}>{full ? (fa ? "خروج از تمام‌صفحه" : "Exit full") : (fa ? "تمام‌صفحه برای تخته" : "Full screen")}</button>{full && <button className="btn btn-ghost btn-sm" onClick={onClose}>{fa ? "بستن" : "Close"}</button>}</div>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><button type="button" className="btn btn-ghost btn-sm" onClick={load}>{fa ? "به‌روزرسانی" : "Refresh"}</button><button type="button" className="btn btn-primary btn-sm" onClick={()=>setFull(!full)}>{full ? (fa ? "خروج از تمام‌صفحه" : "Exit full") : (fa ? "تمام‌صفحه برای تخته" : "Full screen")}</button>{full && <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>{fa ? "بستن" : "Close"}</button>}</div>
     </div>
     <div className="grid grid-3 mb16"><div className="card stat-card"><div className="num">{data.totals?.students || 0}</div><div className="lbl">{fa ? "دانشجو" : "Students"}</div></div><div className="card stat-card"><div className="num">{data.totals?.items || 0}</div><div className="lbl">{fa ? "فعالیت" : "Activities"}</div></div><div className="card stat-card"><div className="num">{rows.filter(r=>r.score!=null).length}</div><div className="lbl">{fa ? "شرکت‌کننده" : "Participants"}</div></div></div>
     <div className="live-board-grid">
-            <VirtualList className="live-board-ranks" itemCount={rows.length} itemHeight={full ? 88 : 76} maxHeight={full ? 720 : 520}>{({ index, style }) => { const r = rows[index]; return <div style={style} className={`live-rank-row ${r.rank===1?'top1':''} ${detailFor?.user_id===r.user_id?'selected':''}`} key={r.user_id}><div className="live-rank-medal">{medal(r.rank)}</div><div><button className="live-rank-name" onClick={()=>openDetail(r)}>{r.displayName}</button><div className="small muted">{fa ? "پیشرفت" : "Progress"}: {r.done}/{r.total}{cl.live_board_speed && r.timeSec != null && (<span> · ⏱ {Math.floor(r.timeSec / 60)}:{String(r.timeSec % 60).padStart(2, "0")}</span>)}</div></div><div className="live-score">{r.score==null ? "—" : r.score}</div><div className="live-progress"><div className="pbar"><span style={{ width: `${r.progress || 0}%` }} /></div><div className="small muted">{r.progress || 0}%</div></div></div>; }}</VirtualList>
+            <VirtualList className="live-board-ranks" itemCount={rows.length} itemHeight={full ? 88 : 76} maxHeight={full ? 720 : 520}>{({ index, style }) => { const r = rows[index]; return <div style={style} className={`live-rank-row ${r.rank===1?'top1':''} ${detailFor?.user_id===r.user_id?'selected':''}`} key={r.user_id}><div className="live-rank-medal">{medal(r.rank)}</div><div><button type="button" className="live-rank-name" onClick={()=>openDetail(r)}>{r.displayName}</button><div className="small muted">{fa ? "پیشرفت" : "Progress"}: {r.done}/{r.total}{cl.live_board_speed && r.timeSec != null && (<span> · ⏱ {Math.floor(r.timeSec / 60)}:{String(r.timeSec % 60).padStart(2, "0")}</span>)}</div></div><div className="live-score">{r.score==null ? "—" : r.score}</div><div className="live-progress"><div className="pbar"><span style={{ width: `${r.progress || 0}%` }} /></div><div className="small muted">{r.progress || 0}%</div></div></div>; }}</VirtualList>
       {detailFor && <LiveStudentDetail detail={detail} displayName={detailFor.displayName} fa={fa} onClose={()=>{setDetailFor(null);setDetail(null)}} />}
     </div>
     {rows.length===0 && <div className="small muted center" style={{padding:20}}>{fa ? "هنوز دانشجویی در این کلاس نیست." : "No students yet."}</div>}
@@ -3171,7 +3171,7 @@ function LiveStudentDetail({ detail, displayName, fa, onClose }) {
   };
   const status = (a) => a.pendingApproval ? (fa ? "در انتظار تأیید" : "Pending approval") : a.solved ? (fa ? "درست" : "Correct") : (fa ? "نادرست/رد" : "Wrong/rejected");
   return <aside className="live-student-detail card">
-    <div className="section-title"><h4>{fa ? "پاسخ‌های" : "Answers"} {displayName}</h4><button className="btn btn-ghost btn-sm" onClick={onClose}>×</button></div>
+    <div className="section-title"><h4>{fa ? "پاسخ‌های" : "Answers"} {displayName}</h4><button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>×</button></div>
     {!detail ? <Spinner /> : detail.__err ? <div className="card empty-state"><div className="ico">⚠️</div><h4>{detail.message || (fa ? "بارگذاری پاسخ‌ها شکست خورد" : "Could not load answers")}</h4></div> : (detail.attempts || []).length === 0 ? <div className="small muted center" style={{padding:12}}>{fa ? "هنوز پاسخی ثبت نشده است." : "No answers yet."}</div> : <div className="live-answer-list">
       {(detail.attempts || []).map((att)=><div className="live-attempt" key={`${att.kind}-${att.attemptId}`}>
         <div className="live-attempt-head"><b>{fa ? (att.title_fa || "فلش‌کارت") : (att.title_en || "Flashcard")}</b><span className="tag">{att.score ?? "—"}</span></div>
@@ -3224,7 +3224,7 @@ function ConversationReview({ classId, member, onClose }) {
                 <td>{fa ? a.caseTitle_fa : a.caseTitle_en}</td>
                 <td><b>{num(a.score)}</b></td>
                 <td className="small muted">{(a.created_at || "").slice(0, 16).replace("T", " ")}</td>
-                <td><button className="btn btn-sm btn-primary" disabled={busy} onClick={() => open(a.id)}>{fa ? "مشاهده" : "Open"}</button></td>
+                <td><button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={() => open(a.id)}>{fa ? "مشاهده" : "Open"}</button></td>
               </tr>
             ))}</tbody></table></div>
         )
@@ -3264,7 +3264,7 @@ function ConversationDetail({ detail, onBack }) {
   };
   return (
     <div>
-      <button className="btn btn-ghost btn-sm mb8" onClick={onBack}>← {fa ? "فهرست آزمون‌ها" : "Back to attempts"}</button>
+      <button type="button" className="btn btn-ghost btn-sm mb8" onClick={onBack}>← {fa ? "فهرست آزمون‌ها" : "Back to attempts"}</button>
       <div className="small muted mb8">{fa ? a.caseTitle_fa : a.caseTitle_en} · {(a.created_at || "").slice(0, 16).replace("T", " ")}</div>
 
       {/* section scores (verify AI grading) — the extern card uses the scoped
@@ -3345,7 +3345,7 @@ function ConversationDetail({ detail, onBack }) {
         )}
         <div className="field"><label>{fa ? "فیدبک برای دانشجو" : "Feedback for the student"}</label>
           <textarea rows={4} value={feedback} onChange={(e) => setFeedback(e.target.value)} /></div>
-        <button className="btn btn-primary" disabled={busy || !a.id} onClick={saveReview}>{busy ? "…" : (fa ? "ثبت فیدبک" : "Save feedback")}</button>
+        <button type="button" className="btn btn-primary" disabled={busy || !a.id} onClick={saveReview}>{busy ? "…" : (fa ? "ثبت فیدبک" : "Save feedback")}</button>
       </div>
     </div>
   );
@@ -3381,14 +3381,14 @@ function VpConversations() {
     <div className="card">
       <div className="section-title">
         <h4><Icon name="chat" size={16} /> {t("vpConversations")}</h4>
-        <button className="btn btn-ghost btn-sm" onClick={load}>{fa ? "بروزرسانی" : "Refresh"}</button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={load}>{fa ? "بروزرسانی" : "Refresh"}</button>
       </div>
       <div className="small muted mb16">
         {fa
           ? "اینجا همه گفت‌وگوهای ذخیره‌شدهٔ کلاس‌هاست: حرف دانشجو، بیمار مجازی، استاد مجازی (معاینه)، درخواست آزمایش/تصویربرداری و درسنامه. برای اعتبارسنجی نمره باز کنید."
           : "Every saved class conversation: student, virtual patient, supervising teacher (exam), lab/imaging orders and microlearning. Open one to validate the grade."}
       </div>
-      {rows?.__err || loadErr ? <div className="empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری گفت‌وگوها شکست خورد" : "Could not load conversations")}</h3><button className="btn btn-ghost mt16" onClick={() => { setRows(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div> : rows == null ? <Spinner /> : rows.length === 0 ? (
+      {rows?.__err || loadErr ? <div className="empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری گفت‌وگوها شکست خورد" : "Could not load conversations")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setRows(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div> : rows == null ? <Spinner /> : rows.length === 0 ? (
         <div className="small muted center" style={{ padding: 24 }}>{fa ? "هنوز گفت‌وگوی ذخیره‌شده‌ای نیست. ثبت گفت‌وگو را در تنظیمات کلاس روشن بگذارید." : "No saved conversations yet. Keep conversation logging on in the class settings."}</div>
       ) : (
         <div className="table-wrap"><table>
@@ -3409,7 +3409,7 @@ function VpConversations() {
               <td><b>{num(r.score)}</b></td>
               <td>{r.has_transcript ? <span className="pill pill-active">{fa ? "ثبت شده" : "Saved"}</span> : <span className="pill pill-medium">{fa ? "بدون متن" : "No text"}</span>}</td>
               <td className="small muted">{(r.created_at || "").slice(0, 16).replace("T", " ")}</td>
-              <td><button className="btn btn-sm btn-primary" disabled={busy} onClick={() => open(r)}>{fa ? "مشاهده" : "Open"}</button></td>
+              <td><button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={() => open(r)}>{fa ? "مشاهده" : "Open"}</button></td>
             </tr>
           ))}</tbody>
         </table></div>
@@ -3436,7 +3436,7 @@ function PickModal({ title, items, labelFn, idFn, selected, withWeight, initialW
           <Icon name="search" size={16} />
           <input value={q} onChange={(e) => setQ(e.target.value)}
             placeholder={searchPlaceholder || t("searchByName")} />
-          {q && <button className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={14} /></button>}
+          {q && <button type="button" className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={14} /></button>}
         </div>
       )}
       {showSearch && <div className="small muted mb8">{faDigits(String(sel.length), lang)} {t("selectedCount")}</div>}
@@ -3490,8 +3490,8 @@ function MemberManageModal({ classId, items, selected, lang, onClose, onSaved })
         <div className="small muted mb8">{lang === "fa" ? "افزودن دسته‌جمعی با شماره دانشجویی؛ شماره‌های ثبت‌نشده نمایش داده می‌شوند و می‌توانید با یک دکمه بسازید." : "Bulk add by student numbers. Missing students are shown and can be created with one click."}</div>
         <textarea value={bulk} onChange={(e)=>setBulk(e.target.value)} style={{ width: "100%", minHeight: 130 }} placeholder="40012345\n40067890" />
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-          <button className="btn btn-ghost btn-sm" onClick={()=>resolve(false)}>{lang === "fa" ? "بررسی و افزودن موجودها" : "Check & add existing"}</button>
-          <button className="btn btn-accent btn-sm" onClick={()=>resolve(true)}>{lang === "fa" ? "ساخت missingها و افزودن" : "Create missing & add"}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={()=>resolve(false)}>{lang === "fa" ? "بررسی و افزودن موجودها" : "Check & add existing"}</button>
+          <button type="button" className="btn btn-accent btn-sm" onClick={()=>resolve(true)}>{lang === "fa" ? "ساخت missingها و افزودن" : "Create missing & add"}</button>
         </div>
         {result && <div className="card mt8" style={{ background: "var(--panel2)", padding: 10 }}>
           <div className="small">{lang === "fa" ? "اضافه‌شده" : "Attached"}: {result.attached || 0}</div>
@@ -3500,7 +3500,7 @@ function MemberManageModal({ classId, items, selected, lang, onClose, onSaved })
         </div>}
       </div>
     </div>
-    <div style={{ display:"flex", justifyContent:"flex-end", gap:8, marginTop:12 }}><button className="btn btn-primary" onClick={saveIds}>{t("save")}</button></div>
+    <div style={{ display:"flex", justifyContent:"flex-end", gap:8, marginTop:12 }}><button type="button" className="btn btn-primary" onClick={saveIds}>{t("save")}</button></div>
   </Modal>;
 }
 
@@ -3531,8 +3531,8 @@ function Exams() {
   return (
     <div className="card">
       <div className="section-title"><h4><Icon name="exam" size={16} /> {t("exams")}</h4>
-        <button className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newExam")}</button></div>
-      {loadErr && <div className="err-banner mb8">{loadErr} <button className="btn btn-ghost btn-sm" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>}
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newExam")}</button></div>
+      {loadErr && <div className="err-banner mb8">{loadErr} <button type="button" className="btn btn-ghost btn-sm" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>}
       <DataTable
         rows={exams}
         initialSort={{ key: "title", dir: "asc" }}
@@ -3542,7 +3542,7 @@ function Exams() {
           <div className="ico"><Icon name="exam" size={36} /></div>
           <h3>{t("examsEmptyTitle")}</h3>
           <div className="small muted">{t("examsEmptyHint")}</div>
-          <button className="btn btn-primary btn-sm mt8" onClick={() => setEditing({})}>+ {t("newExam")}</button>
+          <button type="button" className="btn btn-primary btn-sm mt8" onClick={() => setEditing({})}>+ {t("newExam")}</button>
         </div>}
         columns={[
           { key: "title", label: t("examTitle"), sortValue: (e) => biField(e, "title", lang), render: (e) => biField(e, "title", lang) },
@@ -3551,9 +3551,9 @@ function Exams() {
           { key: "status", label: t("status"), sortValue: (e) => e.state, render: (e) => <Pill kind={stateKind(e.state)}>{stateLabel(e.state)}</Pill> },
           { key: "actions", label: "", sortable: false, thStyle: { textAlign: "end" }, render: (e) => (
             <span style={{ display: "flex", gap: 4, justifyContent: "flex-end", whiteSpace: "nowrap" }}>
-              <button className="btn btn-sm btn-primary" onClick={() => setOpenId(e.id)}>{t("manageStudents")}</button>
-              <button className="btn btn-sm btn-ghost" onClick={() => setEditing(e)}>{t("edit")}</button>
-              <button className="btn btn-sm btn-danger" onClick={() => del(e.id)}>{t("delete")}</button>
+              <button type="button" className="btn btn-sm btn-primary" onClick={() => setOpenId(e.id)}>{t("manageStudents")}</button>
+              <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(e)}>{t("edit")}</button>
+              <button type="button" className="btn btn-sm btn-danger" onClick={() => del(e.id)}>{t("delete")}</button>
             </span>) },
         ]}
       />
@@ -3617,7 +3617,7 @@ function CardPicker({ cards, selected, onToggle, onSelectAll }) {
       <div className="dt-search mb8" style={{ maxWidth: "100%" }}>
         <Icon name="search" size={15} />
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("searchFlashcardsPh") || (lang === "fa" ? "جستجو در عنوان، سؤال، دسته، ID…" : "Search title, question, category, ID…")} />
-        {q && <button className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={13} /></button>}
+        {q && <button type="button" className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={13} /></button>}
       </div>
       <div className="picker-filters">
         <select value={course} onChange={(e)=>setCourse(e.target.value)}><option value="">{lang==="fa"?"همه دوره‌ها":"All courses"}</option>{courses.map(x=><option key={x} value={x}>{x}</option>)}</select>
@@ -3728,7 +3728,7 @@ function ExamModal({ exam, onClose, onSave }) {
   return (
     <Modal title={`${exam.id ? t("edit") : t("newExam")} — ${typeLabel}`} onClose={onClose} onSave={submit}>
       {bankErr && <div className="err-banner mb8">{bankErr}</div>}
-      {!exam.id && <button className="btn btn-sm btn-ghost mb16" onClick={() => setType(null)}>← {t("changeType")}</button>}
+      {!exam.id && <button type="button" className="btn btn-sm btn-ghost mb16" onClick={() => setType(null)}>← {t("changeType")}</button>}
       <div className="grid grid-2">
         <div className="field"><label>{t("examTitle")} (FA)</label><input value={f.title_fa} onChange={(e) => set("title_fa", e.target.value)} /></div>
         <div className="field"><label>{t("examTitle")} (EN)</label><input value={f.title_en} onChange={(e) => set("title_en", e.target.value)} /></div>
@@ -3829,12 +3829,12 @@ function StudentSearchAdd({ onAdd }) {
       <div className="dt-search" style={{ maxWidth: "100%" }}>
         <Icon name="search" size={16} />
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("searchByNameOrNo")} />
-        {q && <button className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={14} /></button>}
+        {q && <button type="button" className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={14} /></button>}
       </div>
       {matches.length > 0 && (
         <div className="stu-results">
           {matches.map((u) => (
-            <button key={u.id} className="stu-result-item" onClick={() => { if (u.student_no) onAdd(u.student_no); setQ(""); }}>
+            <button type="button" key={u.id} className="stu-result-item" onClick={() => { if (u.student_no) onAdd(u.student_no); setQ(""); }}>
               <span>{lang === "fa" ? u.name_fa : u.name_en}</span>
               <span className="small muted">{u.student_no || "—"}</span>
             </button>
@@ -3863,7 +3863,7 @@ function ExamManage({ examId, back }) {
   }).catch((e) => setLoadErr(String(e.message || e)));
   };
   useEffect(() => { load(); }, [examId]);
-  if (loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr}</h3><button className="btn btn-ghost mt16" onClick={() => { setData(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button><button className="btn btn-ghost mt16" onClick={back}>{lang === "fa" ? "بازگشت" : "Back"}</button></div>;
+  if (loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setData(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button><button type="button" className="btn btn-ghost mt16" onClick={back}>{lang === "fa" ? "بازگشت" : "Back"}</button></div>;
   if (!data) return <Spinner />;
 
   const save = async () => {
@@ -3886,8 +3886,8 @@ function ExamManage({ examId, back }) {
     <div className="card">
       <div className="section-title"><h4><Icon name="exam" size={16} /> {biField(data, "title", lang)}</h4>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="btn btn-primary btn-sm" onClick={() => setDrawingOpen(true)}>{lang === "fa" ? "بررسی تصاویر" : "Review drawings"}</button>
-          <button className="btn btn-ghost btn-sm" onClick={back}>← {t("back")}</button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setDrawingOpen(true)}>{lang === "fa" ? "بررسی تصاویر" : "Review drawings"}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={back}>← {t("back")}</button>
         </div></div>
 
       <div className="card mb16" style={{ background: "var(--panel2)" }}>
@@ -3903,8 +3903,8 @@ function ExamManage({ examId, back }) {
         {msg && <div className="err-banner mt8" style={{ margin: "8px 0" }}>{msg}</div>}
         {wrongUni.length > 0 && <div className="err-banner mt8" style={{ margin: "8px 0" }}>{lang === "fa" ? "دانشگاه متفاوت:" : "Different university:"} {wrongUni.map((x)=>x.student_no).join(", ")}</div>}
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="btn btn-primary mt8" onClick={save}>{t("saveParticipants")}</button>
-          {missingNos.length > 0 && <button className="btn btn-accent mt8" onClick={createMissing}>{lang === "fa" ? "ساخت دانشجویان ثبت‌نشده و افزودن" : "Create missing students & add"}</button>}
+          <button type="button" className="btn btn-primary mt8" onClick={save}>{t("saveParticipants")}</button>
+          {missingNos.length > 0 && <button type="button" className="btn btn-accent mt8" onClick={createMissing}>{lang === "fa" ? "ساخت دانشجویان ثبت‌نشده و افزودن" : "Create missing students & add"}</button>}
         </div>
       </div>
 
@@ -4027,7 +4027,7 @@ function ExamResults() {
   const arrow = (k) => sort.key === k ? (sort.dir === "asc" ? " ▲" : " ▼") : "";
   const cell = (a, key) => {
     if (key === "student") return (
-      <button className="linklike" onClick={() => setViewStudent(a.user_id)}>
+      <button type="button" className="linklike" onClick={() => setViewStudent(a.user_id)}>
         {lang === "fa" ? a.student_fa : a.student_en}
       </button>
     );
@@ -4048,12 +4048,12 @@ function ExamResults() {
       );
     }
     if (key === "review") return (
-      <button className="btn btn-sm btn-ghost" onClick={() => setReviewId(a.id)}>
+      <button type="button" className="btn btn-sm btn-ghost" onClick={() => setReviewId(a.id)}>
         <Icon name="edit" size={13} /> {lang === "fa" ? "بررسی" : "Review"}
       </button>
     );
     if (key === "delete") return (
-      <button className="btn btn-sm btn-danger" onClick={() => deleteAttempt(a.id)} title={lang === "fa" ? "حذف کارنامه" : "Delete report"}>
+      <button type="button" className="btn btn-sm btn-danger" onClick={() => deleteAttempt(a.id)} title={lang === "fa" ? "حذف کارنامه" : "Delete report"}>
         <Icon name="trash" size={13} />
       </button>
     );
@@ -4063,12 +4063,12 @@ function ExamResults() {
   return (
     <div className="card">
       <div className="section-title"><h4><Icon name="trophy" size={16} /> {t("examResults")}</h4>
-        <button className="btn btn-accent btn-sm" onClick={exportCsv}><Icon name="download" size={16} /> {t("exportCsv")}</button></div>
-      {(loadErr || examsErr) && <div className="err-banner mb8">{loadErr || examsErr} <button className="btn btn-ghost btn-sm" onClick={reloadRows}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>}
+        <button type="button" className="btn btn-accent btn-sm" onClick={exportCsv}><Icon name="download" size={16} /> {t("exportCsv")}</button></div>
+      {(loadErr || examsErr) && <div className="err-banner mb8">{loadErr || examsErr} <button type="button" className="btn btn-ghost btn-sm" onClick={reloadRows}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>}
 
       <div className="tabs mb16">
-        <button className={`tab ${type === "vp" ? "active" : ""}`} onClick={() => setType("vp")}><Icon name="patient" size={16} /> {t("vpExams")}</button>
-        <button className={`tab ${type === "flash" ? "active" : ""}`} onClick={() => setType("flash")}><Icon name="flask" size={16} /> {t("flashPractice")}</button>
+        <button type="button" className={`tab ${type === "vp" ? "active" : ""}`} onClick={() => setType("vp")}><Icon name="patient" size={16} /> {t("vpExams")}</button>
+        <button type="button" className={`tab ${type === "flash" ? "active" : ""}`} onClick={() => setType("flash")}><Icon name="flask" size={16} /> {t("flashPractice")}</button>
       </div>
 
       {/* filter by exam + toggle chart */}
@@ -4081,7 +4081,7 @@ function ExamResults() {
             {exams.map((e) => <option key={e.id} value={e.id}>{biField(e, "title", lang)}</option>)}
           </select>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={() => setShowChart((v) => !v)}>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowChart((v) => !v)}>
           <Icon name="chart" size={16} /> {showChart ? t("hideChart") : t("showChart")}
         </button>
         <div className="small muted" style={{ marginInlineStart: "auto" }}>
@@ -4255,8 +4255,8 @@ function StudentReportCard({ userId, onClose }) {
           <div className="section-title">
             <h3><Icon name="cap" size={16} /> {t("reportCard")}</h3>
             <div style={{ display: "flex", gap: 8 }}>
-              <button className="btn btn-primary btn-sm" onClick={printCard}><Icon name="download" size={16} /> {t("printPdf")}</button>
-              <button className="btn btn-ghost btn-sm" onClick={onClose}>{t("close")}</button>
+              <button type="button" className="btn btn-primary btn-sm" onClick={printCard}><Icon name="download" size={16} /> {t("printPdf")}</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>{t("close")}</button>
             </div>
           </div>
 
@@ -4365,7 +4365,7 @@ function Catalogs() {
     api.get("/catalogs").then((d) => setList(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setList({ __err: true }); });
   };
   useEffect(() => { load(); }, []);
-  if (list?.__err || loadErr) return <><div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (lang === "fa" ? "بارگذاری کاتالوگ‌ها شکست خورد" : "Could not load catalogs")}</h3><button className="btn btn-ghost mt16" onClick={() => { setList(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div><OrderCatalogAdmin /></>;
+  if (list?.__err || loadErr) return <><div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (lang === "fa" ? "بارگذاری کاتالوگ‌ها شکست خورد" : "Could not load catalogs")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setList(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div><OrderCatalogAdmin /></>;
   if (!list) return <><Spinner /><OrderCatalogAdmin /></>;
   const del = async (id) => { if (confirm(t("confirmDelete"))) { await api.del(`/catalogs/${id}`); load(); } };
   const save = async (data, id) => {
@@ -4376,7 +4376,7 @@ function Catalogs() {
     <>
     <div className="card">
       <div className="section-title"><h4><Icon name="catalog" size={16} /> {t("customCatalogs")}</h4>
-        <button className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newCatalog")}</button></div>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newCatalog")}</button></div>
       <div className="small muted mb16">{t("catalogsHint")}</div>
       {list.length === 0 ? <div className="small muted center" style={{ padding: 20 }}>{t("noData")}</div> : (
         <div className="table-wrap"><table>
@@ -4386,8 +4386,8 @@ function Catalogs() {
               <td>{lang === "fa" ? c.name_fa : c.name_en}</td>
               <td>{c.items.length}</td>
               <td style={{ textAlign: "end" }}>
-                <button className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}>{t("edit")}</button>
-                <button className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button>
+                <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}>{t("edit")}</button>
+                <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button>
               </td>
             </tr>
           ))}</tbody></table></div>
@@ -4470,21 +4470,21 @@ function SiteContent() {
     <div className="page">
       <div className="section-title"><h4><Icon name="edit" size={18} /> {t("siteContent")}</h4>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="btn btn-ghost btn-sm" onClick={resetAll}><Icon name="trash" size={13} /> {t("cmsResetAll")}</button>
-          <button className="btn btn-primary btn-sm" onClick={save}><Icon name="check" size={14} /> {t("cmsPublish")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={resetAll}><Icon name="trash" size={13} /> {t("cmsResetAll")}</button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={save}><Icon name="check" size={14} /> {t("cmsPublish")}</button>
         </div>
       </div>
       <div className="muted small mb16">{t("cmsHint")}</div>
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
         <div className="lang-switch">
-          <button className={`btn btn-sm ${editLang === "fa" ? "btn-primary" : "btn-ghost"}`} onClick={() => setEditLang("fa")}>فارسی</button>
-          <button className={`btn btn-sm ${editLang === "en" ? "btn-primary" : "btn-ghost"}`} onClick={() => setEditLang("en")}>English</button>
+          <button type="button" className={`btn btn-sm ${editLang === "fa" ? "btn-primary" : "btn-ghost"}`} onClick={() => setEditLang("fa")}>فارسی</button>
+          <button type="button" className={`btn btn-sm ${editLang === "en" ? "btn-primary" : "btn-ghost"}`} onClick={() => setEditLang("en")}>English</button>
         </div>
         <div className="dt-search" style={{ marginBottom: 0, flex: 1, minWidth: 200 }}>
           <Icon name="search" size={16} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("searchPlaceholder")} />
-          {q && <button className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={14} /></button>}
+          {q && <button type="button" className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={14} /></button>}
         </div>
       </div>
 
@@ -4612,7 +4612,7 @@ function AdsManager() {
   return (
     <div className="page">
       <div className="section-title"><h4><Icon name="image" size={18} /> {t("adsMgmt")}</h4>
-        <button className="btn btn-primary btn-sm" onClick={() => setEdit({ ...blank })}><Icon name="edit" size={14} /> {t("newAd")}</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setEdit({ ...blank })}><Icon name="edit" size={14} /> {t("newAd")}</button>
       </div>
       <div className="muted small mb16">{lang === "fa" ? "برای هر صفحه (جایگاه) به‌صورت جداگانه تبلیغ بسازید و مدیریت کنید. این تبلیغات به کاربران رقابتی غیرپریمیوم نمایش داده می‌شوند." : "Create and manage ads per page (slot). Shown to non-premium learners."}</div>
 
@@ -4624,7 +4624,7 @@ function AdsManager() {
             <div style={{ fontWeight: 800, fontSize: "1.05rem" }}>{t("adsMaster")} — {master.enabled ? t("adsMasterOn") : t("adsMasterOff")}</div>
             <div className="small muted">{master.enabled ? t("adsMasterHintOn") : t("adsMasterHintOff")}</div>
           </div>
-          <button className={`btn ${master.enabled ? "btn-danger" : "btn-primary"}`} onClick={toggleMaster}>
+          <button type="button" className={`btn ${master.enabled ? "btn-danger" : "btn-primary"}`} onClick={toggleMaster}>
             {master.enabled ? (fa ? "خاموش کردن همه تبلیغات" : "Turn ALL ads off") : (fa ? "روشن کردن تبلیغات" : "Turn ads on")}
           </button>
         </div>
@@ -4644,11 +4644,11 @@ function AdsManager() {
 
       {/* Slot filter: manage ads page-by-page */}
       <div className="ad-slot-tabs mb16">
-        <button className={`btn btn-sm ${filter === "" ? "btn-primary" : "btn-ghost"}`} onClick={() => setFilter("")}>
+        <button type="button" className={`btn btn-sm ${filter === "" ? "btn-primary" : "btn-ghost"}`} onClick={() => setFilter("")}>
           {lang === "fa" ? "همه" : "All"} ({ads.length})
         </button>
         {AD_SLOTS.map((s) => (
-          <button key={s.slot} className={`btn btn-sm ${filter === s.slot ? "btn-primary" : "btn-ghost"}`} onClick={() => setFilter(s.slot)}>
+          <button type="button" key={s.slot} className={`btn btn-sm ${filter === s.slot ? "btn-primary" : "btn-ghost"}`} onClick={() => setFilter(s.slot)}>
             {lang === "fa" ? s.fa : s.en} ({countBySlot(s.slot)})
           </button>
         ))}
@@ -4676,9 +4676,9 @@ function AdsManager() {
               <span className="tag" style={{ background: a.active ? "var(--accentGlow)" : "var(--panel3)" }}>{a.active ? (fa ? "● فعال" : "● on") : (fa ? "○ خاموش" : "○ off")}</span>
             </div>
             <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-              <button className="btn btn-ghost btn-sm" onClick={() => toggleAd(a)} title={t("adToggle")}><Icon name={a.active ? "eye" : "eyeOff"} size={13} /> {a.active ? (fa ? "خاموش" : "Off") : (fa ? "روشن" : "On")}</button>
-              <button className="btn btn-ghost btn-sm" onClick={() => setEdit(a)}><Icon name="edit" size={13} /> {t("edit")}</button>
-              <button className="btn btn-danger btn-sm" onClick={() => remove(a.id)}><Icon name="trash" size={13} /> {t("delete")}</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => toggleAd(a)} title={t("adToggle")}><Icon name={a.active ? "eye" : "eyeOff"} size={13} /> {a.active ? (fa ? "خاموش" : "Off") : (fa ? "روشن" : "On")}</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEdit(a)}><Icon name="edit" size={13} /> {t("edit")}</button>
+              <button type="button" className="btn btn-danger btn-sm" onClick={() => remove(a.id)}><Icon name="trash" size={13} /> {t("delete")}</button>
             </div>
           </div>
         ))}
@@ -4829,7 +4829,7 @@ function SupportInbox() {
 
       <div className="ad-slot-tabs mb16">
         {["", "open", "answered", "resolved"].map((f) => (
-          <button key={f || "all"} className={`btn btn-sm ${filter === f ? "btn-primary" : "btn-ghost"}`} onClick={() => setFilter(f)}>
+          <button type="button" key={f || "all"} className={`btn btn-sm ${filter === f ? "btn-primary" : "btn-ghost"}`} onClick={() => setFilter(f)}>
             {f === "" ? (lang === "fa" ? "همه" : "All") : t("supportStatus_" + f)}
           </button>
         ))}
@@ -4840,7 +4840,7 @@ function SupportInbox() {
         <div className="support-list card">
           {(data.tickets || []).length === 0 && <div className="empty-state" style={{ padding: 24 }}><div className="small muted">{t("noData")}</div></div>}
           {(data.tickets || []).map((tk) => (
-            <button key={tk.id} className={`support-list-item ${active?.ticket?.id === tk.id ? "active" : ""} ${tk.admin_unread > 0 ? "unread" : ""}`} onClick={() => openTicket(tk.id)}>
+            <button type="button" key={tk.id} className={`support-list-item ${active?.ticket?.id === tk.id ? "active" : ""} ${tk.admin_unread > 0 ? "unread" : ""}`} onClick={() => openTicket(tk.id)}>
               <div className="sli-top">
                 <span className="sli-name">{tk.user}</span>
                 <span className={`pill pill-${statusPill(tk.status)}`}>{t("supportStatus_" + tk.status)}</span>
@@ -4868,8 +4868,8 @@ function SupportInbox() {
                     {Object.keys(SUPPORT_CAT).map((c) => <option key={c} value={c}>{catLabel(c)}</option>)}
                   </select>
                   {active.ticket.status !== "resolved"
-                    ? <button className="btn btn-ghost btn-sm" onClick={() => setStatus("resolved")}><Icon name="check" size={13} /> {t("supportMarkResolved")}</button>
-                    : <button className="btn btn-ghost btn-sm" onClick={() => setStatus("open")}><Icon name="repeat" size={13} /> {t("supportReopen")}</button>}
+                    ? <button type="button" className="btn btn-ghost btn-sm" onClick={() => setStatus("resolved")}><Icon name="check" size={13} /> {t("supportMarkResolved")}</button>
+                    : <button type="button" className="btn btn-ghost btn-sm" onClick={() => setStatus("open")}><Icon name="repeat" size={13} /> {t("supportReopen")}</button>}
                 </div>
               </div>
               <div className="st-body" ref={bodyRef}>
@@ -4885,7 +4885,7 @@ function SupportInbox() {
                 <textarea rows={1} value={reply} onChange={(e) => setReply(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendReply(); } }}
                   placeholder={t("supportReplyPlaceholder")} />
-                <button className="support-send" disabled={busy || !reply.trim()} onClick={sendReply}><Icon name="send" size={18} /></button>
+                <button type="button" className="support-send" disabled={busy || !reply.trim()} onClick={sendReply}><Icon name="send" size={18} /></button>
               </div>
             </>
           )}
@@ -4924,7 +4924,7 @@ function HelpCenterAdmin() {
   return (
     <div className="page">
       <div className="section-title"><h4><Icon name="book" size={18} /> {t("helpCenter")}</h4>
-        <button className="btn btn-primary btn-sm" onClick={() => setEdit({ ...blank })}><Icon name="edit" size={14} /> {t("helpNewArticle")}</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setEdit({ ...blank })}><Icon name="edit" size={14} /> {t("helpNewArticle")}</button>
       </div>
       <div className="muted small mb16">{lang === "fa" ? "این مقاله‌ها در بخش «راهنما»ی چت پشتیبانی به کاربران نمایش داده می‌شوند تا خودشان جواب سوال‌ها را پیدا کنند." : "These articles appear in the Help tab of the support chat so users can self-serve answers."}</div>
       {items.length === 0 && <div className="card empty-state"><div className="ico"><Icon name="book" size={40} /></div><h3>{t("noData")}</h3></div>}
@@ -4941,8 +4941,8 @@ function HelpCenterAdmin() {
             <div className="small muted mt8" style={{ maxHeight: 40, overflow: "hidden" }}>{lang === "fa" ? a.body_fa : a.body_en}</div>
             <div className="case-meta mt8"><span className="tag"><Icon name="chart" size={12} /> {t("views") || "بازدید"}: {a.views}</span></div>
             <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-              <button className="btn btn-ghost btn-sm" onClick={() => setEdit(a)}><Icon name="edit" size={13} /> {t("edit")}</button>
-              <button className="btn btn-danger btn-sm" onClick={() => remove(a.id)}><Icon name="trash" size={13} /> {t("delete")}</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEdit(a)}><Icon name="edit" size={13} /> {t("edit")}</button>
+              <button type="button" className="btn btn-danger btn-sm" onClick={() => remove(a.id)}><Icon name="trash" size={13} /> {t("delete")}</button>
             </div>
           </div>
         ))}
@@ -5008,7 +5008,7 @@ function PremiumAccounts() {
   return (
     <div className="page">
       <div className="section-title"><h4><Icon name="crown" size={18} /> {fa ? "مدیریت اکانت‌های پریمیوم" : "Premium accounts"}</h4>
-        <button className="btn btn-primary btn-sm" onClick={() => setGrant({ search: "", results: [], days: 30, lifetime: false })}><Icon name="crown" size={14} /> {fa ? "اعطای پریمیوم" : "Grant premium"}</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setGrant({ search: "", results: [], days: 30, lifetime: false })}><Icon name="crown" size={14} /> {fa ? "اعطای پریمیوم" : "Grant premium"}</button>
       </div>
 
       {/* program on/off notice (the kill switch) */}
@@ -5038,7 +5038,7 @@ function PremiumAccounts() {
       <div className="card">
         <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
           <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load(q)} placeholder={fa ? "جستجوی مشترک…" : "Search subscribers…"} style={{ flex: 1 }} />
-          <button className="btn btn-ghost btn-sm" onClick={() => load(q)}><Icon name="search" size={14} /></button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => load(q)}><Icon name="search" size={14} /></button>
         </div>
         {d.subscribers.length === 0
           ? <div className="empty-state"><div className="ico"><Icon name="crown" size={40} /></div><h3>{fa ? "هنوز مشترک پریمیومی نیست" : "No premium subscribers yet"}</h3></div>
@@ -5051,8 +5051,8 @@ function PremiumAccounts() {
                 <td className="small">{s.lifetime ? (fa ? "مادام‌العمر" : "Lifetime") : fmtDate(s.premium_until)}</td>
                 <td>{s.lifetime ? "∞" : (s.daysLeft === 0 ? <span className="pill pill-danger">{fa ? "منقضی" : "expired"}</span> : s.daysLeft)}</td>
                 <td>
-                  <button className="btn btn-ghost btn-sm" onClick={() => doGrant(s.id, 30, false)} title={fa ? "+۳۰ روز" : "+30 days"}>+30</button>
-                  <button className="btn btn-danger btn-sm" onClick={() => doRevoke(s.id)}><Icon name="close" size={12} /></button>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => doGrant(s.id, 30, false)} title={fa ? "+۳۰ روز" : "+30 days"}>+30</button>
+                  <button type="button" className="btn btn-danger btn-sm" onClick={() => doRevoke(s.id)}><Icon name="close" size={12} /></button>
                 </td>
               </tr>
             ))}</tbody></table></div>}
@@ -5063,7 +5063,7 @@ function PremiumAccounts() {
           <div className="field"><label>{fa ? "جستجوی کاربر (نام/یوزرنیم/ایمیل)" : "Find learner (name/username/email)"}</label>
             <div style={{ display: "flex", gap: 8 }}>
               <input value={grant.search} onChange={(e) => setGrant({ ...grant, search: e.target.value })} onKeyDown={(e) => e.key === "Enter" && searchLearners(grant.search)} style={{ flex: 1 }} />
-              <button className="btn btn-ghost btn-sm" onClick={() => searchLearners(grant.search)}><Icon name="search" size={14} /></button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => searchLearners(grant.search)}><Icon name="search" size={14} /></button>
             </div>
           </div>
           <div className="grid grid-2 mb16">
@@ -5078,7 +5078,7 @@ function PremiumAccounts() {
               {grant.results.map((r) => (
                 <div key={r.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8, background: "var(--panel3, #f4f7fb)", borderRadius: 8, padding: "6px 10px" }}>
                   <span>{r.name} <span className="small muted">@{r.username}</span> {r.premium && <span className="tag">{fa ? "پریمیوم" : "premium"}</span>}</span>
-                  <button className="btn btn-primary btn-sm" onClick={() => doGrant(r.id, grant.days, grant.lifetime)}><Icon name="crown" size={13} /> {fa ? "اعطا" : "Grant"}</button>
+                  <button type="button" className="btn btn-primary btn-sm" onClick={() => doGrant(r.id, grant.days, grant.lifetime)}><Icon name="crown" size={13} /> {fa ? "اعطا" : "Grant"}</button>
                 </div>
               ))}
             </div>
@@ -5116,7 +5116,7 @@ function GroupPurchaseAdmin() {
   return (
     <div className="page">
       <div className="section-title"><h4><Icon name="users" size={18} /> {fa ? "خرید گروهی (تخفیف حجمی)" : "Group purchase (volume discount)"}</h4>
-        <button className="btn btn-primary btn-sm" onClick={() => setEdit({ ...blank })}><Icon name="edit" size={14} /> {fa ? "بستهٔ جدید" : "New pack"}</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setEdit({ ...blank })}><Icon name="edit" size={14} /> {fa ? "بستهٔ جدید" : "New pack"}</button>
       </div>
       <div className="muted small mb16">
         {fa
@@ -5151,8 +5151,8 @@ function GroupPurchaseAdmin() {
               <span className="tag">{fa ? "هر صندلی" : "Per seat"}: <b>{toman(p.perSeat)} {fa ? "ت" : "T"}</b></span>
             </div>
             <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-              <button className="btn btn-ghost btn-sm" onClick={() => setEdit({ ...p })}><Icon name="edit" size={13} /> {t("edit")}</button>
-              <button className="btn btn-danger btn-sm" onClick={() => remove(p.id)}><Icon name="trash" size={13} /> {t("delete")}</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEdit({ ...p })}><Icon name="edit" size={13} /> {t("edit")}</button>
+              <button type="button" className="btn btn-danger btn-sm" onClick={() => remove(p.id)}><Icon name="trash" size={13} /> {t("delete")}</button>
             </div>
           </div>
         ))}
@@ -5341,8 +5341,8 @@ function MascotsAdmin() {
       </div>
 
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-        <button className="btn btn-primary" onClick={save} disabled={busy}>{busy ? "…" : t("save")}</button>
-        <button className="btn btn-ghost" onClick={reset} disabled={busy}>{fa ? "بازنشانی به پیش‌فرض" : "Reset to defaults"}</button>
+        <button type="button" className="btn btn-primary" onClick={save} disabled={busy}>{busy ? "…" : t("save")}</button>
+        <button type="button" className="btn btn-ghost" onClick={reset} disabled={busy}>{fa ? "بازنشانی به پیش‌فرض" : "Reset to defaults"}</button>
       </div>
     </div>
   );
@@ -5387,8 +5387,8 @@ function DxAdmin() {
       <div className="section-title"><h4><Icon name="target" size={18} /> {fa ? "چالش تشخیص روز" : "Daily Diagnosis Challenge"}</h4>
         <div style={{ display: "flex", gap: 8 }}>
           <a className="btn btn-ghost btn-sm" href="/api/admin/dx/import/template.csv" download><Icon name="download" size={14} /> {fa ? "قالب CSV" : "CSV template"}</a>
-          <button className="btn btn-ghost btn-sm" onClick={() => setImporting(true)}><Icon name="upload" size={14} /> {fa ? "ورود دسته‌جمعی" : "Bulk import"}</button>
-          <button className="btn btn-primary btn-sm" onClick={() => setEdit({ ...blank })}><Icon name="edit" size={14} /> {fa ? "کیس جدید" : "New case"}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setImporting(true)}><Icon name="upload" size={14} /> {fa ? "ورود دسته‌جمعی" : "Bulk import"}</button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setEdit({ ...blank })}><Icon name="edit" size={14} /> {fa ? "کیس جدید" : "New case"}</button>
         </div>
       </div>
       <div className="muted small mb16">
@@ -5417,8 +5417,8 @@ function DxAdmin() {
             <div className="small muted mt8">{(fa ? c.category_fa : c.category_en)} · {(fa ? c.vignette_fa : c.vignette_en)}</div>
             <div className="small muted mt8">{fa ? "سرنخ‌ها:" : "Clues:"} {(c.clues || []).length} · {fa ? "گزینه‌ها:" : "Options:"} {(c.options || []).length}{c.scheduled_day ? ` · 📅 ${c.scheduled_day}` : ""}</div>
             <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-              <button className="btn btn-ghost btn-sm" onClick={() => setEdit({ ...c, aliases: (c.aliases || []).join(", ") })}><Icon name="edit" size={13} /> {t("edit")}</button>
-              <button className="btn btn-danger btn-sm" onClick={() => remove(c.id)}><Icon name="trash" size={13} /> {t("delete")}</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEdit({ ...c, aliases: (c.aliases || []).join(", ") })}><Icon name="edit" size={13} /> {t("edit")}</button>
+              <button type="button" className="btn btn-danger btn-sm" onClick={() => remove(c.id)}><Icon name="trash" size={13} /> {t("delete")}</button>
             </div>
           </div>
         ))}
@@ -5540,7 +5540,7 @@ function LandingManager() {
       </div>
       <div className="subtabs mb16" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         {subs.map(([id, ic, label]) => (
-          <button key={id} className={`btn btn-sm ${sub === id ? "btn-primary" : "btn-ghost"}`} onClick={() => setSub(id)}>
+          <button type="button" key={id} className={`btn btn-sm ${sub === id ? "btn-primary" : "btn-ghost"}`} onClick={() => setSub(id)}>
             <Icon name={ic} size={14} /> {label}
           </button>
         ))}
@@ -5574,7 +5574,7 @@ function TestimonialsAdmin() {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-        <button className="btn btn-primary btn-sm" onClick={() => setEdit({ ...blank })}><Icon name="edit" size={14} /> {fa ? "نظر جدید" : "New testimonial"}</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setEdit({ ...blank })}><Icon name="edit" size={14} /> {fa ? "نظر جدید" : "New testimonial"}</button>
       </div>
       {items.length === 0 && <div className="card empty-state"><div className="ico"><Icon name="medal" size={40} /></div><h3>{t("noData")}</h3></div>}
       <div className="grid grid-2">
@@ -5591,8 +5591,8 @@ function TestimonialsAdmin() {
             <div className="small muted">{(fa ? a.role_fa : a.role_en) || a.role_fa}</div>
             <div className="small mt8" style={{ maxHeight: 60, overflow: "hidden", lineHeight: 1.7 }}>{(fa ? a.quote_fa : a.quote_en) || a.quote_fa}</div>
             <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-              <button className="btn btn-ghost btn-sm" onClick={() => setEdit({ ...a })}><Icon name="edit" size={13} /> {t("edit")}</button>
-              <button className="btn btn-danger btn-sm" onClick={() => remove(a.id)}><Icon name="trash" size={13} /> {t("delete")}</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEdit({ ...a })}><Icon name="edit" size={13} /> {t("edit")}</button>
+              <button type="button" className="btn btn-danger btn-sm" onClick={() => remove(a.id)}><Icon name="trash" size={13} /> {t("delete")}</button>
             </div>
           </div>
         ))}
@@ -5654,7 +5654,7 @@ function BadgesAdmin() {
     <div>
       <div className="muted small mb16">{fa ? "نشان‌های کوتاهی که زیر دکمهٔ «شروع رایگان» نمایش داده می‌شوند تا نگرانی‌های کاربر را رفع کنند (مثل «بدون نیاز به کارت بانکی»)." : "Short reassurance badges shown under the primary CTA (e.g. \"No credit card required\")."}</div>
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-        <button className="btn btn-primary btn-sm" onClick={() => setEdit({ ...blank })}><Icon name="edit" size={14} /> {fa ? "نشان جدید" : "New badge"}</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setEdit({ ...blank })}><Icon name="edit" size={14} /> {fa ? "نشان جدید" : "New badge"}</button>
       </div>
       {items.length === 0 && <div className="card empty-state"><div className="ico"><Icon name="shield" size={40} /></div><h3>{t("noData")}</h3></div>}
       <div className="grid grid-2">
@@ -5668,8 +5668,8 @@ function BadgesAdmin() {
               </div>
             </div>
             <div style={{ display: "flex", gap: 6 }}>
-              <button className="btn btn-ghost btn-sm" onClick={() => setEdit({ ...b })}><Icon name="edit" size={13} /></button>
-              <button className="btn btn-danger btn-sm" onClick={() => remove(b.id)}><Icon name="trash" size={13} /></button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEdit({ ...b })}><Icon name="edit" size={13} /></button>
+              <button type="button" className="btn btn-danger btn-sm" onClick={() => remove(b.id)}><Icon name="trash" size={13} /></button>
             </div>
           </div>
         ))}
@@ -5722,7 +5722,7 @@ function LandingFaqAdmin() {
     <div>
       <div className="muted small mb16">{fa ? "این سوال‌ها روی صفحهٔ فرود (متفاوت از مرکز راهنمای درون‌برنامه‌ای) نمایش داده می‌شوند تا اعتراض‌های احتمالی بازدیدکننده را قبل از ثبت‌نام رفع کنند." : "Shown on the landing page (separate from the in-app help center) to handle a visitor's objections before signup."}</div>
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
-        <button className="btn btn-primary btn-sm" onClick={() => setEdit({ ...blank })}><Icon name="edit" size={14} /> {fa ? "سوال جدید" : "New FAQ"}</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setEdit({ ...blank })}><Icon name="edit" size={14} /> {fa ? "سوال جدید" : "New FAQ"}</button>
       </div>
       {items.length === 0 && <div className="card empty-state"><div className="ico"><Icon name="book" size={40} /></div><h3>{t("noData")}</h3></div>}
       <div className="grid grid-2">
@@ -5734,8 +5734,8 @@ function LandingFaqAdmin() {
             </div>
             <div className="small muted mt8" style={{ maxHeight: 50, overflow: "hidden" }}>{(fa ? f.a_fa : f.a_en) || f.a_fa}</div>
             <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-              <button className="btn btn-ghost btn-sm" onClick={() => setEdit({ ...f })}><Icon name="edit" size={13} /> {t("edit")}</button>
-              <button className="btn btn-danger btn-sm" onClick={() => remove(f.id)}><Icon name="trash" size={13} /> {t("delete")}</button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEdit({ ...f })}><Icon name="edit" size={13} /> {t("edit")}</button>
+              <button type="button" className="btn btn-danger btn-sm" onClick={() => remove(f.id)}><Icon name="trash" size={13} /> {t("delete")}</button>
             </div>
           </div>
         ))}
@@ -5802,7 +5802,7 @@ function StatsFloorAdmin() {
           </div>
         ))}
       </div>
-      <button className="btn btn-primary mt16" onClick={save}><Icon name="check" size={15} /> {fa ? "ذخیرهٔ آستانهٔ نمایش" : "Save visibility threshold"}</button>
+      <button type="button" className="btn btn-primary mt16" onClick={save}><Icon name="check" size={15} /> {fa ? "ذخیرهٔ آستانهٔ نمایش" : "Save visibility threshold"}</button>
     </div>
   );
 }
@@ -5859,7 +5859,7 @@ function RemindersAdmin() {
           <span className="tag">{fa ? "به سقف روزانه رسیده" : "Hit daily cap"}: <b>{pv.capped}</b></span>
           <span className="tag">{fa ? "ساعت فعلی (تهران)" : "Now (Tehran)"}: <b>{pv.now?.hour}:00</b></span>
         </div>
-        <button className="btn btn-primary" onClick={run} disabled={busy || pv.eligible === 0}>
+        <button type="button" className="btn btn-primary" onClick={run} disabled={busy || pv.eligible === 0}>
           {busy ? (fa ? "در حال ارسال…" : "Sending…") : <><Icon name="send" size={15} /> {fa ? `ارسال یادآور به ${pv.eligible} کاربر` : `Send to ${pv.eligible} learners`}</>}
         </button>
         {pv.eligible === 0 && <div className="small muted mt8">{fa ? "الان کسی واجد شرایط نیست (یا همه امروز یادآور گرفته‌اند)." : "No one is eligible right now."}</div>}
@@ -5889,16 +5889,16 @@ function VpatientAdmin() {
   return (
     <div>
       <div className="subtabs mb16" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button className={`btn btn-sm ${sub === "settings" ? "btn-primary" : "btn-ghost"}`} onClick={() => setSub("settings")}>
+        <button type="button" className={`btn btn-sm ${sub === "settings" ? "btn-primary" : "btn-ghost"}`} onClick={() => setSub("settings")}>
           <Icon name="settings" size={15} /> {fa ? "تنظیمات" : "Settings"}
         </button>
-        <button className={`btn btn-sm ${sub === "ai" ? "btn-primary" : "btn-ghost"}`} onClick={() => setSub("ai")}>
+        <button type="button" className={`btn btn-sm ${sub === "ai" ? "btn-primary" : "btn-ghost"}`} onClick={() => setSub("ai")}>
           <Icon name="ai" size={15} /> {fa ? "API هوش مصنوعی" : "AI / API"}
         </button>
-        <button className={`btn btn-sm ${sub === "prompts" ? "btn-primary" : "btn-ghost"}`} onClick={() => setSub("prompts")}>
+        <button type="button" className={`btn btn-sm ${sub === "prompts" ? "btn-primary" : "btn-ghost"}`} onClick={() => setSub("prompts")}>
           <Icon name="brain" size={15} /> {fa ? "پرامپت‌ها" : "Prompts"}
         </button>
-        <button className={`btn btn-sm ${sub === "library" ? "btn-primary" : "btn-ghost"}`} onClick={() => setSub("library")}>
+        <button type="button" className={`btn btn-sm ${sub === "library" ? "btn-primary" : "btn-ghost"}`} onClick={() => setSub("library")}>
           <Icon name="download" size={15} /> {fa ? "ایمپورت از دانشگاهی" : "Import from university"}
         </button>
       </div>
@@ -5927,7 +5927,7 @@ function VpatientLibrary() {
     api.get(`/admin/vpatient/library?lang=${lang}`).then(setLib).catch((e) => { setLoadErr(String(e.message || e)); setLib({ __err: true }); });
   };
   useEffect(() => { load(); }, [lang]);
-  if (lib?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری کتابخانه شکست خورد" : "Could not load the library")}</h3><button className="btn btn-ghost mt16" onClick={() => { setLib(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (lib?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری کتابخانه شکست خورد" : "Could not load the library")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setLib(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!lib) return <div className="card"><div className="skeleton sk-card" /></div>;
 
   const toggle = (set, setter, id) => { const n = new Set(set); n.has(id) ? n.delete(id) : n.add(id); setter(n); };
@@ -5952,14 +5952,14 @@ function VpatientLibrary() {
               : "Select university cases & cards to clone into an independent competitive copy (the university original is untouched). CSV export/import is also available."}
         </p>
         <div className="subtabs mb16" style={{ display: "flex", gap: 8 }}>
-          <button className={`btn btn-sm ${tab === "cases" ? "btn-primary" : "btn-ghost"}`} onClick={() => setTab("cases")}>🩺 {fa ? "بیماران مجازی" : "Virtual patients"} ({lib.cases.length})</button>
-          <button className={`btn btn-sm ${tab === "cards" ? "btn-primary" : "btn-ghost"}`} onClick={() => setTab("cards")}>🃏 {fa ? "فلش‌کارت‌ها" : "Flashcards"} ({lib.cards.length})</button>
+          <button type="button" className={`btn btn-sm ${tab === "cases" ? "btn-primary" : "btn-ghost"}`} onClick={() => setTab("cases")}>🩺 {fa ? "بیماران مجازی" : "Virtual patients"} ({lib.cases.length})</button>
+          <button type="button" className={`btn btn-sm ${tab === "cards" ? "btn-primary" : "btn-ghost"}`} onClick={() => setTab("cards")}>🃏 {fa ? "فلش‌کارت‌ها" : "Flashcards"} ({lib.cards.length})</button>
         </div>
 
         {tab === "cases" ? (
           <>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-              <button className="btn btn-primary btn-sm" onClick={importCases} disabled={busy || !selCases.size}>
+              <button type="button" className="btn btn-primary btn-sm" onClick={importCases} disabled={busy || !selCases.size}>
                 {fa ? `ایمپورت ${selCases.size} بیمار` : `Import ${selCases.size} cases`}
               </button>
               <a className="btn btn-ghost btn-sm" href={`/api/content/cases-export.csv`} onClick={(e) => { e.preventDefault(); downloadWithAuth("/api/content/cases-export.csv", "cases.csv", token); }}>
@@ -5985,7 +5985,7 @@ function VpatientLibrary() {
         ) : (
           <>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-              <button className="btn btn-primary btn-sm" onClick={importCards} disabled={busy || !selCards.size}>
+              <button type="button" className="btn btn-primary btn-sm" onClick={importCards} disabled={busy || !selCards.size}>
                 {fa ? `ایمپورت ${selCards.size} کارت` : `Import ${selCards.size} cards`}
               </button>
               <a className="btn btn-ghost btn-sm" href={`/api/content/flashcards-export.csv`} onClick={(e) => { e.preventDefault(); downloadWithAuth("/api/content/flashcards-export.csv", "flashcards.csv", token); }}>
@@ -6045,7 +6045,7 @@ function VpatientSettings() {
     api.get(`/admin/vpatient/cases?lang=${lang}`).then((d) => setCases(Array.isArray(d.cases) ? d.cases : [])).catch((e) => { setCasesErr(String(e.message || e)); setCases({ __err: true }); });
   };
   useEffect(() => { loadVp(); }, [lang]);
-  if (cfg?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری تنظیمات بیمار مجازی شکست خورد" : "Could not load virtual-patient settings")}</h3><button className="btn btn-ghost mt16" onClick={() => { setCfg(null); loadVp(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (cfg?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری تنظیمات بیمار مجازی شکست خورد" : "Could not load virtual-patient settings")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCfg(null); loadVp(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!cfg) return <div className="card"><div className="skeleton sk-card" /></div>;
 
   const save = async () => {
@@ -6157,7 +6157,7 @@ function VpatientSettings() {
         )}
       </div>
 
-      <button className="btn btn-primary" onClick={save} disabled={busy}>{busy ? "…" : t("save")}</button>
+      <button type="button" className="btn btn-primary" onClick={save} disabled={busy}>{busy ? "…" : t("save")}</button>
     </div>
   );
 }
@@ -6180,7 +6180,7 @@ export function VpatientAiConfig() {
     api.get("/exam/ai-providers").then((d) => setProviders(normalizeAiProviders(d))).catch(() => setProviders(FALLBACK_AI_PROVIDERS));
   };
   useEffect(() => { loadAi(); }, []);
-  if (cfg?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری تنظیمات API شکست خورد" : "Could not load AI settings")}</h3><button className="btn btn-ghost mt16" onClick={() => { setCfg(null); loadAi(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (cfg?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری تنظیمات API شکست خورد" : "Could not load AI settings")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCfg(null); loadAi(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!cfg) return <Spinner />;
   const listed = providers.filter((p) => p.key !== "");
   const editCfg = (update) => {
@@ -6240,11 +6240,11 @@ export function VpatientAiConfig() {
       </div>
       </fieldset>
       <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-        <button className="btn btn-primary" onClick={() => save()} disabled={saving || testing}>{saving ? "…" : t("save")}</button>
-        <button className="btn btn-accent" onClick={test} disabled={testing || saving}>
+        <button type="button" className="btn btn-primary" onClick={() => save()} disabled={saving || testing}>{saving ? "…" : t("save")}</button>
+        <button type="button" className="btn btn-accent" onClick={test} disabled={testing || saving}>
           {testing ? (fa ? "در حال آزمایش…" : "Testing…") : (fa ? "آزمایش با API" : "Test with API")}
         </button>
-        {!cfg.routingEnabled && !!cfg.apiKey && <button className="btn btn-ghost" onClick={clearKey} disabled={saving || testing}>{t("aiClearKey")}</button>}
+        {!cfg.routingEnabled && !!cfg.apiKey && <button type="button" className="btn btn-ghost" onClick={clearKey} disabled={saving || testing}>{t("aiClearKey")}</button>}
         {testMsg && <span className={`pill ${testDetail?.connected ? "pill-active" : "pill-medium"}`}>● {testMsg}</span>}
       </div>
       {testDetail && (
@@ -6286,7 +6286,7 @@ function VpatientPrompts() {
     api.get("/admin/vpatient/prompts").then((d) => setP(d.prompts)).catch((e) => { setLoadErr(String(e.message || e)); setP({ __err: true }); });
   };
   useEffect(() => { loadP(); }, []);
-  if (p?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری پرامپت‌ها شکست خورد" : "Could not load prompts")}</h3><button className="btn btn-ghost mt16" onClick={() => { setP(null); loadP(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (p?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری پرامپت‌ها شکست خورد" : "Could not load prompts")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setP(null); loadP(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!p) return <Spinner />;
   const set = (k, v) => setP((s) => ({ ...s, [k]: v }));
   const save = async () => { const d = await api.put("/admin/vpatient/prompts", { prompts: p }); setP(d.prompts); toast(t("saved")); };
@@ -6316,7 +6316,7 @@ function VpatientPrompts() {
       <Field k="evaluator_en" label={`${fa ? "ارزیاب" : "Evaluator"} (EN)`} />
       <Field k="micro_fa" label={`${fa ? "ریزآموزش" : "Microlearning"} (FA)`} />
       <Field k="micro_en" label={`${fa ? "ریزآموزش" : "Microlearning"} (EN)`} />
-      <button className="btn btn-primary mt8" onClick={save}>{t("save")}</button>
+      <button type="button" className="btn btn-primary mt8" onClick={save}>{t("save")}</button>
     </div>
   );
 }
@@ -6392,7 +6392,7 @@ function TwaAdmin() {
         </div>
 
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 12 }}>
-          <button className="btn btn-primary" onClick={save} disabled={busy}>{busy ? "…" : t("save")}</button>
+          <button type="button" className="btn btn-primary" onClick={save} disabled={busy}>{busy ? "…" : t("save")}</button>
         </div>
       </div>
 
@@ -6407,7 +6407,7 @@ function TwaAdmin() {
           ? <>
               <pre style={{ background: "var(--panel2)", border: "1px solid var(--border)", borderRadius: 10,
                 padding: 12, overflow: "auto", fontSize: ".78rem", direction: "ltr", textAlign: "left" }}>{assetlinksJson}</pre>
-              <button className="btn btn-sm btn-ghost mt8" onClick={copyJson}><Icon name="download" size={14} /> {fa ? "کپی JSON" : "Copy JSON"}</button>
+              <button type="button" className="btn btn-sm btn-ghost mt8" onClick={copyJson}><Icon name="download" size={14} /> {fa ? "کپی JSON" : "Copy JSON"}</button>
             </>
           : <div className="note-warn" style={{ padding: 12, borderRadius: 10, background: "rgba(224,145,46,.12)", border: "1px solid rgba(224,145,46,.3)" }}>
               {fa ? "⚠️ هنوز منتشر نشده — «فعال‌سازی» را بزن و حداقل یک اثرانگشت معتبر وارد کن." : "⚠️ Not published yet — enable it and add at least one valid fingerprint."}
@@ -6545,7 +6545,7 @@ function SeoAdmin() {
   return (
     <div className="page">
       <div className="section-title"><h4><Icon name="settings" size={18} /> {fa ? "بهینه‌سازی موتور جستجو (SEO)" : "Search engine optimization (SEO)"}</h4>
-        <button className="btn btn-primary btn-sm" onClick={save}><Icon name="check" size={14} /> {t("save")}</button></div>
+        <button type="button" className="btn btn-primary btn-sm" onClick={save}><Icon name="check" size={14} /> {t("save")}</button></div>
       <div className="muted small mb16">
         {fa
           ? "معادل بومی افزونه‌های Yoast/RankMath — کاملاً بدون هوش مصنوعی. این بخش، متا تگ‌های قابل‌خواندن برای گوگل، پیش‌نمایش زیبا در تلگرام/واتساپ (Open Graph)، دادهٔ ساختاریافته (Schema)، و فایل‌های sitemap.xml و robots.txt را می‌سازد. برای روشن/خاموش کامل از «کلیدهای ویژگی» کلید seo استفاده کنید."
@@ -6642,7 +6642,7 @@ function GoogleClientIdField({ initial }) {
         : "Create a Web OAuth client in Google Cloud. Authorized JavaScript origins must be the exact site origin (e.g. https://medschool.ir, no path). Paste the Client ID here or in GOOGLE_CLIENT_ID."}</div>
       <div className="field"><label>GOOGLE_CLIENT_ID</label>
         <input dir="ltr" value={v} onChange={(e) => setV(e.target.value)} placeholder="xxxx.apps.googleusercontent.com" /></div>
-      <button className="btn btn-primary btn-sm" disabled={busy} onClick={save}>{fa ? "ذخیره" : "Save"}</button>
+      <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={save}>{fa ? "ذخیره" : "Save"}</button>
     </div>
   );
 }
@@ -6752,7 +6752,7 @@ function BlogAdminList({ d, stats: s, fa, t, toast, load, setEditing, KPI }) {
   return (
     <div className="page">
       <div className="section-title"><h4>📝 {fa ? "وبلاگ و مقالات پزشکی" : "Medical blog"}</h4>
-        <button className="btn btn-primary btn-sm" onClick={() => setEditing("new")}><Icon name="edit" size={14} /> {fa ? "مقالهٔ جدید" : "New post"}</button></div>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing("new")}><Icon name="edit" size={14} /> {fa ? "مقالهٔ جدید" : "New post"}</button></div>
       <div className="muted small mb16">
         {fa ? "مقالات آموزشی برای جذب ترافیک از گوگل. هر مقاله به‌طور خودکار در sitemap و با متا تگ و Schema مناسب منتشر می‌شود. برای روشن/خاموش کامل، پرچم «وبلاگ» را در «کلیدهای ویژگی» تنظیم کنید."
              : "Educational articles to attract Google traffic. Each post is auto-added to the sitemap with proper meta tags & schema. Toggle it via Feature Flags → blog."}
@@ -6767,7 +6767,7 @@ function BlogAdminList({ d, stats: s, fa, t, toast, load, setEditing, KPI }) {
         <div className="dt-search" style={{ flex: 1, minWidth: 180 }}>
           <Icon name="search" size={15} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={fa ? "جستجوی مقاله…" : "Search posts…"} />
-          {q && <button className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={13} /></button>}
+          {q && <button type="button" className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={13} /></button>}
         </div>
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">{fa ? "همه" : "All"}</option>
@@ -6788,8 +6788,8 @@ function BlogAdminList({ d, stats: s, fa, t, toast, load, setEditing, KPI }) {
                 </span></div>
             </div>
             <div style={{ display: "flex", gap: 6 }}>
-              <button className="btn btn-sm" onClick={() => setEditing(p.id)}>{t("edit")}</button>
-              <button className="btn btn-sm btn-danger" onClick={async () => { if (confirm(fa ? "حذف شود؟" : "Delete?")) { await api.del(`/admin/blog/${p.id}`); toast(t("delete")); load(); } }}>{t("delete")}</button>
+              <button type="button" className="btn btn-sm" onClick={() => setEditing(p.id)}>{t("edit")}</button>
+              <button type="button" className="btn btn-sm btn-danger" onClick={async () => { if (confirm(fa ? "حذف شود؟" : "Delete?")) { await api.del(`/admin/blog/${p.id}`); toast(t("delete")); load(); } }}>{t("delete")}</button>
             </div>
           </div>
         ))}
@@ -6995,18 +6995,18 @@ function BlogEditor({ id, categories, onBack }) {
     <div className="page">
       <div className="section-title"><h4>📝 {id ? (fa ? "ویرایش مقاله" : "Edit post") : (fa ? "مقالهٔ جدید" : "New post")}</h4>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <button className="btn btn-ghost btn-sm" onClick={onBack}><Icon name="chevronRight" size={14} /> {fa ? "بازگشت" : "Back"}</button>
-          {id && <button className="btn btn-ghost btn-sm" onClick={() => setShowRevs(true)} title={fa ? "تاریخچهٔ ویرایش‌ها" : "Edit history"}><Icon name="clock" size={14} /> {fa ? "تاریخچه" : "History"}</button>}
-          <button className="btn btn-ghost btn-sm" disabled={saving} onClick={() => save({ published: 0 })}>{fa ? "ذخیرهٔ پیش‌نویس" : "Save draft"}</button>
-          <button className="btn btn-primary btn-sm" disabled={saving} onClick={() => save({ published: 1 })}><Icon name="check" size={14} /> {f.published ? (fa ? "ذخیره و انتشار" : "Save & publish") : (fa ? "انتشار" : "Publish")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}><Icon name="chevronRight" size={14} /> {fa ? "بازگشت" : "Back"}</button>
+          {id && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowRevs(true)} title={fa ? "تاریخچهٔ ویرایش‌ها" : "Edit history"}><Icon name="clock" size={14} /> {fa ? "تاریخچه" : "History"}</button>}
+          <button type="button" className="btn btn-ghost btn-sm" disabled={saving} onClick={() => save({ published: 0 })}>{fa ? "ذخیرهٔ پیش‌نویس" : "Save draft"}</button>
+          <button type="button" className="btn btn-primary btn-sm" disabled={saving} onClick={() => save({ published: 1 })}><Icon name="check" size={14} /> {f.published ? (fa ? "ذخیره و انتشار" : "Save & publish") : (fa ? "انتشار" : "Publish")}</button>
         </div>
       </div>
 
       {/* sub-tabs: Write | SEO | Settings */}
       <div className="mode-switch" style={{ marginBottom: 12 }}>
-        <button className={tab === "write" ? "active" : ""} onClick={() => setTab("write")}>{fa ? "نوشتن" : "Write"}</button>
-        <button className={tab === "seo" ? "active" : ""} onClick={() => setTab("seo")}>{fa ? "سئو (SEO)" : "SEO"}</button>
-        <button className={tab === "meta" ? "active" : ""} onClick={() => setTab("meta")}>{fa ? "تنظیمات" : "Settings"}</button>
+        <button type="button" className={tab === "write" ? "active" : ""} onClick={() => setTab("write")}>{fa ? "نوشتن" : "Write"}</button>
+        <button type="button" className={tab === "seo" ? "active" : ""} onClick={() => setTab("seo")}>{fa ? "سئو (SEO)" : "SEO"}</button>
+        <button type="button" className={tab === "meta" ? "active" : ""} onClick={() => setTab("meta")}>{fa ? "تنظیمات" : "Settings"}</button>
       </div>
 
       {tab === "write" && (<>
@@ -7108,8 +7108,8 @@ function BlogEditor({ id, categories, onBack }) {
             <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
               <span className="small muted">{words} {fa ? "کلمه" : "words"} · {readMin} {fa ? "دقیقه مطالعه" : "min read"}</span>
               <div className="mode-switch" style={{ margin: 0 }}>
-                <button className={bodyLang === "fa" ? "active" : ""} onClick={() => setBodyLang("fa")} style={{ padding: "4px 12px" }}>فارسی</button>
-                <button className={bodyLang === "en" ? "active" : ""} onClick={() => setBodyLang("en")} style={{ padding: "4px 12px" }}>EN</button>
+                <button type="button" className={bodyLang === "fa" ? "active" : ""} onClick={() => setBodyLang("fa")} style={{ padding: "4px 12px" }}>فارسی</button>
+                <button type="button" className={bodyLang === "en" ? "active" : ""} onClick={() => setBodyLang("en")} style={{ padding: "4px 12px" }}>EN</button>
               </div>
             </div>
           </div>
@@ -7236,8 +7236,8 @@ function BlogRevisions({ postId, fa, onClose, onRestored }) {
                   <div className="small muted">{r.editor || "—"} · {r.words_fa} {fa ? "کلمه" : "words"} · {r.published ? (fa ? "منتشرشده" : "published") : (fa ? "پیش‌نویس" : "draft")}</div>
                 </div>
                 <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-                  <button className="btn btn-ghost btn-sm" onClick={() => view(r.id)}>{fa ? "نمایش" : "View"}</button>
-                  <button className="btn btn-primary btn-sm" disabled={busy} onClick={() => restore(r.id)}>{fa ? "بازگردانی" : "Restore"}</button>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => view(r.id)}>{fa ? "نمایش" : "View"}</button>
+                  <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => restore(r.id)}>{fa ? "بازگردانی" : "Restore"}</button>
                 </div>
               </div>
             ))}
@@ -7292,7 +7292,7 @@ function CertificatesAdmin() {
         <div style={{ fontWeight: 800, marginBottom: 8 }}>{fa ? "صدور دستی (برای یک کاربر)" : "Manual issue (by user)"}</div>
         <div style={{ display: "flex", gap: 8 }}>
           <input placeholder={fa ? "نام کاربری یا ایمیل" : "username or email"} value={uname} onChange={(e) => setUname(e.target.value)} style={{ flex: 1 }} />
-          <button className="btn btn-primary" onClick={issue}>{fa ? "صدور گواهی دوره" : "Issue program cert"}</button>
+          <button type="button" className="btn btn-primary" onClick={issue}>{fa ? "صدور گواهی دوره" : "Issue program cert"}</button>
         </div>
       </div>
       <div className="card">
@@ -7304,7 +7304,7 @@ function CertificatesAdmin() {
               <div className="small muted">{c.title} · <a href={`/verify/${c.serial}`} target="_blank" rel="noreferrer">{c.serial}</a>
                 {c.revoked ? <span style={{ color: "#c0392b" }}> · {fa ? "باطل" : "revoked"}</span> : ""}</div>
             </div>
-            <button className={`btn btn-sm ${c.revoked ? "" : "btn-danger"}`} onClick={() => toggle(c.id, !c.revoked)}>
+            <button type="button" className={`btn btn-sm ${c.revoked ? "" : "btn-danger"}`} onClick={() => toggle(c.id, !c.revoked)}>
               {c.revoked ? (fa ? "بازگردانی" : "Restore") : (fa ? "ابطال" : "Revoke")}
             </button>
           </div>
@@ -7356,9 +7356,9 @@ function HealthAlerts({ endpoint = "/admin/analytics/alerts", canEditThresholds 
     <div className="card mb16" style={{ borderInlineStart: `5px solid ${alerts.length ? "var(--flame,#e0533d)" : "var(--green)"}` }}>
       <div className="section-title"><h4>{alerts.length ? "⚠️" : "✅"} {t("healthAlerts")} {alerts.length > 0 && <span className="tag">{alerts.length}</span>}</h4>
         {canEditThresholds && <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          <button className="btn btn-ghost btn-sm" onClick={runAlerts}><Icon name="bell" size={13} /> {t("runAlertsNow")}</button>
-          <button className="btn btn-ghost btn-sm" onClick={sendDigest}><Icon name="chart" size={13} /> {t("sendDigestNow")}</button>
-          <button className="btn btn-ghost btn-sm" onClick={() => setEdit({ ...th })}><Icon name="settings" size={13} /> {t("alertThresholds")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={runAlerts}><Icon name="bell" size={13} /> {t("runAlertsNow")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={sendDigest}><Icon name="chart" size={13} /> {t("sendDigestNow")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEdit({ ...th })}><Icon name="settings" size={13} /> {t("alertThresholds")}</button>
         </div>}</div>
       {alerts.length === 0 ? <div className="small muted">{t("noAlerts")}</div> : (
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
@@ -7434,8 +7434,8 @@ function SiteAnalytics() {
     <div className="page">
       <div className="section-title"><h4><Icon name="chart" size={18} /> {t("siteAnalytics")}</h4>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn btn-ghost btn-sm" onClick={() => downloadAuthed(`/api/admin/analytics.csv?lang=${lang}`, "site-analytics.csv")}><Icon name="download" size={13} /> CSV</button>
-          <button className="btn btn-ghost btn-sm" onClick={() => openPrintable(`/api/admin/analytics.pdf?lang=${lang}`)}><Icon name="download" size={13} /> {t("exportPdf")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => downloadAuthed(`/api/admin/analytics.csv?lang=${lang}`, "site-analytics.csv")}><Icon name="download" size={13} /> CSV</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => openPrintable(`/api/admin/analytics.pdf?lang=${lang}`)}><Icon name="download" size={13} /> {t("exportPdf")}</button>
         </div></div>
       <div className="muted small mb16">{fa ? "شاخص‌های کلیدی محصول بر اساس استانداردهای ۲۰۲۶ (کاربر فعال، چسبندگی، ماندگاری، تبدیل)." : "Product KPIs per 2026 standards (active users, stickiness, retention, conversion)."}</div>
 
@@ -7527,8 +7527,8 @@ function AdAnalytics() {
     <div className="page">
       <div className="section-title"><h4><Icon name="target" size={18} /> {t("adAnalytics")}</h4>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn btn-ghost btn-sm" onClick={() => downloadAuthed(`/api/ads/analytics.csv?lang=${lang}`, "ad-analytics.csv")}><Icon name="download" size={13} /> CSV</button>
-          <button className="btn btn-ghost btn-sm" onClick={() => openPrintable(`/api/ads/analytics.pdf?lang=${lang}`)}><Icon name="download" size={13} /> {t("exportPdf")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => downloadAuthed(`/api/ads/analytics.csv?lang=${lang}`, "ad-analytics.csv")}><Icon name="download" size={13} /> CSV</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => openPrintable(`/api/ads/analytics.pdf?lang=${lang}`)}><Icon name="download" size={13} /> {t("exportPdf")}</button>
         </div></div>
       <div className="muted small mb16">{fa ? "شاخص‌های استاندارد تبلیغات (۲۰۲۶): CTR، eCPM، نرخ پرشدن، دسترسی، فراوانی، RPM و درآمد تخمینی." : "Standard ad KPIs (2026): CTR, eCPM, fill rate, reach, frequency, RPM & estimated revenue."}</div>
 
@@ -7549,7 +7549,7 @@ function AdAnalytics() {
       {ecpm && (
         <div className="card mb16">
           <div className="section-title"><h4>💰 {t("ecpmSettings")}</h4>
-            <button className="btn btn-primary btn-sm" onClick={saveEcpm}><Icon name="check" size={14} /> {t("save")}</button></div>
+            <button type="button" className="btn btn-primary btn-sm" onClick={saveEcpm}><Icon name="check" size={14} /> {t("save")}</button></div>
           <div className="small muted mb8">{t("ecpmHint")}</div>
           <div className="grid grid-4">
             {["banner", "native", "interstitial", "rewarded", "app_open", "prelesson", "sponsored"].map((f) => (
@@ -7806,7 +7806,7 @@ function FsrsOptimizer() {
               : `For a reliable fit you need at least ${info.minReviews} reviews. Until then the population-default parameters are recommended. You can still try, but results are unreliable with little data.`}
           </div>
         )}
-        <button className="btn btn-primary" onClick={optimize} disabled={busy}>
+        <button type="button" className="btn btn-primary" onClick={optimize} disabled={busy}>
           {busy ? (fa ? "در حال محاسبه…" : "Computing…") : <><Icon name="brain" size={15} /> {fa ? "محاسبهٔ پارامترهای بهینه" : "Compute optimized parameters"}</>}
         </button>
       </div>
@@ -7823,10 +7823,10 @@ function FsrsOptimizer() {
             [{result.proposed.join(", ")}]
           </code>
           <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-            <button className="btn btn-primary" onClick={apply} disabled={!result.improved && false}>
+            <button type="button" className="btn btn-primary" onClick={apply} disabled={!result.improved && false}>
               <Icon name="check" size={15} /> {fa ? "اعمال این پارامترها" : "Apply these parameters"}
             </button>
-            <button className="btn btn-ghost" onClick={() => setResult(null)}>{fa ? "انصراف" : "Cancel"}</button>
+            <button type="button" className="btn btn-ghost" onClick={() => setResult(null)}>{fa ? "انصراف" : "Cancel"}</button>
           </div>
           {!result.improved && <div className="small muted mt8">{fa ? "توجه: پارامترهای پیشنهادی بهتر از فعلی نبودند؛ می‌توانید همان فعلی را نگه دارید." : "Note: the proposal wasn't better than current; you may keep the current parameters."}</div>}
         </div>
@@ -7859,7 +7859,7 @@ function GamificationConfig() {
   return (
     <div className="page">
       <div className="section-title"><h4><Icon name="bolt" size={18} /> {t("gamification")}</h4>
-        <button className="btn btn-primary btn-sm" onClick={save}><Icon name="check" size={14} /> {t("save")}</button></div>
+        <button type="button" className="btn btn-primary btn-sm" onClick={save}><Icon name="check" size={14} /> {t("save")}</button></div>
       <div className="muted small mb16">{lang === "fa" ? "این تنظیمات، مکانیزم‌های انگیزشی سایت را کنترل می‌کنند. هر مقدار را می‌توانید تغییر دهید یا هر مکانیزم را خاموش کنید." : "Control the platform's motivation mechanics. Every value is editable and each mechanic can be turned off."}</div>
 
       <div className="card mb16">
@@ -8354,7 +8354,7 @@ function SystemOverview({ onJump }) {
         </div>
         <div className="admin-hub-grid">
           {quick.map(([id, ic, title, desc]) => (
-            <button key={id} className="admin-hub-card" onClick={() => onJump?.(id)}>
+            <button type="button" key={id} className="admin-hub-card" onClick={() => onJump?.(id)}>
               <span className="admin-hub-icon"><Icon name={ic} size={18} /></span>
               <span className="admin-hub-copy"><b>{title}</b><small>{desc}</small></span>
             </button>
@@ -8467,7 +8467,7 @@ function PlacementReport() {
     } catch (e) { setErr(e.message); }
   };
 
-  if (err) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{err}</h3><button className="btn btn-ghost mt16" onClick={load}>{t("retry") || (fa ? "تلاش دوباره" : "Retry")}</button></div>;
+  if (err) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{err}</h3><button type="button" className="btn btn-ghost mt16" onClick={load}>{t("retry") || (fa ? "تلاش دوباره" : "Retry")}</button></div>;
   if (!data) return <div className="card"><div className="skeleton" style={{ height: 200 }} /></div>;
 
   const levelName = { beginner: fa ? "مبتدی" : "Beginner", intermediate: fa ? "متوسط" : "Intermediate", advanced: fa ? "پیشرفته" : "Advanced" };
@@ -8503,8 +8503,8 @@ function PlacementReport() {
             <option value="6m">{fa ? "۶ ماه اخیر" : "Last 6 months"}</option>
             <option value="12m">{fa ? "۱۲ ماه اخیر" : "Last 12 months"}</option>
           </select>
-          {data.taken > 0 && <button className="btn btn-ghost btn-sm" onClick={exportCsv}><Icon name="download" size={14} /> {fa ? "خروجی CSV" : "Export CSV"}</button>}
-          <button className="btn btn-ghost btn-sm" onClick={load}><Icon name="refresh" size={14} /> {fa ? "به‌روزرسانی" : "Refresh"}</button>
+          {data.taken > 0 && <button type="button" className="btn btn-ghost btn-sm" onClick={exportCsv}><Icon name="download" size={14} /> {fa ? "خروجی CSV" : "Export CSV"}</button>}
+          <button type="button" className="btn btn-ghost btn-sm" onClick={load}><Icon name="refresh" size={14} /> {fa ? "به‌روزرسانی" : "Refresh"}</button>
         </div></div>
       <div className="small muted mb16">{fa
         ? "خلاصهٔ نتایج آزمون تعیین سطحِ همهٔ کاربرانِ رقابتی. برای دیدن اینکه کاربران در کدام موضوعات ضعیف/قوی وارد می‌شوند."
@@ -8618,14 +8618,14 @@ function UserDetail({ id, onBack }) {
   return (
     <div className="page">
       <div className="section-title"><h4><Icon name="user" size={18} /> {lang === "fa" ? u.name_fa : u.name_en}</h4>
-        <button className="btn btn-ghost btn-sm" onClick={onBack}>← {t("back")}</button></div>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}>← {t("back")}</button></div>
       <div className="grid grid-2 mb16">
         <div className="card">
           <div className="small muted">{t("username")}</div><div style={{ fontWeight: 700, marginBottom: 8 }}>{u.username}</div>
           <div className="case-meta"><span className="tag">{t(u.role)}</span><span className="tag">{u.status}</span>{u.student_no && <span className="tag">{u.student_no}</span>}</div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <button className="btn btn-ghost btn-sm mt16" onClick={resetPw}><Icon name="key" size={13} /> {t("resetPass")}</button>
-            {u.role === "learner" && <button className="btn btn-ghost btn-sm mt16" onClick={resetPlacement}><Icon name="compass" size={13} /> {t("resetPlacement")}</button>}
+            <button type="button" className="btn btn-ghost btn-sm mt16" onClick={resetPw}><Icon name="key" size={13} /> {t("resetPass")}</button>
+            {u.role === "learner" && <button type="button" className="btn btn-ghost btn-sm mt16" onClick={resetPlacement}><Icon name="compass" size={13} /> {t("resetPlacement")}</button>}
           </div>
         </div>
         <div className="card">
@@ -8642,10 +8642,10 @@ function UserDetail({ id, onBack }) {
             <div className="field"><label>{t("newStreak")}</label><input type="number" value={streak} onChange={(e) => setStreak(e.target.value)} /></div>
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button className="btn btn-primary btn-sm" onClick={() => saveLearner()}><Icon name="check" size={13} /> {t("save")}</button>
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => saveLearner()}><Icon name="check" size={13} /> {t("save")}</button>
             {d.profile.premium
-              ? <button className="btn btn-ghost btn-sm" onClick={() => saveLearner({ premium: false })}>{t("revokePremium")}</button>
-              : <button className="btn btn-accent btn-sm" onClick={() => saveLearner({ premium: true })}><Icon name="crown" size={13} /> {t("grantPremium")}</button>}
+              ? <button type="button" className="btn btn-ghost btn-sm" onClick={() => saveLearner({ premium: false })}>{t("revokePremium")}</button>
+              : <button type="button" className="btn btn-accent btn-sm" onClick={() => saveLearner({ premium: true })}><Icon name="crown" size={13} /> {t("grantPremium")}</button>}
           </div>
         </div>
       )}
@@ -8767,7 +8767,7 @@ function Universities() {
   return (
     <div className="page">
       <div className="section-title"><h4><Icon name="class" size={18} /> {t("universities")}</h4>
-        {isAdmin && <button className="btn btn-primary btn-sm" onClick={() => setEditing({})}><Icon name="class" size={14} /> {t("newUniversity")}</button>}
+        {isAdmin && <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing({})}><Icon name="class" size={14} /> {t("newUniversity")}</button>}
       </div>
       {unis.length === 0 && <div className="card empty-state"><div className="ico"><Icon name="class" size={40} /></div><h3>{t("noUniversities")}</h3></div>}
       {isAdmin && defaults && (
@@ -8794,7 +8794,7 @@ function Universities() {
         <div className="dt-search">
           <Icon name="search" size={16} />
           <input value={uniQ} onChange={(e) => setUniQ(e.target.value)} placeholder={t("searchPlaceholder")} />
-          {uniQ && <button className="dt-clear" onClick={() => setUniQ("")}><Icon name="close" size={14} /></button>}
+          {uniQ && <button type="button" className="dt-clear" onClick={() => setUniQ("")}><Icon name="close" size={14} /></button>}
         </div>
       )}
       <div className="grid grid-2">
@@ -8835,12 +8835,12 @@ function Universities() {
               </div>
             )}
             <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-              <button className="btn btn-ghost btn-sm" onClick={() => toggleMembers(u.id)}>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => toggleMembers(u.id)}>
                 <Icon name="users" size={13} /> {members[u.id] ? t("hideMembers") : t("viewMembers")}
               </button>
-              {isAdmin && <button className="btn btn-primary btn-sm" onClick={() => setAddingTo(u)}><Icon name="user" size={13} /> {t("addExistingMembers")}</button>}
-              {isAdmin && <button className="btn btn-ghost btn-sm" onClick={() => setEditing(u)}><Icon name="edit" size={13} /> {t("edit")}</button>}
-              {isAdmin && <button className="btn btn-danger btn-sm" onClick={() => del(u)}><Icon name="trash" size={13} /> {t("delete")}</button>}
+              {isAdmin && <button type="button" className="btn btn-primary btn-sm" onClick={() => setAddingTo(u)}><Icon name="user" size={13} /> {t("addExistingMembers")}</button>}
+              {isAdmin && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing(u)}><Icon name="edit" size={13} /> {t("edit")}</button>}
+              {isAdmin && <button type="button" className="btn btn-danger btn-sm" onClick={() => del(u)}><Icon name="trash" size={13} /> {t("delete")}</button>}
             </div>
             {members[u.id] && (
               <div className="uni-members mt8">
@@ -8848,13 +8848,13 @@ function Universities() {
                 {members[u.id].teachers.length === 0 && <div className="small muted">—</div>}
                 {members[u.id].teachers.map((m) => (
                   <div key={m.id} className="uni-member-row" style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ flex: 1 }}>{m.name}</span><span className="small muted">{m.email}</span>
-                    {isAdmin && <button className="btn btn-ghost btn-sm" title={t("removeFromUni")} onClick={() => removeMember(u.id, m.id)}><Icon name="close" size={12} /></button>}</div>
+                    {isAdmin && <button type="button" className="btn btn-ghost btn-sm" title={t("removeFromUni")} onClick={() => removeMember(u.id, m.id)}><Icon name="close" size={12} /></button>}</div>
                 ))}
                 <div className="small" style={{ fontWeight: 800, margin: "8px 0 4px" }}>🎓 {t("student")}</div>
                 {members[u.id].students.length === 0 && <div className="small muted">—</div>}
                 {members[u.id].students.slice(0, 8).map((m) => (
                   <div key={m.id} className="uni-member-row" style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ flex: 1 }}>{m.name}</span><span className="small muted">{m.student_no || ""}</span>
-                    {isAdmin && <button className="btn btn-ghost btn-sm" title={t("removeFromUni")} onClick={() => removeMember(u.id, m.id)}><Icon name="close" size={12} /></button>}</div>
+                    {isAdmin && <button type="button" className="btn btn-ghost btn-sm" title={t("removeFromUni")} onClick={() => removeMember(u.id, m.id)}><Icon name="close" size={12} /></button>}</div>
                 ))}
                 {members[u.id].students.length > 8 && <div className="small muted">+{members[u.id].students.length - 8}…</div>}
               </div>
@@ -8891,7 +8891,7 @@ function AddUniMembersModal({ uni, onClose, onSaved }) {
       <div className="dt-search mb8" style={{ maxWidth: "100%" }}>
         <Icon name="search" size={16} />
         <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && search()} placeholder={t("searchUsers")} />
-        <button className="btn btn-ghost btn-sm" onClick={search}>{t("search") || "🔍"}</button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={search}>{t("search") || "🔍"}</button>
       </div>
       {list == null ? <Spinner /> : list.length === 0 ? <div className="small muted center" style={{ padding: 16 }}>{t("noCandidates")}</div> : (
         <div style={{ maxHeight: 320, overflowY: "auto" }}>
@@ -9070,7 +9070,7 @@ function SiteControl() {
           <div className="field"><label>{t("maintBody")} (FA)</label><input value={m.body_fa || ""} onChange={(e) => setM({ ...m, body_fa: e.target.value })} /></div>
           <div className="field"><label>{t("maintBody")} (EN)</label><input value={m.body_en || ""} onChange={(e) => setM({ ...m, body_en: e.target.value })} /></div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={saveMaintenance}><Icon name="check" size={14} /> {t("save")}</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={saveMaintenance}><Icon name="check" size={14} /> {t("save")}</button>
       </div>
 
       {/* Landing promo banner */}
@@ -9098,7 +9098,7 @@ function SiteControl() {
           <div className="field"><label>{t("bannerUrl")}</label><input value={banner.url || ""} onChange={(e) => setBanner({ ...banner, url: e.target.value })} placeholder="/store" style={{ direction: "ltr" }} /></div>
           <div className="field"><label>{t("bannerColor")}</label><input type="color" value={banner.bg || "#2f7fd1"} onChange={(e) => setBanner({ ...banner, bg: e.target.value })} /></div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={saveBanner}><Icon name="check" size={14} /> {t("save")}</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={saveBanner}><Icon name="check" size={14} /> {t("save")}</button>
       </div>
 
       {/* Learning programs (courses) on/off */}
@@ -9164,7 +9164,7 @@ function FeatureFlags() {
         return (
           <div className="card mb16" key={title}>
             <div className="section-title"><h4>{title} <span className="small muted">({list.filter((f) => f.enabled).length}/{list.length})</span></h4>
-              <button className="btn btn-ghost btn-sm" onClick={() => setMany(list, !allOn)}>{allOn ? (fa ? "خاموش‌کردن همه" : "All off") : (fa ? "روشن‌کردن همه" : "All on")}</button></div>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setMany(list, !allOn)}>{allOn ? (fa ? "خاموش‌کردن همه" : "All off") : (fa ? "روشن‌کردن همه" : "All on")}</button></div>
             {list.map((f) => (
               <div key={f.key} className="ff-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 10, padding: "8px 0", borderTop: "1px solid var(--border, rgba(127,127,127,.15))" }}>
                 <div><div style={{ fontWeight: 700 }}>{fa ? f.label_fa : f.label_en}</div><div className="small muted">{f.key}</div></div>
@@ -9192,7 +9192,7 @@ function AuditLog() {
   return (
     <div className="page">
       <div className="section-title"><h4><Icon name="clock" size={18} /> {t("auditLog")}</h4>
-        <div className="inline-form" style={{ gap: 8 }}><input placeholder={t("action")} value={action} onChange={(e) => setAction(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load()} style={{ maxWidth: 160 }} /><button className="btn btn-ghost btn-sm" onClick={load}><Icon name="search" size={14} /></button></div>
+        <div className="inline-form" style={{ gap: 8 }}><input placeholder={t("action")} value={action} onChange={(e) => setAction(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load()} style={{ maxWidth: 160 }} /><button type="button" className="btn btn-ghost btn-sm" onClick={load}><Icon name="search" size={14} /></button></div>
       </div>
       {items.length === 0 && <div className="card empty-state"><div className="ico"><Icon name="clock" size={40} /></div><h3>{t("noAudit")}</h3></div>}
       <div className="table-wrap"><table><thead><tr><th>{t("actor")}</th><th>{t("action")}</th><th>{t("resource")}</th><th>{t("when")}</th></tr></thead><tbody>
@@ -9218,7 +9218,7 @@ function ContentManagement() {
   return (
     <div className="page">
       <div className="section-title"><h4><Icon name="book" size={18} /> {t("contentMgmt")}</h4>
-        <button className="btn btn-primary btn-sm" onClick={() => setImporting(true)}>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setImporting(true)}>
           <Icon name="upload" size={14} /> {t("bulkImport")}
         </button>
       </div>
@@ -9232,8 +9232,8 @@ function ContentManagement() {
             <td><span className="tag">{t("qt" + c.type.charAt(0).toUpperCase() + c.type.slice(1)) || c.type}</span></td>
             <td>{c.hasMicro ? "✓" : "—"}</td>
             <td style={{ textAlign: "end", whiteSpace: "nowrap" }}>
-              <button className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}><Icon name="edit" size={13} /> {t("editMicro")}</button>
-              <button className="btn btn-sm btn-ghost" onClick={() => toggleActive(c)}>{c.active ? <Icon name="lock" size={13} /> : <Icon name="check" size={13} />}</button>
+              <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}><Icon name="edit" size={13} /> {t("editMicro")}</button>
+              <button type="button" className="btn btn-sm btn-ghost" onClick={() => toggleActive(c)}>{c.active ? <Icon name="lock" size={13} /> : <Icon name="check" size={13} />}</button>
             </td>
           </tr>
         ))}
@@ -9285,14 +9285,14 @@ function GlobalSettings() {
         <div key={row.k} className="inline-form mt8" style={{ alignItems: "center" }}>
           <input value={row.k} disabled style={{ maxWidth: 200, fontWeight: 700 }} />
           <input value={row.v} onChange={(e) => setRows(rows.map((r, j) => j === i ? { ...r, v: e.target.value } : r))} />
-          <button className="btn btn-sm btn-primary" onClick={() => save(row.k, row.v)}>{t("save")}</button>
+          <button type="button" className="btn btn-sm btn-primary" onClick={() => save(row.k, row.v)}>{t("save")}</button>
         </div>
       ))}
       <div className="divider" />
       <div className="inline-form mt8" style={{ alignItems: "center" }}>
         <input placeholder="key" value={nk} onChange={(e) => setNk(e.target.value)} style={{ maxWidth: 200 }} />
         <input placeholder="value" value={nv} onChange={(e) => setNv(e.target.value)} />
-        <button className="btn btn-sm btn-accent" onClick={async () => { if (nk) { await save(nk, nv); setRows([...rows, { k: nk, v: nv }]); setNk(""); setNv(""); } }}>+ {t("add")}</button>
+        <button type="button" className="btn btn-sm btn-accent" onClick={async () => { if (nk) { await save(nk, nv); setRows([...rows, { k: nk, v: nv }]); setNk(""); setNv(""); } }}>+ {t("add")}</button>
       </div>
     </div>
   );
@@ -9318,7 +9318,7 @@ function DataTools() {
       <div className="small muted mb16">{t("exportData")}</div>
       <div className="grid grid-3">
         {tables.map((tb) => (
-          <button key={tb} className="card" style={{ cursor: "pointer", textAlign: "start", border: "none" }} onClick={() => download(tb)}>
+          <button type="button" key={tb} className="card" style={{ cursor: "pointer", textAlign: "start", border: "none" }} onClick={() => download(tb)}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}><Icon name="download" size={18} /> <b>{tb}</b></div>
           </button>
         ))}
@@ -9370,8 +9370,8 @@ function BackupCard() {
         </div>
       )}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button className="btn btn-primary btn-sm" onClick={downloadDb}><Icon name="download" size={15} /> {fa ? "دانلود نسخهٔ کامل پایگاه‌داده" : "Download full database"}</button>
-        <button className="btn btn-ghost btn-sm" disabled={busy} onClick={snapshot}>💾 {fa ? "ساخت نسخهٔ پشتیبان روی سرور" : "Create server snapshot"}</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={downloadDb}><Icon name="download" size={15} /> {fa ? "دانلود نسخهٔ کامل پایگاه‌داده" : "Download full database"}</button>
+        <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={snapshot}>💾 {fa ? "ساخت نسخهٔ پشتیبان روی سرور" : "Create server snapshot"}</button>
       </div>
     </div>
   );
@@ -9405,7 +9405,7 @@ function QuestionnairesAdmin(){
   if(!forms)return <Spinner/>;
   const responseCount=responses.reduce((m,r)=>{m[r.form_id]=(m[r.form_id]||0)+1;return m;},{});
   return <div className="page">
-    <div className="section-title"><h4><Icon name="check" size={18}/>{t('questionnairesAdmin')}</h4><button className="btn btn-ghost btn-sm" onClick={()=>setEdit(empty)}>{fa?"فرم جدید":"New form"}</button></div>
+    <div className="section-title"><h4><Icon name="check" size={18}/>{t('questionnairesAdmin')}</h4><button type="button" className="btn btn-ghost btn-sm" onClick={()=>setEdit(empty)}>{fa?"فرم جدید":"New form"}</button></div>
     {err&&<div className="ddle-banner bad mb16">{err}</div>}
     <div className="grid grid-2 mb16">
       <div className="card">
@@ -9425,21 +9425,21 @@ function QuestionnairesAdmin(){
           <label className="toggle-row"><span>{fa?"ناشناس":"Anonymous"}</span><input type="checkbox" checked={!!edit.anonymous} onChange={e=>setEdit({...edit,anonymous:e.target.checked})}/></label>
           <label className="toggle-row"><span>{fa?"بعد از پایان نمایش بده":"After finish"}</span><input type="checkbox" checked={!!edit.require_after_finish} onChange={e=>setEdit({...edit,require_after_finish:e.target.checked})}/></label>
         </div>
-        <div className="section-title" style={{marginTop:12}}><h4>{fa?"سؤال‌ها":"Questions"}</h4><button className="btn btn-ghost btn-sm" onClick={addQ}>+ {fa?"سؤال":"Question"}</button></div>
+        <div className="section-title" style={{marginTop:12}}><h4>{fa?"سؤال‌ها":"Questions"}</h4><button type="button" className="btn btn-ghost btn-sm" onClick={addQ}>+ {fa?"سؤال":"Question"}</button></div>
         {(edit.questions||[]).map((q,i)=><div className="card" key={i} style={{padding:10,marginTop:8}}>
           <div className="grid grid-3">
             <label className="field"><span>type</span><select value={q.type||"text"} onChange={e=>setQ(i,'type',e.target.value)}><option value="text">text</option><option value="rating">rating</option><option value="choice">choice</option></select></label>
             <label className="field"><span>{fa?"برچسب فارسی":"FA label"}</span><input value={q.label_fa||""} onChange={e=>setQ(i,'label_fa',e.target.value)}/></label>
             <label className="field"><span>{fa?"برچسب انگلیسی":"EN label"}</span><input value={q.label_en||""} onChange={e=>setQ(i,'label_en',e.target.value)}/></label>
           </div>
-          <div style={{display:'flex',gap:8,alignItems:'center'}}><label className="toggle-row" style={{flex:1}}><span>{fa?"اجباری":"Required"}</span><input type="checkbox" checked={!!q.required} onChange={e=>setQ(i,'required',e.target.checked)}/></label><button className="btn btn-ghost btn-sm" onClick={()=>delQ(i)}>{t('delete')||'Delete'}</button></div>
+          <div style={{display:'flex',gap:8,alignItems:'center'}}><label className="toggle-row" style={{flex:1}}><span>{fa?"اجباری":"Required"}</span><input type="checkbox" checked={!!q.required} onChange={e=>setQ(i,'required',e.target.checked)}/></label><button type="button" className="btn btn-ghost btn-sm" onClick={()=>delQ(i)}>{t('delete')||'Delete'}</button></div>
         </div>)}
-        <div style={{display:'flex',gap:8,marginTop:12}}><button className="btn btn-primary" onClick={save}>{t('save')}</button>{edit.id&&<button className="btn btn-ghost" onClick={()=>setEdit(empty)}>{fa?"لغو و فرم جدید":"Cancel / new"}</button>}</div>
+        <div style={{display:'flex',gap:8,marginTop:12}}><button type="button" className="btn btn-primary" onClick={save}>{t('save')}</button>{edit.id&&<button type="button" className="btn btn-ghost" onClick={()=>setEdit(empty)}>{fa?"لغو و فرم جدید":"Cancel / new"}</button>}</div>
         <JsonHint>{fa?"نکته: برای فرم مخصوص کلاس یا آزمون، class_id یا exam_id را وارد کنید؛ فرم عمومی برای همه contextها قابل نمایش است.":"Tip: for a class/exam form, enter class_id or exam_id. General forms can show across contexts."}</JsonHint>
       </div>
       <div className="card">
         <h4 className="mb8">{fa?"فرم‌های موجود و پاسخ‌ها":"Existing forms & responses"}</h4>
-        <DataTable rows={forms.map(f=>({...f,responses:responseCount[f.id]||0,status:f.active?(fa?'فعال':'Active'):(fa?'خاموش':'Off')}))} columns={[{key:'title_fa',label:t('title')},{key:'scope',label:'scope'},{key:'responses',label:fa?'پاسخ‌ها':'Responses'},{key:'status',label:t('status')},{key:'actions',label:'',sortable:false,render:(f)=><div style={{display:'flex',gap:6}}><button className="btn btn-ghost btn-sm" onClick={()=>startEdit(f)}>{t('edit')}</button><button className="btn btn-ghost btn-sm" onClick={()=>toggle(f)}>{f.active?(fa?'خاموش':'Disable'):(fa?'فعال':'Enable')}</button></div>}]}/>
+        <DataTable rows={forms.map(f=>({...f,responses:responseCount[f.id]||0,status:f.active?(fa?'فعال':'Active'):(fa?'خاموش':'Off')}))} columns={[{key:'title_fa',label:t('title')},{key:'scope',label:'scope'},{key:'responses',label:fa?'پاسخ‌ها':'Responses'},{key:'status',label:t('status')},{key:'actions',label:'',sortable:false,render:(f)=><div style={{display:'flex',gap:6}}><button type="button" className="btn btn-ghost btn-sm" onClick={()=>startEdit(f)}>{t('edit')}</button><button type="button" className="btn btn-ghost btn-sm" onClick={()=>toggle(f)}>{f.active?(fa?'خاموش':'Disable'):(fa?'فعال':'Enable')}</button></div>}]}/>
       </div>
     </div>
     <div className="card"><h4 className="mb8">{fa?"آخرین پاسخ‌ها":"Latest responses"}</h4><DataTable rows={responses.slice(0,100)} columns={[{key:'title_fa',label:t('title')},{key:'user_name',label:t('users')},{key:'context_type',label:'context'},{key:'created_at',label:t('dateTime')}]}/></div>
@@ -9494,7 +9494,7 @@ export function ResearchAdmin(){
   if(!d)return <Spinner/>;
   const eventCount=events.reduce((m,e)=>{m[e.study_id]=(m[e.study_id]||0)+1;return m;},{});
   return <div className="page">
-    <div className="section-title"><h4><Icon name="book" size={18}/>{t('researchAdmin')}</h4><button className="btn btn-ghost btn-sm" onClick={()=>setEdit(empty)}>{fa?"مطالعه جدید":"New study"}</button></div>
+    <div className="section-title"><h4><Icon name="book" size={18}/>{t('researchAdmin')}</h4><button type="button" className="btn btn-ghost btn-sm" onClick={()=>setEdit(empty)}>{fa?"مطالعه جدید":"New study"}</button></div>
     {err&&<div className="ddle-banner bad mb16">{err}</div>}
     <div className="grid grid-2 mb16">
       <div className="card">
@@ -9526,12 +9526,12 @@ export function ResearchAdmin(){
         <div className="small muted">{fa?"خاموش = شمارهٔ دانشجویی در خروجی می‌ماند. روشن = فقط کد مستعار. پیش‌فرض خاموش است.":"Off = student numbers stay in the export. On = pseudonym only. Off by default."}</div>
         {edit.consent_admin_managed===false && edit.consent_required && !(edit.consent_text_fa||'').trim() && !(edit.consent_text_en||'').trim() &&
           <div className="err-banner mt8">{fa?"نیاز به رضایت روشن است ولی متنی ثبت نشده. تا متن نباشد، دانشجو نمی‌تواند رضایت بدهد و ورودش بسته می‌ماند.":"Consent is required but no wording is recorded. Until it is, participants cannot consent and entry stays blocked."}</div>}
-        <button className="btn btn-primary" onClick={save}>{t('save')}</button>
+        <button type="button" className="btn btn-primary" onClick={save}>{t('save')}</button>
         <JsonHint>{fa?"پژوهش‌ها پیش‌فرض خاموش‌اند؛ فقط وقتی فعال شوند event آموزشی ثبت می‌شود.":"Studies are off by default; activate only when educational event collection is intended."}</JsonHint>
       </div>
       <div className="card">
         <h4 className="mb8">{fa?"مطالعات":"Studies"}</h4>
-        <DataTable rows={(d.studies||[]).map(s=>({...s,events:eventCount[s.id]||0,status:s.active?(fa?'فعال':'Active'):(fa?'خاموش':'Off')}))} columns={[{key:'title_fa',label:t('title')},{key:'domain',label:'domain'},{key:'events',label:fa?'رویدادها':'Events'},{key:'status',label:t('status')},{key:'actions',label:'',sortable:false,render:(s)=><div style={{display:'flex',gap:6,flexWrap:'wrap'}}><button className="btn btn-ghost btn-sm" onClick={()=>setEdit({...empty,...s})}>{t('edit')}</button><button className="btn btn-ghost btn-sm" onClick={()=>loadRoster(s.id)}>{fa?'رضایت‌ها':'Consents'}</button><button className="btn btn-ghost btn-sm" onClick={()=>toggle(s)}>{s.active?(fa?'خاموش':'Disable'):(fa?'فعال':'Enable')}</button><button className="btn btn-sm btn-danger" onClick={()=>delStudy(s)}>{t('delete')}</button></div>}]}/>
+        <DataTable rows={(d.studies||[]).map(s=>({...s,events:eventCount[s.id]||0,status:s.active?(fa?'فعال':'Active'):(fa?'خاموش':'Off')}))} columns={[{key:'title_fa',label:t('title')},{key:'domain',label:'domain'},{key:'events',label:fa?'رویدادها':'Events'},{key:'status',label:t('status')},{key:'actions',label:'',sortable:false,render:(s)=><div style={{display:'flex',gap:6,flexWrap:'wrap'}}><button type="button" className="btn btn-ghost btn-sm" onClick={()=>setEdit({...empty,...s})}>{t('edit')}</button><button type="button" className="btn btn-ghost btn-sm" onClick={()=>loadRoster(s.id)}>{fa?'رضایت‌ها':'Consents'}</button><button type="button" className="btn btn-ghost btn-sm" onClick={()=>toggle(s)}>{s.active?(fa?'خاموش':'Disable'):(fa?'فعال':'Enable')}</button><button type="button" className="btn btn-sm btn-danger" onClick={()=>delStudy(s)}>{t('delete')}</button></div>}]}/>
       </div>
     </div>
     {/* ---- Protocol instruments (Tables 1/2/3) ---- */}
@@ -9544,9 +9544,9 @@ export function ResearchAdmin(){
         {key:'active',label:t('status'),render:(f)=>f.active?(fa?'فعال':'Active'):(fa?'خاموش':'Off')},
         {key:'anonymous',label:fa?'بی‌نام':'Anon',render:(f)=>f.anonymous?(fa?'بله':'yes'):(fa?'خیر':'no')},
         {key:'actions',label:'',sortable:false,render:(f)=><div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
-          <button className="btn btn-ghost btn-sm" onClick={()=>openAnalysis(f.id)}>{fa?'تحلیل':'Analysis'}</button>
-          <button className="btn btn-ghost btn-sm" onClick={()=>exportResponses(f.id,false)}>CSV</button>
-          <button className="btn btn-ghost btn-sm" onClick={()=>exportResponses(f.id,true)}>{fa?'CSV بی‌نام':'CSV de-id'}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={()=>openAnalysis(f.id)}>{fa?'تحلیل':'Analysis'}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={()=>exportResponses(f.id,false)}>CSV</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={()=>exportResponses(f.id,true)}>{fa?'CSV بی‌نام':'CSV de-id'}</button>
         </div>}
       ]}/>
       <JsonHint>{fa?"این سه ابزار از متن پروپوزال seed شده‌اند و مثل هر فرم دیگری قابل ویرایش‌اند. پیش‌فرض خاموش‌اند تا پیش از اجرای پژوهش داده‌ای جمع نشود.":"These three are seeded from the protocol text and are editable like any other form. They start inactive so no data is collected before the study runs."}</JsonHint>
@@ -9579,13 +9579,13 @@ export function ResearchAdmin(){
           <option value="false">{fa?"رفع توقف / اجازهٔ ادامه":"Lift hold / allow continuation"}</option>
         </select></label>
         <label className="field"><span>{fa?"توضیح الزامی (مثلاً انصراف حضوری)":"Required note (e.g. in-person withdrawal)"}</span><input value={decision.note} onChange={e=>setDecision({...decision,note:e.target.value})}/></label>
-        <button className="btn btn-primary" disabled={!decision.user_id||!decision.note.trim()} onClick={applyDecision}>{fa?"اعمال دستور":"Apply decision"}</button>
+        <button type="button" className="btn btn-primary" disabled={!decision.user_id||!decision.note.trim()} onClick={applyDecision}>{fa?"اعمال دستور":"Apply decision"}</button>
         <DataTable rows={roster.participationControls||[]} columns={[{key:'user_id',label:fa?'شناسه کاربر':'User ID'},{key:'blocked',label:fa?'وضعیت':'Status',render:r=>r.blocked?(fa?'متوقف به دستور ادمین':'Paused by admin'):(fa?'مجاز به ادامه':'Allowed')},{key:'note',label:fa?'توضیح':'Note'},{key:'updated_at',label:t('dateTime')}]}/>
       </div>}
       <div className="section-title"><h4><Icon name="shield" size={16}/> {fa?"رضایت‌های مطالعه":"Study consents"} — {roster.study.titleFa||roster.study.titleEn}</h4>
-        <div className="row gap8"><button className="btn btn-ghost btn-sm" onClick={()=>exportConsents(false)}>CSV</button>
-        <button className="btn btn-ghost btn-sm" onClick={()=>exportConsents(true)}>CSV {fa?'بی‌نام':'de-identified'}</button>
-        <button className="btn btn-primary btn-sm" onClick={()=>setRec({user_id:"",mode:"paper",note:""})}>{fa?"ثبت رضایت کاغذی/شفاهی":"Record paper/verbal consent"}</button></div></div>
+        <div className="row gap8"><button type="button" className="btn btn-ghost btn-sm" onClick={()=>exportConsents(false)}>CSV</button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={()=>exportConsents(true)}>CSV {fa?'بی‌نام':'de-identified'}</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={()=>setRec({user_id:"",mode:"paper",note:""})}>{fa?"ثبت رضایت کاغذی/شفاهی":"Record paper/verbal consent"}</button></div></div>
       <div className="row gap8 small mb8" style={{flexWrap:'wrap'}}>
         <span className="tag">{fa?"کل":"Total"}: {roster.counts.total}</span>
         <span className="tag">{fa?"رضایت داده":"Granted"}: {roster.counts.granted}</span>
@@ -9619,7 +9619,7 @@ export function ResearchAdmin(){
     </Modal>}
     <div className="card"><h4 className="mb8">{fa?"آخرین رویدادهای پژوهشی":"Latest research events"}</h4>
       <div className="small muted mb8">{fa?"فقط رویداد کلاس/آزمون‌هایی که به یک مطالعه وصل شده‌اند.":"Only events from classes/exams linked to a study."}</div>
-      <DataTable rows={events.slice(0,100)} columns={[{key:'title_fa',label:t('title')},{key:'event_type',label:'event'},{key:'context_type',label:'context'},{key:'user_name',label:t('users')},{key:'created_at',label:t('dateTime')},{key:'actions',label:'',sortable:false,render:(ev)=><button className="btn btn-sm btn-danger" onClick={()=>delEvent(ev)}>{t('delete')}</button>}]}/>
+      <DataTable rows={events.slice(0,100)} columns={[{key:'title_fa',label:t('title')},{key:'event_type',label:'event'},{key:'context_type',label:'context'},{key:'user_name',label:t('users')},{key:'created_at',label:t('dateTime')},{key:'actions',label:'',sortable:false,render:(ev)=><button type="button" className="btn btn-sm btn-danger" onClick={()=>delEvent(ev)}>{t('delete')}</button>}]}/>
     </div>
   </div>
 }
@@ -9638,7 +9638,7 @@ function TutorSettingsAdmin(){
   return <div className="page">
     <div className="section-title"><h4><Icon name="ai" size={18}/>{t('tutorSettings')}</h4></div>
     {err&&<div className="ddle-banner bad mb16">{err}</div>}
-    <div className="card mb16"><h4>{fa?"کنترل کلی دکتر راهنما":"Global Dr Tutor control"}</h4><div className="grid grid-2"><label className="toggle-row"><span>{fa?"فعال‌سازی کلی":"Global enabled"}</span><input type="checkbox" checked={!!f.enabled} onChange={e=>setF({...f,enabled:e.target.checked})}/></label><label className="toggle-row"><span>{fa?"استفاده از AI خارجی":"External AI"}</span><input type="checkbox" checked={!!f.ai_enabled} onChange={e=>setF({...f,ai_enabled:e.target.checked})}/></label></div><label className="field"><span>{fa?"پرامپت پیش‌فرض":"Default prompt"}</span><textarea rows="4" value={f.default_prompt||""} onChange={e=>setF({...f,default_prompt:e.target.value})}/></label><button className="btn btn-primary" onClick={saveGlobal}>{t('save')}</button><JsonHint>{fa?"پیشنهاد ایمن: پیش‌فرض خاموش بماند و فقط در کلاس/آزمون‌های منتخب فعال شود. در آزمون‌ها پاسخ نهایی نباید مستقیم لو برود.":"Safe default: keep off by default and enable only in selected classes/exams. In exams, it should guide reasoning, not reveal final answers."}</JsonHint></div>
+    <div className="card mb16"><h4>{fa?"کنترل کلی دکتر راهنما":"Global Dr Tutor control"}</h4><div className="grid grid-2"><label className="toggle-row"><span>{fa?"فعال‌سازی کلی":"Global enabled"}</span><input type="checkbox" checked={!!f.enabled} onChange={e=>setF({...f,enabled:e.target.checked})}/></label><label className="toggle-row"><span>{fa?"استفاده از AI خارجی":"External AI"}</span><input type="checkbox" checked={!!f.ai_enabled} onChange={e=>setF({...f,ai_enabled:e.target.checked})}/></label></div><label className="field"><span>{fa?"پرامپت پیش‌فرض":"Default prompt"}</span><textarea rows="4" value={f.default_prompt||""} onChange={e=>setF({...f,default_prompt:e.target.value})}/></label><button type="button" className="btn btn-primary" onClick={saveGlobal}>{t('save')}</button><JsonHint>{fa?"پیشنهاد ایمن: پیش‌فرض خاموش بماند و فقط در کلاس/آزمون‌های منتخب فعال شود. در آزمون‌ها پاسخ نهایی نباید مستقیم لو برود.":"Safe default: keep off by default and enable only in selected classes/exams. In exams, it should guide reasoning, not reveal final answers."}</JsonHint></div>
     <div className="grid grid-2"><div className="card"><h4>{fa?"کلاس‌ها":"Classes"}</h4>{(ctx.classes||[]).length?ctx.classes.map(r=><Row key={`c${r.id}`} type="class" row={r}/>):<div className="small muted">{t('noData')}</div>}</div><div className="card"><h4>{fa?"آزمون‌ها":"Exams"}</h4>{(ctx.exams||[]).length?ctx.exams.map(r=><Row key={`e${r.id}`} type="exam" row={r}/>):<div className="small muted">{t('noData')}</div>}</div></div>
   </div>
 }
@@ -9657,7 +9657,7 @@ function ExternalAdsAdmin(){
     <div className="section-title"><h4><Icon name="image" size={18}/>{t('externalAdsAdmin')}</h4><Pill kind={cfg.enabled?'active':'medium'}>{cfg.enabled?(fa?'فعال':'Enabled'):(fa?'خاموش پیش‌فرض':'Off by default')}</Pill></div>
     {err&&<div className="ddle-banner bad mb16">{err}</div>}
     <div className="grid grid-2 mb16">
-      <div className="card"><h4>{fa?"تنظیمات AdSense / تبلیغات خارجی":"AdSense / external ads settings"}</h4><label className="toggle-row"><span>{fa?"فعال‌سازی تبلیغات خارجی":"Enable external ads"}</span><input type="checkbox" checked={!!cfg.enabled} onChange={e=>setCfg({...cfg,enabled:e.target.checked?1:0})}/></label><div className="grid grid-2"><label className="field"><span>provider</span><select value={cfg.provider||'none'} onChange={e=>setCfg({...cfg,provider:e.target.value})}><option value="none">none</option><option value="adsense">adsense</option><option value="custom">custom</option></select></label><label className="field"><span>placement</span><select value={cfg.placement||'blog'} onChange={e=>setCfg({...cfg,placement:e.target.value})}><option value="blog">blog</option><option value="store">store</option><option value="landing">landing</option><option value="learn">learn</option></select></label></div><label className="field"><span>client_id</span><input value={cfg.client_id||""} onChange={e=>setCfg({...cfg,client_id:e.target.value})} placeholder="ca-pub-..."/></label><label className="field"><span>slot_id</span><input value={cfg.slot_id||""} onChange={e=>setCfg({...cfg,slot_id:e.target.value})}/></label><label className="field"><span>{fa?"یادداشت قانونی/حریم خصوصی":"Legal/privacy note"}</span><textarea rows="3" value={cfg.legal_note||""} onChange={e=>setCfg({...cfg,legal_note:e.target.value})}/></label><button className="btn btn-primary" onClick={save}>{t('save')}</button><JsonHint>{fa?"برای حفظ تجربه کاربر و سرعت، پیش‌فرض خاموش است. فقط بعد از تنظیم دامنه، حریم خصوصی و قوانین Google فعال کنید.":"To protect UX and speed, this stays off by default. Enable only after domain, privacy, and Google policy checks."}</JsonHint></div>
+      <div className="card"><h4>{fa?"تنظیمات AdSense / تبلیغات خارجی":"AdSense / external ads settings"}</h4><label className="toggle-row"><span>{fa?"فعال‌سازی تبلیغات خارجی":"Enable external ads"}</span><input type="checkbox" checked={!!cfg.enabled} onChange={e=>setCfg({...cfg,enabled:e.target.checked?1:0})}/></label><div className="grid grid-2"><label className="field"><span>provider</span><select value={cfg.provider||'none'} onChange={e=>setCfg({...cfg,provider:e.target.value})}><option value="none">none</option><option value="adsense">adsense</option><option value="custom">custom</option></select></label><label className="field"><span>placement</span><select value={cfg.placement||'blog'} onChange={e=>setCfg({...cfg,placement:e.target.value})}><option value="blog">blog</option><option value="store">store</option><option value="landing">landing</option><option value="learn">learn</option></select></label></div><label className="field"><span>client_id</span><input value={cfg.client_id||""} onChange={e=>setCfg({...cfg,client_id:e.target.value})} placeholder="ca-pub-..."/></label><label className="field"><span>slot_id</span><input value={cfg.slot_id||""} onChange={e=>setCfg({...cfg,slot_id:e.target.value})}/></label><label className="field"><span>{fa?"یادداشت قانونی/حریم خصوصی":"Legal/privacy note"}</span><textarea rows="3" value={cfg.legal_note||""} onChange={e=>setCfg({...cfg,legal_note:e.target.value})}/></label><button type="button" className="btn btn-primary" onClick={save}>{t('save')}</button><JsonHint>{fa?"برای حفظ تجربه کاربر و سرعت، پیش‌فرض خاموش است. فقط بعد از تنظیم دامنه، حریم خصوصی و قوانین Google فعال کنید.":"To protect UX and speed, this stays off by default. Enable only after domain, privacy, and Google policy checks."}</JsonHint></div>
       <div className="card"><h4>{fa?"آمار رویدادهای تبلیغ خارجی":"External ad event stats"}</h4>{stats.length?<DataTable rows={stats} columns={[{key:'provider',label:'provider'},{key:'event',label:'event'},{key:'count',label:fa?'تعداد':'Count'}]}/>:<div className="small muted">{t('noData')}</div>}</div>
     </div>
   </div>
@@ -9670,7 +9670,7 @@ function AdminCommandPalette({nav,t,pick,onClose}){
   return <Modal title="Command Palette" onClose={onClose}>
     <div className="field"><input autoFocus value={q} onChange={e=>setQ(e.target.value)} placeholder="Ctrl+K…"/></div>
     <div className="admin-command-list">
-      {rows.map(([id,ic,m])=><button key={id} className="btn btn-ghost" onClick={()=>pick(id)}><Icon name={ic} size={14}/><span>{t(id)}</span><small className="muted">{modeLabel(m)}</small></button>)}
+      {rows.map(([id,ic,m])=><button type="button" key={id} className="btn btn-ghost" onClick={()=>pick(id)}><Icon name={ic} size={14}/><span>{t(id)}</span><small className="muted">{modeLabel(m)}</small></button>)}
       {rows.length===0&&<div className="small muted center" style={{padding:12}}>{t("noData")}</div>}
     </div>
   </Modal>

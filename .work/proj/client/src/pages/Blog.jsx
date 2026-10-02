@@ -50,13 +50,13 @@ export default function Blog({ slug, onHome, onGetStarted, onSignIn }) {
   return (
     <div className="blog-wrap">
       <header className="blog-top">
-        <button className="blog-brand" onClick={onHome}>
+        <button type="button" className="blog-brand" onClick={onHome}>
           <span className="lp-logo"><Icon name="cap" size={22} /></span>
           <span className="lp-brand-name">MED School</span>
         </button>
         <div className="blog-top-actions">
-          <button className="lp-btn-ghost" onClick={goList}>{fa ? "همهٔ مقالات" : "All articles"}</button>
-          <button className="lp-btn-primary" onClick={onGetStarted}>{fa ? "شروع رایگان" : "Start free"}</button>
+          <button type="button" className="lp-btn-ghost" onClick={goList}>{fa ? "همهٔ مقالات" : "All articles"}</button>
+          <button type="button" className="lp-btn-primary" onClick={onGetStarted}>{fa ? "شروع رایگان" : "Start free"}</button>
         </div>
       </header>
       {current ? <BlogPost slug={current} onBack={goList} onOpen={goPost} onGetStarted={onGetStarted} onSignIn={onSignIn} />
@@ -100,9 +100,9 @@ function BlogList({ onOpen }) {
 
       {(d.categories || []).length > 0 && (
         <div className="blog-cats">
-          <button className={`blog-cat ${!cat ? "on" : ""}`} onClick={() => setCat("")}>{fa ? "همه" : "All"}</button>
+          <button type="button" className={`blog-cat ${!cat ? "on" : ""}`} onClick={() => setCat("")}>{fa ? "همه" : "All"}</button>
           {d.categories.map((c) => (
-            <button key={c} className={`blog-cat ${cat === c ? "on" : ""}`} onClick={() => setCat(c)}>{catLabel(c, fa)}</button>
+            <button type="button" key={c} className={`blog-cat ${cat === c ? "on" : ""}`} onClick={() => setCat(c)}>{catLabel(c, fa)}</button>
           ))}
         </div>
       )}
@@ -110,7 +110,7 @@ function BlogList({ onOpen }) {
       {d.posts.length === 0 && <div className="blog-empty">{fa ? "هنوز مقاله‌ای منتشر نشده است." : "No articles published yet."}</div>}
 
       {featured && !cat && (
-        <button className="blog-card blog-card-featured" onClick={() => onOpen(featured.slug)}>
+        <button type="button" className="blog-card blog-card-featured" onClick={() => onOpen(featured.slug)}>
           <div className="blog-card-badge">⭐ {fa ? "ویژه" : "Featured"}</div>
           <div className="blog-card-cat">{catLabel(featured.category, fa)}</div>
           <h2>{featured.title}</h2>
@@ -121,7 +121,7 @@ function BlogList({ onOpen }) {
 
       <div className="blog-grid">
         {rest.map((p) => (
-          <button key={p.slug} className="blog-card" onClick={() => onOpen(p.slug)}>
+          <button type="button" key={p.slug} className="blog-card" onClick={() => onOpen(p.slug)}>
             <div className="blog-card-cat">{catLabel(p.category, fa)}</div>
             <h3>{p.title}</h3>
             <p>{p.excerpt}</p>
@@ -157,12 +157,12 @@ function BlogPost({ slug, onBack, onOpen, onGetStarted, onSignIn }) {
     return () => { alive = false; };
   }, [slug, fa]);
 
-  if (err) return <div className="blog-body"><div className="blog-empty">{fa ? "مقاله یافت نشد." : "Article not found."} <button className="lp-btn-ghost" onClick={onBack}>{fa ? "بازگشت" : "Back"}</button></div></div>;
+  if (err) return <div className="blog-body"><div className="blog-empty">{fa ? "مقاله یافت نشد." : "Article not found."} <button type="button" className="lp-btn-ghost" onClick={onBack}>{fa ? "بازگشت" : "Back"}</button></div></div>;
   if (!p) return <div className="blog-body"><Spinner /></div>;
 
   return (
     <article className="blog-article">
-      <button className="blog-back" onClick={onBack}>← {fa ? "همهٔ مقالات" : "All articles"}</button>
+      <button type="button" className="blog-back" onClick={onBack}>← {fa ? "همهٔ مقالات" : "All articles"}</button>
       <div className="blog-card-cat">{catLabel(p.category, fa)}</div>
       <h1>{p.title}</h1>
       <div className="blog-article-meta">
@@ -192,7 +192,7 @@ function BlogPost({ slug, onBack, onOpen, onGetStarted, onSignIn }) {
           <h3>{fa ? "مقالات مرتبط" : "Related articles"}</h3>
           <div className="blog-grid">
             {p.related.map((r) => (
-              <button key={r.slug} className="blog-card" onClick={() => onOpen(r.slug)}>
+              <button type="button" key={r.slug} className="blog-card" onClick={() => onOpen(r.slug)}>
                 <div className="blog-card-cat">{catLabel(r.category, fa)}</div>
                 <h3>{r.title}</h3>
                 <p>{r.excerpt}</p>
@@ -203,7 +203,7 @@ function BlogPost({ slug, onBack, onOpen, onGetStarted, onSignIn }) {
       )}
 
       <div className="blog-cta">
-        {UNIVERSITY_ARTICLE_SLUGS.has(slug) ? <><h3>{fa ? "برای استفاده از امکانات دانشگاهی وارد شوید" : "Sign in to use the university features"}</h3><p>{fa ? "این مقاله‌ها مربوط به اکانت‌های دانشگاهی هستند؛ حساب دانشجو توسط استاد یا ادمین ساخته می‌شود." : "These articles are for university accounts; student accounts are created by faculty or admins."}</p><button className="lp-btn-primary lp-btn-lg" onClick={onSignIn || onGetStarted}>{fa ? "ورود" : "Sign in"}</button></> : <><h3>{fa ? "آمادهٔ یادگیری عملی هستی؟" : "Ready to practice?"}</h3><p>{fa ? "با بیمار مجازی و فلش‌کارت هوشمند، دانشت را به مهارت تبدیل کن." : "Turn knowledge into skill with virtual patients and smart flashcards."}</p><button className="lp-btn-primary lp-btn-lg" onClick={onGetStarted}>{fa ? "شروع رایگان" : "Start free"}</button></>}
+        {UNIVERSITY_ARTICLE_SLUGS.has(slug) ? <><h3>{fa ? "برای استفاده از امکانات دانشگاهی وارد شوید" : "Sign in to use the university features"}</h3><p>{fa ? "این مقاله‌ها مربوط به اکانت‌های دانشگاهی هستند؛ حساب دانشجو توسط استاد یا ادمین ساخته می‌شود." : "These articles are for university accounts; student accounts are created by faculty or admins."}</p><button type="button" className="lp-btn-primary lp-btn-lg" onClick={onSignIn || onGetStarted}>{fa ? "ورود" : "Sign in"}</button></> : <><h3>{fa ? "آمادهٔ یادگیری عملی هستی؟" : "Ready to practice?"}</h3><p>{fa ? "با بیمار مجازی و فلش‌کارت هوشمند، دانشت را به مهارت تبدیل کن." : "Turn knowledge into skill with virtual patients and smart flashcards."}</p><button type="button" className="lp-btn-primary lp-btn-lg" onClick={onGetStarted}>{fa ? "شروع رایگان" : "Start free"}</button></>}
       </div>
     </article>
   );

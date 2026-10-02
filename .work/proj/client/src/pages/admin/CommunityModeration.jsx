@@ -52,8 +52,8 @@ export default function CommunityModeration() {
               {q.card.micro?.lead && <div className="small muted mt8">📖 {q.card.micro.lead}</div>}
               <div className="case-meta mt8"><span className="tag"><Icon name="user" size={12} /> {q.author}</span><span className="tag">{fmtDate(q.created_at, lang)}</span></div>
               <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-                <button className="btn btn-accent btn-sm" onClick={() => act(q.id, "approve")}><Icon name="check" size={13} /> {t("approve")}</button>
-                <button className="btn btn-danger btn-sm" onClick={() => act(q.id, "reject")}><Icon name="close" size={13} /> {t("reject")}</button>
+                <button type="button" className="btn btn-accent btn-sm" onClick={() => act(q.id, "approve")}><Icon name="check" size={13} /> {t("approve")}</button>
+                <button type="button" className="btn btn-danger btn-sm" onClick={() => act(q.id, "reject")}><Icon name="close" size={13} /> {t("reject")}</button>
               </div>
             </div>
           ))}

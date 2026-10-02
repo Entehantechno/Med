@@ -40,7 +40,7 @@ export default function Mnemonics({ onBack }) {
           ))}
         </div>
       )}
-      <button className="btn btn-ghost btn-block mt16" onClick={onBack}>{t("back")}</button>
+      <button type="button" className="btn btn-ghost btn-block mt16" onClick={onBack}>{t("back")}</button>
     </div>
   );
 }

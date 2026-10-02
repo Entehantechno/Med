@@ -39,8 +39,8 @@ export default class ErrorBoundary extends Component {
             ? "متأسفیم! یک خطای غیرمنتظره رخ داد. می‌توانید دوباره تلاش کنید یا صفحه را بارگذاری مجدد کنید."
             : "Sorry! An unexpected error occurred. You can try again or reload the page."}</p>
           <div className="eb-actions">
-            <button className="btn btn-primary" onClick={this.reset}>{fa ? "تلاش دوباره" : "Try again"}</button>
-            <button className="btn btn-ghost" onClick={this.reload}>{fa ? "بارگذاری مجدد" : "Reload"}</button>
+            <button type="button" className="btn btn-primary" onClick={this.reset}>{fa ? "تلاش دوباره" : "Try again"}</button>
+            <button type="button" className="btn btn-ghost" onClick={this.reload}>{fa ? "بارگذاری مجدد" : "Reload"}</button>
           </div>
           {this.state.error && (
             <details className="eb-details">

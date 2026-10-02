@@ -95,8 +95,8 @@ export default function QuestionnaireForm({ form, lang, contextType, contextId, 
       {err && <div className="err-banner mt12">{err}</div>}
 
       <div className="row gap8 mt12">
-        <button className="btn btn-primary" onClick={submit} disabled={busy}>{fa ? "ثبت پاسخ‌ها" : "Submit"}</button>
-        {onCancel && <button className="btn btn-ghost" onClick={onCancel} disabled={busy}>{fa ? "بعداً" : "Later"}</button>}
+        <button type="button" className="btn btn-primary" onClick={submit} disabled={busy}>{fa ? "ثبت پاسخ‌ها" : "Submit"}</button>
+        {onCancel && <button type="button" className="btn btn-ghost" onClick={onCancel} disabled={busy}>{fa ? "بعداً" : "Later"}</button>}
       </div>
       {missing.length > 0 && (
         <div className="small muted mt4">{fa ? `${missing.length} پرسش باقی مانده` : `${missing.length} question(s) left`}</div>

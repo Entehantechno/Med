@@ -21,7 +21,7 @@ export default function PricingEditor() {
   return (
     <div className="page">
       <div className="section-title"><h2><Icon name="crown" size={22} /> {t("pricingEditor")}</h2>
-        <button className="btn btn-primary btn-sm" disabled={busy} onClick={save}><Icon name="check" size={14} /> {t("save")}</button>
+        <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={save}><Icon name="check" size={14} /> {t("save")}</button>
       </div>
       <div className="muted small mb16">{t("pricingEditorHint")}</div>
       <div className="card mb16">

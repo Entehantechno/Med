@@ -30,7 +30,7 @@ export function NotificationBell({ onNavigate }) {
 
   return (
     <div className="bell-wrap" ref={ref}>
-      <button className="btn btn-sm btn-ghost icon-btn bell-btn" onClick={toggle} title={t("notifications")}>
+      <button type="button" className="btn btn-sm btn-ghost icon-btn bell-btn" onClick={toggle} title={t("notifications")}>
         <Icon name="clock" size={16} />
         {data.unseen > 0 && <span className="bell-badge">{data.unseen}</span>}
       </button>
@@ -38,7 +38,7 @@ export function NotificationBell({ onNavigate }) {
         <div className="notif-panel">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 14px", borderBottom: "1px solid var(--border)" }}>
             <b>{t("notifications")}</b>
-            <button className="btn btn-ghost btn-sm" style={{ fontSize: ".72rem" }} onClick={() => subscribePush(t)}>
+            <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: ".72rem" }} onClick={() => subscribePush(t)}>
               <Icon name="clock" size={12} /> {t("enableNotif")}
             </button>
           </div>

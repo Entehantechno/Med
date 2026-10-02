@@ -98,12 +98,12 @@ function LibCard({ card }) {
     <div className="lib-card">
       <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
         <div style={{ fontWeight: 700, flex: 1, minWidth: 0 }}>{card.q}</div>
-        <button className={`btn btn-sm ${saved ? "btn-accent" : "btn-ghost"}`} onClick={toggleSave} title={t("saveForLater")}>
+        <button type="button" className={`btn btn-sm ${saved ? "btn-accent" : "btn-ghost"}`} onClick={toggleSave} title={t("saveForLater")}>
           <Icon name="star" size={13} /> {saved ? t("savedCard") : t("saveCard")}
         </button>
       </div>
       {!revealed
-        ? <button className="btn btn-ghost btn-sm mt8" onClick={() => setRevealed(true)}><Icon name="check" size={13} /> {t("showAnswer")}</button>
+        ? <button type="button" className="btn btn-ghost btn-sm mt8" onClick={() => setRevealed(true)}><Icon name="check" size={13} /> {t("showAnswer")}</button>
         : (<div className="mt8">
             <Type card={card} checked sel={correctSel(card)} setSel={() => {}} isCorrect />
             {card.micro && <MicroLesson micro={card.micro} defaultOpen />}

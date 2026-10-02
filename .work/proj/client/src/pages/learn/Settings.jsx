@@ -44,13 +44,13 @@ export default function Settings() {
         <div className="set-row">
           <div className="set-label">{t("settingsTheme")}</div>
           <div className="set-seg" role="group" aria-label={t("settingsTheme")}>
-            <button
+            <button type="button"
               className={`set-seg-btn ${theme === "light" ? "active" : ""}`}
               aria-pressed={theme === "light"}
               onClick={() => setTheme("light")}>
               ☀️ {t("settingsThemeLight")}
             </button>
-            <button
+            <button type="button"
               className={`set-seg-btn ${theme === "dark" ? "active" : ""}`}
               aria-pressed={theme === "dark"}
               onClick={() => setTheme("dark")}>
@@ -66,7 +66,7 @@ export default function Settings() {
         <div className="small muted" style={{ marginBottom: 10 }}>{t("settingsFontHint")}</div>
         <div className="set-seg set-seg-wrap" role="group" aria-label={t("settingsFont")}>
           {FONTS.map(([key, label]) => (
-            <button
+            <button type="button"
               key={key}
               className={`set-seg-btn ${fontScale === key ? "active" : ""}`}
               aria-pressed={fontScale === key}
@@ -86,7 +86,7 @@ export default function Settings() {
             <div className="set-label">{t("settingsSoundLabel")}</div>
             <div className="small muted">{sound ? t("settingsSoundOnDesc") : t("settingsSoundOffDesc")}</div>
           </div>
-          <button
+          <button type="button"
             className={`switch ${sound ? "on" : ""}`}
             role="switch"
             aria-checked={sound}
@@ -94,7 +94,7 @@ export default function Settings() {
             onClick={() => setSound(!sound)}
           />
         </div>
-        <button className="btn btn-ghost btn-sm set-test" onClick={testSound} disabled={tested}>
+        <button type="button" className="btn btn-ghost btn-sm set-test" onClick={testSound} disabled={tested}>
           {t("settingsPreviewSound")}
         </button>
       </div>
@@ -104,13 +104,13 @@ export default function Settings() {
         <div className="set-head"><Icon name="globe" size={16} /> {t("settingsLanguage")}</div>
         <div className="set-row">
           <div className="set-seg" role="group" aria-label={t("settingsLanguage")}>
-            <button
+            <button type="button"
               className={`set-seg-btn ${lang === "fa" ? "active" : ""}`}
               aria-pressed={lang === "fa"}
               onClick={() => setLang("fa")}>
               {t("settingsLangFa")}
             </button>
-            <button
+            <button type="button"
               className={`set-seg-btn ${lang === "en" ? "active" : ""}`}
               aria-pressed={lang === "en"}
               onClick={() => setLang("en")}>
@@ -124,7 +124,7 @@ export default function Settings() {
       <div className="card set-card">
         <div className="set-head"><Icon name="logout" size={16} /> {t("logoutAll")}</div>
         <div className="small muted" style={{ marginBottom: 10 }}>{t("logoutAllHint")}</div>
-        <button className="btn btn-danger btn-sm" onClick={logoutAll}>{t("logoutAll")}</button>
+        <button type="button" className="btn btn-danger btn-sm" onClick={logoutAll}>{t("logoutAll")}</button>
       </div>
 
       {/* Calm Mode (anti-burnout, opt-in) */}

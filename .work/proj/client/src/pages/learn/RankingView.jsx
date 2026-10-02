@@ -22,10 +22,10 @@ export default function RankingView() {
 
       {/* country / province toggle — fuels regional competition */}
       <div className="tabs mb16">
-        <button className={`tab ${scope === "country" ? "active" : ""}`} onClick={() => setScope("country")}>
+        <button type="button" className={`tab ${scope === "country" ? "active" : ""}`} onClick={() => setScope("country")}>
           <Icon name="globe" size={15} /> {t("countryRank")}
         </button>
-        <button className={`tab ${scope === "province" ? "active" : ""}`} onClick={() => setScope("province")}>
+        <button type="button" className={`tab ${scope === "province" ? "active" : ""}`} onClick={() => setScope("province")}>
           <Icon name="medal" size={15} /> {t("provinceRank")}
         </button>
       </div>

@@ -7,7 +7,7 @@ vi.mock('../context.jsx',()=>({useApp:()=>({lang:'en',t:k=>k,user:{id:100,role:'
 vi.mock('../components/UI.jsx',()=>({TopBar:()=>null,Spinner:()=>null}));
 vi.mock('../utils/antiCheat.js',()=>({useAntiCheat:()=>({leaves:0})}));
 vi.mock('../lib/sw-update.js',()=>({markBusy:()=>{}}));
-vi.mock('../components/OrderSearch.jsx',()=>({default:({onAdd})=><button onClick={()=>onAdd('CBC')}>Order CBC</button>}));
+vi.mock('../components/OrderSearch.jsx',()=>({default:({onAdd})=><button type="button" onClick={()=>onAdd('CBC')}>Order CBC</button>}));
 vi.mock('../components/ClinicalLesson.jsx',()=>({default:()=>null,EvaluationProvenance:()=>null}));
 import Exam from './Exam.jsx';
 let resolveReply,rejectReply;

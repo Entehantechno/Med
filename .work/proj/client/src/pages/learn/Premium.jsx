@@ -88,7 +88,7 @@ export default function Premium({ onProfile }) {
             ? <div style={{ opacity: .95 }}>{t("premiumUntil")}: {fmtDate(profile.premium_until)}</div>
             : <div style={{ opacity: .95 }}>{t("premiumLifetime")}</div>}
           {!!profile.premium_until && (
-            <button className="btn btn-ghost mt16" style={{ background: "rgba(255,255,255,.9)" }} disabled={busy} onClick={cancel}>{t("cancelSub")}</button>
+            <button type="button" className="btn btn-ghost mt16" style={{ background: "rgba(255,255,255,.9)" }} disabled={busy} onClick={cancel}>{t("cancelSub")}</button>
           )}
         </div>
       ) : (
@@ -109,7 +109,7 @@ export default function Premium({ onProfile }) {
                 {pl.best && <span className="badge-best">{t("bestValue")}</span>}
                 <div className="plan-price">{lang === "fa" ? pl.price : pl.priceEn}</div>
                 <div className="muted small" style={{ marginBottom: 16 }}>{pl.period}</div>
-                <button className={`btn btn-block ${pl.best ? "btn-accent" : "btn-primary"}`} disabled={busy} onClick={() => subscribe(pl.id)}>
+                <button type="button" className={`btn btn-block ${pl.best ? "btn-accent" : "btn-primary"}`} disabled={busy} onClick={() => subscribe(pl.id)}>
                   <Icon name="crown" size={16} /> {busy ? t("redirecting") : (profile?.premium ? t("extendPremium") : t("subscribe"))}
                 </button>
               </div>
@@ -129,7 +129,7 @@ export default function Premium({ onProfile }) {
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <input value={redeemCode} onChange={(e) => setRedeemCode(e.target.value)} placeholder="MED-XXXX-XXXX"
               style={{ flex: 1, minWidth: 180, textTransform: "uppercase", direction: "ltr", textAlign: "center", letterSpacing: 1 }} />
-            <button className="btn btn-primary" onClick={doRedeem} disabled={!redeemCode.trim()}>
+            <button type="button" className="btn btn-primary" onClick={doRedeem} disabled={!redeemCode.trim()}>
               <Icon name="check" size={15} /> {fa ? "فعال‌سازی" : "Redeem"}
             </button>
           </div>
@@ -160,7 +160,7 @@ export default function Premium({ onProfile }) {
                 <div className="muted small" style={{ marginBottom: 12 }}>
                   {fa ? `هر نفر: ${(p.perSeat / 10).toLocaleString("fa-IR")} تومان` : `${(p.perSeat / 10).toLocaleString("en-US")} T/seat`}
                 </div>
-                <button className="btn btn-block btn-primary" disabled={busy} onClick={() => buyPack(p.id)}>
+                <button type="button" className="btn btn-block btn-primary" disabled={busy} onClick={() => buyPack(p.id)}>
                   <Icon name="users" size={15} /> {busy ? t("redirecting") : (fa ? "خرید این بسته" : "Buy pack")}
                 </button>
               </div>
@@ -184,7 +184,7 @@ export default function Premium({ onProfile }) {
                     <code style={{ direction: "ltr", letterSpacing: 1, fontWeight: 700, textDecoration: c.status === "redeemed" ? "line-through" : "none", opacity: c.status === "redeemed" ? 0.55 : 1 }}>{c.code}</code>
                     {c.status === "redeemed"
                       ? <span className="tag small">{fa ? "استفاده‌شده" : "used"}{c.redeemed_by ? ` · ${c.redeemed_by}` : ""}</span>
-                      : <button className="btn btn-ghost btn-sm" onClick={() => copyCode(c.code)}><Icon name="download" size={13} /> {fa ? "کپی" : "Copy"}</button>}
+                      : <button type="button" className="btn btn-ghost btn-sm" onClick={() => copyCode(c.code)}><Icon name="download" size={13} /> {fa ? "کپی" : "Copy"}</button>}
                   </div>
                 ))}
               </div>

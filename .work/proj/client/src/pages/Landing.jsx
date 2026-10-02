@@ -106,18 +106,18 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
           <span className="lp-brand-name">MED School</span>
         </div>
         <div className="lp-nav-actions">
-          <button className="lp-icon-btn" onClick={toggleTheme} aria-label={fa ? (theme === "light" ? "حالت تاریک" : "حالت روشن") : (theme === "light" ? "Dark mode" : "Light mode")}>
+          <button type="button" className="lp-icon-btn" onClick={toggleTheme} aria-label={fa ? (theme === "light" ? "حالت تاریک" : "حالت روشن") : (theme === "light" ? "Dark mode" : "Light mode")}>
             <Icon name={theme === "light" ? "moon" : "sun"} size={18} />
           </button>
-          <button className="lp-icon-btn" onClick={toggleLang} aria-label={fa ? "تغییر زبان" : "Change language"}>
+          <button type="button" className="lp-icon-btn" onClick={toggleLang} aria-label={fa ? "تغییر زبان" : "Change language"}>
             <Icon name="globe" size={18} />
           </button>
-          {storeEnabled && <button className="lp-btn-store" onClick={openStore}><Icon name="store" size={16} /> {tc("landStore")}</button>}
-          {onBlog && <button className="lp-btn-ghost" data-testid="nav-blog" onClick={onBlog}>{tc("landBlog")}</button>}
-          <button className="lp-btn-ghost" data-testid="nav-signin" {...warmAuth} onClick={onSignIn}>{tc("landCtaSecondary")}</button>
-          <button className="lp-btn-primary" {...warmAuth} onClick={onGetStarted}>{tc("landCtaPrimary")}</button>
+          {storeEnabled && <button type="button" className="lp-btn-store" onClick={openStore}><Icon name="store" size={16} /> {tc("landStore")}</button>}
+          {onBlog && <button type="button" className="lp-btn-ghost" data-testid="nav-blog" onClick={onBlog}>{tc("landBlog")}</button>}
+          <button type="button" className="lp-btn-ghost" data-testid="nav-signin" {...warmAuth} onClick={onSignIn}>{tc("landCtaSecondary")}</button>
+          <button type="button" className="lp-btn-primary" {...warmAuth} onClick={onGetStarted}>{tc("landCtaPrimary")}</button>
           {/* phones: everything except the primary CTA lives in a menu sheet */}
-          <button className="lp-icon-btn lp-menu-btn" onClick={() => setMenuOpen(true)} aria-label={fa ? "منو" : "Menu"} aria-expanded={menuOpen} aria-controls="lp-menu-sheet">
+          <button type="button" className="lp-icon-btn lp-menu-btn" onClick={() => setMenuOpen(true)} aria-label={fa ? "منو" : "Menu"} aria-expanded={menuOpen} aria-controls="lp-menu-sheet">
             <Icon name="menu" size={20} />
           </button>
         </div>
@@ -128,15 +128,15 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
             <div className="lp-menu-handle" />
             <div className="lp-menu-head">
               <span className="lp-brand"><span className="lp-logo sm"><Icon name="cap" size={18} /></span> MED School</span>
-              <button className="lp-icon-btn" onClick={() => setMenuOpen(false)} aria-label={fa ? "بستن" : "Close"}><Icon name="close" size={18} /></button>
+              <button type="button" className="lp-icon-btn" onClick={() => setMenuOpen(false)} aria-label={fa ? "بستن" : "Close"}><Icon name="close" size={18} /></button>
             </div>
-            <button className="lp-menu-item" {...warmAuth} onClick={() => { setMenuOpen(false); onGetStarted(); }}><Icon name="crown" size={18} /> {tc("landCtaPrimary")}</button>
-            <button className="lp-menu-item" data-testid="menu-signin" {...warmAuth} onClick={() => { setMenuOpen(false); onSignIn(); }}><Icon name="user" size={18} /> {tc("landCtaSecondary")}</button>
-            {storeEnabled && <button className="lp-menu-item" onClick={() => { setMenuOpen(false); openStore(); }}><Icon name="store" size={18} /> {tc("landStore")}</button>}
-            {onBlog && <button className="lp-menu-item" onClick={() => { setMenuOpen(false); onBlog(); }}><Icon name="book" size={18} /> {tc("landBlog")}</button>}
+            <button type="button" className="lp-menu-item" {...warmAuth} onClick={() => { setMenuOpen(false); onGetStarted(); }}><Icon name="crown" size={18} /> {tc("landCtaPrimary")}</button>
+            <button type="button" className="lp-menu-item" data-testid="menu-signin" {...warmAuth} onClick={() => { setMenuOpen(false); onSignIn(); }}><Icon name="user" size={18} /> {tc("landCtaSecondary")}</button>
+            {storeEnabled && <button type="button" className="lp-menu-item" onClick={() => { setMenuOpen(false); openStore(); }}><Icon name="store" size={18} /> {tc("landStore")}</button>}
+            {onBlog && <button type="button" className="lp-menu-item" onClick={() => { setMenuOpen(false); onBlog(); }}><Icon name="book" size={18} /> {tc("landBlog")}</button>}
             <div className="lp-menu-row">
-              <button className="lp-menu-item" onClick={toggleTheme}><Icon name={theme === "light" ? "moon" : "sun"} size={18} /> {fa ? (theme === "light" ? "حالت تاریک" : "حالت روشن") : (theme === "light" ? "Dark mode" : "Light mode")}</button>
-              <button className="lp-menu-item" onClick={toggleLang}><Icon name="globe" size={18} /> {t("otherLang")}</button>
+              <button type="button" className="lp-menu-item" onClick={toggleTheme}><Icon name={theme === "light" ? "moon" : "sun"} size={18} /> {fa ? (theme === "light" ? "حالت تاریک" : "حالت روشن") : (theme === "light" ? "Dark mode" : "Light mode")}</button>
+              <button type="button" className="lp-menu-item" onClick={toggleLang}><Icon name="globe" size={18} /> {t("otherLang")}</button>
             </div>
           </div>
         </div>
@@ -151,10 +151,10 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
           <h1 id="landing-hero-title" className="lp-h1">{tc("landHeroTitle")}</h1>
           <p className="lp-sub">{tc("landHeroSub")}</p>
           <div className="lp-cta-row">
-            <button className="lp-btn-primary lp-btn-lg" {...warmAuth} onClick={onGetStarted}>
+            <button type="button" className="lp-btn-primary lp-btn-lg" {...warmAuth} onClick={onGetStarted}>
               <Icon name="crown" size={18} /> {tc("landCtaPrimary")}
             </button>
-            <button className="lp-btn-outline lp-btn-lg" {...warmAuth} onClick={onSignIn}>{tc("landCtaSecondary")}</button>
+            <button type="button" className="lp-btn-outline lp-btn-lg" {...warmAuth} onClick={onSignIn}>{tc("landCtaSecondary")}</button>
           </div>
           {/* trust badges right under the CTA — objection-killers at decision point */}
           {badges.length > 0 && (
@@ -188,13 +188,13 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
             <div className="lp-aud-ico" style={{ background: "var(--grad-green)" }}><Icon name="medal" size={26} /></div>
             <h3>{tc("landLearnerTitle")}</h3>
             <p>{tc("landLearnerDesc")}</p>
-            <button className="lp-btn-primary" {...warmAuth} onClick={onGetStarted}>{tc("landCtaPrimary")} →</button>
+            <button type="button" className="lp-btn-primary" {...warmAuth} onClick={onGetStarted}>{tc("landCtaPrimary")} →</button>
           </div>
           <div className="lp-aud-card lp-aud-uni">
             <div className="lp-aud-ico" style={{ background: "var(--grad-primary)" }}><Icon name="class" size={26} /></div>
             <h3>{tc("landUniTitle")}</h3>
             <p>{tc("landUniDesc")}</p>
-            <button className="lp-btn-outline" {...warmAuth} onClick={onSignIn}>{tc("landCtaSecondary")} →</button>
+            <button type="button" className="lp-btn-outline" {...warmAuth} onClick={onSignIn}>{tc("landCtaSecondary")} →</button>
           </div>
         </div>
       </section>
@@ -278,7 +278,7 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
       <section className="lp-final">
         <h2>{tc("landFinalTitle")}</h2>
         <p>{tc("landFinalSub")}</p>
-        <button className="lp-btn-primary lp-btn-lg" onClick={onGetStarted}>
+        <button type="button" className="lp-btn-primary lp-btn-lg" onClick={onGetStarted}>
           <Icon name="crown" size={18} /> {tc("landCtaPrimary")}
         </button>
       </section>
@@ -318,7 +318,7 @@ function FaqItem({ q, a }) {
   const [open, setOpen] = useState(false);
   return (
     <div className={`lp-faq ${open ? "open" : ""}`}>
-      <button className="lp-faq-q" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+      <button type="button" className="lp-faq-q" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
         <span>{q}</span>
         <Icon name={open ? "chevronUp" : "chevronDown"} size={18} />
       </button>

@@ -120,12 +120,12 @@ export default function Progress({ go, onProgramChange }) {
 
       {/* shortcuts */}
       <div className="grid grid-2">
-        <button className="card mod-card" onClick={() => go("mistakes")} style={{ cursor: "pointer" }}>
+        <button type="button" className="card mod-card" onClick={() => go("mistakes")} style={{ cursor: "pointer" }}>
           <div className="mod-ico" style={{ background: "var(--grad-warm)" }}><Icon name="warn" size={26} /></div>
           <h3>{t("mistakesHub")}</h3>
           <div className="small muted">{t("mistakesHubHint")}</div>
         </button>
-        <button className="card mod-card" onClick={() => go("notes")} style={{ cursor: "pointer" }}>
+        <button type="button" className="card mod-card" onClick={() => go("notes")} style={{ cursor: "pointer" }}>
           <div className="mod-ico" style={{ background: "var(--grad-primary)" }}><Icon name="edit" size={26} /></div>
           <h3>{t("myNotes")}</h3>
           <div className="small muted">{t("myNotesHint")}</div>

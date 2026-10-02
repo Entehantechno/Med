@@ -83,7 +83,7 @@ export default function CalmModeCard() {
               <div style={{ fontWeight: 700 }}>🌿 {t("calmRestDays")}</div>
               <div className="small muted">{t("calmRestLeft").replace("{n}", s.restDaysLeft).replace("{m}", s.restDaysPerWeek)}</div>
             </div>
-            <button className="btn btn-primary btn-sm" disabled={busy || s.restDaysLeft <= 0 || s.restToday}
+            <button type="button" className="btn btn-primary btn-sm" disabled={busy || s.restDaysLeft <= 0 || s.restToday}
               onClick={restDay}>
               {s.restToday ? t("calmRestedToday") : t("calmTakeRest")}
             </button>

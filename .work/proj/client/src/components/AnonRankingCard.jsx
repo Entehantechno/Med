@@ -46,7 +46,7 @@ export default function AnonRankingCard() {
             <div className="anon-alias-row">
               <input type="text" value={alias} maxLength={s.maxAliasLen} disabled={busy}
                 placeholder={s.aliasPreview} onChange={(e) => setAlias(e.target.value)} />
-              <button className="btn btn-primary btn-sm" disabled={busy} onClick={saveAlias}>{t("save")}</button>
+              <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={saveAlias}>{t("save")}</button>
             </div>
             <div className="small muted">{t("anonAliasHint").replace("{alias}", s.aliasPreview)}</div>
           </div>

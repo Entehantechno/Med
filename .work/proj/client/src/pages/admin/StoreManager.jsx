@@ -25,7 +25,7 @@ export default function StoreManager() {
   return (
     <div className="page">
       <div className="section-title"><h2><Icon name="store" size={22} /> {t("storeManager")}</h2>
-        <button className="btn btn-primary btn-sm" onClick={() => setEdit({})}><Icon name="store" size={14} /> {t("newCourse")}</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => setEdit({})}><Icon name="store" size={14} /> {t("newCourse")}</button>
       </div>
       <div className="muted small mb16">{t("storeManagerHint")}</div>
       {courses.length === 0 && <div className="card empty-state"><div className="ico"><Icon name="store" size={40} /></div><h3>{t("noData")}</h3></div>}
@@ -38,10 +38,10 @@ export default function StoreManager() {
                   : <span className="tag" style={{ marginInlineStart: 8 }}>{t("draft")}</span>}</div>
               <div className="small muted">{c.lessonCount} {t("videosCount")} · {c.freeCount} {t("freePreview")} · {c.enrolled} {t("enrolled")} · {c.price ? `${toman(c.price)} ${t("toman")}` : t("free")}</div>
             </div>
-            <button className="btn btn-sm btn-ghost" onClick={() => setManage(c.id)}><Icon name="play" size={13} /> {t("manageLessons")}</button>
-            <button className="btn btn-sm btn-ghost" onClick={() => togglePub(c)}>{c.published ? t("unpublish") : t("publish")}</button>
-            <button className="btn btn-sm btn-ghost" onClick={() => setEdit(c)}><Icon name="edit" size={13} /></button>
-            <button className="btn btn-sm btn-danger" onClick={() => del(c.id)}><Icon name="trash" size={13} /></button>
+            <button type="button" className="btn btn-sm btn-ghost" onClick={() => setManage(c.id)}><Icon name="play" size={13} /> {t("manageLessons")}</button>
+            <button type="button" className="btn btn-sm btn-ghost" onClick={() => togglePub(c)}>{c.published ? t("unpublish") : t("publish")}</button>
+            <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEdit(c)}><Icon name="edit" size={13} /></button>
+            <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)}><Icon name="trash" size={13} /></button>
           </div>
         </div>
       ))}
@@ -109,8 +109,8 @@ function LessonManager({ courseId, onBack }) {
     <div className="page">
       <div className="section-title"><h2>{lang === "fa" ? data.course.title_fa : data.course.title_en}</h2>
         <div style={{ display: "flex", gap: 8 }}>
-          <button className="btn btn-primary btn-sm" onClick={() => setEdit({})}><Icon name="play" size={13} /> {t("newLessonVideo")}</button>
-          <button className="btn btn-ghost btn-sm" onClick={onBack}>← {t("back")}</button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setEdit({})}><Icon name="play" size={13} /> {t("newLessonVideo")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}>← {t("back")}</button>
         </div>
       </div>
       <div className="muted small mb16">{t("lessonManagerHint")}</div>
@@ -123,11 +123,11 @@ function LessonManager({ courseId, onBack }) {
               <div style={{ fontWeight: 700 }}>{lang === "fa" ? l.title_fa : l.title_en || "—"}</div>
               <div className="small muted">{l.duration} · {l.video_url ? "🎬" : t("noVideo")}</div>
             </div>
-            <button className={`btn btn-sm ${l.free_preview ? "btn-accent" : "btn-ghost"}`} onClick={() => toggleFree(l)} title={t("freePreview")}>
+            <button type="button" className={`btn btn-sm ${l.free_preview ? "btn-accent" : "btn-ghost"}`} onClick={() => toggleFree(l)} title={t("freePreview")}>
               {l.free_preview ? `✓ ${t("freePreview")}` : t("makeFree")}
             </button>
-            <button className="btn btn-sm btn-ghost" onClick={() => setEdit(l)}><Icon name="edit" size={13} /></button>
-            <button className="btn btn-sm btn-danger" onClick={() => del(l.id)}><Icon name="trash" size={13} /></button>
+            <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEdit(l)}><Icon name="edit" size={13} /></button>
+            <button type="button" className="btn btn-sm btn-danger" onClick={() => del(l.id)}><Icon name="trash" size={13} /></button>
           </div>
         </div>
       ))}
@@ -171,7 +171,7 @@ function LessonModal({ courseId, lesson, onClose, onSaved }) {
       <div className="field"><label>{t("videoUrl")}</label>
         <input value={f.video_url} onChange={(e) => set("video_url", e.target.value)} placeholder="/uploads/vid_... یا لینک" style={{ direction: "ltr" }} />
         <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-          <button className="btn btn-ghost btn-sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => fileRef.current?.click()} disabled={uploading}>
             <Icon name="download" size={13} /> {uploading ? t("uploading") : t("uploadVideo")}
           </button>
           <input ref={fileRef} type="file" accept="video/*" onChange={upload} style={{ display: "none" }} />

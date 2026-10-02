@@ -63,8 +63,8 @@ export default function JumpAhead({ topic, onClose, onDone, onProfile }) {
               : `${quiz.cards.length} questions sampled from the ${quiz.skipping} remaining stages. Score at least ${quiz.pass}% and the whole unit unlocks. Mistakes don't cost hearts.`}
           </p>
           <div className="ja-actions">
-            <button className="btn btn-accent btn-lg" onClick={() => setPhase("run")}><Icon name="play" size={16} /> {fa ? "شروع آزمون پرش" : "Start"}</button>
-            <button className="btn btn-ghost" onClick={onClose}>{fa ? "بی‌خیال" : "Not now"}</button>
+            <button type="button" className="btn btn-accent btn-lg" onClick={() => setPhase("run")}><Icon name="play" size={16} /> {fa ? "شروع آزمون پرش" : "Start"}</button>
+            <button type="button" className="btn btn-ghost" onClick={onClose}>{fa ? "بی‌خیال" : "Not now"}</button>
           </div>
         </div>
       );
@@ -82,8 +82,8 @@ export default function JumpAhead({ topic, onClose, onDone, onProfile }) {
           {checked && <div className={`lesson-fb ${right ? "ok" : "bad"}`} style={{ marginTop: 10 }}><b>{right ? t("correct") : t("wrong")}</b></div>}
           <div className="lesson-cta" style={{ marginTop: 12 }}>
             {!checked
-              ? <button className="btn btn-primary btn-block" disabled={sel == null} onClick={check}>{t("check") || (fa ? "بررسی پاسخ" : "Check")}</button>
-              : <button className="btn btn-accent btn-block" disabled={busy} onClick={next}>{idx + 1 < quiz.cards.length ? (t("next") || (fa ? "بعدی" : "Next")) : (fa ? "پایان و نتیجه" : "Finish")}</button>}
+              ? <button type="button" className="btn btn-primary btn-block" disabled={sel == null} onClick={check}>{t("check") || (fa ? "بررسی پاسخ" : "Check")}</button>
+              : <button type="button" className="btn btn-accent btn-block" disabled={busy} onClick={next}>{idx + 1 < quiz.cards.length ? (t("next") || (fa ? "بعدی" : "Next")) : (fa ? "پایان و نتیجه" : "Finish")}</button>}
           </div>
         </div>
       );
@@ -102,7 +102,7 @@ export default function JumpAhead({ topic, onClose, onDone, onProfile }) {
               ? (fa ? `${N(result.skipped)} مرحله باز و انجام‌شده علامت خورد. هر وقت خواستی می‌توانی برگردی و آن‌ها را برای ستارهٔ کامل تمرین کنی.` : `${result.skipped} stages unlocked and marked done. You can always come back and practise them for full stars.`)
               : (fa ? `برای پرش حداقل ${N(result.pass)}٪ لازم بود. مسیر عادی همین‌جا ادامه دارد — و بعد از چند درس دوباره می‌توانی امتحان کنی.` : `You needed ${result.pass}% to jump. Keep going on the normal path and try again after a few lessons.`)}
           </p>
-          <button className="btn btn-primary" onClick={onClose}>{fa ? "بازگشت به مسیر" : "Back to path"}</button>
+          <button type="button" className="btn btn-primary" onClick={onClose}>{fa ? "بازگشت به مسیر" : "Back to path"}</button>
         </div>
       );
     }

@@ -33,7 +33,7 @@ export default function CompetitiveReferences() {
     <div className="page">
       <div className="section-title">
         <h2><Icon name="book" size={22}/> {fa ? "کتابخانهٔ رقابتی — مدیریت رفرنس‌ها" : "Competitive Library — References"}</h2>
-        <button className="btn btn-primary btn-sm" onClick={()=>setEditing({})}>+ {fa ? "افزودن کتاب" : "Add book"}</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={()=>setEditing({})}>+ {fa ? "افزودن کتاب" : "Add book"}</button>
       </div>
       <div className="small muted mb12">{fa ? "این رفرنس‌ها در درسنامهٔ هر سؤال (دکمهٔ «مشاهده در رفرنس») و در کتابخانهٔ دانشجو نمایش داده می‌شوند. کاور، فصل و لینک را دقیق وارد کنید." : "These references power the per-question “View in reference” button and the student library. Fill cover, chapter and link accurately."}</div>
       {err && <div className="ddle-banner bad mb12">{err}</div>}
@@ -46,8 +46,8 @@ export default function CompetitiveReferences() {
               <div className="small muted">{[r.short_title, r.edition, r.publisher].filter(Boolean).join(" • ")}{r.pdf_url ? ` • ${fa?"PDF دارد":"has PDF"}` : ""}</div>
               <div className="small muted" style={{wordBreak:"break-all"}}>{r.source_url}{r.pdf_url ? <span style={{display:"block"}}>PDF: <a href={r.pdf_url} target="_blank" rel="noreferrer">{r.pdf_url}</a></span> : null}</div>
               <div style={{display:"flex", gap:6, marginTop:8}}>
-                <button className="btn btn-ghost btn-sm" onClick={()=>setEditing(r)}>{fa ? "ویرایش" : "Edit"}</button>
-                <button className="btn btn-danger btn-sm" onClick={()=>del(r.id)}>{fa ? "حذف" : "Delete"}</button>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={()=>setEditing(r)}>{fa ? "ویرایش" : "Edit"}</button>
+                <button type="button" className="btn btn-danger btn-sm" onClick={()=>del(r.id)}>{fa ? "حذف" : "Delete"}</button>
                 {r.source_url && <a className="btn btn-ghost btn-sm" href={r.source_url} target="_blank" rel="noopener noreferrer">↗</a>}
               </div>
             </div>
@@ -90,7 +90,7 @@ function RefModal({ data, onClose, onSave }){
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={e=>e.stopPropagation()} style={{maxWidth:560}}>
-        <div className="modal-head"><h3>{f.id ? (fa ? "ویرایش رفرنس" : "Edit reference") : (fa ? "افزودن رفرنس" : "Add reference")}</h3><button className="btn btn-ghost" onClick={onClose}>✕</button></div>
+        <div className="modal-head"><h3>{f.id ? (fa ? "ویرایش رفرنس" : "Edit reference") : (fa ? "افزودن رفرنس" : "Add reference")}</h3><button type="button" className="btn btn-ghost" onClick={onClose}>✕</button></div>
         <div className="modal-body" style={{display:"flex", flexDirection:"column", gap:10}}>
           <div className="field"><label>code (لاتین، یکتا) *</label><input value={f.code} onChange={e=>set("code",e.target.value)} placeholder="harrison-22e" /></div>
           <div className="grid grid-2">
@@ -116,8 +116,8 @@ function RefModal({ data, onClose, onSave }){
           <div className="small muted">{fa ? "حقوق: فقط فراداده و ارجاع مجاز است؛ اگر PDF دارای حق نشر است فقط نمونهٔ مجاز یا فایل با مجوز آپلود کنید." : "Rights: metadata + optional PDF — upload only if you have the right to share; otherwise keep link to publisher."}</div>
         </div>
         <div className="modal-foot" style={{display:"flex", gap:8, justifyContent:"flex-end"}}>
-          <button className="btn btn-ghost" onClick={onClose}>{fa ? "لغو" : "Cancel"}</button>
-          <button className="btn btn-primary" onClick={()=>onSave(f)}>{fa ? "ذخیره" : "Save"}</button>
+          <button type="button" className="btn btn-ghost" onClick={onClose}>{fa ? "لغو" : "Cancel"}</button>
+          <button type="button" className="btn btn-primary" onClick={()=>onSave(f)}>{fa ? "ذخیره" : "Save"}</button>
         </div>
       </div>
     </div>

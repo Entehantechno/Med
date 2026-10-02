@@ -29,7 +29,7 @@ export default function Mindmap({ onBack }) {
       <div className="page">
         <div className="section-title">
           <h2><span style={{ fontSize: "1.4rem" }}>{map.topic?.emoji}</span> {map.topic?.title}</h2>
-          <button className="btn btn-ghost btn-sm" onClick={() => { setActive(null); setMap(null); }}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setActive(null); setMap(null); }}>
             <Icon name={lang === "fa" ? "chevronRight" : "chevronLeft"} size={15} /> {t("mindmapAll")}
           </button>
         </div>
@@ -57,7 +57,7 @@ export default function Mindmap({ onBack }) {
             </div>
           </div>
         )}
-        <button className="btn btn-ghost btn-block mt16" onClick={onBack}>{t("back")}</button>
+        <button type="button" className="btn btn-ghost btn-block mt16" onClick={onBack}>{t("back")}</button>
       </div>
     );
   }
@@ -73,7 +73,7 @@ export default function Mindmap({ onBack }) {
       ) : (
         <div className="grid grid-2">
           {withContent.map((tp) => (
-            <button key={tp.slug} className="card mm-card" onClick={() => open(tp.slug)} style={{ textAlign: "start", cursor: "pointer" }}>
+            <button type="button" key={tp.slug} className="card mm-card" onClick={() => open(tp.slug)} style={{ textAlign: "start", cursor: "pointer" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <span className="mm-emoji" style={{ background: tp.color || "#2f7fd1" }}>{tp.emoji}</span>
                 <div>
@@ -85,7 +85,7 @@ export default function Mindmap({ onBack }) {
           ))}
         </div>
       )}
-      <button className="btn btn-ghost btn-block mt16" onClick={onBack}>{t("back")}</button>
+      <button type="button" className="btn btn-ghost btn-block mt16" onClick={onBack}>{t("back")}</button>
     </div>
   );
 }

@@ -52,7 +52,7 @@ export default function ImportModal({ onClose, onDone }) {
     <Modal title={t("bulkImport")} onClose={onClose} wide>
       {/* ---- Step 1: guided intro (collapsible) ---- */}
       <div className="import-guide">
-        <button className="import-guide-head" onClick={() => setShowGuide((s) => !s)}>
+        <button type="button" className="import-guide-head" onClick={() => setShowGuide((s) => !s)}>
           <span><Icon name="bulb" size={16} /> {t("importHowTitle")}</span>
           <Icon name={showGuide ? "chevronUp" : "chevronDown"} size={16} />
         </button>
@@ -82,14 +82,14 @@ export default function ImportModal({ onClose, onDone }) {
 
       {/* ---- Step 2: download templates ---- */}
       <div className="import-actions">
-        <button className="btn btn-primary btn-sm" onClick={() => download("/api/admin/content/import/simple.csv", "simple_questions.csv")}>
+        <button type="button" className="btn btn-primary btn-sm" onClick={() => download("/api/admin/content/import/simple.csv", "simple_questions.csv")}>
           <Icon name="download" size={14} /> {t("importSimpleTemplate")}
         </button>
-        <button className="btn btn-ghost btn-sm" onClick={() => download("/api/admin/content/import/template.csv", "full_template.csv")}>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => download("/api/admin/content/import/template.csv", "full_template.csv")}>
           <Icon name="download" size={14} /> {t("importFullTemplate")}
         </button>
         <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={onFile} style={{ display: "none" }} />
-        <button className="btn btn-ghost btn-sm" onClick={() => fileRef.current?.click()}><Icon name="upload" size={14} /> {t("chooseFile")}</button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => fileRef.current?.click()}><Icon name="upload" size={14} /> {t("chooseFile")}</button>
       </div>
 
       {/* ---- Step 3: paste / edit ---- */}
@@ -143,10 +143,10 @@ export default function ImportModal({ onClose, onDone }) {
       )}
 
       <div className="modal-actions">
-        <button className="btn btn-ghost" onClick={onClose}>{t("cancel")}</button>
+        <button type="button" className="btn btn-ghost" onClick={onClose}>{t("cancel")}</button>
         {!preview
-          ? <button className="btn btn-primary" disabled={busy} onClick={doPreview}><Icon name="search" size={14} /> {t("previewImport")}</button>
-          : <button className="btn btn-accent" disabled={busy || preview.valid === 0} onClick={doImport}>
+          ? <button type="button" className="btn btn-primary" disabled={busy} onClick={doPreview}><Icon name="search" size={14} /> {t("previewImport")}</button>
+          : <button type="button" className="btn btn-accent" disabled={busy || preview.valid === 0} onClick={doImport}>
               <Icon name="check" size={14} /> {t("importN").replace("{n}", preview.valid)}
             </button>}
       </div>

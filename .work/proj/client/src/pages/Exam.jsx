@@ -603,11 +603,11 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
           </div>
           <div className="row gap8 mt12" style={{ flexWrap: "wrap" }}>
             {boot.status === "error" && (
-              <button className="btn btn-primary" onClick={() => { setBoot({ status: "loading", stage: "case" }); setBootKey((k) => k + 1); }}>
+              <button type="button" className="btn btn-primary" onClick={() => { setBoot({ status: "loading", stage: "case" }); setBootKey((k) => k + 1); }}>
                 {fa ? "تلاش دوباره" : "Try again"}
               </button>
             )}
-            <button className="btn btn-ghost" onClick={leaveExam}>
+            <button type="button" className="btn btn-ghost" onClick={leaveExam}>
               {fa ? "بازگشت" : "Back"}
             </button>
           </div>
@@ -662,10 +662,10 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
                             : "The consent wording has not been recorded by the researcher yet. You cannot take part until it is.")}
             </div>
             <div className="row gap8 mt12" style={{ flexWrap: "wrap" }}>
-              <button className="btn btn-primary" onClick={agreeConsent} disabled={consentBusy || !text || consent.reason === "research_paused"}>
+              <button type="button" className="btn btn-primary" onClick={agreeConsent} disabled={consentBusy || !text || consent.reason === "research_paused"}>
                 {fa ? "موافقم و شرکت می‌کنم" : "I agree and take part"}
               </button>
-              <button className="btn btn-ghost" onClick={declineConsent} disabled={consentBusy}>
+              <button type="button" className="btn btn-ghost" onClick={declineConsent} disabled={consentBusy}>
                 {fa ? "خروج و ارسال درخواست به ادمین" : "Leave and send request to admin"}
               </button>
             </div>
@@ -716,7 +716,7 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
         {!!error && (
           <div className="err-banner mb16">
             <Icon name="warn" size={16} /> {error}
-            <button className="btn btn-ghost btn-sm" style={{ marginInlineStart: 8 }} onClick={() => setError("")}>{t("close")}</button>
+            <button type="button" className="btn btn-ghost btn-sm" style={{ marginInlineStart: 8 }} onClick={() => setError("")}>{t("close")}</button>
           </div>
         )}
         {loggingOn && (
@@ -778,7 +778,7 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
               <input value={input} onChange={(e) => setInput(e.target.value)}
                 placeholder={t("typeMessage")}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent?.isComposing && !e.repeat) send(); }} />
-              <button className="btn btn-primary" onClick={send} disabled={typing}>{t("send")}</button>
+              <button type="button" className="btn btn-primary" onClick={send} disabled={typing}>{t("send")}</button>
             </div>
           </div>
 
@@ -787,7 +787,7 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
               {/* Flow order per the station protocol: history → problem list →
                   differentials → THEN order tests/imaging from your ddx. */}
               {["history", "problem", "dx", "tests", "paraclinic", "imaging", "images"].map((id) => (
-                <button key={id} className={`tab ${tab === id ? "active" : ""}`} onClick={() => { setTab(id); logEvent("tab_switch", { tab: id }); }}>
+                <button type="button" key={id} className={`tab ${tab === id ? "active" : ""}`} onClick={() => { setTab(id); logEvent("tab_switch", { tab: id }); }}>
                   {t(id === "history" ? "tabHistory" : id === "problem" ? "tabProblem"
                     : id === "tests" ? "tabTests" : id === "paraclinic" ? "tabParaclinic"
                     : id === "imaging" ? "tabImaging" : id === "images" ? "tabImages" : "tabDx")}
@@ -813,7 +813,7 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
                 onOrder={(q) => orderResult("imaging", q)} />}
               {tab === "images" && <ImagesTab images={requestedImages} t={t} lang={lang} />}
             </div>
-            <button className="btn btn-accent btn-block mt16" onClick={finish}>✓ {t("finishExam")}</button>
+            <button type="button" className="btn btn-accent btn-block mt16" onClick={finish}>✓ {t("finishExam")}</button>
           </div>
         </div>
       </div>
@@ -902,7 +902,7 @@ function OrderTab({ label, listLabel, catalog, items, setItems, lang, t, onOrder
       </div>
       <label className="small muted">{listLabel}</label>
       <div>{items.length ? items.map((x, i) => (
-        <span className="chip" key={i}>{x}<button onClick={() => setItems((prev) => prev.filter((_, j) => j !== i))}>✕</button></span>
+        <span className="chip" key={i}>{x}<button type="button" onClick={() => setItems((prev) => prev.filter((_, j) => j !== i))}>✕</button></span>
       )) : <div className="small muted mt8">{t("noneYet")}</div>}</div>
     </>
   );
@@ -924,10 +924,10 @@ function DxTab({ ddx, setDdx, finalDx, setFinalDx, t, onDdx, onDdxRemove, onFina
         <div className="inline-form" style={{ marginTop: 6 }}>
           <input value={v} onChange={(e) => setV(e.target.value)} placeholder={t("addDdx")}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.nativeEvent?.isComposing && !e.repeat) add(); }} />
-          <button className="btn btn-primary btn-sm" onClick={add}>{t("add")}</button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={add}>{t("add")}</button>
         </div>
         <div className="mt8">{ddx.map((x, i) => (
-          <span className="chip" key={i}>{x}<button onClick={() => {
+          <span className="chip" key={i}>{x}<button type="button" onClick={() => {
             const removed = x;
             setDdx((prev) => prev.filter((_, j) => j !== i));
             onDdxRemove?.(removed);
@@ -958,7 +958,7 @@ function Report({ caseData, evalRes, settings, onBack, home, embedded = false })
       <div className="container">
         <div className="section-title">
           <h2>{t("report")} — {isStaff ? biField(caseData, "title", lang) : biField(caseData, "chief", lang)}</h2>
-          <button className="btn btn-ghost btn-sm" onClick={onBack}>{t("backToCases")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}>{t("backToCases")}</button>
         </div>
         {/* Top: Overall score and section breakdown */}
         <div className="grid grid-2">

@@ -58,8 +58,8 @@ export function RewardedAd({ format = "rewarded", nodeId = null, onClose, onRewa
             <h3>{ad.title}</h3>
             {ad.body && <p className="small muted">{ad.body}</p>}
             <div className="rw-reward-line">🎁 {t("rewardedEarn").replace("{n}", ad.reward_gems)}</div>
-            <button className="btn btn-accent btn-block" onClick={play}><Icon name="play" size={16} /> {t("rewardedWatch")}</button>
-            <button className="btn btn-ghost btn-block mt8" onClick={onClose}>{t("rewardedNoThanks")}</button>
+            <button type="button" className="btn btn-accent btn-block" onClick={play}><Icon name="play" size={16} /> {t("rewardedWatch")}</button>
+            <button type="button" className="btn btn-ghost btn-block mt8" onClick={onClose}>{t("rewardedNoThanks")}</button>
             {capInfo && <div className="small muted center mt8">{t("rewardedCap").replace("{u}", capInfo.used).replace("{c}", capInfo.cap)}</div>}
           </>
         )}
@@ -77,14 +77,14 @@ export function RewardedAd({ format = "rewarded", nodeId = null, onClose, onRewa
           <div className="rw-done">
             <div className="rw-done-emoji">🎉</div>
             <h3>{t("rewardedGot").replace("{n}", reward)}</h3>
-            <button className="btn btn-primary btn-block mt8" onClick={() => { onClose?.(); }}>{t("continueLearning")}</button>
+            <button type="button" className="btn btn-primary btn-block mt8" onClick={() => { onClose?.(); }}>{t("continueLearning")}</button>
           </div>
         )}
         {phase === "capped" && (
           <div className="rw-done">
             <div className="rw-done-emoji">✅</div>
             <h3>{t("rewardedCapReached")}</h3>
-            <button className="btn btn-primary btn-block mt8" onClick={() => { onClose?.(); }}>{t("back")}</button>
+            <button type="button" className="btn btn-primary btn-block mt8" onClick={() => { onClose?.(); }}>{t("back")}</button>
           </div>
         )}
       </div>

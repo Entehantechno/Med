@@ -76,7 +76,7 @@ function CourseDetail({ id, onBack, onRequireAuth }) {
   return (
     <div className="page">
       <div className="section-title"><h2>{c.title}</h2>
-        <button className="btn btn-ghost btn-sm" onClick={onBack}>← {t("back")}</button></div>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}>← {t("back")}</button></div>
 
       {playing && (
         <div className="card mb16">
@@ -89,12 +89,12 @@ function CourseDetail({ id, onBack, onRequireAuth }) {
         <div className="case-meta mt8"><span className="tag"><Icon name="user" size={13} /> {c.instructor}</span>
           <span className="tag">{t(c.level === "all" ? "allLevels" : c.level)}</span></div>
         {!c.owned && c.effectivePrice > 0 && (
-          <button className="btn btn-accent btn-block mt16" disabled={busy} onClick={buy}>
+          <button type="button" className="btn btn-accent btn-block mt16" disabled={busy} onClick={buy}>
             <Icon name="crown" size={16} /> {t("buyCourse")} — {toman(c.effectivePrice)} {t("toman")}
           </button>
         )}
         {!c.owned && c.effectivePrice === 0 && (
-          <button className="btn btn-primary btn-block mt16" disabled={busy} onClick={buy}>{t("enrollFree")}</button>
+          <button type="button" className="btn btn-primary btn-block mt16" disabled={busy} onClick={buy}>{t("enrollFree")}</button>
         )}
         {c.owned && <div className="micro-box small mt16" style={{ padding: "10px 14px" }}>✓ {t("youOwnCourse")}</div>}
       </div>
@@ -108,7 +108,7 @@ function CourseDetail({ id, onBack, onRequireAuth }) {
             <div className="small muted">{l.duration} {l.free_preview && <span className="tag" style={{ marginInlineStart: 6 }}>{t("freePreview")}</span>}</div>
           </div>
           {l.unlocked
-            ? <button className="btn btn-primary btn-sm" onClick={() => setPlaying(l.video_url)}><Icon name="play" size={13} /> {t("watch")}</button>
+            ? <button type="button" className="btn btn-primary btn-sm" onClick={() => setPlaying(l.video_url)}><Icon name="play" size={13} /> {t("watch")}</button>
             : <span className="lesson-lock"><Icon name="lock" size={16} /></span>}
         </div>
       ))}

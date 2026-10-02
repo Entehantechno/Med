@@ -36,7 +36,7 @@ export default function ReferenceViewer({ code: propCode, initialPage, onBack })
     try { window.history.pushState({}, "", "/"); window.dispatchEvent(new CustomEvent("medlab-go",{detail:"library"})); } catch {}
   };
 
-  if (err) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{err}</h3><button className="btn btn-ghost mt16" onClick={goBack}>{tBack}</button></div>;
+  if (err) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{err}</h3><button type="button" className="btn btn-ghost mt16" onClick={goBack}>{tBack}</button></div>;
   if (!ref) return <div className="card"><div className="skeleton" style={{ height: 200 }} /></div>;
 
   const title = fa ? (ref.title_fa || ref.title_en) : (ref.title_en || ref.title_fa);
@@ -48,7 +48,7 @@ export default function ReferenceViewer({ code: propCode, initialPage, onBack })
   return (
     <div className="page" style={{ maxWidth: 980, margin: "0 auto" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-        <button className="btn btn-ghost btn-sm" onClick={goBack}><Icon name="chevronDown" size={14} style={{ transform: "rotate(90deg)" }} /> {fa ? "کتابخانه" : "Library"}</button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={goBack}><Icon name="chevronDown" size={14} style={{ transform: "rotate(90deg)" }} /> {fa ? "کتابخانه" : "Library"}</button>
         {page && <span className="chip" style={{ background: "#eef6ff", border: "1px solid #dbeafe", padding: "2px 8px", borderRadius: 999, fontSize: 12 }}>{fa ? `صفحهٔ پیشنهادی: ${page}` : `Suggested page: ${page}`}</span>}
       </div>
 

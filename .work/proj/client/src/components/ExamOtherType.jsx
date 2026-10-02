@@ -19,7 +19,7 @@ function LocalHints({ hints, showHints, fa }) {
   if (!showHints || !list.length) return null;
   return <div className="local-hints">
     {Array.from({ length: n }).map((_, i) => <div className="ddle-question ddle-hint" key={i}><b>{fa ? "هینت" : "Hint"} {i + 1}:</b> {typeof list[i] === "object" ? (list[i].text || list[i].label || "") : String(list[i] || "")}</div>)}
-    {n < list.length && <button className="btn btn-ghost btn-sm" onClick={() => setN((x) => x + 1)}>💡 {fa ? "نمایش هینت" : "Show hint"}</button>}
+    {n < list.length && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setN((x) => x + 1)}>💡 {fa ? "نمایش هینت" : "Show hint"}</button>}
   </div>;
 }
 
@@ -94,7 +94,7 @@ export default function ExamOtherType({ card, lang, done, showCorrect, showHints
             let cls = "mc-opt";
             if (checked) { if (o.v === !!(reveal?.answer ?? card.answer)) cls += " correct"; else if (o.v === sel) cls += " wrong"; }
             else if (o.v === sel) cls += " sel";
-            return <button key={String(o.v)} className={cls} disabled={checked} onClick={() => setSel(o.v)}>{o.l}</button>;
+            return <button type="button" key={String(o.v)} className={cls} disabled={checked} onClick={() => setSel(o.v)}>{o.l}</button>;
           })}
         </div>
       )}
@@ -109,23 +109,23 @@ export default function ExamOtherType({ card, lang, done, showCorrect, showHints
           <div className="match-col">{left.map((l) => {
             const connected = sel?.pairs?.[l.id] != null; let cls = "opt match-item";
             if (sel?.activeLeft === l.id) cls += " sel"; if (connected && !checked) cls += " connected"; if (checked) cls += right ? " ok" : " bad";
-            return <button key={l.id} className={cls} disabled={checked} onClick={() => setSel((s) => ({ ...s, activeLeft: l.id }))}>{l.text}</button>;
+            return <button type="button" key={l.id} className={cls} disabled={checked} onClick={() => setSel((s) => ({ ...s, activeLeft: l.id }))}>{l.text}</button>;
           })}</div>
           <div className="match-col">{rightCol.map((rr) => {
             const used = Object.values(sel?.pairs || {}).includes(rr.id); let cls = "opt match-item"; if (used && !checked) cls += " connected";
-            return <button key={rr.id} className={cls} disabled={checked || (used && sel?.activeLeft == null)} onClick={() => setSel((s) => (s.activeLeft == null ? s : { pairs: { ...s.pairs, [s.activeLeft]: rr.id }, activeLeft: null }))}>{rr.text}</button>;
+            return <button type="button" key={rr.id} className={cls} disabled={checked || (used && sel?.activeLeft == null)} onClick={() => setSel((s) => (s.activeLeft == null ? s : { pairs: { ...s.pairs, [s.activeLeft]: rr.id }, activeLeft: null }))}>{rr.text}</button>;
           })}</div>
         </div>
       )}
       {card.type === "order" && (
         <div>
-          <div className="order-slots">{(sel || []).map((c, i) => <span key={c.id} className={`chip order-chip ${checked ? (right ? "ok" : "bad") : ""}`}>{i + 1}. {c.text}</span>)}{!checked && (sel || []).length > 0 && <button className="chip order-undo" onClick={() => setSel((s) => s.slice(0, -1))}>↩</button>}</div>
-          <div className="order-pool">{orderPool.map((it) => { const usedIt = (sel || []).find((c) => c.id === it.id); return <button key={it.id} className="opt order-word" disabled={checked || !!usedIt} style={{ opacity: usedIt ? .35 : 1 }} onClick={() => setSel((s) => [...(s || []), it])}>{it.text}</button>; })}</div>
+          <div className="order-slots">{(sel || []).map((c, i) => <span key={c.id} className={`chip order-chip ${checked ? (right ? "ok" : "bad") : ""}`}>{i + 1}. {c.text}</span>)}{!checked && (sel || []).length > 0 && <button type="button" className="chip order-undo" onClick={() => setSel((s) => s.slice(0, -1))}>↩</button>}</div>
+          <div className="order-pool">{orderPool.map((it) => { const usedIt = (sel || []).find((c) => c.id === it.id); return <button type="button" key={it.id} className="opt order-word" disabled={checked || !!usedIt} style={{ opacity: usedIt ? .35 : 1 }} onClick={() => setSel((s) => [...(s || []), it])}>{it.text}</button>; })}</div>
         </div>
       )}
       {gradeErr && <div className="ddle-banner bad" style={{ marginTop: 12 }}>{gradeErr}</div>}
       {checked && <div className={`ddle-banner ${right ? "ok" : "bad"}`} style={{ marginTop: 12 }}>{right ? `✓ ${t("correct")}` : t("incorrect")}</div>}
-      {!checked && <button className="btn btn-primary btn-block mt16" disabled={!canCheck() || busy} onClick={check}>{t("checkAns") || t("send")}</button>}
+      {!checked && <button type="button" className="btn btn-primary btn-block mt16" disabled={!canCheck() || busy} onClick={check}>{t("checkAns") || t("send")}</button>}
     </div>
   );
 }
@@ -317,7 +317,7 @@ function DrawingQuestion({ card, lang, checked, setChecked, onGraded, hints, sho
       {labels.map((lb, i) => <span key={i} className="draw-label" style={{ left: `${lb.x}%`, top: `${lb.y}%` }}>{lb.text}</span>)}
     </div>
     {rubric.length > 0 && <div className="drawing-rubric"><div className="small muted">{fa ? "پس از کشیدن، معیارهایی را که رعایت کرده‌اید علامت بزنید. نمره نهایی بعد از تأیید استاد ثبت می‌شود." : "Check the criteria you met. Final score is recorded after teacher approval."}</div>{rubric.map((r, i) => <label className="toggle-row" key={i}><span>{r}</span><input type="checkbox" checked={!!rubricDone[i]} disabled={checked} onChange={(e)=>setRubricDone((s)=>({...s,[i]:e.target.checked}))}/></label>)}</div>}
-    {checked ? <div className="ddle-banner ok">✓ {fa ? "نقاشی ثبت شد و در انتظار تأیید استاد است" : "Drawing submitted and pending teacher approval"}</div> : <button className="btn btn-primary btn-block mt16" disabled={strokeCount < minStrokes} onClick={finish}>{fa ? "ثبت نقاشی برای بررسی استاد" : "Submit for teacher review"}</button>}
+    {checked ? <div className="ddle-banner ok">✓ {fa ? "نقاشی ثبت شد و در انتظار تأیید استاد است" : "Drawing submitted and pending teacher approval"}</div> : <button type="button" className="btn btn-primary btn-block mt16" disabled={strokeCount < minStrokes} onClick={finish}>{fa ? "ثبت نقاشی برای بررسی استاد" : "Submit for teacher review"}</button>}
   </div>;
 }
 
@@ -330,9 +330,9 @@ function StepwiseQuestion({ card, lang, showCorrect, checked, setChecked, onGrad
   const [stepResults, setStepResults] = useState(null);
   const renderInput = (s, i) => {
     const type = s.answerType || s.type || "autocomplete";
-    if (type === "truefalse") return <div className="mc-options compact"><button className={`mc-opt ${answers[i] === "true" ? "sel" : ""}`} disabled={checked} onClick={() => setAnswers((a)=>({...a,[i]:"true"}))}>{fa ? "درست" : "True"}</button><button className={`mc-opt ${answers[i] === "false" ? "sel" : ""}`} disabled={checked} onClick={() => setAnswers((a)=>({...a,[i]:"false"}))}>{fa ? "نادرست" : "False"}</button></div>;
+    if (type === "truefalse") return <div className="mc-options compact"><button type="button" className={`mc-opt ${answers[i] === "true" ? "sel" : ""}`} disabled={checked} onClick={() => setAnswers((a)=>({...a,[i]:"true"}))}>{fa ? "درست" : "True"}</button><button type="button" className={`mc-opt ${answers[i] === "false" ? "sel" : ""}`} disabled={checked} onClick={() => setAnswers((a)=>({...a,[i]:"false"}))}>{fa ? "نادرست" : "False"}</button></div>;
     const opts = fa ? (s.options_fa || []) : (s.options_en || []);
-    if (type === "mcq" && opts.length) return <div className="mc-options compact">{opts.map((o, j) => <button key={j} className={`mc-opt ${answers[i] === o ? "sel" : ""}`} disabled={checked} onClick={() => setAnswers((a)=>({...a,[i]:o}))}>{o}</button>)}</div>;
+    if (type === "mcq" && opts.length) return <div className="mc-options compact">{opts.map((o, j) => <button type="button" key={j} className={`mc-opt ${answers[i] === o ? "sel" : ""}`} disabled={checked} onClick={() => setAnswers((a)=>({...a,[i]:o}))}>{o}</button>)}</div>;
     return <textarea rows="2" value={answers[i] || ""} disabled={checked} onChange={(e)=>setAnswers((a)=>({...a,[i]:e.target.value}))} placeholder={fa ? "پاسخ این مرحله…" : "Answer this step…"}/>;
   };
   const canCheck = steps.length && steps.every((_, i) => String(answers[i] || "").trim());
@@ -362,7 +362,7 @@ function StepwiseQuestion({ card, lang, showCorrect, checked, setChecked, onGrad
     })}
     {checked && <div className={`ddle-banner ${stepResults?.every((x)=>x.correct)?'ok':'bad'}`} style={{marginTop:12}}>{stepResults?.filter((x)=>x.correct).length || 0}/{steps.length} {fa ? "مرحله درست" : "steps correct"}</div>}
     {gradeErr && <div className="ddle-banner bad" style={{ marginTop: 12 }}>{gradeErr}</div>}
-    {!checked && <button className="btn btn-primary btn-block mt16" disabled={!canCheck || busy} onClick={finish}>{t("checkAns") || t("send")}</button>}
+    {!checked && <button type="button" className="btn btn-primary btn-block mt16" disabled={!canCheck || busy} onClick={finish}>{t("checkAns") || t("send")}</button>}
   </div>;
 }
 
@@ -410,7 +410,7 @@ function KfQuestion({ card, lang, showCorrect, checked, setChecked, onGraded, hi
         <div className="step-no">{fa ? `کی‌اف ${i + 1}` : `KF ${i + 1}`}</div>
         <div className="step-prompt">{fa ? it.prompt_fa : it.prompt_en}</div>
         {(it.kind || "short") === "mcq" ? (
-          <div className="mc-options compact">{opts.map((o, j) => o ? <button key={j} className={`mc-opt ${answers[i] === j ? "sel" : ""} ${checked && it.correct != null && j === Number(it.correct) ? "correct" : ""} ${checked && answers[i] === j && (it.correct == null || j !== Number(it.correct)) ? "wrong" : ""}`} disabled={checked} onClick={() => setAnswers((a) => ({ ...a, [i]: j }))}><span className="mc-letter">{letters[j]}</span><span>{o}</span></button> : null)}</div>
+          <div className="mc-options compact">{opts.map((o, j) => o ? <button type="button" key={j} className={`mc-opt ${answers[i] === j ? "sel" : ""} ${checked && it.correct != null && j === Number(it.correct) ? "correct" : ""} ${checked && answers[i] === j && (it.correct == null || j !== Number(it.correct)) ? "wrong" : ""}`} disabled={checked} onClick={() => setAnswers((a) => ({ ...a, [i]: j }))}><span className="mc-letter">{letters[j]}</span><span>{o}</span></button> : null)}</div>
         ) : (
           <input className="fill-input" value={answers[i] || ""} disabled={checked} placeholder={fa ? "پاسخ کوتاه…" : "Short answer…"} onChange={(e) => setAnswers((a) => ({ ...a, [i]: e.target.value }))} />
         )}
@@ -419,7 +419,7 @@ function KfQuestion({ card, lang, showCorrect, checked, setChecked, onGraded, hi
     })}
     {checked && <div className={`ddle-banner ${itemResults?.every((x) => x.correct) ? "ok" : "bad"}`} style={{ marginTop: 12 }}>{itemResults?.filter((x) => x.correct).length || 0}/{items.length} {fa ? "مورد درست" : "items correct"}</div>}
     {gradeErr && <div className="ddle-banner bad" style={{ marginTop: 12 }}>{gradeErr}</div>}
-    {!checked && <button className="btn btn-primary btn-block mt16" disabled={!canCheck || busy} onClick={finish}>{t("checkAns") || t("send")}</button>}
+    {!checked && <button type="button" className="btn btn-primary btn-block mt16" disabled={!canCheck || busy} onClick={finish}>{t("checkAns") || t("send")}</button>}
   </div>;
 }
 
@@ -516,7 +516,7 @@ function PuzzleQuestion({ card, lang, showCorrect, checked, setChecked, onGraded
     ))}</div>}
     {checked && <div className={`ddle-banner ${allOk ? "ok" : "bad"}`} style={{ marginTop: 12 }}>{allOk ? `✓ ${t("correct")}` : `${pins.filter((_, i) => pinOk(i)).length}/${pins.length} ${fa ? "برچسب درست" : "labels correct"}`}</div>}
     {gradeErr && <div className="ddle-banner bad" style={{ marginTop: 12 }}>{gradeErr}</div>}
-    {!checked && <button className="btn btn-primary btn-block mt16" disabled={busy || Object.keys(assign).length < pins.length} onClick={finish}>{t("checkAns") || t("send")}</button>}
+    {!checked && <button type="button" className="btn btn-primary btn-block mt16" disabled={busy || Object.keys(assign).length < pins.length} onClick={finish}>{t("checkAns") || t("send")}</button>}
   </div>;
 }
 
@@ -556,13 +556,13 @@ function CompareQuestion({ card, lang, showCorrect, checked, setChecked, onGrade
           if (picks[i] === v) cls += " sel";
           if (checked && showCorrect && res?.belongs === v) cls += " correct";
           else if (checked && picks[i] === v && !ok) cls += " wrong";
-          return <button key={v} className={cls} disabled={checked} onClick={() => setPicks((p) => ({ ...p, [i]: v }))}>{lab}</button>;
+          return <button type="button" key={v} className={cls} disabled={checked} onClick={() => setPicks((p) => ({ ...p, [i]: v }))}>{lab}</button>;
         })}</div>
       </div>;
     })}
     {checked && <div className={`ddle-banner ${rows?.every((x) => x.ok) ? "ok" : "bad"}`} style={{ marginTop: 12 }}>{rows?.filter((x) => x.ok).length || 0}/{features.length} {fa ? "ویژگی درست" : "features correct"}</div>}
     {gradeErr && <div className="ddle-banner bad" style={{ marginTop: 12 }}>{gradeErr}</div>}
-    {!checked && <button className="btn btn-primary btn-block mt16" disabled={!canCheck || busy} onClick={finish}>{t("checkAns") || t("send")}</button>}
+    {!checked && <button type="button" className="btn btn-primary btn-block mt16" disabled={!canCheck || busy} onClick={finish}>{t("checkAns") || t("send")}</button>}
   </div>;
 }
 

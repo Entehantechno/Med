@@ -27,8 +27,8 @@ export default function MyCards() {
     <div className="page">
       <div className="section-title"><h2><Icon name="edit" size={22} /> {t("myCards")}</h2>
         <div style={{ display: "flex", gap: 8 }}>
-          {cards.length > 0 && <button className="btn btn-ghost btn-sm" onClick={startPractice}><Icon name="play" size={14} /> {t("practiceMine")}</button>}
-          <button className="btn btn-primary btn-sm" onClick={() => setEditing(true)}><Icon name="edit" size={14} /> {t("createCard")}</button>
+          {cards.length > 0 && <button type="button" className="btn btn-ghost btn-sm" onClick={startPractice}><Icon name="play" size={14} /> {t("practiceMine")}</button>}
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing(true)}><Icon name="edit" size={14} /> {t("createCard")}</button>
         </div>
       </div>
 
@@ -39,7 +39,7 @@ export default function MyCards() {
             <div style={{ fontWeight: 700 }}>{c.q}</div>
             <div className="small muted">{c.hints.length} {t("hints")}</div>
           </div>
-          <button className="btn btn-danger btn-sm" onClick={() => del(c.linkId)}><Icon name="trash" size={13} /></button>
+          <button type="button" className="btn btn-danger btn-sm" onClick={() => del(c.linkId)}><Icon name="trash" size={13} /></button>
         </div>
       ))}
 
@@ -128,7 +128,7 @@ function PracticeMine({ cards, onDone }) {
   return (
     <div className="page">
       <div className="section-title"><h2><Icon name="play" size={22} /> {t("practiceMine")}</h2>
-        <button className="btn btn-ghost btn-sm" onClick={onDone}>{t("back")}</button></div>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={onDone}>{t("back")}</button></div>
       <div className="lesson-wrap">
         <div className="pbar mb16"><span style={{ width: `${Math.round((idx / cards.length) * 100)}%` }} /></div>
         <div className="lesson-q">{card.q}</div>
@@ -144,11 +144,11 @@ function PracticeMine({ cards, onDone }) {
 
         <div className="mt16" style={{ display: "flex", gap: 8 }}>
           {!checked && card.hints?.length > shownHints && (
-            <button className="btn btn-ghost" onClick={() => setShownHints((n) => n + 1)}><Icon name="bulb" size={16} /> {t("hint")}</button>
+            <button type="button" className="btn btn-ghost" onClick={() => setShownHints((n) => n + 1)}><Icon name="bulb" size={16} /> {t("hint")}</button>
           )}
           {!checked
-            ? <button className="btn btn-primary" style={{ flex: 1 }} disabled={!Type.canCheck({ sel }, card)} onClick={check}>{t("checkAns")}</button>
-            : <button className="btn btn-accent" style={{ flex: 1 }} onClick={next}>{idx + 1 < cards.length ? t("nextQ") : t("reviewDone")}</button>}
+            ? <button type="button" className="btn btn-primary" style={{ flex: 1 }} disabled={!Type.canCheck({ sel }, card)} onClick={check}>{t("checkAns")}</button>
+            : <button type="button" className="btn btn-accent" style={{ flex: 1 }} onClick={next}>{idx + 1 < cards.length ? t("nextQ") : t("reviewDone")}</button>}
         </div>
       </div>
     </div>

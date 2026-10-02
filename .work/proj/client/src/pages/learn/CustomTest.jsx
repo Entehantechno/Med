@@ -83,8 +83,8 @@ export default function CustomTest({ onProfile, onBack, resumeId = null, onPremi
       <div className="ico" style={{ fontSize: 48 }}>👑</div>
       <h3>{fa ? "آزمون‌ساز ویژه اعضای پلاس است" : "The test builder is a Plus feature"}</h3>
       <div className="muted small mt8">{fa ? "با پلاس از کل بانک ۱۱٬۶۰۰ سؤالی، آزمون دلخواه خودت را بساز: مثلاً ۲۰ سؤال تصادفی گوارش یا ۳۰ سؤال دیابت." : "Plus lets you build any test from the 11,600-question bank."}</div>
-      <button className="btn btn-primary mt16" onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))}>{fa ? "مشاهده پلاس" : "See Plus"}</button>
-      <button className="btn btn-ghost mt8" onClick={onBack}>{t("back")}</button>
+      <button type="button" className="btn btn-primary mt16" onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))}>{fa ? "مشاهده پلاس" : "See Plus"}</button>
+      <button type="button" className="btn btn-ghost mt8" onClick={onBack}>{t("back")}</button>
     </div></div>
   );
 
@@ -107,7 +107,7 @@ export default function CustomTest({ onProfile, onBack, resumeId = null, onPremi
       {/* 1) WHAT */}
       <section className="card ct-step">
         <div className="ct-step-head"><span className="ct-num">۱</span><b>{fa ? "چه سؤال‌هایی؟" : "Which questions?"}</b>
-          {cfg.topic.length > 0 && <button className="ct-clear" onClick={() => setCfg((c) => ({ ...c, topic: [], pathChapter: [] }))}>{fa ? "همهٔ درس‌ها" : "All subjects"}</button>}
+          {cfg.topic.length > 0 && <button type="button" className="ct-clear" onClick={() => setCfg((c) => ({ ...c, topic: [], pathChapter: [] }))}>{fa ? "همهٔ درس‌ها" : "All subjects"}</button>}
         </div>
         <div className="ct-chips">
           {(opts?.topics || []).map((tp) => (
@@ -121,7 +121,7 @@ export default function CustomTest({ onProfile, onBack, resumeId = null, onPremi
         {chapterPool.length > 0 && (
           <div className="ct-sub">
             <div className="ct-sub-title">{fa ? "فقط این فصل‌ها (اختیاری):" : "Only these chapters (optional):"}
-              {cfg.pathChapter.length > 0 && <button className="ct-clear" onClick={() => setCfg((c) => ({ ...c, pathChapter: [] }))}>{fa ? "همهٔ فصل‌ها" : "All chapters"}</button>}
+              {cfg.pathChapter.length > 0 && <button type="button" className="ct-clear" onClick={() => setCfg((c) => ({ ...c, pathChapter: [] }))}>{fa ? "همهٔ فصل‌ها" : "All chapters"}</button>}
             </div>
             <div className="ct-chips ct-chips-sm">
               {chapterPool.map((ch) => (
@@ -219,7 +219,7 @@ export default function CustomTest({ onProfile, onBack, resumeId = null, onPremi
           <b>{n} {fa ? "سؤال" : "questions"}</b>
           <span className="small muted">{scopeLabel} · {fa ? STATUS.find((s) => s.id === cfg.status)?.fa : cfg.status} · {cfg.mode === "timed" ? (fa ? "زمان‌دار" : "timed") : (fa ? "آموزشی" : "tutor")}</span>
         </div>
-        <button className="btn btn-accent" disabled={!n || busy} onClick={start}><Icon name="play" size={16} /> {fa ? "شروع آزمون" : "Start"}</button>
+        <button type="button" className="btn btn-accent" disabled={!n || busy} onClick={start}><Icon name="play" size={16} /> {fa ? "شروع آزمون" : "Start"}</button>
       </div>
 
       {history.length > 0 && (
@@ -233,12 +233,12 @@ export default function CustomTest({ onProfile, onBack, resumeId = null, onPremi
               </div>
               {h.status === "finished"
                 ? <b style={{ color: h.accuracy >= 60 ? "var(--accent2)" : "var(--danger)" }}>{h.correct}/{h.total}</b>
-                : <button className="btn btn-sm btn-primary" onClick={() => { setPhase("loading"); api.get(`/learn/custom-test/${h.id}?lang=${lang}`).then((d) => { setTest(d); setPhase("run"); }).catch(() => setPhase("build")); }}>{fa ? `ادامه (${h.answered}/${h.n})` : `Resume (${h.answered}/${h.n})`}</button>}
+                : <button type="button" className="btn btn-sm btn-primary" onClick={() => { setPhase("loading"); api.get(`/learn/custom-test/${h.id}?lang=${lang}`).then((d) => { setTest(d); setPhase("run"); }).catch(() => setPhase("build")); }}>{fa ? `ادامه (${h.answered}/${h.n})` : `Resume (${h.answered}/${h.n})`}</button>}
             </div>
           ))}
         </div>
       )}
-      <button className="btn btn-ghost btn-block mt16" onClick={onBack}>{t("back")}</button>
+      <button type="button" className="btn btn-ghost btn-block mt16" onClick={onBack}>{t("back")}</button>
     </div>
   );
 }
@@ -377,7 +377,7 @@ function Runner({ test, setTest, onFinish, onQuit }) {
   return (
     <div className="lesson-wrap ct-run">
       <div className="lesson-top">
-        <button className="btn btn-ghost btn-sm" onClick={onQuit} aria-label={t("back")}><Icon name="close" size={16} /></button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={onQuit} aria-label={t("back")}><Icon name="close" size={16} /></button>
         <div className="pbar"><span style={{ width: `${Math.round((answered / cards.length) * 100)}%` }} /></div>
         <button
           type="button"
@@ -396,7 +396,7 @@ function Runner({ test, setTest, onFinish, onQuit }) {
       <div className="ct-nav" role="tablist" aria-label={fa ? "سؤال‌ها" : "Questions"}>
         {cards.map((c, i) => {
           const a = answers[c.id];
-          return <button key={c.id} role="tab" aria-selected={i === idx} className={`ct-nav-dot ${i === idx ? "cur" : ""} ${a ? (timed ? "done" : a.correct ? "ok" : "bad") : ""} ${a?.flagged ? "flag" : ""}`} onClick={() => setIdx(i)}>{i + 1}</button>;
+          return <button type="button" key={c.id} role="tab" aria-selected={i === idx} className={`ct-nav-dot ${i === idx ? "cur" : ""} ${a ? (timed ? "done" : a.correct ? "ok" : "bad") : ""} ${a?.flagged ? "flag" : ""}`} onClick={() => setIdx(i)}>{i + 1}</button>;
         })}
       </div>
 
@@ -419,17 +419,17 @@ function Runner({ test, setTest, onFinish, onQuit }) {
       </div>
 
       <div className="lesson-actions" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <button className={`btn btn-ghost btn-sm ${flag ? "ct-flag-on" : ""}`} onClick={() => setFlag((f) => !f)} aria-pressed={flag} title={fa ? "نشان‌کردن برای مرور" : "Mark for review"}>🚩</button>
-        <button className="btn btn-ghost" disabled={idx === 0} onClick={() => setIdx(idx - 1)}><Icon name="chevronRight" size={15} /></button>
+        <button type="button" className={`btn btn-ghost btn-sm ${flag ? "ct-flag-on" : ""}`} onClick={() => setFlag((f) => !f)} aria-pressed={flag} title={fa ? "نشان‌کردن برای مرور" : "Mark for review"}>🚩</button>
+        <button type="button" className="btn btn-ghost" disabled={idx === 0} onClick={() => setIdx(idx - 1)}><Icon name="chevronRight" size={15} /></button>
         {!prev && !checked
-          ? <button className="btn btn-primary" style={{ flex: 1 }} disabled={!canCheck || busy} onClick={submit}>{timed ? (fa ? "ثبت و بعدی" : "Save & next") : t("check")}</button>
+          ? <button type="button" className="btn btn-primary" style={{ flex: 1 }} disabled={!canCheck || busy} onClick={submit}>{timed ? (fa ? "ثبت و بعدی" : "Save & next") : t("check")}</button>
           : idx + 1 < cards.length
-            ? <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => setIdx(idx + 1)}>{t("nextQ")} <Icon name="chevronLeft" size={15} /></button>
-            : <button className="btn btn-accent" style={{ flex: 1 }} disabled={busy} onClick={() => finish(false)}><Icon name="check" size={15} /> {busy ? (fa ? "در حال ثبت نهایی..." : "Finishing...") : (fa ? "پایان آزمون" : "Finish")}</button>}
+            ? <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={() => setIdx(idx + 1)}>{t("nextQ")} <Icon name="chevronLeft" size={15} /></button>
+            : <button type="button" className="btn btn-accent" style={{ flex: 1 }} disabled={busy} onClick={() => finish(false)}><Icon name="check" size={15} /> {busy ? (fa ? "در حال ثبت نهایی..." : "Finishing...") : (fa ? "پایان آزمون" : "Finish")}</button>}
         {answered < cards.length && (prev || checked) && idx + 1 >= cards.length && null}
       </div>
       {answered >= cards.length && idx + 1 < cards.length && (
-        <button className="btn btn-accent btn-block mt8" disabled={busy} onClick={() => finish(false)}>{busy ? (fa ? "در حال ثبت نهایی..." : "Finishing...") : (fa ? "همه پاسخ داده شد — پایان آزمون" : "All answered — finish")}</button>
+        <button type="button" className="btn btn-accent btn-block mt8" disabled={busy} onClick={() => finish(false)}>{busy ? (fa ? "در حال ثبت نهایی..." : "Finishing...") : (fa ? "همه پاسخ داده شد — پایان آزمون" : "All answered — finish")}</button>
       )}
       <div className="muted small center mt8">{t("answered")}: {answered}/{cards.length}</div>
       <LabValuesModal isOpen={showLabModal} onClose={() => setShowLabModal(false)} lang={lang} />
@@ -463,8 +463,8 @@ function Result({ test, onAgain, onBack, onPremium }) {
           </div>
         )}
         <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-          <button className="btn btn-primary" onClick={onAgain}>{fa ? "آزمون جدید" : "New test"}</button>
-          <button className="btn btn-ghost" onClick={onBack}>{t("back")}</button>
+          <button type="button" className="btn btn-primary" onClick={onAgain}>{fa ? "آزمون جدید" : "New test"}</button>
+          <button type="button" className="btn btn-ghost" onClick={onBack}>{t("back")}</button>
         </div>
       </div>
 

@@ -184,11 +184,11 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
       <div className="ico" style={{ fontSize: 48, lineHeight: 1 }}>👑</div>
       <h3>{lang === "fa" ? "تمرین بیشتر ویژه اعضای پلاس است" : "Extra practice is for Plus members"}</h3>
       <div className="muted small mt8">{lang === "fa" ? "درس‌های اصلی هر فصل رایگان‌اند؛ با پلاس به سؤال‌های بیشترِ همین فصل، بانک سؤال و قلب نامحدود دسترسی دارید." : "Core lessons are free; Plus unlocks more questions per chapter, the question bank and unlimited hearts."}</div>
-      <button className="btn btn-primary mt16" onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))}>{lang === "fa" ? "مشاهده پلاس" : "See Plus"}</button>
-      <button className="btn btn-ghost mt8" onClick={onDone}>{t("back")}</button>
+      <button type="button" className="btn btn-primary mt16" onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))}>{lang === "fa" ? "مشاهده پلاس" : "See Plus"}</button>
+      <button type="button" className="btn btn-ghost mt8" onClick={onDone}>{t("back")}</button>
     </div>
   );
-  if (err) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={40} /></div><h3>{err}</h3><button className="btn btn-ghost mt16" onClick={onDone}>{t("back")}</button></div>;
+  if (err) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={40} /></div><h3>{err}</h3><button type="button" className="btn btn-ghost mt16" onClick={onDone}>{t("back")}</button></div>;
   if (!data) return <div className="card"><div className="skeleton" style={{ height: 240 }} /></div>;
 
   // lesson-intro ad (admin-controlled): show once before the questions start
@@ -196,12 +196,12 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
     return (
       <div className="lesson-wrap">
         <div className="lesson-top">
-          <button className="btn btn-ghost btn-sm icon-btn" onClick={onDone} title={t("back")}><Icon name="logout" size={16} /></button>
+          <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onDone} title={t("back")}><Icon name="logout" size={16} /></button>
           <div style={{ flex: 1 }} />
         </div>
         <div className="small muted center mb8">{t("sponsored")}</div>
         <AdCard ad={introAd} />
-        <button className="btn btn-primary btn-block mt16" onClick={() => setIntroDismissed(true)}>
+        <button type="button" className="btn btn-primary btn-block mt16" onClick={() => setIntroDismissed(true)}>
           <Icon name="play" size={16} /> {t("startLesson")}
         </button>
       </div>
@@ -292,13 +292,13 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
   return (
     <div className="lesson-wrap">
       <div className="lesson-top">
-        <button className="btn btn-ghost btn-sm icon-btn" onClick={onDone} title={t("back")}><Icon name="logout" size={16} /></button>
+        <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onDone} title={t("back")}><Icon name="logout" size={16} /></button>
         <div className="pbar" style={{ "--seg": cards.length }} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label={`${idx + 1} / ${cards.length}`}><span style={{ width: `${progress}%` }} /></div>
         {combo >= 2 && <span className="combo-chip" title={t("comboLabel")}><StreakIcon size={15} /> {combo}</span>}
-        <button className="btn btn-ghost btn-sm icon-btn" onClick={toggleSound} title={soundOn ? t("soundOff") : t("soundOn")} aria-label={soundOn ? t("soundOff") : t("soundOn")}>
+        <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={toggleSound} title={soundOn ? t("soundOff") : t("soundOn")} aria-label={soundOn ? t("soundOff") : t("soundOn")}>
           {soundOn ? "🔊" : "🔇"}
         </button>
-        <button
+        <button type="button"
           className="btn btn-ghost btn-sm icon-btn"
           onClick={() => setShowLabModal(true)}
           title={lang === "fa" ? "مقادیر نرمال آزمایشگاهی (کلید L)" : "Normal Lab Values (Key L)"}
@@ -460,8 +460,8 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
 
       <div className="lesson-cta mt16" ref={ctaRef}>
         {!checked
-          ? <button className="btn btn-primary btn-block" disabled={!canCheck} onClick={check}>{t("checkAns")}</button>
-          : <button className="btn btn-accent btn-block" onClick={next}>{idx + 1 < cards.length ? t("nextQ") : t("lessonComplete")}</button>}
+          ? <button type="button" className="btn btn-primary btn-block" disabled={!canCheck} onClick={check}>{t("checkAns")}</button>
+          : <button type="button" className="btn btn-accent btn-block" onClick={next}>{idx + 1 < cards.length ? t("nextQ") : t("lessonComplete")}</button>}
       </div>
 
       <LabValuesModal isOpen={showLabModal} onClose={() => setShowLabModal(false)} lang={lang} />
@@ -476,7 +476,7 @@ function SaveCardButton({ cardId }) {
   useEffect(() => { let ok = true; api.get(`/learn/library/save/${cardId}`).then((d) => ok && setSaved(!!d.saved)).catch(() => {}); return () => { ok = false; }; }, [cardId]);
   const toggle = async () => { try { const r = await api.post(`/learn/library/save/${cardId}`, {}); setSaved(!!r.saved); } catch { /* */ } };
   return (
-    <button className={`btn btn-sm ${saved ? "btn-accent" : "btn-ghost"}`} onClick={toggle} title={t("saveForLater")} style={{ padding: "3px 10px" }}>
+    <button type="button" className={`btn btn-sm ${saved ? "btn-accent" : "btn-ghost"}`} onClick={toggle} title={t("saveForLater")} style={{ padding: "3px 10px" }}>
       <Icon name="star" size={13} /> {saved ? t("savedCard") : t("saveForLater")}
     </button>
   );
@@ -519,9 +519,9 @@ function OutOfHearts({ onProfile, onBack }) {
       <div className="muted small mt8">{t("outOfHeartsDesc")}</div>
       <div className="muted small mt8">{waitTxt}</div>
       <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 18, flexWrap: "wrap" }}>
-        <button className="btn btn-accent" disabled={busy} onClick={refill}><GemIcon size={16} /> {t("refillHearts")} ({cost})</button>
-        <button className="btn btn-ghost" onClick={() => setShowAd(true)}>🎁 {t("rewardedWatch")}</button>
-        <button className="btn btn-ghost" onClick={onBack}>{t("back")}</button>
+        <button type="button" className="btn btn-accent" disabled={busy} onClick={refill}><GemIcon size={16} /> {t("refillHearts")} ({cost})</button>
+        <button type="button" className="btn btn-ghost" onClick={() => setShowAd(true)}>🎁 {t("rewardedWatch")}</button>
+        <button type="button" className="btn btn-ghost" onClick={onBack}>{t("back")}</button>
       </div>
       {showAd && <RewardedAd format="rewarded" onClose={() => setShowAd(false)} onReward={(p) => onProfile?.(p)} />}
     </div>
@@ -625,11 +625,11 @@ function Celebrate({ result, betweenAd, onDone, onReplay, onContinueLesson }) {
         <div className="card mt16" style={{ display: "flex", alignItems: "center", gap: 12, borderInlineStart: "4px solid var(--xp)" }}>
           <span className="node-emoji">🎯</span>
           <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontWeight: 800 }}>{t("replayLesson")}</div></div>
-          <button className="btn btn-accent btn-sm" onClick={onReplay}><Icon name="repeat" size={14} /> {t("tryAgain")}</button>
+          <button type="button" className="btn btn-accent btn-sm" onClick={onReplay}><Icon name="repeat" size={14} /> {t("tryAgain")}</button>
         </div>
       )}
       {betweenAd && <div className="mt16"><AdCard ad={betweenAd} /></div>}
-      <button className="btn btn-primary btn-block mt16" onClick={() => {
+      <button type="button" className="btn btn-primary btn-block mt16" onClick={() => {
         if (result.nextNode?.id && onContinueLesson) onContinueLesson(result.nextNode.id);
         else onDone();
       }}><Icon name="check" size={18} /> {result.nextNode?.id ? (fa ? "درس بعدی" : "Next lesson") : t("continueLearning")}</button>

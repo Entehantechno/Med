@@ -95,7 +95,7 @@ export function MCQ({ card, checked, sel, setSel, isCorrect, glossary }) {
         const letter = optionLetter(i, lang);
         return (
           <div key={i} className={`opt-wrap ${showWhy ? "has-why" : ""}`}>
-            <button
+            <button type="button"
               className={cls}
               disabled={checked}
               onClick={() => selectOption(i)}
@@ -152,7 +152,7 @@ export function TrueFalse({ card, checked, sel, setSel }) {
         let cls = "opt";
         if (checked) { if (o.v === card.answer) cls += " ok"; else if (o.v === sel) cls += " bad"; }
         else if (o.v === sel) cls += " sel";
-        return <button key={String(o.v)} className={cls} disabled={checked} onClick={() => { playTap(); setSel(o.v); }}>{o.label}</button>;
+        return <button type="button" key={String(o.v)} className={cls} disabled={checked} onClick={() => { playTap(); setSel(o.v); }}>{o.label}</button>;
       })}
     </div>
   );
@@ -213,7 +213,7 @@ export function Match({ card, checked, sel, setSel }) {
           if (state.activeLeft === l.id) cls += " sel";
           if (connected && !checked) cls += " connected";
           if (checked) cls += isRight ? " ok" : " bad";
-          return <button key={l.id} className={cls} disabled={checked} onClick={() => pickLeft(l.id)}>{l.text}</button>;
+          return <button type="button" key={l.id} className={cls} disabled={checked} onClick={() => pickLeft(l.id)}>{l.text}</button>;
         })}
       </div>
       <div className="match-col">
@@ -221,7 +221,7 @@ export function Match({ card, checked, sel, setSel }) {
           const used = rightUsed.includes(rr.id);
           let cls = "opt match-item";
           if (used && !checked) cls += " connected";
-          return <button key={rr.id} className={cls} disabled={checked || (used && state.activeLeft == null)} onClick={() => pickRight(rr.id)}>{rr.text}</button>;
+          return <button type="button" key={rr.id} className={cls} disabled={checked || (used && state.activeLeft == null)} onClick={() => pickRight(rr.id)}>{rr.text}</button>;
         })}
       </div>
     </div>
@@ -244,12 +244,12 @@ export function Order({ card, checked, sel, setSel }) {
           const good = checked && c.id === i;
           return <span key={c.id} className={`chip order-chip ${checked ? (good ? "ok" : "bad") : ""}`}>{i + 1}. {c.text}</span>;
         })}
-        {!checked && chosen.length > 0 && <button className="chip order-undo" onClick={removeLast}>↩</button>}
+        {!checked && chosen.length > 0 && <button type="button" className="chip order-undo" onClick={removeLast}>↩</button>}
       </div>
       <div className="order-pool">
         {pool.map((it) => {
           const used = chosen.find((c) => c.id === it.id);
-          return <button key={it.id} className="opt order-word" disabled={checked || !!used} style={{ opacity: used ? .35 : 1 }} onClick={() => add(it)}>{it.text}</button>;
+          return <button type="button" key={it.id} className="opt order-word" disabled={checked || !!used} style={{ opacity: used ? .35 : 1 }} onClick={() => add(it)}>{it.text}</button>;
         })}
       </div>
       {checked && !correct && (
@@ -299,7 +299,7 @@ export function Compare({ card, checked, sel, setSel }) {
                   else if (c.key === picked) cls += " wrong";        // mark the wrong pick
                 } else if (picked === c.key) cls += " sel";
                 return (
-                  <button key={c.key} className={cls} disabled={checked} onClick={() => choose(f.id, c.key)}>
+                  <button type="button" key={c.key} className={cls} disabled={checked} onClick={() => choose(f.id, c.key)}>
                     {c.label}
                   </button>
                 );
@@ -356,7 +356,7 @@ export function MicroLesson({ micro, defaultOpen = false, glossary, features }) 
   const effectiveHy = showToggle ? hy : false;
   return (
     <div className="micro-box" style={{ borderColor: radar ? "#fcd34d" : undefined, boxShadow: radar ? "0 0 0 2px #fef3c7" : undefined }}>
-      <button className="micro-toggle" onClick={() => setOpen((v) => !v)} style={{ background: radar ? "#fffbeb" : undefined }}>
+      <button type="button" className="micro-toggle" onClick={() => setOpen((v) => !v)} style={{ background: radar ? "#fffbeb" : undefined }}>
         <Icon name="book" size={16} /> {fa ? "درسنامهٔ کوتاه" : "Quick lesson"}
         {radar && <span className="tag" style={{ marginInlineStart: 8, background: "#dc2626", color: "#fff", fontSize: ".72rem", animation: "pulse 1.5s infinite" }}>🔴 Radar</span>}
         <span style={{ marginInlineStart: "auto" }}>{open ? "▾" : "▸"}</span>

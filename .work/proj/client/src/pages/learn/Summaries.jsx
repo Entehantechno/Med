@@ -55,7 +55,7 @@ export default function Summaries() {
       </div>
       {topics.map((tp) => (
         <div key={tp.topicId} className="card mt16">
-          <button className="sum-topic" onClick={() => setOpen((o) => ({ ...o, [tp.topicId]: !o[tp.topicId] }))}>
+          <button type="button" className="sum-topic" onClick={() => setOpen((o) => ({ ...o, [tp.topicId]: !o[tp.topicId] }))}>
             <b>{tp.name}</b>
             <span className="muted small">{(tp.chapters || []).length} {fa ? "فصل" : "chapters"}</span>
           </button>

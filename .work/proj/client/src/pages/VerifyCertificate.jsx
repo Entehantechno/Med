@@ -27,7 +27,7 @@ export default function VerifyCertificate({ serial: initialSerial, onHome }) {
   return (
     <div className="verify-wrap">
       <header className="blog-top">
-        <button className="blog-brand" onClick={onHome}>
+        <button type="button" className="blog-brand" onClick={onHome}>
           <span className="lp-logo"><Icon name="cap" size={22} /></span>
           <span className="lp-brand-name">MED School</span>
         </button>
@@ -41,7 +41,7 @@ export default function VerifyCertificate({ serial: initialSerial, onHome }) {
           <div className="verify-search">
             <input value={serial} onChange={(e) => setSerial(e.target.value)} placeholder="MED-2026-XXXXXX"
               onKeyDown={(e) => e.key === "Enter" && doVerify()} />
-            <button className="lp-btn-primary" onClick={() => doVerify()} disabled={loading}>
+            <button type="button" className="lp-btn-primary" onClick={() => doVerify()} disabled={loading}>
               {loading ? (fa ? "بررسی…" : "Checking…") : (fa ? "استعلام" : "Verify")}
             </button>
           </div>

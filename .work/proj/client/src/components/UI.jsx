@@ -33,21 +33,21 @@ export function TopBar({ onHome }) {
   const goProfile = () => window.dispatchEvent(new CustomEvent("medlab-nav", { detail: "profile" }));
   return (
     <div className="topbar" ref={ref}>
-      <div className="brand" style={{ cursor: "pointer" }} onClick={onHome}>
+      <button type="button" className="brand" style={{ cursor: "pointer", background: "none", border: "none", padding: 0, textAlign: "start" }} onClick={onHome} aria-label={t("appName")}>
         <LogoMark />
         <div><h1>{t("appName")}</h1><p>{t("appSub")}</p></div>
-      </div>
+      </button>
       <div className="topbar-actions">
         {user && (
-          <button className="btn btn-sm btn-ghost" onClick={goProfile} title={t("profile")}>
+          <button type="button" className="btn btn-sm btn-ghost" onClick={goProfile} title={t("profile")}>
             <Icon name="user" size={16} /> <span className="small">{lang === "fa" ? user.name_fa : user.name_en}</span>
           </button>
         )}
-        <button className="btn btn-sm btn-ghost icon-btn" onClick={toggleTheme} title={theme === "light" ? t("darkMode") : t("lightMode")}>
+        <button type="button" className="btn btn-sm btn-ghost icon-btn" onClick={toggleTheme} title={theme === "light" ? t("darkMode") : t("lightMode")}>
           <Icon name={theme === "light" ? "moon" : "sun"} size={16} />
         </button>
-        <button className="btn btn-sm btn-ghost" onClick={toggleLang}><Icon name="globe" size={16} /> <span className="icon-lang-label">{t("otherLang")}</span></button>
-        {user && <button className="btn btn-sm btn-danger icon-btn" onClick={logout} title={t("logout")}><Icon name="logout" size={16} /></button>}
+        <button type="button" className="btn btn-sm btn-ghost" onClick={toggleLang}><Icon name="globe" size={16} /> <span className="icon-lang-label">{t("otherLang")}</span></button>
+        {user && <button type="button" className="btn btn-sm btn-danger icon-btn" onClick={logout} title={t("logout")}><Icon name="logout" size={16} /></button>}
       </div>
     </div>
   );
@@ -90,8 +90,8 @@ export function Modal({ title, children, onClose, onSave, saveLabel, wide }) {
         <h3>{title}</h3>
         <div className="modal-body">{children}</div>
         <div className="modal-actions">
-          <button className="btn btn-ghost" onClick={onClose}>{t("cancel")}</button>
-          {onSave && <button className="btn btn-primary" onClick={onSave}>{saveLabel || t("save")}</button>}
+          <button type="button" className="btn btn-ghost" onClick={onClose}>{t("cancel")}</button>
+          {onSave && <button type="button" className="btn btn-primary" onClick={onSave}>{saveLabel || t("save")}</button>}
         </div>
       </div>
     </div>,

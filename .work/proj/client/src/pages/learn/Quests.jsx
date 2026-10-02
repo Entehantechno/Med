@@ -86,7 +86,7 @@ export default function Quests({ onProfile }) {
           <div className="pbar sm mb8"><span style={{ width: `${Math.round((revival.lessonsDone / revival.lessonsRequired) * 100)}%` }} /></div>
           <div className="small muted mb8">{revival.lessonsDone}/{revival.lessonsRequired} {t("lessonsDone")}</div>
           {revival.ready
-            ? <button className="btn btn-accent btn-block" disabled={busy === "revival"} onClick={claimRevival}>💫 {t("revivalClaim")}</button>
+            ? <button type="button" className="btn btn-accent btn-block" disabled={busy === "revival"} onClick={claimRevival}>💫 {t("revivalClaim")}</button>
             : <span className="tag">{t("revivalDoLessons")}</span>}
         </div>
       )}
@@ -102,7 +102,7 @@ export default function Quests({ onProfile }) {
             <div className="small muted mb8">{t("dailyGoalHint")}</div>
             <div className="goal-opts">
               {daily.options.map((o) => (
-                <button key={o.value} className={`btn btn-sm ${daily.goal === o.value ? "btn-primary" : "btn-ghost"}`}
+                <button type="button" key={o.value} className={`btn btn-sm ${daily.goal === o.value ? "btn-primary" : "btn-ghost"}`}
                   onClick={() => setGoal(o.value)}>{lang === "fa" ? o.fa : o.en} · {o.value}</button>
               ))}
             </div>
@@ -124,7 +124,7 @@ export default function Quests({ onProfile }) {
               </div>
               <div className="quest-reward">
                 {q.claimed ? <span className="tag done">✓</span>
-                  : q.done ? <button className="btn btn-accent btn-sm" disabled={busy === "q" + q.id} onClick={() => claim(q.id)}>
+                  : q.done ? <button type="button" className="btn btn-accent btn-sm" disabled={busy === "q" + q.id} onClick={() => claim(q.id)}>
                       <GemIcon size={14} /> +{q.reward_gems}</button>
                   : <span className="tag"><GemIcon size={14} /> {q.reward_gems}</span>}
               </div>
@@ -143,7 +143,7 @@ export default function Quests({ onProfile }) {
           {monthly.claimed
             ? <span className="tag done">✓ {t("claimed")}</span>
             : monthly.complete
-              ? <button className="btn btn-accent btn-block" disabled={busy === "monthly"} onClick={claimMonthly}>🏅 {t("claimBadge")} · <GemIcon size={14} /> +{monthly.reward_gems}</button>
+              ? <button type="button" className="btn btn-accent btn-block" disabled={busy === "monthly"} onClick={claimMonthly}>🏅 {t("claimBadge")} · <GemIcon size={14} /> +{monthly.reward_gems}</button>
               : <span className="tag">🏅 {t("monthlyReward")}: <GemIcon size={14} /> +{monthly.reward_gems}</span>}
           {badges.length > 0 && (
             <div className="badge-shelf mt16">
@@ -174,7 +174,7 @@ export default function Quests({ onProfile }) {
           ) : (
             <>
               <div className="small muted mb8">{t("wagerHint").replace("{d}", wager.target_days).replace("{s}", wager.stake).replace("{r}", wager.reward)}</div>
-              <button className="btn btn-primary btn-block" disabled={busy === "wager"} onClick={placeWager}>
+              <button type="button" className="btn btn-primary btn-block" disabled={busy === "wager"} onClick={placeWager}>
                 🎲 {t("placeWager")} · <GemIcon size={14} /> {wager.stake}
               </button>
             </>
@@ -193,7 +193,7 @@ export default function Quests({ onProfile }) {
               <div style={{ fontWeight: 700 }}>{c.name}</div>
               <div className="small muted">{c.from}:00–{c.to}:00</div>
               {c.opened ? <span className="tag done">{t("opened")}</span>
-                : c.available ? <button className="btn btn-accent btn-sm" disabled={busy === "c" + c.slug} onClick={() => openChest(c.slug)}>
+                : c.available ? <button type="button" className="btn btn-accent btn-sm" disabled={busy === "c" + c.slug} onClick={() => openChest(c.slug)}>
                     <GemIcon size={14} /> +{c.gems}</button>
                 : <span className="tag">{t("comeBack")}</span>}
             </div>
@@ -212,7 +212,7 @@ export default function Quests({ onProfile }) {
                 <div className="shop-ico"><Icon name={it.icon} size={22} /></div>
                 <div style={{ fontWeight: 700 }}>{it.name}</div>
                 <div className="small muted" style={{ flex: 1 }}>{it.desc}</div>
-                <button className="btn btn-primary btn-sm btn-block" disabled={busy === "s" + it.slug || shop.gems < it.cost}
+                <button type="button" className="btn btn-primary btn-sm btn-block" disabled={busy === "s" + it.slug || shop.gems < it.cost}
                   onClick={() => buy(it.slug)}><GemIcon size={14} /> {it.cost}</button>
               </div>
             ))}

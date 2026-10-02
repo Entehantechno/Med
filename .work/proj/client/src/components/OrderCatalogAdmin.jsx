@@ -51,7 +51,7 @@ export default function OrderCatalogAdmin() {
       toast(e?.message || t("errorGeneric"));
     } finally { setBusy(false); }
   };
-  if (d?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری فهرست سفارش شکست خورد" : "Could not load the order catalog")}</h3><button className="btn btn-ghost mt16" onClick={() => { setD(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (d?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری فهرست سفارش شکست خورد" : "Could not load the order catalog")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setD(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!d) return <Spinner />;
   return (
     <div className="card mt16">

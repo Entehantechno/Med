@@ -13,7 +13,7 @@ export default function PublicStore({ onHome, onRequireAuth }) {
       <TopBar onHome={onHome} />
       <div className="container">
         <div className="section-title" style={{ marginBottom: 4 }}>
-          <button className="btn btn-ghost btn-sm" onClick={onHome}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={onHome}>
             <Icon name="chevronRight" size={15} /> {t("backToHome")}
           </button>
         </div>

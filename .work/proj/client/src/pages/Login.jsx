@@ -91,7 +91,7 @@ export default function Login({ initialMode = "login", onBackHome, asModal = fal
   const card = (
         <div className="card login-card" style={{ maxWidth: 420 }}>
           {asModal && onBackHome && (
-            <button className="login-modal-close" aria-label={t("close") || "بستن"} onClick={onBackHome}>
+            <button type="button" className="login-modal-close" aria-label={t("close") || "بستن"} onClick={onBackHome}>
               <Icon name="close" size={18} />
             </button>
           )}
@@ -165,6 +165,14 @@ export default function Login({ initialMode = "login", onBackHome, asModal = fal
                     onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} />
                   <button type="button" className="pw-toggle" aria-label={showPw ? (fa ? "پنهان کردن رمز" : "Hide password") : (fa ? "نمایش رمز" : "Show password")} onClick={() => setShowPw((v) => !v)}>{showPw ? (fa ? "پنهان" : "Hide") : (fa ? "نمایش" : "Show")}</button>
                 </div>
+                {mode === "login" && (
+                  <div className="small mt8" style={{ textAlign: "end" }}>
+                    <button type="button" className="btn btn-ghost btn-sm" style={{ padding: "2px 6px", fontSize: ".82rem" }}
+                      onClick={() => window.dispatchEvent(new CustomEvent("medlab-toast", { detail: fa ? "برای بازیابی رمز با مدیر (پشتیبانی) تماس بگیرید." : "Contact support to reset your password." }))}>
+                      {fa ? "فراموشی رمز؟" : "Forgot password?"}
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           )}
@@ -176,18 +184,18 @@ export default function Login({ initialMode = "login", onBackHome, asModal = fal
 
           <div className="mt16" style={{ borderTop: "1px solid var(--border)", paddingTop: 14 }}>
             {mode === "login" ? (
-              <button className="btn btn-accent btn-block" onClick={() => { setMode("signup"); setErr(""); setNotice(""); }}>
+              <button type="button" className="btn btn-accent btn-block" onClick={() => { setMode("signup"); setErr(""); setNotice(""); }}>
                 <Icon name="crown" size={16} /> {t("signupAsLearner")}
               </button>
             ) : (
-              <button className="btn btn-ghost btn-block" onClick={() => { setMode("login"); setErr(""); setNotice(""); }}>
+              <button type="button" className="btn btn-ghost btn-block" onClick={() => { setMode("login"); setErr(""); setNotice(""); }}>
                 {t("haveAccount")} {t("login")}
               </button>
             )}
           </div>
 
           {onBackHome && !asModal && (
-            <button className="btn btn-ghost btn-sm btn-block mt16" onClick={onBackHome}>
+            <button type="button" className="btn btn-ghost btn-sm btn-block mt16" onClick={onBackHome}>
               <Icon name="logout" size={14} /> {t("backToHome")}
             </button>
           )}

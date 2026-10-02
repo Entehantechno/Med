@@ -45,7 +45,7 @@ export default function Friends({ onProfile }) {
       <div className="section-title"><h2><Icon name="users" size={22} /> {t("friends")}</h2></div>
       <div className="ad-slot-tabs mb16">
         {tabs.map(([id, ic, label]) => (
-          <button key={id} className={`btn btn-sm ${sub === id ? "btn-primary" : "btn-ghost"}`} onClick={() => setSub(id)}>
+          <button type="button" key={id} className={`btn btn-sm ${sub === id ? "btn-primary" : "btn-ghost"}`} onClick={() => setSub(id)}>
             <Icon name={ic} size={14} /> {label}
           </button>
         ))}
@@ -79,7 +79,7 @@ function FriendsTab({ data, t, lang, busy, doNudge, doQuest, claimQuest, doUnfol
                 <div style={{ fontWeight: 700 }}>{s.name}</div>
                 <div className="small muted"><StreakIcon size={13} /> {s.streak} {t("dayStreak")} · {s.friendDoneToday ? `✅ ${t("friendDoneToday")}` : `⏳ ${t("friendNotDone")}`}</div>
               </div>
-              {s.canNudge && <button className="btn btn-accent btn-sm" disabled={busy === "n" + s.friendId} onClick={() => doNudge(s.friendId)}>👋 {t("nudge")}</button>}
+              {s.canNudge && <button type="button" className="btn btn-accent btn-sm" disabled={busy === "n" + s.friendId} onClick={() => doNudge(s.friendId)}>👋 {t("nudge")}</button>}
             </div>
           ))}
         </div>
@@ -100,12 +100,12 @@ function FriendsTab({ data, t, lang, busy, doNudge, doQuest, claimQuest, doUnfol
               </div>
               {q ? (
                 q.claimed ? <span className="tag done">✓ {t("claimed")}</span>
-                  : q.complete ? <button className="btn btn-accent btn-sm" disabled={busy === "cq" + q.id} onClick={() => claimQuest(q.id)}><GemIcon size={14} /> +{q.reward_gems}</button>
+                  : q.complete ? <button type="button" className="btn btn-accent btn-sm" disabled={busy === "cq" + q.id} onClick={() => claimQuest(q.id)}><GemIcon size={14} /> +{q.reward_gems}</button>
                     : <span className="tag" title={t("questInProgress")}>🤝 {q.total}/{q.goal}</span>
               ) : (
-                <button className="btn btn-primary btn-sm" disabled={busy === "q" + f.id} onClick={() => doQuest(f.id)}>🤝 {t("startFriendQuest")}</button>
+                <button type="button" className="btn btn-primary btn-sm" disabled={busy === "q" + f.id} onClick={() => doQuest(f.id)}>🤝 {t("startFriendQuest")}</button>
               )}
-              <button className="btn btn-ghost btn-sm" disabled={busy === "u" + f.id} onClick={() => doUnfollow(f.id)} title={t("unfollow")}><Icon name="close" size={13} /></button>
+              <button type="button" className="btn btn-ghost btn-sm" disabled={busy === "u" + f.id} onClick={() => doUnfollow(f.id)} title={t("unfollow")}><Icon name="close" size={13} /></button>
             </div>
           );
         })}
@@ -125,7 +125,7 @@ function FriendsTab({ data, t, lang, busy, doNudge, doQuest, claimQuest, doUnfol
               </div>
               <div className="quest-reward">
                 {q.claimed ? <span className="tag done">✓</span>
-                  : q.complete ? <button className="btn btn-accent btn-sm" disabled={busy === "cq" + q.id} onClick={() => claimQuest(q.id)}><GemIcon size={14} /> +{q.reward_gems}</button>
+                  : q.complete ? <button type="button" className="btn btn-accent btn-sm" disabled={busy === "cq" + q.id} onClick={() => claimQuest(q.id)}><GemIcon size={14} /> +{q.reward_gems}</button>
                     : <span className="tag"><GemIcon size={14} /> {q.reward_gems}</span>}
               </div>
             </div>
@@ -164,8 +164,8 @@ function DiscoverTab({ t, lang, busy, doFollow, doUnfollow }) {
             <div className="small muted">{u.xp} {t("xp")} · <StreakIcon size={12} /> {u.streak}</div>
           </div>
           {u.following
-            ? <button className="btn btn-ghost btn-sm" disabled={busy === "u" + u.id} onClick={() => doUnfollow(u.id)}>{t("following2")}</button>
-            : <button className="btn btn-primary btn-sm" disabled={busy === "f" + u.id} onClick={() => doFollow(u.id)}><Icon name="check" size={13} /> {t("follow")}</button>}
+            ? <button type="button" className="btn btn-ghost btn-sm" disabled={busy === "u" + u.id} onClick={() => doUnfollow(u.id)}>{t("following2")}</button>
+            : <button type="button" className="btn btn-primary btn-sm" disabled={busy === "f" + u.id} onClick={() => doFollow(u.id)}><Icon name="check" size={13} /> {t("follow")}</button>}
         </div>
       ))}
     </div>
@@ -185,7 +185,7 @@ function FeedTab({ feed, t, busy, highFive }) {
             {e.highfives > 0 && <div className="small muted">🙌 {e.highfives}</div>}
           </div>
           {!e.isMe && (
-            <button className={`btn btn-sm ${e.hifived ? "btn-accent" : "btn-ghost"}`} disabled={e.hifived || busy === "h" + e.id} onClick={() => highFive(e.id)}>
+            <button type="button" className={`btn btn-sm ${e.hifived ? "btn-accent" : "btn-ghost"}`} disabled={e.hifived || busy === "h" + e.id} onClick={() => highFive(e.id)}>
               🙌 {e.hifived ? t("hifived") : t("highfive")}
             </button>
           )}

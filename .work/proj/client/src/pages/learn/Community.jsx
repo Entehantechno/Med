@@ -45,13 +45,13 @@ export default function Community({ onBack }) {
     <div className="page">
       <div className="section-title">
         <h2>👥 {t("community")}</h2>
-        <button className="btn btn-primary btn-sm" onClick={openShare}><Icon name="upload" size={14} /> {t("communityShare")}</button>
+        <button type="button" className="btn btn-primary btn-sm" onClick={openShare}><Icon name="upload" size={14} /> {t("communityShare")}</button>
       </div>
       <div className="muted small mb16">{t("communityHint")}</div>
 
       <div className="ad-slot-tabs mb16">
-        <button className={`btn btn-sm ${sort === "top" ? "btn-primary" : "btn-ghost"}`} onClick={() => setSort("top")}>🔝 {t("communityTop")}</button>
-        <button className={`btn btn-sm ${sort === "new" ? "btn-primary" : "btn-ghost"}`} onClick={() => setSort("new")}>🆕 {t("communityNew")}</button>
+        <button type="button" className={`btn btn-sm ${sort === "top" ? "btn-primary" : "btn-ghost"}`} onClick={() => setSort("top")}>🔝 {t("communityTop")}</button>
+        <button type="button" className={`btn btn-sm ${sort === "new" ? "btn-primary" : "btn-ghost"}`} onClick={() => setSort("new")}>🆕 {t("communityNew")}</button>
       </div>
 
       {cards.length === 0 && <div className="card empty-state"><div className="ico">👥</div><h3>{t("communityEmpty")}</h3><div className="small muted">{t("communityEmptyHint")}</div></div>}
@@ -60,9 +60,9 @@ export default function Community({ onBack }) {
         {cards.map((c) => (
           <div key={c.id} className="card cc-card">
             <div className="cc-vote">
-              <button className={`cc-arrow ${c.myVote === 1 ? "on" : ""}`} onClick={() => vote(c.id, 1)} title={t("upvote")}>▲</button>
+              <button type="button" className={`cc-arrow ${c.myVote === 1 ? "on" : ""}`} onClick={() => vote(c.id, 1)} title={t("upvote")}>▲</button>
               <span className="cc-score">{c.score}</span>
-              <button className={`cc-arrow down ${c.myVote === -1 ? "on" : ""}`} onClick={() => vote(c.id, -1)} title={t("downvote")}>▼</button>
+              <button type="button" className={`cc-arrow down ${c.myVote === -1 ? "on" : ""}`} onClick={() => vote(c.id, -1)} title={t("downvote")}>▼</button>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700 }}>{c.card.q}</div>
@@ -80,7 +80,7 @@ export default function Community({ onBack }) {
             <div style={{ display: "flex", alignItems: "center" }}>
               {c.imported
                 ? <span className="tag" style={{ background: "var(--accentGlow)" }}>✓ {t("communityImported")}</span>
-                : <button className="btn btn-accent btn-sm" onClick={() => doImport(c.id)}><Icon name="download" size={13} /> {t("communityImport")}</button>}
+                : <button type="button" className="btn btn-accent btn-sm" onClick={() => doImport(c.id)}><Icon name="download" size={13} /> {t("communityImport")}</button>}
             </div>
           </div>
         ))}
@@ -96,14 +96,14 @@ export default function Community({ onBack }) {
                 {mine.map((m) => (
                   <div key={m.linkId} className="card" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
                     <span style={{ minWidth: 0 }}>{m.q}</span>
-                    <button className="btn btn-primary btn-sm" onClick={() => share(m.id, m.topic_id)}><Icon name="upload" size={13} /> {t("communityShare")}</button>
+                    <button type="button" className="btn btn-primary btn-sm" onClick={() => share(m.id, m.topic_id)}><Icon name="upload" size={13} /> {t("communityShare")}</button>
                   </div>
                 ))}
               </div>}
         </Modal>
       )}
 
-      <button className="btn btn-ghost btn-block mt16" onClick={onBack}>{t("back")}</button>
+      <button type="button" className="btn btn-ghost btn-block mt16" onClick={onBack}>{t("back")}</button>
     </div>
   );
 }

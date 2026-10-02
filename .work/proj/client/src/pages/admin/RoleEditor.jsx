@@ -53,7 +53,7 @@ export default function RoleEditor() {
         <div className="rbac-role" key={role}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
             <div style={{ fontWeight: 800 }}>{lang === "fa" ? ROLE_LABEL[role]?.fa : ROLE_LABEL[role]?.en} <span className="small muted">({draft[role]?.length || 0})</span></div>
-            <button className="btn btn-primary btn-sm" disabled={busy === role} onClick={() => save(role)}><Icon name="check" size={13} /> {t("save")}</button>
+            <button type="button" className="btn btn-primary btn-sm" disabled={busy === role} onClick={() => save(role)}><Icon name="check" size={13} /> {t("save")}</button>
           </div>
           <div className="rbac-perms">
             {permList.map(([key, desc]) => (

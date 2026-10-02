@@ -40,10 +40,10 @@ export default function OnboardingChecklist({ go, onProfile }) {
           </div>
         </div>
         <div style={{ display: "flex", gap: 4 }}>
-          <button className="btn btn-ghost btn-sm icon-btn" onClick={() => setCollapsed((c) => !c)} title={collapsed ? t("expand") : t("collapse")}>
+          <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={() => setCollapsed((c) => !c)} title={collapsed ? t("expand") : t("collapse")}>
             <Icon name={collapsed ? "chevronDown" : "chevronUp"} size={16} />
           </button>
-          <button className="btn btn-ghost btn-sm icon-btn" onClick={dismiss} title={t("dismiss")}><Icon name="close" size={16} /></button>
+          <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={dismiss} title={t("dismiss")}><Icon name="close" size={16} /></button>
         </div>
       </div>
 
@@ -53,7 +53,7 @@ export default function OnboardingChecklist({ go, onProfile }) {
         <>
           <div className="onboard-steps">
             {ob.steps.map((s) => (
-              <button key={s.key} className={`onboard-step ${s.done ? "done" : ""}`} onClick={() => !s.done && goStep(s.link)} disabled={s.done}>
+              <button type="button" key={s.key} className={`onboard-step ${s.done ? "done" : ""}`} onClick={() => !s.done && goStep(s.link)} disabled={s.done}>
                 <span className="os-check">{s.done ? "✅" : <Icon name={s.icon} size={16} />}</span>
                 <span className="os-body">
                   <span className="os-label">{s.label}</span>
@@ -65,7 +65,7 @@ export default function OnboardingChecklist({ go, onProfile }) {
           </div>
 
           {ob.complete && !ob.claimed && (
-            <button className="btn btn-accent btn-block mt8" onClick={claim}>
+            <button type="button" className="btn btn-accent btn-block mt8" onClick={claim}>
               🎉 {t("onboardClaim").replace("{n}", ob.reward_gems)}
             </button>
           )}

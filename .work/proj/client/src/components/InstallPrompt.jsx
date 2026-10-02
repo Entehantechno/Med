@@ -158,8 +158,8 @@ export default function InstallPrompt() {
               <li>🔔 {t("installBenefit3")}</li>
             </ul>
             <div className="pwa-install-actions">
-              <button className="pwa-btn-primary" onClick={doInstall}>{t("installNow")}</button>
-              <button className="pwa-btn-ghost" onClick={dismiss}>{t("installLater")}</button>
+              <button type="button" className="pwa-btn-primary" onClick={doInstall}>{t("installNow")}</button>
+              <button type="button" className="pwa-btn-ghost" onClick={dismiss}>{t("installLater")}</button>
             </div>
           </div>
         </div>
@@ -183,7 +183,7 @@ export default function InstallPrompt() {
               <li><span className="pwa-ios-num">3</span><span>{t("installIosStep3")}</span></li>
             </ol>
             <div className="pwa-ios-note">{t("installIosOnlySafari")}</div>
-            <button className="pwa-btn-primary pwa-ios-close" onClick={() => { setIosOpen(false); dismiss(); }}>
+            <button type="button" className="pwa-btn-primary pwa-ios-close" onClick={() => { setIosOpen(false); dismiss(); }}>
               {fa ? "متوجه شدم" : "Got it"}
             </button>
           </div>

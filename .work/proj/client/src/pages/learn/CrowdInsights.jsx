@@ -69,7 +69,7 @@ export default function CrowdInsights({ onBack }) {
               </div>
             ))}
           </div>}
-      <button className="btn btn-ghost btn-block mt16" onClick={onBack}>{t("back")}</button>
+      <button type="button" className="btn btn-ghost btn-block mt16" onClick={onBack}>{t("back")}</button>
     </div>
   );
 }

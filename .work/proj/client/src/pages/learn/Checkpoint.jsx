@@ -42,7 +42,7 @@ export default function Checkpoint({ onProfile }) {
     <div className="card empty-state">
       <div className="ico"><Icon name="warn" size={40} /></div>
       <h3>{err === "feature disabled" ? t("cpDisabled") : err}</h3>
-      <button className="btn btn-ghost mt16" onClick={load}>{t("retry")}</button>
+      <button type="button" className="btn btn-ghost mt16" onClick={load}>{t("retry")}</button>
     </div>
   );
   if (!list) return <div className="card"><div className="skeleton" style={{ height: 220 }} /></div>;
@@ -86,8 +86,8 @@ export default function Checkpoint({ onProfile }) {
 
             {c.unlocked ? (
               c.cooldownMin > 0
-                ? <button className="btn btn-ghost btn-block" disabled>{t("cpCooldownMin").replace("{n}", c.cooldownMin)}</button>
-                : <button className="btn btn-primary btn-block cp-start" onClick={() => start(c.section)}>
+                ? <button type="button" className="btn btn-ghost btn-block" disabled>{t("cpCooldownMin").replace("{n}", c.cooldownMin)}</button>
+                : <button type="button" className="btn btn-primary btn-block cp-start" onClick={() => start(c.section)}>
                     <Icon name="play" size={16} /> {c.attempts > 0 ? t("cpRetake") : t("cpStart")}
                   </button>
             ) : (
@@ -173,7 +173,7 @@ function ExamRunner({ exam, onProfile, onExit }) {
   return (
     <div className="lesson-wrap cp-exam">
       <div className="lesson-top">
-        <button className="btn btn-ghost btn-sm icon-btn" onClick={onExit} title={t("cpExit")} aria-label={t("cpExit")}><Icon name="logout" size={16} /></button>
+        <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onExit} title={t("cpExit")} aria-label={t("cpExit")}><Icon name="logout" size={16} /></button>
         <div className="pbar"><span style={{ width: `${progress}%` }} /></div>
         {totalSecs > 0 && (
           <span className={`cp-timer ${timeLow ? "low" : ""}`} title={t("cpTimeLeft")} aria-live="off">⏱ {mm}:{ss}</span>
@@ -194,8 +194,8 @@ function ExamRunner({ exam, onProfile, onExit }) {
           test-taking experience (and keeps every question a genuine retrieval). */}
       <div className="lesson-actions">
         {!checked
-          ? <button className="btn btn-primary btn-block" disabled={!canCheck} onClick={check}><Icon name="check" size={16} /> {t("cpConfirm")}</button>
-          : <button className="btn btn-primary btn-block" onClick={next}>{idx + 1 < cards.length ? t("continue") : t("cpFinish")}</button>}
+          ? <button type="button" className="btn btn-primary btn-block" disabled={!canCheck} onClick={check}><Icon name="check" size={16} /> {t("cpConfirm")}</button>
+          : <button type="button" className="btn btn-primary btn-block" onClick={next}>{idx + 1 < cards.length ? t("continue") : t("cpFinish")}</button>}
       </div>
     </div>
   );
@@ -206,7 +206,7 @@ function ExamResult({ result, onExit }) {
   const { t } = useApp();
   if (result.error) return (
     <div className="card empty-state"><div className="ico"><Icon name="warn" size={40} /></div><h3>{result.error}</h3>
-      <button className="btn btn-ghost mt16" onClick={onExit}>{t("back")}</button></div>
+      <button type="button" className="btn btn-ghost mt16" onClick={onExit}>{t("back")}</button></div>
   );
   const passed = result.passed;
   return (
@@ -226,7 +226,7 @@ function ExamResult({ result, onExit }) {
         {!passed && <p className="muted cp-encourage">{t("cpFailHint")}</p>}
         {passed && <p className="muted cp-encourage">{t("cpPassHint")}</p>}
 
-        <button className="btn btn-primary btn-block mt16" onClick={onExit}>{t("cpBackToList")}</button>
+        <button type="button" className="btn btn-primary btn-block mt16" onClick={onExit}>{t("cpBackToList")}</button>
       </div>
       <LessonInsights report={result.errorReport} srsAdded={result.srsAdded} newMastery={result.newMastery} />
     </div>

@@ -118,7 +118,7 @@ export default function DailyChallenge({ onProfile }) {
             /* fallback to buttons if bilingual options aren't available */
             <div className="dx-options">
               {d.options.map((o) => (
-                <button key={o} className="dx-opt" disabled={busy || guessedTexts.has(o)} onClick={() => guess(o)}>{o}</button>
+                <button type="button" key={o} className="dx-opt" disabled={busy || guessedTexts.has(o)} onClick={() => guess(o)}>{o}</button>
               ))}
             </div>
           )}
@@ -156,12 +156,12 @@ export default function DailyChallenge({ onProfile }) {
           <div className="dx-share">
             <div className="dx-share-grid">{shareGrid}</div>
             <div className="dx-share-btns">
-              <button className="btn btn-ghost btn-sm" onClick={() => { copyShare(d, shareGrid, fa); share("copy"); }}>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => { copyShare(d, shareGrid, fa); share("copy"); }}>
                 <Icon name="download" size={14} /> {fa ? "کپی نتیجه" : "Copy result"}
               </button>
-              <button className="dx-sh tg" title="Telegram" onClick={() => { openShare("telegram", shareTextOf(d, shareGrid, fa)); share("telegram"); }}>✈️</button>
-              <button className="dx-sh wa" title="WhatsApp" onClick={() => { openShare("whatsapp", shareTextOf(d, shareGrid, fa)); share("whatsapp"); }}>🟢</button>
-              <button className="dx-sh ig" title="Instagram" onClick={() => { copyShare(d, shareGrid, fa); share("instagram"); }}>📸</button>
+              <button type="button" className="dx-sh tg" title="Telegram" onClick={() => { openShare("telegram", shareTextOf(d, shareGrid, fa)); share("telegram"); }}>✈️</button>
+              <button type="button" className="dx-sh wa" title="WhatsApp" onClick={() => { openShare("whatsapp", shareTextOf(d, shareGrid, fa)); share("whatsapp"); }}>🟢</button>
+              <button type="button" className="dx-sh ig" title="Instagram" onClick={() => { copyShare(d, shareGrid, fa); share("instagram"); }}>📸</button>
             </div>
           </div>
         </div>

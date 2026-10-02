@@ -36,7 +36,7 @@ export default function Profile({ home }) {
       <div className="container">
         <div className="section-title">
           <h2><Icon name="user" size={16} /> {t("profile")}</h2>
-          <button className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
         </div>
 
         <div className="grid grid-2">
@@ -58,7 +58,7 @@ export default function Profile({ home }) {
             <div className="field"><label>{t("confirmPassword")}</label>
               <input dir="ltr" type="password" autoComplete="new-password" value={np2} onChange={(e) => setNp2(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && submit()} /></div>
-            <button className="btn btn-primary" onClick={submit}>{t("save")}</button>
+            <button type="button" className="btn btn-primary" onClick={submit}>{t("save")}</button>
           </div>
         </div>
 

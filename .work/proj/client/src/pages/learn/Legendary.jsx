@@ -49,7 +49,7 @@ export default function Legendary({ nodeId, onProfile, onDone }) {
   if (!status) return <div className="card"><div className="skeleton" style={{ height: 160 }} /></div>;
   if (!status.enabled) return (
     <div className="card empty-state"><div className="ico">👑</div><h3>{t("legendaryDisabled")}</h3>
-      <button className="btn btn-ghost mt16" onClick={onDone}>{t("back")}</button></div>
+      <button type="button" className="btn btn-ghost mt16" onClick={onDone}>{t("back")}</button></div>
   );
 
   if (phase === "intro") return (
@@ -69,11 +69,11 @@ export default function Legendary({ nodeId, onProfile, onDone }) {
                   <li>➕ {t("legendaryXp")}: +{status.xpReward} XP</li>
                   <li>{status.premium ? <>👑 {t("legendaryFreePremium")}</> : <><GemIcon size={14} /> {t("legendaryCost")}: {status.cost}</>}</li>
                 </ul>
-                <button className="btn btn-primary btn-block" disabled={busy || (!status.premium && status.gems < status.cost)} onClick={start}>
+                <button type="button" className="btn btn-primary btn-block" disabled={busy || (!status.premium && status.gems < status.cost)} onClick={start}>
                   <Icon name="play" size={16} /> {status.premium ? t("legendaryStartFree") : <>{t("legendaryStart")} · <GemIcon size={14} /> {status.cost}</>}
                 </button>
               </>}
-        <button className="btn btn-ghost btn-block mt8" onClick={onDone}>{t("back")}</button>
+        <button type="button" className="btn btn-ghost btn-block mt8" onClick={onDone}>{t("back")}</button>
       </div>
     </div>
   );
@@ -91,7 +91,7 @@ export default function Legendary({ nodeId, onProfile, onDone }) {
                 <div className="small muted">{t("legendaryCountNote").replace("{n}", result.legendaryCount)}</div></>
             : <div className="small muted">{t("legendaryTryAgain").replace("{r}", result.ratio).replace("{n}", result.needed)}</div>}
         </div>
-        <button className="btn btn-primary btn-block mt16" onClick={onDone}><Icon name="check" size={16} /> {t("continueLearning")}</button>
+        <button type="button" className="btn btn-primary btn-block mt16" onClick={onDone}><Icon name="check" size={16} /> {t("continueLearning")}</button>
       </div>
     );
   }
@@ -118,7 +118,7 @@ export default function Legendary({ nodeId, onProfile, onDone }) {
   return (
     <div className="lesson-wrap legendary-run">
       <div className="lesson-top">
-        <button className="btn btn-ghost btn-sm icon-btn" onClick={onDone} title={t("back")}><Icon name="logout" size={16} /></button>
+        <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onDone} title={t("back")}><Icon name="logout" size={16} /></button>
         <div className="pbar"><span style={{ width: `${progress}%`, background: "linear-gradient(90deg,#a855f7,#eab308)" }} /></div>
         <span className="hud-chip" style={{ fontSize: ".95rem" }}>👑 {correct}/{cards.length}</span>
       </div>
@@ -136,8 +136,8 @@ export default function Legendary({ nodeId, onProfile, onDone }) {
       )}
       <div className="mt16">
         {!checked
-          ? <button className="btn btn-primary btn-block" disabled={!canCheck} onClick={check}>{t("checkAns")}</button>
-          : <button className="btn btn-accent btn-block" onClick={next}>{idx + 1 < cards.length && mistakes < MAX_MISTAKES ? t("nextQ") : t("lessonComplete")}</button>}
+          ? <button type="button" className="btn btn-primary btn-block" disabled={!canCheck} onClick={check}>{t("checkAns")}</button>
+          : <button type="button" className="btn btn-accent btn-block" onClick={next}>{idx + 1 < cards.length && mistakes < MAX_MISTAKES ? t("nextQ") : t("lessonComplete")}</button>}
       </div>
     </div>
   );

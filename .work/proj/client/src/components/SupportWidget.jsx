@@ -128,7 +128,7 @@ export default function SupportWidget() {
   return (
     <>
       {!open && (
-        <button ref={fabRef} className={`support-fab${docked ? " docked" : ""} side-${side}`} onClick={onFabClick}
+        <button type="button" ref={fabRef} className={`support-fab${docked ? " docked" : ""} side-${side}`} onClick={onFabClick}
           onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={() => { drag.current = null; }}
           aria-label={t("support")} title={t("support")}>
           <Icon name="chat" size={26} />
@@ -146,14 +146,14 @@ export default function SupportWidget() {
                 <div className="support-head-sub">{t("supportReplyTime")}</div>
               </div>
             </div>
-            <button className="support-close" onClick={() => setOpen(false)} aria-label={t("close")}><Icon name="close" size={18} /></button>
+            <button type="button" className="support-close" onClick={() => setOpen(false)} aria-label={t("close")}><Icon name="close" size={18} /></button>
           </div>
 
           {/* tabs: Chat vs Help center (only when help is available) */}
           {helpEnabled && (
             <div className="support-tabs">
-              <button className={view === "chat" ? "active" : ""} onClick={() => setView("chat")}><Icon name="chat" size={14} /> {t("supportTabChat")}</button>
-              <button className={view === "help" ? "active" : ""} onClick={() => { setView("help"); setOpenArticle(null); }}><Icon name="book" size={14} /> {t("supportTabHelp")}</button>
+              <button type="button" className={view === "chat" ? "active" : ""} onClick={() => setView("chat")}><Icon name="chat" size={14} /> {t("supportTabChat")}</button>
+              <button type="button" className={view === "help" ? "active" : ""} onClick={() => { setView("help"); setOpenArticle(null); }}><Icon name="book" size={14} /> {t("supportTabHelp")}</button>
             </div>
           )}
 
@@ -171,7 +171,7 @@ export default function SupportWidget() {
                   <div className="support-cats">
                     <div className="small muted mb8">{t("supportPickTopic")}</div>
                     {Object.entries(CAT_META).map(([k, m]) => (
-                      <button key={k} className={`support-cat ${category === k ? "active" : ""}`} onClick={() => setCategory(k)}>
+                      <button type="button" key={k} className={`support-cat ${category === k ? "active" : ""}`} onClick={() => setCategory(k)}>
                         <span className="sc-emoji">{m.emoji}</span> {lang === "fa" ? m.fa : m.en}
                       </button>
                     ))}
@@ -200,7 +200,7 @@ export default function SupportWidget() {
                   rows={1}
                   placeholder={isEmpty ? t("supportPlaceholderNew").replace("{topic}", lang === "fa" ? CAT_META[category].fa : CAT_META[category].en) : t("supportPlaceholder")}
                 />
-                <button className="support-send" disabled={sending || !text.trim()} onClick={send} aria-label={t("send")}>
+                <button type="button" className="support-send" disabled={sending || !text.trim()} onClick={send} aria-label={t("send")}>
                   <Icon name="send" size={18} />
                 </button>
               </div>
@@ -210,10 +210,10 @@ export default function SupportWidget() {
             <div className="support-body">
               {openArticle ? (
                 <div className="help-article">
-                  <button className="btn btn-ghost btn-sm mb8" onClick={() => setOpenArticle(null)}><Icon name={lang === "fa" ? "chevronRight" : "chevronLeft"} size={14} /> {t("back")}</button>
+                  <button type="button" className="btn btn-ghost btn-sm mb8" onClick={() => setOpenArticle(null)}><Icon name={lang === "fa" ? "chevronRight" : "chevronLeft"} size={14} /> {t("back")}</button>
                   <h4>{openArticle.title}</h4>
                   <div className="help-article-body">{openArticle.body}</div>
-                  <div className="help-still small muted mt16">{t("supportStillNeed")} <button className="link-btn" onClick={() => setView("chat")}>{t("supportTabChat")}</button></div>
+                  <div className="help-still small muted mt16">{t("supportStillNeed")} <button type="button" className="link-btn" onClick={() => setView("chat")}>{t("supportTabChat")}</button></div>
                 </div>
               ) : (
                 <>
@@ -222,19 +222,19 @@ export default function SupportWidget() {
                     <input value={helpQ} onChange={(e) => setHelpQ(e.target.value)} placeholder={t("supportHelpSearch")} />
                   </div>
                   <div className="help-cats">
-                    <button className={helpCat === "" ? "active" : ""} onClick={() => setHelpCat("")}>{lang === "fa" ? "همه" : "All"}</button>
+                    <button type="button" className={helpCat === "" ? "active" : ""} onClick={() => setHelpCat("")}>{lang === "fa" ? "همه" : "All"}</button>
                     {(help?.categories || []).map((c) => (
-                      <button key={c} className={helpCat === c ? "active" : ""} onClick={() => setHelpCat(c)}>{HELP_CAT_LABEL[c] ? (lang === "fa" ? HELP_CAT_LABEL[c].fa : HELP_CAT_LABEL[c].en) : c}</button>
+                      <button type="button" key={c} className={helpCat === c ? "active" : ""} onClick={() => setHelpCat(c)}>{HELP_CAT_LABEL[c] ? (lang === "fa" ? HELP_CAT_LABEL[c].fa : HELP_CAT_LABEL[c].en) : c}</button>
                     ))}
                   </div>
                   {help && help.articles.length === 0 && <div className="small muted center" style={{ padding: 20 }}>{t("supportHelpEmpty")}</div>}
                   {(help?.articles || []).map((a) => (
-                    <button key={a.id} className="help-item" onClick={() => api.get(`/support/help/${a.id}?lang=${lang}`).then((d) => setOpenArticle(d.article)).catch(() => {})}>
+                    <button type="button" key={a.id} className="help-item" onClick={() => api.get(`/support/help/${a.id}?lang=${lang}`).then((d) => setOpenArticle(d.article)).catch(() => {})}>
                       <Icon name="book" size={15} /> <span>{a.title}</span>
                       <Icon name={lang === "fa" ? "chevronLeft" : "chevronRight"} size={14} />
                     </button>
                   ))}
-                  <div className="help-still small muted center mt16">{t("supportStillNeed")} <button className="link-btn" onClick={() => setView("chat")}>{t("supportTabChat")}</button></div>
+                  <div className="help-still small muted center mt16">{t("supportStillNeed")} <button type="button" className="link-btn" onClick={() => setView("chat")}>{t("supportTabChat")}</button></div>
                 </>
               )}
             </div>

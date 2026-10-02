@@ -187,10 +187,10 @@ export default function Browse() {
           <p className="muted small mb0">{t("browseDesc")}</p>
         </div>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
-          {flag("custom_test") && <button className="btn btn-sm btn-accent" onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "customTest" }))} title={lang === "fa" ? "از بانک، آزمون دلخواه بساز" : "Build a custom test from the bank"}>
+          {flag("custom_test") && <button type="button" className="btn btn-sm btn-accent" onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "customTest" }))} title={lang === "fa" ? "از بانک، آزمون دلخواه بساز" : "Build a custom test from the bank"}>
             <Icon name="exam" size={14} /> {lang === "fa" ? "آزمون‌ساز" : "Create test"}
           </button>}
-          <button className={`btn btn-sm ${showFil || activeChips.length ? "btn-primary" : "btn-ghost"}`} onClick={() => setShowFil((v) => !v)} aria-expanded={showFil}>
+          <button type="button" className={`btn btn-sm ${showFil || activeChips.length ? "btn-primary" : "btn-ghost"}`} onClick={() => setShowFil((v) => !v)} aria-expanded={showFil}>
             <Icon name="settings" size={14} /> {t("browseFilters")}{activeChips.length ? ` (${activeChips.length})` : ""}
           </button>
         </div>
@@ -263,7 +263,7 @@ export default function Browse() {
               {more ? (fa ? "فیلترهای کمتر" : "Fewer filters") : (fa ? "فیلترهای بیشتر" : "More filters")}
             </button>
             {active > 0 && (
-              <button className="btn btn-ghost btn-sm" onClick={resetAll}>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={resetAll}>
                 <Icon name="close" size={13} /> {t("browseReset")}
               </button>
             )}
@@ -326,7 +326,7 @@ export default function Browse() {
       <ul className="browse-list">
         {(data?.cards || []).map((c) => (
           <li key={c.id} className="browse-item card">
-            <button className="browse-item-main" onClick={() => setOpen(c.id)}>
+            <button type="button" className="browse-item-main" onClick={() => setOpen(c.id)}>
               <Highlight className="browse-q" text={c.q} ranges={c.hl} />
               <div className="browse-meta">
                 {c.subject && !fil.subject.length && <span className="chip">{c.subject}</span>}
@@ -346,9 +346,9 @@ export default function Browse() {
 
       {pages > 1 && (
         <div className="browse-pager">
-          <button className="btn btn-ghost btn-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} aria-label={t("prev")}>‹</button>
+          <button type="button" className="btn btn-ghost btn-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} aria-label={t("prev")}>‹</button>
           <span className="muted small" dir="ltr" aria-live="polite">{page} / {pages}</span>
-          <button className="btn btn-ghost btn-sm" disabled={page >= pages} onClick={() => setPage((p) => p + 1)} aria-label={t("next")}>›</button>
+          <button type="button" className="btn btn-ghost btn-sm" disabled={page >= pages} onClick={() => setPage((p) => p + 1)} aria-label={t("next")}>›</button>
         </div>
       )}
 
@@ -396,7 +396,7 @@ function BrowseCard({ id, onClose }) {
             </div>
           )}
           {!checked && !keyless && (
-            <button className="btn btn-primary mt12" disabled={!canCheck} onClick={() => setChecked(true)}>
+            <button type="button" className="btn btn-primary mt12" disabled={!canCheck} onClick={() => setChecked(true)}>
               {t("checkAnswer") || "بررسی"}
             </button>
           )}
