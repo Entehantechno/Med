@@ -1,4 +1,4 @@
-/* mindmapBank.js — Premium MindMap + Approach Bank (2026-10-02 → 2026-10-04 — 60 maps)
+/* mindmapBank.js — Premium MindMap + Approach Bank (2026-10-02 → 2026-10-04 — 100 maps)
    A premium-only, bidirectionally linked knowledge graph:
 
    - MindMaps: hierarchical disease maps (definition → complications)
@@ -384,7 +384,7 @@ try {
 // Seed 50 high-yield Harrison-based mindmaps — idempotent, premium + free mix
 export function seedMindmapBank() {
   const existing = db.prepare("SELECT COUNT(*) c FROM mindmap_bank").get().c;
-  if (existing >= 60) return { seeded: 0, total: existing };
+  if (existing >= 100) return { seeded: 0, total: existing };
 
   const maps = [
     // 1-11 as before (kept for compat)
@@ -1580,6 +1580,695 @@ export function seedMindmapBank() {
           { id: "rx", label_fa: "اسپیرونولاکتون + سفتریاکسون + لاکتولوز + باند واریس", label_en: "Spiro + ceftri + lactulose + banding", branch: "treatment", x: 0, y: 220 },
         ],
         edges: [{ from: "asc", to: "sbp", label: "" }, { from: "asc", to: "he", label: "" }, { from: "sbp", to: "rx", label: "" }]
+      }
+    },
+    // --- 40 more to reach 100 — full coverage ---
+    {
+      slug: "aortic-dissection",
+      title_fa: "دایسکشن آئورت",
+      title_en: "Aortic Dissection",
+      type: "mind", system: "cardio", level: "emergency",
+      summary_fa: "دردِ پاره‌کننده + اختلاف فشار + مدیاستن عریض — CT. Harrison 22e Ch.31.",
+      summary_en: "Tearing pain + BP gap + wide mediastinum — CT. Harrison 22e Ch.31.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "درد ناگهانیِ پاره‌کننده + انتشار به پشت", label_en: "Sudden tearing pain radiating to back", branch: "clinical", x: 0, y: 0 },
+          { id: "sign", label_fa: "اختلاف فشار دو دست + سوفل AR + شوک", label_en: "BP gap + AR murmur + shock", branch: "clinical", x: 0, y: 110 },
+          { id: "ct", label_fa: "CT آنژیو: فلپ + لومنِ کاذب", label_en: "CT angio: flap + false lumen", branch: "workup", x: 0, y: 220 },
+          { id: "rx", label_fa: "A: جراحی فوری — B: کنترل HR/BP (اسمولول + نیپريد)", label_en: "A: surgery — B: HR/BP control", branch: "treatment", x: 0, y: 330 },
+        ],
+        edges: [{ from: "clin", to: "sign", label: "" }, { from: "sign", to: "ct", label: "" }, { from: "ct", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "svt",
+      title_fa: "تاکی‌کاردی فوق‌بطنی (SVT)",
+      title_en: "Supraventricular Tachycardia",
+      type: "mind", system: "cardio", level: "high_yield",
+      summary_fa: "QRS باریک + ریگولار + P مخفی — واگ + آدنوزین. Harrison 22e Ch.28.",
+      summary_en: "Narrow regular QRS + hidden P — vagal + adenosine. Harrison 22e Ch.28.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "ecg", label_fa: "ECG: QRS باریکِ ریگولار ~150-250", label_en: "ECG: narrow regular ~150-250", branch: "workup", x: 0, y: 0 },
+          { id: "vagal", label_fa: "واگال (والسالوا) → آدنوزین 6mg", label_en: "Vagal → adenosine 6mg", branch: "treatment", x: -200, y: 110 },
+          { id: "stable", label_fa: "پایدار → وراپامیل/بتا", label_en: "Stable → verapamil/beta", branch: "treatment", x: 200, y: 110 },
+          { id: "unstable", label_fa: "ناپایدار → کاردیوورژن", label_en: "Unstable → cardioversion", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "ecg", to: "vagal", label: "" }, { from: "ecg", to: "stable", label: "" }, { from: "vagal", to: "unstable", label: "" }]
+      }
+    },
+    {
+      slug: "bradycardia",
+      title_fa: "برادی‌کاردی و بلوک AV",
+      title_en: "Bradycardia & AV Block",
+      type: "mind", system: "cardio", level: "core",
+      summary_fa: "HR<60 + سرگیجه/سنکوپ + ECG بلوک. Harrison 22e Ch.28.",
+      summary_en: "HR<60 + dizz/syncope + AV block ECG. Harrison 22e Ch.28.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "علائم: خستگی + سرگیجه + سنکوپ", label_en: "Sympt: fatigue + dizz + syncope", branch: "clinical", x: 0, y: 0 },
+          { id: "ecg", label_fa: "ECG: برادی سینوسی vs بلوک Mobitz I/II vs کامل", label_en: "ECG: sinus brady vs Mobitz I/II vs complete", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "آتروپین + پیس موقت → دائم اگر علامت‌دار", label_en: "Atropine + temp pacing → permanent if symptomatic", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "ecg", label: "" }, { from: "ecg", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "pneumothorax",
+      title_fa: "پنوموتوراکس",
+      title_en: "Pneumothorax",
+      type: "mind", system: "pulmo", level: "emergency",
+      summary_fa: "دردِ پلورتیک + تنگی‌نفس + غیابِ صدای تنفسی — CXR. Harrison 22e Ch.55.",
+      summary_en: "Pleuritic pain + dyspnea + absent breath — CXR. Harrison 22e Ch.55.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "تظاهر: دردِ تیز + تنگی‌نفس + هیپرسونور", label_en: "Clin: sharp pain + dyspnea + hyperresonance", branch: "clinical", x: 0, y: 0 },
+          { id: "cxr", label_fa: "CXR: خطِ پلور + فقدانِ مارکینگ", label_en: "CXR: pleural line + absent markings", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "کوچک: مشاهده — بزرگ/تنشن: درن سینه", label_en: "Small: observe — large/tension: chest tube", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "cxr", label: "" }, { from: "cxr", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "ards",
+      title_fa: "سندرم زجر تنفسی حاد (ARDS)",
+      title_en: "ARDS",
+      type: "mind", system: "pulmo", level: "high_yield",
+      summary_fa: "هیپوکسمیِ مقاوم + انفیلترای دوطرفه + PEEP. Harrison 22e Ch.54.",
+      summary_en: "Refractory hypoxemia + bilateral infiltrates + PEEP. Harrison 22e Ch.54.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "برلین: PaO2/FiO2 <300 + CXR دوطرفه <7روز", label_en: "Berlin: PaO2/FiO2 <300 + bilateral <7d", branch: "definition", x: 0, y: 0 },
+          { id: "cause", label_fa: "علل: پنومونی، سپسیس، آسپیراسیون، تروما", label_en: "Causes: pneumonia, sepsis, aspiration", branch: "etiology", x: 0, y: 110 },
+          { id: "rx", label_fa: "ونتیلاسیونِ محافظتی (VT 6ml/kg) + PEEP + پرون", label_en: "Lung-protective VT 6 + PEEP + prone", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "def", to: "cause", label: "" }, { from: "cause", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "lung-cancer",
+      title_fa: "سرطان ریه",
+      title_en: "Lung Cancer",
+      type: "mind", system: "pulmo", level: "high_yield",
+      summary_fa: "سرفه + هموپتزی + توده + NSCLC vs SCLC. Harrison 22e Ch.85.",
+      summary_en: "Cough + hemoptysis + mass + NSCLC vs SCLC. Harrison 22e Ch.85.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "سرفه مزمن + کاهش وزن + هموپتزی", label_en: "Chronic cough + weight loss + hemoptysis", branch: "clinical", x: 0, y: 0 },
+          { id: "img", label_fa: "CT + بیوپسی → NSCLC (آدنو/اسکوام) vs SCLC", label_en: "CT + biopsy → NSCLC vs SCLC", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "NSCLC: جراحی/شیمی/ایمونو — SCLC: شیمی+رادیو", label_en: "NSCLC: surgery/chemo/IO — SCLC: chemo+RT", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "img", label: "" }, { from: "img", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "pulmonary-htn",
+      title_fa: "هیپرتانسیون ریوی",
+      title_en: "Pulmonary Hypertension",
+      type: "mind", system: "pulmo", level: "core",
+      summary_fa: "تنگی‌نفسِ فعالیتی + اکو PASP↑ + کات راست. Harrison 22e Ch.56.",
+      summary_en: "Exertional dyspnea + echo PASP↑ + RHC. Harrison 22e Ch.56.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "خستگی + سنکوپ + ادم + JVP↑", label_en: "Fatigue + syncope + edema + JVP↑", branch: "clinical", x: 0, y: 0 },
+          { id: "echo", label_fa: "اکو: RVH + TR + PASP", label_en: "Echo: RVH + TR + PASP", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "درمانِ علت + آنتاگونیست اندوتلین/سیلدنافیل", label_en: "Treat cause + ERA/PDE5", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "echo", label: "" }, { from: "echo", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "sarcoidosis",
+      title_fa: "سارکوئیدوز",
+      title_en: "Sarcoidosis",
+      type: "mind", system: "pulmo", level: "core",
+      summary_fa: "لنفادنوپاتی نافی + گرانولوم غیرپنیری. Harrison 22e Ch.53.",
+      summary_en: "Hilar LAD + noncaseating granuloma. Harrison 22e Ch.53.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "سرفه + تنگی‌نفس + اریتم ندوزوم", label_en: "Cough + dyspnea + erythema nodosum", branch: "clinical", x: 0, y: 0 },
+          { id: "img", label_fa: "CXR: لنف نافی دوطرفه + ACE↑ + بیوپسی", label_en: "CXR: bilateral hilar LAD + ACE↑ + biopsy", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "اغلب خودمحدود — استروئید اگر علامت‌دار", label_en: "Often self-limited — steroids if symptomatic", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "img", label: "" }, { from: "img", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "peptic-ulcer",
+      title_fa: "زخم پپتیک",
+      title_en: "Peptic Ulcer Disease",
+      type: "mind", system: "gastro", level: "core",
+      summary_fa: "درد اپی‌گاستر + H.pylori/NSAID + آندوسکوپی. Harrison 22e Ch.335.",
+      summary_en: "Epigastric pain + H.pylori/NSAID + scope. Harrison 22e Ch.335.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "eti", label_fa: "علل: H.pylori، NSAID، استرس", label_en: "Causes: H.pylori, NSAID, stress", branch: "etiology", x: 0, y: 0 },
+          { id: "clin", label_fa: "دردِ سوزشی + تهوع + خونریزی", label_en: "Burning pain + N/V + bleed", branch: "clinical", x: 0, y: 110 },
+          { id: "rx", label_fa: "PPI + ریشه‌کنی H.pylori (کلاریترو/آموکسی) + پرهیز NSAID", label_en: "PPI + H.pylori erad + avoid NSAID", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "eti", to: "clin", label: "" }, { from: "clin", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "cholecystitis",
+      title_fa: "کوله‌سیستیت حاد",
+      title_en: "Acute Cholecystitis",
+      type: "mind", system: "gastro", level: "high_yield",
+      summary_fa: "درد RUQ + مورفی + تب + سونو سنگ + دیواره ضخیم. Harrison 22e Ch.345.",
+      summary_en: "RUQ pain + Murphy + fever + US stone + wall thick. Harrison 22e Ch.345.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "درد RUQ + انتشار به شانه + تهوع", label_en: "RUQ pain radiating to shoulder + N/V", branch: "clinical", x: 0, y: 0 },
+          { id: "us", label_fa: "سونو: سنگ + دیواره>3mm + مایع پری‌کوله", label_en: "US: stone + wall>3mm + fluid", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "NPO + آنتی‌بیوتیک + کوله‌سیستکتومی لاپاروسکوپیک", label_en: "NPO + abx + lap chole", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "us", label: "" }, { from: "us", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "colorectal-cancer",
+      title_fa: "سرطان کولورکتال",
+      title_en: "Colorectal Cancer",
+      type: "mind", system: "gastro", level: "high_yield",
+      summary_fa: "خون مخفی + تغییر اجابت + غربال FIT/کولونوسکوپی. Harrison 22e Ch.84.",
+      summary_en: "Occult blood + change bowel + FIT/scope. Harrison 22e Ch.84.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "خونریزی + کم‌خونی + کاهش وزن", label_en: "Bleed + anemia + weight loss", branch: "clinical", x: 0, y: 0 },
+          { id: "scr", label_fa: "FIT + کولونوسکوپی + بیوپسی + CEA", label_en: "FIT + colonoscopy + biopsy + CEA", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "جراحی + شیمی (FOLFOX) + غربال خانواده", label_en: "Surgery + FOLFOX + family screen", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "scr", label: "" }, { from: "scr", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "ckd",
+      title_fa: "بیماری مزمن کلیه (CKD)",
+      title_en: "Chronic Kidney Disease",
+      type: "mind", system: "nephro", level: "high_yield",
+      summary_fa: "GFR↓ >3ماه + آلبومینوری + عوارض. Harrison 22e Ch.64.",
+      summary_en: "GFR↓ >3mo + albuminuria + complications. Harrison 22e Ch.64.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "st", label_fa: "مرحله‌بندی: G1-G5 + A1-A3", label_en: "Stage: G1-G5 + A1-A3", branch: "definition", x: 0, y: 0 },
+          { id: "comp", label_fa: "عوارض: آنمی، CKD-MBD، اسیدوز، HTN", label_en: "Comp: anemia, CKD-MBD, acidosis, HTN", branch: "complication", x: 0, y: 110 },
+          { id: "rx", label_fa: "ACE/ARB + SGLT2 + کنترلِ فشار/قند + دیالیز G5", label_en: "ACE/ARB + SGLT2 + BP/glc + dialysis G5", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "st", to: "comp", label: "" }, { from: "comp", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "metabolic-acidosis",
+      title_fa: "اسیدوز متابولیک",
+      title_en: "Metabolic Acidosis",
+      type: "approach", system: "nephro", level: "high_yield",
+      summary_fa: "pH↓ + HCO3↓ + آنیون‌گپ. Harrison 22e Ch.66.",
+      summary_en: "pH↓ + HCO3↓ + anion gap. Harrison 22e Ch.66.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "abg", label_fa: "ABG: pH↓ + HCO3↓", label_en: "ABG: pH↓ + HCO3↓", branch: "workup", x: 0, y: 0 },
+          { id: "gap", label_fa: "AG↑: لاکتات، کتو، کلیه، سم (MUDPILES)", label_en: "High AG: lactate, keto, renal, toxin", branch: "etiology", x: -200, y: 110 },
+          { id: "nongap", label_fa: "AG نرمال: RTA، اسهال، استازولامید", label_en: "Normal AG: RTA, diarrhea", branch: "etiology", x: 200, y: 110 },
+          { id: "rx", label_fa: "درمانِ علت + بیکربنات اگر pH<7.1 شدید", label_en: "Treat cause + bicarb if pH<7.1", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "abg", to: "gap", label: "" }, { from: "abg", to: "nongap", label: "" }, { from: "gap", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "hypercalcemia-appro",
+      title_fa: "هیپرکلسمی — اپروچ",
+      title_en: "Hypercalcemia",
+      type: "approach", system: "endo", level: "high_yield",
+      summary_fa: "Ca>10.5 + PTH + بدخیمی. Harrison 22e Ch.47.",
+      summary_en: "Ca>10.5 + PTH + malignancy. Harrison 22e Ch.47.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "lab", label_fa: "Ca↑ + علائم: یبوست، پلی‌یوری، گیجی", label_en: "High Ca + constip, polyuria, confusion", branch: "clinical", x: 0, y: 0 },
+          { id: "pth", label_fa: "PTH↑ → هیپرپارا — PTH↓ → بدخیمی/ویت D", label_en: "High PTH → hyperpara — low → malignancy", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "مایعات + بیس‌فسفونات + کلسی‌تونین + درمانِ علت", label_en: "Fluids + bisphos + calcitonin + treat cause", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "lab", to: "pth", label: "" }, { from: "pth", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "pheochromocytoma",
+      title_fa: "فئوکروموسیتوم",
+      title_en: "Pheochromocytoma",
+      type: "mind", system: "endo", level: "core",
+      summary_fa: "HTN حمله‌ای + تعریق + تپش + متانفرین↑. Harrison 22e Ch.40.",
+      summary_en: "Paroxysmal HTN + sweat + palp + metanephrine↑. Harrison 22e Ch.40.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "tri", label_fa: "تریاد: سردرد + تعریق + تپش", label_en: "Triad: headache + sweat + palp", branch: "clinical", x: 0, y: 0 },
+          { id: "lab", label_fa: "متانفرینِ پلاسما/ادرار↑ + CT آدرنال", label_en: "Plasma/urine metanephrine↑ + CT", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "آلفا (فنوکسی) سپس بتا + جراحی", label_en: "Alpha then beta + surgery", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "tri", to: "lab", label: "" }, { from: "lab", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "parkinson",
+      title_fa: "پارکینسون",
+      title_en: "Parkinson Disease",
+      type: "mind", system: "neuro", level: "high_yield",
+      summary_fa: "ترمورِ استراحت + ریژیدیتی + برادی‌کینزی + پاسخ به لوودوپا. Harrison 22e Ch.79.",
+      summary_en: "Rest tremor + rigidity + bradykinesia + levodopa response. Harrison 22e Ch.79.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "tri", label_fa: "تریاد + ناپایداری وضعیتی", label_en: "Triad + postural instability", branch: "clinical", x: 0, y: 0 },
+          { id: "dx", label_fa: "بالینی + DAT-SPECT اگر شک", label_en: "Clinical + DAT-SPECT if doubt", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "لوودوپا/کاربی‌دوپا + آگونیست دوپا + DBS", label_en: "Levodopa + dopamine agonist + DBS", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "tri", to: "dx", label: "" }, { from: "dx", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "alzheimer",
+      title_fa: "آلزایمر",
+      title_en: "Alzheimer Disease",
+      type: "mind", system: "neuro", level: "core",
+      summary_fa: "اختلال حافظهٔ پیشرونده + آتروفی هیپوکامپ. Harrison 22e Ch.79.",
+      summary_en: "Progressive memory loss + hippocampal atrophy. Harrison 22e Ch.79.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "فراموشیِ اخیر + اختلالِ عملکرد روزانه", label_en: "Recent memory loss + ADL impairment", branch: "clinical", x: 0, y: 0 },
+          { id: "img", label_fa: "MRI: آتروفی + PET آمیلوئید + CSF Aβ/tau", label_en: "MRI: atrophy + amyloid PET + CSF", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "دونپزیل + ممانتین + حمایت", label_en: "Donepezil + memantine + support", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "img", label: "" }, { from: "img", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "sah",
+      title_fa: "خونریزی ساب‌آراکنوئید (SAH)",
+      title_en: "Subarachnoid Hemorrhage",
+      type: "mind", system: "neuro", level: "emergency",
+      summary_fa: "سردردِ برق‌آسا + سفتی گردن + CT. Harrison 22e Ch.68.",
+      summary_en: "Thunderclap headache + neck stiffness + CT. Harrison 22e Ch.68.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "سردردِ ناگهانیِ شدید + تهوع + فتوفوبی", label_en: "Sudden severe headache + N/V + photophobia", branch: "clinical", x: 0, y: 0 },
+          { id: "ct", label_fa: "CT: خون ساب‌آراکنوئید — اگر منفی LP", label_en: "CT: SAH blood — if neg LP", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "نیمودیپین + Sicherung آنوریسم (کویل/کلیپ)", label_en: "Nimodipine + secure aneurysm", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "ct", label: "" }, { from: "ct", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "myasthenia",
+      title_fa: "میاستنی گراویس",
+      title_en: "Myasthenia Gravis",
+      type: "mind", system: "neuro", level: "high_yield",
+      summary_fa: "ضعفِ نوسانی + پتوز + آنتی-AChR. Harrison 22e Ch.77.",
+      summary_en: "Fluctuating weakness + ptosis + anti-AChR. Harrison 22e Ch.77.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "پتوز/دوبینی + ضعفِ انتهای روز + بهبود با استراحت", label_en: "Ptosis/diplopia + fatigable weakness", branch: "clinical", x: 0, y: 0 },
+          { id: "test", label_fa: "آنتی-AChR + EMG + تست ادروفونیوم", label_en: "Anti-AChR + EMG + edrophonium", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "پیریدوستیگمین + استروئید + IVIG + تیمکتومی", label_en: "Pyridostigmine + steroids + IVIG + thymectomy", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "test", label: "" }, { from: "test", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "leukemia-aml",
+      title_fa: "لوسمی میلوئیدی حاد (AML)",
+      title_en: "Acute Myeloid Leukemia",
+      type: "mind", system: "heme", level: "high_yield",
+      summary_fa: "بلاست>20% + پن‌سیتوپنی + Auer rod. Harrison 22e Ch.81.",
+      summary_en: "Blasts>20% + pancytopenia + Auer. Harrison 22e Ch.81.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "تب + خونریزی + خستگی + هپاتواسپلنومگالی", label_en: "Fever + bleed + fatigue + HSM", branch: "clinical", x: 0, y: 0 },
+          { id: "lab", label_fa: "CBC: پن‌سیتوپنی + بلاست — مغز استخوان >20%", label_en: "CBC: pancytopenia + blasts — marrow >20%", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "شیمی (7+3) + ATRA اگر APL + پیوند", label_en: "Chemo 7+3 + ATRA if APL + transplant", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "lab", label: "" }, { from: "lab", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "lymphoma",
+      title_fa: "لنفوم (هوچکین/غیرهوچکین)",
+      title_en: "Lymphoma",
+      type: "mind", system: "heme", level: "high_yield",
+      summary_fa: "لنفادنوپاتی + B symptoms + بیوپسی. Harrison 22e Ch.82.",
+      summary_en: "LAD + B symptoms + biopsy. Harrison 22e Ch.82.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "تودهٔ بدون درد + تعریق شبانه + کاهش وزن + تب", label_en: "Painless mass + night sweat + weight loss + fever", branch: "clinical", x: 0, y: 0 },
+          { id: "bx", label_fa: "بیوپسیِ اکسیزیونال + IHC + Ann Arbor", label_en: "Excisional biopsy + IHC + Ann Arbor", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "هوچکین: ABVD — غیرهوچکین: R-CHOP", label_en: "Hodgkin: ABVD — NHL: R-CHOP", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "bx", label: "" }, { from: "bx", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "myeloma",
+      title_fa: "مولتیپل میلوما",
+      title_en: "Multiple Myeloma",
+      type: "mind", system: "heme", level: "high_yield",
+      summary_fa: "CRAB + M پروتئین + پلاسماسل>10%. Harrison 22e Ch.83.",
+      summary_en: "CRAB + M protein + plasma>10%. Harrison 22e Ch.83.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "crab", label_fa: "CRAB: Ca↑, نارسایی کلیه، آنمی، Bone pain", label_en: "CRAB: Ca, renal, anemia, bone", branch: "clinical", x: 0, y: 0 },
+          { id: "lab", label_fa: "SPEP: M spike + Bence-Jones + مغز", label_en: "SPEP: M spike + Bence Jones + marrow", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "بورتیزومیب + لنالیدومید + دگزا + پیوند", label_en: "Bortezomib + len + dex + transplant", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "crab", to: "lab", label: "" }, { from: "lab", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "dic",
+      title_fa: "انعقاد داخل‌عروقی منتشر (DIC)",
+      title_en: "DIC",
+      type: "mind", system: "heme", level: "emergency",
+      summary_fa: "خونریزی + ترومبوز + PT↑ + پلاکت↓ + D-dimer↑. Harrison 22e Ch.26.",
+      summary_en: "Bleed + thrombosis + PT↑ + low plt + D-dimer↑. Harrison 22e Ch.26.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "trig", label_fa: "محرک: سپسیس، تروما، بدخیمی، مامایی", label_en: "Trigger: sepsis, trauma, malignancy, obstetric", branch: "etiology", x: 0, y: 0 },
+          { id: "lab", label_fa: "PT↑ + PTT↑ + فیبرینوژن↓ + D-dimer↑ + پلاکت↓", label_en: "PT↑ PTT↑ fibrin↓ D-dimer↑ low plt", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "درمانِ علت + FFP/پلاکت + هپارین اگر ترومبوز", label_en: "Treat cause + FFP/plt + heparin if clot", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "trig", to: "lab", label: "" }, { from: "lab", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "gout",
+      title_fa: "نقرس",
+      title_en: "Gout",
+      type: "mind", system: "rheum", level: "core",
+      summary_fa: "مونوآرتریتِ حاد + کریستالِ سوزنیِ منفی. Harrison 22e Ch.46.",
+      summary_en: "Acute monoarthritis + needle negative. Harrison 22e Ch.46.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "پوداگرا (شست پا) + قرمزی + دردِ شبانه", label_en: "Podagra + red + night pain", branch: "clinical", x: 0, y: 0 },
+          { id: "fluid", label_fa: "مایع مفصلی: کریستالِ سوزنیِ منفی + WBC↑", label_en: "Synovial: needle negative + WBC↑", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "حاد: NSAID/کلشی‌سین — مزمن: آلوپورینول + پرهیز", label_en: "Acute: NSAID/colch — chronic: allopurinol", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "fluid", label: "" }, { from: "fluid", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "scleroderma",
+      title_fa: "اسکلرودرمی",
+      title_en: "Systemic Sclerosis",
+      type: "mind", system: "rheum", level: "core",
+      summary_fa: "سفتی پوست + رینود + فیبروز ریه. Harrison 22e Ch.76.",
+      summary_en: "Skin thickening + Raynaud + lung fibrosis. Harrison 22e Ch.76.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "پوست سفت + رینود + دیسفاژی", label_en: "Tight skin + Raynaud + dysphagia", branch: "clinical", x: 0, y: 0 },
+          { id: "ab", label_fa: "آنتی-Scl-70 / سنترومر + کاپیلاروسکوپی", label_en: "Anti-Scl70 / centromere + capillaroscopy", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "علامتی + ACE برای کرایز کلیوی + میکوفنولات", label_en: "Sympt + ACE for renal crisis + MMF", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "ab", label: "" }, { from: "ab", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "sjogren",
+      title_fa: "شوگرن",
+      title_en: "Sjögren",
+      type: "mind", system: "rheum", level: "core",
+      summary_fa: "خشکی چشم/دهان + آنتی-Ro/La. Harrison 22e Ch.76.",
+      summary_en: "Dry eye/mouth + anti-Ro/La. Harrison 22e Ch.76.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "خشکی + پوسیدگی + پاروتیت", label_en: "Dryness + caries + parotitis", branch: "clinical", x: 0, y: 0 },
+          { id: "test", label_fa: "Schirmer + آنتی-Ro/La + بیوپسی لب", label_en: "Schirmer + anti-Ro/La + lip biopsy", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "اشک/بزاق مصنوعی + هیدروکسی‌کلروکین", label_en: "Artificial tears/saliva + HCQ", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "test", label: "" }, { from: "test", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "approach-syncope",
+      title_fa: "سنکوپ — اپروچ",
+      title_en: "Syncope — Approach",
+      type: "approach", system: "other", level: "core",
+      summary_fa: "افتِ گذرای هوشیاری + علل قلبی/رفلکسی. Harrison 22e Ch.27.",
+      summary_en: "Transient LOC + cardiac/reflex causes. Harrison 22e Ch.27.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "hist", label_fa: "شرح: محرک، پوزیشن، تپش، تشنج؟", label_en: "History: trigger, position, palp, seizure?", branch: "workup", x: 0, y: 0 },
+          { id: "card", label_fa: "قلبی: آریتمی/ساختمانی → ECG/اکو/هولتر", label_en: "Cardiac: arrhythmia/struct → ECG/echo/Holter", branch: "workup", x: -200, y: 110 },
+          { id: "reflex", label_fa: "رفلکسی/ارتوستاتیک → تیلت/فشار", label_en: "Reflex/orthostatic → tilt/BP", branch: "workup", x: 200, y: 110 },
+          { id: "rx", label_fa: "پیس/ICD اگر قلبی + آموزش اگر رفلکسی", label_en: "Pace/ICD if cardiac + education if reflex", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "hist", to: "card", label: "" }, { from: "hist", to: "reflex", label: "" }, { from: "card", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "approach-vertigo",
+      title_fa: "سرگیجه دورانی — اپروچ",
+      title_en: "Vertigo — Approach",
+      type: "approach", system: "neuro", level: "core",
+      summary_fa: "محیطی vs مرکزی + Dix-Hallpike. Harrison 22e Ch.28.",
+      summary_en: "Peripheral vs central + Dix-Hallpike. Harrison 22e Ch.28.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "per", label_fa: "محیطی: BPPV، منییر، نوریت وستیبولار (شنوایی ±)", label_en: "Peripheral: BPPV, Meniere, vest neuritis", branch: "clinical", x: -200, y: 0 },
+          { id: "cent", label_fa: "مرکزی: سکته/ MS (بدون شنوایی + علائم ساقه)", label_en: "Central: stroke/MS (no hearing + brainstem)", branch: "clinical", x: 200, y: 0 },
+          { id: "test", label_fa: "Dix-Hallpike + HINTS + MRI اگر مرکزی", label_en: "Dix-Hallpike + HINTS + MRI if central", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "Epley برای BPPV + وستیبولار توانبخشی", label_en: "Epley for BPPV + vest rehab", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "per", to: "test", label: "" }, { from: "cent", to: "test", label: "" }, { from: "test", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "approach-jaundice",
+      title_fa: "یرقان — اپروچ",
+      title_en: "Jaundice — Approach",
+      type: "approach", system: "gastro", level: "core",
+      summary_fa: "مستقیم vs غیرمستقیم. Harrison 22e Ch.45.",
+      summary_en: "Direct vs indirect. Harrison 22e Ch.45.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "bili", label_fa: "بیلی‌روبین: غیرمستقیم↑ → همولیز/ژیلبرت", label_en: "Indirect↑ → hemolysis/Gilbert", branch: "workup", x: -200, y: 0 },
+          { id: "direct", label_fa: "مستقیم↑ → کلستاز/هپاتوسلولار", label_en: "Direct↑ → cholestasis/hepatocellular", branch: "workup", x: 200, y: 0 },
+          { id: "img", label_fa: "US/MRCP + آنزیم (ALP/ALT) + INR", label_en: "US/MRCP + ALP/ALT + INR", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "درمانِ علت + ERCP اگر انسداد", label_en: "Treat cause + ERCP if obstruction", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "bili", to: "img", label: "" }, { from: "direct", to: "img", label: "" }, { from: "img", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "approach-edema",
+      title_fa: "ادم — افتراق",
+      title_en: "Edema — Approach",
+      type: "approach", system: "other", level: "core",
+      summary_fa: "سیستمیک vs لوکال. Harrison 22e Ch.46.",
+      summary_en: "Systemic vs local. Harrison 22e Ch.46.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "loc", label_fa: "لوکال: DVT، سلولیت، لنف‌ادم", label_en: "Local: DVT, cellulitis, lymphedema", branch: "clinical", x: -200, y: 0 },
+          { id: "sys", label_fa: "سیستمیک: HF، سیروز، نفروتیک، دارو", label_en: "Systemic: HF, cirrhosis, nephrotic, drug", branch: "clinical", x: 200, y: 0 },
+          { id: "work", label_fa: "BNP، آلبومین، ادرار، تیروئید", label_en: "BNP, albumin, urine, thyroid", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "نمک کم + دیورتیک + درمانِ علت", label_en: "Low salt + diuretic + treat cause", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "loc", to: "work", label: "" }, { from: "sys", to: "work", label: "" }, { from: "work", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "cellulitis",
+      title_fa: "سلولیت",
+      title_en: "Cellulitis",
+      type: "mind", system: "infect", level: "core",
+      summary_fa: "اریتم + گرما + ادم + تب — استرپتو/استاف. Harrison 22e Ch.131.",
+      summary_en: "Erythema + warmth + edema + fever — strep/staph. Harrison 22e Ch.131.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "پوستِ قرمزِ گرم + درد + تب", label_en: "Red warm skin + pain + fever", branch: "clinical", x: 0, y: 0 },
+          { id: "ddx", label_fa: "افتراق: DVT، نقرس، درماتیت", label_en: "DDx: DVT, gout, dermatitis", branch: "ddx", x: 0, y: 110 },
+          { id: "rx", label_fa: "سفالکسین/کلیندا + بالا نگه‌داشتن + علامت‌گذاری", label_en: "Cephalexin/clinda + elevation + marking", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "ddx", label: "" }, { from: "ddx", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "influenza",
+      title_fa: "آنفلوانزا",
+      title_en: "Influenza",
+      type: "mind", system: "infect", level: "high_yield",
+      summary_fa: "تب ناگهانی + میالژی + سرفه — PCR + اوسلتامیویر. Harrison 22e Ch.210.",
+      summary_en: "Sudden fever + myalgia + cough — PCR + oseltamivir. Harrison 22e Ch.210.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "تب + لرز + میالژی + سرفه خشک", label_en: "Fever + chill + myalgia + dry cough", branch: "clinical", x: 0, y: 0 },
+          { id: "test", label_fa: "Rapid Ag/PCR — در فصلِ اپیدمی", label_en: "Rapid/PCR in season", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "اوسلتامیویر <48h + واکسنِ سالانه", label_en: "Oseltamivir <48h + annual vaccine", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "test", label: "" }, { from: "test", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "poisoning",
+      title_fa: "مسمومیت — اپروچ کلی",
+      title_en: "Poisoning — General Approach",
+      type: "approach", system: "emergency", level: "emergency",
+      summary_fa: "ABC + دکنتامینه + آنتی‌دوت. Harrison 22e Ch.14.",
+      summary_en: "ABC + decontam + antidote. Harrison 22e Ch.14.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "abc", label_fa: "ABC + گلوکز + نالوکسان + تیامین", label_en: "ABC + glucose + naloxone + thiamine", branch: "action", x: 0, y: 0 },
+          { id: "hist", label_fa: "شرح + معاینه + لاب (ABG، ECG، استامینوفن)", label_en: "History + exam + labs (ABG, ECG, acetaminophen)", branch: "workup", x: 0, y: 110 },
+          { id: "decon", label_fa: "زغال فعال <1h + شستشو اگر لازم", label_en: "Activated charcoal <1h + lavage if needed", branch: "treatment", x: -200, y: 220 },
+          { id: "antid", label_fa: "آنتی‌دوت: نالوکسان، فلومازنیل، NAC", label_en: "Antidote: naloxone, flumazenil, NAC", branch: "treatment", x: 200, y: 220 },
+        ],
+        edges: [{ from: "abc", to: "hist", label: "" }, { from: "hist", to: "decon", label: "" }, { from: "hist", to: "antid", label: "" }]
+      }
+    },
+    {
+      slug: "cardiac-arrest",
+      title_fa: "ایست قلبی — ACLS",
+      title_en: "Cardiac Arrest — ACLS",
+      type: "approach", system: "emergency", level: "emergency",
+      summary_fa: "VF/VT vs آسystole/PEA + CPR + اپی. Harrison 22e Ch.317.",
+      summary_en: "VF/VT vs asystole/PEA + CPR + epi. Harrison 22e Ch.317.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "rhy", label_fa: "ریتم: VF/VT قابلِ شوک vs PEA/آسیستول غیرقابل", label_en: "Rhythm: VF/VT shockable vs PEA/asystole non", branch: "workup", x: 0, y: 0 },
+          { id: "cpr", label_fa: "CPR با کیفیت + شوک اگر VF/VT + اپی هر 3-5min", label_en: "High-quality CPR + shock if VF/VT + epi q3-5", branch: "treatment", x: 0, y: 110 },
+          { id: "rev", label_fa: "Hs & Ts: هیپوکسی، هیپوولمی، K، تامپوناد، PE", label_en: "Hs & Ts: hypoxia, hypoV, K, tamponade, PE", branch: "etiology", x: 0, y: 220 },
+        ],
+        edges: [{ from: "rhy", to: "cpr", label: "" }, { from: "cpr", to: "rev", label: "" }]
+      }
+    },
+    {
+      slug: "covid",
+      title_fa: "کووید-۱۹",
+      title_en: "COVID-19",
+      type: "mind", system: "infect", level: "high_yield",
+      summary_fa: "تب + سرفه + هیپوکسی + PCR + رمدسیویر/دگزا. Harrison 22e Ch.208.",
+      summary_en: "Fever + cough + hypoxia + PCR + remdesivir/dex. Harrison 22e Ch.208.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "تب + سرفه + تنگی‌نفس + از دست‌دادن بویایی", label_en: "Fever + cough + dyspnea + anosmia", branch: "clinical", x: 0, y: 0 },
+          { id: "test", label_fa: "PCR/Antigen + CXR/CT + CRP/لنفوپنی", label_en: "PCR/Ag + CXR/CT + CRP/lymphopenia", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "حمایتی + دگزا اگر هیپوکسی + رمدسیویر + واکسن", label_en: "Support + dex if hypoxic + remdesivir + vaccine", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "test", label: "" }, { from: "test", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "hypernatremia-appro",
+      title_fa: "هیپرناترمی",
+      title_en: "Hypernatremia",
+      type: "approach", system: "nephro", level: "core",
+      summary_fa: "Na>145 + تشنگی/گیجی + علتِ کم‌آبی. Harrison 22e Ch.47.",
+      summary_en: "Na>145 + thirst/confusion + water loss. Harrison 22e Ch.47.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "Na↑ + تشنگی + گیجی + الیگوری/پلی‌یوری", label_en: "High Na + thirst + confusion", branch: "clinical", x: 0, y: 0 },
+          { id: "vol", label_fa: "حجم: هیپوولمیک (اسهال/دیورتیک) vs یوولمیک (DI)", label_en: "Vol: hypo (diarrhea) vs eu (DI)", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "مایعاتِ هیپوتونیک + درمانِ DI/علت + اصلاحِ آهسته", label_en: "Hypotonic fluids + treat DI + slow correction", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "vol", label: "" }, { from: "vol", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "siadh",
+      title_fa: "SIADH",
+      title_en: "SIADH",
+      type: "mind", system: "endo", level: "high_yield",
+      summary_fa: "هیپوناترمیِ یوولمیک + اسمولالیته پایین + Na ادرار بالا. Harrison 22e Ch.47.",
+      summary_en: "Euvolemic hypoNa + low osmol + high urine Na. Harrison 22e Ch.47.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "lab", label_fa: "Na↓ + اسمول پایین + ادرار غلیظ + تیروئید/آدرنال نرمال", label_en: "Low Na + low osmol + concentrated urine + normal thyroid/adrenal", branch: "workup", x: 0, y: 0 },
+          { id: "cause", label_fa: "علل: دارو، بدخیمی، CNS، ریه", label_en: "Causes: drugs, malignancy, CNS, lung", branch: "etiology", x: 0, y: 110 },
+          { id: "rx", label_fa: "محدودیت مایعات + نمک هیپرتونیک اگر شدید + تولواپتان", label_en: "Fluid restrict + hypertonic if severe + tolvaptan", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "lab", to: "cause", label: "" }, { from: "cause", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "acromegaly",
+      title_fa: "آکرومگالی",
+      title_en: "Acromegaly",
+      type: "mind", system: "endo", level: "core",
+      summary_fa: "GH↑ + دست/پا بزرگ + IGF-1↑ + آدنوم هیپوفیز. Harrison 22e Ch.40.",
+      summary_en: "High GH + large hands/feet + high IGF1 + pituitary adenoma. Harrison 22e Ch.40.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "بزرگیِ دست/پا + پروگناتیسم + تعریق + HTN/DM", label_en: "Large hands/feet + prognathism + sweat + HTN/DM", branch: "clinical", x: 0, y: 0 },
+          { id: "lab", label_fa: "IGF-1↑ + OGTT GH عدمِ سرکوب + MRI هیپوفیز", label_en: "High IGF1 + OGTT non-suppressed + MRI", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "جراحی ترانس‌اسفنوئیدال + اکترئوتاید + پرتودرمانی", label_en: "Transsphenoidal + octreotide + RT", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "lab", label: "" }, { from: "lab", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "osteomyelitis",
+      title_fa: "استئومیلیت",
+      title_en: "Osteomyelitis",
+      type: "mind", system: "infect", level: "core",
+      summary_fa: "دردِ استخوان + تب + ESR↑ + MRI — استاف. Harrison 22e Ch.133.",
+      summary_en: "Bone pain + fever + high ESR + MRI — staph. Harrison 22e Ch.133.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "دردِ موضعی + تب + قرمزی + سابقهٔ زخم/تروما", label_en: "Local pain + fever + redness + wound/trauma", branch: "clinical", x: 0, y: 0 },
+          { id: "img", label_fa: "MRI: ادم مغز استخوان + کشتِ خون/استخوان", label_en: "MRI: marrow edema + blood/bone culture", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "آنتی‌بیوتیک طولانی (nafcillin/ونکو) + دبریدمان", label_en: "Long abx + debridement", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "img", label: "" }, { from: "img", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "malaria",
+      title_fa: "مالاریا",
+      title_en: "Malaria",
+      type: "mind", system: "infect", level: "core",
+      summary_fa: "تبِ متناوب + لرز + آنمی + اسمیرِ خونی. Harrison 22e Ch.230.",
+      summary_en: "Intermittent fever + chill + anemia + blood smear. Harrison 22e Ch.230.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "تب + لرز + تعریق + همولیز + اسپلنومگالی", label_en: "Fever + chill + sweat + hemolysis + splenomegaly", branch: "clinical", x: 0, y: 0 },
+          { id: "smear", label_fa: "اسمیرِ ضخیم/نازک + RDT + PCR", label_en: "Thick/thin smear + RDT + PCR", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "آرتمترین/کلروکین + پرایمکین برای ویواکس + پیشگیری", label_en: "Artemether/chloroquine + primaquine for vivax + prophylaxis", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "smear", label: "" }, { from: "smear", to: "rx", label: "" }]
       }
     },
   ];

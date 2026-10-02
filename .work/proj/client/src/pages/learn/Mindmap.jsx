@@ -3,7 +3,7 @@ import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
 
-/* MindMap Bank — 60 maps, premium + attractive UI
+/* MindMap Bank — 100 maps, premium + attractive UI
    - Glass cards, gradients, micro-animations, hover lift
    - Search + faceted chips with live counts
    - Graph: glass nodes, spring layout, mini-map
@@ -136,7 +136,7 @@ export default function Mindmap({ onBack }) {
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-3xl shadow-lg shadow-amber-500/25">🔒</div>
             <h3 className="mt-4 text-xl font-black text-amber-900">{lang === "fa" ? "این نقشه ویژهٔ پرمیوم است" : "Premium Only"}</h3>
             <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-amber-800/80">
-              {lang === "fa" ? "با پرمیوم، ۶۰ مایندمپ و اپروچِ لینک‌دار به بانک را باز کنید — ۳ نقشه برای آشنایی رایگان است." : "Unlock 60 linked maps with Premium — 3 free to preview."}
+              {lang === "fa" ? "با پرمیوم، ۱۰۰ مایندمپ و اپروچِ لینک‌دار به بانک را باز کنید — ۳ نقشه برای آشنایی رایگان است." : "Unlock 100 linked maps with Premium — 3 free to preview."}
             </p>
             <div className="mt-6 flex justify-center gap-3">
               <button onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))} className="rounded-full bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3 text-sm font-black text-white shadow-lg shadow-amber-500/25 transition hover:scale-105 hover:shadow-xl">
@@ -273,7 +273,7 @@ export default function Mindmap({ onBack }) {
       {/* Top switch */}
       <div className="mb-4 flex gap-2">
         <button onClick={() => setMode("bank")} className={`rounded-full px-5 py-2.5 text-sm font-black shadow-sm transition ${mode === "bank" ? "bg-slate-900 text-white shadow-slate-900/20" : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"}`}>
-          ⭐ {lang === "fa" ? "بانکِ مایندمپ — ۶۰" : "MindMap Bank — 60"}
+          ⭐ {lang === "fa" ? "بانکِ مایندمپ — ۱۰۰" : "MindMap Bank — 100"}
         </button>
         <button onClick={() => setMode("classic")} className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${mode === "classic" ? "bg-slate-900 text-white" : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"}`}>
           🗺️ {lang === "fa" ? "نقشه‌های درسی" : "Lesson maps"}
@@ -556,7 +556,7 @@ export default function Mindmap({ onBack }) {
                       <div className="rounded-[19px] bg-gradient-to-br from-violet-600 via-indigo-600 to-sky-600 p-6">
                         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
                           <div className="text-white">
-                            <h3 className="text-base font-black">✨ {lang === "fa" ? "۳ نقشه رایگان، ۵۷ تای دیگر با پرمیوم" : "3 free, 57 more with Premium"}</h3>
+                            <h3 className="text-base font-black">✨ {lang === "fa" ? "۳ نقشه رایگان، ۹۷ تای دیگر با پرمیوم" : "3 free, 97 more with Premium"}</h3>
                             <p className="mt-1 text-sm text-violet-100">{lang === "fa" ? "هر گره به بانکِ سؤالات لینک است — دو کلیک تا تسلط" : "Every node links to Qbank — 2 clicks to mastery"}</p>
                           </div>
                           <button onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))} className="shrink-0 rounded-full bg-white px-6 py-3 text-sm font-black text-violet-700 shadow-lg hover:bg-violet-50">

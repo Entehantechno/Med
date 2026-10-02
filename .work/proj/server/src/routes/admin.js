@@ -48,6 +48,11 @@ import {
   fillPair, tombstone, tombstoneNode, tombstoneTopic, tombstoneCard,
   isTombstoned, nodeIsTombstoned, topicIsTombstoned, cardIsTombstoned,
 } from "../lib/adminbilingual.js";
+import {
+  searchMindmaps as adminSearchMindmaps, upsertMindmap, deleteMindmap, duplicateMindmap,
+  linkQuestion, unlinkQuestion, bulkUpdateStatus, bulkUpdatePremium, exportCSV, importCSV,
+  seedMindmapBank, listMindmaps as adminListMindmaps,
+} from "../lib/mindmapBank.js";
 import { isLearnContent } from "../lib/content-track.js";
 
 const r = Router();
@@ -3511,6 +3516,106 @@ r.get("/export/:table", ...P("learn.data"), (req, res) => {
   res.setHeader("Content-Disposition", `attachment; filename="${table}.json"`);
   res.setHeader("Content-Type", "application/json");
   res.send(JSON.stringify(rows, null, 2));
+});
+
+/* ---------------- MINDMAP BANK ADMIN (premium graph) — FULL CONTROL ---------------- */
+r.get("/mindmap-bank", authRequired, requireRole("admin","teacher"), (req, res) => {
+  try { seedMindmapBank(); } catch {}
+  const lang = (req.query.lang || "fa").slice(0,2);
+  const q = (req.query.q || "").toString().slice(0,200);
+  const asList = (v) => (v == null || v === "" ? [] : String(v).split(",").filter(Boolean));
+  const filters = {
+    system: asList(req.query.system),
+    type: asList(req.query.type),
+    level: asList(req.query.level),
+    branch: asList(req.query.branch),
+    premium: asList(req.query.premium),
+  };
+  const sort = (req.query.sort || "default").toString();
+  const page = Math.max(1, parseInt(req.query.page,10)||1);
+  const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize,10)||20));
+  const status = (req.query.status || "").toString() || "active";
+  if (q || filters.system.length || filters.type.length || filters.level.length || req.query.status) {
+    const out = adminSearchMindmaps({ lang, q, filters, sort, page, pageSize, isPremium: true, status: status || "active" });
+    return res.json(out);
+  }
+  const out = adminListMindmaps({ lang, isPremium: true });
+  res.json(out);
+});
+r.get("/mindmap-bank/export/csv", authRequired, requireRole("admin","teacher"), (req, res) => {
+  const csv = exportCSV(req.query.lang||"fa");
+  res.setHeader("Content-Type","text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition","attachment; filename=mindmap-bank.csv");
+  res.send(csv);
+});
+r.get("/mindmap-bank/export/json", authRequired, requireRole("admin","teacher"), (req, res) => {
+  const rows = db.prepare("SELECT * FROM mindmap_bank ORDER BY id").all();
+  res.json({ total: rows.length, items: rows.map(r=>{ try{r.graph_json=JSON.parse(r.graph_json)}catch{}; return r; }) });
+});
+r.post("/mindmap-bank/import/csv", authRequired, requireRole("admin","teacher"), (req, res) => {
+  const csv = req.body?.csv || req.body?.data || "";
+  const out = importCSV(csv);
+  res.json(out);
+});
+r.post("/mindmap-bank/import/json", authRequired, requireRole("admin","teacher"), (req, res) => {
+  const arr = req.body?.items || req.body || [];
+  let ok=0; for(const it of (Array.isArray(arr)?arr:[])){ try{ upsertMindmap(it); ok++; }catch{} }
+  res.json({ ok:true, imported: ok });
+});
+r.get("/mindmap-bank/history/:slug", authRequired, requireRole("admin","teacher"), (req, res) => {
+  const rows = db.prepare("SELECT * FROM mindmap_history WHERE slug=? ORDER BY id DESC LIMIT 50").all(req.params.slug);
+  res.json({ history: rows });
+});
+r.post("/mindmap-bank/bulk/delete", authRequired, requireRole("admin","teacher"), (req, res) => {
+  const slugs = req.body?.slugs || [];
+  for (const s of slugs) try { deleteMindmap(s); } catch {}
+  res.json({ ok: true });
+});
+r.post("/mindmap-bank/bulk/status", authRequired, requireRole("admin","teacher"), (req, res) => {
+  const slugs = req.body?.slugs || [];
+  const status = req.body?.status || "active";
+  bulkUpdateStatus(slugs, status);
+  res.json({ ok: true });
+});
+r.post("/mindmap-bank/bulk/premium", authRequired, requireRole("admin","teacher"), (req, res) => {
+  const slugs = req.body?.slugs || [];
+  const isPremium = !!req.body?.is_premium;
+  bulkUpdatePremium(slugs, isPremium);
+  res.json({ ok: true });
+});
+r.post("/mindmap-bank/duplicate/:slug", authRequired, requireRole("admin","teacher"), (req, res) => {
+  const row = duplicateMindmap(req.params.slug, req.body?.newSlug);
+  res.json({ ok: true, row });
+});
+r.get("/mindmap-bank/:slug", authRequired, requireRole("admin","teacher"), (req, res) => {
+  const row = db.prepare("SELECT * FROM mindmap_bank WHERE slug=?").get(req.params.slug);
+  if (!row) return res.status(404).json({ error: "not found" });
+  try { row.graph_json = JSON.parse(row.graph_json); } catch {}
+  res.json(row);
+});
+r.post("/mindmap-bank", authRequired, requireRole("admin","teacher"), (req, res) => {
+  const data = req.body || {};
+  if (typeof data.graph_json === "string") try { data.graph_json = JSON.parse(data.graph_json); } catch {}
+  const row = upsertMindmap(data);
+  res.json({ ok: true, row });
+});
+r.delete("/mindmap-bank/:slug", authRequired, requireRole("admin","teacher"), (req, res) => {
+  deleteMindmap(req.params.slug);
+  res.json({ ok: true });
+});
+r.post("/mindmap-bank/link", authRequired, requireRole("admin","teacher"), (req, res) => {
+  const { question_id, mindmap_slug, node_slug, weight } = req.body || {};
+  linkQuestion({ question_id, mindmap_slug, node_slug, weight });
+  res.json({ ok: true });
+});
+r.post("/mindmap-bank/unlink", authRequired, requireRole("admin","teacher"), (req, res) => {
+  const { question_id, mindmap_slug } = req.body || {};
+  unlinkQuestion({ question_id, mindmap_slug });
+  res.json({ ok: true });
+});
+r.post("/mindmap-bank/seed", authRequired, requireRole("admin"), (req, res) => {
+  const out = seedMindmapBank();
+  res.json(out);
 });
 
 /* ============ PUBLIC FLAGS (any authed user can read which features are on) ============ */

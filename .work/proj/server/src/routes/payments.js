@@ -43,7 +43,7 @@ export function getPlans() {
 }
 
 /* Public pricing for banners/upsells (auth required is enough; no role needed). */
-r.get(\"/plans\", authRequired, (req, res) => {
+r.get("/plans", authRequired, (req, res) => {
   const plans = getPlans();
   res.json({ plans: { monthly: plans.monthly.amount, yearly: plans.yearly.amount, monthlyDays: plans.monthly.days, yearlyDays: plans.yearly.days }, monthly: plans.monthly.amount, yearly: plans.yearly.amount });
 });

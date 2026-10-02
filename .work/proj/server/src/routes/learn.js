@@ -33,6 +33,7 @@ import { createSim, finishSim, simHistory } from "../lib/examsim.js";
 import { normalizeConfig, builderOptions, pickCards, createCustomTest, getCustomTest, answerCustomTest, finishCustomTest, customHistory } from "../lib/customtest.js";
 import { gradeFlashcard, bodyFromClientSel } from "../lib/flashcard-grade.js";
 import { buildMindmap, mindmapTopics } from "../lib/mindmap.js";
+import { searchMindmaps, getMindmap, mindmapFacets, questionsByConcept, seedMindmapBank } from "../lib/mindmapBank.js";
 import { buildStudyPlan, getStudyPlan } from "../lib/studyplan.js";
 import { getSetting } from "./content.js";
 import { studyNote, resolveAiConfig } from "../lib/ai-engine.js";
@@ -1563,6 +1564,69 @@ r.get("/mindmap/:slug", ...learner, flagGate("mindmap"), (req, res) => {
   const map = buildMindmap(req.params.slug, L(req));
   if (!map) return res.status(404).json({ error: "not found" });
   res.json(map);
+});
+
+/* ---------------- MINDMAP BANK (premium) ---------------- */
+// seeded on first hit + at server boot
+try { seedMindmapBank(); } catch {}
+// Facet vocab (for client filter UI)
+r.get("/mindmap-bank/facets", ...learner, (req, res) => {
+  res.json({ facets: mindmapFacets() });
+});
+r.get("/mindmap-bank", ...learner, (req, res) => {
+  let isPrem = false;
+  try {
+    const me = getProfile(req.user.id);
+    if (me && (me.premium || me.premium_effective)) isPrem = true;
+    const u = db.prepare("SELECT role FROM users WHERE id=?").get(req.user.id);
+    if (u && (u.role === "admin" || u.role === "teacher")) isPrem = true;
+  } catch {}
+  const asList = (v) => (v == null || v === "" ? [] : String(v).split(",").filter(Boolean));
+  const q = (req.query.q || "").toString().slice(0, 200);
+  const filters = {
+    system: asList(req.query.system),
+    type: asList(req.query.type),
+    level: asList(req.query.level),
+    branch: asList(req.query.branch),
+    premium: asList(req.query.premium),
+  };
+  const sort = (req.query.sort || "").toString() || "default";
+  const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+  const pageSize = Math.min(50, Math.max(1, parseInt(req.query.pageSize, 10) || parseInt(req.query.per, 10) || 20));
+  const status = (req.query.status || "active").toString();
+  const out = searchMindmaps({ lang: L(req), q, filters, sort, page, pageSize, isPremium: isPrem, status });
+  out.facets = mindmapFacets();
+  res.json(out);
+});
+r.get("/mindmap-bank/:slug", ...learner, (req, res) => {
+  if (req.params.slug === "facets") return res.status(400).json({ error: "use /facets" });
+  let isPrem = false;
+  try {
+    const me = getProfile(req.user.id);
+    if (me && (me.premium || me.premium_effective)) isPrem = true;
+    const u = db.prepare("SELECT role FROM users WHERE id=?").get(req.user.id);
+    if (u && (u.role === "admin" || u.role === "teacher")) isPrem = true;
+  } catch {}
+  const m = getMindmap(req.params.slug, { lang: L(req), isPremium: isPrem });
+  if (!m) return res.status(404).json({ error: "not found" });
+  res.json(m);
+});
+r.get("/questions/by-concept", ...learner, (req, res) => {
+  const concept = (req.query.concept || "").trim() || (req.query.node || "").trim();
+  const mindmapSlug = (req.query.mindmap || "").trim() || null;
+  if (!concept && !mindmapSlug) return res.status(400).json({ error: "no concept" });
+  const limit = Math.min(30, Math.max(1, parseInt(req.query.limit, 10) || 8));
+  const offset = Math.max(0, parseInt(req.query.offset, 10) || 0);
+  const items = questionsByConcept({ concept: concept || null, mindmapSlug, lang: L(req), limit, offset });
+  res.json({ items });
+});
+r.get("/questions/:id/mindmaps", ...learner, (req, res) => {
+  const qid = parseInt(req.params.id, 10);
+  if (!qid) return res.status(400).json({ error: "bad id" });
+  const rows = db.prepare("SELECT qml.mindmap_slug, qml.node_slug, mb.title_fa, mb.title_en, mb.type, mb.system FROM question_mindmap_links qml JOIN mindmap_bank mb ON mb.slug=qml.mindmap_slug WHERE qml.question_id=?").all(qid);
+  const lang = L(req);
+  const out = rows.map((r) => ({ slug: r.mindmap_slug, node: r.node_slug, title: lang === "fa" ? r.title_fa : r.title_en, type: r.type, system: r.system }));
+  res.json({ mindmaps: out });
 });
 
 /* Is an AI provider configured? Boolean only — never leaks the key. Lets the
