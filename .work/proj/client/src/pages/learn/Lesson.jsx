@@ -13,6 +13,7 @@ import { AdCard } from "./AdCard.jsx";
 import { RewardedAd } from "./RewardedAd.jsx";
 import { TYPE_MAP, MicroLesson } from "./QuestionTypes.jsx";
 import MediaEmbed from "../../components/MediaEmbed.jsx";
+import BugReportButton from "../../components/BugReportButton.jsx";
 import HighlightableStem from "../../components/HighlightableStem.jsx";
 import LessonInsights from "../../components/LessonInsights.jsx";
 import { NoteButton } from "./Notes.jsx";
@@ -79,6 +80,8 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
   const [premium, setPremium] = useState(false);
   const [buryMsg, setBuryMsg] = useState("");
   const [buryBusy, setBuryBusy] = useState(null);
+  const [features, setFeatures] = useState({ high_yield: true, learning_radar: true, bury: true, suspend: true });
+  useEffect(() => { api.get("/learn/features").then(setFeatures).catch(() => {}); }, []);
   useEffect(() => { setBuryMsg(""); setBuryBusy(null); }, [idx]);
   const [showLabModal, setShowLabModal] = useState(false);
   const [stemZoom, setStemZoom] = useState(() => Number(localStorage.getItem("med_stem_zoom") || 1));
@@ -400,10 +403,10 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
               <div className="at-text">{card.attending}</div>
             </div>
           )}
-          {/* QB micro lesson: auto-open on wrong, offered as a button on correct */}
+          {/* QB micro lesson: auto-open on wrong, offered as a button on correct — respects High-Yield + Learning Radar */}
           {card.micro && (wasCorrect
-            ? <MicroLesson micro={card.micro} defaultOpen={showMicro} glossary={data.glossary} />
-            : <MicroLesson micro={card.micro} defaultOpen={true} glossary={data.glossary} />)}
+            ? <MicroLesson micro={card.micro} defaultOpen={showMicro} glossary={data.glossary} features={features} />
+            : <MicroLesson micro={card.micro} defaultOpen={true} glossary={data.glossary} features={features} />)}
           {/* visual mnemonic (Sketchy-style) shown when the card carries one */}
           {card.mnemonic && (
             <div className="card mn-inline" style={{ marginTop: 10 }}>
@@ -420,17 +423,18 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
           <div style={{ display: "flex", justifyContent: "center", marginTop: 10, gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             {flag("notes") && <NoteButton cardId={card.id} />}
             {flag("learner_cards") && flag("save_flashcard") && <SaveFlashcardButton cardId={card.id} premium={premium} onPremium={() => onPremiumWanted?.()} />}
-            <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={async () => {
+            {features.bury && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={async () => {
               if (buryBusy) return; setBuryBusy("bury");
               try { await api.post("/learn/review/bury", { cardId: card.id }); setBuryMsg(lang === "fa" ? "تا فردا مخفی شد" : "Buried until tomorrow"); setTimeout(() => setBuryMsg(""), 2500); }
               catch (e) { setBuryMsg(e.message || "خطا"); } finally { setBuryBusy(null); }
-            }} title={lang === "fa" ? "مخفی تا فردا (bury)" : "Bury until tomorrow"}>⏸ {lang === "fa" ? "مخفی" : "Bury"}</button>
-            <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={async () => {
+            }} title={lang === "fa" ? "مخفی تا فردا (bury)" : "Bury until tomorrow"}>⏸ {lang === "fa" ? "مخفی" : "Bury"}</button>}
+            {features.suspend && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={async () => {
               if (buryBusy) return; setBuryBusy("suspend");
               try { await api.post("/learn/review/suspend", { cardId: card.id }); setBuryMsg(lang === "fa" ? "تعلیق شد — دیگر نمایش داده نمی‌شود" : "Suspended"); setTimeout(() => setBuryMsg(""), 2500); }
               catch (e) { setBuryMsg(e.message || "خطا"); } finally { setBuryBusy(null); }
-            }} title={lang === "fa" ? "تعلیق کامل" : "Suspend"}>🚫 {lang === "fa" ? "تعلیق" : "Suspend"}</button>
+            }} title={lang === "fa" ? "تعلیق کامل" : "Suspend"}>🚫 {lang === "fa" ? "تعلیق" : "Suspend"}</button>}
             {buryMsg && <span className="small muted">{buryMsg}</span>}
+            <BugReportButton cardId={card.id} />
           </div>
         </>
       )}

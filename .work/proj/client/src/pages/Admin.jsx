@@ -40,6 +40,7 @@ const MediaLibrary = lazy(() => import("./admin/MediaLibrary.jsx"));
 const ContentStats = lazy(() => import("./admin/ContentStats.jsx"));
 const ImportModal = lazy(() => import("./admin/ImportModal.jsx"));
 const CommunityModeration = lazy(() => import("./admin/CommunityModeration.jsx"));
+const BugHunt = lazy(() => import("./admin/BugHunt.jsx"));
 function LazyAdminChunk({ children }) {
   return <Suspense fallback={<Spinner />}>{children}</Suspense>;
 }
@@ -141,7 +142,7 @@ export default function Admin({ home }) {
     { title: t("navGroupContent"), items: [["learnCards", "flask", "learn.content"], ["competitiveReferences", "book", "learn.content"], ["contentStats", "chart", "learn.content"], ["mediaLibrary", "image", "learn.content"], ["pathManager", "book", "learn.content"], ["mascotsAdmin", "star", "learn.content"], ["vpatientAdmin", "patient", "learn.settings"], ["dxAdmin", "target", "learn.content"], ["blogAdmin", "book", "learn.content"], ["communityMod", "users", "learn.content"]] },
     { title: t("navGroupMarketing"), items: [["adsMgmt", "image", "learn.ads"], ["storeManager", "store", "store.manage"], ["pricingEditor", "crown", "learn.settings"], ["groupPurchase", "users", "learn.settings"], ["payments", "crown", "learn.settings"]] },
     { title: t("navGroupSupport"), items: [["supportInbox", "chat", "learn.support"], ["helpCenter", "book", "learn.content"]] },
-    { title: t("navGroupSystem"), items: [["remindersAdmin", "clock", "learn.settings"], ["pwaAdmin", "download", "learn.view"], ["twaAdmin", "download", "learn.settings"], ["seoAdmin", "settings", "learn.settings"], ["gamification", "bolt", "learn.settings"], ["fsrsOptimizer", "brain", "learn.settings"]] },
+    { title: t("navGroupSystem"), items: [["remindersAdmin", "clock", "learn.settings"], ["pwaAdmin", "download", "learn.view"], ["twaAdmin", "download", "learn.settings"], ["seoAdmin", "settings", "learn.settings"], ["gamification", "bolt", "learn.settings"], ["fsrsOptimizer", "brain", "learn.settings"], ["bugHunt", "bug", "learn.settings"]] },
   ];
   // Build visible nav sections and de-duplicate by tab id. This is a safety net
   // so future additions cannot accidentally show the same admin tab twice.
@@ -334,6 +335,7 @@ export default function Admin({ home }) {
             {tab === "externalAdsAdmin" && <ExternalAdsAdmin />}
             {tab === "tutorSettings" && <TutorSettingsAdmin />}
             {tab === "fsrsOptimizer" && <FsrsOptimizer />}
+            {tab === "bugHunt" && <LazyAdminChunk><BugHunt /></LazyAdminChunk>}
             {tab === "siteContent" && <SiteContent />}
             {tab === "overview" && <SystemOverview onJump={pickTab} />}
             {tab === "learnerMgmt" && <LearnerManagement />}
@@ -8131,6 +8133,49 @@ function GamificationConfig() {
         <div className="field"><label>{lang === "fa" ? "مخزن نام‌های مستعار (انگلیسی)" : "Alias pool (English)"}</label>
           <input value={(cfg.anon?.alias_pool_en || []).join(", ")}
             onChange={(e) => set("anon", "alias_pool_en", e.target.value.split(",").map((x) => x.trim()).filter(Boolean))} /></div>
+      </div>
+
+      <div className="card mb16">
+        <div className="section-title"><h4>⚡ {lang === "fa" ? "High-Yield و Learning Radar (AMBOSS)" : "High-Yield & Learning Radar (AMBOSS)"}</h4></div>
+        <div className="small muted mb8">{lang === "fa" ? "High-Yield: دکمهٔ ⚡ در درسنامه که فقط نکتهٔ طلایی + اولین نکته را نشان می‌دهد. Learning Radar: برچسب 🔴 برای کارت‌هایی که قبلاً اشتباه زده شده‌اند." : "High-Yield: ⚡ toggle in micro-lessons showing only the golden point + first bullet. Learning Radar: 🔴 badge for cards previously answered incorrectly."}</div>
+        {Toggle(lang === "fa" ? "High-Yield فعال باشد" : "High-Yield enabled", "high_yield")}
+        <label className="toggle-row"><span>{lang === "fa" ? "نمایش دکمهٔ High-Yield" : "Show High-Yield toggle"}</span>
+          <input type="checkbox" checked={cfg.high_yield?.show_toggle !== false} onChange={(e) => set("high_yield", "show_toggle", e.target.checked)} /></label>
+        <label className="toggle-row"><span>{lang === "fa" ? "ذخیرهٔ انتخاب کاربر (localStorage)" : "Persist user choice (localStorage)"}</span>
+          <input type="checkbox" checked={cfg.high_yield?.persist_choice !== false} onChange={(e) => set("high_yield", "persist_choice", e.target.checked)} /></label>
+        <div className="section-title mt16"><h4>🔴 {lang === "fa" ? "Learning Radar" : "Learning Radar"}</h4></div>
+        {Toggle(lang === "fa" ? "Learning Radar فعال باشد" : "Learning Radar enabled", "learning_radar")}
+        <div className="grid grid-3 mt8">
+          {F(lang === "fa" ? "حداقل خطا برای برچسب" : "Min wrong to flag", "learning_radar", "min_wrong")}
+          {F(lang === "fa" ? "فراموشی برچسب (روز، ۰=هرگز)" : "Decay days (0=never)", "learning_radar", "decay_days")}
+          <div />
+        </div>
+      </div>
+
+      <div className="card mb16">
+        <div className="section-title"><h4>⏸ {lang === "fa" ? "Bury / Suspend (Anki FSRS)" : "Bury / Suspend (Anki FSRS)"}</h4></div>
+        <div className="small muted mb8">{lang === "fa" ? "Bury: مخفی تا فردا. Suspend: تعلیق نامحدود تا بازگشایی دستی. هر دو از صف مرور حذف می‌شوند." : "Bury: hide until tomorrow. Suspend: hide indefinitely until manually unsuspended. Both removed from review queue."}</div>
+        <label className="toggle-row"><span>{lang === "fa" ? "Bury فعال باشد" : "Bury enabled"}</span>
+          <input type="checkbox" checked={cfg.bury_suspend?.bury_enabled !== false} onChange={(e) => set("bury_suspend", "bury_enabled", e.target.checked)} /></label>
+        <label className="toggle-row"><span>{lang === "fa" ? "Suspend فعال باشد" : "Suspend enabled"}</span>
+          <input type="checkbox" checked={cfg.bury_suspend?.suspend_enabled !== false} onChange={(e) => set("bury_suspend", "suspend_enabled", e.target.checked)} /></label>
+        <label className="toggle-row"><span>{lang === "fa" ? "نمایش در درس" : "Show in lesson"}</span>
+          <input type="checkbox" checked={cfg.bury_suspend?.show_in_lesson !== false} onChange={(e) => set("bury_suspend", "show_in_lesson", e.target.checked)} /></label>
+        <label className="toggle-row"><span>{lang === "fa" ? "نمایش در مرور" : "Show in review"}</span>
+          <input type="checkbox" checked={cfg.bury_suspend?.show_in_review !== false} onChange={(e) => set("bury_suspend", "show_in_review", e.target.checked)} /></label>
+      </div>
+
+      <div className="card mb16">
+        <div className="section-title"><h4>🐛 {lang === "fa" ? "سامانهٔ باگیابی تکرارشونده" : "Recurring Bug Hunt"}</h4></div>
+        <div className="small muted mb8">{lang === "fa" ? "اسکن خودکار روزانه برای یافته‌های رایج (لینک شکسته، کارت یتیم، رفرنس ناقص) + گزارش دستی کاربر. گزارش‌ها در پنل ادمین باگیابی تجمیع می‌شوند." : "Daily auto-scan for common findings (broken links, orphan cards, incomplete refs) + manual user reports. Reports are aggregated in the Bug Hunt admin panel."}</div>
+        {Toggle(lang === "fa" ? "باگیابی فعال باشد" : "Bug Hunt enabled", "bug_hunt")}
+        <div className="grid grid-3 mt8">
+          {F(lang === "fa" ? "فاصلهٔ اسکن خودکار (ساعت، ۰=دستی)" : "Auto-scan interval (hours, 0=manual)", "bug_hunt", "auto_scan_hours")}
+          {F(lang === "fa" ? "نگهداری گزارش (روز)" : "Keep reports (days)", "bug_hunt", "keep_reports")}
+          <label className="toggle-row" style={{ alignSelf: "end" }}><span>{lang === "fa" ? "اعلان به ادمین" : "Notify admin"}</span>
+            <input type="checkbox" checked={cfg.bug_hunt?.notify_admin !== false} onChange={(e) => set("bug_hunt", "notify_admin", e.target.checked)} /></label>
+        </div>
+        <div className="mt8"><a className="btn btn-ghost btn-sm" href="#/admin/bug-hunt" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent("medlab-go", { detail: "bugHunt" })); }}>{lang === "fa" ? "رفتن به پنل باگیابی →" : "Go to Bug Hunt panel →"}</a></div>
       </div>
 
       <div className="card mb16">

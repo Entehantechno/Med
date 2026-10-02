@@ -63,6 +63,7 @@ import {
   startFriendQuest, friendQuests, claimFriendQuest, getFeed, highFive, friendsLeaderboard,
   markFriendActivity, progressFriendQuests, postFeed,
 } from "../lib/friends.js";
+import { createReport as createBugReport } from "../lib/bughunt.js";
 
 // feature-flag gate: 404 the feature cleanly when an admin turns it off
 const flagGate = (key) => (req, res, next) => isEnabled(key) ? next() : res.status(403).json({ error: "feature disabled", flag: key });
@@ -250,10 +251,24 @@ r.get("/lesson/:nodeId", ...learner, (req, res) => {
     .map((c) => ({ ...serializeCard(c, lang), crowd: crowdForCard(c.id), hasHint: peerCfg().hint !== false && hasHint(c) }))
     .filter((c) => String(c.q || "").trim());
   cards = withOptionStats(cards);
-  // Learning Radar (AMBOSS-style): mark cards the learner previously got wrong
+  // Learning Radar (AMBOSS-style): mark cards the learner previously got wrong — respects admin config + decay
   try {
-    const wrongIds = new Set(db.prepare("SELECT DISTINCT card_id FROM card_attempts WHERE user_id=? AND correct=0").all(req.user.id).map((r) => r.card_id));
-    for (const c of cards) if (wrongIds.has(c.id) && c.micro) c.micro.learning_radar = 1;
+    const lrCfg = getGameConfig().learning_radar;
+    if (lrCfg?.enabled !== false && isEnabled("learning_radar")) {
+      const minWrong = Math.max(1, Number(lrCfg?.min_wrong) || 1);
+      const decayDays = Number(lrCfg?.decay_days) || 0;
+      const rows = db.prepare("SELECT card_id, COUNT(*) cnt, MAX(day) last_day FROM card_attempts WHERE user_id=? AND correct=0 GROUP BY card_id HAVING cnt >= ?").all(req.user.id, minWrong);
+      const flagIds = new Set();
+      const now = new Date();
+      for (const r of rows) {
+        if (decayDays > 0 && r.last_day) {
+          const diff = (now - new Date(r.last_day + "T00:00:00Z")) / 86400000;
+          if (diff > decayDays) continue;
+        }
+        flagIds.add(r.card_id);
+      }
+      for (const c of cards) if (flagIds.has(c.id) && c.micro) c.micro.learning_radar = 1;
+    }
   } catch { /* best-effort */ }
   // Duolingo-style: present questions in a random order each attempt.
   // Language switch sends ?ids= so the same deck (and order) is restored.
@@ -1806,13 +1821,27 @@ r.post("/review/grade", ...learner, flagGate("srs_review"), (req, res) => {
   res.json({ sched, profile });
 });
 // Anki-style bury / suspend (FSRS) — premium-friendly, no extra cost
-r.post("/review/bury", ...learner, flagGate("srs_review"), (req, res) => {
+r.get("/features", ...learner, (req, res) => {
+  const cfg = getGameConfig();
+  res.json({
+    high_yield: cfg.high_yield?.enabled !== false && isEnabled("high_yield"),
+    learning_radar: cfg.learning_radar?.enabled !== false && isEnabled("learning_radar"),
+    bury: cfg.bury_suspend?.bury_enabled !== false && isEnabled("bury_suspend") && isEnabled("srs_review"),
+    suspend: cfg.bury_suspend?.suspend_enabled !== false && isEnabled("bury_suspend") && isEnabled("srs_review"),
+    bug_hunt: cfg.bug_hunt?.enabled !== false && isEnabled("bug_hunt"),
+  });
+});
+r.post("/review/bury", ...learner, flagGate("srs_review"), flagGate("bury_suspend"), (req, res) => {
+  const cfg = getGameConfig().bury_suspend;
+  if (cfg?.bury_enabled === false) return res.status(403).json({ error: "feature disabled" });
   const cardId = parseInt(req.body?.cardId, 10);
   if (!cardId) return res.status(400).json({ error: "no card" });
   const out = buryCard(req.user.id, cardId);
   res.json(out);
 });
-r.post("/review/suspend", ...learner, flagGate("srs_review"), (req, res) => {
+r.post("/review/suspend", ...learner, flagGate("srs_review"), flagGate("bury_suspend"), (req, res) => {
+  const cfg = getGameConfig().bury_suspend;
+  if (cfg?.suspend_enabled === false) return res.status(403).json({ error: "feature disabled" });
   const cardId = parseInt(req.body?.cardId, 10);
   if (!cardId) return res.status(400).json({ error: "no card" });
   const out = suspendCard(req.user.id, cardId);
@@ -2051,6 +2080,18 @@ r.post("/vpatient/daily-reward", ...learner, async (req, res) => {
   } catch (e) {
     res.status(500).json({ error: "vpatient_boot_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
+});
+
+/* Learner bug report (manual) — respects bug_hunt.enabled */
+r.post("/bug-report", ...learner, (req, res) => {
+  const cfg = getGameConfig().bug_hunt;
+  if (cfg?.enabled === false) return res.status(403).json({ error: "feature disabled" });
+  const title = String(req.body?.title || "").trim().slice(0, 200);
+  const description = String(req.body?.description || "").trim().slice(0, 5000);
+  if (!title || !description) return res.status(400).json({ error: "title and description required" });
+  const severity = ["low", "medium", "high", "critical"].includes(req.body?.severity) ? req.body.severity : "medium";
+  const out = createBugReport({ reporter_id: req.user.id, title, description, severity, kind: "manual", meta: req.body?.meta || {} });
+  res.json(out);
 });
 
 /* Warm the browse pool right after boot (off the request path) so the first

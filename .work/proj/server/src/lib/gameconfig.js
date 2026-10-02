@@ -320,6 +320,32 @@ export const DEFAULT_GAME_CONFIG = {
     auto_issue: true,           // auto-issue when the learner crosses the threshold
     show_hours: true,           // print "N hours of study" on the certificate
   },
+  // --- High-Yield & Learning Radar (AMBOSS: High-Yield mode + Learning Radar) ---
+  high_yield: {
+    enabled: true,             // master switch for the High-Yield toggle in micro-lessons
+    show_toggle: true,         // show the ⚡ High-Yield button when a lesson has golden/points
+    persist_choice: true,      // remember learner's last toggle via localStorage
+  },
+  learning_radar: {
+    enabled: true,             // flag cards previously answered wrong (🔴 نیاز به مرور)
+    min_wrong: 1,              // min wrong attempts before flagging
+    decay_days: 14,            // auto-unflag if no wrong in N days (0 = never decay)
+  },
+  // --- Bury / Suspend (Anki FSRS) ---
+  bury_suspend: {
+    bury_enabled: true,        // allow bury until tomorrow
+    suspend_enabled: true,     // allow indefinite suspend
+    show_in_lesson: true,      // show bury/suspend controls inside lessons
+    show_in_review: true,      // show bury/suspend inside SRS review
+    admin_see_suspended: true, // admin dashboard shows suspended counts
+  },
+  // --- Bug Hunt (recurring automated QA) ---
+  bug_hunt: {
+    enabled: true,             // master switch for recurring bug scans
+    auto_scan_hours: 24,       // run auto-scan every N hours (0 = manual only)
+    notify_admin: true,        // push notification to admin on new findings
+    keep_reports: 30,          // days to keep scan reports
+  },
   // --- Security hardening (Helmet + rate limiting), production-safe defaults ---
   security: {
     enabled: true,             // master switch for rate limiting (headers always on)

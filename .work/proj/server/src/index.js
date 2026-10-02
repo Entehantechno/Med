@@ -172,6 +172,21 @@ async function main() {
     // Admin analytics scheduler: daily health-alert notifications + weekly digest
     // (self-gated by per-day/per-week de-dup tags, so it's safe to call hourly).
     try { const { runAdminAnalyticsScheduler } = await import("./lib/analytics-notify.js"); const m = await runAdminAnalyticsScheduler(); if (m) console.log(`📊 sent ${m} admin analytics notifications`); } catch (e) { /* */ }
+    // Bug Hunt auto-scan (recurring QA) — respects bug_hunt.enabled + auto_scan_hours
+    try {
+      const { getGameConfig } = await import("./lib/gameconfig.js");
+      const cfg = getGameConfig().bug_hunt;
+      if (cfg?.enabled !== false && (cfg?.auto_scan_hours || 0) > 0) {
+        const { db } = await import("./db.js");
+        const last = db.prepare("SELECT created_at FROM bug_scans ORDER BY id DESC LIMIT 1").get();
+        const hoursSince = last ? (Date.now() - new Date(last.created_at).getTime()) / 3600000 : 999;
+        if (hoursSince >= (cfg.auto_scan_hours || 24)) {
+          const { scanOnce } = await import("./lib/bughunt.js");
+          const out = scanOnce();
+          if (out.findings.length) console.log(`🐛 bug-hunt auto-scan: ${out.findings.length} findings`);
+        }
+      }
+    } catch (e) { /* never break tick */ }
   };
   setTimeout(tick, 15000);                 // once shortly after boot
   setInterval(tick, 60 * 60 * 1000);       // then hourly

@@ -3,6 +3,7 @@ import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
 import { TYPE_MAP, MicroLesson } from "./QuestionTypes.jsx";
+import BugReportButton from "../../components/BugReportButton.jsx";
 
 /* Spaced-repetition review: shows due cards. The learner reveals the answer,
    then self-grades (Again/Hard/Good/Easy) which reschedules the card. */
@@ -18,6 +19,8 @@ export default function Review({ onProfile, go }) {
   const [stats, setStats] = useState(null);
   const [buryMsg, setBuryMsg] = useState("");
   const [buryBusy, setBuryBusy] = useState(null);
+  const [features, setFeatures] = useState({ bury: true, suspend: true });
+  useEffect(() => { api.get("/learn/features").then(setFeatures).catch(() => {}); }, []);
 
   useEffect(() => {
     setCards(null); setIdx(0); setRevealed(false); setReviewed(0); setDone(false);
@@ -140,10 +143,11 @@ export default function Review({ onProfile, go }) {
             <Icon name="check" size={16} /> {t("showAnswer")}
           </button>
           {mode === "due" && (
-            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 8, flexWrap: "wrap" }}>
-              <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("bury")}>⏸ {lang === "fa" ? "مخفی تا فردا" : "Bury"}</button>
-              <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("suspend")}>🚫 {lang === "fa" ? "تعلیق" : "Suspend"}</button>
+            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
+              {features.bury && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("bury")}>⏸ {lang === "fa" ? "مخفی تا فردا" : "Bury"}</button>}
+              {features.suspend && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("suspend")}>🚫 {lang === "fa" ? "تعلیق" : "Suspend"}</button>}
               {buryMsg && <span className="small muted">{buryMsg}</span>}
+              <BugReportButton cardId={card.id} />
             </div>
           )}
           </div>
@@ -162,10 +166,11 @@ export default function Review({ onProfile, go }) {
               <button className="btn grade-good" aria-label={t("gGood")} onClick={() => grade(2)}><span className="grade-lbl">{t("gGood")}</span>{card.preview && <span className="grade-iv">{ivLabel(card.preview.good)}</span>}</button>
               <button className="btn grade-easy" aria-label={t("gEasy")} onClick={() => grade(3)}><span className="grade-lbl">{t("gEasy")}</span>{card.preview && <span className="grade-iv">{ivLabel(card.preview.easy)}</span>}</button>
             </div>
-            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 8, flexWrap: "wrap" }}>
-              <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("bury")}>⏸ {lang === "fa" ? "مخفی تا فردا" : "Bury"}</button>
-              <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("suspend")}>🚫 {lang === "fa" ? "تعلیق" : "Suspend"}</button>
+            <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
+              {features.bury && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("bury")}>⏸ {lang === "fa" ? "مخفی تا فردا" : "Bury"}</button>}
+              {features.suspend && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("suspend")}>🚫 {lang === "fa" ? "تعلیق" : "Suspend"}</button>}
               {buryMsg && <span className="small muted">{buryMsg}</span>}
+              <BugReportButton cardId={card.id} />
             </div>
           </div>
         )}

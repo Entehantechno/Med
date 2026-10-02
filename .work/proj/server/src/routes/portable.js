@@ -997,32 +997,30 @@ export async function importUniversityBundle(buffer, options = {}) {
     // 2. Reference Catalog
     for (const r of data.references) {
       const srcId = Number(r.id);
+      const refCode = r.code ?? r.course_code ?? r.title_en ?? `ref-${srcId}`;
       let existing = db
         .prepare(
-          "SELECT id FROM reference_catalog WHERE course_code=? AND title_fa=?",
+          "SELECT id FROM reference_catalog WHERE code=? AND title_fa=?",
         )
-        .get(r.course_code, r.title_fa);
+        .get(refCode, r.title_fa);
       if (existing) {
         refMap.set(srcId, existing.id);
       } else {
         const insR = db
           .prepare(
-            `INSERT INTO reference_catalog (course_code, title_fa, title_en, edition, publication_year, publisher, authors_fa, authors_en, official_url, rights_status, active, notes)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            `INSERT INTO reference_catalog (code, title_fa, title_en, edition, publication_year, publisher, source_url, rights_status, active)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           )
           .run(
-            r.course_code,
-            r.title_fa,
-            r.title_en,
-            r.edition,
-            r.publication_year,
-            r.publisher,
-            r.authors_fa,
-            r.authors_en,
-            r.official_url,
-            r.rights_status,
+            refCode,
+            r.title_fa || "",
+            r.title_en || "",
+            r.edition || "",
+            r.publication_year || null,
+            r.publisher || "",
+            r.source_url ?? r.official_url ?? "",
+            r.rights_status || "metadata_only",
             r.active ?? 1,
-            r.notes || "",
           );
         refMap.set(srcId, Number(insR.lastInsertRowid));
       }

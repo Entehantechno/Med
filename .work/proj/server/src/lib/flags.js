@@ -69,6 +69,10 @@ export const DEFAULT_FLAGS = [
   ["save_flashcard", "ذخیرهٔ یک‌ضربه‌ای به‌عنوان فلش‌کارت 👑", "One-tap save as flashcard 👑"],
   ["jump_ahead", "پرش از واحد", "Jump ahead (unit skip quiz)"],
   ["premium_trial", "هدیهٔ پرمیوم در نقاط عطف استریک", "Premium gift at streak milestones"],
+  ["high_yield", "حالت High-Yield در درسنامه", "High-Yield mode in micro-lessons"],
+  ["learning_radar", "برچسب Learning Radar (نیاز به مرور)", "Learning Radar badge (needs review)"],
+  ["bury_suspend", "مخفی/تعلیق کارت (Bury/Suspend FSRS)", "Bury / Suspend cards (FSRS)"],
+  ["bug_hunt", "سامانهٔ باگیابی تکرارشونده", "Recurring Bug Hunt system"],
 ];
 
 export function ensureFlags() {

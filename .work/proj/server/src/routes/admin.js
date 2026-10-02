@@ -18,6 +18,7 @@ import { parseCSV, toCSV } from "../lib/csv.js";
 import { moderationQueue, moderate, communityStats } from "../lib/community.js";
 import { listPrograms, saveProgramsSetting } from "../lib/programs.js";
 import { getGameConfig, saveGameConfig, DEFAULT_GAME_CONFIG } from "../lib/gameconfig.js";
+import { listReports, createReport, updateReport, scanOnce, listScans, stats as bugStats } from "../lib/bughunt.js";
 import { listTickets, adminThread, adminReply, markAdminRead, setStatus, setCategory, supportStats } from "../lib/support.js";
 import { HELP_CATEGORIES, adminArticles, createArticle, updateArticle, deleteArticle } from "../lib/helpcenter.js";
 import {
@@ -363,6 +364,35 @@ r.put("/game-config", ...P("learn.settings"), (req, res) => {
   const cfg = saveGameConfig(req.body?.config || req.body || {});
   audit(req, "settings.game_config", "settings:gameplus_config", { keys: Object.keys(cfg) });
   res.json({ ok: true, config: cfg });
+});
+
+/* ---- Bug Hunt (recurring automated QA) ---- */
+r.get("/bug-hunt/stats", ...P("learn.settings"), (req, res) => {
+  res.json(bugStats());
+});
+r.get("/bug-hunt/reports", ...P("learn.settings"), (req, res) => {
+  res.json({ reports: listReports({ status: req.query.status || "", kind: req.query.kind || "", limit: Number(req.query.limit) || 50 }) });
+});
+r.get("/bug-hunt/scans", ...P("learn.settings"), (req, res) => {
+  res.json({ scans: listScans(Number(req.query.limit) || 20) });
+});
+r.post("/bug-hunt/scan", ...P("learn.settings"), (req, res) => {
+  const out = scanOnce();
+  audit(req, "bug_hunt.scan", "bug_hunt", { findings: out.findings.length });
+  res.json(out);
+});
+r.post("/bug-hunt/report", ...P("learn.settings"), (req, res) => {
+  const { title, description, severity } = req.body || {};
+  if (!title || !description) return res.status(400).json({ error: "title and description required" });
+  const out = createReport({ reporter_id: req.user.id, title, description, severity: severity || "medium", kind: "manual", meta: req.body?.meta || {} });
+  audit(req, "bug_hunt.report", `bug:${out.id}`, { title });
+  res.json(out);
+});
+r.put("/bug-hunt/report/:id", ...P("learn.settings"), (req, res) => {
+  const out = updateReport(Number(req.params.id), req.body || {});
+  if (out.error) return res.status(404).json(out);
+  audit(req, "bug_hunt.update", `bug:${req.params.id}`, req.body || {});
+  res.json(out);
 });
 
 /* ---- Support & feedback inbox (agents reply to user tickets) ---- */

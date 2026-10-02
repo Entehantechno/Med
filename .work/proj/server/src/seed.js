@@ -70,7 +70,7 @@ db.exec(`DELETE FROM class_members; DELETE FROM class_cases; DELETE FROM classes
          DELETE FROM user_badges; DELETE FROM event_runs; DELETE FROM ad_views;
          DELETE FROM streak_wagers; DELETE FROM user_notes; DELETE FROM study_plans;
          DELETE FROM exam_sims; DELETE FROM course_enrollments; DELETE FROM transactions;
-         DELETE FROM community_votes; DELETE FROM community_imports;
+         DELETE FROM community_cards; DELETE FROM community_votes; DELETE FROM community_imports;
          DELETE FROM mastery_badges;
          DELETE FROM class_flashcards; DELETE FROM class_flashcard_attempts;
          DELETE FROM catalogs;

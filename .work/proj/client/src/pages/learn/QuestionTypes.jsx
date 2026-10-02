@@ -339,29 +339,39 @@ export const TYPE_MAP = new Proxy(TYPE_VIEWS, {
   },
 });
 
-/* QB-style micro lesson ("درسنامه") shown after answering. */
-export function MicroLesson({ micro, defaultOpen = false, glossary }) {
+/* QB-style micro lesson ("درسنامه") shown after answering. — High-Yield + Learning Radar */
+export function MicroLesson({ micro, defaultOpen = false, glossary, features }) {
   const { lang } = useApp();
   const fa = lang === "fa";
   const [open, setOpen] = useState(defaultOpen);
-  const [hy, setHy] = useState(false);
+  const [hy, setHy] = useState(() => {
+    try { return localStorage.getItem("med_high_yield") === "1"; } catch { return false; }
+  });
+  useEffect(() => { try { localStorage.setItem("med_high_yield", hy ? "1" : "0"); } catch {} }, [hy]);
   if (!micro || (!micro.lead && !micro.golden && !(micro.points || []).length && !micro.high_yield && !micro.highYield)) return null;
-  const hasHighYield = !!(micro.high_yield || micro.highYield || micro.golden);
-  const radar = micro.learning_radar || micro.learningRadar;
+  const hasHighYield = features?.high_yield === false ? false : !!(micro.high_yield || micro.highYield || micro.golden);
+  const radar = features?.learning_radar === false ? null : (micro.learning_radar || micro.learningRadar);
   return (
-    <div className="micro-box">
-      <button className="micro-toggle" onClick={() => setOpen((v) => !v)}>
-        <Icon name="book" size={16} /> {fa ? "درسنامهٔ کوتاه" : "Quick lesson"} <span style={{ marginInlineStart: "auto" }}>{open ? "▾" : "▸"}</span>
+    <div className="micro-box" style={{ borderColor: radar ? "#fcd34d" : undefined, boxShadow: radar ? "0 0 0 2px #fef3c7" : undefined }}>
+      <button className="micro-toggle" onClick={() => setOpen((v) => !v)} style={{ background: radar ? "#fffbeb" : undefined }}>
+        <Icon name="book" size={16} /> {fa ? "درسنامهٔ کوتاه" : "Quick lesson"}
+        {radar && <span className="tag" style={{ marginInlineStart: 8, background: "#dc2626", color: "#fff", fontSize: ".72rem", animation: "pulse 1.5s infinite" }}>🔴 Radar</span>}
+        <span style={{ marginInlineStart: "auto" }}>{open ? "▾" : "▸"}</span>
       </button>
       {open && (
         <div className="micro-body">
           {hasHighYield && (
-            <div style={{ display: "flex", gap: 8, marginBottom: 10, flexWrap: "wrap", alignItems: "center" }}>
-              <button type="button" className={`btn btn-sm ${hy ? "btn-accent" : "btn-ghost"}`} onClick={() => setHy((v) => !v)} title={fa ? "فقط نکات طلایی" : "High-Yield only"}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
+              <button type="button" className={`btn btn-sm ${hy ? "btn-accent" : "btn-ghost"}`} onClick={() => setHy((v) => !v)} title={fa ? "فقط نکات طلایی و حیاتی (AMBOSE High-Yield)" : "High-Yield only (AMBOSS-style)"} style={{ borderColor: hy ? "#f59e0b" : undefined, background: hy ? "#fffbeb" : undefined }}>
                 ⚡ {fa ? (hy ? "نمای کامل" : "High-Yield") : (hy ? "Full" : "High-Yield")}
               </button>
-              {radar && <span className="tag" style={{ background: "#fef3c7", border: "1px solid #fcd34d", color: "#92400e" }}>🔴 {fa ? "نیاز به مرور — قبلاً اشتباه زدی" : "Learning Radar — review needed"}</span>}
+              {radar && <span className="tag" style={{ background: "#fef3c7", border: "1px solid #fcd34d", color: "#92400e", fontWeight: 700 }}>🔴 {fa ? "نیاز به مرور — قبلاً اشتباه زدی" : "Learning Radar — review needed"}</span>}
+              {hasHighYield && !hy && <span className="small muted">{fa ? "حالت High-Yield: فقط طلایی‌ها" : "High-Yield: golden only"}</span>}
             </div>
+          )}
+          {/* when High-Yield is on but card has no radar, still show subtle hint */}
+          {!hasHighYield && radar && (
+            <div style={{ marginBottom: 10 }}><span className="tag" style={{ background: "#fef3c7", border: "1px solid #fcd34d", color: "#92400e" }}>🔴 {fa ? "نیاز به مرور" : "Needs review"}</span></div>
           )}
           {!hy ? (
             <>
