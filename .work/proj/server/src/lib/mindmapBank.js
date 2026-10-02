@@ -1,4 +1,4 @@
-/* mindmapBank.js — Premium MindMap + Approach Bank (2026-10-02 → 2026-10-04 — 50 maps)
+/* mindmapBank.js — Premium MindMap + Approach Bank (2026-10-02 → 2026-10-04 — 60 maps)
    A premium-only, bidirectionally linked knowledge graph:
 
    - MindMaps: hierarchical disease maps (definition → complications)
@@ -384,7 +384,7 @@ try {
 // Seed 50 high-yield Harrison-based mindmaps — idempotent, premium + free mix
 export function seedMindmapBank() {
   const existing = db.prepare("SELECT COUNT(*) c FROM mindmap_bank").get().c;
-  if (existing >= 50) return { seeded: 0, total: existing };
+  if (existing >= 60) return { seeded: 0, total: existing };
 
   const maps = [
     // 1-11 as before (kept for compat)
@@ -1405,6 +1405,181 @@ export function seedMindmapBank() {
           { id: "rx", label_fa: "درمان: مایعات + وازوپرسور (نوراپی) + علت (آنتی‌بیوتیک/ PCI/ ترومبولیز)", label_en: "Rx: fluids + norepi + cause-specific", branch: "treatment", x: 0, y: 330 },
         ],
         edges: [{ from: "def", to: "types", label: "" }, { from: "types", to: "work", label: "" }, { from: "work", to: "rx", label: "" }]
+      }
+    },
+    // --- 10 more to reach 60 ---
+    {
+      slug: "anaphylaxis",
+      title_fa: "آنافیلاکسی",
+      title_en: "Anaphylaxis",
+      type: "approach", system: "emergency", level: "emergency",
+      summary_fa: "افت فشار + کهیر/آنژیوادم + برونکواسپاسم — اپی‌نفرین IM. Harrison 22e Ch.23.",
+      summary_en: "Hypotension + urticaria/angioedema + bronchospasm — IM epi. Harrison 22e Ch.23.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "tri", label_fa: "تریاد: پوست + تنفس + گردش", label_en: "Triad: skin + resp + circ", branch: "clinical", x: 0, y: 0 },
+          { id: "trig", label_fa: "محرک: غذا/دارو/نیش حشره", label_en: "Trigger: food/drug/sting", branch: "etiology", x: 0, y: 110 },
+          { id: "rx", label_fa: "اپی‌نفرین IM 0.3-0.5mg + مایعات + آنتی‌هیستامین + استروئید", label_en: "IM epi + fluids + antihistamine + steroids", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "tri", to: "trig", label: "" }, { from: "trig", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "dvt",
+      title_fa: "ترومبوز ورید عمقی (DVT)",
+      title_en: "Deep Venous Thrombosis",
+      type: "mind", system: "cardio", level: "high_yield",
+      summary_fa: "ادم/درد اندام + Wells + D-dimer + سونو. Harrison 22e Ch.56.",
+      summary_en: "Limb swelling/pain + Wells + D-dimer + US. Harrison 22e Ch.56.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "تظاهر: ادم یک‌طرفه + درد + اریتم", label_en: "Clin: unilateral swelling + pain + erythema", branch: "clinical", x: 0, y: 0 },
+          { id: "wells", label_fa: "Wells ≥2 پرریسک → سونو فوری", label_en: "Wells ≥2 high → US now", branch: "workup", x: -200, y: 110 },
+          { id: "dd", label_fa: "Wells پایین + D-dimer منفی → رد", label_en: "Low Wells + neg D-dimer → rule out", branch: "workup", x: 200, y: 110 },
+          { id: "rx", label_fa: "DOAC (آپیکسابان/ریواروکسابان) + جوراب فشاری", label_en: "DOAC + compression", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "wells", label: "" }, { from: "clin", to: "dd", label: "" }, { from: "wells", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "stroke-hemo",
+      title_fa: "سکته هموراژیک",
+      title_en: "Hemorrhagic Stroke",
+      type: "mind", system: "neuro", level: "emergency",
+      summary_fa: "سردرد ناگهانی + همی‌پارزی + CT هیپردنس. Harrison 22e Ch.68.",
+      summary_en: "Thunderclap headache + hemiparesis + hyperdense CT. Harrison 22e Ch.68.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "سردرد برق‌آسا + تهوع/استفراغ + افت هوشیاری", label_en: "Thunderclap + N/V + ↓ LOC", branch: "clinical", x: 0, y: 0 },
+          { id: "ct", label_fa: "CT بدون کنتراست: خون هیپردنس", label_en: "Non-contrast CT: hyperdense blood", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "کاهش فشار ملایم + ریورس وارفارین + جراحی اگر هماتوم بزرگ", label_en: "Gentle BP ↓ + reverse warfarin + surgery if large", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "ct", label: "" }, { from: "ct", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "ms",
+      title_fa: "مولتیپل اسکلروزیس (MS)",
+      title_en: "Multiple Sclerosis",
+      type: "mind", system: "neuro", level: "high_yield",
+      summary_fa: "حملات عود-بهبود + MRI پلاک + OCB. Harrison 22e Ch.78.",
+      summary_en: "Relapsing-remitting + MRI plaques + OCB. Harrison 22e Ch.78.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "نوریت اپتیک + ضعف/پارستزی منتشر در زمان/مکان", label_en: "Optic neuritis + disseminated weakness/paresthesia", branch: "clinical", x: 0, y: 0 },
+          { id: "mri", label_fa: "MRI: پلاک پری‌ونتریکولار + Dawson finger", label_en: "MRI: periventricular plaques", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "حمله: متیل‌پردنیزولون — پیشگیری: اینترفرون/ریتوکسی", label_en: "Attack: methylpred — DMT: interferon/ritux", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "mri", label: "" }, { from: "mri", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "gbs",
+      title_fa: "سندرم گیلن‌باره (GBS)",
+      title_en: "Guillain-Barré Syndrome",
+      type: "mind", system: "neuro", level: "emergency",
+      summary_fa: "فلج صعودی + آرِفلکسی + سابقه گاستروانتریت (کمپیلوباکتر). Harrison 22e Ch.77.",
+      summary_en: "Ascending paralysis + areflexia + prior gastroenteritis. Harrison 22e Ch.77.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "ضعف صعودی + آرِفلکسی + پارستزی", label_en: "Ascending weakness + areflexia", branch: "clinical", x: 0, y: 0 },
+          { id: "lp", label_fa: "LP: پروتئین↑ بدون پلئوسیتوز (albuminocytologic dissociation)", label_en: "LP: high protein no pleocytosis", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "IVIG یا پلاسمافرز + مانیتور تنفسی", label_en: "IVIG or plasmapheresis + resp monitor", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "lp", label: "" }, { from: "lp", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "hypothyroidism",
+      title_fa: "کم‌کاری تیروئید",
+      title_en: "Hypothyroidism",
+      type: "mind", system: "endo", level: "core",
+      summary_fa: "خستگی + افزایش وزن + یبوست + TSH↑. Harrison 22e Ch.41.",
+      summary_en: "Fatigue + weight gain + constipation + high TSH. Harrison 22e Ch.41.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "علائم: خستگی، عدم تحمل سرما، یبوست، ادم میکزدم", label_en: "Clin: fatigue, cold intolerance, constipation, myxedema", branch: "clinical", x: 0, y: 0 },
+          { id: "lab", label_fa: "TSH↑ + T4↓ (اولیه) — TSH↓ + T4↓ (ثانویه)", label_en: "TSH↑ T4↓ (primary) — TSH↓ T4↓ (secondary)", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "لووتیروکسین با تیتر TSH", label_en: "Levothyroxine titrated to TSH", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "lab", label: "" }, { from: "lab", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "cushing",
+      title_fa: "سندرم کوشینگ",
+      title_en: "Cushing Syndrome",
+      type: "mind", system: "endo", level: "high_yield",
+      summary_fa: "چاقی مرکزی + استریا + هیپرتانسیون + کورتیزول↑. Harrison 22e Ch.40.",
+      summary_en: "Central obesity + striae + HTN + high cortisol. Harrison 22e Ch.40.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "clin", label_fa: "ماه‌صورت + بوفالو هامپ + استریای بنفش + ضعف", label_en: "Moon face + buffalo hump + purple striae", branch: "clinical", x: 0, y: 0 },
+          { id: "scr", label_fa: "غربال: دگزامتازون 1mg شبانه + کورتیزول آزاد ادرار", label_en: "Screen: 1mg dex + UFC", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "جراحی آدنوم هیپوفیز/آدرنال + کتوکونازول", label_en: "Surgery pituitary/adrenal + ketoconazole", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "clin", to: "scr", label: "" }, { from: "scr", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "uti",
+      title_fa: "عفونت ادراری (UTI)",
+      title_en: "Urinary Tract Infection",
+      type: "mind", system: "nephro", level: "core",
+      summary_fa: "سوزش ادرار + تکرر + لکوسیت استراز + کشت. Harrison 22e Ch.66.",
+      summary_en: "Dysuria + frequency + leuk esterase + culture. Harrison 22e Ch.66.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "cys", label_fa: "سیستیت: سوزش + تکرر بدون تب", label_en: "Cystitis: dysuria + frequency no fever", branch: "clinical", x: -200, y: 0 },
+          { id: "pyelo", label_fa: "پیلونفریت: تب + درد پهلو + تهوع", label_en: "Pyelo: fever + flank pain + N/V", branch: "clinical", x: 200, y: 0 },
+          { id: "ua", label_fa: "آنالیز ادرار + کشت → E.coli", label_en: "UA + culture → E.coli", branch: "workup", x: 0, y: 110 },
+          { id: "rx", label_fa: "نیتروفورانتوئین/فوسفو برای سیستیت — سفتریاکسون برای پیلو", label_en: "Nitro/fosfo for cystitis — ceftri for pyelo", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "cys", to: "ua", label: "" }, { from: "pyelo", to: "ua", label: "" }, { from: "ua", to: "rx", label: "" }]
+      }
+    },
+    {
+      slug: "anemia-appro",
+      title_fa: "آنمی — اپروچ تشخیصی",
+      title_en: "Anemia — Diagnostic Approach",
+      type: "approach", system: "heme", level: "core",
+      summary_fa: "MCV + رتیک + اسمیر. Harrison 22e Ch.25.",
+      summary_en: "MCV + retic + smear. Harrison 22e Ch.25.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "cbc", label_fa: "CBC: Hb↓ + MCV؟", label_en: "CBC: low Hb + MCV?", branch: "workup", x: 0, y: 0 },
+          { id: "micro", label_fa: "میکروسیتیک: فقر آهن/تالاسمی", label_en: "Micro: iron def/thal", branch: "etiology", x: -200, y: 110 },
+          { id: "macro", label_fa: "ماکروسیتیک: B12/فولات/الکل", label_en: "Macro: B12/folate/alcohol", branch: "etiology", x: 200, y: 110 },
+          { id: "normo", label_fa: "نورموسیتیک: خونریزی/همولیز/مزمن", label_en: "Normocytic: bleed/hemolysis/chronic", branch: "etiology", x: 0, y: 220 },
+        ],
+        edges: [{ from: "cbc", to: "micro", label: "" }, { from: "cbc", to: "macro", label: "" }, { from: "cbc", to: "normo", label: "" }]
+      }
+    },
+    {
+      slug: "cirrhosis-complications",
+      title_fa: "عوارض سیروز — آسیت و آنسفالوپاتی",
+      title_en: "Cirrhosis Complications",
+      type: "mind", system: "gastro", level: "high_yield",
+      summary_fa: "آسیت + SBP + آنسفالوپاتی + واریس. Harrison 22e Ch.44.",
+      summary_en: "Ascites + SBP + encephalopathy + varices. Harrison 22e Ch.44.",
+      cover_url: "/covers/harrison.jpg",
+      graph_json: {
+        nodes: [
+          { id: "asc", label_fa: "آسیت: SAAG>1.1 → پورتال", label_en: "Ascites: SAAG>1.1 → portal", branch: "clinical", x: -200, y: 0 },
+          { id: "sbp", label_fa: "SBP: تب + درد شکم + نوتروفیل آسیت>250", label_en: "SBP: fever + pain + ascitic PMN>250", branch: "complication", x: 200, y: 0 },
+          { id: "he", label_fa: "آنسفالوپاتی: گیجی + آستریكسیس + آمونیاک↑", label_en: "Encephalopathy: confusion + asterixis", branch: "complication", x: 0, y: 110 },
+          { id: "rx", label_fa: "اسپیرونولاکتون + سفتریاکسون + لاکتولوز + باند واریس", label_en: "Spiro + ceftri + lactulose + banding", branch: "treatment", x: 0, y: 220 },
+        ],
+        edges: [{ from: "asc", to: "sbp", label: "" }, { from: "asc", to: "he", label: "" }, { from: "sbp", to: "rx", label: "" }]
       }
     },
   ];
