@@ -80,7 +80,7 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
   const [premium, setPremium] = useState(false);
   const [buryMsg, setBuryMsg] = useState("");
   const [buryBusy, setBuryBusy] = useState(null);
-  const [features, setFeatures] = useState({ high_yield: true, learning_radar: true, bury: true, suspend: true });
+  const [features, setFeatures] = useState({ high_yield: true, learning_radar: true, bury: true, suspend: true, bury_show_in_lesson: true, bury_show_in_review: true, high_yield_show_toggle: true, high_yield_persist_choice: true, bug_hunt: true });
   useEffect(() => { api.get("/learn/features").then(setFeatures).catch(() => {}); }, []);
   useEffect(() => { setBuryMsg(""); setBuryBusy(null); }, [idx]);
   const [showLabModal, setShowLabModal] = useState(false);
@@ -423,18 +423,18 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
           <div style={{ display: "flex", justifyContent: "center", marginTop: 10, gap: 8, flexWrap: "wrap", alignItems: "center" }}>
             {flag("notes") && <NoteButton cardId={card.id} />}
             {flag("learner_cards") && flag("save_flashcard") && <SaveFlashcardButton cardId={card.id} premium={premium} onPremium={() => onPremiumWanted?.()} />}
-            {features.bury && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={async () => {
+            {features.bury && features.bury_show_in_lesson !== false && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={async () => {
               if (buryBusy) return; setBuryBusy("bury");
               try { await api.post("/learn/review/bury", { cardId: card.id }); setBuryMsg(lang === "fa" ? "تا فردا مخفی شد" : "Buried until tomorrow"); setTimeout(() => setBuryMsg(""), 2500); }
               catch (e) { setBuryMsg(e.message || "خطا"); } finally { setBuryBusy(null); }
             }} title={lang === "fa" ? "مخفی تا فردا (bury)" : "Bury until tomorrow"}>⏸ {lang === "fa" ? "مخفی" : "Bury"}</button>}
-            {features.suspend && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={async () => {
+            {features.suspend && features.bury_show_in_lesson !== false && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={async () => {
               if (buryBusy) return; setBuryBusy("suspend");
               try { await api.post("/learn/review/suspend", { cardId: card.id }); setBuryMsg(lang === "fa" ? "تعلیق شد — دیگر نمایش داده نمی‌شود" : "Suspended"); setTimeout(() => setBuryMsg(""), 2500); }
               catch (e) { setBuryMsg(e.message || "خطا"); } finally { setBuryBusy(null); }
             }} title={lang === "fa" ? "تعلیق کامل" : "Suspend"}>🚫 {lang === "fa" ? "تعلیق" : "Suspend"}</button>}
             {buryMsg && <span className="small muted">{buryMsg}</span>}
-            <BugReportButton cardId={card.id} />
+            {features.bug_hunt !== false && <BugReportButton cardId={card.id} />}
           </div>
         </>
       )}

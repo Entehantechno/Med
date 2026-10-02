@@ -178,8 +178,8 @@ async function main() {
       const cfg = getGameConfig().bug_hunt;
       if (cfg?.enabled !== false && (cfg?.auto_scan_hours || 0) > 0) {
         const { db } = await import("./db.js");
-        const last = db.prepare("SELECT created_at FROM bug_scans ORDER BY id DESC LIMIT 1").get();
-        const hoursSince = last ? (Date.now() - new Date(last.created_at).getTime()) / 3600000 : 999;
+        const row = db.prepare("SELECT (julianday('now') - julianday(created_at))*24 AS hours FROM bug_scans ORDER BY id DESC LIMIT 1").get();
+        const hoursSince = row?.hours ?? 999;
         if (hoursSince >= (cfg.auto_scan_hours || 24)) {
           const { scanOnce } = await import("./lib/bughunt.js");
           const out = scanOnce();

@@ -19,7 +19,7 @@ export default function Review({ onProfile, go }) {
   const [stats, setStats] = useState(null);
   const [buryMsg, setBuryMsg] = useState("");
   const [buryBusy, setBuryBusy] = useState(null);
-  const [features, setFeatures] = useState({ bury: true, suspend: true });
+  const [features, setFeatures] = useState({ bury: true, suspend: true, bury_show_in_lesson: true, bury_show_in_review: true, high_yield: true, learning_radar: true, bug_hunt: true, high_yield_show_toggle: true, high_yield_persist_choice: true });
   useEffect(() => { api.get("/learn/features").then(setFeatures).catch(() => {}); }, []);
 
   useEffect(() => {
@@ -135,7 +135,7 @@ export default function Review({ onProfile, go }) {
 
         {/* show the card content; in review we reveal the answer + micro */}
         <Type card={card} checked={revealed} sel={reviewAnswer(card)} setSel={() => {}} />
-        {revealed && card.micro && <MicroLesson micro={card.micro} defaultOpen={true} />}
+        {revealed && card.micro && <MicroLesson micro={card.micro} defaultOpen={true} features={features} />}
 
         {!revealed ? (
           <div className="lesson-cta mt16">
@@ -144,10 +144,10 @@ export default function Review({ onProfile, go }) {
           </button>
           {mode === "due" && (
             <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
-              {features.bury && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("bury")}>⏸ {lang === "fa" ? "مخفی تا فردا" : "Bury"}</button>}
-              {features.suspend && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("suspend")}>🚫 {lang === "fa" ? "تعلیق" : "Suspend"}</button>}
+              {features.bury && features.bury_show_in_review !== false && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("bury")}>⏸ {lang === "fa" ? "مخفی تا فردا" : "Bury"}</button>}
+              {features.suspend && features.bury_show_in_review !== false && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("suspend")}>🚫 {lang === "fa" ? "تعلیق" : "Suspend"}</button>}
               {buryMsg && <span className="small muted">{buryMsg}</span>}
-              <BugReportButton cardId={card.id} />
+              {features.bug_hunt !== false && <BugReportButton cardId={card.id} />}
             </div>
           )}
           </div>
@@ -167,10 +167,10 @@ export default function Review({ onProfile, go }) {
               <button className="btn grade-easy" aria-label={t("gEasy")} onClick={() => grade(3)}><span className="grade-lbl">{t("gEasy")}</span>{card.preview && <span className="grade-iv">{ivLabel(card.preview.easy)}</span>}</button>
             </div>
             <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 8, flexWrap: "wrap", alignItems: "center" }}>
-              {features.bury && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("bury")}>⏸ {lang === "fa" ? "مخفی تا فردا" : "Bury"}</button>}
-              {features.suspend && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("suspend")}>🚫 {lang === "fa" ? "تعلیق" : "Suspend"}</button>}
+              {features.bury && features.bury_show_in_review !== false && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("bury")}>⏸ {lang === "fa" ? "مخفی تا فردا" : "Bury"}</button>}
+              {features.suspend && features.bury_show_in_review !== false && <button type="button" className="btn btn-ghost btn-sm" disabled={!!buryBusy} onClick={() => handleBury("suspend")}>🚫 {lang === "fa" ? "تعلیق" : "Suspend"}</button>}
               {buryMsg && <span className="small muted">{buryMsg}</span>}
-              <BugReportButton cardId={card.id} />
+              {features.bug_hunt !== false && <BugReportButton cardId={card.id} />}
             </div>
           </div>
         )}

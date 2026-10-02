@@ -1825,9 +1825,15 @@ r.get("/features", ...learner, (req, res) => {
   const cfg = getGameConfig();
   res.json({
     high_yield: cfg.high_yield?.enabled !== false && isEnabled("high_yield"),
+    high_yield_show_toggle: cfg.high_yield?.show_toggle !== false,
+    high_yield_persist_choice: cfg.high_yield?.persist_choice !== false,
     learning_radar: cfg.learning_radar?.enabled !== false && isEnabled("learning_radar"),
+    learning_radar_min_wrong: cfg.learning_radar?.min_wrong ?? 1,
+    learning_radar_decay_days: cfg.learning_radar?.decay_days ?? 14,
     bury: cfg.bury_suspend?.bury_enabled !== false && isEnabled("bury_suspend") && isEnabled("srs_review"),
     suspend: cfg.bury_suspend?.suspend_enabled !== false && isEnabled("bury_suspend") && isEnabled("srs_review"),
+    bury_show_in_lesson: cfg.bury_suspend?.show_in_lesson !== false,
+    bury_show_in_review: cfg.bury_suspend?.show_in_review !== false,
     bug_hunt: cfg.bug_hunt?.enabled !== false && isEnabled("bug_hunt"),
   });
 });

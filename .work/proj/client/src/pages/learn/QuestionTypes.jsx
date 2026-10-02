@@ -343,14 +343,17 @@ export const TYPE_MAP = new Proxy(TYPE_VIEWS, {
 export function MicroLesson({ micro, defaultOpen = false, glossary, features }) {
   const { lang } = useApp();
   const fa = lang === "fa";
-  const [open, setOpen] = useState(defaultOpen);
+  const persist = features?.high_yield_persist_choice !== false;
+  const showToggle = features?.high_yield_show_toggle !== false;
   const [hy, setHy] = useState(() => {
+    if (!persist) return false;
     try { return localStorage.getItem("med_high_yield") === "1"; } catch { return false; }
   });
-  useEffect(() => { try { localStorage.setItem("med_high_yield", hy ? "1" : "0"); } catch {} }, [hy]);
+  useEffect(() => { if (!persist) return; try { localStorage.setItem("med_high_yield", hy ? "1" : "0"); } catch {} }, [hy, persist]);
   if (!micro || (!micro.lead && !micro.golden && !(micro.points || []).length && !micro.high_yield && !micro.highYield)) return null;
   const hasHighYield = features?.high_yield === false ? false : !!(micro.high_yield || micro.highYield || micro.golden);
   const radar = features?.learning_radar === false ? null : (micro.learning_radar || micro.learningRadar);
+  const effectiveHy = showToggle ? hy : false;
   return (
     <div className="micro-box" style={{ borderColor: radar ? "#fcd34d" : undefined, boxShadow: radar ? "0 0 0 2px #fef3c7" : undefined }}>
       <button className="micro-toggle" onClick={() => setOpen((v) => !v)} style={{ background: radar ? "#fffbeb" : undefined }}>
@@ -360,20 +363,23 @@ export function MicroLesson({ micro, defaultOpen = false, glossary, features }) 
       </button>
       {open && (
         <div className="micro-body">
-          {hasHighYield && (
+          {hasHighYield && showToggle && (
             <div style={{ display: "flex", gap: 8, marginBottom: 12, flexWrap: "wrap", alignItems: "center" }}>
               <button type="button" className={`btn btn-sm ${hy ? "btn-accent" : "btn-ghost"}`} onClick={() => setHy((v) => !v)} title={fa ? "فقط نکات طلایی و حیاتی (AMBOSE High-Yield)" : "High-Yield only (AMBOSS-style)"} style={{ borderColor: hy ? "#f59e0b" : undefined, background: hy ? "#fffbeb" : undefined }}>
                 ⚡ {fa ? (hy ? "نمای کامل" : "High-Yield") : (hy ? "Full" : "High-Yield")}
               </button>
               {radar && <span className="tag" style={{ background: "#fef3c7", border: "1px solid #fcd34d", color: "#92400e", fontWeight: 700 }}>🔴 {fa ? "نیاز به مرور — قبلاً اشتباه زدی" : "Learning Radar — review needed"}</span>}
-              {hasHighYield && !hy && <span className="small muted">{fa ? "حالت High-Yield: فقط طلایی‌ها" : "High-Yield: golden only"}</span>}
+              {hasHighYield && !effectiveHy && <span className="small muted">{fa ? "حالت High-Yield: فقط طلایی‌ها" : "High-Yield: golden only"}</span>}
             </div>
+          )}
+          {hasHighYield && !showToggle && radar && (
+            <div style={{ marginBottom: 10 }}><span className="tag" style={{ background: "#fef3c7", border: "1px solid #fcd34d", color: "#92400e" }}>🔴 {fa ? "نیاز به مرور" : "Needs review"}</span></div>
           )}
           {/* when High-Yield is on but card has no radar, still show subtle hint */}
           {!hasHighYield && radar && (
             <div style={{ marginBottom: 10 }}><span className="tag" style={{ background: "#fef3c7", border: "1px solid #fcd34d", color: "#92400e" }}>🔴 {fa ? "نیاز به مرور" : "Needs review"}</span></div>
           )}
-          {!hy ? (
+          {!effectiveHy ? (
             <>
               {micro.media && <MediaEmbed media={micro.media} className="micro-media" />}
               {micro.lead && <GlossaryText as="div" className="micro-lead" text={micro.lead} glossary={glossary} />}
@@ -393,13 +399,13 @@ export function MicroLesson({ micro, defaultOpen = false, glossary, features }) 
               <div className="small muted" style={{ marginTop: 6 }}>{fa ? "— حالت High-Yield فقط نکتهٔ طلایی و اولین نکته را نشان می‌دهد" : "— High-Yield shows only the golden point and first bullet"}</div>
             </>
           )}
-          {micro.options?.length > 0 && !hy && (
+          {micro.options?.length > 0 && !effectiveHy && (
             <div className="micro-opts">
               <div className="micro-sub">{fa ? "بررسی گزینه‌ها:" : "Option analysis:"}</div>
               {micro.options.map((o, i) => <GlossaryText as="div" key={i} className="micro-opt-line" text={o} glossary={glossary} />)}
             </div>
           )}
-          {micro.high_yield && !hy && <GlossaryText as="div" className="small muted" text={micro.high_yield} glossary={glossary} />}
+          {micro.high_yield && !effectiveHy && <GlossaryText as="div" className="small muted" text={micro.high_yield} glossary={glossary} />}
           {micro.source && <div className="micro-source"><Icon name="bookmark" size={12} /> {fa ? "منبع: " : "Source: "}{micro.source}</div>}
         </div>
       )}

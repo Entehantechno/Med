@@ -143,6 +143,15 @@ export function scanOnce() {
     }
   }
 
+  // respect keep_reports: prune scans older than N days
+  try {
+    const keep = Number(getGameConfig().bug_hunt?.keep_reports ?? 30);
+    if (keep > 0) {
+      db.prepare("DELETE FROM bug_scans WHERE created_at < datetime('now', '-' || ? || ' days')").run(keep);
+      persistNow();
+    }
+  } catch {}
+
   return { scanId: info.lastInsertRowid, findings };
 }
 

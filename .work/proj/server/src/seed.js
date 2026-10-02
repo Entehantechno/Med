@@ -64,9 +64,9 @@ db.exec(`DELETE FROM class_members; DELETE FROM class_cases; DELETE FROM classes
          DELETE FROM group_packs; DELETE FROM group_orders; DELETE FROM seat_codes;
          DELETE FROM dx_cases; DELETE FROM dx_attempts;
          DELETE FROM referrals; DELETE FROM share_events; DELETE FROM pwa_events;
-         DELETE FROM blog_posts; DELETE FROM certificates;
+         DELETE FROM blog_posts; DELETE FROM blog_revisions; DELETE FROM certificates;
          DELETE FROM user_quests; DELETE FROM daily_chests; DELETE FROM streak_days;
-         DELETE FROM card_attempts; DELETE FROM question_stats; DELETE FROM monthly_quests;
+         DELETE FROM card_attempts; DELETE FROM card_revisions; DELETE FROM question_stats; DELETE FROM monthly_quests;
          DELETE FROM user_badges; DELETE FROM event_runs; DELETE FROM ad_views;
          DELETE FROM streak_wagers; DELETE FROM user_notes; DELETE FROM study_plans;
          DELETE FROM exam_sims; DELETE FROM course_enrollments; DELETE FROM transactions;
