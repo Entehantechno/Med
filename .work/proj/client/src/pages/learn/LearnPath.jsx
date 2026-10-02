@@ -7,6 +7,8 @@ import { DrMed, Microbe, MascotSay } from "../../components/PathMascots.jsx";
 import { loadMascots, currentMascots, drLine, microbeLine, guideImg, DEFAULT_MASCOTS } from "../../lib/mascotConfig.js";
 import Confetti from "../../components/Confetti.jsx";
 import { AdCard } from "./AdCard.jsx";
+import { MotionAd } from "./MotionAd.jsx";
+import { PremiumInline } from "./PremiumBanner.jsx";
 import { safeLocal } from "../../lib/storage.js";
 import JumpAhead from "./JumpAhead.jsx";
 
@@ -78,6 +80,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
   const fa = lang === "fa";
   const [topics, setTopics] = useState(null);
   const [ads, setAds] = useState([]);
+  const [isPremium, setIsPremium] = useState(false);
   const [celebrate, setCelebrate] = useState(false);   // fire confetti once per newly-completed unit
   const [mascots, setMascots] = useState(currentMascots());  // admin-editable character config
   const [highlightSlug, setHighlightSlug] = useState(null);  // briefly glow the deep-linked topic
@@ -119,6 +122,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
   useEffect(() => { loadMascots().then(setMascots).catch(() => setMascots(DEFAULT_MASCOTS)); }, []);
 
   useEffect(() => {
+    api.get(`/learn/profile?lang=${lang}`).then((d) => setIsPremium(!!(d.profile?.premium_effective ?? d.profile?.premium))).catch(() => {});
     api.get(`/learn/path?lang=${lang}`).then((d) => {
       setTopics(d.topics);
       // Celebrate when a unit is completed that we haven't celebrated before.
@@ -452,8 +456,16 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
               )}
             </div>
 
-            {/* interleave an ad between subject groups */}
-            {ti === 2 && ads[0] && <div className="mb16"><AdCard ad={ads[0]} /></div>}
+            {/* interleave a motion-graphic ad between subject groups — admin ad in motion shell, house premium promo when empty (hidden for premium) */}
+            {ti === 2 && !isPremium && (
+              <div className="mb16">
+                {ads[0] ? (
+                  <MotionAd ad={ads[0]} variant="path" />
+                ) : (
+                  <PremiumInline />
+                )}
+              </div>
+            )}
           </div>
         );
       })}

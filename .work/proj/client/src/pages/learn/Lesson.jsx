@@ -10,6 +10,8 @@ import { StreakIcon, HeartIcon, GemIcon, XpIcon } from "../../components/StatIco
 import { DrMed } from "../../components/PathMascots.jsx";
 import { currentMascots, loadMascots } from "../../lib/mascotConfig.js";
 import { AdCard } from "./AdCard.jsx";
+import { MotionAd } from "./MotionAd.jsx";
+import { PremiumCard, PremiumInline } from "./PremiumBanner.jsx";
 import { RewardedAd } from "./RewardedAd.jsx";
 import { TYPE_MAP, MicroLesson } from "./QuestionTypes.jsx";
 import MediaEmbed from "../../components/MediaEmbed.jsx";
@@ -191,21 +193,33 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
   if (err) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={40} /></div><h3>{err}</h3><button type="button" className="btn btn-ghost mt16" onClick={onDone}>{t("back")}</button></div>;
   if (!data) return <div className="card"><div className="skeleton" style={{ height: 240 }} /></div>;
 
-  // lesson-intro ad (admin-controlled): show once before the questions start
-  if (introAd && !introDismissed) {
-    return (
-      <div className="lesson-wrap">
-        <div className="lesson-top">
-          <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onDone} title={t("back")}><Icon name="logout" size={16} /></button>
-          <div style={{ flex: 1 }} />
+  // lesson-intro motion graphic — admin ad inside premium motion shell, curated house promo otherwise
+  if (!introDismissed && (introAd || !premium)) {
+    // show curated intro only once per session for non-premium; premium with no admin ad skips straight to lesson
+    const showCuratedIntro = !introAd && !premium && !introDismissed;
+    if (introAd || showCuratedIntro) {
+      return (
+        <div className="lesson-wrap">
+          <div className="lesson-top">
+            <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onDone} title={t("back")}><Icon name="logout" size={16} /></button>
+            <div style={{ flex: 1 }} />
+          </div>
+          {introAd ? (
+            <MotionAd ad={introAd} variant="intro" onCta={() => setIntroDismissed(true)} />
+          ) : (
+            <MotionAd variant="intro" onCta={() => setIntroDismissed(true)} />
+          )}
+          <button type="button" className="btn btn-primary btn-block mt16" onClick={() => setIntroDismissed(true)}>
+            <Icon name="play" size={16} /> {t("startLesson")}
+          </button>
+          {!introAd && (
+            <div className="small muted center mt8" style={{ opacity:.7 }}>
+              {lang === "fa" ? "پیشنهاد ویژه — با پلاس بدون تبلیغ و با قلب نامحدود ادامه بده" : "Special — go Plus for no ads & unlimited hearts"}
+            </div>
+          )}
         </div>
-        <div className="small muted center mb8">{t("sponsored")}</div>
-        <AdCard ad={introAd} />
-        <button type="button" className="btn btn-primary btn-block mt16" onClick={() => setIntroDismissed(true)}>
-          <Icon name="play" size={16} /> {t("startLesson")}
-        </button>
-      </div>
-    );
+      );
+    }
   }
 
   const cards = data.cards;
@@ -629,7 +643,14 @@ function Celebrate({ result, betweenAd, onDone, onReplay, onContinueLesson }) {
           <button type="button" className="btn btn-accent btn-sm" onClick={onReplay}><Icon name="repeat" size={14} /> {t("tryAgain")}</button>
         </div>
       )}
-      {betweenAd && <div className="mt16"><AdCard ad={betweenAd} /></div>}
+      {/* motion-graphic between-lessons — admin ad in gold shell, or premium upsell for non-premium */}
+      {betweenAd ? (
+        <div className="mt16"><MotionAd ad={betweenAd} variant="between" /></div>
+      ) : (
+        !result.profile?.premium && !result.profile?.premium_effective && (
+          <div className="mt16"><PremiumCard /></div>
+        )
+      )}
       <button type="button" className="btn btn-primary btn-block mt16" onClick={() => {
         if (result.nextNode?.id && onContinueLesson) onContinueLesson(result.nextNode.id);
         else onDone();

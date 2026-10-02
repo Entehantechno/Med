@@ -16,9 +16,9 @@
 
 /* The cache VERSION is stamped at build time (see scripts/stamp-sw.mjs) with the
    app's VERSION.txt so old caches are cleaned automatically on every release.
-   The 2026.10.02-critical-review-120 token below is replaced during `npm run build`; if it is
+   The 2026.10.02-motion-premium-121 token below is replaced during `npm run build`; if it is
    ever left un-replaced (dev), we fall back to a date so it still changes. */
-const CACHE_VERSION = "medschool-2026.10.02-critical-review-120-academic-private-v1";  // stamped on build
+const CACHE_VERSION = "medschool-2026.10.02-motion-premium-121-academic-private-v1";  // stamped on build
 const SHELL_CACHE   = `${CACHE_VERSION}-shell`;    // app shell (html/offline)
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;   // hashed assets
 const API_CACHE     = `${CACHE_VERSION}-api`;      // read-only API responses

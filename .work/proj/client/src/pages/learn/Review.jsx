@@ -4,6 +4,7 @@ import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
 import { TYPE_MAP, MicroLesson } from "./QuestionTypes.jsx";
 import BugReportButton from "../../components/BugReportButton.jsx";
+import { PremiumInline } from "./PremiumBanner.jsx";
 
 /* Spaced-repetition review: shows due cards. The learner reveals the answer,
    then self-grades (Again/Hard/Good/Easy) which reschedules the card. */
@@ -11,6 +12,7 @@ export default function Review({ onProfile, go }) {
   const { t, lang } = useApp();
   const [mode, setMode] = useState("due");   // due | saved
   const [cards, setCards] = useState(null);
+  const [isPremium, setIsPremium] = useState(false);
   const [calm, setCalm] = useState(null);   // Calm Mode review-cap info
   const [idx, setIdx] = useState(0);
   const [revealed, setRevealed] = useState(false);
@@ -20,7 +22,7 @@ export default function Review({ onProfile, go }) {
   const [buryMsg, setBuryMsg] = useState("");
   const [buryBusy, setBuryBusy] = useState(null);
   const [features, setFeatures] = useState({ bury: true, suspend: true, bury_show_in_lesson: true, bury_show_in_review: true, high_yield: true, learning_radar: true, bug_hunt: true, high_yield_show_toggle: true, high_yield_persist_choice: true });
-  useEffect(() => { api.get("/learn/features").then(setFeatures).catch(() => {}); }, []);
+  useEffect(() => { api.get("/learn/features").then(setFeatures).catch(() => {}); api.get("/learn/profile").then((d) => setIsPremium(!!(d.profile?.premium_effective ?? d.profile?.premium))).catch(() => {}); }, []);
 
   useEffect(() => {
     setCards(null); setIdx(0); setRevealed(false); setReviewed(0); setDone(false);
@@ -110,6 +112,8 @@ export default function Review({ onProfile, go }) {
         <span className="tag">{idx + 1} / {cards.length}</span></div>
       <Tabs />
       <div className="muted small mb16">{mode === "saved" ? t("savedCardsHint") : t("reviewDesc")}</div>
+      {/* premium motion upsell — beautiful banner in review slot (hidden for premium) */}
+      {mode === "due" && !isPremium && <div className="mb16"><PremiumInline /></div>}
 
       {/* Calm Mode: reassure the learner that the pile is intentionally trimmed */}
       {mode === "due" && calm?.capped && (

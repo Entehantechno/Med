@@ -4,6 +4,8 @@ import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
 import { GemIcon, XpIcon, StreakIcon } from "../../components/StatIcons.jsx";
 import { AdCard } from "./AdCard.jsx";
+import { MotionAd } from "./MotionAd.jsx";
+import { PremiumHero, PremiumInline } from "./PremiumBanner.jsx";
 import { RewardedAd } from "./RewardedAd.jsx";
 import { TierBadge } from "./TierBadge.jsx";
 import OnboardingChecklist from "./OnboardingChecklist.jsx";
@@ -208,8 +210,20 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
           onReward={(prof) => { if (prof) { onProfile?.(prof); setData((d) => d ? { ...d, profile: prof } : d); } }} />
       )}
 
-      {/* ad slot (hidden for premium) */}
-      {data?.ads?.length > 0 && <div className="mb16"><AdCard ad={data.ads[0]} /></div>}
+      {/* premium hero — beautiful motion upsell for non-premium */}
+      {!(p.premium_effective ?? p.premium) && (
+        <div className="mb16">
+          {data?.ads?.length > 0 ? (
+            <MotionAd ad={data.ads[0]} variant="path" />
+          ) : (
+            <PremiumHero />
+          )}
+        </div>
+      )}
+      {/* secondary ad slot: curated motion when admin ad was used as hero */}
+      {!(p.premium_effective ?? p.premium) && data?.ads?.length > 0 && (
+        <div className="mb16"><PremiumInline /></div>
+      )}
 
       {/* national ranking preview */}
       {flag("ranking") && <div className="card">

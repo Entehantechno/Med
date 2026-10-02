@@ -17,6 +17,7 @@ import "./mobile-learn.css";
 // freezing every page except the signup overlay (which has its own scroller).
 import "./scroll-unlock.css";
 import "./search.css";
+import "./styles-motion-ads.css";
 import { initRum } from "./lib/rum.js";
 import { safeLocal } from "./lib/storage.js";
 import { initSwUpdate } from "./lib/sw-update.js";
