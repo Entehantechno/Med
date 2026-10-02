@@ -268,6 +268,8 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
         // Dr. Med mood + phase for this section (deterministic per section id).
         const secPhase = secPct >= 100 ? "done" : secPct > 0 ? "mid" : "start";
         const drMood = secPct >= 100 ? "celebrate" : secPct > 0 ? "cheer" : "wave";
+        const coreNodes = prepareTopicNodes(topic.nodes);
+        const frontierIdx = Math.max(0, coreNodes.findIndex((n) => !n.done));
         return (
           <div key={topic.id} className={`path-section-wrap ${highlightSlug === topic.slug || (highlightSlug === "__current__" && hasCurrent) ? "topic-focus-glow" : ""}`}
             ref={(el) => { if (topic.slug) topicRefs.current[topic.slug] = el; }}
@@ -312,29 +314,17 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
               </div>
             </div>
 
-            {/* ---- Winding node path ---- */}
+            {/* ---- Winding node path (single prepareTopicNodes per unit for perf) ---- */}
             <div className="unit-path">
-              {(() => {
-                const WINDOW_BEFORE = 2, WINDOW_AFTER = 6, COLLAPSE_AT = 12;
-                const coreNodes = prepareTopicNodes(topic.nodes);
-                const all = coreNodes;
-                if (all.length <= COLLAPSE_AT || expanded[topic.id]) return null;
-                const frontier = Math.max(0, all.findIndex((n) => !n.done));
-                const from = Math.max(0, frontier - WINDOW_BEFORE);
-                if (from === 0) return null;
-                return (
-                  <button type="button" className="unit-window-more" onClick={() => setExpanded((e) => ({ ...e, [topic.id]: true }))}>
-                    <Icon name="check" size={13} /> {fa ? `${from} مرحلهٔ قبلی تکمیل شده — نمایش همه` : `${from} earlier stages done — show all`}
-                  </button>
-                );
-              })()}
-              {(() => {
-                const coreNodes = prepareTopicNodes(topic.nodes);
-                return coreNodes.map((n, ni) => {
-                  if (!expanded[topic.id] && coreNodes.length > 12) {
-                    const frontier = Math.max(0, coreNodes.findIndex((x) => !x.done));
-                    if (ni < frontier - 2 || ni > frontier + 6) return null;
-                  }
+              {coreNodes.length > 12 && !expanded[topic.id] && Math.max(0, frontierIdx - 2) > 0 && (
+                <button type="button" className="unit-window-more" onClick={() => setExpanded((e) => ({ ...e, [topic.id]: true }))}>
+                  <Icon name="check" size={13} /> {fa ? `${Math.max(0, frontierIdx - 2)} مرحلهٔ قبلی تکمیل شده — نمایش همه` : `${Math.max(0, frontierIdx - 2)} earlier stages done — show all`}
+                </button>
+              )}
+              {coreNodes.map((n, ni) => {
+                if (!expanded[topic.id] && coreNodes.length > 12) {
+                  if (ni < frontierIdx - 2 || ni > frontierIdx + 6) return null;
+                }
                   const mastered = n.stars >= 5;
                   const isCurrent = n.id === currentId;
                   // gentle winding S-curve (Duolingo-style): a smooth 6-step
@@ -359,7 +349,6 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
                       <div className="unit-node-main-wrap">
                         <button type="button"
                           className={`unit-node node ${n.done ? "done" : ""} ${n.locked ? "locked" : ""} ${n.kind === "boss" ? "boss" : ""} ${n.legendary ? "legendary" : ""} ${isCurrent ? "current" : ""}`}
-                          aria-disabled={n.locked}
                           aria-current={isCurrent ? "step" : undefined}
                           aria-label={`${n.title}${n.locked ? (fa ? " (قفل)" : " (locked)") : n.legendary ? (fa ? " (افسانه‌ای)" : " (legendary)") : n.done ? `${fa ? " تکمیل‌شده" : " done"} ${n.stars}/5` : isCurrent ? (fa ? " (درس فعلی)" : " (current)") : ""}${mastered && !n.legendary ? (fa ? " — برای چالش افسانه‌ای بزن" : " — tap for legendary") : ""}`}
                           onClick={openNode}
@@ -450,21 +439,12 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
                       )}
                     </div>
                   );
-                });
-              })()}
-              {(() => {
-                const coreNodes = prepareTopicNodes(topic.nodes);
-                const all = coreNodes;
-                if (all.length <= 12 || expanded[topic.id]) return null;
-                const frontier = Math.max(0, all.findIndex((n) => !n.done));
-                const hidden = all.length - 1 - (frontier + 6);
-                if (hidden <= 0) return null;
-                return (
-                  <button type="button" className="unit-window-more" onClick={() => setExpanded((e) => ({ ...e, [topic.id]: true }))}>
-                    <Icon name="lock" size={13} /> {fa ? `${hidden} مرحلهٔ دیگر — نمایش همه` : `${hidden} more stages — show all`}
-                  </button>
-                );
-              })()}
+                })}
+              {coreNodes.length > 12 && !expanded[topic.id] && (coreNodes.length - 1 - (frontierIdx + 6)) > 0 && (
+                <button type="button" className="unit-window-more" onClick={() => setExpanded((e) => ({ ...e, [topic.id]: true }))}>
+                  <Icon name="lock" size={13} /> {fa ? `${coreNodes.length - 1 - (frontierIdx + 6)} مرحلهٔ دیگر — نمایش همه` : `${coreNodes.length - 1 - (frontierIdx + 6)} more stages — show all`}
+                </button>
+              )}
               {complete && (
                 <div className="unit-complete-chip" aria-label={fa ? "این واحد کامل شد" : "Unit complete"}>
                   <Icon name="check" size={13} /> {fa ? "کامل شد" : "Complete"}

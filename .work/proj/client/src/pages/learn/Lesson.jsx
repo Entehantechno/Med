@@ -228,7 +228,8 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
     // record per-card telemetry (correctness + response time + flag/guess signals)
     answersRef.current.push({ cardId: card.id, _idx: idx, correct: right, responseMs: Date.now() - cardStartRef.current, flagged, guessed, confidence, sel: Number.isInteger(sel) ? sel : null, hintUsed });
     requestAnimationFrame(() => {
-      ctaRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+      // Center keeps the CTA visible above the sticky mobile tabbar (block:"end" hid it underneath).
+      ctaRef.current?.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
     });
     if (right) {
       setCorrect((c) => c + 1);

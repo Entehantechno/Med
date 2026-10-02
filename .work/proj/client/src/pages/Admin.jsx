@@ -212,9 +212,11 @@ export default function Admin({ home }) {
     return rows;
   })();
 
-  // guard: never render a tab the user lacks permission for
+  // guard: never render a tab the user lacks permission for (effect, not render-phase setState)
   const allowedTabs = nav.map(([id]) => id);
-  if (!allowedTabs.includes(tab) && allowedTabs.length) setTab(allowedTabs[0]);
+  useEffect(() => {
+    if (allowedTabs.length && !allowedTabs.includes(tab)) setTab(allowedTabs[0]);
+  }, [tab, allowedTabs.join(",")]);
 
   return (
     <div className="app">

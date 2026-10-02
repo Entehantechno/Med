@@ -127,15 +127,14 @@ export default function StudentHome({ go }) {
           </div>
         )}
 
-        {/* At-a-glance counters that ALSO navigate — a student can always reach
-            their exams / classes / progress straight from the home. */}
+        {/* At-a-glance counters — first two navigate, third is a pure progress summary (avoids duplicate nav target). */}
         <div className="grid grid-3">
           <button type="button" className="card stat-card stat-card-link" onClick={() => go("exams")}>
             <div className="num"><StatNum value={data.exams.length} /></div><div className="lbl">{t("myExams")}</div></button>
           <button type="button" className="card stat-card stat-card-link" onClick={() => go("classes")}>
             <div className="num"><StatNum value={data.classes.length} /></div><div className="lbl">{t("myClasses")}</div></button>
-          <button type="button" className="card stat-card stat-card-link" onClick={() => go("classes")}>
-            <div className="num"><StatNum value={data.mine.length} /></div><div className="lbl">{t("myProgress")}</div></button>
+          <div className="card stat-card" title={t("myProgress")}>
+            <div className="num"><StatNum value={data.mine.length} /></div><div className="lbl">{t("myProgress")}</div></div>
         </div>
       </div>
     </div>

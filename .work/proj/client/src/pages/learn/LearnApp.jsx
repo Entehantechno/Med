@@ -226,15 +226,17 @@ export default function LearnApp() {
   // Nav grouped into scannable sections (19 flat items were overwhelming):
   //  • یادگیری (learn/daily habit) • ابزارها (study tools) • رقابت (compete)
   //  • من (personal) • فروشگاه (store/premium). Each item: [id, icon, label, show].
+  //  Stable `key` per section keeps collapsed state across language switches
+  //  (previously used translated title as map key — switching fa↔en lost the user's expansion).
   const navSections = [
-    { title: t("navLearn"), items: [
+    { key: "learn", title: t("navLearn"), items: [
       ["home", "dashboard", t("learnHome"), true],
       ["path", "book", t("learnPath"), true],
       ["dxChallenge", "target", t("dxTitle"), flag("dx_challenge")],
       ["review", "repeat", t("review"), flag("srs_review")],
       ["quests", "target", t("questsHub"), flag("quests")],
     ] },
-    { title: t("navTools"), items: [
+    { key: "tools", title: t("navTools"), items: [
       ["placement", "compass", t("placementTitle"), flag("placement")],
       ["practice", "target", t("smartPractice"), flag("smart_practice")],
       // Look-up mode: filter the official question bank by subject/chapter/year.
@@ -250,7 +252,7 @@ export default function LearnApp() {
       ["mnemonics", "bulb", t("mnemonics"), flag("mnemonics")],
       ["crowd", "activity", t("crowdInsights"), flag("crowd_insights")],
     ] },
-    { title: t("navCompete"), items: [
+    { key: "compete", title: t("navCompete"), items: [
       ["friends", "users", t("friends"), flag("friends")],
       ["invite", "users", t("inviteTitle"), flag("referral")],
       ["league", "medal", t("league"), flag("leagues")],
@@ -260,7 +262,7 @@ export default function LearnApp() {
       ["community", "users", t("community"), flag("community")],
       ["achievements", "trophy", t("achievements"), flag("achievements")],
     ] },
-    { title: t("navMine"), items: [
+    { key: "mine", title: t("navMine"), items: [
       ["progress", "chart", t("myProgress"), flag("progress")],
       ["mastery", "medal", t("masteryTitle"), flag("mastery")],
       ["flagged", "target", t("flaggedReview"), flag("flagged_review")],
@@ -270,7 +272,7 @@ export default function LearnApp() {
       ["library", "crown", t("premiumLibrary"), flag("premium") && (profile?.premium_effective ?? profile?.premium)],
       ["settings", "settings", t("settings"), true],
     ] },
-    { title: t("navStore"), items: [
+    { key: "store", title: t("navStore"), items: [
       ["store", "store", t("store"), flag("store")],
       ["premium", "crown", t("premium"), flag("premium")],
     ] },
@@ -381,10 +383,10 @@ export default function LearnApp() {
               // Collapsed by default except the first group and the active one
               // — 30+ flat items open at once were overwhelming on first paint.
               const hasActive = sec.items.some(([id]) => tab === id || (id === "path" && tab === "lesson"));
-              const open = hasActive ? true : (navOpen[sec.title] ?? sIdx === 0);
+              const open = hasActive ? true : (navOpen[sec.key] ?? sIdx === 0);
               return (
-                <div className={`learn-nav-group ${open ? "open" : "collapsed"}`} key={sec.title}>
-                  <button type="button" className="learn-nav-title" onClick={() => setNavOpen((o) => ({ ...o, [sec.title]: !open }))} aria-expanded={open}>
+                <div className={`learn-nav-group ${open ? "open" : "collapsed"}`} key={sec.key}>
+                  <button type="button" className="learn-nav-title" onClick={() => setNavOpen((o) => ({ ...o, [sec.key]: !open }))} aria-expanded={open}>
                     <span>{sec.title}</span>
                     <Icon name={open ? "chevronUp" : "chevronDown"} size={14} />
                   </button>
@@ -453,18 +455,23 @@ export default function LearnApp() {
                 </div>
               </div>
             )}
-            {navSections.map((sec) => (
-              <div className="learn-more-sec" key={sec.title}>
-                <div className="learn-nav-title">{sec.title}</div>
-                <div className="learn-more-grid">
-                  {sec.items.map(([id, ico, label]) => (
-                    <button key={id} type="button" className={`learn-more-item ${tab === id ? "active" : ""}`} onClick={() => setTab(id)}>
-                      <Icon name={ico} size={18} /> {label}
-                    </button>
-                  ))}
+            {navSections.map((sec) => {
+              // Don't repeat the four primary tabbar tabs inside the overflow sheet — they're already one tap away.
+              const overflowItems = sec.items.filter(([id]) => !tabbarIds.includes(id));
+              if (overflowItems.length === 0) return null;
+              return (
+                <div className="learn-more-sec" key={sec.key}>
+                  <div className="learn-nav-title">{sec.title}</div>
+                  <div className="learn-more-grid">
+                    {overflowItems.map(([id, ico, label]) => (
+                      <button key={id} type="button" className={`learn-more-item ${tab === id ? "active" : ""}`} onClick={() => setTab(id)}>
+                        <Icon name={ico} size={18} /> {label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
