@@ -84,11 +84,11 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
   useEffect(() => { api.get("/learn/features").then(setFeatures).catch(() => {}); }, []);
   useEffect(() => { setBuryMsg(""); setBuryBusy(null); }, [idx]);
   const [showLabModal, setShowLabModal] = useState(false);
-  const [stemZoom, setStemZoom] = useState(() => Number(localStorage.getItem("med_stem_zoom") || 1));
+  const [stemZoom, setStemZoom] = useState(() => { try { return Number(localStorage.getItem("med_stem_zoom") || 1); } catch { return 1; } });
   const adjustZoom = (d) => {
     const next = Math.max(0.85, Math.min(1.4, Number((stemZoom + d).toFixed(2))));
     setStemZoom(next);
-    localStorage.setItem("med_stem_zoom", String(next));
+    try { localStorage.setItem("med_stem_zoom", String(next)); } catch {}
   };
   const [result, setResult] = useState(null);
   const [betweenAd, setBetweenAd] = useState(null);

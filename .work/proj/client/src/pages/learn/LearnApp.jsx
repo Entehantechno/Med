@@ -83,8 +83,8 @@ export default function LearnApp() {
   const [activeProgram, setActiveProgram] = useState("preint");
   const [vpatientOn, setVpatientOn] = useState(false); // admin-enabled virtual patient (competitive)
 
-  // navigate while remembering where we came from
-  const setTab = (next) => { setMoreOpen(false); if (next !== "browse" && /^#browse/.test(window.location.hash)) window.history.replaceState(null, "", window.location.pathname); setTabState((cur) => { if (next !== cur) setHistory((h) => [...h, cur]); return next; }); };
+  // navigate while remembering where we came from (capped to avoid unbounded growth)
+  const setTab = (next) => { setMoreOpen(false); if (next !== "browse" && /^#browse/.test(window.location.hash)) window.history.replaceState(null, "", window.location.pathname); setTabState((cur) => { if (next !== cur) setHistory((h) => [...h, cur].slice(-50)); return next; }); };
   // jump straight to a specific topic on the learning path (e.g. from the
   // placement "start here" recommendation) — the path scrolls to + highlights it.
   const goToTopic = (slug) => { setPathFocus(slug || null); setTab("path"); };

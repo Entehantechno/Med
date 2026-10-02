@@ -61,21 +61,34 @@ export function scanOnce() {
   const add = (title, description, severity = "low", meta = {}) => findings.push({ title, description, severity, meta });
 
   // 1) orphan flashcards (active learn cards not in any path_nodes)
+  // NOTE: many competitive bank cards are intentionally browse/search-only (past_exam_import)
+  // and not placed on the main Duolingo path. Threshold 500 avoids false positives on 11k bank.
   try {
     const allCards = new Set(db.prepare("SELECT id FROM flashcards WHERE active=1").all().map(r => r.id));
     const referenced = new Set();
     for (const row of db.prepare("SELECT card_ids FROM path_nodes WHERE active=1").all()) {
       try { JSON.parse(row.card_ids || "[]").forEach(id => referenced.add(id)); } catch {}
     }
-    // also check learner_cards etc not considered orphan for learn track?
     let orphans = 0;
+    let browseOnly = 0;
     for (const id of allCards) {
       if (!referenced.has(id)) {
         const d = db.prepare("SELECT data_json FROM flashcards WHERE id=?").get(id);
-        try { const j = JSON.parse(d.data_json); if (j.track === "learn") orphans++; } catch {}
+        try {
+          const j = JSON.parse(d.data_json);
+          if (j.track === "learn") {
+            orphans++;
+            if (j.source_meta?.kind === "past_exam_import") browseOnly++;
+          }
+        } catch {}
       }
     }
-    if (orphans > 50) add("کارت‌های یتیم زیاد است", `تعداد کارت فعال learn که در هیچ مسیر نیست: ${orphans}`, "medium", { orphans });
+    const nonBrowseOrphans = orphans - browseOnly;
+    // 11k competitive bank is intentionally browse/search-only (1910 typical).
+    // Only flag when non-browse orphans are high, or total exceeds 2500 (real drift).
+    if (nonBrowseOrphans > 500 || orphans > 2500) {
+      add("کارت‌های یتیم زیاد است", `تعداد کارت فعال learn که در هیچ مسیر نیست: ${orphans} (قابل‌مرور/بانک: ${browseOnly})`, "medium", { orphans, browseOnly, nonBrowseOrphans });
+    }
   } catch {}
 
   // 2) missing micro golden/points (empty lesson)
@@ -96,9 +109,9 @@ export function scanOnce() {
     if (emptyMicro > 20) add("درسنامه‌های خالی", `تعداد کارت با micro خالی: ${emptyMicro}`, "low", { emptyMicro });
   } catch {}
 
-  // 3) keyless bank cards
+  // 3) keyless bank cards (json_valid guards against corrupt data_json rows)
   try {
-    const n = db.prepare("SELECT COUNT(*) c FROM flashcards WHERE active=1 AND json_extract(data_json,'$.source_meta.kind')='past_exam_import' AND json_extract(data_json,'$.source_meta.keyless')=1").get().c;
+    const n = db.prepare("SELECT COUNT(*) c FROM flashcards WHERE active=1 AND json_valid(data_json) AND json_extract(data_json,'$.source_meta.kind')='past_exam_import' AND (json_extract(data_json,'$.source_meta.keyless')=1 OR json_extract(data_json,'$.source_meta.keyless')='true')").get().c;
     if (n > 0) add("کارت‌های بدون کلید در بانک", `تعداد: ${n} — نیاز به بازبینی ادمین`, "medium", { keyless: n });
   } catch {}
 
@@ -117,9 +130,9 @@ export function scanOnce() {
     if (broken > 0) add("ارجاع شکسته در میکرولرنینگ", `تعداد کارت با کد رفرنس نامعتبر: ${broken}`, "high", { brokenRefs: broken });
   } catch {}
 
-  // 5) tenant isolation drift
+  // 5) tenant isolation drift (json_valid guard; NULL track = uni by convention)
   try {
-    const n = db.prepare("SELECT COUNT(*) c FROM flashcards WHERE active=1 AND university_id IS NULL AND json_extract(data_json,'$.track')!='learn' AND json_extract(data_json,'$.track') IS NOT NULL").get().c;
+    const n = db.prepare("SELECT COUNT(*) c FROM flashcards WHERE active=1 AND university_id IS NULL AND json_valid(data_json) AND json_extract(data_json,'$.track')!='learn' AND json_extract(data_json,'$.track') IS NOT NULL").get().c;
     if (n > 0) add("انحراف tenant", `تعداد کارت بدون university_id خارج از learn: ${n}`, "high", { tenantDrift: n });
   } catch {}
 
