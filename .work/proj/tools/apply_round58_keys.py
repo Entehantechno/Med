@@ -66,6 +66,9 @@ def main():
         payload = json.loads(payload_path.read_text(encoding='utf-8'))
         for row in sorted(by_part[part], key=lambda r: r['local_question']):
             question = payload['questions'][row['local_question'] - 1]
+            if question['correct_index'] == row['proposed_index']:
+                print(f"  {row['part']:>2}:{row['local_question']:<4} {row['id']}  already [{row['proposed_index']}]  {question['options_fa'][row['proposed_index']][:60]}")
+                continue
             assert question['correct_index'] == row['current_index'], (
                 f"{part}:{row['local_question']} moved already? file={question['correct_index']} pack={row['current_index']}")
             print(f"  {row['part']:>2}:{row['local_question']:<4} {row['id']}  "

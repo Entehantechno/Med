@@ -6326,12 +6326,12 @@
         "کریگلر نجار"
       ],
       "options_en": [],
-      "correct_index": 1,
+      "correct_index": 3,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد.",
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد طب کودکان سازگار است.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد."
+        "دلیل رد گزینه: هپاتیت اتوایمیون همخوان نیست.",
+        "دلیل رد گزینه: اختلالات متابولیک همخوان نیست.",
+        "دلیل رد گزینه: کمبود آلفا ۱ آنتی تریپسین همخوان نیست.",
+        "گزینه صحیح: کریگلر نجار با تظاهر همخوان است."
       ],
       "options_why_en": [
         "",
@@ -6339,15 +6339,18 @@
         "",
         ""
       ],
-      "explanation_fa": "در نوزاد ابتدا سن بارداری، وزن تولد، سازگاری تنفسی، تغذیه، زردی و نشانههای عفونت ارزیابی میشود. تب یا بیحالی نوزاد میتواند سپسیس باشد و نیازمند کشت و آنتیبیوتیک تجربی مناسب سن است. زردی بر زمان شروع، مستقیم یا غیرمستقیم بودن و عوامل خطر تحلیل میشود. احیای نوزاد بر تهویه مؤثر و ضربان قلب استوار است.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با کودک ۲ سالهای را با شکایت زردی و اختلال رشد یه درمانگاه آورده اند. در معاینه کبد و طحال بزرگ است. تستهای کبدی مختل و کلس مراجعه کرده است. گزینه صحیح «کریگلر نجار» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «کریگلر نجار» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "First, gestational age, birth weight, respiratory compatibility, feeding, jaundice and signs of infection are evaluated in the newborn. A newborn's fever or lethargy can be sepsis and requires culture and age-appropriate experimental antibiotics. Jaundice is analyzed based on the time of onset, whether it is direct or indirect, and risk factors. Neonatal resuscitation is based on effective ventilation and heart rate.",
       "micro": {
-        "lead_fa": "در نوزاد ابتدا سن بارداری، وزن تولد، سازگاری تنفسی، تغذیه، زردی و نشانههای عفونت ارزیابی میشود. تب یا بیحالی نوزاد میتواند سپسیس باشد و نیازمند کشت و آنتیبیوتیک تجربی مناسب سن است. زردی بر زمان شروع، مستقیم یا غیرمستقیم بودن و عوامل خطر تحلیل میشود. احیای نوزاد بر تهویه مؤثر و ضربان قلب استوار است.",
+        "lead_fa": "گزینه «کریگلر نجار» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "First, gestational age, birth weight, respiratory compatibility, feeding, jaundice and signs of infection are evaluated in the newborn. A newborn's fever or lethargy can be sepsis and requires culture and age-appropriate experimental antibiotics. Jaundice is analyzed based on the time of onset, whether it is direct or indirect, and risk factors. Neonatal resuscitation is based on effective ventilation and heart rate.",
-        "golden_fa": "در نوزاد، زمان شروع علائم و وضعیت تغذیه و تنفس اهمیت ویژه دارد.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "In infants, the time of onset of symptoms and the feeding and breathing status are particularly important.",
         "points_fa": [
-          "سن، وزن، شدت، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],

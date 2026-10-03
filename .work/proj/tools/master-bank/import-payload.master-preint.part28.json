@@ -1460,12 +1460,12 @@
         "هیسترکتومیTAH + BSO"
       ],
       "options_en": [],
-      "correct_index": 0,
+      "correct_index": 2,
       "options_why_fa": [
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد زنان و مامایی سازگار است.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد."
+        "دلیل رد گزینه: شروع پروژسترون 5 میلی گرم روزانه همخوان نیست.",
+        "دلیل رد گزینه: تکرار سونوگرافی سه ماه بعد همخوان نیست.",
+        "گزینه صحیح: بیوپسی اندومتر با تظاهر همخوان است.",
+        "دلیل رد گزینه: هیسترکتومیTAH + BSO همخوان نیست."
       ],
       "options_why_en": [
         "",
@@ -1473,15 +1473,18 @@
         "",
         ""
       ],
-      "explanation_fa": "یائسگی با ۱۲ ماه آمنوره تشخیص و علائم vasomotor/واژینال و سلامت استخوان/قلب ارزیابی میشود. درمان هورمونی برای علائم در فرد مناسب است، نه پیشگیری اولیه قلبی. estrogen موضعی برای علائم ادراریتناسلی مؤثر است. سرطان وابسته به هورمون، VTE و بیماری کبدی بر انتخاب اثر دارند.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با خانم 58 ساله که 5 سال قبل منوپوزشده، از هفته گذشته دچار خونریزی واژینال شده است. در سونوگرافی انجام شده ضخامت آندومتر 8m مراجعه کرده است. گزینه صحیح «بیوپسی اندومتر» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «بیوپسی اندومتر» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "Menopause is diagnosed with 12 months of amenorrhea and vasomotor/vaginal symptoms and bone/heart health. Hormone therapy is appropriate for symptoms in the individual, not primary cardiac prevention. Topical estrogen is effective for genitourinary symptoms. Hormone-dependent cancer, VTE, and liver disease affect selection.",
       "micro": {
-        "lead_fa": "یائسگی با ۱۲ ماه آمنوره تشخیص و علائم vasomotor/واژینال و سلامت استخوان/قلب ارزیابی میشود. درمان هورمونی برای علائم در فرد مناسب است، نه پیشگیری اولیه قلبی. estrogen موضعی برای علائم ادراریتناسلی مؤثر است. سرطان وابسته به هورمون، VTE و بیماری کبدی بر انتخاب اثر دارند.",
+        "lead_fa": "گزینه «بیوپسی اندومتر» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "Menopause is diagnosed with 12 months of amenorrhea and vasomotor/vaginal symptoms and bone/heart health. Hormone therapy is appropriate for symptoms in the individual, not primary cardiac prevention. Topical estrogen is effective for genitourinary symptoms. Hormone-dependent cancer, VTE, and liver disease affect selection.",
-        "golden_fa": "در یائسگی درمان بر علامت و خطر فردی استوار است.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "In menopause, treatment is based on symptoms and individual risk.",
         "points_fa": [
-          "سن، شدت، خطر، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
@@ -1714,12 +1717,12 @@
         "تست تحمل خوراکی گلوکوز سه ساعته 100 گرمی"
       ],
       "options_en": [],
-      "correct_index": 0,
+      "correct_index": 3,
       "options_why_fa": [
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد زنان و مامایی سازگار است.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد."
+        "دلیل رد گزینه: شروع انسولین همخوان نیست.",
+        "دلیل رد گزینه: ارجاع به متخصص تغذیه همخوان نیست.",
+        "دلیل رد گزینه: تکرار مجدد تست با 50 گرم گلوکوز همخوان نیست.",
+        "گزینه صحیح: تست تحمل خوراکی گلوکوز سه ساعته 100 گرمی با تظاهر همخوان است."
       ],
       "options_why_en": [
         "",
@@ -1727,15 +1730,18 @@
         "",
         ""
       ],
-      "explanation_fa": "مراقبت بارداری با تعیین سن بارداری، غربالگری ناهنجاری، ارزیابی رشد جنین و بیماریهای مادر انجام میشود. دارو و تصویربرداری باید با سن بارداری و خطر جنین سنجیده شود. کاهش حرکات، خونریزی، پارگی پرده، درد شدید یا پرفشاری خون علائم هشدارند. تصمیم ختم بارداری بر سن، وضعیت جنین و خطر مادر استوار است.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با خانم 35 ساله 1 G باBMI نرمال با سن حاملگی 26 هفته که نتیجه تست تحمل گلوکوز با 50، گرم 152 شده اسرت اقدام بعدی کدام است؟ مراجعه کرده است. گزینه صحیح «تست تحمل خوراکی گلوکوز سه ساعته 100 گرمی» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «تست تحمل خوراکی گلوکوز سه ساعته 100 گرمی» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "Pregnancy care is done by determining gestational age, screening for abnormalities, evaluating fetal growth and maternal diseases. Medication and imaging should be weighed against gestational age and fetal risk. Decreased movements, bleeding, membrane rupture, severe pain or high blood pressure are warning signs. The decision to terminate the pregnancy is based on the age, condition of the fetus and the risk of the mother.",
       "micro": {
-        "lead_fa": "مراقبت بارداری با تعیین سن بارداری، غربالگری ناهنجاری، ارزیابی رشد جنین و بیماریهای مادر انجام میشود. دارو و تصویربرداری باید با سن بارداری و خطر جنین سنجیده شود. کاهش حرکات، خونریزی، پارگی پرده، درد شدید یا پرفشاری خون علائم هشدارند. تصمیم ختم بارداری بر سن، وضعیت جنین و خطر مادر استوار است.",
+        "lead_fa": "گزینه «تست تحمل خوراکی گلوکوز سه ساعته 100 گرمی» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "Pregnancy care is done by determining gestational age, screening for abnormalities, evaluating fetal growth and maternal diseases. Medication and imaging should be weighed against gestational age and fetal risk. Decreased movements, bleeding, membrane rupture, severe pain or high blood pressure are warning signs. The decision to terminate the pregnancy is based on the age, condition of the fetus and the risk of the mother.",
-        "golden_fa": "سن بارداری و وضعیت مادر و جنین پایه تصمیمگیریاند.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "Gestational age and condition of mother and fetus are the basis for decision making.",
         "points_fa": [
-          "سن، شدت، خطر، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
@@ -1776,12 +1782,12 @@
         "اندازه گیری سطح استروژن و پروژسترون در فاز لوتئال"
       ],
       "options_en": [],
-      "correct_index": 0,
+      "correct_index": 1,
       "options_why_fa": [
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد زنان و مامایی سازگار است.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد."
+        "دلیل رد گزینه: ثبت علائم به شیوه گذشته نگر همخوان نیست.",
+        "گزینه صحیح: ثبت علائم به شیوه آینده نگر با تظاهر همخوان است.",
+        "دلیل رد گزینه: مصاحبه توسط روانپزشک همخوان نیست.",
+        "دلیل رد گزینه: اندازه گیری سطح استروژن و پروژسترون در فاز لوتئال همخوان نیست."
       ],
       "options_why_en": [
         "",
@@ -1789,15 +1795,18 @@
         "",
         ""
       ],
-      "explanation_fa": "در زایمان، وضعیت مادر و جنین، پیشرفت سرویکس و presentation تعیینکنندهاند. خونریزی پس از زایمان ابتدا با tone، trauma، tissue و thrombin بررسی میشود. آتونی با ماساژ، اکسیتوسین و uterotonic مناسب درمان میشود. در پرولاپس بند ناف، پارگی رحم، دکولمان شدید یا fetal distress اقدام فوری لازم است.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با خانم با سابقه دو نوبت زایمان با شکایت درد پستانها و سردرد قبل از قاعدگی مراجعه کررده اسرت، بهتررین روش تشخیصی برای سندرو مراجعه کرده است. گزینه صحیح «ثبت علائم به شیوه آینده نگر» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «ثبت علائم به شیوه آینده نگر» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "In childbirth, the condition of the mother and the fetus, the progress of the cervix and presentation are decisive. Postpartum bleeding is first checked with tone, trauma, tissue and thrombin. Atony is treated with appropriate massage, oxytocin and uterotonic. Urgent action is required in umbilical cord prolapse, uterine rupture, severe decollement or fetal distress.",
       "micro": {
-        "lead_fa": "در زایمان، وضعیت مادر و جنین، پیشرفت سرویکس و presentation تعیینکنندهاند. خونریزی پس از زایمان ابتدا با tone، trauma، tissue و thrombin بررسی میشود. آتونی با ماساژ، اکسیتوسین و uterotonic مناسب درمان میشود. در پرولاپس بند ناف، پارگی رحم، دکولمان شدید یا fetal distress اقدام فوری لازم است.",
+        "lead_fa": "گزینه «ثبت علائم به شیوه آینده نگر» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "In childbirth, the condition of the mother and the fetus, the progress of the cervix and presentation are decisive. Postpartum bleeding is first checked with tone, trauma, tissue and thrombin. Atony is treated with appropriate massage, oxytocin and uterotonic. Urgent action is required in umbilical cord prolapse, uterine rupture, severe decollement or fetal distress.",
-        "golden_fa": "در اورژانس مامایی، احیای مادر و ارزیابی فوری جنین مقدم است.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "In emergency obstetrics, maternal resuscitation and immediate evaluation of the fetus are priority.",
         "points_fa": [
-          "سن، شدت، خطر، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
@@ -1903,12 +1912,12 @@
         "آقای 28 ساله بدون سابقه بیماری قلبی با تاکی کاردی با کمپلکس باریک و منظم"
       ],
       "options_en": [],
-      "correct_index": 0,
+      "correct_index": 3,
       "options_why_fa": [
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد زنان و مامایی سازگار است.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد."
+        "دلیل رد گزینه: مرد 65 ساله با سابقه بیماری ایسکمی قلبی و تاکی کاردی با کمپلکس پهن منظم همخوان نیست.",
+        "دلیل رد گزینه: خانم 65 ساله بدون سابقه بیماری قلبی و تاکی کاردی با کمپلکس باریک نامنظم همخوان نیست.",
+        "دلیل رد گزینه: آقای 44 ساله با سابقه بیماری ایسکمی قلبی و تاکی کاردی با کمپلکس باریک نامنظم همخوان نیست.",
+        "گزینه صحیح: آقای 28 ساله بدون سابقه بیماری قلبی با تاکی کاردی با کمپلکس باریک و منظم با تظاهر همخوان است."
       ],
       "options_why_en": [
         "",
@@ -1916,15 +1925,18 @@
         "",
         ""
       ],
-      "explanation_fa": "مراقبت بارداری با تعیین سن بارداری، غربالگری ناهنجاری، ارزیابی رشد جنین و بیماریهای مادر انجام میشود. دارو و تصویربرداری باید با سن بارداری و خطر جنین سنجیده شود. کاهش حرکات، خونریزی، پارگی پرده، درد شدید یا پرفشاری خون علائم هشدارند. تصمیم ختم بارداری بر سن، وضعیت جنین و خطر مادر استوار است.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با مراجعه کره است. بیمار درد قفسه سینه، تنگی نفس یا کاهش هوشیاری ندارد. در کدام بیمار آدنوزین به عنوان درمان اولیه، مناسبتر مراجعه کرده است. گزینه صحیح «آقای 28 ساله بدون سابقه بیماری قلبی با تاکی کاردی با کمپلکس باریک و منظم» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «آقای 28 ساله بدون سابقه بیماری قلبی با تاکی کاردی با کمپلکس باریک و منظم» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "Pregnancy care is done by determining gestational age, screening for abnormalities, evaluating fetal growth and maternal diseases. Medication and imaging should be weighed against gestational age and fetal risk. Decreased movements, bleeding, membrane rupture, severe pain or high blood pressure are warning signs. The decision to terminate the pregnancy is based on the age, condition of the fetus and the risk of the mother.",
       "micro": {
-        "lead_fa": "مراقبت بارداری با تعیین سن بارداری، غربالگری ناهنجاری، ارزیابی رشد جنین و بیماریهای مادر انجام میشود. دارو و تصویربرداری باید با سن بارداری و خطر جنین سنجیده شود. کاهش حرکات، خونریزی، پارگی پرده، درد شدید یا پرفشاری خون علائم هشدارند. تصمیم ختم بارداری بر سن، وضعیت جنین و خطر مادر استوار است.",
+        "lead_fa": "گزینه «آقای 28 ساله بدون سابقه بیماری قلبی با تاکی کاردی با کمپلکس باریک و منظم» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "Pregnancy care is done by determining gestational age, screening for abnormalities, evaluating fetal growth and maternal diseases. Medication and imaging should be weighed against gestational age and fetal risk. Decreased movements, bleeding, membrane rupture, severe pain or high blood pressure are warning signs. The decision to terminate the pregnancy is based on the age, condition of the fetus and the risk of the mother.",
-        "golden_fa": "سن بارداری و وضعیت مادر و جنین پایه تصمیمگیریاند.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "Gestational age and condition of mother and fetus are the basis for decision making.",
         "points_fa": [
-          "سن، شدت، خطر، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
@@ -2030,12 +2042,12 @@
         "نیاز به اقدام خاصی نمی باشد"
       ],
       "options_en": [],
-      "correct_index": 0,
+      "correct_index": 3,
       "options_why_fa": [
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد زنان و مامایی سازگار است.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد."
+        "دلیل رد گزینه: جراحی و حذف میوم همخوان نیست.",
+        "دلیل رد گزینه: تکرار سونوگرافی سه ماه دیگر همخوان نیست.",
+        "دلیل رد گزینه: تجویز قرص ترکیبی مونوفازیک همخوان نیست.",
+        "گزینه صحیح: نیاز به اقدام خاصی نمی باشد با تظاهر همخوان است."
       ],
       "options_why_en": [
         "",
@@ -2043,15 +2055,18 @@
         "",
         ""
       ],
-      "explanation_fa": "مراقبت بارداری با تعیین سن بارداری، غربالگری ناهنجاری، ارزیابی رشد جنین و بیماریهای مادر انجام میشود. دارو و تصویربرداری باید با سن بارداری و خطر جنین سنجیده شود. کاهش حرکات، خونریزی، پارگی پرده، درد شدید یا پرفشاری خون علائم هشدارند. تصمیم ختم بارداری بر سن، وضعیت جنین و خطر مادر استوار است.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با خانم 58 ساله یائسه در سونوگرافی که انجام داده است یک میوم داخل جداری 4 سانتی متری گزارش شده است بیمار شکایت خاصی ندارد.  مراجعه کرده است. گزینه صحیح «نیاز به اقدام خاصی نمی باشد» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «نیاز به اقدام خاصی نمی باشد» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "Pregnancy care is done by determining gestational age, screening for abnormalities, evaluating fetal growth and maternal diseases. Medication and imaging should be weighed against gestational age and fetal risk. Decreased movements, bleeding, membrane rupture, severe pain or high blood pressure are warning signs. The decision to terminate the pregnancy is based on the age, condition of the fetus and the risk of the mother.",
       "micro": {
-        "lead_fa": "مراقبت بارداری با تعیین سن بارداری، غربالگری ناهنجاری، ارزیابی رشد جنین و بیماریهای مادر انجام میشود. دارو و تصویربرداری باید با سن بارداری و خطر جنین سنجیده شود. کاهش حرکات، خونریزی، پارگی پرده، درد شدید یا پرفشاری خون علائم هشدارند. تصمیم ختم بارداری بر سن، وضعیت جنین و خطر مادر استوار است.",
+        "lead_fa": "گزینه «نیاز به اقدام خاصی نمی باشد» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "Pregnancy care is done by determining gestational age, screening for abnormalities, evaluating fetal growth and maternal diseases. Medication and imaging should be weighed against gestational age and fetal risk. Decreased movements, bleeding, membrane rupture, severe pain or high blood pressure are warning signs. The decision to terminate the pregnancy is based on the age, condition of the fetus and the risk of the mother.",
-        "golden_fa": "سن بارداری و وضعیت مادر و جنین پایه تصمیمگیریاند.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "Gestational age and condition of mother and fetus are the basis for decision making.",
         "points_fa": [
-          "سن، شدت، خطر، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
@@ -12217,12 +12232,12 @@
         "تجویز متوترکسات"
       ],
       "options_en": [],
-      "correct_index": 3,
+      "correct_index": 1,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد زنان و مامایی سازگار است."
+        "دلیل رد گزینه: الپاراتومی همخوان نیست.",
+        "گزینه صحیح: تکرار B- hCG با تظاهر همخوان است.",
+        "دلیل رد گزینه: الپاراسکوپی همخوان نیست.",
+        "دلیل رد گزینه: تجویز متوترکسات همخوان نیست."
       ],
       "options_why_en": [
         "",
@@ -12230,15 +12245,18 @@
         "",
         ""
       ],
-      "explanation_fa": "مراقبت بارداری با تعیین سن بارداری، غربالگری ناهنجاری، ارزیابی رشد جنین و بیماریهای مادر انجام میشود. دارو و تصویربرداری باید با سن بارداری و خطر جنین سنجیده شود. کاهش حرکات، خونریزی، پارگی پرده، درد شدید یا پرفشاری خون علائم هشدارند. تصمیم ختم بارداری بر سن، وضعیت جنین و خطر مادر استوار است.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با خانم 25 ساله، پریمی گراوید، با یک هفته رتارد پریود و درد زیر دل مراجعه نموده است. BhCG: 880mlu/ml و سونوگرافی داخل حفره  مراجعه کرده است. گزینه صحیح «تکرار B- hCG» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «تکرار B- hCG» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "Pregnancy care is done by determining gestational age, screening for abnormalities, evaluating fetal growth and maternal diseases. Medication and imaging should be weighed against gestational age and fetal risk. Decreased movements, bleeding, membrane rupture, severe pain or high blood pressure are warning signs. The decision to terminate the pregnancy is based on the age, condition of the fetus and the risk of the mother.",
       "micro": {
-        "lead_fa": "مراقبت بارداری با تعیین سن بارداری، غربالگری ناهنجاری، ارزیابی رشد جنین و بیماریهای مادر انجام میشود. دارو و تصویربرداری باید با سن بارداری و خطر جنین سنجیده شود. کاهش حرکات، خونریزی، پارگی پرده، درد شدید یا پرفشاری خون علائم هشدارند. تصمیم ختم بارداری بر سن، وضعیت جنین و خطر مادر استوار است.",
+        "lead_fa": "گزینه «تکرار B- hCG» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "Pregnancy care is done by determining gestational age, screening for abnormalities, evaluating fetal growth and maternal diseases. Medication and imaging should be weighed against gestational age and fetal risk. Decreased movements, bleeding, membrane rupture, severe pain or high blood pressure are warning signs. The decision to terminate the pregnancy is based on the age, condition of the fetus and the risk of the mother.",
-        "golden_fa": "سن بارداری و وضعیت مادر و جنین پایه تصمیمگیریاند.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "Gestational age and condition of mother and fetus are the basis for decision making.",
         "points_fa": [
-          "سن، شدت، خطر، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
@@ -14099,12 +14117,12 @@
         "بستری و تجویز گلوکوکورتیکوئید"
       ],
       "options_en": [],
-      "correct_index": 1,
+      "correct_index": 3,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد زنان و مامایی سازگار است.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد."
+        "دلیل رد گزینه: بستری و مراقبت تا 36 هفته همخوان نیست.",
+        "دلیل رد گزینه: ختم بارداری با سزارین همخوان نیست.",
+        "دلیل رد گزینه: ختم بارداری با اکسی توسین همخوان نیست.",
+        "گزینه صحیح: بستری و تجویز گلوکوکورتیکوئید با تظاهر همخوان است."
       ],
       "options_why_en": [
         "",
@@ -14112,15 +14130,18 @@
         "",
         ""
       ],
-      "explanation_fa": "در زایمان، وضعیت مادر و جنین، پیشرفت سرویکس و presentation تعیینکنندهاند. خونریزی پس از زایمان ابتدا با tone، trauma، tissue و thrombin بررسی میشود. آتونی با ماساژ، اکسیتوسین و uterotonic مناسب درمان میشود. در پرولاپس بند ناف، پارگی رحم، دکولمان شدید یا fetal distress اقدام فوری لازم است.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با یک خانم 22 ساله، شکم دوم که در حاملگی اول زایمان طبیعی داشته است با حاملگی 3 قلوی 24 هفته ای با پارگی کیسه آب مراجعه کرد مراجعه کرده است. گزینه صحیح «بستری و تجویز گلوکوکورتیکوئید» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «بستری و تجویز گلوکوکورتیکوئید» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "In childbirth, the condition of the mother and the fetus, the progress of the cervix and presentation are decisive. Postpartum bleeding is first checked with tone, trauma, tissue and thrombin. Atony is treated with appropriate massage, oxytocin and uterotonic. Urgent action is required in umbilical cord prolapse, uterine rupture, severe decollement or fetal distress.",
       "micro": {
-        "lead_fa": "در زایمان، وضعیت مادر و جنین، پیشرفت سرویکس و presentation تعیینکنندهاند. خونریزی پس از زایمان ابتدا با tone، trauma، tissue و thrombin بررسی میشود. آتونی با ماساژ، اکسیتوسین و uterotonic مناسب درمان میشود. در پرولاپس بند ناف، پارگی رحم، دکولمان شدید یا fetal distress اقدام فوری لازم است.",
+        "lead_fa": "گزینه «بستری و تجویز گلوکوکورتیکوئید» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "In childbirth, the condition of the mother and the fetus, the progress of the cervix and presentation are decisive. Postpartum bleeding is first checked with tone, trauma, tissue and thrombin. Atony is treated with appropriate massage, oxytocin and uterotonic. Urgent action is required in umbilical cord prolapse, uterine rupture, severe decollement or fetal distress.",
-        "golden_fa": "در اورژانس مامایی، احیای مادر و ارزیابی فوری جنین مقدم است.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "In emergency obstetrics, maternal resuscitation and immediate evaluation of the fetus are priority.",
         "points_fa": [
-          "سن، شدت، خطر، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],

@@ -3800,12 +3800,12 @@
         "سزارین اورژانس"
       ],
       "options_en": [],
-      "correct_index": 1,
+      "correct_index": 3,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد زنان و مامایی سازگار است.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد."
+        "دلیل رد گزینه: کنترل بیمار تا زمان ترم همخوان نیست.",
+        "دلیل رد گزینه: القای زایمان همخوان نیست.",
+        "دلیل رد گزینه: تعیین ماچوریتی ریه جنین همخوان نیست.",
+        "گزینه صحیح: سزارین اورژانس با تظاهر همخوان است."
       ],
       "options_why_en": [
         "",
@@ -3813,15 +3813,18 @@
         "",
         ""
       ],
-      "explanation_fa": "خونریزی غیرطبیعی با PALM-COEIN طبقهبندی میشود. ابتدا بارداری و ناپایداری رد، سپس شمارش کامل خون و بررسی ساختاری/هورمونی هدفمند انجام میشود. نمونهبرداری آندومتر در سن بالاتر یا خطر hyperplasia لازم است. درمان با پروژستین، LNG-IUD، ترکیبیها، tranexamic acid یا جراحی بر علت و شدت استوار است.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با خانم حامله ای با پالسنتا پرویا در هفته ی 36 حاملگی با خون ریزی شدید مراجعه کرده است. مناسبترین اقدام کدام است؟ مراجعه کرده است. گزینه صحیح «سزارین اورژانس» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «سزارین اورژانس» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "Abnormal bleeding is classified by PALM-COEIN. First, pregnancy and instability are ruled out, then CBC and a targeted structural/hormonal examination are performed. Endometrial sampling is necessary in older age or risk of hyperplasia. Treatment with progestin, LNG-IUD, combinations, tranexamic acid or surgery depends on the cause and severity.",
       "micro": {
-        "lead_fa": "خونریزی غیرطبیعی با PALM-COEIN طبقهبندی میشود. ابتدا بارداری و ناپایداری رد، سپس شمارش کامل خون و بررسی ساختاری/هورمونی هدفمند انجام میشود. نمونهبرداری آندومتر در سن بالاتر یا خطر hyperplasia لازم است. درمان با پروژستین، LNG-IUD، ترکیبیها، tranexamic acid یا جراحی بر علت و شدت استوار است.",
+        "lead_fa": "گزینه «سزارین اورژانس» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "Abnormal bleeding is classified by PALM-COEIN. First, pregnancy and instability are ruled out, then CBC and a targeted structural/hormonal examination are performed. Endometrial sampling is necessary in older age or risk of hyperplasia. Treatment with progestin, LNG-IUD, combinations, tranexamic acid or surgery depends on the cause and severity.",
-        "golden_fa": "در خونریزی غیرطبیعی ابتدا بارداری و ناپایداری رد میشوند.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "In abnormal bleeding, first pregnancy and instability are ruled out.",
         "points_fa": [
-          "سن، شدت، خطر، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
@@ -6657,12 +6660,12 @@
         "سفتریاکسون تزریقی"
       ],
       "options_en": [],
-      "correct_index": 2,
+      "correct_index": 0,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد زنان و مامایی سازگار است.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد."
+        "گزینه صحیح: مترونیدازول خوراکی با تظاهر همخوان است.",
+        "دلیل رد گزینه: کلوتریمازول واژینال همخوان نیست.",
+        "دلیل رد گزینه: آزیترومایسین خوراکی همخوان نیست.",
+        "دلیل رد گزینه: سفتریاکسون تزریقی همخوان نیست."
       ],
       "options_why_en": [
         "",
@@ -6670,15 +6673,18 @@
         "",
         ""
       ],
-      "explanation_fa": "عفونت لگنی با درد پایین شکم، حساسیت حرکت سرویکس و خطر جنسی مطرح و درمان تجربی زودهنگام میخواهد. عفونت بارداری و postpartum بر پاتوژن و شدت مدیریت میشود. herpes، syphilis، HPV و HIV هرکدام الگوریتم غربالگری و درمان اختصاصی دارند. شریک جنسی و پیشگیری reinfection اهمیت دارند.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با خانم 24 سالهای با شکایت ترشحات زیاد کف آلود مراجعه کرده است. کدامیک از درمانهای زیر را پیشنهاد میکنید؟ مراجعه کرده است. گزینه صحیح «مترونیدازول خوراکی» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «مترونیدازول خوراکی» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "Pelvic infection with lower abdominal pain, sensitivity to cervical movement, and sexual risk are prominent and require early empirical treatment. Pregnancy and postpartum infections are managed based on pathogen and severity. Herpes, syphilis, HPV and HIV each have their own screening and treatment algorithm. Sexual partner and prevention of reinfection are important.",
       "micro": {
-        "lead_fa": "عفونت لگنی با درد پایین شکم، حساسیت حرکت سرویکس و خطر جنسی مطرح و درمان تجربی زودهنگام میخواهد. عفونت بارداری و postpartum بر پاتوژن و شدت مدیریت میشود. herpes، syphilis، HPV و HIV هرکدام الگوریتم غربالگری و درمان اختصاصی دارند. شریک جنسی و پیشگیری reinfection اهمیت دارند.",
+        "lead_fa": "گزینه «مترونیدازول خوراکی» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "Pelvic infection with lower abdominal pain, sensitivity to cervical movement, and sexual risk are prominent and require early empirical treatment. Pregnancy and postpartum infections are managed based on pathogen and severity. Herpes, syphilis, HPV and HIV each have their own screening and treatment algorithm. Sexual partner and prevention of reinfection are important.",
-        "golden_fa": "عفونت زنان نیازمند درمان بهموقع و توجه به شریک جنسی است.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "Female infection requires timely treatment and attention to the sexual partner.",
         "points_fa": [
-          "سن، شدت، خطر، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
@@ -7109,12 +7115,12 @@
         "تجویز گان سیکلوویر در 72 ساعت اول بعد از تماس با ویروس"
       ],
       "options_en": [],
-      "correct_index": 3,
+      "correct_index": 1,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد زنان و مامایی سازگار است."
+        "دلیل رد گزینه: تجویز واکسن ویروسی غیر فعال شده قبل از حاملگی همخوان نیست.",
+        "گزینه صحیح: رعایت بهداشت و شستن دستها با تظاهر همخوان است.",
+        "دلیل رد گزینه: تجویز ایمونوگلوبولین CMV در 72 ساعت اول بعد از تماس با ویروس همخوان نیست.",
+        "دلیل رد گزینه: تجویز گان سیکلوویر در 72 ساعت اول بعد از تماس با ویروس همخوان نیست."
       ],
       "options_why_en": [
         "",
@@ -7122,15 +7128,18 @@
         "",
         ""
       ],
-      "explanation_fa": "عفونت لگنی با درد پایین شکم، حساسیت حرکت سرویکس و خطر جنسی مطرح و درمان تجربی زودهنگام میخواهد. عفونت بارداری و postpartum بر پاتوژن و شدت مدیریت میشود. herpes، syphilis، HPV و HIV هرکدام الگوریتم غربالگری و درمان اختصاصی دارند. شریک جنسی و پیشگیری reinfection اهمیت دارند.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با مؤثرترین روش برای پیشگیری از ابتلای خانم باردار به عفونت CMV چیست؟ مراجعه کرده است. گزینه صحیح «رعایت بهداشت و شستن دستها» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «رعایت بهداشت و شستن دستها» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "Pelvic infection with lower abdominal pain, sensitivity to cervical movement, and sexual risk are prominent and require early empirical treatment. Pregnancy and postpartum infections are managed based on pathogen and severity. Herpes, syphilis, HPV and HIV each have their own screening and treatment algorithm. Sexual partner and prevention of reinfection are important.",
       "micro": {
-        "lead_fa": "عفونت لگنی با درد پایین شکم، حساسیت حرکت سرویکس و خطر جنسی مطرح و درمان تجربی زودهنگام میخواهد. عفونت بارداری و postpartum بر پاتوژن و شدت مدیریت میشود. herpes، syphilis، HPV و HIV هرکدام الگوریتم غربالگری و درمان اختصاصی دارند. شریک جنسی و پیشگیری reinfection اهمیت دارند.",
+        "lead_fa": "گزینه «رعایت بهداشت و شستن دستها» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "Pelvic infection with lower abdominal pain, sensitivity to cervical movement, and sexual risk are prominent and require early empirical treatment. Pregnancy and postpartum infections are managed based on pathogen and severity. Herpes, syphilis, HPV and HIV each have their own screening and treatment algorithm. Sexual partner and prevention of reinfection are important.",
-        "golden_fa": "عفونت زنان نیازمند درمان بهموقع و توجه به شریک جنسی است.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "Female infection requires timely treatment and attention to the sexual partner.",
         "points_fa": [
-          "سن، شدت، خطر، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
@@ -8536,12 +8545,12 @@
         "ختم حاملگی"
       ],
       "options_en": [],
-      "correct_index": 0,
+      "correct_index": 3,
       "options_why_fa": [
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد زنان و مامایی سازگار است.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد."
+        "دلیل رد گزینه: تحت نظر همخوان نیست.",
+        "دلیل رد گزینه: تست استرس جنینی همخوان نیست.",
+        "دلیل رد گزینه: تزریق توکولیتیک همخوان نیست.",
+        "گزینه صحیح: ختم حاملگی با تظاهر همخوان است."
       ],
       "options_why_en": [
         "",
@@ -8549,15 +8558,18 @@
         "",
         ""
       ],
-      "explanation_fa": "در زایمان، وضعیت مادر و جنین، پیشرفت سرویکس و presentation تعیینکنندهاند. خونریزی پس از زایمان ابتدا با tone، trauma، tissue و thrombin بررسی میشود. آتونی با ماساژ، اکسیتوسین و uterotonic مناسب درمان میشود. در پرولاپس بند ناف، پارگی رحم، دکولمان شدید یا fetal distress اقدام فوری لازم است.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با خانم باردار 33 هفته ای با خون ریزی خفیف واژینال مراجعه کرده است. در معاینه حساسیت مختصر بر روی رحم دارد. اما شواهدی از د مراجعه کرده است. گزینه صحیح «ختم حاملگی» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «ختم حاملگی» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "In childbirth, the condition of the mother and the fetus, the progress of the cervix and presentation are decisive. Postpartum bleeding is first checked with tone, trauma, tissue and thrombin. Atony is treated with appropriate massage, oxytocin and uterotonic. Urgent action is required in umbilical cord prolapse, uterine rupture, severe decollement or fetal distress.",
       "micro": {
-        "lead_fa": "در زایمان، وضعیت مادر و جنین، پیشرفت سرویکس و presentation تعیینکنندهاند. خونریزی پس از زایمان ابتدا با tone، trauma، tissue و thrombin بررسی میشود. آتونی با ماساژ، اکسیتوسین و uterotonic مناسب درمان میشود. در پرولاپس بند ناف، پارگی رحم، دکولمان شدید یا fetal distress اقدام فوری لازم است.",
+        "lead_fa": "گزینه «ختم حاملگی» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "In childbirth, the condition of the mother and the fetus, the progress of the cervix and presentation are decisive. Postpartum bleeding is first checked with tone, trauma, tissue and thrombin. Atony is treated with appropriate massage, oxytocin and uterotonic. Urgent action is required in umbilical cord prolapse, uterine rupture, severe decollement or fetal distress.",
-        "golden_fa": "در اورژانس مامایی، احیای مادر و ارزیابی فوری جنین مقدم است.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "In emergency obstetrics, maternal resuscitation and immediate evaluation of the fetus are priority.",
         "points_fa": [
-          "سن، شدت، خطر، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
@@ -10743,12 +10755,12 @@
         "کرم واژینال کلوتریمازول"
       ],
       "options_en": [],
-      "correct_index": 0,
+      "correct_index": 3,
       "options_why_fa": [
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد زنان و مامایی سازگار است.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد."
+        "دلیل رد گزینه: شیاف واژینال اسیدیوریک همخوان نیست.",
+        "دلیل رد گزینه: کپسول فلوکونازول همخوان نیست.",
+        "دلیل رد گزینه: ژل واژینال مترونیدازول همخوان نیست.",
+        "گزینه صحیح: کرم واژینال کلوتریمازول با تظاهر همخوان است."
       ],
       "options_why_en": [
         "",
@@ -10756,15 +10768,18 @@
         "",
         ""
       ],
-      "explanation_fa": "عفونت لگنی با درد پایین شکم، حساسیت حرکت سرویکس و خطر جنسی مطرح و درمان تجربی زودهنگام میخواهد. عفونت بارداری و postpartum بر پاتوژن و شدت مدیریت میشود. herpes، syphilis، HPV و HIV هرکدام الگوریتم غربالگری و درمان اختصاصی دارند. شریک جنسی و پیشگیری reinfection اهمیت دارند.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با خانم بارداری با شکایت دیس شارژ واژینال و خارش مراجعه میکند. در معاینه ترشح سفید رنگ چسبنده همراه با التهاب و اریتم ولو م مراجعه کرده است. گزینه صحیح «کرم واژینال کلوتریمازول» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «کرم واژینال کلوتریمازول» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "Pelvic infection with lower abdominal pain, sensitivity to cervical movement, and sexual risk are prominent and require early empirical treatment. Pregnancy and postpartum infections are managed based on pathogen and severity. Herpes, syphilis, HPV and HIV each have their own screening and treatment algorithm. Sexual partner and prevention of reinfection are important.",
       "micro": {
-        "lead_fa": "عفونت لگنی با درد پایین شکم، حساسیت حرکت سرویکس و خطر جنسی مطرح و درمان تجربی زودهنگام میخواهد. عفونت بارداری و postpartum بر پاتوژن و شدت مدیریت میشود. herpes، syphilis، HPV و HIV هرکدام الگوریتم غربالگری و درمان اختصاصی دارند. شریک جنسی و پیشگیری reinfection اهمیت دارند.",
+        "lead_fa": "گزینه «کرم واژینال کلوتریمازول» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "Pelvic infection with lower abdominal pain, sensitivity to cervical movement, and sexual risk are prominent and require early empirical treatment. Pregnancy and postpartum infections are managed based on pathogen and severity. Herpes, syphilis, HPV and HIV each have their own screening and treatment algorithm. Sexual partner and prevention of reinfection are important.",
-        "golden_fa": "عفونت زنان نیازمند درمان بهموقع و توجه به شریک جنسی است.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "Female infection requires timely treatment and attention to the sexual partner.",
         "points_fa": [
-          "سن، شدت، خطر، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
@@ -11845,12 +11860,12 @@
         "تعداد اسپرم"
       ],
       "options_en": [],
-      "correct_index": 2,
+      "correct_index": 3,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد زنان و مامایی سازگار است.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد."
+        "دلیل رد گزینه: میزان حجم مایع منی همخوان نیست.",
+        "دلیل رد گزینه: میزان شک ل طبیعی اسپرم همخوان نیست.",
+        "دلیل رد گزینه: میزان تحرک اسپرم همخوان نیست.",
+        "گزینه صحیح: تعداد اسپرم با تظاهر همخوان است."
       ],
       "options_why_en": [
         "",
@@ -11858,15 +11873,18 @@
         "",
         ""
       ],
-      "explanation_fa": "مراقبت بارداری با تعیین سن بارداری، غربالگری ناهنجاری، ارزیابی رشد جنین و بیماریهای مادر انجام میشود. دارو و تصویربرداری باید با سن بارداری و خطر جنین سنجیده شود. کاهش حرکات، خونریزی، پارگی پرده، درد شدید یا پرفشاری خون علائم هشدارند. تصمیم ختم بارداری بر سن، وضعیت جنین و خطر مادر استوار است.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با در یک اسپرموگرام حجم مایع منی 3 میلی لتر و تعداد اسپرم 10 میلیون در میلی لیتر و میزان تحرک اسپرم 55 درصد و اشکال اسپرم ن مراجعه کرده است. گزینه صحیح «تعداد اسپرم» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «تعداد اسپرم» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "Pregnancy care is done by determining gestational age, screening for abnormalities, evaluating fetal growth and maternal diseases. Medication and imaging should be weighed against gestational age and fetal risk. Decreased movements, bleeding, membrane rupture, severe pain or high blood pressure are warning signs. The decision to terminate the pregnancy is based on the age, condition of the fetus and the risk of the mother.",
       "micro": {
-        "lead_fa": "مراقبت بارداری با تعیین سن بارداری، غربالگری ناهنجاری، ارزیابی رشد جنین و بیماریهای مادر انجام میشود. دارو و تصویربرداری باید با سن بارداری و خطر جنین سنجیده شود. کاهش حرکات، خونریزی، پارگی پرده، درد شدید یا پرفشاری خون علائم هشدارند. تصمیم ختم بارداری بر سن، وضعیت جنین و خطر مادر استوار است.",
+        "lead_fa": "گزینه «تعداد اسپرم» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "Pregnancy care is done by determining gestational age, screening for abnormalities, evaluating fetal growth and maternal diseases. Medication and imaging should be weighed against gestational age and fetal risk. Decreased movements, bleeding, membrane rupture, severe pain or high blood pressure are warning signs. The decision to terminate the pregnancy is based on the age, condition of the fetus and the risk of the mother.",
-        "golden_fa": "سن بارداری و وضعیت مادر و جنین پایه تصمیمگیریاند.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "Gestational age and condition of mother and fetus are the basis for decision making.",
         "points_fa": [
-          "سن، شدت، خطر، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
@@ -12362,12 +12380,12 @@
         "پالسنتا پرویا"
       ],
       "options_en": [],
-      "correct_index": 3,
+      "correct_index": 2,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد زنان و مامایی سازگار است."
+        "دلیل رد گزینه: سن مادر همخوان نیست.",
+        "دلیل رد گزینه: گراویدیتی همخوان نیست.",
+        "گزینه صحیح: اولیگوهیدرآمینوس با تظاهر همخوان است.",
+        "دلیل رد گزینه: پالسنتا پرویا همخوان نیست."
       ],
       "options_why_en": [
         "",
@@ -12375,15 +12393,18 @@
         "",
         ""
       ],
-      "explanation_fa": "در زایمان، وضعیت مادر و جنین، پیشرفت سرویکس و presentation تعیینکنندهاند. خونریزی پس از زایمان ابتدا با tone، trauma، tissue و thrombin بررسی میشود. آتونی با ماساژ، اکسیتوسین و uterotonic مناسب درمان میشود. در پرولاپس بند ناف، پارگی رحم، دکولمان شدید یا fetal distress اقدام فوری لازم است.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با خانم 35 سالهای G1 با حاملگی ترم جهت زایمان مراجعه میکند. در سونوگرافی جنین زنده به ظاهر سالم، بریچ و با AF کم تر از نرما مراجعه کرده است. گزینه صحیح «اولیگوهیدرآمینوس» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «اولیگوهیدرآمینوس» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "In childbirth, the condition of the mother and the fetus, the progress of the cervix and presentation are decisive. Postpartum bleeding is first checked with tone, trauma, tissue and thrombin. Atony is treated with appropriate massage, oxytocin and uterotonic. Urgent action is required in umbilical cord prolapse, uterine rupture, severe decollement or fetal distress.",
       "micro": {
-        "lead_fa": "در زایمان، وضعیت مادر و جنین، پیشرفت سرویکس و presentation تعیینکنندهاند. خونریزی پس از زایمان ابتدا با tone، trauma، tissue و thrombin بررسی میشود. آتونی با ماساژ، اکسیتوسین و uterotonic مناسب درمان میشود. در پرولاپس بند ناف، پارگی رحم، دکولمان شدید یا fetal distress اقدام فوری لازم است.",
+        "lead_fa": "گزینه «اولیگوهیدرآمینوس» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "In childbirth, the condition of the mother and the fetus, the progress of the cervix and presentation are decisive. Postpartum bleeding is first checked with tone, trauma, tissue and thrombin. Atony is treated with appropriate massage, oxytocin and uterotonic. Urgent action is required in umbilical cord prolapse, uterine rupture, severe decollement or fetal distress.",
-        "golden_fa": "در اورژانس مامایی، احیای مادر و ارزیابی فوری جنین مقدم است.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "In emergency obstetrics, maternal resuscitation and immediate evaluation of the fetus are priority.",
         "points_fa": [
-          "سن، شدت، خطر، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
@@ -14114,12 +14135,12 @@
         "جراحی"
       ],
       "options_en": [],
-      "correct_index": 3,
+      "correct_index": 0,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد را کامل توضیح نمیدهد.",
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد زنان و مامایی سازگار است."
+        "گزینه صحیح: تزریق یک دوز دیگر متوترکسات با تظاهر همخوان است.",
+        "دلیل رد گزینه: تزریق Double Dose متوترکسات همخوان نیست.",
+        "دلیل رد گزینه: ابتدا سونوگرافی می کنیم و سپس براساس نتایج آن تصمیم گیری میشود. همخوان نیست.",
+        "دلیل رد گزینه: جراحی همخوان نیست."
       ],
       "options_why_en": [
         "",
@@ -14127,15 +14148,18 @@
         "",
         ""
       ],
-      "explanation_fa": "مراقبت بارداری با تعیین سن بارداری، غربالگری ناهنجاری، ارزیابی رشد جنین و بیماریهای مادر انجام میشود. دارو و تصویربرداری باید با سن بارداری و خطر جنین سنجیده شود. کاهش حرکات، خونریزی، پارگی پرده، درد شدید یا پرفشاری خون علائم هشدارند. تصمیم ختم بارداری بر سن، وضعیت جنین و خطر مادر استوار است.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با خانم 26 سالهای 1 E 1 P 2 G که 6 روز قبل با تشخیص حاملگی خارج رحمی و BhCG=2000 تحت تزریق متوترکسات قرار گرفته اکنون با Bh مراجعه کرده است. گزینه صحیح «تزریق یک دوز دیگر متوترکسات» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «تزریق یک دوز دیگر متوترکسات» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "Pregnancy care is done by determining gestational age, screening for abnormalities, evaluating fetal growth and maternal diseases. Medication and imaging should be weighed against gestational age and fetal risk. Decreased movements, bleeding, membrane rupture, severe pain or high blood pressure are warning signs. The decision to terminate the pregnancy is based on the age, condition of the fetus and the risk of the mother.",
       "micro": {
-        "lead_fa": "مراقبت بارداری با تعیین سن بارداری، غربالگری ناهنجاری، ارزیابی رشد جنین و بیماریهای مادر انجام میشود. دارو و تصویربرداری باید با سن بارداری و خطر جنین سنجیده شود. کاهش حرکات، خونریزی، پارگی پرده، درد شدید یا پرفشاری خون علائم هشدارند. تصمیم ختم بارداری بر سن، وضعیت جنین و خطر مادر استوار است.",
+        "lead_fa": "گزینه «تزریق یک دوز دیگر متوترکسات» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "Pregnancy care is done by determining gestational age, screening for abnormalities, evaluating fetal growth and maternal diseases. Medication and imaging should be weighed against gestational age and fetal risk. Decreased movements, bleeding, membrane rupture, severe pain or high blood pressure are warning signs. The decision to terminate the pregnancy is based on the age, condition of the fetus and the risk of the mother.",
-        "golden_fa": "سن بارداری و وضعیت مادر و جنین پایه تصمیمگیریاند.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "Gestational age and condition of mother and fetus are the basis for decision making.",
         "points_fa": [
-          "سن، شدت، خطر، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],

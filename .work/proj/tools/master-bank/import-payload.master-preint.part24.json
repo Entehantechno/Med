@@ -6583,12 +6583,12 @@
         "لوله گذاری داخل تراشه و ساکشن کردن"
       ],
       "options_en": [],
-      "correct_index": 3,
+      "correct_index": 1,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد.",
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد طب کودکان سازگار است."
+        "دلیل رد گزینه: تحریک پوستی همخوان نیست.",
+        "گزینه صحیح: تهویه با پ ک و ماسک با تظاهر همخوان است.",
+        "دلیل رد گزینه: فشردن قفسه ی صدری همخوان نیست.",
+        "دلیل رد گزینه: لوله گذاری داخل تراشه و ساکشن کردن همخوان نیست."
       ],
       "options_why_en": [
         "",
@@ -6596,15 +6596,18 @@
         "",
         ""
       ],
-      "explanation_fa": "در نوزاد ابتدا سن بارداری، وزن تولد، سازگاری تنفسی، تغذیه، زردی و نشانههای عفونت ارزیابی میشود. تب یا بیحالی نوزاد میتواند سپسیس باشد و نیازمند کشت و آنتیبیوتیک تجربی مناسب سن است. زردی بر زمان شروع، مستقیم یا غیرمستقیم بودن و عوامل خطر تحلیل میشود. احیای نوزاد بر تهویه مؤثر و ضربان قلب استوار است.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با نوزاد چهل و یک هفته که به دلیل دیسترس جنینی و دفع مکونیوم به طریق، سزارین به دنیا آمده در بدو تولد هیپوتون است و ضربان ق مراجعه کرده است. گزینه صحیح «تهویه با پ ک و ماسک» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «تهویه با پ ک و ماسک» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "First, gestational age, birth weight, respiratory compatibility, feeding, jaundice and signs of infection are evaluated in the newborn. A newborn's fever or lethargy can be sepsis and requires culture and age-appropriate experimental antibiotics. Jaundice is analyzed based on the time of onset, whether it is direct or indirect, and risk factors. Neonatal resuscitation is based on effective ventilation and heart rate.",
       "micro": {
-        "lead_fa": "در نوزاد ابتدا سن بارداری، وزن تولد، سازگاری تنفسی، تغذیه، زردی و نشانههای عفونت ارزیابی میشود. تب یا بیحالی نوزاد میتواند سپسیس باشد و نیازمند کشت و آنتیبیوتیک تجربی مناسب سن است. زردی بر زمان شروع، مستقیم یا غیرمستقیم بودن و عوامل خطر تحلیل میشود. احیای نوزاد بر تهویه مؤثر و ضربان قلب استوار است.",
+        "lead_fa": "گزینه «تهویه با پ ک و ماسک» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "First, gestational age, birth weight, respiratory compatibility, feeding, jaundice and signs of infection are evaluated in the newborn. A newborn's fever or lethargy can be sepsis and requires culture and age-appropriate experimental antibiotics. Jaundice is analyzed based on the time of onset, whether it is direct or indirect, and risk factors. Neonatal resuscitation is based on effective ventilation and heart rate.",
-        "golden_fa": "در نوزاد، زمان شروع علائم و وضعیت تغذیه و تنفس اهمیت ویژه دارد.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "In infants, the time of onset of symptoms and the feeding and breathing status are particularly important.",
         "points_fa": [
-          "سن، وزن، شدت، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
@@ -7295,12 +7298,12 @@
         "فشردن قفسه ی سینه"
       ],
       "options_en": [],
-      "correct_index": 2,
+      "correct_index": 0,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد.",
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد طب کودکان سازگار است.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد."
+        "گزینه صحیح: تهویه با ماسک و بگ با تظاهر همخوان است.",
+        "دلیل رد گزینه: تحریک پوستی همخوان نیست.",
+        "دلیل رد گزینه: لوله گذاری داخل تراشه و ساکشن ترشحات همخوان نیست.",
+        "دلیل رد گزینه: فشردن قفسه ی سینه همخوان نیست."
       ],
       "options_why_en": [
         "",
@@ -7308,15 +7311,18 @@
         "",
         ""
       ],
-      "explanation_fa": "در نوزاد ابتدا سن بارداری، وزن تولد، سازگاری تنفسی، تغذیه، زردی و نشانههای عفونت ارزیابی میشود. تب یا بیحالی نوزاد میتواند سپسیس باشد و نیازمند کشت و آنتیبیوتیک تجربی مناسب سن است. زردی بر زمان شروع، مستقیم یا غیرمستقیم بودن و عوامل خطر تحلیل میشود. احیای نوزاد بر تهویه مؤثر و ضربان قلب استوار است.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با نوزاد ۴۱ هفته ای که به علت دیسترس جنینی و دفع مکونیوم از طریق سزارین به دنیا آمده است در بدو تولد هیپوتون است و ضربان قل مراجعه کرده است. گزینه صحیح «تهویه با ماسک و بگ» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «تهویه با ماسک و بگ» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "First, gestational age, birth weight, respiratory compatibility, feeding, jaundice and signs of infection are evaluated in the newborn. A newborn's fever or lethargy can be sepsis and requires culture and age-appropriate experimental antibiotics. Jaundice is analyzed based on the time of onset, whether it is direct or indirect, and risk factors. Neonatal resuscitation is based on effective ventilation and heart rate.",
       "micro": {
-        "lead_fa": "در نوزاد ابتدا سن بارداری، وزن تولد، سازگاری تنفسی، تغذیه، زردی و نشانههای عفونت ارزیابی میشود. تب یا بیحالی نوزاد میتواند سپسیس باشد و نیازمند کشت و آنتیبیوتیک تجربی مناسب سن است. زردی بر زمان شروع، مستقیم یا غیرمستقیم بودن و عوامل خطر تحلیل میشود. احیای نوزاد بر تهویه مؤثر و ضربان قلب استوار است.",
+        "lead_fa": "گزینه «تهویه با ماسک و بگ» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "First, gestational age, birth weight, respiratory compatibility, feeding, jaundice and signs of infection are evaluated in the newborn. A newborn's fever or lethargy can be sepsis and requires culture and age-appropriate experimental antibiotics. Jaundice is analyzed based on the time of onset, whether it is direct or indirect, and risk factors. Neonatal resuscitation is based on effective ventilation and heart rate.",
-        "golden_fa": "در نوزاد، زمان شروع علائم و وضعیت تغذیه و تنفس اهمیت ویژه دارد.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "In infants, the time of onset of symptoms and the feeding and breathing status are particularly important.",
         "points_fa": [
-          "سن، وزن، شدت، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
@@ -7942,12 +7948,12 @@
         "ساکشن نای"
       ],
       "options_en": [],
-      "correct_index": 3,
+      "correct_index": 0,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد.",
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد طب کودکان سازگار است."
+        "گزینه صحیح: تهویه با بگ و ماسک با تظاهر همخوان است.",
+        "دلیل رد گزینه: تحریک پوستی همخوان نیست.",
+        "دلیل رد گزینه: فشردن قفسه ی سینه همخوان نیست.",
+        "دلیل رد گزینه: ساکشن نای همخوان نیست."
       ],
       "options_why_en": [
         "",
@@ -7955,15 +7961,18 @@
         "",
         ""
       ],
-      "explanation_fa": "در نوزاد ابتدا سن بارداری، وزن تولد، سازگاری تنفسی، تغذیه، زردی و نشانههای عفونت ارزیابی میشود. تب یا بیحالی نوزاد میتواند سپسیس باشد و نیازمند کشت و آنتیبیوتیک تجربی مناسب سن است. زردی بر زمان شروع، مستقیم یا غیرمستقیم بودن و عوامل خطر تحلیل میشود. احیای نوزاد بر تهویه مؤثر و ضربان قلب استوار است.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با نوزاد ۴۱ هفته ای که به علت دیسترس جنینی و دفع مکونیوم از طریق سزارین متولد شده در بدو تولد هیپوتون است و ضربان قلب ۵۰ در مراجعه کرده است. گزینه صحیح «تهویه با بگ و ماسک» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «تهویه با بگ و ماسک» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "First, gestational age, birth weight, respiratory compatibility, feeding, jaundice and signs of infection are evaluated in the newborn. A newborn's fever or lethargy can be sepsis and requires culture and age-appropriate experimental antibiotics. Jaundice is analyzed based on the time of onset, whether it is direct or indirect, and risk factors. Neonatal resuscitation is based on effective ventilation and heart rate.",
       "micro": {
-        "lead_fa": "در نوزاد ابتدا سن بارداری، وزن تولد، سازگاری تنفسی، تغذیه، زردی و نشانههای عفونت ارزیابی میشود. تب یا بیحالی نوزاد میتواند سپسیس باشد و نیازمند کشت و آنتیبیوتیک تجربی مناسب سن است. زردی بر زمان شروع، مستقیم یا غیرمستقیم بودن و عوامل خطر تحلیل میشود. احیای نوزاد بر تهویه مؤثر و ضربان قلب استوار است.",
+        "lead_fa": "گزینه «تهویه با بگ و ماسک» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "First, gestational age, birth weight, respiratory compatibility, feeding, jaundice and signs of infection are evaluated in the newborn. A newborn's fever or lethargy can be sepsis and requires culture and age-appropriate experimental antibiotics. Jaundice is analyzed based on the time of onset, whether it is direct or indirect, and risk factors. Neonatal resuscitation is based on effective ventilation and heart rate.",
-        "golden_fa": "در نوزاد، زمان شروع علائم و وضعیت تغذیه و تنفس اهمیت ویژه دارد.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "In infants, the time of onset of symptoms and the feeding and breathing status are particularly important.",
         "points_fa": [
-          "سن، وزن، شدت، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
@@ -9499,12 +9508,12 @@
         "خشک کردن نوزاد"
       ],
       "options_en": [],
-      "correct_index": 2,
+      "correct_index": 1,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد.",
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد طب کودکان سازگار است.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد."
+        "دلیل رد گزینه: تحریک تنفسی همخوان نیست.",
+        "گزینه صحیح: تهویه با فشار مثبت با تظاهر همخوان است.",
+        "دلیل رد گزینه: ساکشن دهان و داخل تراشه همخوان نیست.",
+        "دلیل رد گزینه: خشک کردن نوزاد همخوان نیست."
       ],
       "options_why_en": [
         "",
@@ -9512,15 +9521,18 @@
         "",
         ""
       ],
-      "explanation_fa": "در نوزاد ابتدا سن بارداری، وزن تولد، سازگاری تنفسی، تغذیه، زردی و نشانههای عفونت ارزیابی میشود. تب یا بیحالی نوزاد میتواند سپسیس باشد و نیازمند کشت و آنتیبیوتیک تجربی مناسب سن است. زردی بر زمان شروع، مستقیم یا غیرمستقیم بودن و عوامل خطر تحلیل میشود. احیای نوزاد بر تهویه مؤثر و ضربان قلب استوار است.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با ، نوزاد پست ترم آغشته به مکونیوم رقیق بدون تنفس کاملاً هیپوتون متولد شده است اولین اقدام شما کدام است؟ مراجعه کرده است. گزینه صحیح «تهویه با فشار مثبت» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «تهویه با فشار مثبت» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "First, gestational age, birth weight, respiratory compatibility, feeding, jaundice and signs of infection are evaluated in the newborn. A newborn's fever or lethargy can be sepsis and requires culture and age-appropriate experimental antibiotics. Jaundice is analyzed based on the time of onset, whether it is direct or indirect, and risk factors. Neonatal resuscitation is based on effective ventilation and heart rate.",
       "micro": {
-        "lead_fa": "در نوزاد ابتدا سن بارداری، وزن تولد، سازگاری تنفسی، تغذیه، زردی و نشانههای عفونت ارزیابی میشود. تب یا بیحالی نوزاد میتواند سپسیس باشد و نیازمند کشت و آنتیبیوتیک تجربی مناسب سن است. زردی بر زمان شروع، مستقیم یا غیرمستقیم بودن و عوامل خطر تحلیل میشود. احیای نوزاد بر تهویه مؤثر و ضربان قلب استوار است.",
+        "lead_fa": "گزینه «تهویه با فشار مثبت» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "First, gestational age, birth weight, respiratory compatibility, feeding, jaundice and signs of infection are evaluated in the newborn. A newborn's fever or lethargy can be sepsis and requires culture and age-appropriate experimental antibiotics. Jaundice is analyzed based on the time of onset, whether it is direct or indirect, and risk factors. Neonatal resuscitation is based on effective ventilation and heart rate.",
-        "golden_fa": "در نوزاد، زمان شروع علائم و وضعیت تغذیه و تنفس اهمیت ویژه دارد.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "In infants, the time of onset of symptoms and the feeding and breathing status are particularly important.",
         "points_fa": [
-          "سن، وزن، شدت، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
@@ -13777,12 +13789,12 @@
         "لوله گذاری و ساکشن ترشحات"
       ],
       "options_en": [],
-      "correct_index": 3,
+      "correct_index": 2,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد.",
-        "نادرست است؛ دلیل رد: این گزینه در مقایسه با پاسخ صحیح، یافته محوری یا الگوریتم استاندارد کودکان را کامل توضیح نمیدهد.",
-        "صحیح است؛ این گزینه با پاسخ کلیدی و مسیر استاندارد طب کودکان سازگار است."
+        "دلیل رد گزینه: ساکشن دهان و بینی همخوان نیست.",
+        "دلیل رد گزینه: تحریک برای شروع تنفس خودبخودی همخوان نیست.",
+        "گزینه صحیح: شروع تنفس با پگ و ماسک با تظاهر همخوان است.",
+        "دلیل رد گزینه: لوله گذاری و ساکشن ترشحات همخوان نیست."
       ],
       "options_why_en": [
         "",
@@ -13790,15 +13802,18 @@
         "",
         ""
       ],
-      "explanation_fa": "در نوزاد ابتدا سن بارداری، وزن تولد، سازگاری تنفسی، تغذیه، زردی و نشانههای عفونت ارزیابی میشود. تب یا بیحالی نوزاد میتواند سپسیس باشد و نیازمند کشت و آنتیبیوتیک تجربی مناسب سن است. زردی بر زمان شروع، مستقیم یا غیرمستقیم بودن و عوامل خطر تحلیل میشود. احیای نوزاد بر تهویه مؤثر و ضربان قلب استوار است.",
+      "explanation_fa": "پس از اصلاح کلید، بیمار با در نوزادی که آغشته به مکونیوم و بدون تنفس خودبخودی به دنیا آمده است اولین اقدام درمانی شما چیست؟ مراجعه کرده است. گزینه صحیح «شروع تنفس با پگ و ماسک» با شرح حال و معاینه و یافته‌های پاراکلینیک همخوانی دارد. سایر گزینه‌ها همخوانی کمتر دارند. بر اساس هاریسون و راهنمای به‌روز، معاینه دقیق و تصمیم فردمحور انتخاب صحیح همین است. این نکته با بررسی فردمحور تایید می‌شود.\n\nدرسنامه: گزینه «شروع تنفس با پگ و ماسک» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن. تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
       "explanation_en": "First, gestational age, birth weight, respiratory compatibility, feeding, jaundice and signs of infection are evaluated in the newborn. A newborn's fever or lethargy can be sepsis and requires culture and age-appropriate experimental antibiotics. Jaundice is analyzed based on the time of onset, whether it is direct or indirect, and risk factors. Neonatal resuscitation is based on effective ventilation and heart rate.",
       "micro": {
-        "lead_fa": "در نوزاد ابتدا سن بارداری، وزن تولد، سازگاری تنفسی، تغذیه، زردی و نشانههای عفونت ارزیابی میشود. تب یا بیحالی نوزاد میتواند سپسیس باشد و نیازمند کشت و آنتیبیوتیک تجربی مناسب سن است. زردی بر زمان شروع، مستقیم یا غیرمستقیم بودن و عوامل خطر تحلیل میشود. احیای نوزاد بر تهویه مؤثر و ضربان قلب استوار است.",
+        "lead_fa": "گزینه «شروع تنفس با پگ و ماسک» را پس از اصلاح کلید با تظاهر اصلی و معاینه دقیق بشناس و انتخاب کن.",
         "lead_en": "First, gestational age, birth weight, respiratory compatibility, feeding, jaundice and signs of infection are evaluated in the newborn. A newborn's fever or lethargy can be sepsis and requires culture and age-appropriate experimental antibiotics. Jaundice is analyzed based on the time of onset, whether it is direct or indirect, and risk factors. Neonatal resuscitation is based on effective ventilation and heart rate.",
-        "golden_fa": "در نوزاد، زمان شروع علائم و وضعیت تغذیه و تنفس اهمیت ویژه دارد.",
+        "golden_fa": "تصمیم نهایی را با معاینه دقیق، اکو و بررسی فردمحور بگیر و ثبت کن.",
         "golden_en": "In infants, the time of onset of symptoms and the feeding and breathing status are particularly important.",
         "points_fa": [
-          "سن، وزن، شدت، اقدام."
+          "شرح حال دقیق بیمار را با زمان شروع و عوامل تشدید کامل بگیر.",
+          "معاینه بالینی کامل شامل علائم حیاتی و سمع قلب و ریه انجام بده.",
+          "بررسی پاراکلینیک هدفمند شامل نوار قلب، اکو و آزمایشات لازم درخواست کن.",
+          "تصمیم درمانی فردمحور بر اساس راهنمای هاریسون و شرایط بیمار بگیر."
         ],
         "points_en": [],
         "options_fa": [],
