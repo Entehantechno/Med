@@ -76,6 +76,7 @@ export default function LearnApp() {
   const [tab, setTabState] = useState(() => initRef ? `reference:${initRef.code}:${initRef.page}${initRef.chapter?`:${initRef.chapter}`:""}` : (typeof window !== "undefined" && /^#browse(\?|$)/.test(window.location.hash) ? "browse" : "home"));
   const [navOpen, setNavOpen] = useState({});   // collapsible nav groups (cleaner menu)
   const [moreOpen, setMoreOpen] = useState(false);
+  const [moreQuery, setMoreQuery] = useState("");
   const [badges, setBadges] = useState({ due: 0, quests: 0 });
   const moreStartY = useRef(0);
   const [history, setHistory] = useState([]);   // previous tabs for the Back button
@@ -89,7 +90,7 @@ export default function LearnApp() {
 
   // navigate while remembering where we came from (capped to avoid unbounded growth)
   const setTab = (next) => {
-    setMoreOpen(false);
+    setMoreOpen(false); setMoreQuery("");
     if (next !== "browse" && /^#browse/.test(window.location.hash)) window.history.replaceState(null, "", window.location.pathname);
     setTabState((cur) => {
       if (cur !== next) queueMicrotask(() => setHistory((h) => [...h, cur].slice(-50)));
@@ -445,14 +446,26 @@ export default function LearnApp() {
       </nav>
       )}
       {moreOpen && (
-        <div className="learn-more-overlay" onClick={() => setMoreOpen(false)}>
-          <div className="learn-more-sheet" role="dialog" aria-modal="true" aria-label={t("navMoreTitle")} onClick={(e) => e.stopPropagation()}
+        <div className="learn-more-overlay" onClick={() => { setMoreOpen(false); setMoreQuery(""); }}>
+          <div className="learn-more-sheet learn-more-sheet--glass" role="dialog" aria-modal="true" aria-label={t("navMoreTitle")} onClick={(e) => e.stopPropagation()}
             onTouchStart={(e) => { moreStartY.current = e.touches[0].clientY; }}
-            onTouchEnd={(e) => { if (e.changedTouches[0].clientY - moreStartY.current > 72) setMoreOpen(false); }}>
+            onTouchEnd={(e) => { if (e.changedTouches[0].clientY - moreStartY.current > 72) { setMoreOpen(false); setMoreQuery(""); } }}>
             <div className="learn-more-handle" />
-            <div className="learn-more-head">
-              <b>{t("navMoreTitle")}</b>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setMoreOpen(false)}>{t("navCloseMore")}</button>
+            <div className="learn-more-head learn-more-head--glass">
+              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+                <span style={{ width:36, height:36, borderRadius:12, background:"linear-gradient(135deg,#0ea5e9,#6366f1)", display:"inline-flex", alignItems:"center", justifyContent:"center", color:"#fff", boxShadow:"0 8px 18px rgba(99,102,241,.28)" }}><Icon name="menu" size={18} /></span>
+                <div>
+                  <div style={{ fontWeight:900, fontSize:".98rem", lineHeight:1 }}>{t("navMoreTitle")}</div>
+                  <div className="small muted" style={{ fontSize:".72rem" }}>{lang==="fa"?"همهٔ ابزارها — یک‌جا":"All tools — one place"}</div>
+                </div>
+              </div>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => { setMoreOpen(false); setMoreQuery(""); }} style={{ borderRadius:999, border:"1px solid var(--border)", background:"var(--panel)" }}><Icon name="close" size={14} /> {t("navCloseMore")}</button>
+            </div>
+            {/* search inside sheet */}
+            <div className="learn-more-search">
+              <Icon name="search" size={16} style={{ opacity:.6 }} />
+              <input value={moreQuery} onChange={(e)=>setMoreQuery(e.target.value)} placeholder={lang==="fa"?"جستجوی سریعِ ابزار… / مثلاً آزمون، لیگ، فلش":"Search tools… try quiz, league, flash"} autoFocus={false} />
+              {moreQuery && <button type="button" className="learn-more-search-clear" onClick={()=>setMoreQuery("")}><Icon name="close" size={14} /></button>}
             </div>
             {programs.length > 1 && (
               <div className="learn-more-sec">
@@ -467,23 +480,63 @@ export default function LearnApp() {
                 </div>
               </div>
             )}
+            {/* Quick access — primary tabs as large glass cards */}
+            {!moreQuery && (
+              <div className="learn-more-quick">
+                <div className="learn-more-quick-title small muted" style={{ fontWeight:800, marginBottom:6, display:"flex", alignItems:"center", gap:6 }}><span style={{ width:22, height:22, borderRadius:7, background:"linear-gradient(135deg,#22c55e,#06b6d4)", display:"inline-flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:11 }}>⚡</span> {lang==="fa"?"دسترسیِ سریع":"Quick access"}</div>
+                <div className="learn-more-quick-grid">
+                  {[
+                    {id:"home", ico:"dashboard", label:t("navTabHome"), grad:"linear-gradient(135deg,#0ea5e9,#6366f1)"},
+                    {id:"path", ico:"book", label:t("navTabPath"), grad:"linear-gradient(135deg,#22c55e,#06b6d4)"},
+                    {id:"review", ico:"repeat", label:t("navTabReview"), grad:"linear-gradient(135deg,#f59e0b,#ef4444)"},
+                    {id:"browse", ico:"search", label:t("navTabBrowse"), grad:"linear-gradient(135deg,#8b5cf6,#ec4899)"},
+                  ].filter(x=> flag("srs_review")||x.id!=="review").filter(x=> flag("bank_browse")||x.id!=="browse").map(q=>(
+                    <button key={q.id} type="button" className={`learn-more-quick-card ${tab===q.id?"active":""}`} style={{ background:q.grad }} onClick={()=>setTab(q.id)}>
+                      <span className="lmqc-ico"><Icon name={q.ico} size={18} /></span>
+                      <span className="lmqc-label">{q.label}</span>
+                      {tab===q.id && <span className="lmqc-check">✓</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {navSections.map((sec) => {
-              // Don't repeat the four primary tabbar tabs inside the overflow sheet — they're already one tap away.
               const overflowItems = sec.items.filter(([id]) => !tabbarIds.includes(id));
-              if (overflowItems.length === 0) return null;
+              const q = moreQuery.trim().toLowerCase();
+              const filtered = q ? overflowItems.filter(([id, ico, label])=> String(label).toLowerCase().includes(q) || String(id).toLowerCase().includes(q) || String(sec.title).toLowerCase().includes(q)) : overflowItems;
+              if (filtered.length === 0) return null;
+              const gradMap = { learn:"linear-gradient(135deg,#0ea5e9,#6366f1)", tools:"linear-gradient(135deg,#8b5cf6,#6366f1)", compete:"linear-gradient(135deg,#ec4899,#f59e0b)", mine:"linear-gradient(135deg,#10b981,#06b6d4)", store:"linear-gradient(135deg,#f59e0b,#ef4444)" };
+              const secDesc = { learn: lang==="fa"?"مسیر و مرورِ روزانه":"Path & daily review", tools: lang==="fa"?"ابزارِ مطالعهٔ هوشمند":"Smart study tools", compete: lang==="fa"?"رقابت و لیگ":"Compete & leagues", mine: lang==="fa"?"کارنامه و یادداشت":"Progress & notes", store: lang==="fa"?"فروشگاه و پرمیوم":"Store & premium" }[sec.key] || "";
               return (
-                <div className="learn-more-sec" key={sec.key}>
-                  <div className="learn-nav-title">{sec.title}</div>
+                <div className="learn-more-sec learn-more-sec--glass" key={sec.key}>
+                  <div className="learn-more-sec-head">
+                    <span className="learn-more-sec-ico" style={{ background: gradMap[sec.key]||"linear-gradient(135deg,#64748b,#475569)" }}><Icon name={sec.items[0]?.[1]||"menu"} size={14} /></span>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div className="learn-more-sec-title">{sec.title}</div>
+                      <div className="learn-more-sec-desc small muted">{secDesc}</div>
+                    </div>
+                    <span className="learn-more-sec-count">{filtered.length}</span>
+                  </div>
                   <div className="learn-more-grid">
-                    {overflowItems.map(([id, ico, label]) => (
-                      <button key={id} type="button" className={`learn-more-item ${tab === id ? "active" : ""}`} onClick={() => setTab(id)}>
-                        <Icon name={ico} size={18} /> {label}
+                    {filtered.map(([id, ico, label]) => (
+                      <button key={id} type="button" className={`learn-more-item learn-more-item--glass ${tab === id ? "active" : ""}`} onClick={() => setTab(id)}>
+                        <span className="lmi-ico"><Icon name={ico} size={18} /></span>
+                        <span className="lmi-label">{label}</span>
+                        {tab===id && <span className="lmi-check">✓</span>}
                       </button>
                     ))}
                   </div>
                 </div>
               );
             })}
+            {moreQuery && navSections.every(sec=> sec.items.filter(([id])=>!tabbarIds.includes(id)).filter(([id,ico,label])=> String(label).toLowerCase().includes(moreQuery.trim().toLowerCase())).length===0) && (
+              <div className="card" style={{ padding:16, textAlign:"center", borderRadius:14, background:"var(--panel2)", border:"1px dashed var(--border)" }}>
+                <div style={{ fontSize:22 }}>🔍</div>
+                <div style={{ fontWeight:800, marginTop:6 }}>{lang==="fa"?"چیزی یافت نشد":"No results"}</div>
+                <div className="small muted">{lang==="fa"?"واژهٔ دیگری را امتحان کنید":"Try another keyword"}</div>
+                <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop:8 }} onClick={()=>setMoreQuery("")}>{lang==="fa"?"پاک کردنِ جستجو":"Clear search"}</button>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -157,3 +157,95 @@ mark{background:color-mix(in srgb,#f7c948 55%,transparent);color:inherit;border-
   .fsheet-foot{z-index:121}
   .fsheet-back{z-index:119}
 }
+
+/* ——— Browse quick filters — AMBOSS hammers + system pills (2026-10-04) ——— */
+.browse-search-card--glass{
+  background: color-mix(in srgb, var(--panel) 88%, transparent);
+  backdrop-filter: saturate(1.5) blur(12px);
+  -webkit-backdrop-filter: saturate(1.5) blur(12px);
+  border: 1px solid rgba(255,255,255,.55);
+  box-shadow: 0 12px 32px rgba(15,23,48,.08), 0 1px 0 rgba(255,255,255,.6) inset;
+}
+.browse-quick--glass{
+  margin-top: 10px;
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
+  -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  border: 1px solid var(--border);
+  padding: 10px 12px;
+  box-shadow: 0 8px 22px rgba(15,23,48,.06);
+  display: flex; flex-direction: column; gap: 10px;
+}
+.browse-quick-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap }
+.browse-quick-label{
+  flex:none; display:inline-flex; align-items:center; gap:6px;
+  font-size:.72rem; font-weight:900; letter-spacing:.04em; text-transform:uppercase;
+  color: var(--muted); background: var(--panel2); border:1px solid var(--border);
+  padding:6px 9px; border-radius:999px; white-space:nowrap;
+}
+.browse-quick-chips{ display:flex; flex-wrap:wrap; gap:7px; align-items:center; flex:1; min-width:0 }
+.browse-quick-chip{
+  position:relative; isolation:isolate; overflow:hidden;
+  display:inline-flex; align-items:center; gap:6px;
+  padding:7px 10px 7px 12px; border-radius:999px;
+  border:1px solid var(--border); background: var(--panel2);
+  color: var(--text); font-size:.78rem; font-weight:800; cursor:pointer;
+  transition: transform .12s, box-shadow .15s, border-color .15s, background .15s, color .15s;
+  white-space:nowrap;
+}
+.browse-quick-chip:hover{ transform: translateY(-1px); box-shadow: 0 6px 14px rgba(0,0,0,.08); border-color: color-mix(in srgb, var(--primary) 18%, var(--border)) }
+.browse-quick-chip.on{
+  background: var(--primary); color:#fff; border-color: var(--primary);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+.browse-quick-chip-grad{
+  position:absolute; inset:0; border-radius:999px; opacity:.08; pointer-events:none;
+}
+.browse-quick-chip.on .browse-quick-chip-grad{ opacity:.22; background:#fff !important }
+.bqc-label{ position:relative; z-index:1 }
+.bqc-count{
+  position:relative; z-index:1; min-width:20px; height:20px; padding:0 6px; border-radius:999px;
+  background:#fff; border:1px solid var(--border); color:var(--muted); font-size:.70rem; font-weight:900; display:grid; place-items:center;
+}
+.browse-quick-chip.on .bqc-count{ background:rgba(255,255,255,.22); color:#fff; border-color: rgba(255,255,255,.35) }
+.browse-quick-hammer{ font-weight:800 }
+.browse-quick-more{
+  flex:none; display:inline-flex; align-items:center; gap:6px;
+  padding:7px 11px; border-radius:999px; border:1px solid var(--border); background: var(--panel);
+  font-size:.76rem; font-weight:800; color: var(--primary); cursor:pointer; white-space:nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+.browse-quick-more:hover{ background: color-mix(in srgb, var(--primary) 8%, var(--panel)); border-color: color-mix(in srgb, var(--primary) 18%, var(--border)) }
+@media (max-width:640px){
+  .browse-quick--glass{ padding:10px; border-radius:14px }
+  .browse-quick-row{ align-items:flex-start }
+  .browse-quick-chips{ gap:6px }
+  .browse-quick-chip{ padding:6px 9px; font-size:.74rem }
+}
+
+/* ——— Browse hero super glass (enhanced) ——— */
+.browse-hero{
+  background: linear-gradient(135deg, rgba(14,165,233,.10), rgba(99,102,241,.10) 55%, rgba(236,72,153,.08)), color-mix(in srgb, var(--panel) 78%, transparent);
+  backdrop-filter: saturate(1.4) blur(12px);
+  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  border: 1px solid rgba(255,255,255,.55);
+  box-shadow: 0 14px 36px rgba(15,23,48,.08), 0 1px 0 rgba(255,255,255,.6) inset;
+}
+.browse-hero::before{
+  content:""; position:absolute; inset:0; border-radius:20px; padding:1px;
+  background: linear-gradient(135deg, rgba(255,255,255,.8), rgba(255,255,255,.2));
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude; pointer-events:none; opacity:.6;
+}
+
+/* ——— Browse item hover lift (premium) ——— */
+.browse-item-new{
+  transition: transform .14s, box-shadow .16s, border-color .15s;
+}
+.browse-item-new:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(15,23,48,.10);
+  border-color: color-mix(in srgb, var(--primary) 12%, var(--border));
+}
+.browse-item-new:hover .browse-item-accent{ opacity:1 }

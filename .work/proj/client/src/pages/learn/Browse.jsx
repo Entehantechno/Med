@@ -227,7 +227,7 @@ export default function Browse() {
       </div>
 
       {/* ===== Search — glass card ===== */}
-      <div className="browse-search-card">
+      <div className="browse-search-card browse-search-card--glass">
         <SearchBox
           value={term}
           onChange={setTerm}
@@ -237,6 +237,43 @@ export default function Browse() {
           placeholder={t("browseSearch")}
           storageKey="bank"
         />
+      </div>
+
+      {/* Quick filters — AMBOSS/UWorld inspired: system pills + hammer difficulty (instant) */}
+      <div className="browse-quick browse-quick--glass">
+        <div className="browse-quick-row">
+          <span className="browse-quick-label"><Icon name="layers" size={12} /> {fa?"سیستم":"System"}</span>
+          <div className="browse-quick-chips">
+            {(facets.subject || []).slice().sort((a,b)=>b.count-a.count).slice(0,9).map(o=>{
+              const on = (fil.subject||[]).includes(o.value);
+              const grad = subjGrad(o.value || o.label);
+              return (
+                <button key={o.value} type="button" onClick={()=>toggle("subject", o.value)} className={`browse-quick-chip ${on?"on":""}`} style={on?{}:{}}>
+                  <span className={`browse-quick-chip-grad bg-gradient-to-r ${grad}`} aria-hidden="true" style={on?{opacity:.18}:{}} />
+                  <span className="bqc-label">{o.label || o.value}</span>
+                  <span className="bqc-count">{o.count}</span>
+                </button>
+              );
+            })}
+            {(facets.subject||[]).length===0 && <span className="small muted">{fa?"در حال بارگذاری…":"Loading systems…"}</span>}
+          </div>
+          <button type="button" className="browse-quick-more" onClick={()=>setShowFil(true)}><Icon name="settings" size={12} /> {fa?"همهٔ فیلترها":"All filters"} {activeChips.length?`· ${activeChips.length}`:""}</button>
+        </div>
+        <div className="browse-quick-row">
+          <span className="browse-quick-label">🔨 {fa?"سختی":"Hammers"}</span>
+          <div className="browse-quick-chips">
+            {["easy","medium","hard"].map(lvl=>{
+              const on = (fil.difficulty||[]).includes(lvl);
+              const map = { easy:{ fa:"آسان", en:"Easy", h:"🔨", c:"#10b981", bg:"#ecfdf5", bd:"#a7f3d0" }, medium:{ fa:"متوسط", en:"Medium", h:"🔨🔨", c:"#f59e0b", bg:"#fffbeb", bd:"#fde68a" }, hard:{ fa:"سخت", en:"Hard", h:"🔨🔨🔨", c:"#ef4444", bg:"#fef2f2", bd:"#fecaca" } }[lvl];
+              return (
+                <button key={lvl} type="button" onClick={()=>toggle("difficulty", lvl)} className={`browse-quick-chip browse-quick-hammer ${on?"on":""}`} style={on?{ background: map.c, color:"#fff", borderColor: map.c, boxShadow:`0 6px 14px ${map.c}33` }:{ background: map.bg, color: map.c, borderColor: map.bd }}>
+                  <span>{map.h}</span> {fa?map.fa:map.en} <span className="bqc-count" style={{ background: on?"rgba(255,255,255,.22)":"#fff", color: on?"#fff":map.c, border:`1px solid ${on?"rgba(255,255,255,.4)":map.bd}` }}>{(facets.difficulty||[]).find(x=>x.value===lvl)?.count ?? ""}</span>
+                </button>
+              );
+            })}
+            <span className="small muted" style={{ marginInlineStart:6, fontSize:".72rem" }}>{fa?"OR درون، AND بینِ فاست‌ها":"OR inside, AND across"}</span>
+          </div>
+        </div>
       </div>
 
       {/* ===== Active chips — colorful pills ===== */}
