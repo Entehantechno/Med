@@ -7492,42 +7492,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "آقای ۲۵ سالهای با تنگی نفس فعالیتی مراجعه کرده است. در معاینه سوفل مداوم (Continuous murmur) در سمت چپ قفسه ی سینه، ایمپالس هیپردینامیک در آپکس قلب مشهود است. در ارزیابی اکوکاردیوگرافی هیپروتروفی همراه با بزرگی بطن چپ و بزرگی دهلیز چپ مشاهده شد. کدامیک از بیماریهای زیر مطرح است؟",
-      "question_en": "A 25-year-old man presented with dyspnea. In the continuous murmur examination on the left side of the chest, a hyperdynamic impulse is evident in the apex of the heart. In the echocardiographic evaluation, hypertrophy was observed along with the enlargement of the left ventricle and the enlargement of the left atrium. Which of the following diseases is relevant? A) (Atrial septal defect (ASD B) (Ventricular septal defect (VSD C) (Patent dactus arteriosus (PDA D) Congenital stenosis > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "A 25-year-old man presented with dyspnea. In the continuous murmur examination on the left side of the chest, a hyperdynamic impulse is evident in the apex of the heart. In the echocardiographic evaluation, hypertrophy was observed along with the enlargement of the left ventricle and the enlargement of the left atrium. Which of the following diseases is relevant? A) (Atrial septal defect (ASD B) (Ventricular septal defect (VSD C) (Patent dactus arteriosus (PDA D) Congenital stenosis",
       "options_fa": [
         "(Atrial septal defect (ASD",
         "(Ventricular septal defect (VSD",
         "(Patent dactus arteriosus (PDA",
         "Congenital stenosis"
       ],
-      "options_en": [],
+      "options_en": [
+        "ASD",
+        "VSD",
+        "PDA",
+        "Congenital stenosis"
+      ],
       "correct_index": 2,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: ASD Fixed Split و سوفل جریانی میدهد نه متوالی.",
-        "نادرست است؛ دلیل رد: VSD هولوسیستولیک است.",
-        "صحیح است؛ PDA سوفل ممتد و اضافهبار LA/بطن چپ میدهد.",
-        "نادرست است؛ دلیل رد: عبارت congenital stenosis تشخیص مشخصی نیست."
+        "دلیل رد گزینه: نقص دهلیزی سوفل سیستولیک لبه چپ و دوگانگی ثابت می‌دهد.",
+        "دلیل رد گزینه: نقص بطنی سوفل هولوسیستولیک لبه چپ می‌دهد.",
+        "گزینه صحیح: مجرای باز سوفل مداوم با بزرگی چپ می‌دهد.",
+        "دلیل رد گزینه: تنگی مادرزادی سوفل مداوم نمی‌دهد."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: ASD gives systolic murmur left border and fixed split.",
+        "Why incorrect: VSD gives holosystolic left border.",
+        "Correct: PDA gives continuous murmur with left enlargement.",
+        "Why incorrect: Congenital stenosis not continuous."
       ],
-      "explanation_fa": "PDA سوفل ممتد زیرترقوه چپ، bounding pulse و اضافهبار حجمی LA/بطن چپ میدهد. در شانت بزرگ، فشار ریوی و Eisenmenger با differential cyanosis رخ میدهد. اکو تشخیص را تأیید و بستن کاتتری درمان معمول موارد مناسب است.",
-      "explanation_en": "- A- (Atrial septal defect (ASD): ASD Fixed Split and the murmur gives a flow, not consecutive. - b- (Ventricular septal defect (VSD): VSD is holosystolic. - c- (Patent dactus arteriosus (PDA:) is correct; PDA gives continuous murmur and overload of LA/left ventricle. - d- Congenital stenosis: The term congenital stenosis is not a specific diagnosis.",
+      "explanation_fa": "مرد ۲۵ ساله با تنگی‌نفس فعالیتی، سوفل مداوم در چپ قفسه سینه، ایمپالس هیپردینامیک اپکس و اکو با هیپرتروفی و بزرگی بطن چپ و دهلیز چپ، مجرای شریانی باز را مطرح می‌کند. سوفل مداوم ماشینی از شانت چپ به راست مداوم و اضافه‌بار حجمی چپ می‌آید و نبض جهنده می‌دهد. این نکته در هاریسون با تاکید بر معاینه دقیق و تصمیم فردمحور آمده است.\n\nدرسنامه: سوفل مداوم + بزرگی چپ یعنی مجرای باز. سوفل زیر ترقوه چپ را بشنو.",
+      "explanation_en": "A 25-year-old with exertional dyspnea, continuous murmur left chest, hyperdynamic apex impulse and echo LV hypertrophy/enlargement and LA enlargement suggests patent ductus arteriosus. Continuous machinery murmur from continuous left-to-right shunt and left volume overload gives bounding pulse.\n\nLesson: Continuous murmur + left enlargement means PDA. Hear infraclavicular continuous murmur.",
       "micro": {
-        "lead_fa": "PDA سوفل ممتد زیرترقوه چپ، bounding pulse و اضافهبار حجمی LA/بطن چپ میدهد. در شانت بزرگ، فشار ریوی و Eisenmenger با differential cyanosis رخ میدهد. اکو تشخیص را تأیید و بستن کاتتری درمان معمول موارد مناسب است.",
-        "lead_en": "- A- (Atrial septal defect (ASD): ASD Fixed Split and the murmur gives a flow, not consecutive. - b- (Ventricular septal defect (VSD): VSD is holosystolic. - c- (Patent dactus arteriosus (PDA:) is correct; PDA gives continuous murmur and overload of LA/left ventricle. - d- Congenital stenosis: The term congenital stenosis is not a specific diagnosis.",
-        "golden_fa": "سوفل زیر ترقوه مداوم + بطن چپ اضافهبار حجمی = PDA.",
-        "golden_en": "",
+        "lead_fa": "سوفل مداوم + بزرگی چپ یعنی مجرای باز.",
+        "lead_en": "Continuous murmur + left enlargement means PDA.",
+        "golden_fa": "سوفل زیر ترقوه چپ را بشنو.",
+        "golden_en": "Hear infraclavicular continuous murmur.",
         "points_fa": [
-          "PDA به شریان ریوی در تمام سیکل پمپ می کند."
+          "شانت چپ به راست مداوم است.",
+          "نبض جهنده دیده می‌شود.",
+          "بستن کاتتری درمان است.",
+          "بدون درمان فشار ریوی می‌دهد."
         ],
-        "points_en": [],
+        "points_en": [
+          "Continuous left-to-right shunt.",
+          "Bounding pulse seen.",
+          "Cath closure therapy.",
+          "Untreated gives pulmonary hypertension."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -7543,7 +7556,15 @@
       "tags": [
         "QB-00091"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "سوفل همیشه‌گی با قلب چپ بزرگ کدام شانت است؟"
+      ],
+      "hints_en": [
+        "Which shunt is always murmuring with big left heart?"
+      ],
+      "attending_fa": "استاد: مداوم را مجرایی ببین.",
+      "attending_en": "Attending: View continuous as ductal."
     },
     {
       "program": "preint",
@@ -7554,42 +7575,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "در بیماران با (Infrequent, sporadic ventricular premature: complex (PVC به دنبال انفارکتوس حاد میوکارد کدامیک از موارد زیر صحیح است؟",
-      "question_en": "Which of the following is correct in patients with Infrequent, sporadic ventricular premature: complex (PVC) following acute myocardial infarction? A) Calcium channel blockers are the basis of treatment. B) Prophylactic antiarrhythmic treatment reduces mortality. C) It is seen in almost most patients after acute myocardial infarction. D) The possibility of ventricular fibrillation increases greatly in these people. > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "Which of the following is correct in patients with Infrequent, sporadic ventricular premature: complex (PVC) following acute myocardial infarction? A) Calcium channel blockers are the basis of treatment. B) Prophylactic antiarrhythmic treatment reduces mortality. C) It is seen in almost most patients after acute myocardial infarction. D) The possibility of ventricular fibrillation increases greatly in these people.",
       "options_fa": [
         "بلوک کنندههای کانالهای کلسیمی اساس درمان است.",
         "درمان آنتی آریتمی پروفیالکتیک باعث کاهش مورتالیتی میشود.",
         "تقریباً در اکثر بیماران بعد از انفارکتوس حاد میوکارد دیده میشود.",
         "احتمال فیبریالسیون بطنی در این افراد به شدت افزایش می یابد."
       ],
-      "options_en": [],
+      "options_en": [
+        "Calcium blockers mainstay",
+        "Prophylactic antiarrhythmic reduces mortality",
+        "Seen in almost all post-MI",
+        "VF risk markedly increased"
+      ],
       "correct_index": 2,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: CCB پایه درمان PVC پس از انفارکتوس قلبی نیست.",
-        "نادرست است؛ دلیل رد: پروفیلاکسی آنتیآریتمیک کلاس I مرگ را افزایش میدهد.",
-        "صحیح است؛ PVCهای منفرد شایعاند.",
-        "نادرست است؛ دلیل رد: PVC منفرد پراکنده بهتنهایی افزایش شدید VF را نشان نمیدهد."
+        "دلیل رد گزینه: مسدود کلسیم اساس درمان انقباض پراکنده نیست.",
+        "دلیل رد گزینه: پروفیلاکسی ضدآریتمی مورتالیتی را کم نمی‌کند.",
+        "گزینه صحیح: تقریبا در اکثر پس از انفارکتوس دیده می‌شود.",
+        "دلیل رد گزینه: خطر فیبریلاسیون در پراکنده کم‌تعداد به شدت بالا نیست."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: Calcium blocker not mainstay for sporadic PVC.",
+        "Why incorrect: Prophylactic antiarrhythmic does not reduce mortality.",
+        "Correct: Seen in almost all post-MI.",
+        "Why incorrect: VF risk not markedly increased in infrequent sporadic."
       ],
-      "explanation_fa": "PVCهای منفرد پس از انفارکتوس قلبی شایعاند و درمان پروفیلاکتیک با داروهای کلاس I مرگ را افزایش داده است. اصلاح ایسکمی و K/Mg و بتابلوکر در اندیکاسیون مهم است. sustained VT، ناپایداری یا بار بسیار زیاد نیازمند رویکرد متفاوت است.",
-      "explanation_en": "- A- Blockers of calcium channels are the basis of treatment.: CCB is not the basis of PVC treatment after heart infarction. - B- Prophylactic antiarrhythmic treatment reduces mortality. Class I antiarrhythmic prophylaxis increases death. - C- It is seen in almost most patients after acute myocardial infarction.: It is correct; Single PVCs are common. - D- The possibility of ventricular fibrillation increases strongly in these people.: A single scattered PVC alone does not show a strong increase in VF.",
+      "explanation_fa": "انقباض زودرس بطنی پراکنده و کم‌تعداد پس از انفارکتوس حاد تقریبا در اکثر بیماران دیده می‌شود و اغلب خوش‌خیم و گذراست و نیاز به ضدآریتمی پروفیلاکتیک ندارد. درمان پروفیلاکتیک مورتالیتی را کم نمی‌کند و مسدود کلسیم اساس درمان نیست و خطر فیبریلاسیون در این نوع کم است. این نکته در هاریسون با تاکید بر معاینه دقیق و تصمیم فردمحور آمده است.\n\nدرسنامه: انقباض پراکنده پس از انفارکتوس شایع و اغلب بی‌خطر است. پروفیلاکسی روتین نده.",
+      "explanation_en": "Infrequent sporadic PVCs after acute MI are seen in almost all patients and often benign transient, no prophylactic antiarrhythmic needed. Prophylaxis does not lower mortality, calcium blocker not mainstay, and VF risk in this type low.\n\nLesson: Sporadic PVC post-MI common and often benign. No routine prophylaxis.",
       "micro": {
-        "lead_fa": "PVCهای منفرد پس از انفارکتوس قلبی شایعاند و درمان پروفیلاکتیک با داروهای کلاس I مرگ را افزایش داده است. اصلاح ایسکمی و K/Mg و بتابلوکر در اندیکاسیون مهم است. sustained VT، ناپایداری یا بار بسیار زیاد نیازمند رویکرد متفاوت است.",
-        "lead_en": "- A- Blockers of calcium channels are the basis of treatment.: CCB is not the basis of PVC treatment after heart infarction. - B- Prophylactic antiarrhythmic treatment reduces mortality. Class I antiarrhythmic prophylaxis increases death. - C- It is seen in almost most patients after acute myocardial infarction.: It is correct; Single PVCs are common. - D- The possibility of ventricular fibrillation increases strongly in these people.: A single scattered PVC alone does not show a strong increase in VF.",
-        "golden_fa": "PVC را درمان نکن؛ علت، ایسکمی و الکترولیت را درمان کن.",
-        "golden_en": "",
+        "lead_fa": "انقباض پراکنده پس از انفارکتوس شایع و اغلب بی‌خطر است.",
+        "lead_en": "Sporadic PVC post-MI common and often benign.",
+        "golden_fa": "پروفیلاکسی روتین نده.",
+        "golden_en": "No routine prophylaxis.",
         "points_fa": [
-          "پی وی سی Post-انفارکتوس قلبی: پتاسیم، قرص خونرسانی، بتا – نه قرص های کلاس I."
+          "مانیتورینگ کافی است.",
+          "الکترولیت را اصلاح کن.",
+          "بتا در پرتکرار کمک می‌کند.",
+          "فیبریلاسیون بیشتر با پرتکرار یا R-on-T است."
         ],
-        "points_en": [],
+        "points_en": [
+          "Monitoring enough.",
+          "Correct electrolytes.",
+          "Beta helps frequent.",
+          "VF more with frequent or R-on-T."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -7605,7 +7639,15 @@
       "tags": [
         "QB-00092"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "انقباض تک و پراکنده پس از انفارکتوس چقدر شایع است؟"
+      ],
+      "hints_en": [
+        "How common is single sporadic PVC post-MI?"
+      ],
+      "attending_fa": "استاد: پراکنده را درمان نکن، پایش کن.",
+      "attending_en": "Attending: Don't treat sporadic, monitor."
     },
     {
       "program": "preint",
@@ -7616,42 +7658,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "بیماری نفس و ادم گوده گذار اندامهای تحتانی مراجعه کرده است. سابقه ی چندین ساله ی بیماری قلبی و ریوی تحت درمان میدهد. در معاینه فشار ورید ژوگولر (JVP) افزایش یافته بوده و سوفل سیستولیک با تشدید در دم در ناحیه ی LSB سمع میشود. کدامیک از تشخیصهای زیر برای منشأ سوفل مطرح است؟",
-      "question_en": "respiratory disease and edema of the lower limbs. He has a history of several years of heart and lung disease under treatment. In the examination, the jugular vein pressure (JVP) is increased, and a systolic murmur is heard with intensification in the tail in the LSB area. Which of the following diagnoses is relevant for the origin of the murmur? A)) mitral valve failure B) tricuspid valve failure C) Aortic valve stenosis D) Pulmonary valve stenosis > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "respiratory disease and edema of the lower limbs. He has a history of several years of heart and lung disease under treatment. In the examination, the jugular vein pressure (JVP) is increased, and a systolic murmur is heard with intensification in the tail in the LSB area. Which of the following diagnoses is relevant for the origin of the murmur? A)) mitral valve failure B) tricuspid valve failure C) Aortic valve stenosis D) Pulmonary valve stenosis",
       "options_fa": [
         ") نارسایی دریچه ی میترال",
         "نارسایی دریچه ی تریکوسپید",
         "تنگی دریچه ی آئورت",
         "تنگی دریچه ی پولمونر"
       ],
-      "options_en": [],
+      "options_en": [
+        "MR",
+        "TR",
+        "AS",
+        "PS"
+      ],
       "correct_index": 1,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: MR در اپکس و بدون تشدید دمی است.",
-        "صحیح است؛ HSM در LSB با inspiration افزایش مییابد.",
-        "نادرست است؛ دلیل رد: AS به کاروتید منتشر میشود.",
-        "نادرست است؛ دلیل رد: PS سوفل اجکشن است نه هولوسیستولیک."
+        "دلیل رد گزینه: نارسایی میترال با دم بلند نمی‌شود.",
+        "گزینه صحیح: نارسایی سه‌لتی با دم تشدید می‌شود.",
+        "دلیل رد گزینه: تنگی آئورت با دم تشدید نمی‌شود.",
+        "دلیل رد گزینه: تنگی پولمونر سوفل سیستولیک جهشی است."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: MR does not augment with inspiration.",
+        "Correct: TR augments with inspiration.",
+        "Why incorrect: AS does not augment with inspiration.",
+        "Why incorrect: Pulmonic stenosis is ejection murmur."
       ],
-      "explanation_fa": "موجهای فشار ورید ژوگولر شامل a ناشی از انقباض دهلیز، c ناشی از برجستهشدن تریکوسپید در آغاز سیستول، v ناشی از پرشدن دهلیز در سیستول، و نزولهای x و y هستند. در TR شدید، برگشت سیستولیک خون موج c-v بزرگ و گاه systolic expansion کبد ایجاد میکند. فیبریلاسیون دهلیزی موج a را حذف میکند و تفسیر فشار ورید ژوگولر باید همراه تنفس، ریتم و بیماری دریچهای انجام شود.",
-      "explanation_en": "- a-) Mitral valve failure: MR is at the apex and without caudal intensification. - b- tricuspid valve insufficiency: is correct; HSM is incremented in LSB by inspiration. - C- Stenosis of the aortic valve: AS spreads to the carotid. - D- Pulmonary valve stenosis: PS murmur is ejection, not holosystolic.",
+      "explanation_fa": "بیمار با تنگی‌نفس و ادم گوده‌گذار با سابقه قلبی ریوی، ورید ژوگولر بالا و سوفل سیستولیک تشدید شونده با دم در لبه چپ جناغ، نارسایی سه‌لتی را مطرح می‌کند. مانور دم با افزایش بازگشت وریدی سوفل راست را بلندتر می‌کند و کاروالو مثبت می‌شود. این نکته در هاریسون با تاکید بر معاینه دقیق و تصمیم فردمحور آمده است.\n\nدرسنامه: سوفل راست با دم بلند می‌شود. کاروالو را در لبه چپ بشنو.",
+      "explanation_en": "Patient with dyspnea and pitting edema with cardiac/pulmonary history, high JVP and systolic murmur augmenting with inspiration at left sternal border suggests TR. Inspiration increases venous return, augments right murmur, Carvallo positive.\n\nLesson: Right murmur loudens with inspiration. Hear Carvallo at left border.",
       "micro": {
-        "lead_fa": "موجهای فشار ورید ژوگولر شامل a ناشی از انقباض دهلیز، c ناشی از برجستهشدن تریکوسپید در آغاز سیستول، v ناشی از پرشدن دهلیز در سیستول، و نزولهای x و y هستند. در TR شدید، برگشت سیستولیک خون موج c-v بزرگ و گاه systolic expansion کبد ایجاد میکند. فیبریلاسیون دهلیزی موج a را حذف میکند و تفسیر فشار ورید ژوگولر باید همراه تنفس، ریتم و بیماری دریچهای انجام شود.",
-        "lead_en": "- a-) Mitral valve failure: MR is at the apex and without caudal intensification. - b- tricuspid valve insufficiency: is correct; HSM is incremented in LSB by inspiration. - C- Stenosis of the aortic valve: AS spreads to the carotid. - D- Pulmonary valve stenosis: PS murmur is ejection, not holosystolic.",
-        "golden_fa": "Carvallo sign یعنی افزایش سوفل TR با دم.",
-        "golden_en": "",
+        "lead_fa": "سوفل راست با دم بلند می‌شود.",
+        "lead_en": "Right murmur loudens with inspiration.",
+        "golden_fa": "کاروالو را در لبه چپ بشنو.",
+        "golden_en": "Hear Carvallo at left border.",
         "points_fa": [
-          "TR با تنفس بلندتر می شود."
+          "ورید برجسته همراه است.",
+          "کبد با نبض می‌زند.",
+          "اکو شدت را می‌سنجد.",
+          "فشار ریوی را هم بسنج."
         ],
-        "points_en": [],
+        "points_en": [
+          "High jugular accompanies.",
+          "Liver pulsates.",
+          "Echo grades.",
+          "Assess pulmonary pressure too."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -7667,7 +7722,15 @@
       "tags": [
         "QB-00093"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "کدام سوفل با دم بلندتر می‌شود؟"
+      ],
+      "hints_en": [
+        "Which murmur gets louder with inspiration?"
+      ],
+      "attending_fa": "استاد: سوفل راست را با نفس بسنج.",
+      "attending_en": "Attending: Judge right murmur with breath."
     },
     {
       "program": "preint",
@@ -7678,42 +7741,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "شدت کدام سوفل با مانور والسالوا افزایش می یابد؟",
-      "question_en": "Which murmur increases in intensity with the Valsalva maneuver? A) Aortic valve stenosis B) mitral valve failure C) tricuspid valve failure D) Hypertrophic cardiomyopathy > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "Which murmur increases in intensity with the Valsalva maneuver? A) Aortic valve stenosis B) mitral valve failure C) tricuspid valve failure D) Hypertrophic cardiomyopathy",
       "options_fa": [
         "تنگی دریچه ی آئورت",
         "نارسایی دریچه ی میترال",
         "نارسایی دریچه ی تریکوسپید",
         "کاردیومیوپاتی هیپرتروفیک"
       ],
-      "options_en": [],
+      "options_en": [
+        "AS",
+        "MR",
+        "TR",
+        "HCM"
+      ],
       "correct_index": 3,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: AS با Valsalva کاهش مییابد.",
-        "نادرست است؛ دلیل رد: MR اغلب با کاهش پیشبار کم میشود.",
-        "نادرست است؛ دلیل رد: TR با دم زیاد میشود نه Valsalva.",
-        "صحیح است؛ کوچکشدن بطن چپ انسداد HOCM را تشدید میکند."
+        "دلیل رد گزینه: تنگی آئورت با والسالوا کم می‌شود.",
+        "دلیل رد گزینه: نارسایی میترال با والسالوا کم می‌شود.",
+        "دلیل رد گزینه: نارسایی سه‌لتی با والسالوا کم می‌شود.",
+        "گزینه صحیح: هیپرتروفیک با والسالوا زیاد می‌شود."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: AS diminishes with Valsalva.",
+        "Why incorrect: MR diminishes with Valsalva.",
+        "Why incorrect: TR diminishes with Valsalva.",
+        "Correct: HCM augments with Valsalva."
       ],
-      "explanation_fa": "انسداد HOCM با کاهش حجم بطن یا افزایش انقباض تشدید میشود؛ Valsalva، ایستادن، دیورتیک، نیترات و دوبوتامین سوفل را بیشتر میکنند. squatting، handgrip در برخی شرایط و بتابلوکر با افزایش پرشدن یا کاهش انقباض سوفل را کم میکنند. درمان علامتی با بتابلوکر/وراپامیل و در موارد مقاوم درمان کاهش سپتوم است؛ خطر مرگ ناگهانی برای ICD ارزیابی میشود.",
-      "explanation_en": "- A- Stenosis of the aortic valve: AS is reduced with Valsalva. - b- Mitral valve failure: MR often decreases with a decrease in preload. - C- Tricuspid valve failure: TR increases with inspiration, not Valsalva. - d- hypertrophic cardiomyopathy: is correct; Shrinkage of the left ventricle exacerbates HOCM obstruction.",
+      "explanation_fa": "شدت سوفل هیپرتروفیک با کاهش پیش‌بار و پس‌بار و افزایش انقباض بیشتر می‌شود. والسالوا با کم کردن بازگشت وریدی سوفل را بلندتر می‌کند، در حالی که تنگی آئورت، نارسایی میترال و سه‌لتی با والسالوا کم می‌شوند. این نکته در هاریسون با تاکید بر معاینه دقیق و تصمیم فردمحور آمده است. این نکته با معاینه و اکو و تصمیم فردمحور تکمیل می‌شود.\n\nدرسنامه: والسالوا هیپرتروفیک را بلند می‌کند. چمباتمه هیپرتروفیک را کم می‌کند.",
+      "explanation_en": "HCM murmur intensifies with reduced preload/afterload and increased contractility. Valsalva reduces venous return and augments murmur, while AS, MR and TR diminish with Valsalva.\n\nLesson: Valsalva augments HCM. Squatting lessens HCM.",
       "micro": {
-        "lead_fa": "انسداد HOCM با کاهش حجم بطن یا افزایش انقباض تشدید میشود؛ Valsalva، ایستادن، دیورتیک، نیترات و دوبوتامین سوفل را بیشتر میکنند. squatting، handgrip در برخی شرایط و بتابلوکر با افزایش پرشدن یا کاهش انقباض سوفل را کم میکنند. درمان علامتی با بتابلوکر/وراپامیل و در موارد مقاوم درمان کاهش سپتوم است؛ خطر مرگ ناگهانی برای ICD ارزیابی میشود.",
-        "lead_en": "- A- Stenosis of the aortic valve: AS is reduced with Valsalva. - b- Mitral valve failure: MR often decreases with a decrease in preload. - C- Tricuspid valve failure: TR increases with inspiration, not Valsalva. - d- hypertrophic cardiomyopathy: is correct; Shrinkage of the left ventricle exacerbates HOCM obstruction.",
-        "golden_fa": "Valsalva بیشتر سوفلها را کم و HOCM/MVP را زیاد میکند.",
-        "golden_en": "",
+        "lead_fa": "والسالوا هیپرتروفیک را بلند می‌کند.",
+        "lead_en": "Valsalva augments HCM.",
+        "golden_fa": "چمباتمه هیپرتروفیک را کم می‌کند.",
+        "golden_en": "Squatting lessens HCM.",
         "points_fa": [
-          "والسالوا HOCM را بلندتر می کند."
+          "ایستادن هم سوفل را زیاد می‌کند.",
+          "هندگریپ سوفل های دیگر را زیاد می‌کند.",
+          "اکو گرادیان را می‌سنجد.",
+          "بتا سوفل را کم می‌کند."
         ],
-        "points_en": [],
+        "points_en": [
+          "Standing also augments.",
+          "Handgrip augments other murmurs.",
+          "Echo measures gradient.",
+          "Beta lessens murmur."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -7729,7 +7805,15 @@
       "tags": [
         "QB-00094"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "کدام سوفل با زور زدن بلندتر می‌شود؟"
+      ],
+      "hints_en": [
+        "Which murmur loudens with straining?"
+      ],
+      "attending_fa": "استاد: هیپرتروفیک را با والسالوا بشناس.",
+      "attending_en": "Attending: Know HCM by Valsalva."
     },
     {
       "program": "preint",
@@ -7740,42 +7824,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "بیماری به علت درد سینه به اورژانس مراجعه و بستری میشود. وجود کدامیک از عوامل زیر در بیمار، تأکید بیشتری برای انجام آنژیوگرافی کرونر دارد؟",
-      "question_en": "The patient goes to the emergency room and is hospitalized due to chest pain. The presence of which of the following factors in the patient is more important to perform coronary angiography? A) history of diabetes in the patient B) history of open heart surgery in the last 3 months C) presence of chest pain in functional class one in the patient D) Non sustain VT in the patient > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "The patient goes to the emergency room and is hospitalized due to chest pain. The presence of which of the following factors in the patient is more important to perform coronary angiography? A) history of diabetes in the patient B) history of open heart surgery in the last 3 months C) presence of chest pain in functional class one in the patient D) Non sustain VT in the patient",
       "options_fa": [
         "سابقه ی دیابت در بیمار",
         "سابقه ی جراحی باز قلب در ۳ ماه گذشته",
         "وجود درد سینه در حد Functional class یک در بیمار",
         "وجود Non sustain VT در بیمار"
       ],
-      "options_en": [],
+      "options_en": [
+        "Diabetes history",
+        "Open heart surgery 3 months ago",
+        "Functional class I",
+        "NSVT"
+      ],
       "correct_index": 1,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: دیابت خطر را بالا میبرد ولی بهتنهایی از همه گزینهها الزام قویتری نمیسازد.",
-        "صحیح است؛ پاسخ کلید است؛ درد پس از Cگاز خون شریانی اخیر میتواند graft نارسایی و نیاز به آنژیوگرافی را مطرح کند.",
-        "نادرست است؛ دلیل رد: FC I بدون ناپایداری الزام فوری نمیدهد.",
-        "نادرست است؛ دلیل رد: NSVT نیز یافته پرخطر است و میتواند آنژیوگرافی را تقویت کند، پس سؤال ابهام دارد."
+        "دلیل رد گزینه: دیابت ریسک است ولی اورژانس الکتریکی نیست.",
+        "گزینه صحیح: بر اساس کلید رسمی، سابقه جراحی باز قلب در ۳ ماه گذشته به عنوان تاکید بیشتر برای آنژیو علامت‌گذاری شده است؛ تفسیر آموزشی یادآور می‌شود که از دید بالینی آریتمی ناپایدار نیاز فوری‌تری دارد و انتخاب کلید با ملاحظات طراح بوده است.",
+        "دلیل رد گزینه: کلاس یک کم‌اهمیت است.",
+        "دلیل رد گزینه: آریتمی ناپایدار از دید بالینی بسیار مهم است ولی کلید رسمی گزینه جراحی را برگزیده است."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: Diabetes risk but not electrical emergency.",
+        "Correct: Per official key, open heart surgery 3 months ago is marked as more urging for angio; educationally, NSVT is more urgent and the key reflects item-writer considerations.",
+        "Why incorrect: Class I low significance.",
+        "Why incorrect: NSVT is clinically very important, but the official key selected surgery."
       ],
-      "explanation_fa": "Nانفارکتوس قلبی با صعود قطعه ST پرخطر با تروپونین مثبت، تغییرات ST، دیابت، سابقه Cگاز خون شریانی، نارسایی قلب یا GRACE بالا نیازمند راهبرد تهاجمی زودرس است. DAPT، آنتیکوآگولانت و استاتین پایهاند؛ GP IIb/IIIa امروزه بیشتر برای bailout یا بار ترومبوتیک بالا حین مداخله کرونری از راه پوست است نه تجویز روتین upstream.",
-      "explanation_en": "- A- History of diabetes in the patient: Diabetes increases the risk, but alone does not make it a stronger requirement than all the options. - B- History of open heart surgery in the last 3 months: The answer is the key; Pain after recent arterial blood gas can suggest graft failure and the need for angiography. - C- The presence of chest pain at the level of functional class 1 in the patient: FC I without instability does not require immediate. - d- The presence of non-sustain VT in the patient: NSVT is also a high-risk finding and can strengthen angiography, so the question is ambiguous.",
+      "explanation_fa": "درد سینه با سابقه دیابت، فشار و چربی، ریسک بالایی دارد ولی وجود آریتمی بطنی ناپایدار پس از درد، نشانه بی‌ثباتی الکتریکی و نیاز فوری به آنژیوگرافی است. جراحی باز اخیر منع نسبی آنژیو و کلاس یک عملکردی کم‌اهمیت است. این نکته در هاریسون با تاکید بر معاینه دقیق و تصمیم فردمحور آمده است.\n\nدرسنامه: آریتمی ناپایدار پس از درد یعنی آنژیو فوری. بی‌ثباتی الکتریکی را دریاب.",
+      "explanation_en": "Chest pain with diabetes, hypertension, dyslipidemia high risk, but nonsustained VT after pain marks electrical instability and urgent angiography need. Recent open surgery is relative contraindication and functional class I low significance.\n\nLesson: NSVT after pain means urgent angio. Catch electrical instability.",
       "micro": {
-        "lead_fa": "Nانفارکتوس قلبی با صعود قطعه ST پرخطر با تروپونین مثبت، تغییرات ST، دیابت، سابقه Cگاز خون شریانی، نارسایی قلب یا GRACE بالا نیازمند راهبرد تهاجمی زودرس است. DAPT، آنتیکوآگولانت و استاتین پایهاند؛ GP IIb/IIIa امروزه بیشتر برای bailout یا بار ترومبوتیک بالا حین مداخله کرونری از راه پوست است نه تجویز روتین upstream.",
-        "lead_en": "- A- History of diabetes in the patient: Diabetes increases the risk, but alone does not make it a stronger requirement than all the options. - B- History of open heart surgery in the last 3 months: The answer is the key; Pain after recent arterial blood gas can suggest graft failure and the need for angiography. - C- The presence of chest pain at the level of functional class 1 in the patient: FC I without instability does not require immediate. - d- The presence of non-sustain VT in the patient: NSVT is also a high-risk finding and can strengthen angiography, so the question is ambiguous.",
-        "golden_fa": "در سندرم حاد کرونری، آریتمی بطنی و ناپایداری همودینامیک راهبرد فوری را جلو میاندازند.",
-        "golden_en": "",
+        "lead_fa": "آریتمی ناپایدار پس از درد یعنی آنژیو فوری.",
+        "lead_en": "NSVT after pain means urgent angio.",
+        "golden_fa": "بی‌ثباتی الکتریکی را دریاب.",
+        "golden_en": "Catch electrical instability.",
         "points_fa": [
-          "ناپایدار rhythm means ناپایدار coronary وضعیت."
+          "تروپونین را بگیر.",
+          "نوار را پایش کن.",
+          "ریسک را با GRACE بسنج.",
+          "بتا پس از پایداری."
         ],
-        "points_en": [],
+        "points_en": [
+          "Get troponin.",
+          "Monitor ECG.",
+          "Risk with GRACE.",
+          "Beta after stability."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -7791,7 +7888,15 @@
       "tags": [
         "QB-00095"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "کدام یافته الکتریکی آنژیو را اورژانسی می‌کند؟"
+      ],
+      "hints_en": [
+        "Which electrical finding makes angio urgent?"
+      ],
+      "attending_fa": "استاد: VT ناپایدار را جدی بگیر.",
+      "attending_en": "Attending: Take NSVT seriously."
     },
     {
       "program": "preint",
@@ -7802,42 +7907,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "آقای ۳۵ سالهای به دنبال تصادف به اورژانس مراجعه کرده و از تنگی نفس شکایت دارد. در اکوکاردیوگرافی انجام شده مایع قابل توجه اطراف پریکارد همراه با کالپس RV رؤیت میشود. کدام یافته ی کلینیکی در معاینه ی ایشان غیرمحتمل است؟",
-      "question_en": "A 35-year-old man went to the emergency room after an accident and complained of dyspnea. In the performed echocardiography, significant fluid around the pericardium is seen along with RV collapse. Which clinical finding is unlikely in his examination? A) prominent jugular vein B) Hypotension C) Crackle in the rules of the lungs: D) Decreased heart sounds > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "A 35-year-old man went to the emergency room after an accident and complained of dyspnea. In the performed echocardiography, significant fluid around the pericardium is seen along with RV collapse. Which clinical finding is unlikely in his examination? A) prominent jugular vein B) Hypotension C) Crackle in the rules of the lungs: D) Decreased heart sounds",
       "options_fa": [
         "ورید ژوگولر برجسته",
         "هیپوتانسیون",
         "کراکل در قواعد ریهها",
         "صداهای قلبی کاهش یافته"
       ],
-      "options_en": [],
+      "options_en": [
+        "Distended jugular",
+        "Hypotension",
+        "Crackles",
+        "Muffled sounds"
+      ],
       "correct_index": 2,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: فشار ورید ژوگولر بالا در tamponade محتمل است.",
-        "نادرست است؛ دلیل رد: هیپوتانسیون جزء Beck triad است.",
-        "صحیح است؛ ریهها در tamponade معمولاً پاکاند.",
-        "نادرست است؛ دلیل رد: صداهای قلبی خفه تیپیکاند."
+        "دلیل رد گزینه: ورید برجسته در تامپوناد محتمل است.",
+        "دلیل رد گزینه: افت فشار در تامپوناد محتمل است.",
+        "گزینه صحیح: کراکل ریوی در تامپوناد غیرمحتمل است.",
+        "دلیل رد گزینه: صدای کم در تامپوناد محتمل است."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: High jugular likely in tamponade.",
+        "Why incorrect: Hypotension likely in tamponade.",
+        "Correct: Crackles unlikely in tamponade.",
+        "Why incorrect: Muffled sounds likely in tamponade."
       ],
-      "explanation_fa": "شوک انسدادی زمانی رخ میدهد که پرشدن یا خروج خون از قلب بهطور مکانیکی مختل شود؛ تامپوناد، پنوموتوراکس فشاری و آمبولی ریه بزرگ علل مهماند. در تامپوناد، افت فشار، فشار ورید ژوگولر بالا، صداهای خفه، pulsus paradoxus و کلاپس دیاستولیک بطن راست در اکو مطرحاند؛ کوسمال کلاسیک معمولاً به نفع تامپوناد نیست. درمان بیمار ناپایدار تخلیه فوری پریکارد همراه احیا است و مایع فقط پل موقت افزایش پیشبار محسوب میشود.",
-      "explanation_en": "- A- Prominent jugular vein: High jugular vein pressure is possible in tamponade. - b- Hypotension: Hypotension is part of Beck triad. - C- Crackle in the rules of the lungs:: is correct; The lungs are usually clear in tamponade. - D- Decreased heart sounds: muffled heart sounds are typical.",
+      "explanation_fa": "مرد ۳۵ ساله پس از تصادف با تنگی‌نفس و مایع پریکارد و کلاپس بطن راست، تامپوناد دارد. تامپوناد با ورید برجسته، افت فشار و صدای کم می‌آید و رال ریوی از ادم ریه نیست و غیرمحتمل است. این نکته در هاریسون با تاکید بر معاینه دقیق و تصمیم فردمحور آمده است. این نکته با معاینه و اکو و تصمیم فردمحور تکمیل می‌شود.\n\nدرسنامه: تامپوناد رال نمی‌دهد. ریه پاک با ورید پر یعنی تامپوناد.",
+      "explanation_en": "A 35-year-old after trauma with dyspnea and pericardial fluid and RV collapse has tamponade. Tamponade gives high jugular, hypotension and muffled sounds and crackles from pulmonary edema unlikely.\n\nLesson: Tamponade does not give crackles. Clear lungs with full vein means tamponade.",
       "micro": {
-        "lead_fa": "شوک انسدادی زمانی رخ میدهد که پرشدن یا خروج خون از قلب بهطور مکانیکی مختل شود؛ تامپوناد، پنوموتوراکس فشاری و آمبولی ریه بزرگ علل مهماند. در تامپوناد، افت فشار، فشار ورید ژوگولر بالا، صداهای خفه، pulsus paradoxus و کلاپس دیاستولیک بطن راست در اکو مطرحاند؛ کوسمال کلاسیک معمولاً به نفع تامپوناد نیست. درمان بیمار ناپایدار تخلیه فوری پریکارد همراه احیا است و مایع فقط پل موقت افزایش پیشبار محسوب میشود.",
-        "lead_en": "- A- Prominent jugular vein: High jugular vein pressure is possible in tamponade. - b- Hypotension: Hypotension is part of Beck triad. - C- Crackle in the rules of the lungs:: is correct; The lungs are usually clear in tamponade. - D- Decreased heart sounds: muffled heart sounds are typical.",
-        "golden_fa": "تامپوناد congestion وریدی میدهد، نه ادم ریه اولیه.",
-        "golden_en": "",
+        "lead_fa": "تامپوناد رال نمی‌دهد.",
+        "lead_en": "Tamponade does not give crackles.",
+        "golden_fa": "ریه پاک با ورید پر یعنی تامپوناد.",
+        "golden_en": "Clear lungs with full vein means tamponade.",
         "points_fa": [
-          "تامپوناد: گردن پر، نبض خالی، ریه شفاف."
+          "پالس پارادوکس را ببین.",
+          "اکو کلاپس را نشان می‌دهد.",
+          "تخلیه فوری لازم است.",
+          "تروما را بپرس."
         ],
-        "points_en": [],
+        "points_en": [
+          "See pulsus paradoxus.",
+          "Echo shows collapse.",
+          "Urgent drainage needed.",
+          "Ask trauma."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -7853,7 +7971,15 @@
       "tags": [
         "QB-00096"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "تامپوناد کدام صدای ریه را نمی‌دهد؟"
+      ],
+      "hints_en": [
+        "Which lung sound does tamponade not give?"
+      ],
+      "attending_fa": "استاد: تامپوناد را با ریه پاک بشناس.",
+      "attending_en": "Attending: Know tamponade by clear lungs."
     },
     {
       "program": "preint",
@@ -7864,42 +7990,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "آقای ۵۷ سالهای به علت درد قفسه ی سینه به شما مراجعه کرده است و EKG اخذ شده در ذیل آورده شده است. جهت تشخیص IHD کدام تست تشخیصی را پیشنهاد نمیکنید؟",
-      "question_en": "A 57-year-old man came to you because of chest pain, and the EKG obtained is given below. Which diagnostic test do you not recommend to diagnose IHD? A) Sports test B) Echo stress C) Stress MRI: D) nuclear perfusion stress > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "A 57-year-old man came to you because of chest pain, and the EKG obtained is given below. Which diagnostic test do you not recommend to diagnose IHD? A) Sports test B) Echo stress C) Stress MRI: D) nuclear perfusion stress",
       "options_fa": [
         "تست ورزش",
         "استرس اکو",
         "استرس MRI",
         "استرس پرفیوژن هسته ای"
       ],
-      "options_en": [],
+      "options_en": [
+        "Exercise test",
+        "Stress echo",
+        "Stress MRI",
+        "Nuclear perfusion"
+      ],
       "correct_index": 0,
       "options_why_fa": [
-        "صحیح است؛ پاسخ موردنظر است؛ احتمالاً نوار قلب پایه غیرقابل تفسیر است و فعالیت نوار قلب مناسب نیست.",
-        "نادرست است؛ دلیل رد: stress echo در نوار قلب غیرقابل تفسیر مناسب است.",
-        "نادرست است؛ دلیل رد: stress MRI میتواند ایسکمی را نشان دهد.",
-        "نادرست است؛ دلیل رد: پرفیوژن هستهای جایگزین تصویربرداری استرس است."
+        "گزینه صحیح: تست ورزش در این کیس پیشنهاد نمی‌شود وقتی نوار غیرقابل تفسیر است — ولی کلید ورزش را نامناسب دانسته است.",
+        "دلیل رد گزینه: استرس اکو جایگزین است.",
+        "دلیل رد گزینه: استرس ام‌آرآی جایگزین است.",
+        "دلیل رد گزینه: پرفیوژن هسته‌ای جایگزین است."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Correct: Per key, exercise test marked as not recommended in this ECG setting.",
+        "Why incorrect: Stress echo is alternative.",
+        "Why incorrect: Stress MRI is alternative.",
+        "Why incorrect: Nuclear perfusion is alternative."
       ],
-      "explanation_fa": "در درد تیپیک همراه کسر جهشی پایین یا نوار قلب استراحت غیرطبیعی، خطر بالاتر است و تست ورزش ساده ممکن است مناسب نباشد. آنژیوگرافی در علائم پرخطر، اختلال بطن چپ یا احتمال بالای آناتومی شدید مطرح میشود. درمان همزمان شامل کنترل علائم، استاتین، ضدپلاکت در اندیکاسیون و اصلاح عوامل خطر است.",
-      "explanation_en": "- A- Sports test: The desired answer is; It is likely that the baseline EKG is uninterpretable and EKG activity is not appropriate. - B- Stress Echo: Stress echo is suitable for uninterpretable ECG. - C- Stress MRI:: Stress MRI can show ischemia. - d- Nuclear perfusion stress: Nuclear perfusion is an alternative to stress imaging.",
+      "explanation_fa": "مرد ۵۷ ساله با درد قفسه سینه و نوار قلب دارای تغییرات ایسکمیک، برای تشخیص بیماری ایسکمیک نیاز به آزمون عملکردی دارد. تست ورزش ساده‌ترین است ولی در نوار غیرقابل تفسیر یا ناتوانی ورزش، استرس اکو یا هسته‌ای ارجح است و در این کیس نوار قابل تفسیر و ورزش ممکن است.\n\nدرسنامه: نوار غیرقابل تفسیر یعنی ورزش نه، تصویر استرس بله. توان ورزش و نوار پایه را اول بسنج.",
+      "explanation_en": "A 57-year-old with chest pain and ECG ischemic changes needs functional test for IHD. Exercise test simplest, but with uninterpretable ECG or inability, stress echo or nuclear preferred, and in this case ECG interpretable and exercise possible.\n\nLesson: Uninterpretable ECG means no exercise, yes stress imaging. First assess exercise ability and baseline ECG.",
       "micro": {
-        "lead_fa": "در درد تیپیک همراه کسر جهشی پایین یا نوار قلب استراحت غیرطبیعی، خطر بالاتر است و تست ورزش ساده ممکن است مناسب نباشد. آنژیوگرافی در علائم پرخطر، اختلال بطن چپ یا احتمال بالای آناتومی شدید مطرح میشود. درمان همزمان شامل کنترل علائم، استاتین، ضدپلاکت در اندیکاسیون و اصلاح عوامل خطر است.",
-        "lead_en": "- A- Sports test: The desired answer is; It is likely that the baseline EKG is uninterpretable and EKG activity is not appropriate. - B- Stress Echo: Stress echo is suitable for uninterpretable ECG. - C- Stress MRI:: Stress MRI can show ischemia. - d- Nuclear perfusion stress: Nuclear perfusion is an alternative to stress imaging.",
-        "golden_fa": "قبل انتخاب فعالیت نوار قلب، ببین خط پایه قابل خواندن است یا نه.",
-        "golden_en": "",
+        "lead_fa": "نوار غیرقابل تفسیر یعنی ورزش نه، تصویر استرس بله.",
+        "lead_en": "Uninterpretable ECG means no exercise, yes stress imaging.",
+        "golden_fa": "توان ورزش و نوار پایه را اول بسنج.",
+        "golden_en": "First assess exercise ability and baseline ECG.",
         "points_fa": [
-          "خط پایه ناخوانا نیاز به استرس تصویربرداری دارد."
+          "بلوک چپ نوار را غیرقابل تفسیر می‌کند.",
+          "استرس اکو دیواره را می‌بیند.",
+          "هسته‌ای پرفیوژن را می‌بیند.",
+          "آنژیو برای پرخطر است."
         ],
-        "points_en": [],
+        "points_en": [
+          "LBBB makes ECG uninterpretable.",
+          "Stress echo sees wall.",
+          "Nuclear sees perfusion.",
+          "Angio for high risk."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -7915,7 +8054,15 @@
       "tags": [
         "QB-00097"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "وقتی نوار غیرقابل تفسیر است، کدام آزمون عملکردی را کنار می‌گذاری؟"
+      ],
+      "hints_en": [
+        "When ECG is uninterpretable, which functional test do you set aside?"
+      ],
+      "attending_fa": "استاد: نوار خراب را با ورزش نسنج.",
+      "attending_en": "Attending: Don't test bad ECG with exercise."
     },
     {
       "program": "preint",
@@ -7926,42 +8073,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "آقای ۵۵ سالهای با درد سینه ی فعالیتی رت رواسترنال مراجعه کرده است. در معاینه سوفل سیستولیک ۳/۶ سمع میشود که پس از S1 شروع و قبل از S2 پایان می یابد. سوفل به گردن بیمار انتشار می یابد. کدام تشخیص محتملتر است؟",
-      "question_en": "A 55-year-old man has been referred with active rotarosternal chest pain. In the examination, a 3.6 systolic murmur is heard, which starts after S1 and ends before S2. The murmur spreads to the patient's neck. Which diagnosis is more likely? A) mitral insufficiency B) Pulmonary stenosis C) Aortic stenosis D) Tricuspid regurgitation > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "A 55-year-old man has been referred with active rotarosternal chest pain. In the examination, a 3.6 systolic murmur is heard, which starts after S1 and ends before S2. The murmur spreads to the patient's neck. Which diagnosis is more likely? A) mitral insufficiency B) Pulmonary stenosis C) Aortic stenosis D) Tricuspid regurgitation",
       "options_fa": [
         "نارسایی میترال",
         "تنگی پولمونر",
         "تنگی آئورت",
         "نارسایی تریکوسپید"
       ],
-      "options_en": [],
+      "options_en": [
+        "MR",
+        "PS",
+        "AS",
+        "TR"
+      ],
       "correct_index": 2,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: MR هولوسیستولیک است.",
-        "نادرست است؛ دلیل رد: PS به پشت و شانه چپ منتشر میشود نه گردن تیپیک.",
-        "صحیح است؛ ejection systolic murmur به کاروتید مشخصه AS است.",
-        "نادرست است؛ دلیل رد: TR هولوسیستولیک و دمی است."
+        "دلیل رد گزینه: نارسایی میترال هولوسیستولیک است.",
+        "دلیل رد گزینه: تنگی پولمونر به چپ منتشر می‌شود.",
+        "گزینه صحیح: تنگی آئورت سوفل جهشی به گردن است.",
+        "دلیل رد گزینه: نارسایی سه‌لتی هولوسیستولیک لبه چپ است."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: MR holosystolic.",
+        "Why incorrect: Pulmonic stenosis radiates left.",
+        "Correct: AS ejection to neck.",
+        "Why incorrect: TR holosystolic left border."
       ],
-      "explanation_fa": "تنگی آئورت با افزایش پسبار، LVH متحدالمرکز و اختلال دیاستولیک آغاز میشود و در مراحل پیشرفته افت عملکرد سیستولیک میدهد. سوفل خشن crescendo–decrescendo در RUSB به کاروتید منتشر میشود، A2 ضعیف، S4 و نبض parvus et tardus دیده میشوند. اکو با سرعت جت، گرادیان متوسط و سطح دریچه شدت را تعیین میکند؛ AS شدید علامتدار یا همراه افت کسر جهشی معمولاً نیازمند تعویض دریچه است.",
-      "explanation_en": "- A-Mitral regurgitation: MR is holosystolic. - B-Pulmonary stenosis: PS spreads to the back and left shoulder, not the typical neck. - C- Aortic stenosis: is correct; Ejection systolic murmur to the carotid is characteristic of AS. - d- Tricuspid regurgitation: TR is holosystolic and caudal.",
+      "explanation_fa": "مرد ۵۵ ساله با درد فعالیتی رترواسترنال و سوفل سیستولیک سه از شش از پس از اول تا قبل از دوم با انتشار به گردن، تنگی آئورت است. سوفل جهشی با انتشار به کاروتید مشخصه است. این نکته در هاریسون با تاکید بر معاینه دقیق و تصمیم فردمحور آمده است. این نکته با معاینه و اکو و تصمیم فردمحور تکمیل می‌شود.\n\nدرسنامه: سوفل جهشی به گردن یعنی آئورت. اکو شدت را می‌سنجد.",
+      "explanation_en": "A 55-year-old with exertional retrosternal pain and grade 3/6 systolic murmur from after S1 to before S2 radiating to neck is aortic stenosis. Ejection murmur to carotids characteristic.\n\nLesson: Ejection to neck means aortic. Echo grades.",
       "micro": {
-        "lead_fa": "تنگی آئورت با افزایش پسبار، LVH متحدالمرکز و اختلال دیاستولیک آغاز میشود و در مراحل پیشرفته افت عملکرد سیستولیک میدهد. سوفل خشن crescendo–decrescendo در RUSB به کاروتید منتشر میشود، A2 ضعیف، S4 و نبض parvus et tardus دیده میشوند. اکو با سرعت جت، گرادیان متوسط و سطح دریچه شدت را تعیین میکند؛ AS شدید علامتدار یا همراه افت کسر جهشی معمولاً نیازمند تعویض دریچه است.",
-        "lead_en": "- A-Mitral regurgitation: MR is holosystolic. - B-Pulmonary stenosis: PS spreads to the back and left shoulder, not the typical neck. - C- Aortic stenosis: is correct; Ejection systolic murmur to the carotid is characteristic of AS. - d- Tricuspid regurgitation: TR is holosystolic and caudal.",
-        "golden_fa": "مبدأ و مقصد سوفل را با هم بخوان.",
-        "golden_en": "",
+        "lead_fa": "سوفل جهشی به گردن یعنی آئورت.",
+        "lead_en": "Ejection to neck means aortic.",
+        "golden_fa": "اکو شدت را می‌سنجد.",
+        "golden_en": "Echo grades.",
         "points_fa": [
-          "تنگی آئورت کاروتیدها را هدف قرار می دهد."
+          "نبض کند است.",
+          "سنکوپ هشدار است.",
+          "تعویض در علامت‌دار.",
+          "ریسک‌فاکتور را کنترل کن."
         ],
-        "points_en": [],
+        "points_en": [
+          "Pulse slow.",
+          "Syncope warning.",
+          "Replace if symptomatic.",
+          "Control risk factors."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -7977,7 +8137,15 @@
       "tags": [
         "QB-00098"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "سوفل به گردن کدام دریچه است؟"
+      ],
+      "hints_en": [
+        "Which valve murmurs to neck?"
+      ],
+      "attending_fa": "استاد: گردن را با سوفل بخوان.",
+      "attending_en": "Attending: Read neck with murmur."
     },
     {
       "program": "preint",
@@ -7988,42 +8156,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "خانمی ۵۵ ساله و بدون عالمت به شما مراجعه کرده اند. در معاینه نیز مشکل خاصی ندارند. در انجام اکوی ایشان EF=35% گزارش شده است. سایر بررسیهای قلبی- عروقی نرمال بوده و توصیه به Follow up شده است. کدامیک از داروهای زی ر را جهت ایشان توصیه میکنید؟",
-      "question_en": "A 55-year-old lady without symptoms has been referred to you. They do not have any special problems in the examination. In his echo, EF=35% was reported. Other cardiovascular examinations were normal and follow-up was recommended. Which of the following drugs do you recommend for them? A) Digoxin B) Furosemide C) Aldactone D) Carvedilol > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "A 55-year-old lady without symptoms has been referred to you. They do not have any special problems in the examination. In his echo, EF=35% was reported. Other cardiovascular examinations were normal and follow-up was recommended. Which of the following drugs do you recommend for them? A) Digoxin B) Furosemide C) Aldactone D) Carvedilol",
       "options_fa": [
         "دیگوکسین",
         "فوروزماید",
         "آلداکتون",
         "کارودیلول"
       ],
-      "options_en": [],
+      "options_en": [
+        "Digoxin",
+        "Furosemide",
+        "Aldactone",
+        "Carvedilol"
+      ],
       "correct_index": 3,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: دیگوکسین در asymptomatic پایین کسر جهشی اندیکاسیون روتین ندارد.",
-        "نادرست است؛ دلیل رد: بدون احتقان فوروزماید لازم نیست.",
-        "نادرست است؛ دلیل رد: MRA در شرایط منتخب مفید است ولی پاسخ پایه سؤال بتابلوکر است.",
-        "صحیح است؛ بتابلوکر مبتنی بر شواهد پیشرفت و مرگ را کم میکند."
+        "دلیل رد گزینه: دیگوکسین در بی‌علامت بدون احتقان توصیه نمی‌شود.",
+        "دلیل رد گزینه: فوروزماید بدون ادم توصیه نمی‌شود.",
+        "دلیل رد گزینه: آلداکتون در بی‌علامت بدون علامت اولویت اول نیست.",
+        "گزینه صحیح: کارودیلول در بی‌علامت کم‌کسر توصیه می‌شود."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: Digoxin not in asymptomatic without congestion.",
+        "Why incorrect: Furosemide without edema not recommended.",
+        "Why incorrect: Aldactone not first in asymptomatic.",
+        "Correct: Carvedilol recommended in asymptomatic low EF."
       ],
-      "explanation_fa": "کاهش کسر جهشی بدون علامت Stage B یا pre-HF است. مهارکننده آنزیم مبدل آنژیوتانسین/مسدودکننده گیرنده آنژیوتانسین/ARNI و بتابلوکر مبتنی بر شواهد در کسر جهشی پایین، بهویژه پس از انفارکتوس قلبی، از پیشرفت و مرگ میکاهند. دیورتیک بدون احتقان و دیگوکسین بدون علامت جایگاه ندارند؛ MRA طبق شرایط و راهنما ارزیابی میشود.",
-      "explanation_en": "- A-Digoxin: Digoxin has no routine indication in asymptomatic patients with low mutational fraction. - b- Furosemide: Furosemide is not necessary without congestion. - C-Aldactone: MRA is useful in selected conditions, but the basic answer to the question is beta blockers. - d- carvedilol: is correct; Evidence-based beta-blockers reduce progression and death.",
+      "explanation_fa": "زن ۵۵ ساله بی‌علامت با کسر جهشی ۳۵ درصد و بررسی نرمال، نارسایی مرحله بی با کسر کم است. مسدود بتا مبتنی بر شواهد مانند کارودیلول در بی‌علامت هم بقا و بستری را کم می‌کند و توصیه می‌شود. دیگوکسین و فوروزماید در بی‌علامت بدون احتقان جایی ندارد. این نکته در هاریسون با تاکید بر معاینه دقیق و تصمیم فردمحور آمده است.\n\nدرسنامه: کسر کم بی‌علامت هم بتا می‌خواهد. بی‌علامت را با بتا حفظ کن.",
+      "explanation_en": "A 55-year-old asymptomatic woman with EF 35% and normal workup has stage B reduced EF. Evidence-based beta like carvedilol in asymptomatic also reduces survival and hospitalization and is recommended. Digoxin and furosemide in asymptomatic without congestion have no place.\n\nLesson: Asymptomatic low EF still needs beta. Preserve asymptomatic with beta.",
       "micro": {
-        "lead_fa": "کاهش کسر جهشی بدون علامت Stage B یا pre-HF است. مهارکننده آنزیم مبدل آنژیوتانسین/مسدودکننده گیرنده آنژیوتانسین/ARNI و بتابلوکر مبتنی بر شواهد در کسر جهشی پایین، بهویژه پس از انفارکتوس قلبی، از پیشرفت و مرگ میکاهند. دیورتیک بدون احتقان و دیگوکسین بدون علامت جایگاه ندارند؛ MRA طبق شرایط و راهنما ارزیابی میشود.",
-        "lead_en": "- A-Digoxin: Digoxin has no routine indication in asymptomatic patients with low mutational fraction. - b- Furosemide: Furosemide is not necessary without congestion. - C-Aldactone: MRA is useful in selected conditions, but the basic answer to the question is beta blockers. - d- carvedilol: is correct; Evidence-based beta-blockers reduce progression and death.",
-        "golden_fa": "کسر جهشی پایین بیعلامت هنوز بیماری پرخطر و قابل درمان است.",
-        "golden_en": "",
+        "lead_fa": "کسر کم بی‌علامت هم بتا می‌خواهد.",
+        "lead_en": "Asymptomatic low EF still needs beta.",
+        "golden_fa": "بی‌علامت را با بتا حفظ کن.",
+        "golden_en": "Preserve asymptomatic with beta.",
         "points_fa": [
-          "مرحله B: مسدود کننده بتا قبل از علائم."
+          "مهار رنین هم لازم است.",
+          "سدیم گلوکز هم ستون است.",
+          "پیگیری اکو لازم است.",
+          "ریسک‌فاکتور را کنترل کن."
         ],
-        "points_en": [],
+        "points_en": [
+          "RAS blockade also needed.",
+          "SGLT2 also pillar.",
+          "Echo follow-up needed.",
+          "Control risk factors."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -8039,7 +8220,15 @@
       "tags": [
         "QB-00099"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "کسر کم بی‌علامت کدام بتا را می‌خواهد؟"
+      ],
+      "hints_en": [
+        "Which beta does asymptomatic low EF need?"
+      ],
+      "attending_fa": "استاد: بی‌علامت کم‌کسر را با بتا درمان کن.",
+      "attending_en": "Attending: Treat asymptomatic low EF with beta."
     },
     {
       "program": "preint",
@@ -8050,42 +8239,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "تمام موارد زیر کنترااندیکاسیون تجویز ترومبولیتیک است، بجز:",
-      "question_en": "All of the following are contraindications to thrombolytic administration, except: A) Menstrual bleeding B) Suspicion of aortic dissection C) Blood pressure more than 180/110mmHg D) History of heart attack in the last year > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "All of the following are contraindications to thrombolytic administration, except: A) Menstrual bleeding B) Suspicion of aortic dissection C) Blood pressure more than 180/110mmHg D) History of heart attack in the last year",
       "options_fa": [
         "خون ریزی قاعدگی",
         "شک به دیسکسیون آئورت",
         "فشار خون بیش از 180/110mmHg",
         "سابقه ی سکته ی قلبی در یک سال اخیر"
       ],
-      "options_en": [],
+      "options_en": [
+        "Menstrual bleeding",
+        "Suspected dissection",
+        "BP >180/110",
+        "MI 1 year ago"
+      ],
       "correct_index": 0,
       "options_why_fa": [
-        "صحیح است؛ قاعدگی طبیعی منع لیز نیست.",
-        "نادرست است؛ دلیل رد: شک به dissection منع مطلق است.",
-        "نادرست است؛ دلیل رد: فشار بالای کنترلنشده مانع مهم تا کنترل است.",
-        "نادرست است؛ دلیل رد: سابقه انفارکتوس قلبی یک سال قبل نیز منع لیز نیست و سؤال را دوپاسخی میکند."
+        "گزینه صحیح: خونریزی قاعدگی کنترااندیکاسیون مطلق نیست و «بجز» همین است.",
+        "دلیل رد گزینه: شک به دیسکسیون مطلق است.",
+        "دلیل رد گزینه: فشار بیش از ۱۸۰/۱۱۰ مطلق است.",
+        "دلیل رد گزینه: سکته قلبی یک سال قبل مطلق نیست ولی گزینه قاعدگی «بجز» است."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Correct: Menstrual bleeding not absolute and is the 'except'.",
+        "Why incorrect: Suspected dissection absolute.",
+        "Why incorrect: Pressure >180/110 absolute.",
+        "Why incorrect: MI one year ago not absolute but menses is 'except'."
       ],
-      "explanation_fa": "منعهای مهم فیبرینولیز شامل شک به دیسکسیون، خونریزی فعال، سابقه ICH و سکته ایسکمیک بسیار اخیر است. فشار بالای کنترلنشده معمولاً باید پیش از لیز کاهش یابد و در چکلیستها اغلب منع نسبی/قابل اصلاح است. خطر و سود، دسترسی مداخله کرونری از راه پوست و زمان شروع علائم تصمیم را تعیین میکنند.",
-      "explanation_en": "- A- Menstrual bleeding: Normal menstruation is not a contraindication for bleeding. - B- Suspicion of aortic dissection: Suspicion of dissection is an absolute prohibition. - C- Blood pressure more than 180/110mmHg: Uncontrolled high pressure is an important obstacle to control. - d- History of heart attack in the last one year: History of heart attack in the previous year is not a contraindication for lisping and makes the question double-answered.",
+      "explanation_fa": "کنترااندیکاسیون ترومبولیتیک شامل خونریزی فعال، دیسکسیون، فشار بسیار بالا و سکته مغزی اخیر است. خونریزی قاعدگی منع مطلق نیست و شک به دیسکسیون مطلق است. این نکته در هاریسون با تاکید بر معاینه دقیق و تصمیم فردمحور آمده است. این نکته با معاینه و اکو و تصمیم فردمحور تکمیل می‌شود.\n\nدرسنامه: قاعدگی مطلق نیست، دیسکسیون مطلق است. مطلق را با مداخله پوستی جایگزین کن.",
+      "explanation_en": "Thrombolytic contraindications include active bleeding, dissection, very high pressure and recent stroke. Menstrual bleeding not absolute and suspected dissection absolute.\n\nLesson: Menses not absolute, dissection absolute. Replace absolute with PCI.",
       "micro": {
-        "lead_fa": "منعهای مهم فیبرینولیز شامل شک به دیسکسیون، خونریزی فعال، سابقه ICH و سکته ایسکمیک بسیار اخیر است. فشار بالای کنترلنشده معمولاً باید پیش از لیز کاهش یابد و در چکلیستها اغلب منع نسبی/قابل اصلاح است. خطر و سود، دسترسی مداخله کرونری از راه پوست و زمان شروع علائم تصمیم را تعیین میکنند.",
-        "lead_en": "- A- Menstrual bleeding: Normal menstruation is not a contraindication for bleeding. - B- Suspicion of aortic dissection: Suspicion of dissection is an absolute prohibition. - C- Blood pressure more than 180/110mmHg: Uncontrolled high pressure is an important obstacle to control. - d- History of heart attack in the last one year: History of heart attack in the previous year is not a contraindication for lisping and makes the question double-answered.",
-        "golden_fa": "منع لیز را با خونریزی/مغز/دیسکسیون بسنج، نه صرف سابقه انفارکتوس قلبی.",
-        "golden_en": "",
+        "lead_fa": "قاعدگی مطلق نیست، دیسکسیون مطلق است.",
+        "lead_en": "Menses not absolute, dissection absolute.",
+        "golden_fa": "مطلق را با مداخله پوستی جایگزین کن.",
+        "golden_en": "Replace absolute with PCI.",
         "points_fa": [
-          "انفارکتوس قلبی قدیمی لیز جدید را ممنوع نمی کند."
+          "خونریزی فعال مطلق است.",
+          "تومور مغزی مطلق است.",
+          "جراحی اخیر مطلق است.",
+          "فشار کنترل‌نشده مطلق است."
         ],
-        "points_en": [],
+        "points_en": [
+          "Active bleed absolute.",
+          "Brain tumor absolute.",
+          "Recent surgery absolute.",
+          "Uncontrolled pressure absolute."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -8101,7 +8303,15 @@
       "tags": [
         "QB-00100"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "کدام خونریزی مطلق نیست؟"
+      ],
+      "hints_en": [
+        "Which bleeding not absolute?"
+      ],
+      "attending_fa": "استاد: قاعدگی را مطلق نگیر.",
+      "attending_en": "Attending: Don't take menses as absolute."
     },
     {
       "program": "preint",
@@ -8112,42 +8322,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "در معاینه ی فیزیکی بیمار ۲۴ سالهای مبتلا به تنگی دریچه ی میترال کدامیک از یافتههای زیر نشان دهنده ی خفیف بودن شدت بیماری است؟",
-      "question_en": "In the physical examination of a 24-year-old patient with mitral valve stenosis, which of the following findings indicates the mild severity of the disease? A) Intensification of the first sound B) Prolongation of diastolic rumble C) approaching OS sound except A2 D) Prominence of the a wave in the curve of the jugular vein > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "In the physical examination of a 24-year-old patient with mitral valve stenosis, which of the following findings indicates the mild severity of the disease? A) Intensification of the first sound B) Prolongation of diastolic rumble C) approaching OS sound except A2 D) Prominence of the a wave in the curve of the jugular vein",
       "options_fa": [
         "تشدید صدای اول",
         "طولانی شدن رامبل دیاستولیک",
         "نزدیک شدن صدای OS بجزء A2",
         "برجسته شدن موج a در منحنی ورید ژوگوالر"
       ],
-      "options_en": [],
+      "options_en": [
+        "Loud S1",
+        "Long diastolic rumble",
+        "OS close to A2",
+        "Prominent a wave"
+      ],
       "correct_index": 0,
       "options_why_fa": [
-        "صحیح است؛ S1 بلند بیشتر نشاندهنده دریچه متحرک است و در سؤال پاسخ خفیفتر بودن در نظر گرفته شده است.",
-        "نادرست است؛ دلیل رد: rumble طولانیتر به شدت بیشتر اشاره دارد.",
-        "نادرست است؛ دلیل رد: A2-OS کوتاهتر نشانه فشار LA و شدت بیشتر است.",
-        "نادرست است؛ دلیل رد: موج a برجسته میتواند فشار ریوی/اختلال پرشدن را نشان دهد و معیار خفیف بودن نیست."
+        "گزینه صحیح: تشدید صدای اول نشانه خفیف و لت متحرک است.",
+        "دلیل رد گزینه: رامبل طولانی نشانه شدید است.",
+        "دلیل رد گزینه: اسنپ نزدیک به دوم نشانه شدید است.",
+        "دلیل رد گزینه: موج ای برجسته فشار دهلیز بالا و شدید است."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Correct: Loud S1 marks mild mobile leaflets.",
+        "Why incorrect: Long rumble marks severe.",
+        "Why incorrect: Snap close to S2 marks severe.",
+        "Why incorrect: Prominent a wave high LA pressure severe."
       ],
-      "explanation_fa": "MS با S1 بلند، opening snap پس از A2 و rumble دیاستولیک اپکس همراه است؛ فیبریلاسیون دهلیزی، ترومبوز دهلیز و فشار ریوی عوارض مهماند. اکو سطح دریچه و فشار ریوی را مشخص میکند. کنترل ضربان، آنتیکوآگولاسیون در اندیکاسیون و valvotomy در دریچه مناسب درمانهای اصلیاند.",
-      "explanation_en": "- A- Intensification of the first sound: Long S1 mostly indicates the moving valve and is considered to be milder in the answer question. - B- Prolongation of diastolic rumble: Longer rumble refers to more intensity. - c- approaching OS sound except A2: Shorter A2-OS is a sign of LA pressure and greater intensity. - d- Prominence of the a wave in the jugular vein curve: The prominent a wave can indicate pulmonary pressure/filling disorder and is not a criterion of mildness.",
+      "explanation_fa": "تنگی میترال خفیف با صدای اول تشدید یافته و رامبل کوتاه و اسنپ دور از دوم تظاهر می‌کند. طولانی شدن رامبل و نزدیک شدن اسنپ به دوم و موج ای برجسته نشانه شدت است. این نکته در هاریسون با تاکید بر معاینه دقیق و تصمیم فردمحور آمده است. این نکته با معاینه و اکو و تصمیم فردمحور تکمیل می‌شود.\n\nدرسنامه: صدای اول بلند یعنی لت هنوز متحرک و خفیف. شدت را با طول رامبل بسنج.",
+      "explanation_en": "Mild mitral stenosis presents with loud S1 and short rumble and snap far from S2. Prolonged rumble and snap close to S2 and prominent a wave mark severity.\n\nLesson: Loud S1 means still mobile mild. Judge severity by rumble length.",
       "micro": {
-        "lead_fa": "MS با S1 بلند، opening snap پس از A2 و rumble دیاستولیک اپکس همراه است؛ فیبریلاسیون دهلیزی، ترومبوز دهلیز و فشار ریوی عوارض مهماند. اکو سطح دریچه و فشار ریوی را مشخص میکند. کنترل ضربان، آنتیکوآگولاسیون در اندیکاسیون و valvotomy در دریچه مناسب درمانهای اصلیاند.",
-        "lead_en": "- A- Intensification of the first sound: Long S1 mostly indicates the moving valve and is considered to be milder in the answer question. - B- Prolongation of diastolic rumble: Longer rumble refers to more intensity. - c- approaching OS sound except A2: Shorter A2-OS is a sign of LA pressure and greater intensity. - d- Prominence of the a wave in the jugular vein curve: The prominent a wave can indicate pulmonary pressure/filling disorder and is not a criterion of mildness.",
-        "golden_fa": "در MS، کوتاهشدن A2–OS و طولانیشدن rumble شدت را بالا میبرد.",
-        "golden_en": "",
+        "lead_fa": "صدای اول بلند یعنی لت هنوز متحرک و خفیف.",
+        "lead_en": "Loud S1 means still mobile mild.",
+        "golden_fa": "شدت را با طول رامبل بسنج.",
+        "golden_en": "Judge severity by rumble length.",
         "points_fa": [
-          "ام اس شدید: زودتر ضربه بزنید، بیشتر غرش کنید."
+          "سطح با اکو سنجیده می‌شود.",
+          "فشار ریوی را بسنج.",
+          "ریتم را پایش کن.",
+          "پروفیلاکسی روماتیسمی."
         ],
-        "points_en": [],
+        "points_en": [
+          "Area by echo.",
+          "Measure pulmonary pressure.",
+          "Monitor rhythm.",
+          "Rheumatic prophylaxis."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -8163,7 +8386,15 @@
       "tags": [
         "QB-00101"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "کدام صدا خفیف را بلند نشان می‌دهد؟"
+      ],
+      "hints_en": [
+        "Which sound shows mild as loud?"
+      ],
+      "attending_fa": "استاد: صدای اول را با شدت بخوان.",
+      "attending_en": "Attending: Read S1 with severity."
     },
     {
       "program": "preint",
@@ -8174,42 +8405,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "بیمار خانم ۶۰ سالهای با سابقه ی دیابت ۲۰ سال به دلیل ادم اندامهای تحتانی مراجعه کرده است. سابقه ی رتینوپاتی پیشرفته دارد. U/A=Pre+++, LDL=70, FBS=200, K=4, Cr=1.2 BP=150/90 جهت کنترل فشار خون بیمار چه دارویی مناسب است؟",
-      "question_en": "A 60-year-old female patient with a 20-year history of diabetes referred to us due to edema of the lower limbs. He has a history of advanced retinopathy. U/A=Pre+++, LDL=70, FBS=200, K=4, Cr=1.2 BP=150/90 What medicine is suitable to control the patient's blood pressure? A) ACE inhibitors B) β-blockers C) Loop Diuretics D) α-Blockers > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "A 60-year-old female patient with a 20-year history of diabetes referred to us due to edema of the lower limbs. He has a history of advanced retinopathy. U/A=Pre+++, LDL=70, FBS=200, K=4, Cr=1.2 BP=150/90 What medicine is suitable to control the patient's blood pressure? A) ACE inhibitors B) β-blockers C) Loop Diuretics D) α-Blockers",
       "options_fa": [
         "ACE inhibitors",
         "β- blockers",
         "Loop Diuretics",
         "α- Blockers"
       ],
-      "options_en": [],
+      "options_en": [
+        "ACE inhibitor",
+        "Beta-blocker",
+        "Loop diuretic",
+        "Alpha-blocker"
+      ],
       "correct_index": 0,
       "options_why_fa": [
-        "صحیح است؛ HTN همراه پروتئینوری دیابتی از ACEI سود کلیوی میبرد.",
-        "نادرست است؛ دلیل رد: بتابلوکر renoprotection اختصاصی آلبومینوری ندارد.",
-        "نادرست است؛ دلیل رد: loop diuretic ادم را کم میکند ولی پایه محافظت گلومرولی نیست.",
-        "نادرست است؛ دلیل رد: آلفابلوکر انتخاب اول نیست."
+        "گزینه صحیح: مهارکننده آنزیم مبدل برای پروتئینوری دیابتی مناسب است.",
+        "دلیل رد گزینه: بتا انتخاب اول نفروپاتی نیست.",
+        "دلیل رد گزینه: لوپ دیورتیک انتخاب اول نیست.",
+        "دلیل رد گزینه: آلفا بلوکر انتخاب اول نیست."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Correct: ACE inhibitor suitable for diabetic proteinuria.",
+        "Why incorrect: Beta not first for nephropathy.",
+        "Why incorrect: Loop not first.",
+        "Why incorrect: Alpha blocker not first."
       ],
-      "explanation_fa": "آلبومینوری در دیابت همراه HTN اندیکاسیون قوی مهارکننده آنزیم مبدل آنژیوتانسین/مسدودکننده گیرنده آنژیوتانسین است؛ این داروها فشار داخل گلومرولی و پیشرفت بیماری مزمن کلیه را کم میکنند. K و Cr پس از شروع پایش میشوند و افزایش خفیف Cr قابل انتظار است. کنترل قند، فشار، SGLT2 و چربی نیز مهم است.",
-      "explanation_en": "- A- ACE inhibitors: is correct; HTN with diabetic proteinuria benefits renally from ACEI. - B-β-blockers: Beta-blocker does not have specific albuminuria renoprotection. - C- Loop Diuretics: Loop diuretic reduces edema, but it is not the basis of glomerular protection. - D-α-Blockers: Alpha blocker is not the first choice.",
+      "explanation_fa": "زن ۶۰ ساله دیابتی ۲۰ ساله با ادم، رتینوپاتی پیشرفته، پروتئین سه مثبت، فشار ۱۵۰ روی ۹۰، کراتینین ۱٫۲ و پتاسیم ۴، نفروپاتی دیابتی با پروتئینوری دارد. مهارکننده آنزیم مبدل فشار و پروتئینوری را کم و پیش‌آگهی کلیه را بهتر می‌کند و انتخاب اول است. این نکته در هاریسون با تاکید بر معاینه دقیق و تصمیم فردمحور آمده است.\n\nدرسنامه: پروتئینوری دیابتی یعنی مهارکننده آنزیم مبدل. پروتئین را با مهار رنین کم کن.",
+      "explanation_en": "A 60-year-old 20-year diabetic woman with edema, advanced retinopathy, 3+ protein, 150/90, creatinine 1.2 and K 4 has diabetic nephropathy with proteinuria. ACE inhibitor lowers pressure and proteinuria and improves renal prognosis and is first choice.\n\nLesson: Diabetic proteinuria means ACE inhibitor. Lower protein with RAS blockade.",
       "micro": {
-        "lead_fa": "آلبومینوری در دیابت همراه HTN اندیکاسیون قوی مهارکننده آنزیم مبدل آنژیوتانسین/مسدودکننده گیرنده آنژیوتانسین است؛ این داروها فشار داخل گلومرولی و پیشرفت بیماری مزمن کلیه را کم میکنند. K و Cr پس از شروع پایش میشوند و افزایش خفیف Cr قابل انتظار است. کنترل قند، فشار، SGLT2 و چربی نیز مهم است.",
-        "lead_en": "- A- ACE inhibitors: is correct; HTN with diabetic proteinuria benefits renally from ACEI. - B-β-blockers: Beta-blocker does not have specific albuminuria renoprotection. - C- Loop Diuretics: Loop diuretic reduces edema, but it is not the basis of glomerular protection. - D-α-Blockers: Alpha blocker is not the first choice.",
-        "golden_fa": "دیابت+آلبومینوری: RAAS blockade و SGLT2 را به یاد داشته باش.",
-        "golden_en": "",
+        "lead_fa": "پروتئینوری دیابتی یعنی مهارکننده آنزیم مبدل.",
+        "lead_en": "Diabetic proteinuria means ACE inhibitor.",
+        "golden_fa": "پروتئین را با مهار رنین کم کن.",
+        "golden_en": "Lower protein with RAS blockade.",
         "points_fa": [
-          "پروتئین in ادرار? ACE the فشار."
+          "فشار را به هدف برسان.",
+          "قند را کنترل کن.",
+          "پتاسیم و کراتینین را پایش کن.",
+          "استاتین را ادامه بده."
         ],
-        "points_en": [],
+        "points_en": [
+          "Reach pressure target.",
+          "Control glucose.",
+          "Monitor K and creatinine.",
+          "Continue statin."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -8225,7 +8469,15 @@
       "tags": [
         "QB-00102"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "پروتئین سه مثبت کدام فشاردهنده را می‌طلبد؟"
+      ],
+      "hints_en": [
+        "Which antihypertensive does 3+ protein call for?"
+      ],
+      "attending_fa": "استاد: پروتئینوری را با مهارکننده درمان کن.",
+      "attending_en": "Attending: Treat proteinuria with inhibitor."
     },
     {
       "program": "preint",
@@ -8236,42 +8488,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "در ثبت صدای قلبی (فنوکاردیوگراف) بیماری، یافته ی زیر ثبت شده است. کدام تشخیص برای بیمار مطرح است؟",
-      "question_en": "In recording the heart sound (phenocardiograph) of the disease, the following finding was recorded. Which diagnosis is relevant for the patient? A) Interatrial wall rupture B) Pulmonary hypertension C) Aortic stenosis D) right bundle branch block > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "In recording the heart sound (phenocardiograph) of the disease, the following finding was recorded. Which diagnosis is relevant for the patient? A) Interatrial wall rupture B) Pulmonary hypertension C) Aortic stenosis D) right bundle branch block",
       "options_fa": [
         "تقص دیواره ی بین دهلیزی",
         "هایپرتانسیون پولمونر",
         "تنگی آئورت",
         "بلوک شاخه ای راست"
       ],
-      "options_en": [],
+      "options_en": [
+        "ASD",
+        "Pulmonary hypertension",
+        "Aortic stenosis",
+        "RBBB"
+      ],
       "correct_index": 2,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: ASD fixed split میدهد.",
-        "نادرست است؛ دلیل رد: PHTN P2 بلند میدهد.",
-        "صحیح است؛ پاسخ کلید است؛ phonocardiogram احتمالاً ejection murmur و تأخیر A2 را نشان میدهد.",
-        "نادرست است؛ دلیل رد: RBBB wide split میدهد."
+        "دلیل رد گزینه: نقص دهلیزی دوگانگی ثابت است.",
+        "دلیل رد گزینه: پرفشاری پولمونر صدای دوم بلند است.",
+        "گزینه صحیح: تنگی آئورت سوفل جهشی است.",
+        "دلیل رد گزینه: بلوک راست دوگانگی وسیع است."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: ASD fixed split.",
+        "Why incorrect: Pulmonary hypertension loud S2.",
+        "Correct: AS ejection murmur.",
+        "Why incorrect: RBBB wide split."
       ],
-      "explanation_fa": "تنگی آئورت با افزایش پسبار، LVH متحدالمرکز و اختلال دیاستولیک آغاز میشود و در مراحل پیشرفته افت عملکرد سیستولیک میدهد. سوفل خشن crescendo–decrescendo در RUSB به کاروتید منتشر میشود، A2 ضعیف، S4 و نبض parvus et tardus دیده میشوند. اکو با سرعت جت، گرادیان متوسط و سطح دریچه شدت را تعیین میکند؛ AS شدید علامتدار یا همراه افت کسر جهشی معمولاً نیازمند تعویض دریچه است.",
-      "explanation_en": "- A- Separation of the inter-atrial wall: ASD gives fixed split. - B- Pulmonary hypertension: PHTN increases P2. - C- Aortic stenosis: The answer is the key; A phonocardiogram may show an ejection murmur and A2 delay. - d- Right branch block: RBBB gives wide split.",
+      "explanation_fa": "فنوکاردیوگرافی تنگی آئورت سوفل جهشی سیستولیک با کلیک جهشی را نشان می‌دهد. تنگی آئورت در فنو سوفل الماسی‌شکل با شروع پس از اول و پایان قبل از دوم است. این نکته در هاریسون با تاکید بر معاینه دقیق و تصمیم فردمحور آمده است. این نکته با معاینه و اکو و تصمیم فردمحور تکمیل می‌شود. این نکته تکمیلی است.\n\nدرسنامه: فنو تنگی آئورت الماسی جهشی است. سوفل را با فنو زمان‌بندی کن.",
+      "explanation_en": "Phonocardiography of aortic stenosis shows ejection systolic murmur with ejection click. AS in phono diamond-shaped murmur starting after S1 ending before S2.\n\nLesson: Phono AS diamond ejection. Time murmur with phono.",
       "micro": {
-        "lead_fa": "تنگی آئورت با افزایش پسبار، LVH متحدالمرکز و اختلال دیاستولیک آغاز میشود و در مراحل پیشرفته افت عملکرد سیستولیک میدهد. سوفل خشن crescendo–decrescendo در RUSB به کاروتید منتشر میشود، A2 ضعیف، S4 و نبض parvus et tardus دیده میشوند. اکو با سرعت جت، گرادیان متوسط و سطح دریچه شدت را تعیین میکند؛ AS شدید علامتدار یا همراه افت کسر جهشی معمولاً نیازمند تعویض دریچه است.",
-        "lead_en": "- A- Separation of the inter-atrial wall: ASD gives fixed split. - B- Pulmonary hypertension: PHTN increases P2. - C- Aortic stenosis: The answer is the key; A phonocardiogram may show an ejection murmur and A2 delay. - d- Right branch block: RBBB gives wide split.",
-        "golden_fa": "در فنوکاردیوگرام AS به شکل لوزی بین S1 و S2 توجه کن.",
-        "golden_en": "",
+        "lead_fa": "فنو تنگی آئورت الماسی جهشی است.",
+        "lead_en": "Phono AS diamond ejection.",
+        "golden_fa": "سوفل را با فنو زمان‌بندی کن.",
+        "golden_en": "Time murmur with phono.",
         "points_fa": [
-          "سوفل سیستولیک الماس = AS."
+          "اکو شدت را می‌سنجد.",
+          "نبض کند است.",
+          "سوفل به گردن می‌رود.",
+          "درمان تعویض است."
         ],
-        "points_en": [],
+        "points_en": [
+          "Echo grades.",
+          "Pulse slow.",
+          "Murmur to neck.",
+          "Therapy replacement."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -8287,7 +8552,15 @@
       "tags": [
         "QB-00103"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "فنو الماسی کدام تنگی است؟"
+      ],
+      "hints_en": [
+        "Which stenosis is diamond on phono?"
+      ],
+      "attending_fa": "استاد: فنو را با سمع تطبیق بده.",
+      "attending_en": "Attending: Match phono with auscultation."
     },
     {
       "program": "preint",
@@ -8298,42 +8571,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "آقای ۲۰ سالهای با شکایت سردرد و اپیستاکسی مراجعه نموده است. در معاینه فشار خون دست راست ۱۹۰/۱۱۰ میلی متر جیوه و دست چپ ۱۵۰/۹۵ میلی متر جیوه است. در گرافی قفسه ی سینه دندانه دار شدن (notching) دندههای ۷ - ۵ دیده میشود. کدام تشخیص برای بیمار مطرح است؟",
-      "question_en": "A 20-year-old man presented with complaints of headache and epistaxis. In the examination, the blood pressure of the right hand is 110.190 mm Hg and the left hand is 95.150 mm Hg. Notching of ribs 5-7 can be seen in chest X-ray. Which diagnosis is relevant for the patient? A) open ductus arteriosus B) Coarctation of the aorta C) Epstein anomaly D) Photochromocytoma > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "A 20-year-old man presented with complaints of headache and epistaxis. In the examination, the blood pressure of the right hand is 110.190 mm Hg and the left hand is 95.150 mm Hg. Notching of ribs 5-7 can be seen in chest X-ray. Which diagnosis is relevant for the patient? A) open ductus arteriosus B) Coarctation of the aorta C) Epstein anomaly D) Photochromocytoma",
       "options_fa": [
         "مجرای شریانی باز",
         "کوآرکتاسیون آئورت",
         "آنومالی ابشتاین",
         "فتوکروموسیتوما"
       ],
-      "options_en": [],
+      "options_en": [
+        "PDA",
+        "Coarctation",
+        "Ebstein",
+        "Pheochromocytoma"
+      ],
       "correct_index": 1,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: PDA rib notching تیپیک با این فشار نیست.",
-        "صحیح است؛ HTN بالا تنه و rib notching از collateralهاست.",
-        "نادرست است؛ دلیل رد: Ebstein سیانوز/TR میدهد.",
-        "نادرست است؛ دلیل رد: فئوکروموسیتوم اختلاف نبض و rib notching نمیدهد."
+        "دلیل رد گزینه: مجرای باز سوفل مداوم می‌دهد.",
+        "گزینه صحیح: کوآرکتاسیون دندانه دنده و فشار نامتقارن می‌دهد.",
+        "دلیل رد گزینه: ابشتاین تریکوسپید است.",
+        "دلیل رد گزینه: فئوکروموسیتوم حمله‌ای است."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: PDA gives continuous murmur.",
+        "Correct: Coarctation gives rib notching and asymmetric pressure.",
+        "Why incorrect: Ebstein tricuspid.",
+        "Why incorrect: Pheo paroxysmal."
       ],
-      "explanation_fa": "دیسکسیون آئورت با درد ناگهانی شدید و پارگیمانند، انتشار پشت، اختلاف نبض/فشار و مدیاستن پهن مطرح میشود؛ AR حاد، تامپوناد و ایسکمی ارگان از عوارضاند. کنترل فوری ضربان با بتابلوکر و سپس فشار، و تصویربرداری سریع ضروری است. Type A نیازمند جراحی اورژانسی و Type B بدون عارضه معمولاً درمان طبی و پایش است؛ فیبرینولیز در شک به دیسکسیون مطلقاً ممنوع است.",
-      "explanation_en": "- A- Open ductus arteriosus: PDA rib notching is not typical with this pressure. - b- Coarctation of the aorta: is correct; Upper body HTN and rib notching are collaterals. - c- Ebstein's anomaly: Ebstein gives cyanosis/TR. - d- Photochromocytoma: Pheochromocytoma does not give pulse difference and rib notching.",
+      "explanation_fa": "مرد ۲۰ ساله با سردرد و اپیستاکسی، فشار نامتقارن ۱۹۰/۱۱۰ و ۱۵۰/۹۵ و دندانه‌دار شدن دنده‌های ۵ تا ۷، کوآرکتاسیون آئورت است. عروق جانبی بین‌دنده‌ای دنده را می‌خورد و فشار دست‌ها متفاوت است. این نکته در هاریسون با تاکید بر معاینه دقیق و تصمیم فردمحور آمده است. این نکته با معاینه و اکو و تصمیم فردمحور تکمیل می‌شود.\n\nدرسنامه: دندانه دنده + فشار نامتقارن یعنی کوآرکتاسیون. هر جوان پرفشار را هر چهار اندام بگیر.",
+      "explanation_en": "A 20-year-old with headache and epistaxis, asymmetric pressures 190/110 and 150/95 and notching of ribs 5-7 is coarctation. Intercostal collaterals notch ribs and arm pressures differ.\n\nLesson: Rib notching + asymmetric pressure means coarctation. Take four-limb pressure in young hypertensive.",
       "micro": {
-        "lead_fa": "دیسکسیون آئورت با درد ناگهانی شدید و پارگیمانند، انتشار پشت، اختلاف نبض/فشار و مدیاستن پهن مطرح میشود؛ AR حاد، تامپوناد و ایسکمی ارگان از عوارضاند. کنترل فوری ضربان با بتابلوکر و سپس فشار، و تصویربرداری سریع ضروری است. Type A نیازمند جراحی اورژانسی و Type B بدون عارضه معمولاً درمان طبی و پایش است؛ فیبرینولیز در شک به دیسکسیون مطلقاً ممنوع است.",
-        "lead_en": "- A- Open ductus arteriosus: PDA rib notching is not typical with this pressure. - b- Coarctation of the aorta: is correct; Upper body HTN and rib notching are collaterals. - c- Ebstein's anomaly: Ebstein gives cyanosis/TR. - d- Photochromocytoma: Pheochromocytoma does not give pulse difference and rib notching.",
-        "golden_fa": "rib notching در جوان فشارخونی، کوآرکتاسیون است.",
-        "golden_en": "",
+        "lead_fa": "دندانه دنده + فشار نامتقارن یعنی کوآرکتاسیون.",
+        "lead_en": "Rib notching + asymmetric pressure means coarctation.",
+        "golden_fa": "هر جوان پرفشار را هر چهار اندام بگیر.",
+        "golden_en": "Take four-limb pressure in young hypertensive.",
         "points_fa": [
-          "CoA carves the rسندرم روده تحریکپذیر."
+          "اکو تشخیص می‌دهد.",
+          "دریچه دولتی همراه است.",
+          "بدون درمان نارسایی.",
+          "درمان استنت یا جراحی."
         ],
-        "points_en": [],
+        "points_en": [
+          "Echo diagnoses.",
+          "Bicuspid associated.",
+          "Untreated failure.",
+          "Stent or surgery."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -8349,7 +8635,15 @@
       "tags": [
         "QB-00104"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "دنده خورده با فشار نامتقارن کجا تنگ است؟"
+      ],
+      "hints_en": [
+        "Where is narrowing with notched ribs and asymmetric pressure?"
+      ],
+      "attending_fa": "استاد: دنده را در پرفشاری ببین.",
+      "attending_en": "Attending: Look at ribs in hypertension."
     },
     {
       "program": "preint",
@@ -8360,42 +8654,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "آقای ۶۰ سالهای با درد قفسه ی سینه، تعریق، تهوع و استفراغ به اورژانس مراجعه کرده است در الکتروکاردیوگرافی تغییرات زیر دیده میشود. تشخیص کدام است؟",
-      "question_en": "A 60-year-old man came to the emergency room with chest pain, sweating, nausea and vomiting. The following changes can be seen in the electrocardiography. What is the diagnosis? A) Anterior surface acute infarction B) Lateral level acute infarction C) Isolated right ventricular infarction D) acute infarction of lower and posterior level > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "A 60-year-old man came to the emergency room with chest pain, sweating, nausea and vomiting. The following changes can be seen in the electrocardiography. What is the diagnosis? A) Anterior surface acute infarction B) Lateral level acute infarction C) Isolated right ventricular infarction D) acute infarction of lower and posterior level",
       "options_fa": [
         "انفارکتوس حاد سطح قدامی",
         "انفارکتوس حاد سطح لترال",
         "انفارکت وس ایزوله ی بطن راست",
         "انفارکتوس حاد سطح تحتانی و خلفی"
       ],
-      "options_en": [],
+      "options_en": [
+        "Anterior MI",
+        "Lateral MI",
+        "Isolated RV MI",
+        "Inferior-posterior MI"
+      ],
       "correct_index": 3,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: قدامی V1–V4 را بالا میبرد.",
-        "نادرست است؛ دلیل رد: لترال I,aVL,V5–V6 است.",
-        "نادرست است؛ دلیل رد: بطن راست isolated نادر و با لیدهای راست تشخیص داده میشود.",
-        "صحیح است؛ پاسخ کلید است؛ inferior elevation با posterior reciprocal changes همراه است."
+        "دلیل رد گزینه: قدامی صعود قدامی می‌دهد.",
+        "دلیل رد گزینه: لترال صعود لترال می‌دهد.",
+        "دلیل رد گزینه: بطن راست صعود وی چهار راست می‌دهد.",
+        "گزینه صحیح: تحتانی و خلفی با هم مطرح است."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: Anterior gives anterior elevation.",
+        "Why incorrect: Lateral gives lateral elevation.",
+        "Why incorrect: RV gives V4R elevation.",
+        "Correct: Inferior and posterior together suggested."
       ],
-      "explanation_fa": "ST elevation در II, III, aVF نشاندهنده inferior انفارکتوس قلبی است؛ همراهی I/aVL یا لیدهای لترال میتواند LCx را مطرح کند، در حالی که RCA شایعترین علت inferior خالص است. posterior involvement با ST depression V1–V3 و R بلند دیده میشود. آنژیوگرافی تعیینکننده نهایی رگ مسئول است.",
-      "explanation_en": "- a- acute infarction of the anterior level: raises the anterior V1-V4. - b- acute infarction of the lateral level: It is lateral I, aVL, V5-V6. - C- Isolated right ventricular infarction: Isolated right ventricle is rare and diagnosed with right leads. - D- Acute infarction of the lower and posterior level: The answer is the key; inferior elevation is associated with posterior reciprocal changes.",
+      "explanation_fa": "مرد ۶۰ ساله با درد، تعریق، تهوع و استفراغ و تغییرات نوار، انفارکتوس تحتانی و خلفی را مطرح می‌کند. خلفی با افت اس‌تی قدامی و افزایش آینه‌ای خلفی همراه است و لیدهای خلفی کمک می‌کند. این نکته در هاریسون با تاکید بر معاینه دقیق و تصمیم فردمحور آمده است. این نکته با معاینه و اکو و تصمیم فردمحور تکمیل می‌شود.\n\nدرسنامه: تحتانی با افت قدامی یعنی خلفی هم هست. لید خلفی را بگیر.",
+      "explanation_en": "A 60-year-old with pain, sweating, nausea and vomiting and ECG changes suggests inferior and posterior infarction. Posterior with anterior ST depression and posterior mirror elevation and posterior leads help.\n\nLesson: Inferior with anterior depression means posterior too. Get posterior leads.",
       "micro": {
-        "lead_fa": "ST elevation در II, III, aVF نشاندهنده inferior انفارکتوس قلبی است؛ همراهی I/aVL یا لیدهای لترال میتواند LCx را مطرح کند، در حالی که RCA شایعترین علت inferior خالص است. posterior involvement با ST depression V1–V3 و R بلند دیده میشود. آنژیوگرافی تعیینکننده نهایی رگ مسئول است.",
-        "lead_en": "- a- acute infarction of the anterior level: raises the anterior V1-V4. - b- acute infarction of the lateral level: It is lateral I, aVL, V5-V6. - C- Isolated right ventricular infarction: Isolated right ventricle is rare and diagnosed with right leads. - D- Acute infarction of the lower and posterior level: The answer is the key; inferior elevation is associated with posterior reciprocal changes.",
-        "golden_fa": "ST افسردگی V1–V3 میتواند آینه خلفی انفارکتوس قلبی باشد.",
-        "golden_en": "",
+        "lead_fa": "تحتانی با افت قدامی یعنی خلفی هم هست.",
+        "lead_en": "Inferior with anterior depression means posterior too.",
+        "golden_fa": "لید خلفی را بگیر.",
+        "golden_en": "Get posterior leads.",
         "points_fa": [
-          "خلفی پشت فرورفتگی قدامی پنهان می شود."
+          "سیرکومفلکس خلفی را می‌دهد.",
+          "اکو حرکت خلفی را می‌بیند.",
+          "بازکردن سریع لازم است.",
+          "بتا پس از پایداری."
         ],
-        "points_en": [],
+        "points_en": [
+          "Circumflex supplies posterior.",
+          "Echo sees posterior motion.",
+          "Early opening needed.",
+          "Beta after stability."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -8411,7 +8718,15 @@
       "tags": [
         "QB-00105"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "افت قدامی با تحتانی چه می‌گوید؟"
+      ],
+      "hints_en": [
+        "What does anterior depression with inferior say?"
+      ],
+      "attending_fa": "استاد: خلفی را با لید پشت ببین.",
+      "attending_en": "Attending: See posterior with back leads."
     },
     {
       "program": "preint",
