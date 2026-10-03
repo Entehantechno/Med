@@ -25,17 +25,17 @@ export default defineConfig({
     // faster download (and no dev noise leaking to users). esbuild is the
     // default minifier — fast and effective.
     minify: "esbuild",
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
         manualChunks(id) {
           if (id.includes("node_modules")) {
-            // Keep the React runtime in one long-lived, cacheable chunk.
-            if (id.includes("/react-dom/") || id.includes("/react/") || id.includes("/scheduler/")) {
-              return "react-vendor";
-            }
-            // Fonts are imported as CSS and emitted as assets, not JS — no chunk.
+            if (id.includes("/react-dom/") || id.includes("/react/") || id.includes("/scheduler/")) return "react-vendor";
+            if (id.includes("i18n") || id.includes("i18next")) return "i18n";
             return "vendor";
           }
+          // Split large translation files to keep entry small
+          if (id.includes("/i18n/") || id.includes("/locales/")) return "i18n";
         },
       },
     },

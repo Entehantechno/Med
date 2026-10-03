@@ -1,3 +1,4 @@
+import "../search.css";
 import CompetitiveReferences from "./admin/CompetitiveReferences.jsx";
 import AiRoutesEditor from "../components/AiRoutesEditor.jsx";
 import { useEffect, useState, useRef, useMemo, lazy, Suspense } from "react";

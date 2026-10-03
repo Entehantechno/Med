@@ -270,3 +270,15 @@ button, a, .opt, .mc-opt, .tab, .nav-item{
 /* Round 5: windowed unit path — "show all" pills between hidden stage ranges */
 .unit-window-more{display:flex;align-items:center;gap:6px;margin:6px auto 10px;padding:6px 14px;border-radius:999px;border:1px dashed var(--border);background:var(--surface,#fff);color:var(--muted);font-size:.8rem;font-weight:700;cursor:pointer}
 .unit-window-more:hover{color:var(--primary);border-color:var(--primary)}
+/* Perf+mobile 2026-10-03: tap targets ≥44px, picker 1col at 375px, lazy covers */
+@media (max-width:480px){
+  .picker-filters{grid-template-columns:1fr !important}
+  .mindmap-card, .bank-card, .filter-chip{ min-height:44px }
+  .mindmap-cover{ content-visibility:auto; contain-intrinsic-size:220px }
+}
+@media (max-width:640px){
+  button, .btn, .nav-item, .tab, .opt-strike, .hotspot-click{ min-height:44px; min-width:44px }
+}
+/* Mindmap graph pinch-zoom */
+.mindmap-graph{ touch-action:pan-x pan-y; overscroll-behavior:contain }
+.mindmap-graph svg{ transform-origin:0 0; will-change:transform }

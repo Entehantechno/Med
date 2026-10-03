@@ -11,13 +11,9 @@ import "@fontsource-variable/vazirmatn";
 import "./styles.css";
 // 2025 visual polish — loaded last so it layers on top of styles.css.
 import "./design-refresh.css";
-import "./styles-speed-fixes.css";
-import "./mobile-learn.css";
-// Document-scroll restore — MUST be last. Nested overflow on html+body was
-// freezing every page except the signup overlay (which has its own scroller).
+// Non-critical CSS is code-split per route (see Admin.jsx & LearnApp.jsx lazy imports)
+// to keep first paint small. Critical above, rest deferred via JS chunks.
 import "./scroll-unlock.css";
-import "./search.css";
-import "./styles-motion-ads.css";
 import { initRum } from "./lib/rum.js";
 import { safeLocal } from "./lib/storage.js";
 import { initSwUpdate } from "./lib/sw-update.js";

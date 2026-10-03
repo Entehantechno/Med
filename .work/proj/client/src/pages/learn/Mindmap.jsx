@@ -152,6 +152,7 @@ export default function Mindmap({ onBack }) {
   };
 
   const GraphView = ({ data }) => {
+    const [zoom, setZoom] = useState(1);
     if (data.locked) {
       return (
         <div className="relative overflow-hidden rounded-[20px] border border-amber-200 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 p-8 text-center shadow-lg">
@@ -245,9 +246,19 @@ export default function Mindmap({ onBack }) {
             <span className="flex h-8 w-8 items-center justify-center rounded-xl text-white shadow" style={{ background: meta.color }}>{data.type === "approach" ? "🧭" : "🧠"}</span>
             <span className="text-sm font-black text-slate-800">{data.title}</span>
           </div>
-          <span className="hidden text-xs font-medium text-slate-500 sm:inline">{lang === "fa" ? "روی گره بزنید → سؤالات" : "Tap node → Questions"}</span>
+          <div className="flex items-center gap-1">
+            <button onClick={() => setZoom(z => Math.max(0.6, +(z-0.15).toFixed(2)))} className="h-8 w-8 rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50" aria-label="zoom out">−</button>
+            <span className="min-w-9 text-center text-xs font-bold text-slate-600">{Math.round(zoom*100)}%</span>
+            <button onClick={() => setZoom(z => Math.min(1.6, +(z+0.15).toFixed(2)))} className="h-8 w-8 rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50" aria-label="zoom in">+</button>
+            <button onClick={() => setZoom(1)} className="ms-1 rounded-full border border-slate-200 bg-slate-900 px-3 py-1 text-xs font-black text-white">⤢ {lang==="fa"?"بازنشانی":"Reset"}</button>
+            <span className="ms-2 hidden text-xs font-medium text-slate-500 sm:inline">{lang === "fa" ? "روی گره بزنید → سؤالات" : "Tap node → Questions"}</span>
+          </div>
         </div>
-        <div className="relative h-[520px] w-full overflow-auto bg-[radial-gradient(circle_at_1px_1px,_#e2e8f0_1px,_transparent_0)] bg-[length:20px_20px]">
+        <div className="mindmap-graph relative h-[520px] w-full overflow-auto bg-[radial-gradient(circle_at_1px_1px,_#e2e8f0_1px,_transparent_0)] bg-[length:20px_20px]"
+          onWheel={e => { if(e.ctrlKey||e.metaKey){ e.preventDefault(); const d = e.deltaY>0?-0.08:0.08; setZoom(z=>Math.min(1.6,Math.max(0.6,+(z+d).toFixed(2)))) } }}
+          onDoubleClick={() => setZoom(z=> z===1?1.35:1)}
+        >
+          <div style={{ width: W, height: H, transform: `scale(${zoom})`, transformOrigin: "0 0" }} className="relative">
           <svg width={W} height={H} className="absolute inset-0">
             <defs>
               <marker id="arrow" viewBox="0 0 10 10" refX={8} refY={5} markerWidth={8} markerHeight={8} orient="auto">
@@ -288,6 +299,7 @@ export default function Mindmap({ onBack }) {
               </button>
             );
           })}
+          </div>
         </div>
       </div>
     );

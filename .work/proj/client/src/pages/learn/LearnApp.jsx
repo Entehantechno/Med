@@ -1,3 +1,7 @@
+import "../../mobile-learn.css";
+import "../../search.css";
+import "../../styles-motion-ads.css";
+import "../../styles-speed-fixes.css";
 import { lazy, Suspense, useEffect, useState, useCallback, useRef } from "react";
 import { useApp } from "../../context.jsx";
 import { useScrollLock } from "../../utils/useScrollLock.js";
