@@ -72,8 +72,8 @@ export default function LearnApp() {
   const { t, lang, flag } = useApp();
   // deep-link to reference viewer via pathname /learn/reference/:code?page=N  (SPA fallback)
   const refMatch = typeof window !== "undefined" ? /^\/learn\/reference\/([^/?#]+)/.exec(window.location.pathname) : null;
-  const initRef = refMatch ? { code: decodeURIComponent(refMatch[1]), page: new URLSearchParams(window.location.search).get("page") || "" } : null;
-  const [tab, setTabState] = useState(() => initRef ? `reference:${initRef.code}:${initRef.page}` : (typeof window !== "undefined" && /^#browse(\?|$)/.test(window.location.hash) ? "browse" : "home"));
+  const initRef = refMatch ? { code: decodeURIComponent(refMatch[1]), page: new URLSearchParams(window.location.search).get("page") || "", chapter: new URLSearchParams(window.location.search).get("chapter")||new URLSearchParams(window.location.search).get("ch")||"" } : null;
+  const [tab, setTabState] = useState(() => initRef ? `reference:${initRef.code}:${initRef.page}${initRef.chapter?`:${initRef.chapter}`:""}` : (typeof window !== "undefined" && /^#browse(\?|$)/.test(window.location.hash) ? "browse" : "home"));
   const [navOpen, setNavOpen] = useState({});   // collapsible nav groups (cleaner menu)
   const [moreOpen, setMoreOpen] = useState(false);
   const [badges, setBadges] = useState({ due: 0, quests: 0 });
@@ -201,7 +201,8 @@ export default function LearnApp() {
       const m = /^\/learn\/reference\/([^/?#]+)/.exec(window.location.pathname);
       if (m) {
         const pg = new URLSearchParams(window.location.search).get("page")||"";
-        setTabState(`reference:${decodeURIComponent(m[1])}:${pg}`);
+        const ch = new URLSearchParams(window.location.search).get("chapter")||new URLSearchParams(window.location.search).get("ch")||"";
+        setTabState(`reference:${decodeURIComponent(m[1])}:${pg}${ch?`:${ch}`:""}`);
       } else if (typeof tab === "string" && tab.startsWith("reference:")) {
         setTabState("library");
       }

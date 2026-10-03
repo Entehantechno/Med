@@ -106,6 +106,17 @@ export default function Mindmap({ onBack }) {
       }
     } catch {}
   }, [mode]);
+  // deep-link from LearnPath system chips → pre-filter bank by system
+  useEffect(() => {
+    try {
+      const sys = sessionStorage.getItem("mindmapFilterSystem");
+      if (sys) {
+        sessionStorage.removeItem("mindmapFilterSystem");
+        const wanted = String(sys).split(",").map(s=>s.trim()).filter(Boolean);
+        if (wanted.length) { setFilterSys(wanted); setMode("bank"); }
+      }
+    } catch {}
+  }, []);
 
   const [toast, setToast] = useState("");
   useEffect(() => { if (toast) { const id = setTimeout(() => setToast(""), 2500); return () => clearTimeout(id); } }, [toast]);

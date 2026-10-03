@@ -23,6 +23,51 @@ const SECTION_THEME = {
   other:    "#647184",
 };
 const sectionColor = (parent) => SECTION_THEME[parent] || SECTION_THEME.other;
+
+/* System → mindmap mapping (topic slug → mindmap system id) */
+const TOPIC_TO_SYSTEM = {
+  gi: "gastro", pulmo: "pulmo", nephro: "nephro", heme: "heme", endo: "endo", rheum: "rheum", cardio: "cardio",
+  surgery: "surgery", peds: "peds", obgyn: "obgyn", path: "path", infect: "infect", neuro: "neuro", psych: "psych",
+  derm: "derm", ortho: "ortho", pharm: "pharm", uro: "uro", ophth: "ophth", ent: "ent", radio: "radio", stats: "stats",
+  ethics: "ethics", genetics: "genetics", immuno: "immuno", nutrition: "nutrition", physics: "physics", anatomy: "anatomy",
+  physio: "physio", biochem: "biochem", histology: "histology", embryo: "embryo", micro: "micro", biophys: "biophys",
+};
+const MINDMAP_SYSTEMS = [
+  { id: "cardio", fa: "قلب", en: "Cardio", icon: "❤️", color: "#e11d48", grad: "from-rose-500 to-pink-600" },
+  { id: "pulmo", fa: "ریه", en: "Lung", icon: "🫁", color: "#0284c7", grad: "from-sky-500 to-blue-600" },
+  { id: "gastro", fa: "گوارش", en: "GI", icon: "🍃", color: "#059669", grad: "from-emerald-500 to-teal-600" },
+  { id: "nephro", fa: "کلیه", en: "Kidney", icon: "🫘", color: "#7c3aed", grad: "from-violet-500 to-purple-600" },
+  { id: "endo", fa: "غدد", en: "Endo", icon: "🧬", color: "#d97706", grad: "from-amber-500 to-orange-600" },
+  { id: "neuro", fa: "مغز", en: "Neuro", icon: "🧠", color: "#0891b2", grad: "from-cyan-500 to-teal-600" },
+  { id: "heme", fa: "خون", en: "Heme", icon: "🩸", color: "#dc2626", grad: "from-red-600 to-rose-700" },
+  { id: "rheum", fa: "روماتو", en: "Rheum", icon: "🦴", color: "#a855f7", grad: "from-fuchsia-500 to-purple-600" },
+  { id: "infect", fa: "عفونی", en: "Infect", icon: "🦠", color: "#16a34a", grad: "from-green-500 to-emerald-600" },
+  { id: "peds", fa: "کودکان", en: "Peds", icon: "👶", color: "#ec4899", grad: "from-pink-500 to-rose-600" },
+  { id: "obgyn", fa: "زنان", en: "OB-GYN", icon: "🤰", color: "#e11d48", grad: "from-rose-500 to-red-600" },
+  { id: "surgery", fa: "جراحی", en: "Surgery", icon: "🔪", color: "#dc2626", grad: "from-red-500 to-rose-600" },
+  { id: "path", fa: "پاتولوژی", en: "Path", icon: "🧫", color: "#9333ea", grad: "from-purple-500 to-violet-600" },
+  { id: "pharm", fa: "دارو", en: "Pharm", icon: "💊", color: "#0ea5e9", grad: "from-sky-500 to-blue-600" },
+  { id: "radio", fa: "رادیولوژی", en: "Radio", icon: "📷", color: "#64748b", grad: "from-slate-500 to-gray-600" },
+  { id: "ent", fa: "گوش‌حلق", en: "ENT", icon: "👃", color: "#14b8a6", grad: "from-teal-500 to-emerald-600" },
+  { id: "uro", fa: "اورولوژی", en: "Uro", icon: "🚹", color: "#2563eb", grad: "from-blue-500 to-indigo-600" },
+  { id: "ortho", fa: "ارتوپدی", en: "Ortho", icon: "🦿", color: "#f59e0b", grad: "from-amber-500 to-orange-600" },
+  { id: "psych", fa: "روان", en: "Psych", icon: "🎭", color: "#8b5cf6", grad: "from-violet-500 to-purple-600" },
+  { id: "derm", fa: "پوست", en: "Derm", icon: "🖐️", color: "#f97316", grad: "from-orange-500 to-amber-600" },
+  { id: "ophth", fa: "چشم", en: "Eye", icon: "👁️", color: "#06b6d4", grad: "from-cyan-500 to-blue-600" },
+  { id: "stats", fa: "آمار", en: "Stats", icon: "📊", color: "#16a34a", grad: "from-green-500 to-teal-600" },
+  { id: "ethics", fa: "اخلاق", en: "Ethics", icon: "⚖️", color: "#334155", grad: "from-slate-600 to-slate-700" },
+  { id: "immuno", fa: "ایمنی", en: "Immune", icon: "🛡️", color: "#22c55e", grad: "from-green-500 to-emerald-600" },
+  { id: "nutrition", fa: "تغذیه", en: "Nutr", icon: "🥗", color: "#84cc16", grad: "from-lime-500 to-green-600" },
+  { id: "genetics", fa: "ژنتیک", en: "Gen", icon: "🧬", color: "#db2777", grad: "from-pink-500 to-rose-500" },
+  { id: "anatomy", fa: "آناتومی", en: "Anatomy", icon: "🧍", color: "#ea580c", grad: "from-orange-500 to-red-500" },
+  { id: "physio", fa: "فیزیولوژی", en: "Physio", icon: "⚡", color: "#06b6d4", grad: "from-cyan-500 to-blue-500" },
+  { id: "biochem", fa: "بیوشیمی", en: "Biochem", icon: "🧪", color: "#8b5cf6", grad: "from-violet-500 to-purple-600" },
+  { id: "histology", fa: "بافت‌شناسی", en: "Histology", icon: "🔬", color: "#ec4899", grad: "from-pink-500 to-rose-500" },
+  { id: "embryo", fa: "جنین‌شناسی", en: "Embryo", icon: "🌱", color: "#22c55e", grad: "from-green-500 to-emerald-600" },
+  { id: "micro", fa: "میکروب", en: "Micro", icon: "👾", color: "#14b8a6", grad: "from-teal-500 to-cyan-600" },
+  { id: "biophys", fa: "بیوفیزیک", en: "Biophys", icon: "🔭", color: "#6366f1", grad: "from-indigo-500 to-violet-600" },
+  { id: "emergency", fa: "اورژانس", en: "Emerg", icon: "🚨", color: "#ef4444", grad: "from-red-500 to-orange-600" },
+];
 // Choose white or dark text for a given background hex for WCAG contrast.
 function contrastText(hex) {
   try {
@@ -78,6 +123,15 @@ function prepareTopicNodes(rawNodes = []) {
 export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocused, onProfile }) {
   const { t, lang, flag } = useApp();
   const fa = lang === "fa";
+  const [mindBank, setMindBank] = useState(null);
+  const goMindmapSystem = (sysId) => {
+    try { sessionStorage.setItem("mindmapFilterSystem", sysId); } catch {}
+    try { window.dispatchEvent(new CustomEvent("medlab-go", { detail: "mindmap" })); } catch {}
+  };
+  const goMindmapTopic = (slug) => {
+    const sys = TOPIC_TO_SYSTEM[slug] || slug;
+    goMindmapSystem(sys);
+  };
   const [topics, setTopics] = useState(null);
   const [ads, setAds] = useState([]);
   const [sideAds, setSideAds] = useState([]);
@@ -121,6 +175,9 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
   const topicRefs = useRef({});   // slug → DOM node, so we can scroll to a specific topic
 
   useEffect(() => { loadMascots().then(setMascots).catch(() => setMascots(DEFAULT_MASCOTS)); }, []);
+  useEffect(() => {
+    api.get(`/learn/mindmap-bank?lang=${lang}&pageSize=1`).then(setMindBank).catch(()=>{});
+  }, [lang]);
 
   useEffect(() => {
     api.get(`/learn/profile?lang=${lang}`).then((d) => setIsPremium(!!(d.profile?.premium_effective ?? d.profile?.premium))).catch(() => {});
@@ -268,6 +325,38 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
         </div>
       )}
 
+      {/* ==== Mindmaps — categorized strip (competitive path): global system chips + per-topic related ==== */}
+      <div className="mm-strip card" style={{ marginBottom: 16, padding: 16, borderRadius: 16, border: "1px solid #e2e8f0", background: "linear-gradient(180deg,#ffffff 0%, #f8fbff 100%)", boxShadow: "0 6px 22px rgba(15,23,42,.06)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span style={{ width: 36, height: 36, borderRadius: 12, background: "linear-gradient(135deg,#06b6d4,#6366f1)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 18, boxShadow: "0 8px 18px rgba(99,102,241,.25)" }}>🧠</span>
+            <div>
+              <div style={{ fontWeight: 900, fontSize: ".98rem", lineHeight: 1.1 }}>{fa ? "مایندمپ‌ها — دسته‌بندی سیستمیک" : "MindMaps — Browse by System"}</div>
+              <div className="small muted" style={{ fontSize: ".78rem", lineHeight: 1.6 }}>{fa ? "۳۴۹ نقشهٔ لینک‌دار به بانک سوالات — رفرنس نامحدود ✓ · مایندمپ ۵/روز برای رایگان" : "349 linked maps — ref unlimited ✓ · 5/day free mindmaps"} {mindBank?.total ? <span style={{ background: "#0f172a", color: "#fff", borderRadius: 999, padding: "1px 8px", fontWeight: 800, fontSize: ".72rem", marginInlineStart: 6 }}>{mindBank.total} {fa ? "نقشه" : "maps"}</span> : null} {mindBank?.daily && mindBank.daily.limit < 999 ? <span className={`small`} style={{ background: mindBank.daily.remaining <= 1 ? "#fee2e2" : mindBank.daily.remaining <= 3 ? "#fef3c7" : "#dcfce7", color: mindBank.daily.remaining <= 1 ? "#991b1b" : mindBank.daily.remaining <= 3 ? "#92400e" : "#065f46", borderRadius: 999, padding: "1px 8px", fontWeight: 800, marginInlineStart: 6 }}>{mindBank.daily.remaining}/{mindBank.daily.limit} {fa ? "امروز" : "left today"}</span> : null}</div>
+            </div>
+          </div>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => { try{ window.dispatchEvent(new CustomEvent("medlab-go",{detail:"mindmap"})); }catch{}}} style={{ borderRadius: 999, border: "1px solid #e2e8f0", background: "#fff" }}>{fa ? "همهٔ نقشه‌ها →" : "View all →"}</button>
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+          {MINDMAP_SYSTEMS.map(s => {
+            const cnt = mindBank?.facetCounts?.system?.[s.id] || 0;
+            const isHot = cnt > 8;
+            return (
+              <button key={s.id} type="button" onClick={() => goMindmapSystem(s.id)} title={`${fa ? s.fa : s.en}${cnt ? ` · ${cnt}` : ""}`}
+                className="mm-chip"
+                style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 999, border: cnt ? "1px solid transparent" : "1px solid #e2e8f0", background: cnt ? s.color : "#fff", color: cnt ? "#fff" : "#334155", fontWeight: 800, fontSize: ".78rem", boxShadow: cnt ? `0 6px 16px ${s.color}33` : "0 1px 4px rgba(0,0,0,.04)", transform: isHot ? "scale(1.02)" : undefined, transition: "all .15s" }}>
+                <span style={{ fontSize: 14 }}>{s.icon}</span> {fa ? s.fa : s.en} {cnt ? <span style={{ background: "rgba(255,255,255,.22)", borderRadius: 999, padding: "1px 6px", fontSize: ".70rem", fontWeight: 900 }}>{cnt}</span> : null}
+              </button>
+            );
+          })}
+        </div>
+        <div className="small muted" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", lineHeight: 1.7 }}>
+          <span style={{ background: "#eff6ff", border: "1px solid #dbeafe", borderRadius: 999, padding: "2px 8px", fontWeight: 700, color: "#1d4ed8" }}>📚 {fa ? "رفرنس نامحدود" : "Ref unlimited"} ✓</span>
+          <span style={{ opacity: .9 }}>{fa ? "هر نقشه به سؤالات لینک است — دو کلیک تا تسلط" : "Every map links to Qbank — 2 clicks to mastery"}</span>
+          <span style={{ marginInlineStart: "auto", opacity: .75 }}>{fa ? "۳ نقشه برای آشنایی رایگان است" : "3 free previews, then Plus"}</span>
+        </div>
+      </div>
+
       {topics.map((topic, ti) => {
         const parentHead = topic.parent !== lastParent ? topic.parent : null;
         lastParent = topic.parent;
@@ -325,6 +414,22 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
                 <div className="uhp-bar"><span style={{ width: `${pct}%` }} /></div>
               </div>
             </div>
+            {/* per-topic related mindmaps — categorized strip */}
+            {(() => {
+              const sysId = TOPIC_TO_SYSTEM[topic.slug] || topic.slug;
+              const meta = MINDMAP_SYSTEMS.find(s => s.id === sysId);
+              if (!meta) return null;
+              const cnt = mindBank?.facetCounts?.system?.[sysId] || 0;
+              return (
+                <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", margin:"10px 2px 6px", padding:"8px 10px", borderRadius:12, background:`linear-gradient(135deg, ${meta.color}08, #ffffff)`, border:`1px solid ${meta.color}18`, boxShadow:"0 2px 10px rgba(15,23,42,.04)" }}>
+                  <span style={{ width:26, height:26, borderRadius:8, background: meta.color, color:"#fff", display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:14, boxShadow:`0 4px 10px ${meta.color}30` }}>{meta.icon}</span>
+                  <span className="small" style={{ fontWeight:800, color:"#0f172a" }}>{fa ? `نقشه‌های \u00AB${topic.name}\u00BB` : `Maps for ${topic.name}`}</span>
+                  <span className="small muted" style={{ fontSize:".74rem" }}>• {cnt ? `${cnt} ${fa?"نقشه":"maps"}` : (fa?"نقشه‌های سیستمیک":"system maps")} </span>
+                  {cnt > 0 && <span className="small" style={{ background: meta.color, color:"#fff", borderRadius:999, padding:"1px 7px", fontWeight:900, fontSize:".70rem" }}>{cnt}</span>}
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={()=>goMindmapTopic(topic.slug)} style={{ marginInlineStart:"auto", borderRadius:999, border:`1px solid ${meta.color}30`, background:"#fff", color: meta.color, fontWeight:800, fontSize:".74rem" }}>{fa ? "مشاهده نقشه‌ها →" : "View maps →"}</button>
+                </div>
+              );
+            })()}
 
             {/* ---- Winding node path (single prepareTopicNodes per unit for perf) ---- */}
             <div className="unit-path">

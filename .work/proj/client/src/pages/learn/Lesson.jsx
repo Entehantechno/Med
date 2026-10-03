@@ -510,7 +510,7 @@ export function typeLabel(type, lang) {
   return (M[type] || M.mcq)[lang === "fa" ? 0 : 1];
 }
 
-/* Resource bar — reference unlimited, mindmap limited (competitive path) */
+/* Resource bar — competitive: reference UNLIMITED deep-link (code+chapter+page), mindmap 5/day */
 function LessonResourceBar({ card, premium, lang }) {
   const fa = lang === "fa";
   const [mindmaps, setMindmaps] = useState([]);
@@ -524,7 +524,27 @@ function LessonResourceBar({ card, premium, lang }) {
   });
   const limit = premium ? Infinity : 5;
   const remaining = Math.max(0, limit - used);
-  const unlimitedRef = true; // competitive: references always unlimited
+  // pick per-question citation: bilingual, deep-link (code + chapter + page)
+  const pickRef = () => {
+    const m = card?.micro;
+    if (!m) return null;
+    // new shape: references array + reference_fa/en + reference (primary)
+    let r = null;
+    if (lang === "fa") r = m.reference_fa || m.reference || (Array.isArray(m.references) && m.references[0]) || null;
+    else r = m.reference_en || m.reference || (Array.isArray(m.references) && (m.references[1] || m.references[0])) || null;
+    if (!r || !r.code) {
+      // fallback to legacy source string — try to extract code from micro.source if it looks like a code
+      const src = m.source || card?.source || "";
+      if (src && src.length < 40 && /^[a-z0-9-]+$/i.test(src.replace(/\s/g,""))) return { code: src.trim(), page: "", chapter_fa: "", chapter_en: "" };
+      return r;
+    }
+    return r;
+  };
+  const ref = pickRef();
+  const refCode = ref?.code || "";
+  const refPage = ref?.page || "";
+  const refChapter = fa ? (ref?.chapter_fa || ref?.chapter_en || "") : (ref?.chapter_en || ref?.chapter_fa || "");
+  const refLabel = [ref?.short_fa || ref?.short_en || refCode, refChapter ? `${fa?"فصل":"Ch."} ${refChapter}` : null, refPage ? `${fa?"ص":"p."} ${refPage}` : null].filter(Boolean).join(" • ");
 
   useEffect(() => {
     if (!card?.id) return;
@@ -532,14 +552,18 @@ function LessonResourceBar({ card, premium, lang }) {
   }, [card?.id]);
 
   const openReference = () => {
-    // reference is unlimited — go to library/reference viewer
-    // if card has a source, try to open the reference code inferred from micro.source
-    const code = card?.micro?.source || card?.source || "";
-    // dispatch to library tab — reference viewer is inside library tab
-    // For now, open library; ReferenceViewer will show the exact page when code matches
-    try {
-      window.dispatchEvent(new CustomEvent("medlab-go", { detail: "library" }));
-    } catch {}
+    if (refCode) {
+      const qs = new URLSearchParams();
+      if (refPage) qs.set("page", refPage);
+      if (refChapter) qs.set("chapter", refChapter);
+      const q = qs.toString() ? `?${qs.toString()}` : "";
+      const path = `/learn/reference/${encodeURIComponent(refCode)}${q}`;
+      try { window.history.pushState({}, "", path); } catch {}
+      try { window.dispatchEvent(new CustomEvent("medlab-go", { detail: `reference:${refCode}:${refPage}` })); } catch {}
+      return;
+    }
+    // no per-question citation — fall back to library
+    try { window.dispatchEvent(new CustomEvent("medlab-go", { detail: "library" })); } catch {}
   };
 
   const openMindmap = (slug) => {
@@ -558,9 +582,10 @@ function LessonResourceBar({ card, premium, lang }) {
     }
     const target = slug || mindmaps[0]?.slug;
     if (target) {
+      try { sessionStorage.setItem("openMindmap", target); } catch {}
+      try { window.dispatchEvent(new CustomEvent("medlab-go", { detail: "mindmap" })); } catch {}
+      // also keep hash detail for deep-link fallback
       try { window.dispatchEvent(new CustomEvent("medlab-go", { detail: `mindmap:${target}` })); } catch {}
-      // fallback: direct hash navigation
-      try { window.location.hash = `#mindmap-${target}`; window.dispatchEvent(new CustomEvent("medlab-go", { detail: "mindmap" })); } catch {}
     } else {
       try { window.dispatchEvent(new CustomEvent("medlab-go", { detail: "mindmap" })); } catch {}
     }
@@ -568,10 +593,13 @@ function LessonResourceBar({ card, premium, lang }) {
 
   return (
     <div className="lesson-resource-bar">
-      <button type="button" className="lesson-res-btn lesson-res-ref" onClick={openReference} title={fa ? "مرجع نامحدود — همیشه باز" : "Unlimited reference — always open"}>
+      <button type="button" className="lesson-res-btn lesson-res-ref" onClick={openReference} title={refLabel || (fa ? "مرجع نامحدود — همیشه باز" : "Unlimited reference — always open")}>
         <span className="lesson-res-ico" style={{ background: "linear-gradient(135deg,#0ea5e9,#6366f1)" }}><Icon name="book" size={14} /></span>
-        <span className="lesson-res-label">{fa ? "مشاهده در رفرنس" : "View in reference"}</span>
-        <span className="lesson-res-badge unlimited">{fa ? "نامحدود" : "unlimited"} ✓</span>
+        <span className="lesson-res-label" style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", lineHeight:1.25 }}>
+          <span>{fa ? "مشاهده در رفرنس" : "View in reference"}</span>
+          {refLabel && <span className="small" style={{ fontSize:".68rem", opacity:.85, fontWeight:600 }}>{refLabel}</span>}
+        </span>
+        <span className="lesson-res-badge unlimited" style={{ marginInlineStart:"auto" }}>{refCode ? (refPage ? `${fa?"ص":"p."} ${refPage} →` : `${fa?"رفرنس":"ref"} →`) : (fa ? "نامحدود" : "unlimited")} ✓</span>
       </button>
       <button type="button" className={`lesson-res-btn lesson-res-map ${!premium && used >= limit ? "locked" : ""}`} onClick={() => openMindmap()} title={!premium && used >= limit ? (fa ? "سهم روزانه تمام شد — ارتقا به پلاس" : "Daily limit reached — upgrade") : (fa ? `نقشه ذهنی — ${remaining} باقی‌مانده امروز` : `Mindmap — ${remaining} left today`)}>
         <span className="lesson-res-ico" style={{ background: premium || used < limit ? "linear-gradient(135deg,#10b981,#06b6d4)" : "linear-gradient(135deg,#9ca3af,#6b7280)" }}><Icon name={(!premium && used >= limit) ? "lock" : "brain"} size={14} /></span>
@@ -582,7 +610,14 @@ function LessonResourceBar({ card, premium, lang }) {
           <span className={`lesson-res-badge ${remaining <= 1 ? "danger" : remaining <= 3 ? "warn" : ""}`}>{remaining}/{limit} {fa ? "امروز" : "today"}</span>
         )}
       </button>
-      {mindmaps.length > 0 && <span className="small muted" style={{ alignSelf: "center", fontSize: ".72rem" }}>{mindmaps.length} {fa ? "نقشه مرتبط" : "linked"}</span>}
+      {mindmaps.length > 0 && (
+        <span className="small muted" style={{ alignSelf: "center", fontSize: ".72rem", display:"flex", gap:4, flexWrap:"wrap", alignItems:"center" }}>
+          {mindmaps.slice(0,1).map(mm=> (
+            <button key={mm.slug} type="button" className="chip" style={{ border:"1px solid #bbf7d0", background:"#f0fdf4", padding:"2px 7px", borderRadius:999, fontSize:".70rem" }} onClick={()=>openMindmap(mm.slug)} title={mm.title}>{mm.title?.slice(0,18)}{mm.title?.length>18?"…":""} →</button>
+          ))}
+          {mindmaps.length>1 && <span>+{mindmaps.length-1}</span>}
+        </span>
+      )}
     </div>
   );
 }

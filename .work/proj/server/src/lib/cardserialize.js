@@ -19,11 +19,56 @@ export function serializeMicro(d, lang) {
     // fall back to legacy explain/hints so old cards still show a mini lesson
     const ex = pick(d, "ex", lang) || (Array.isArray(d.hints_fa) ? (lang === "fa" ? d.hints_fa : d.hints_en)?.join(" ") : "");
     if (!ex) return null;
-    return { lead: ex, golden: "", points: [], options: [], source: "", media: null };
+    return { lead: ex, golden: "", points: [], options: [], source: "", media: null, references: [], reference: null };
   }
   const rawLead = lang === "fa" ? m.lead_fa : m.lead_en;
   const rawGolden = lang === "fa" ? m.golden_fa : m.golden_en;
   const { lead, golden } = dedupeGolden(stripCrossRefs(rawLead), stripCrossRefs(rawGolden));
+  const normalizeRef = (r) => {
+    if (!r || typeof r !== "object") return null;
+    const code = r.code || r.short_en || r.short_fa || "";
+    if (!code && !r.book_fa && !r.book_en) return null;
+    return {
+      code: String(code || ""),
+      book_fa: r.book_fa || r.title_fa || r.book || "",
+      book_en: r.book_en || r.title_en || r.book || "",
+      chapter_fa: r.chapter_fa || r.chapter || "",
+      chapter_en: r.chapter_en || r.chapter || "",
+      page: r.page ? String(r.page) : "",
+      edition: r.edition || "",
+      url: r.url || r.source_url || "",
+      pdf_url: r.pdf_url || "",
+      cover_url: r.cover_url || r.cover || "",
+      short_fa: r.short_fa || r.short_en || code || "",
+      short_en: r.short_en || r.short_fa || code || "",
+      publisher: r.publisher || "",
+    };
+  };
+  // Gather references from all possible shapes the admin editor emits
+  const rawRefs = [];
+  if (m.reference_fa) rawRefs.push(m.reference_fa);
+  if (m.reference_en) rawRefs.push(m.reference_en);
+  if (m.reference) rawRefs.push(m.reference);
+  if (Array.isArray(m.references)) rawRefs.push(...m.references);
+  if (m.referenceEn) rawRefs.push(m.referenceEn);
+  // dedupe by code
+  const seen = new Set();
+  const references = [];
+  for (const r of rawRefs) {
+    const n = normalizeRef(r);
+    if (!n) continue;
+    const key = `${n.code}|${n.chapter_fa}|${n.page}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    references.push(n);
+  }
+  // primary reference is FA-first for fa, EN-first for en
+  let primary = null;
+  if (lang === "fa") primary = normalizeRef(m.reference_fa) || normalizeRef(m.references?.[0]) || normalizeRef(m.reference) || references[0] || null;
+  else primary = normalizeRef(m.reference_en) || normalizeRef(m.referenceEn) || normalizeRef(m.references?.[1]) || normalizeRef(m.references?.[0]) || normalizeRef(m.reference) || references[0] || null;
+  // also expose fa/en shortcuts for the client to pick without guessing
+  const refFa = normalizeRef(m.reference_fa) || normalizeRef(m.references?.[0]) || (lang === "fa" ? primary : null);
+  const refEn = normalizeRef(m.reference_en) || normalizeRef(m.referenceEn) || normalizeRef(m.references?.[1]) || (lang === "en" ? primary : null);
   return {
     lead,
     golden,
@@ -32,13 +77,11 @@ export function serializeMicro(d, lang) {
     source: lang === "fa" ? (m.source_fa || m.source || "") : (m.source_en || m.source || ""),
     source_fa: m.source_fa || m.source || "",
     source_en: m.source_en || m.source || "",
-    // bilingual reference for the attractive button at the bottom of every micro-lesson
-    reference: m.reference ? {
-      book_fa: m.reference.book_fa || "", book_en: m.reference.book_en || "",
-      chapter_fa: m.reference.chapter_fa || "", chapter_en: m.reference.chapter_en || "",
-      edition: m.reference.edition || "", url: m.reference.url || "", page: m.reference.page || "",
-      short_fa: m.reference.short_fa || "", short_en: m.reference.short_en || "",
-    } : null,
+    // competitive per-question citation — deep-linkable (code+chapter+page)
+    reference: primary,
+    reference_fa: refFa,
+    reference_en: refEn,
+    references,
     // درسنامه can carry an image / uploaded video / Aparat|YouTube embed
     media: serializeMedia(m.media, lang),
   };

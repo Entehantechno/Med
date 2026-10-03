@@ -11,8 +11,10 @@ import Icon from "../../components/Icon.jsx";
 export default function ReferenceViewer({ code: propCode, initialPage, onBack }) {
   const fallbackCode = (()=>{ try{ const m=/^\/learn\/reference\/([^/?#]+)/.exec(window.location.pathname); return m?decodeURIComponent(m[1]):"";}catch{return "";} })();
   const fallbackPage = (()=>{ try{ return new URLSearchParams(window.location.search).get("page")||"";}catch{return "";} })();
+  const fallbackChapter = (()=>{ try{ return new URLSearchParams(window.location.search).get("chapter")||new URLSearchParams(window.location.search).get("ch")||"";}catch{return "";} })();
   const code = propCode || fallbackCode;
   const page = initialPage != null ? String(initialPage) : fallbackPage;
+  const chapterParam = fallbackChapter;
   const { lang } = useApp();
   const fa = lang === "fa";
   const [ref, setRef] = useState(null);
@@ -50,6 +52,7 @@ export default function ReferenceViewer({ code: propCode, initialPage, onBack })
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
         <button type="button" className="btn btn-ghost btn-sm" onClick={goBack}><Icon name="chevronDown" size={14} style={{ transform: "rotate(90deg)" }} /> {fa ? "کتابخانه" : "Library"}</button>
         {page && <span className="chip" style={{ background: "#eef6ff", border: "1px solid #dbeafe", padding: "2px 8px", borderRadius: 999, fontSize: 12 }}>{fa ? `صفحهٔ پیشنهادی: ${page}` : `Suggested page: ${page}`}</span>}
+        {chapterParam && <span className="chip" style={{ background: "#f0fdf4", border: "1px solid #bbf7d0", padding: "2px 8px", borderRadius: 999, fontSize: 12 }}>{fa ? `فصل: ${chapterParam}` : `Chapter: ${chapterParam}`}</span>}
       </div>
 
       <div className="card" style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
@@ -57,7 +60,7 @@ export default function ReferenceViewer({ code: propCode, initialPage, onBack })
         <div style={{ flex: 1, minWidth: 240 }}>
           <h2 style={{ margin: "0 0 6px" }}>{title}</h2>
           <div className="muted" style={{ marginBottom: 10 }}>{[ref.short_title, ref.edition ? `${fa ? "ویراست " : "Edition "}${ref.edition}` : null, ref.publisher].filter(Boolean).join(" • ")}</div>
-          {page && <div className="small" style={{ background: "#f6f8ff", border: "1px solid #e6e8ff", borderRadius: 8, padding: "8px 10px", marginBottom: 10, lineHeight: 1.8 }}>{fa ? `نویسندهٔ درس این صفحه را برای مطالعه پیشنهاد کرده است: ` : `The author suggests studying: `}<b>{fa ? `صفحه ${page}` : `Page ${page}`}</b>{ref.chapter_hint ? ` — ${ref.chapter_hint}` : ""}</div>}
+          {page && <div className="small" style={{ background: "#f6f8ff", border: "1px solid #e6e8ff", borderRadius: 8, padding: "8px 10px", marginBottom: 10, lineHeight: 1.8 }}>{fa ? `نویسندهٔ درس این صفحه را برای مطالعه پیشنهاد کرده است: ` : `The author suggests studying: `}<b>{fa ? `صفحه ${page}` : `Page ${page}`}</b>{(chapterParam || ref.chapter_hint) ? ` — ${chapterParam || ref.chapter_hint}` : ""}</div>}
           <div className="small muted" style={{ lineHeight: 1.9, marginBottom: 12 }}>
             {fa
               ? "به‌دلیل حق نشر، متن کامل کتاب در همین سایت میزبانی نمی‌شود. با دکمهٔ زیر به سایت قانونی ناشر (AccessMedicine / ClinicalKey / LWW) می‌روید؛ اگر دسترسی سازمانی دارید مستقیماً همان صفحه باز می‌شود. می‌توانید کل کتاب را هم مرور کنید."
