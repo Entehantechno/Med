@@ -2482,3 +2482,314 @@ mark.stem-hl{ background:linear-gradient(transparent 55%, rgba(246,195,67,.6) 55
   .ddle-card:has(.ddle-banner.ok), .ddle-card:has(.ddle-banner.bad){animation:none}
 }
 
+
+/* ========================================================================
+   Round 12 — Global site beauty audit 2026-10-04
+   Audit doc: RESEARCH-GLOBAL-AUDIT-2026-10-04.md
+   Goal: one cohesive glass + tactile system across Landing, LearnHome,
+         Browse, Lesson, Admin, Student, TopBar/Nav/TabBar — light & dark.
+   No logic change, only visual layer. Respects prefers-reduced-motion.
+   ======================================================================== */
+
+/* -- 1) Global cards: subtle glass + lift (non-destructive) -- */
+.card{
+  backdrop-filter: blur(10px) saturate(1.06);
+  -webkit-backdrop-filter: blur(10px) saturate(1.06);
+  transition: transform .18s var(--ease-spring), box-shadow .22s ease, border-color .18s ease, background .18s ease;
+}
+.card:hover{ transform: translateY(-1px); box-shadow: var(--shadow); }
+@media (hover:none){ .card:hover{ transform:none } }
+
+/* empty-state: more delightful */
+.empty-state{
+  background:
+    radial-gradient(480px 240px at 50% 0%, rgba(37,105,176,.06), transparent 60%),
+    var(--panel);
+  border: 1px dashed rgba(37,105,176,.14);
+}
+[data-theme="dark"] .empty-state{
+  background:
+    radial-gradient(480px 240px at 50% 0%, rgba(79,147,232,.10), transparent 60%),
+    var(--panel);
+  border-color: rgba(79,147,232,.18);
+}
+.empty-state .ico{
+  width: 72px; height: 72px; border-radius: 18px;
+  display:grid; place-items:center; margin:0 auto 14px;
+  background: linear-gradient(135deg, rgba(37,105,176,.10), rgba(99,102,241,.08));
+  border:1px solid rgba(37,105,176,.12);
+  box-shadow: 0 10px 22px -12px rgba(37,105,176,.25);
+}
+[data-theme="dark"] .empty-state .ico{ background: rgba(79,147,232,.12); border-color: rgba(79,147,232,.18) }
+.empty-state h3{ font-family: var(--font-display); letter-spacing:-.01em }
+
+/* skeleton: rounder + softer shimmer */
+.skeleton{ border-radius:14px !important; }
+.skeleton::after{ opacity:.42 }
+.sk-line{ border-radius:999px }
+
+/* -- 2) TopBar: thin glass highlight + softer shadow -- */
+.topbar{
+  background: linear-gradient(180deg, var(--header), var(--header2)) !important;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  box-shadow: 0 6px 20px -10px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.08) inset;
+  backdrop-filter: blur(10px) saturate(1.08);
+  -webkit-backdrop-filter: blur(10px) saturate(1.08);
+}
+.topbar::after{
+  content:""; position:absolute; inset:0 0 auto 0; height:1px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+  pointer-events:none;
+}
+
+/* -- 3) Learn shell: sidebar + topline + mobile tabbar -- */
+.learn-topline{
+  backdrop-filter: blur(12px) saturate(1.08);
+  -webkit-backdrop-filter: blur(12px) saturate(1.08);
+  background: color-mix(in srgb, var(--panel) 82%, transparent);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 4px 16px -12px rgba(0,0,0,.12);
+}
+.learn-nav .nav-item{
+  border-radius: 12px;
+  transition: background .16s ease, transform .12s var(--ease-spring), color .16s ease;
+}
+.learn-nav .nav-item.active{
+  background: linear-gradient(90deg, rgba(37,105,176,.10), transparent) !important;
+  color: var(--primary) !important;
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+[data-theme="dark"] .learn-nav .nav-item.active{
+  background: linear-gradient(90deg, rgba(79,147,232,.14), transparent) !important;
+}
+.learn-tabbar{
+  background: rgba(255,255,255,.78) !important;
+  backdrop-filter: blur(16px) saturate(1.14);
+  -webkit-backdrop-filter: blur(16px) saturate(1.14);
+  border-top: 1px solid rgba(226,232,240,.9) !important;
+  box-shadow: 0 -8px 24px -14px rgba(15,23,42,.12);
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
+}
+[data-theme="dark"] .learn-tabbar{
+  background: rgba(20,29,51,.72) !important;
+  border-top-color: rgba(255,255,255,.06) !important;
+}
+.learn-tabbar button{
+  border-radius: 12px; transition: background .16s ease, transform .12s var(--ease-spring);
+  min-height: 44px;
+}
+.learn-tabbar button.active{
+  background: rgba(37,105,176,.10) !important;
+  color: var(--primary) !important;
+}
+[data-theme="dark"] .learn-tabbar button.active{ background: rgba(79,147,232,.14) !important }
+.tab-badge{
+  animation: badgePulse 1.8s ease-in-out infinite;
+  box-shadow: 0 2px 8px rgba(224,84,79,.35);
+}
+@keyframes badgePulse{ 0%,100%{transform:scale(1)} 50%{transform:scale(1.08)} }
+
+/* -- 4) LearnHome hero + quick-nav: glass + rhythm -- */
+.home-hero{
+  background: rgba(255,255,255,.78) !important;
+  backdrop-filter: blur(14px) saturate(1.10);
+  -webkit-backdrop-filter: blur(14px) saturate(1.10);
+  border: 1px solid rgba(255,255,255,.68) !important;
+  box-shadow: 0 14px 36px rgba(15,23,42,.07), 0 1px 0 rgba(255,255,255,.7) inset !important;
+  overflow:hidden;
+}
+[data-theme="dark"] .home-hero{
+  background: rgba(30,41,59,.64) !important;
+  border-color: rgba(255,255,255,.07) !important;
+}
+.home-hero::before{
+  content:""; position:absolute; inset:0; pointer-events:none; opacity:.5;
+  background:
+    radial-gradient(420px 200px at 18% 0%, rgba(37,105,176,.08), transparent 60%),
+    radial-gradient(360px 180px at 92% 8%, rgba(99,102,241,.07), transparent 60%);
+}
+.home-hero > *{ position:relative; z-index:1 }
+.goal-ring{
+  box-shadow: 0 10px 22px -12px rgba(37,105,176,.25), 0 0 0 1px rgba(37,105,176,.08) inset;
+  border:1px solid rgba(255,255,255,.6);
+}
+.home-quick button{
+  background: rgba(255,255,255,.78) !important;
+  backdrop-filter: blur(10px) saturate(1.08);
+  -webkit-backdrop-filter: blur(10px) saturate(1.08);
+  border:1px solid rgba(255,255,255,.66) !important;
+  box-shadow: 0 8px 20px -12px rgba(15,23,42,.10), 0 1px 0 rgba(255,255,255,.6) inset;
+  border-radius: 14px !important;
+  transition: transform .16s var(--ease-spring), box-shadow .18s ease;
+}
+[data-theme="dark"] .home-quick button{
+  background: rgba(30,41,59,.60) !important;
+  border-color: rgba(255,255,255,.07) !important;
+}
+.home-quick button:hover{ transform: translateY(-2px); box-shadow: 0 14px 28px -14px rgba(15,23,42,.14) }
+.hq-ico{ box-shadow: 0 6px 14px rgba(0,0,0,.08) }
+.streak-strip, .placement-offer, .placement-reco, .dx-teaser{
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* -- 5) Browse: search card + results + filter sheet glass -- */
+.browse-search-card--glass{
+  background: rgba(255,255,255,.78) !important;
+  backdrop-filter: blur(16px) saturate(1.12);
+  -webkit-backdrop-filter: blur(16px) saturate(1.12);
+  border:1px solid rgba(255,255,255,.68) !important;
+  box-shadow: 0 12px 32px rgba(15,23,42,.07), 0 1px 0 rgba(255,255,255,.7) inset !important;
+}
+[data-theme="dark"] .browse-search-card--glass{
+  background: rgba(30,41,59,.64) !important;
+  border-color: rgba(255,255,255,.07) !important;
+}
+.browse-quick--glass{
+  background: linear-gradient(180deg, rgba(255,255,255,.62), rgba(255,255,255,.92)) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border:1px solid rgba(226,232,240,.9) !important;
+  box-shadow: 0 8px 20px -12px rgba(15,23,42,.06);
+}
+[data-theme="dark"] .browse-quick--glass{
+  background: rgba(30,41,59,.52) !important;
+  border-color: rgba(255,255,255,.06) !important;
+}
+.browse-item-new.card{
+  border-inline-start: 3px solid transparent;
+  transition: transform .16s var(--ease-spring), box-shadow .18s ease, border-color .18s ease;
+}
+.browse-item-new.card:hover{
+  transform: translateY(-2px);
+  border-inline-start-color: var(--primary);
+  box-shadow: 0 14px 30px -14px rgba(15,23,42,.12);
+}
+.browse-filters-new.card{
+  background: rgba(255,255,255,.84) !important;
+  backdrop-filter: blur(18px) saturate(1.12);
+  -webkit-backdrop-filter: blur(18px) saturate(1.12);
+  border:1px solid rgba(255,255,255,.70) !important;
+  box-shadow: 0 20px 44px rgba(15,23,42,.14), 0 1px 0 rgba(255,255,255,.7) inset !important;
+}
+[data-theme="dark"] .browse-filters-new.card{
+  background: rgba(20,29,51,.78) !important;
+  border-color: rgba(255,255,255,.08) !important;
+}
+.fsheet-back{ backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); background: rgba(15,23,42,.22) !important }
+[data-theme="dark"] .fsheet-back{ background: rgba(0,0,0,.38) !important }
+.browse-quick-chip{ transition: transform .14s var(--ease-spring), box-shadow .14s ease }
+.browse-quick-chip:hover{ transform: translateY(-1px) }
+.browse-hero{
+  position:relative; overflow:hidden;
+}
+.browse-hero-glow{
+  background:
+    radial-gradient(520px 280px at 18% 0%, rgba(37,105,176,.10), transparent 60%),
+    radial-gradient(420px 220px at 92% 10%, rgba(99,102,241,.08), transparent 60%) !important;
+}
+
+/* -- 6) Lesson options: tactile -- */
+.opt-grid .opt-wrap{
+  border-radius: 14px !important;
+  border:1px solid transparent;
+  transition: transform .14s var(--ease-spring), box-shadow .16s ease, border-color .16s ease;
+}
+.opt-grid .opt-wrap:hover{ transform: translateY(-2px); box-shadow: 0 12px 24px -14px rgba(15,23,42,.10) }
+.opt-wrap:has(input:checked), .opt-wrap.on{
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(37,105,176,.12), 0 10px 22px -12px rgba(37,105,176,.22) !important;
+}
+.lesson-fb{
+  border-radius: 14px !important;
+}
+
+/* -- 7) Landing: hero glow + stats glass + CTA shine -- */
+.lp-hero{ position:relative; overflow:hidden }
+.lp-hero-glow{
+  background:
+    radial-gradient(720px 420px at 20% 8%, rgba(37,105,176,.14), transparent 60%),
+    radial-gradient(560px 360px at 88% 12%, rgba(99,102,241,.10), transparent 60%),
+    radial-gradient(640px 380px at 50% 100%, rgba(34,160,107,.06), transparent 60%) !important;
+}
+.lp-stats{
+  background: rgba(255,255,255,.72);
+  backdrop-filter: blur(12px) saturate(1.08);
+  -webkit-backdrop-filter: blur(12px) saturate(1.08);
+  border:1px solid rgba(255,255,255,.66);
+  box-shadow: 0 12px 32px rgba(15,23,42,.07), 0 1px 0 rgba(255,255,255,.7) inset;
+}
+[data-theme="dark"] .lp-stats{ background: rgba(30,41,59,.56); border-color: rgba(255,255,255,.07) }
+.lp-btn-primary{ position:relative; overflow:hidden }
+.lp-btn-primary::after{
+  content:""; position:absolute; inset:0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.22) 50%, transparent 70%);
+  transform: translateX(-60%); opacity:0; transition: transform .6s ease, opacity .3s;
+}
+.lp-btn-primary:hover::after{ transform: translateX(60%); opacity:1 }
+
+/* -- 8) Admin: sticky glass header + row lift + sidebar glass -- */
+.table-wrap{ border-radius: 14px; overflow:hidden; box-shadow: var(--shadow-sm) }
+table thead th{
+  position: sticky; top:0; z-index:1;
+  background: rgba(255,255,255,.78) !important;
+  backdrop-filter: blur(10px) saturate(1.08);
+  -webkit-backdrop-filter: blur(10px) saturate(1.08);
+  border-bottom: 1px solid var(--border) !important;
+}
+[data-theme="dark"] table thead th{ background: rgba(20,29,51,.72) !important }
+tbody tr{ transition: transform .12s ease, background .12s ease }
+tbody tr:hover td{ transform: translateX(1px) }
+[dir="rtl"] tbody tr:hover td{ transform: translateX(-1px) }
+.sidenav{
+  background: rgba(255,255,255,.62);
+  backdrop-filter: blur(10px) saturate(1.06);
+  -webkit-backdrop-filter: blur(10px) saturate(1.06);
+  border:1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px;
+}
+[data-theme="dark"] .sidenav{ background: rgba(30,41,59,.52); border-color: rgba(255,255,255,.06) }
+.sidenav button.active{
+  background: linear-gradient(90deg, rgba(37,105,176,.10), transparent) !important;
+  box-shadow: inset 3px 0 0 var(--primary);
+}
+.modal{
+  background: rgba(255,255,255,.86) !important;
+  backdrop-filter: blur(18px) saturate(1.12);
+  -webkit-backdrop-filter: blur(18px) saturate(1.12);
+  border:1px solid rgba(255,255,255,.70) !important;
+  box-shadow: 0 24px 48px rgba(15,23,42,.16), 0 1px 0 rgba(255,255,255,.7) inset !important;
+}
+[data-theme="dark"] .modal{ background: rgba(20,29,51,.80) !important; border-color: rgba(255,255,255,.08) !important }
+.modal-back{ backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px) }
+
+/* -- 9) Student (university): class/exam cards -- */
+.case-item{
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 14px !important;
+}
+.case-item:hover{ box-shadow: 0 12px 24px -14px rgba(15,23,42,.10) }
+
+/* -- 10) RTL comfort: more line-height for Persian long text -- */
+[dir="rtl"] .lesson-q{ line-height: 1.95 }
+[dir="rtl"] .browse-preview-q{ line-height: 1.9 }
+[dir="rtl"] .card p{ line-height: 1.9 }
+
+/* -- 11) Focus: double shadow for glass buttons -- */
+:focus-visible{
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(37,105,176,.18), 0 0 0 1px var(--primary) !important;
+}
+[data-theme="dark"] :focus-visible{ box-shadow: 0 0 0 3px rgba(79,147,232,.24), 0 0 0 1px var(--primary) !important }
+
+/* reduce motion */
+@media (prefers-reduced-motion: reduce){
+  .card, .card:hover, .browse-item-new.card, .browse-item-new.card:hover,
+  .home-quick button, .home-quick button:hover, .learn-nav .nav-item,
+  .learn-tabbar button, .opt-grid .opt-wrap{ transform:none !important; transition:none !important }
+  .tab-badge{ animation:none !important }
+  .lp-btn-primary::after{ transition:none !important }
+}
+
