@@ -109,7 +109,7 @@ export function publicReference(row) {
 export function listReferenceCatalog({ activeOnly = true } = {}) {
   return db
     .prepare(
-      `SELECT * FROM reference_catalog ${activeOnly ? "WHERE active=1" : ""} ORDER BY title_en COLLATE NOCASE,id`,
+      `SELECT * FROM reference_catalog ${activeOnly ? "WHERE active=1" : ""} ORDER BY id`,
     )
     .all()
     .map(publicReference);

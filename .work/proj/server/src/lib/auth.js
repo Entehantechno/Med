@@ -29,6 +29,7 @@ export function signToken(user) {
       id: user.id,
       role: user.role,
       username: user.username,
+      university_id: user.university_id ?? null,
       ver: Number(user.token_ver) || 1,
       jti: crypto.randomBytes(16).toString("hex"),
     },
@@ -101,7 +102,7 @@ function attachUser(token) {
   const payload = jwt.verify(token, SECRET, { algorithms: ["HS256"], issuer: JWT_ISS, audience: JWT_AUD });
   // Server-side revocation: password change / admin reset bumps token_ver.
   try {
-    const row = db.prepare("SELECT token_ver, status, role FROM users WHERE id=?").get(payload.id);
+    const row = db.prepare("SELECT token_ver, status, role, university_id FROM users WHERE id=?").get(payload.id);
     if (!row) throw new Error("gone");
     if (row.status && row.status !== "active") throw new Error("inactive");
     const live = Number(row.token_ver);
@@ -109,6 +110,7 @@ function attachUser(token) {
     if ((Number.isFinite(live) ? live : 1) !== (Number.isFinite(claimed) ? claimed : 1)) throw new Error("revoked");
     if (payload.jti && isJtiRevoked(payload.jti)) throw new Error("revoked");
     if (row.role) payload.role = row.role;
+    payload.university_id = row.university_id ?? payload.university_id ?? null;
   } catch (e) {
     const msg = String(e && e.message || e);
     if (msg === "revoked" || msg === "gone" || msg === "inactive") throw e;

@@ -1,1 +1,0 @@
-import{j as n}from"./react-vendor-DnC3ZRgH.js";function a({text:s,as:l="span",...t}){if(s==null||s==="")return null;const r=String(s);if(!r.includes("**"))return n.jsx(l,{...t,children:r});const p=r.split("**");return n.jsx(l,{...t,children:p.map((o,i)=>i%2===1?n.jsx("strong",{children:o},i):n.jsx("span",{children:o},i))})}export{a as E};

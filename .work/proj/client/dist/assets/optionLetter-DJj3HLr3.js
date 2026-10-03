@@ -1,1 +1,0 @@
-const r=["الف","ب","ج","د","ه","و","ز","ح"],e=["A","B","C","D","E","F","G","H"];function i(o,n){const t=Number(o);return!Number.isFinite(t)||t<0?"":(n==="en"?e:r)[t]||(n==="en"?String.fromCharCode(65+t):String(t+1))}function c(o,n){const t=i(o,n);return n==="en"?`Option ${t}`:`گزینه ${t}`}export{c as a,i as o};

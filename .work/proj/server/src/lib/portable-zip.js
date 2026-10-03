@@ -7,7 +7,7 @@ import path from "path";
 export function safeArchivePath(p) {
   if (typeof p !== "string") return null;
   if (!p || p.length > 500) return null;
-  if (p.includes("\0") || p.includes("\\") || p.includes(":")) return null;
+  if (p.includes("\0") || p.includes("\\") || p.includes(":") || p.includes("//")) return null;
   if (p.startsWith("/") || p.startsWith("\\")) return null;
   // disallow directory traversal
   if (p.split("/").includes("..")) return null;
@@ -37,9 +37,12 @@ export function safeArchivePath(p) {
 export function createPortableZip(entries) {
   if (!Array.isArray(entries)) throw new Error("entries_must_be_array");
   const sanitized = [];
+  const seen = new Set();
   for (const e of entries) {
     const sp = safeArchivePath(e.path);
     if (!sp) throw new Error(`unsafe_path:${e.path}`);
+    if (seen.has(sp)) throw new Error(`duplicate_path:${sp}`);
+    seen.add(sp);
     const data = Buffer.isBuffer(e.data) ? e.data : Buffer.from(e.data || "");
     sanitized.push({ path: sp, data: data.toString("base64") });
   }

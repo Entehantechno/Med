@@ -3,248 +3,362 @@
   {
    "part": "-preint:part01",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 40.9,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 209,
-   "exp_med": 309,
+   "prefixOK%": 99.5,
+   "exp_min": 281,
+   "exp_med": 443,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part02",
    "qty": 220,
    "micro%": 0.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 209,
-   "exp_med": 283,
+   "prefixOK%": 100.0,
+   "exp_min": 343,
+   "exp_med": 559,
    "exp_<120": 0,
    "enriched_rows": []
   },
   {
    "part": "-preint:part03",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 97.7,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 202,
-   "exp_med": 291,
+   "prefixOK%": 97.7,
+   "exp_min": 450,
+   "exp_med": 531,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part04",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 95.5,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 231,
-   "exp_med": 693,
+   "prefixOK%": 95.5,
+   "exp_min": 280,
+   "exp_med": 531,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part05",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 97.3,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 231,
-   "exp_med": 592,
+   "prefixOK%": 97.3,
+   "exp_min": 451,
+   "exp_med": 527,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part06",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 96.8,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 399,
-   "exp_med": 581,
+   "prefixOK%": 96.8,
+   "exp_min": 443,
+   "exp_med": 531,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part07",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 356,
-   "exp_med": 507,
+   "prefixOK%": 100.0,
+   "exp_min": 444,
+   "exp_med": 552,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part08",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 332,
-   "exp_med": 488,
+   "prefixOK%": 100.0,
+   "exp_min": 440,
+   "exp_med": 588,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part09",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 387,
-   "exp_med": 455,
+   "prefixOK%": 100.0,
+   "exp_min": 551,
+   "exp_med": 628,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part10",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 405,
-   "exp_med": 505,
+   "prefixOK%": 100.0,
+   "exp_min": 559,
+   "exp_med": 649,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part11",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 379,
-   "exp_med": 569,
+   "prefixOK%": 100.0,
+   "exp_min": 559,
+   "exp_med": 657,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part12",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 214,
-   "exp_med": 574,
+   "prefixOK%": 100.0,
+   "exp_min": 525,
+   "exp_med": 647,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part13",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 79,
-   "exp_med": 120,
-   "exp_<120": 108,
-   "enriched_rows": []
+   "prefixOK%": 100.0,
+   "exp_min": 525,
+   "exp_med": 639,
+   "exp_<120": 0,
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part14",
    "qty": 220,
-   "micro%": 86.4,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 87,
-   "exp_med": 123,
-   "exp_<120": 80,
-   "enriched_rows": []
+   "prefixOK%": 100.0,
+   "exp_min": 523,
+   "exp_med": 622,
+   "exp_<120": 0,
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part15",
    "qty": 220,
    "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 83,
-   "exp_med": 111,
-   "exp_<120": 186,
-   "enriched_rows": []
+   "prefixOK%": 100.0,
+   "exp_min": 450,
+   "exp_med": 531,
+   "exp_<120": 0,
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part16",
    "qty": 220,
    "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 98,
-   "exp_med": 765,
-   "exp_<120": 26,
-   "enriched_rows": []
+   "prefixOK%": 100.0,
+   "exp_min": 450,
+   "exp_med": 529,
+   "exp_<120": 0,
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part17",
    "qty": 220,
    "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 416,
-   "exp_med": 683,
+   "prefixOK%": 100.0,
+   "exp_min": 444,
+   "exp_med": 535,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part18",
    "qty": 220,
    "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 451,
-   "exp_med": 604,
+   "prefixOK%": 100.0,
+   "exp_min": 443,
+   "exp_med": 525,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part19",
    "qty": 220,
    "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 420,
-   "exp_med": 584,
+   "prefixOK%": 100.0,
+   "exp_min": 441,
+   "exp_med": 531,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part20",
    "qty": 220,
    "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 389,
-   "exp_med": 497,
+   "prefixOK%": 100.0,
+   "exp_min": 454,
+   "exp_med": 529,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part21",
    "qty": 220,
    "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 18.2,
-   "exp_min": 234,
-   "exp_med": 447,
+   "prefixOK%": 100.0,
+   "exp_min": 445,
+   "exp_med": 498,
    "exp_<120": 0,
    "enriched_rows": [
-    180,
-    181,
-    182,
-    183,
-    184
+    0,
+    1,
+    2,
+    3,
+    4
    ]
   },
   {
    "part": "-preint:part22",
    "qty": 220,
-   "micro%": 97.7,
+   "micro%": 98.6,
    "why=4%": 100.0,
-   "prefixOK%": 97.7,
+   "prefixOK%": 98.6,
    "exp_min": 259,
-   "exp_med": 449,
+   "exp_med": 452,
    "exp_<120": 0,
    "enriched_rows": [
     0,
@@ -257,11 +371,11 @@
   {
    "part": "-preint:part23",
    "qty": 220,
-   "micro%": 91.4,
+   "micro%": 96.4,
    "why=4%": 100.0,
-   "prefixOK%": 91.4,
-   "exp_min": 266,
-   "exp_med": 482,
+   "prefixOK%": 96.4,
+   "exp_min": 272,
+   "exp_med": 486,
    "exp_<120": 0,
    "enriched_rows": [
     0,
@@ -274,11 +388,11 @@
   {
    "part": "-preint:part24",
    "qty": 220,
-   "micro%": 92.3,
+   "micro%": 96.8,
    "why=4%": 100.0,
-   "prefixOK%": 92.3,
-   "exp_min": 266,
-   "exp_med": 457,
+   "prefixOK%": 96.8,
+   "exp_min": 272,
+   "exp_med": 462,
    "exp_<120": 0,
    "enriched_rows": [
     0,
@@ -291,11 +405,11 @@
   {
    "part": "-preint:part25",
    "qty": 220,
-   "micro%": 72.7,
+   "micro%": 86.4,
    "why=4%": 100.0,
-   "prefixOK%": 72.7,
+   "prefixOK%": 86.4,
    "exp_min": 266,
-   "exp_med": 436,
+   "exp_med": 448,
    "exp_<120": 0,
    "enriched_rows": [
     0,
@@ -308,327 +422,501 @@
   {
    "part": "-preint:part26",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 266,
-   "exp_med": 276,
+   "prefixOK%": 100.0,
+   "exp_min": 444,
+   "exp_med": 750,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part27",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 96.4,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
+   "prefixOK%": 96.4,
    "exp_min": 245,
-   "exp_med": 276,
+   "exp_med": 826,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part28",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 97.3,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 245,
-   "exp_med": 289,
+   "prefixOK%": 97.3,
+   "exp_min": 262,
+   "exp_med": 678,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part29",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 245,
-   "exp_med": 291,
+   "prefixOK%": 100.0,
+   "exp_min": 378,
+   "exp_med": 576,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part30",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 245,
-   "exp_med": 289,
+   "prefixOK%": 100.0,
+   "exp_min": 445,
+   "exp_med": 527,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part31",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 245,
-   "exp_med": 293,
+   "prefixOK%": 100.0,
+   "exp_min": 446,
+   "exp_med": 529,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part32",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 245,
-   "exp_med": 293,
+   "prefixOK%": 100.0,
+   "exp_min": 443,
+   "exp_med": 523,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part33",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 245,
-   "exp_med": 289,
+   "prefixOK%": 100.0,
+   "exp_min": 442,
+   "exp_med": 524,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part34",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 245,
-   "exp_med": 289,
+   "prefixOK%": 100.0,
+   "exp_min": 446,
+   "exp_med": 527,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part35",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 249,
-   "exp_med": 285,
+   "prefixOK%": 100.0,
+   "exp_min": 445,
+   "exp_med": 523,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part36",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 300,
-   "exp_med": 300,
+   "prefixOK%": 100.0,
+   "exp_min": 447,
+   "exp_med": 523,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part37",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 300,
-   "exp_med": 300,
+   "prefixOK%": 100.0,
+   "exp_min": 446,
+   "exp_med": 522,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part38",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 221,
-   "exp_med": 253,
+   "prefixOK%": 100.0,
+   "exp_min": 441,
+   "exp_med": 523,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part39",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 234,
-   "exp_med": 234,
+   "prefixOK%": 100.0,
+   "exp_min": 453,
+   "exp_med": 539,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part40",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 234,
-   "exp_med": 234,
+   "prefixOK%": 100.0,
+   "exp_min": 445,
+   "exp_med": 540,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part41",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 234,
-   "exp_med": 234,
+   "prefixOK%": 100.0,
+   "exp_min": 439,
+   "exp_med": 529,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part42",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 234,
-   "exp_med": 234,
+   "prefixOK%": 100.0,
+   "exp_min": 445,
+   "exp_med": 529,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part43",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 234,
-   "exp_med": 234,
+   "prefixOK%": 100.0,
+   "exp_min": 440,
+   "exp_med": 531,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part44",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 234,
-   "exp_med": 245,
+   "prefixOK%": 100.0,
+   "exp_min": 442,
+   "exp_med": 513,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part45",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 245,
-   "exp_med": 245,
+   "prefixOK%": 100.0,
+   "exp_min": 444,
+   "exp_med": 491,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part46",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 245,
-   "exp_med": 245,
+   "prefixOK%": 100.0,
+   "exp_min": 446,
+   "exp_med": 488,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part47",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 232,
-   "exp_med": 283,
+   "prefixOK%": 100.0,
+   "exp_min": 441,
+   "exp_med": 522,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part48",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 283,
-   "exp_med": 283,
+   "prefixOK%": 100.0,
+   "exp_min": 445,
+   "exp_med": 525,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part49",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 283,
-   "exp_med": 283,
+   "prefixOK%": 100.0,
+   "exp_min": 448,
+   "exp_med": 528,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part50",
    "qty": 220,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 283,
-   "exp_med": 283,
+   "prefixOK%": 100.0,
+   "exp_min": 442,
+   "exp_med": 522,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "-preint:part51",
    "qty": 120,
-   "micro%": 0.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 202,
-   "exp_med": 253,
+   "prefixOK%": 100.0,
+   "exp_min": 441,
+   "exp_med": 522,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "sidency:part01",
    "qty": 220,
-   "micro%": 5.0,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 403,
-   "exp_med": 700,
+   "prefixOK%": 100.0,
+   "exp_min": 469,
+   "exp_med": 499,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "sidency:part02",
    "qty": 220,
-   "micro%": 6.4,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 396,
-   "exp_med": 700,
+   "prefixOK%": 100.0,
+   "exp_min": 439,
+   "exp_med": 509,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   },
   {
    "part": "sidency:part03",
    "qty": 44,
-   "micro%": 2.3,
+   "micro%": 100.0,
    "why=4%": 100.0,
-   "prefixOK%": 0.0,
-   "exp_min": 255,
-   "exp_med": 350,
+   "prefixOK%": 100.0,
+   "exp_min": 485,
+   "exp_med": 548,
    "exp_<120": 0,
-   "enriched_rows": []
+   "enriched_rows": [
+    0,
+    1,
+    2,
+    3,
+    4
+   ]
   }
  ],
  "totals": {
-  "micro": 2535,
+  "micro": 11164,
   "why4": 11604,
-  "prefix": 819,
+  "prefix": 11513,
   "rows": 11604
  }
 }
