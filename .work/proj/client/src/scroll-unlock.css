@@ -137,6 +137,10 @@ html.overlay-open body{
   -webkit-overflow-scrolling:touch;
 }
 
+/* Accessibility: skip-link must stay visually hidden until keyboard focus —
+   duplicated here so Landing stays hidden even if styles-speed-fixes loads later. */
+.skip-link{position:absolute;inset-block-start:8px;inset-inline-start:8px;z-index:9999;transform:translateY(-140%);padding:10px 14px;border-radius:12px;background:var(--primary,#2f7fd1);color:#fff;font-weight:900;text-decoration:none;box-shadow:0 12px 30px -18px #000;transition:transform 140ms cubic-bezier(.2,.8,.2,1)}.skip-link:focus,.skip-link:focus-visible{transform:translateY(0);outline:3px solid #fff;outline-offset:2px}
+
 /* content-visibility:auto can under-report document height so the page looks
    like it has nothing left to scroll. Keep marketing sections in normal flow. */
 .lp-section,

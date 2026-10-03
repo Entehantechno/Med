@@ -101,10 +101,10 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
       )}
       {/* ---- Top nav (the ONLY header; sticky, compact on phones) ---- */}
       <header className={`lp-nav${scrolled ? " raised" : ""}`}>
-        <div className="lp-brand">
+        <button type="button" className="lp-brand" onClick={() => { window.location.href = "/"; }} aria-label={fa ? "بازگشت به صفحه اصلی" : "Go to home"}>
           <span className="lp-logo"><Icon name="cap" size={24} /></span>
           <span className="lp-brand-name">MED School</span>
-        </div>
+        </button>
         <div className="lp-nav-actions">
           <button type="button" className="lp-icon-btn" onClick={toggleTheme} aria-label={fa ? (theme === "light" ? "حالت تاریک" : "حالت روشن") : (theme === "light" ? "Dark mode" : "Light mode")}>
             <Icon name={theme === "light" ? "moon" : "sun"} size={18} />
@@ -287,10 +287,10 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
 
       {/* ---- Footer ---- */}
       <footer className="lp-footer">
-        <div className="lp-brand">
+        <button type="button" className="lp-brand" onClick={() => { window.location.href = "/"; }} aria-label={fa ? "بازگشت به صفحه اصلی" : "Go to home"}>
           <span className="lp-logo"><Icon name="cap" size={20} /></span>
           <span className="lp-brand-name">MED School</span>
-        </div>
+        </button>
         <div className="lp-footer-tag">{tc("landFooterTagline")}</div>
         <div className="lp-footer-rights">© {new Date().getFullYear()} MED School — {tc("landRights")}</div>
       </footer>

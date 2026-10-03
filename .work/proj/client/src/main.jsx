@@ -11,8 +11,12 @@ import "@fontsource-variable/vazirmatn";
 import "./styles.css";
 // 2025 visual polish — loaded last so it layers on top of styles.css.
 import "./design-refresh.css";
-// Non-critical CSS is code-split per route (see Admin.jsx & LearnApp.jsx lazy imports)
-// to keep first paint small. Critical above, rest deferred via JS chunks.
+// Motion + micro-interactions must be global — Landing (eager) needs them too
+// (regression 2026-10-03: moving them to LearnApp broke landing). Entry budget
+// is raised to 52gz to accommodate; UX > 0.5KB.
+import "./styles-motion-ads.css";
+import "./styles-speed-fixes.css";
+import "./mobile-learn.css";
 import "./scroll-unlock.css";
 import { initRum } from "./lib/rum.js";
 import { safeLocal } from "./lib/storage.js";
