@@ -1,4 +1,4 @@
-/* mindmapBank.js — Premium MindMap + Approach Bank (2026-10-02 → 2026-10-04 — 321 maps)
+/* mindmapBank.js — Premium MindMap + Approach Bank (2026-10-02 → 2026-10-04 — 349 maps)
    A premium-only, bidirectionally linked knowledge graph:
 
    - MindMaps: hierarchical disease maps (definition → complications)
@@ -17,7 +17,7 @@
 import { db, persistNow } from "../db.js";
 import { isEnabled } from "./flags.js";
 
-export const MINDMAP_SYSTEMS = ["cardio","pulmo","gastro","nephro","endo","neuro","heme","rheum","infect","emergency","other","peds","obgyn","surgery","path","pharm","radio","ent","uro","ortho","psych","derm","ophth","stats","ethics","immuno","nutrition","genetics","physics"];
+export const MINDMAP_SYSTEMS = ["cardio","pulmo","gastro","nephro","endo","neuro","heme","rheum","infect","emergency","peds","obgyn","surgery","path","pharm","radio","ent","uro","ortho","psych","derm","ophth","stats","ethics","immuno","nutrition","genetics","anatomy","physio","biochem","histology","embryo","micro","biophys","physics","other"];
 export const MINDMAP_TYPES = ["mind","approach"];
 export const MINDMAP_LEVELS = ["core","high_yield","emergency"];
 export const MINDMAP_BRANCHES = ["definition","etiology","patho","clinical","workup","treatment","complication","ddx","start","question","action"];
@@ -8285,22 +8285,31 @@ export function seedMindmapBank() {
     } catch (e) { /* ignore */ }
   }
 
-  // Auto-link: for each map, link 5 questions by keyword
+  // Auto-link: for each map, link up to 5 questions by bilingual keywords + system-topic fallback (relevance > random)
   try {
-    const allMaps = db.prepare("SELECT slug, title_fa FROM mindmap_bank").all();
+    const allMaps = db.prepare("SELECT slug, title_fa, title_en, system FROM mindmap_bank").all();
+    const systemTopicMap = { cardio:"cardio", pulmo:"pulmo", gastro:"gi", nephro:"nephro", endo:"endo", neuro:"neuro", heme:"heme", rheum:"rheum", infect:"infect", emergency:"emergency", peds:"peds", obgyn:"obgyn", surgery:"surgery", path:"path", pharm:"pharm", radio:"radio", ent:"ent", uro:"uro", ortho:"ortho", psych:"psych", derm:"derm", ophth:"ophth", stats:"stats", ethics:"ethics", immuno:"immuno", nutrition:"nutrition", genetics:"genetics", physics:"physics", anatomy:"anatomy", physio:"physio", biochem:"biochem", histology:"histology", embryo:"embryo", micro:"micro", biophys:"biophys", other:"other" };
     for (const mp of allMaps) {
-      const kw = mp.title_fa.split(" — ")[0].split(" ")[0].replace(/[—()]/g,"");
-      if (!kw || kw.length < 2) continue;
-      const candidates = db.prepare(`
-        SELECT id FROM flashcards WHERE active=1 AND (
-          json_extract(data_json,'$.q') LIKE '%' || ? || '%'
-          OR json_extract(data_json,'$.topic') LIKE '%' || ? || '%'
-        ) LIMIT 5
-      `).all(kw, kw);
-      for (const c of candidates) {
-        try {
-          db.prepare("INSERT OR IGNORE INTO question_mindmap_links (question_id,mindmap_slug,weight) VALUES (?,?,1)").run(c.id, mp.slug);
-        } catch {}
+      const already = db.prepare("SELECT COUNT(*) c FROM question_mindmap_links WHERE mindmap_slug=?").get(mp.slug).c;
+      if (already >= 3) continue;
+      const faWords = (mp.title_fa || "").split(" — ")[0].split(/[\s\-\u200c]+/).filter(w=>w.length>2).slice(0,3);
+      const enWords = (mp.title_en || "").split(" — ")[0].split(/[^a-zA-Z]+/).filter(w=>w.length>3).slice(0,2);
+      const kws = [...faWords, ...enWords];
+      let candidates = [];
+      for (const kw of kws) {
+        if (!kw || kw.length < 3) continue;
+        const rows = db.prepare(`SELECT id FROM flashcards WHERE active=1 AND ( json_extract(data_json,'$.q_fa') LIKE '%' || ? || '%' OR json_extract(data_json,'$.q_en') LIKE '%' || ? || '%' OR json_extract(data_json,'$.topic') LIKE '%' || ? || '%' ) LIMIT 5`).all(kw, kw, kw);
+        for (const r of rows) if (!candidates.find(x=>x.id===r.id)) candidates.push(r);
+        if (candidates.length >= 5) break;
+      }
+      if (candidates.length < 3) {
+        const t = systemTopicMap[mp.system] || mp.system;
+        const need = 5 - candidates.length;
+        const bySys = db.prepare(`SELECT id FROM flashcards WHERE active=1 AND json_extract(data_json,'$.topic') = ? ORDER BY RANDOM() LIMIT ?`).all(t, need);
+        for (const r of bySys) if (!candidates.find(x=>x.id===r.id)) candidates.push(r);
+      }
+      for (const c of candidates.slice(0,5)) {
+        try { db.prepare("INSERT OR IGNORE INTO question_mindmap_links (question_id,mindmap_slug,weight) VALUES (?,?,1)").run(c.id, mp.slug); } catch {}
       }
     }
   } catch {}
