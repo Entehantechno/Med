@@ -96,6 +96,10 @@ export default function Mindmap({ onBack }) {
   const [detailLoading, setDetailLoading] = useState(false);
   const [nodeQ, setNodeQ] = useState(null);
   const [hovered, setHovered] = useState(null);
+  const [zen, setZen] = useState(false);
+  const [pitch, setPitch] = useState(false);
+  const [pitchIdx, setPitchIdx] = useState(0);
+  const [structure, setStructure] = useState("radial");
 
   useEffect(() => {
     try {
@@ -167,8 +171,43 @@ export default function Mindmap({ onBack }) {
     }).catch(() => setToast("خطا"));
   };
 
-  const GraphView = ({ data }) => {
+  const GraphView = ({ data, structure="radial", pitch=false, pitchIdx=0, setPitchIdx=()=>{}, zen=false }) => {
     const [zoom, setZoom] = useState(1);
+    // Pitch (presentation) mode — XMind Pitch inspired: one node per slide
+    if (pitch && data && !data.locked) {
+      const nodes = data.nodes || [];
+      const cur = nodes[Math.min(Math.max(0, pitchIdx), Math.max(0, nodes.length-1))] || null;
+      const st = cur ? branchStyle(cur.branch) : null;
+      return (
+        <div className="mm-pitch rounded-[20px] border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 md:p-8 shadow-xl text-white relative overflow-hidden" style={{ minHeight: 420 }}>
+          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-gradient-to-br from-violet-600/20 to-indigo-600/20 blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-gradient-to-br from-sky-600/20 to-cyan-600/20 blur-3xl" />
+          <div className="relative flex items-center justify-between gap-3 mb-6">
+            <span className="text-xs font-black tracking-widest text-white/60">{lang==="fa"?"حالتِ پرزنتیشن":"PITCH"} • {pitchIdx+1} / {nodes.length}</span>
+            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold backdrop-blur">{data.title}</span>
+          </div>
+          {cur ? (
+            <div className="relative mx-auto max-w-2xl rounded-[20px] border border-white/10 bg-white p-6 md:p-7 shadow-2xl text-slate-900">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl text-lg" style={{ background: st.bg, color: st.fg }}>{st.icon}</span>
+                <span className="text-xs font-black tracking-wide" style={{ color: st.fg }}>{st.label}</span>
+                <span className="ms-auto text-xs font-bold text-slate-500">{cur.branch}</span>
+              </div>
+              <div className="text-lg md:text-xl font-black leading-relaxed text-slate-900">{lang==="fa"?cur.label_fa:cur.label_en}</div>
+              <div className="mt-4 flex gap-2">
+                <button onClick={()=>openQuestionsFor(cur.id, data.slug)} className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-black text-white hover:bg-black">🔗 {lang==="fa"?"سؤالاتِ این گره":"Questions for this node"} →</button>
+                <button onClick={()=>setPitchIdx(i=>Math.max(0,i-1))} disabled={pitchIdx===0} className="ms-auto rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold disabled:opacity-40">‹ {lang==="fa"?"قبلی":"Prev"}</button>
+                <button onClick={()=>setPitchIdx(i=>Math.min(nodes.length-1,i+1))} disabled={pitchIdx>=nodes.length-1} className="rounded-full bg-sky-600 px-4 py-2 text-sm font-black text-white hover:bg-sky-700 disabled:opacity-40">{lang==="fa"?"بعدی":"Next"} ›</button>
+              </div>
+            </div>
+          ) : (<div className="text-center text-white/70">{lang==="fa"?"گره‌ای نیست":"No nodes"}</div>)}
+          <div className="relative mt-6 flex justify-center gap-1.5">
+            {nodes.map((_,i)=>(<span key={i} className={`h-1.5 rounded-full transition ${i===pitchIdx?"w-8 bg-white":"w-1.5 bg-white/30"}`} />))}
+          </div>
+          <button onClick={()=>setPitchIdx(0)} className="absolute bottom-4 end-4 rounded-full bg-white/10 px-3 py-1 text-xs font-bold backdrop-blur hover:bg-white/20">{lang==="fa"?"از نو":"Restart"}</button>
+        </div>
+      );
+    }
     if (data.locked) {
       const isDaily = data.error === "daily_limit" || (data.daily && data.daily.remaining <= 0);
       return (
@@ -196,6 +235,62 @@ export default function Mindmap({ onBack }) {
     const nodes = data.nodes || [];
     const edges = data.edges || [];
     const hasPos = nodes.some(n => n.x !== 0 || n.y !== 0);
+
+    // Structure switch: XMind-like alternatives (even when hasPos true)
+    if (structure === "timeline" && nodes.length) {
+      return (
+        <div className="mm-timeline rounded-[20px] border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm overflow-x-auto">
+          <div className="flex items-stretch gap-0 min-w-max">
+            {nodes.map((n,i)=>{ const st=branchStyle(n.branch); return (
+              <div key={n.id} className="flex items-center gap-0">
+                <button onClick={()=>openQuestionsFor(n.id, data.slug)} className="group relative flex w-[220px] shrink-0 flex-col gap-2 rounded-2xl border-2 bg-white p-4 text-start shadow-sm hover:-translate-y-0.5 hover:shadow-md transition" style={{ borderColor: st.fg }}>
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full text-xs" style={{ background: st.bg, color: st.fg }}>{st.icon}</span>
+                  <span className="text-xs font-black" style={{ color: st.fg }}>{st.label}</span>
+                  <span className="text-sm font-bold leading-tight text-slate-800 line-clamp-3">{lang==="fa"?n.label_fa:n.label_en}</span>
+                </button>
+                {i < nodes.length-1 && <span className="mx-2 h-0.5 w-8 shrink-0 rounded bg-slate-300" />}
+              </div>
+            );})}
+          </div>
+        </div>
+      );
+    }
+    if (structure === "fish" && nodes.length) {
+      return (
+        <div className="mm-fish rounded-[20px] border border-slate-200 bg-white p-6 shadow-sm overflow-x-auto">
+          <div className="relative min-w-max">
+            <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-0.5 rounded-full bg-gradient-to-r from-slate-300 via-slate-400 to-slate-300" />
+            <div className="relative flex gap-6 py-8">
+              {nodes.map((n,i)=>{ const up=i%2===0; const st=branchStyle(n.branch); return (
+                <div key={n.id} className={`flex w-[200px] shrink-0 flex-col items-center gap-2 ${up?"-translate-y-6":"translate-y-6"}`}>
+                  {up && (<button onClick={()=>openQuestionsFor(n.id, data.slug)} className="rounded-2xl border-2 bg-white p-3 shadow hover:shadow-md transition text-start" style={{ borderColor: st.fg }}><span className="flex h-6 w-6 items-center justify-center rounded-full text-xs mx-auto" style={{ background: st.bg, color: st.fg }}>{st.icon}</span><span className="mt-1 block text-xs font-bold text-center line-clamp-2">{lang==="fa"?n.label_fa:n.label_en}</span></button>)}
+                  <span className={`h-6 w-0.5 rounded-full ${up?"bg-slate-300":"bg-slate-300 order-first"}`} style={{ height: 24 }} />
+                  {!up && (<button onClick={()=>openQuestionsFor(n.id, data.slug)} className="rounded-2xl border-2 bg-white p-3 shadow hover:shadow-md transition text-start" style={{ borderColor: st.fg }}><span className="flex h-6 w-6 items-center justify-center rounded-full text-xs mx-auto" style={{ background: st.bg, color: st.fg }}>{st.icon}</span><span className="mt-1 block text-xs font-bold text-center line-clamp-2">{lang==="fa"?n.label_fa:n.label_en}</span></button>)}
+                </div>
+              );})}
+            </div>
+          </div>
+        </div>
+      );
+    }
+    if (structure === "logic" && nodes.length) {
+      return (
+        <div className="mm-logic rounded-[20px] border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm">
+          <div className="flex flex-col gap-3 max-w-2xl mx-auto">
+            {nodes.map(n=>{ const st=branchStyle(n.branch); return (
+              <button key={n.id} onClick={()=>openQuestionsFor(n.id, data.slug)} className="flex gap-3 rounded-2xl border bg-white p-4 text-start shadow-sm hover:shadow-md transition" style={{ borderColor: st.fg, borderInlineStartWidth: 6 }}>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm" style={{ background: st.bg, color: st.fg }}>{st.icon}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs font-black" style={{ color: st.fg }}>{st.label} • {n.branch}</div>
+                  <div className="mt-1 text-sm font-bold leading-relaxed text-slate-800">{lang==="fa"?n.label_fa:n.label_en}</div>
+                </div>
+                <span className="self-center text-slate-400">›</span>
+              </button>
+            );})}
+          </div>
+        </div>
+      );
+    }
 
     if (!hasPos || nodes.length > 10) {
       return (
@@ -376,7 +471,35 @@ export default function Mindmap({ onBack }) {
                 </div>
               </div>
 
-              <GraphView data={detail} />
+              {/* ——— Mindmap toolbar: Zen / Pitch / Structure (XMind + Miro) ——— */}
+              <div className={`mm-toolbar ${zen?"mm-toolbar--zen":""}`} style={{ display:"flex", flexWrap:"wrap", gap:8, alignItems:"center", justifyContent:"space-between", padding:"10px 12px", borderRadius:16, background: zen?"rgba(255,255,255,.82)":"#fff", backdropFilter: zen?"saturate(1.4) blur(12px)":"none", border:"1px solid #e2e8f0", boxShadow:"0 8px 22px rgba(15,23,48,.06)" }}>
+                <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
+                  <span className="small muted" style={{ fontWeight:800, fontSize:".72rem", display:"flex", alignItems:"center", gap:6 }}><span style={{ width:22, height:22, borderRadius:7, background:"linear-gradient(135deg,#06b6d4,#6366f1)", display:"inline-grid", placeItems:"center", color:"#fff", fontSize:11 }}>✨</span> {lang==="fa"?"نما":"View"}</span>
+                  {[
+                    {id:"radial", fa:"شعاعی", en:"Radial", ico:"🌸"},
+                    {id:"logic", fa:"درختی", en:"Tree", ico:"🌳"},
+                    {id:"fish", fa:"استخوان‌ماهی", en:"Fish", ico:"🐟"},
+                    {id:"timeline", fa:"تایم‌لاین", en:"Time", ico:"⏳"},
+                  ].map(s=>(
+                    <button key={s.id} type="button" onClick={()=>setStructure(s.id)} className={`mm-struct-btn ${structure===s.id?"on":""}`} style={{ display:"inline-flex", alignItems:"center", gap:6, padding:"6px 10px", borderRadius:999, border:"1px solid", borderColor: structure===s.id?"#6366f1":"#e2e8f0", background: structure===s.id?"#6366f1":"#fff", color: structure===s.id?"#fff":"#334155", fontWeight:800, fontSize:".74rem", boxShadow: structure===s.id?"0 6px 14px rgba(99,102,241,.28)":"none" }}>
+                      <span>{s.ico}</span> {lang==="fa"?s.fa:s.en}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
+                  <button type="button" onClick={()=>{ setPitch(p=>!p); setPitchIdx(0); }} className={`btn btn-ghost btn-sm ${pitch?"mm-btn--on":""}`} style={{ borderRadius:999, border:"1px solid #e2e8f0", background: pitch?"#111827":"#fff", color: pitch?"#fff":"#334155", fontWeight:800 }}>
+                    {pitch?"⏹":"▶"} {lang==="fa"?"پرزنتیشن":"Pitch"}
+                  </button>
+                  <button type="button" onClick={()=>setZen(z=>!z)} className="btn btn-ghost btn-sm" style={{ borderRadius:999, border:"1px solid #e2e8f0", background: zen?"#0ea5e9":"#fff", color: zen?"#fff":"#334155", fontWeight:800 }}>
+                    {zen?"✕":"◐"} {zen?(lang==="fa"?"خروج از Zen":"Exit Zen"):(lang==="fa"?"حالتِ Zen":"Zen")}
+                  </button>
+                  <button type="button" onClick={()=>{ const blob=new Blob([JSON.stringify(detail,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=(detail.slug||'mindmap')+'.json'; a.click(); URL.revokeObjectURL(url); }} className="btn btn-ghost btn-sm" style={{ borderRadius:999, border:'1px solid #e2e8f0', background:'#fff' }} title={lang==='fa'?'خروجیِ پرزنتیشن':'Export'}>{lang==='fa'?'خروجی':'Export'} ⤓</button>
+                </div>
+              </div>
+              <div className={zen?"mm-zen-wrap":""} style={zen?{ position:"fixed", inset:0, zIndex:80, background:"rgba(248,250,252,.86)", backdropFilter:"saturate(1.3) blur(14px)", WebkitBackdropFilter:"saturate(1.3) blur(14px)", padding:"20px 16px 16px", overflow:"auto" }:{}}>
+                {zen && <button type="button" onClick={()=>setZen(false)} style={{ position:"fixed", top:12, insetInlineEnd:12, zIndex:81, width:36, height:36, borderRadius:999, border:"1px solid #e2e8f0", background:"#fff", display:"grid", placeItems:"center", boxShadow:"0 8px 18px rgba(0,0,0,.12)" }}>✕</button>}
+                <GraphView data={detail} structure={structure} pitch={pitch} pitchIdx={pitchIdx} setPitchIdx={setPitchIdx} zen={zen} />
+              </div>
 
               {detail.related?.length > 0 && (
                 <div className="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm">
