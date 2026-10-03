@@ -2249,3 +2249,236 @@ mark.stem-hl{ background:linear-gradient(transparent 55%, rgba(246,195,67,.6) 55
 .opt-grid .opt-wrap:hover{transform:translateY(-1px)}
 .lesson-fb{box-shadow:0 8px 20px rgba(0,0,0,.06)}
 @media(max-width:480px){.dr-grid{grid-template-columns:repeat(2,1fr)}.dr-spark{display:none}}
+
+/* ========================================================================
+   Round 10 — LearnPath & Flashcard beauty 2026-10-04 (research-driven)
+   Duolingo: glass hero + constellation + 80% bar shimmer + winding glow
+   Anki/Quizlet: glass 3D card + FSRS pills + strength meter hints
+   ======================================================================== */
+
+/* -- Path page: soft constellation field (fixed, subtle) -- */
+.path-page{position:relative;isolation:isolate}
+.path-page::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:-1;opacity:.38;
+  background:
+    radial-gradient(1.6px 1.6px at 8% 14%, rgba(37,105,176,.28) 0 100%, transparent 100%),
+    radial-gradient(1px 1px at 22% 38%, rgba(99,102,241,.22) 0 100%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 46% 12%, rgba(14,165,233,.20) 0 100%, transparent 100%),
+    radial-gradient(1px 1px at 72% 22%, rgba(236,72,153,.16) 0 100%, transparent 100%),
+    radial-gradient(1.4px 1.4px at 88% 44%, rgba(34,160,107,.14) 0 100%, transparent 100%),
+    radial-gradient(1px 1px at 64% 78%, rgba(245,158,11,.14) 0 100%, transparent 100%),
+    radial-gradient(900px 500px at 50% -10%, rgba(37,105,176,.07), transparent 60%),
+    radial-gradient(700px 400px at 90% 30%, rgba(99,102,241,.05), transparent 60%),
+    linear-gradient(180deg, rgba(248,250,252,.9), rgba(255,255,255,0));
+}
+[data-theme="dark"] .path-page::before{opacity:.22;
+  background:
+    radial-gradient(1.6px 1.6px at 8% 14%, rgba(120,170,255,.28) 0 100%, transparent 100%),
+    radial-gradient(1px 1px at 22% 38%, rgba(167,139,250,.22) 0 100%, transparent 100%),
+    radial-gradient(1.2px 1.2px at 46% 12%, rgba(56,189,248,.18) 0 100%, transparent 100%),
+    radial-gradient(900px 500px at 50% -10%, rgba(30,58,138,.18), transparent 60%),
+    linear-gradient(180deg, rgba(15,23,42,.6), rgba(15,23,42,0));
+}
+
+/* -- Path progress hero: true frosted glass -- */
+.path-progress-card{
+  background: rgba(255,255,255,.78) !important;
+  backdrop-filter: blur(18px) saturate(1.18);
+  -webkit-backdrop-filter: blur(18px) saturate(1.18);
+  border: 1px solid rgba(255,255,255,.72) !important;
+  box-shadow: 0 14px 40px rgba(15,23,42,.08), 0 1px 0 rgba(255,255,255,.75) inset, 0 0 0 1px rgba(226,232,240,.6);
+  overflow:hidden;
+}
+[data-theme="dark"] .path-progress-card{
+  background: rgba(30,41,59,.68) !important;
+  border-color: rgba(255,255,255,.08) !important;
+  box-shadow: 0 14px 40px rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.06) inset;
+}
+.path-progress-card::before{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;
+  background:
+    radial-gradient(420px 180px at 18% 0%, rgba(14,165,233,.10), transparent 60%),
+    radial-gradient(380px 200px at 92% 10%, rgba(99,102,241,.10), transparent 58%),
+    radial-gradient(1px 1px at 14% 28%, rgba(37,105,176,.22) 0 100%, transparent 100%),
+    radial-gradient(1px 1px at 34% 52%, rgba(99,102,241,.14) 0 100%, transparent 100%),
+    radial-gradient(1px 1px at 78% 32%, rgba(236,72,153,.12) 0 100%, transparent 100%);
+}
+.path-progress-card > *{position:relative;z-index:1}
+.ppc-msg{letter-spacing:-.01em}
+[data-theme="light"] .ppc-pct{color:#1d4ed8}
+.ppc-bar{height:14px !important;background:rgba(226,232,240,.9) !important;box-shadow:inset 0 1px 2px rgba(0,0,0,.06);border:1px solid rgba(255,255,255,.6)}
+[data-theme="dark"] .ppc-bar{background:rgba(51,65,85,.6) !important;border-color:rgba(255,255,255,.06)}
+.ppc-bar>span{
+  background: linear-gradient(90deg, #0ea5e9, #2569b0 45%, #6366f1 85%, #0ea5e9) !important;
+  background-size: 220% 100% !important;
+  animation: ppcFill 1s ease-out, ppcSheenMove 2.2s linear infinite;
+  box-shadow: 0 0 14px rgba(37,105,176,.35);
+  position:relative;overflow:hidden;
+}
+@keyframes ppcFill{from{width:0} }
+@keyframes ppcSheenMove{0%{background-position:0% 50%}100%{background-position:220% 50%}}
+.ppc-bar>span::after{
+  content:"";position:absolute;inset:0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.48), transparent);
+  transform: translateX(-100%); animation: ppcGloss 2.6s ease-in-out infinite;
+}
+@keyframes ppcGloss{ 60%,100%{transform:translateX(100%)} 0%{transform:translateX(-100%)} }
+.ppc-sub{font-weight:700;letter-spacing:.01em}
+.ppc-continue{border-top-color: rgba(226,232,240,.9) !important;background:linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,0));margin:14px -18px -16px;padding:14px 18px 16px}
+[data-theme="dark"] .ppc-continue{border-top-color:rgba(255,255,255,.06) !important;background:linear-gradient(180deg, rgba(255,255,255,.04), transparent)}
+.ppc-mini-title{font-family:var(--font-display)}
+
+/* sticky glass length: slim bar when compact already handled — just blur */
+.path-progress-card.ppc-compact{
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+}
+
+/* -- Mindmap strip: glass tilt -- */
+.mm-strip{backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: transform .18s var(--ease-spring), box-shadow .22s ease}
+.mm-strip:hover{transform:translateY(-1px);box-shadow:0 14px 36px rgba(15,23,42,.08)}
+.mm-chip{transition: transform .16s var(--ease-spring), box-shadow .16s ease, filter .16s ease}
+.mm-chip:hover{transform:translateY(-2px) scale(1.02);filter:brightness(1.05);box-shadow:0 10px 20px rgba(0,0,0,.08)}
+.mm-chip:active{transform:translateY(0) scale(.98)}
+
+/* -- Unit header: glass + gloss sweep -- */
+.unit-header{
+  backdrop-filter: blur(8px) saturate(1.1);
+  -webkit-backdrop-filter: blur(8px) saturate(1.1);
+  border: 1px solid rgba(255,255,255,.22);
+  box-shadow: 0 12px 32px -16px rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.22) inset, 0 8px 22px -12px rgba(30,60,120,.35);
+  overflow:hidden;
+}
+.unit-header::after{
+  content:"";position:absolute;inset:0;pointer-events:none;opacity:.0;
+  background: linear-gradient(110deg, transparent 30%, rgba(255,255,255,.22) 50%, transparent 70%);
+  transform: translateX(-40%); transition: opacity .3s, transform .6s;
+}
+.unit-header:hover::after{opacity:1;transform:translateX(40%)}
+.unit-header-ico{background:rgba(255,255,255,.20) !important;backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.28);box-shadow:0 4px 14px rgba(0,0,0,.12)}
+.uhp-bar{height:8px !important;background:rgba(255,255,255,.28) !important;border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(4px)}
+.uhp-bar>span{background:rgba(255,255,255,.96) !important;box-shadow:0 0 10px rgba(255,255,255,.55)}
+
+/* -- Winding path: glow trail between nodes + softer sway shadow -- */
+.unit-node-row::after{opacity:.55;filter:blur(.2px)}
+.unit-path{padding: 8px 0 6px}
+.unit-node .unit-bubble{
+  position:relative;overflow:hidden;isolation:isolate;
+  transition: transform .18s var(--ease-spring), box-shadow .18s ease, filter .18s ease;
+}
+.unit-bubble .bubble-gloss{
+  content:"";position:absolute;inset:1px 1px 44% 1px;border-radius:inherit;
+  background: linear-gradient(180deg, rgba(255,255,255,.38), rgba(255,255,255,0));
+  pointer-events:none;opacity:.9;
+}
+.unit-node:hover .unit-bubble{transform:translateY(-3px) scale(1.015);filter:brightness(1.03)}
+.unit-node:active .unit-bubble{transform:translateY(2px) scale(.98)}
+.unit-node.current .unit-bubble{
+  box-shadow: 0 10px 0 rgba(0,0,0,.14), 0 16px 32px -10px rgba(37,105,176,.45), 0 0 0 4px rgba(37,105,176,.12) !important;
+}
+.unit-node.done .unit-bubble .bubble-gloss{opacity:.55}
+.unit-node.locked .unit-bubble .bubble-gloss{opacity:.28}
+.unit-node-row .node-ring.on{box-shadow:0 0 0 3px rgba(37,105,176,.14), 0 0 22px rgba(37,105,176,.22)}
+@keyframes nodeBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.unit-node-label{backdrop-filter:blur(2px)}
+.unl-title{letter-spacing:-.01em}
+[data-theme="dark"] .unl-title{color:var(--text)}
+.unit-complete-chip{
+  background: linear-gradient(135deg,#dcfce7,#bbf7d0) !important;color:#065f46 !important;
+  border:1px solid #86efac !important;box-shadow:0 8px 20px rgba(34,197,94,.18);
+  backdrop-filter: blur(6px);
+}
+[data-theme="dark"] .unit-complete-chip{background:rgba(34,197,94,.16) !important;color:#bbf7d0 !important;border-color:rgba(34,197,94,.28) !important}
+
+/* -- Lesson: glass question card -- */
+.lesson-q-card{
+  background: rgba(255,255,255,.84) !important;
+  backdrop-filter: blur(16px) saturate(1.12);
+  -webkit-backdrop-filter: blur(16px) saturate(1.12);
+  border: 1px solid rgba(255,255,255,.70) !important;
+  box-shadow: 0 14px 40px rgba(15,23,42,.07), 0 1px 0 rgba(255,255,255,.75) inset !important;
+}
+[data-theme="dark"] .lesson-q-card{
+  background: rgba(30,41,59,.72) !important;
+  border-color: rgba(255,255,255,.08) !important;
+  box-shadow: 0 14px 40px rgba(0,0,0,.32) !important;
+}
+.lesson-q-accent{
+  height:4px !important;
+  background: linear-gradient(90deg, #0ea5e9, #6366f1, #ec4899, #f59e0b, #0ea5e9) !important;
+  background-size: 300% 100% !important;
+  animation: accentShift 7s linear infinite;
+}
+@keyframes accentShift{0%{background-position:0% 50%}100%{background-position:300% 50%}}
+.lesson-q{line-height:1.85}
+.lesson-resource-bar{border-top-color: rgba(226,232,240,.9) !important}
+[data-theme="dark"] .lesson-resource-bar{border-top-color: rgba(255,255,255,.07) !important}
+.lesson-res-btn{backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px)}
+.lesson-res-ref{background: linear-gradient(135deg, rgba(240,249,255,.9), rgba(224,242,254,.85)) !important}
+[data-theme="dark"] .lesson-res-ref{background: linear-gradient(135deg, rgba(14,165,233,.14), rgba(99,102,241,.12)) !important; border-color: rgba(99,102,241,.18) !important}
+
+/* -- Lesson options: tactile lift -- */
+.opt-grid .opt-wrap{border-radius:14px;overflow:hidden}
+.opt-grid .opt-wrap:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(15,23,42,.08)}
+.lesson-fb{backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px)}
+
+/* -- Flashcards practice (Doctordle): glass card + 3D hover -- */
+.ddle-card{
+  background: rgba(255,255,255,.86) !important;
+  backdrop-filter: blur(16px) saturate(1.12);
+  -webkit-backdrop-filter: blur(16px) saturate(1.12);
+  border: 1px solid rgba(255,255,255,.72) !important;
+  box-shadow: 0 14px 40px rgba(15,23,42,.07), 0 1px 0 rgba(255,255,255,.7) inset !important;
+  transition: transform .18s var(--ease-spring), box-shadow .22s ease;
+}
+[data-theme="dark"] .ddle-card{
+  background: rgba(30,41,59,.72) !important;
+  border-color: rgba(255,255,255,.08) !important;
+}
+.ddle-card:hover{transform:translateY(-1px);box-shadow:0 18px 44px rgba(15,23,42,.10), 0 1px 0 rgba(255,255,255,.7) inset !important}
+[data-theme="dark"] .ddle-card:hover{box-shadow:0 18px 44px rgba(0,0,0,.35) !important}
+.ddle-title{font-family:var(--font-display);letter-spacing:-.015em}
+.ddle-underline{background: linear-gradient(90deg, #22a06b, #0ea5e9, #6366f1) !important; height:4px !important; width:64px !important}
+.ddle-img{box-shadow:0 10px 24px rgba(0,0,0,.08);border-color:rgba(226,232,240,.9) !important}
+.zoom-badge{backdrop-filter:blur(8px); background:rgba(15,23,42,.62) !important; border:1px solid rgba(255,255,255,.18)}
+.mc-opt{
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  transition: transform .15s var(--ease-spring), box-shadow .16s ease, border-color .16s ease, background .16s ease !important;
+}
+.mc-opt:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 20px rgba(15,23,42,.06)}
+.mc-opt.correct{box-shadow:0 8px 18px rgba(34,197,94,.18) !important}
+.mc-opt.wrong{box-shadow:0 8px 18px rgba(239,68,68,.12) !important}
+.progress-dots .dot{box-shadow: inset 0 1px 0 rgba(255,255,255,.6)}
+.progress-dots .dot.active{box-shadow:0 0 0 3px rgba(37,105,176,.14), 0 2px 10px rgba(37,105,176,.22)}
+.ddle-hint{backdrop-filter:blur(6px)}
+.ddle-banner{backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px)}
+
+/* -- Deck picker (Flashcards.jsx): glass stat cards -- */
+.flash-wrap .mod-card, .flash-wrap .card.mod-card{
+  background: rgba(255,255,255,.78) !important;
+  backdrop-filter: blur(12px) saturate(1.1);
+  -webkit-backdrop-filter: blur(12px) saturate(1.1);
+  border:1px solid rgba(255,255,255,.65) !important;
+  box-shadow:0 10px 30px rgba(15,23,42,.06), 0 1px 0 rgba(255,255,255,.6) inset !important;
+  transition: transform .18s var(--ease-spring), box-shadow .22s ease;
+}
+[data-theme="dark"] .flash-wrap .mod-card{
+  background: rgba(30,41,59,.64) !important;
+  border-color: rgba(255,255,255,.07) !important;
+}
+.flash-wrap .mod-card:hover{transform:translateY(-3px);box-shadow:0 16px 36px rgba(15,23,42,.10) !important}
+.stat-card{backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.55)}
+[data-theme="dark"] .stat-card{border-color:rgba(255,255,255,.06)}
+
+/* -- Immersive flash feedback: gentle card nudge on right/wrong -- */
+@keyframes cardOkPop{0%{transform:scale(1)}30%{transform:scale(1.015)}100%{transform:scale(1)}}
+@keyframes cardBadShake{0%,100%{transform:translateX(0)}22%{transform:translateX(-3px)}44%{transform:translateX(3px)}66%{transform:translateX(-2px)}}
+.ddle-card:has(.ddle-banner.ok){animation: cardOkPop .42s var(--ease-spring)}
+.ddle-card:has(.ddle-banner.bad){animation: cardBadShake .42s ease}
+
+/* reduce motion respect */
+@media (prefers-reduced-motion: reduce){
+  .ppc-bar>span, .ppc-bar>span::after, .lesson-q-accent{animation:none !important}
+  .unit-header::after{transition:none}
+  .ddle-card:has(.ddle-banner.ok), .ddle-card:has(.ddle-banner.bad){animation:none}
+}
+
