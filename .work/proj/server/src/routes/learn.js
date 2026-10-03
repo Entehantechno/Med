@@ -33,7 +33,7 @@ import { createSim, finishSim, simHistory } from "../lib/examsim.js";
 import { normalizeConfig, builderOptions, pickCards, createCustomTest, getCustomTest, answerCustomTest, finishCustomTest, customHistory } from "../lib/customtest.js";
 import { gradeFlashcard, bodyFromClientSel } from "../lib/flashcard-grade.js";
 import { buildMindmap, mindmapTopics } from "../lib/mindmap.js";
-import { searchMindmaps, getMindmap, mindmapFacets, questionsByConcept, seedMindmapBank } from "../lib/mindmapBank.js";
+import { searchMindmaps, getMindmap, mindmapFacets, questionsByConcept, seedMindmapBank, mindmapDailyInfo, canViewMindmap, recordMindmapView } from "../lib/mindmapBank.js";
 import { buildStudyPlan, getStudyPlan } from "../lib/studyplan.js";
 import { getSetting } from "./content.js";
 import { studyNote, resolveAiConfig } from "../lib/ai-engine.js";
@@ -1557,6 +1557,23 @@ r.post("/custom-test/:id/finish", ...learner, customGate, (req, res) => {
 });
 
 /* ---------------- MIND-MAPS (built from hand-written درسنامه; no AI) ---------------- */
+r.get("/references", ...learner, (req, res) => {
+  // competitive: references are unlimited for everyone (free & premium)
+  try {
+    const rows = db.prepare("SELECT * FROM reference_catalog WHERE active=1 ORDER BY id").all();
+    const refs = rows.map((r) => ({
+      code: r.code, title_fa: r.title_fa, title_en: r.title_en, short_title: r.short_title,
+      publisher: r.publisher, edition: r.edition, publication_year: r.publication_year,
+      isbn: r.isbn, source_url: r.source_url, cover_url: r.cover_url, pdf_url: r.pdf_url,
+      rights_status: r.rights_status, active: r.active,
+    }));
+    // fallback: if no catalog, return a minimal Harrison entry so ReferenceViewer never empty
+    if (!refs.length) {
+      refs.push({ code: "harrison-22e", title_fa: "هاریسون - اصول طب داخلی", title_en: "Harrison's Principles of Internal Medicine", short_title: "Harrison", publisher: "McGraw-Hill", edition: "22e", source_url: "https://accessmedicine.mhmedical.com/book.aspx?bookid=3095", cover_url: "/covers/harrison.jpg", pdf_url: "", rights_status: "metadata_only", active: 1 });
+    }
+    res.json({ references: refs });
+  } catch { res.json({ references: [] }); }
+});
 r.get("/mindmap/topics", ...learner, flagGate("mindmap"), (req, res) => {
   res.json({ topics: mindmapTopics(L(req), activeProgramFor(req.user.id)) });
 });
@@ -1596,6 +1613,10 @@ r.get("/mindmap-bank", ...learner, (req, res) => {
   const status = (req.query.status || "active").toString();
   const out = searchMindmaps({ lang: L(req), q, filters, sort, page, pageSize, isPremium: isPrem, status });
   out.facets = mindmapFacets();
+  try {
+    out.daily = isPrem ? { remaining: Infinity, limit: 999, used: 0 } : mindmapDailyInfo(req.user.id);
+    out.freeLimit = 5;
+  } catch {}
   res.json(out);
 });
 r.get("/mindmap-bank/:slug", ...learner, (req, res) => {
@@ -1609,7 +1630,22 @@ r.get("/mindmap-bank/:slug", ...learner, (req, res) => {
   } catch {}
   const m = getMindmap(req.params.slug, { lang: L(req), isPremium: isPrem });
   if (!m) return res.status(404).json({ error: "not found" });
-  res.json(m);
+  // competitive: free daily limit 5/day — even previews count after 5
+  if (!isPrem) {
+    const daily = mindmapDailyInfo(req.user.id);
+    if (!m.locked && daily.remaining <= 0) {
+      return res.status(402).json({ error: "mindmap daily limit", daily, premiumRequired: true });
+    }
+    // record view for free when they actually get content (not locked)
+    if (!m.locked) {
+      recordMindmapView(req.user.id, isPrem);
+      const after = mindmapDailyInfo(req.user.id);
+      return res.json({ ...m, daily: after });
+    }
+    return res.json({ ...m, daily });
+  }
+  // premium: unlimited, return with daily info
+  try { const daily = mindmapDailyInfo(req.user.id); return res.json({ ...m, daily }); } catch { return res.json(m); }
 });
 r.get("/questions/by-concept", ...learner, (req, res) => {
   const concept = (req.query.concept || "").trim() || (req.query.node || "").trim();

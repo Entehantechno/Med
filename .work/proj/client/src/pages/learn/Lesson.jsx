@@ -348,15 +348,19 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
           {card.chapter && <span className="exam-chapter-chip">{card.chapter}</span>}
         </div>
       )}
-      <HighlightableStem text={card.q} highlights={card.highlights} className="lesson-q" style={{ fontSize: `${stemZoom * 1.35}rem`, lineHeight: 1.75 }} />
-      {/* rich question media: image / uploaded video / Aparat|YouTube embed
-          (falls back to the legacy plain image when no media descriptor). */}
-      {card.media
-        ? <MediaEmbed media={card.media} className="lesson-media" />
-        : card.image && <img src={card.image} alt={card.imageAlt || (lang === "fa" ? "طرح آموزشی سؤال" : "Teaching figure")} className="ddle-img" style={{ maxHeight: 220, margin: "0 auto 16px", display: "block" }} />}
+      {/* Beautiful question card — glass + accent */}
+      <div className="lesson-q-card">
+        <div className="lesson-q-accent" aria-hidden="true" />
+        <HighlightableStem text={card.q} highlights={card.highlights} className="lesson-q" style={{ fontSize: `${stemZoom * 1.35}rem`, lineHeight: 1.75 }} />
+        {card.media
+          ? <MediaEmbed media={card.media} className="lesson-media" />
+          : card.image && <img src={card.image} alt={card.imageAlt || (lang === "fa" ? "طرح آموزشی سؤال" : "Teaching figure")} className="ddle-img" style={{ maxHeight: 220, margin: "0 auto 16px", display: "block", borderRadius: 12 }} />}
+        <Type card={card} checked={checked} sel={sel} setSel={setSel} isCorrect={wasCorrect} glossary={data.glossary} />
+        {/* Resource bar: reference unlimited + mindmap limited — competitive path */}
+        <LessonResourceBar card={card} premium={premium} lang={lang} />
+      </div>
 
       {!checked && flag("hint") && <HintButton card={card} premium={premium} onUsed={() => setHintUsed(true)} onProfile={(pp) => onProfile?.((prev) => ({ ...(prev || {}), ...pp }))} />}
-      <Type card={card} checked={checked} sel={sel} setSel={setSel} isCorrect={wasCorrect} glossary={data.glossary} />
 
       {checked && (
         <>
@@ -504,6 +508,83 @@ export function typeLabel(type, lang) {
     compare: ["تمایز بالینی", "Compare & contrast"],
   };
   return (M[type] || M.mcq)[lang === "fa" ? 0 : 1];
+}
+
+/* Resource bar — reference unlimited, mindmap limited (competitive path) */
+function LessonResourceBar({ card, premium, lang }) {
+  const fa = lang === "fa";
+  const [mindmaps, setMindmaps] = useState([]);
+  const [used, setUsed] = useState(() => {
+    try {
+      const d = new Date().toISOString().slice(0, 10);
+      const k = `med_mindmap_daily_${d}`;
+      const v = JSON.parse(localStorage.getItem(k) || "0");
+      return Number(v) || 0;
+    } catch { return 0; }
+  });
+  const limit = premium ? Infinity : 5;
+  const remaining = Math.max(0, limit - used);
+  const unlimitedRef = true; // competitive: references always unlimited
+
+  useEffect(() => {
+    if (!card?.id) return;
+    api.get(`/learn/questions/${card.id}/mindmaps`).then((d) => setMindmaps(d.mindmaps || [])).catch(() => setMindmaps([]));
+  }, [card?.id]);
+
+  const openReference = () => {
+    // reference is unlimited — go to library/reference viewer
+    // if card has a source, try to open the reference code inferred from micro.source
+    const code = card?.micro?.source || card?.source || "";
+    // dispatch to library tab — reference viewer is inside library tab
+    // For now, open library; ReferenceViewer will show the exact page when code matches
+    try {
+      window.dispatchEvent(new CustomEvent("medlab-go", { detail: "library" }));
+    } catch {}
+  };
+
+  const openMindmap = (slug) => {
+    if (!premium && used >= limit) {
+      window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }));
+      return;
+    }
+    if (!premium) {
+      try {
+        const d = new Date().toISOString().slice(0, 10);
+        const k = `med_mindmap_daily_${d}`;
+        const next = used + 1;
+        localStorage.setItem(k, String(next));
+        setUsed(next);
+      } catch {}
+    }
+    const target = slug || mindmaps[0]?.slug;
+    if (target) {
+      try { window.dispatchEvent(new CustomEvent("medlab-go", { detail: `mindmap:${target}` })); } catch {}
+      // fallback: direct hash navigation
+      try { window.location.hash = `#mindmap-${target}`; window.dispatchEvent(new CustomEvent("medlab-go", { detail: "mindmap" })); } catch {}
+    } else {
+      try { window.dispatchEvent(new CustomEvent("medlab-go", { detail: "mindmap" })); } catch {}
+    }
+  };
+
+  return (
+    <div className="lesson-resource-bar">
+      <button type="button" className="lesson-res-btn lesson-res-ref" onClick={openReference} title={fa ? "مرجع نامحدود — همیشه باز" : "Unlimited reference — always open"}>
+        <span className="lesson-res-ico" style={{ background: "linear-gradient(135deg,#0ea5e9,#6366f1)" }}><Icon name="book" size={14} /></span>
+        <span className="lesson-res-label">{fa ? "مشاهده در رفرنس" : "View in reference"}</span>
+        <span className="lesson-res-badge unlimited">{fa ? "نامحدود" : "unlimited"} ✓</span>
+      </button>
+      <button type="button" className={`lesson-res-btn lesson-res-map ${!premium && used >= limit ? "locked" : ""}`} onClick={() => openMindmap()} title={!premium && used >= limit ? (fa ? "سهم روزانه تمام شد — ارتقا به پلاس" : "Daily limit reached — upgrade") : (fa ? `نقشه ذهنی — ${remaining} باقی‌مانده امروز` : `Mindmap — ${remaining} left today`)}>
+        <span className="lesson-res-ico" style={{ background: premium || used < limit ? "linear-gradient(135deg,#10b981,#06b6d4)" : "linear-gradient(135deg,#9ca3af,#6b7280)" }}><Icon name={(!premium && used >= limit) ? "lock" : "brain"} size={14} /></span>
+        <span className="lesson-res-label">{fa ? "نقشه ذهنی" : "Mindmap"}</span>
+        {premium ? (
+          <span className="lesson-res-badge unlimited">{fa ? "نامحدود" : "unlimited"} ✓</span>
+        ) : (
+          <span className={`lesson-res-badge ${remaining <= 1 ? "danger" : remaining <= 3 ? "warn" : ""}`}>{remaining}/{limit} {fa ? "امروز" : "today"}</span>
+        )}
+      </button>
+      {mindmaps.length > 0 && <span className="small muted" style={{ alignSelf: "center", fontSize: ".72rem" }}>{mindmaps.length} {fa ? "نقشه مرتبط" : "linked"}</span>}
+    </div>
+  );
 }
 
 function OutOfHearts({ onProfile, onBack }) {

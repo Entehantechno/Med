@@ -139,7 +139,12 @@ export default function Mindmap({ onBack }) {
   };
   const openBank = (slug) => {
     setDetail(null); setDetailLoading(true); setNodeQ(null);
-    api.get(`/learn/mindmap-bank/${slug}?lang=${lang}`).then(d => { setDetail(d); setDetailLoading(false); }).catch(() => setDetailLoading(false));
+    api.get(`/learn/mindmap-bank/${slug}?lang=${lang}`).then(d => { setDetail(d); setDetailLoading(false); }).catch((e) => {
+      if (e?.status === 402) {
+        setDetail({ locked: true, daily: e?.data?.daily, error: "daily_limit" });
+      }
+      setDetailLoading(false);
+    });
   };
   const openQuestionsFor = (concept, mindmapSlug) => {
     const qs = new URLSearchParams({ lang });
@@ -154,15 +159,16 @@ export default function Mindmap({ onBack }) {
   const GraphView = ({ data }) => {
     const [zoom, setZoom] = useState(1);
     if (data.locked) {
+      const isDaily = data.error === "daily_limit" || (data.daily && data.daily.remaining <= 0);
       return (
         <div className="relative overflow-hidden rounded-[20px] border border-amber-200 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 p-8 text-center shadow-lg">
           <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-gradient-to-br from-amber-200/50 to-orange-200/50 blur-2xl" />
           <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-gradient-to-br from-yellow-200/50 to-amber-200/50 blur-2xl" />
           <div className="relative">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-3xl shadow-lg shadow-amber-500/25">🔒</div>
-            <h3 className="mt-4 text-xl font-black text-amber-900">{lang === "fa" ? "این نقشه ویژهٔ پرمیوم است" : "Premium Only"}</h3>
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-3xl shadow-lg shadow-amber-500/25">{isDaily ? "⏳" : "🔒"}</div>
+            <h3 className="mt-4 text-xl font-black text-amber-900">{isDaily ? (lang === "fa" ? "سهم امروز تمام شد" : "Daily limit reached") : (lang === "fa" ? "این نقشه ویژهٔ پرمیوم است" : "Premium Only")}</h3>
             <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-amber-800/80">
-              {lang === "fa" ? "با پرمیوم، ۳۴۹ مایندمپ و اپروچِ لینک‌دار به بانک را باز کنید — ۳ نقشه برای آشنایی رایگان است." : "Unlock 349 linked maps with Premium — 3 free to preview."}
+              {isDaily ? (lang === "fa" ? "امروز ۵ نقشه دیدید — فردا دوباره ۵ نقشه رایگان دارید. با پلاس نامحدود می‌شود." : "You viewed 5 maps today — 5 more free tomorrow. Go Plus for unlimited.") : (lang === "fa" ? "با پرمیوم، ۳۴۹ مایندمپ و اپروچِ لینک‌دار به بانک را باز کنید — ۳ نقشه برای آشنایی رایگان است." : "Unlock 349 linked maps with Premium — 3 free to preview.")}
             </p>
             <div className="mt-6 flex justify-center gap-3">
               <button onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))} className="rounded-full bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3 text-sm font-black text-white shadow-lg shadow-amber-500/25 transition hover:scale-105 hover:shadow-xl">
@@ -501,6 +507,8 @@ export default function Mindmap({ onBack }) {
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-3 py-1 text-white">{bank.total} {lang === "fa" ? "نقشه" : "maps"}</span>
                           {q && <span className="ms-2 rounded-full border border-slate-200 bg-white px-3 py-1">“{q}”</span>}
                           {bank.previews ? <span className="ms-2 rounded-full bg-emerald-100 px-3 py-1 font-black text-emerald-800">{bank.previews} {lang === "fa" ? "رایگان" : "free"}</span> : null}
+                          {bank.daily && bank.daily.limit < 999 && <span className={`ms-2 rounded-full px-3 py-1 font-black ${bank.daily.remaining <= 1 ? "bg-rose-100 text-rose-800" : bank.daily.remaining <= 3 ? "bg-amber-100 text-amber-800" : "bg-sky-100 text-sky-800"}`}>{bank.daily.remaining}/{bank.daily.limit} {lang === "fa" ? "امروز باقی‌مانده" : "left today"}</span>}
+                          <span className="ms-2 hidden rounded-full border border-sky-200 bg-sky-50 px-3 py-1 font-bold text-sky-700 sm:inline-flex">📚 {lang === "fa" ? "رفرنس نامحدود" : "ref unlimited"} ✓</span>
                         </>
                       ) : (
                         <span className="animate-pulse rounded-full bg-slate-200 px-3 py-1 text-slate-200">...</span>
@@ -508,6 +516,12 @@ export default function Mindmap({ onBack }) {
                     </span>
                     <span className="hidden text-slate-500 sm:inline">{lang === "fa" ? "قانون: OR داخل یک فاست، AND بین فاست‌ها" : "OR inside, AND across"} • {lang === "fa" ? "همهٔ کلمه‌ها باید بیایند" : "All terms must match"}</span>
                   </div>
+                  {bank?.daily && bank.daily.limit < 999 && bank.daily.remaining <= 2 && (
+                    <div className={`mt-3 rounded-xl border px-4 py-3 text-sm font-bold shadow-sm ${bank.daily.remaining === 0 ? "border-rose-200 bg-rose-50 text-rose-800" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
+                      {bank.daily.remaining === 0 ? (lang === "fa" ? "🚫 سهم روزانهٔ مایندمپ تمام شد — با پلاس نامحدود می‌شود" : "Daily mindmap limit reached — Go Plus for unlimited") : (lang === "fa" ? `⚠️ فقط ${bank.daily.remaining} نقشهٔ دیگر امروز باقی‌مانده — با پلاس نامحدود` : `Only ${bank.daily.remaining} more today — Go Plus for unlimited`)}
+                      <button onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))} className="ms-2 rounded-full bg-slate-900 px-3 py-1 text-xs font-black text-white hover:bg-slate-800">{lang === "fa" ? "مشاهده پلاس" : "See Plus"}</button>
+                    </div>
+                  )}
                 </div>
               </div>
 

@@ -7,40 +7,53 @@ import { TYPE_MAP, MicroLesson } from "./QuestionTypes.jsx";
 import Emphasis from "../../components/Emphasis.jsx";
 import SearchBox, { Highlight, normFa } from "../../components/SearchBox.jsx";
 
-/* Learner-facing question browser.
- *
- * The learning path decides what you SHOULD study next; this page is for when
- * you already know what you want — "headache questions from 1404", "every
- * negative-stem item in Neurology". It exposes the same classification the
- * admin has, with the two rules faceted search is expected to follow:
- * OR inside one facet, AND across facets.
- *
- * Counts next to each option come from the server, recomputed against the
- * other active filters, so the numbers stay honest as you drill down and an
- * option that would return nothing is never offered.
+/* Learner-facing question browser — beautiful redesign 2026-10.
+ * Baymard/NNg: OR inside facet, AND across, honest counts, hash-state,
+ * glass cards, system gradients, sticky toolbar.
  */
 
 const FACETS = [
-  { key: "subject", label: "examSubjectLabel" },
-  { key: "examType", label: "examTypeLabel" },
-  { key: "chapter", label: "chapterLabel", dependsOn: "subject" },
-  { key: "concept", label: "conceptLabel", dependsOn: "chapter" },
-  { key: "year", label: "examYearLabel" },
-  { key: "month", label: "examMonthLabel" },
-  { key: "sitting", label: "sittingLabel", localize: true },
-  { key: "scope", label: "scopeLabel" },
-  { key: "exam", label: "examSittingLabel" },
-  { key: "style", label: "styleLabel", localize: true },
-  { key: "difficulty", label: "difficulty", localize: true },
-  { key: "qtype", label: "questionTypeLabel", localize: true },
-  { key: "origin", label: "originLabel", localize: true },
+  { key: "subject", label: "examSubjectLabel", icon: "book" },
+  { key: "examType", label: "examTypeLabel", icon: "exam" },
+  { key: "chapter", label: "chapterLabel", dependsOn: "subject", icon: "layers" },
+  { key: "concept", label: "conceptLabel", dependsOn: "chapter", icon: "bulb" },
+  { key: "year", label: "examYearLabel", icon: "calendar" },
+  { key: "month", label: "examMonthLabel", icon: "clock" },
+  { key: "sitting", label: "sittingLabel", localize: true, icon: "clock" },
+  { key: "scope", label: "scopeLabel", icon: "target" },
+  { key: "exam", label: "examSittingLabel", icon: "exam" },
+  { key: "style", label: "styleLabel", localize: true, icon: "edit" },
+  { key: "difficulty", label: "difficulty", localize: true, icon: "zap" },
+  { key: "qtype", label: "questionTypeLabel", localize: true, icon: "list" },
+  { key: "origin", label: "originLabel", localize: true, icon: "shield" },
 ];
-const PRIMARY = ["subject", "examType", "chapter", "year"];   // open by default; the rest sit under "more"
+const PRIMARY = ["subject", "examType", "chapter", "year"];
 const EMPTY = Object.fromEntries(FACETS.map((f) => [f.key, []]));
 
-/* Filter state lives in the URL hash (#browse?subject=…&q=…) so back/forward,
-   refresh and sharing a search all work — Baymard: "non-canonical URLs reset
-   filters" is a top-3 filter complaint. */
+const SUBJECT_GRAD = {
+  "داخلی": "from-emerald-500 to-teal-600",
+  "جراحی": "from-rose-500 to-pink-600",
+  "کودکان": "from-sky-500 to-blue-600",
+  "زنان": "from-fuchsia-500 to-purple-600",
+  "اعصاب": "from-amber-500 to-orange-600",
+  "روان": "from-violet-500 to-indigo-600",
+  "پوست": "from-lime-500 to-emerald-600",
+  "چشم": "from-cyan-500 to-sky-600",
+  "گوش": "from-slate-500 to-gray-600",
+  "ارتوپدی": "from-orange-500 to-red-600",
+  "رادیو": "from-zinc-500 to-neutral-600",
+  "پاتولوژی": "from-pink-500 to-rose-600",
+  "فارما": "from-indigo-500 to-violet-600",
+  "بهداشت": "from-teal-500 to-cyan-600",
+  "default": "from-slate-500 to-slate-600",
+};
+function subjGrad(s) {
+  if (!s) return SUBJECT_GRAD.default;
+  for (const k of Object.keys(SUBJECT_GRAD)) if (s.includes(k)) return SUBJECT_GRAD[k];
+  return SUBJECT_GRAD.default;
+}
+const DIFF_COLOR = { easy: "emerald", medium: "amber", hard: "rose" };
+
 function readHash() {
   try {
     const h = window.location.hash || "";
@@ -69,19 +82,18 @@ export default function Browse() {
   const fa = lang !== "en";
   const init = useMemo(readHash, []);
   const [fil, setFil] = useState(init?.fil || EMPTY);
-  const [term, setTerm] = useState(init?.term || "");        // what is in the box
-  const [query, setQuery] = useState(init?.term || "");      // what we search (debounced)
-  const [sort, setSort] = useState(init?.sort || "");        // "" = smart default
+  const [term, setTerm] = useState(init?.term || "");
+  const [query, setQuery] = useState(init?.term || "");
+  const [sort, setSort] = useState(init?.sort || "");
   const [page, setPage] = useState(init?.page || 1);
   const [data, setData] = useState(null);
   const [busy, setBusy] = useState(false);
-  const [open, setOpen] = useState(null);      // card being previewed
+  const [open, setOpen] = useState(null);
   const [showFil, setShowFil] = useState(false);
   const [more, setMore] = useState(false);
-  const [facetQ, setFacetQ] = useState({});    // per-facet quick filter text
-  const cache = useRef(new Map());             // qs → response (session SWR)
+  const [facetQ, setFacetQ] = useState({});
+  const cache = useRef(new Map());
 
-  // Localised label for the machine values the API returns.
   const vLabel = (facet, v) => {
     const map = {
       sitting: { main: t("sittingMain"), midterm: t("sittingMid") },
@@ -107,16 +119,15 @@ export default function Browse() {
   useEffect(() => {
     let alive = true;
     const hit = cache.current.get(qs);
-    if (hit) setData(hit);                      // instant paint from session cache …
+    if (hit) setData(hit);
     setBusy(!hit);
-    api.get(`/learn/browse?${qs}`)              // … then revalidate
+    api.get(`/learn/browse?${qs}`)
       .then((d) => { if (!alive) return; cache.current.set(qs, d); setData(d); })
       .catch(() => { if (alive && !hit) setData({ cards: [], total: 0, facets: {} }); })
       .finally(() => { if (alive) setBusy(false); });
     return () => { alive = false; };
   }, [qs]);
 
-  // Prefetch the next page while the learner reads this one.
   useEffect(() => {
     if (!data || busy) return;
     const pages = Math.max(1, Math.ceil((data.total || 0) / 20));
@@ -129,8 +140,6 @@ export default function Browse() {
     return () => (window.cancelIdleCallback || clearTimeout)(h);
   }, [data, busy, page, qs]);
 
-  // OR inside a facet (toggle a value), AND across facets. Changing a parent
-  // clears its children so "Neurology + a Cardiology chapter" cannot happen.
   const toggle = (k, v) => {
     setPage(1);
     setFil((s) => {
@@ -143,7 +152,6 @@ export default function Browse() {
   };
   const resetAll = () => { setFil(EMPTY); setTerm(""); setQuery(""); setSort(""); setPage(1); };
 
-  // Autocomplete: scoped facet values + a few stems (server-ranked).
   const suggest = useCallback((q) => api.get(`/learn/browse/suggest?lang=${lang}&q=${encodeURIComponent(q)}`).then((d) => d.suggestions || []).catch(() => []), [lang]);
   const onPick = (sug) => {
     if (sug.kind === "card") { setOpen(sug.id); return; }
@@ -157,7 +165,7 @@ export default function Browse() {
   };
 
   const activeChips = [];
-  for (const f of FACETS) for (const v of (fil[f.key] || [])) activeChips.push({ key: f.key, value: v, label: f.localize || f.key === "examType" ? vLabel(f.key, v) : (facetLabel(data?.facets, f.key, v) || v), facet: t(f.label) });
+  for (const f of FACETS) for (const v of (fil[f.key] || [])) activeChips.push({ key: f.key, value: v, label: f.localize || f.key === "examType" ? vLabel(f.key, v) : (facetLabel(data?.facets, f.key, v) || v), facet: t(f.label), icon: f.icon });
   const active = activeChips.length + (query.trim() ? 1 : 0);
   const facets = data?.facets || {};
   const total = data?.total || 0;
@@ -174,57 +182,98 @@ export default function Browse() {
     }
     const fq = normFa((facetQ[f.key] || "").trim());
     if (fq) opts = opts.filter((o) => normFa(o.label || o.value).includes(fq) || normFa(vLabel(f.key, o.value)).includes(fq));
-    // selected values first, then by count
     const sel = new Set(fil[f.key] || []);
     return [...opts].sort((a, b) => (sel.has(b.value) - sel.has(a.value)) || (b.count - a.count));
   };
 
   return (
-    <div className="browse-page">
-      <div className="browse-head">
-        <div>
-          <h2 className="h2"><Icon name="search" size={18} /> {t("browseTitle")}</h2>
-          <p className="muted small mb0">{t("browseDesc")}</p>
+    <div className="browse-page" style={{ maxWidth: 980, margin: "0 auto", padding: "0 4px" }}>
+      {/* ===== Beautiful header — glass + gradient ===== */}
+      <div className="browse-hero">
+        <div className="browse-hero-glow" aria-hidden="true" />
+        <div className="browse-hero-inner">
+          <div className="browse-hero-icon">
+            <Icon name="search" size={20} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 className="browse-hero-title">{t("browseTitle")}</h2>
+            <p className="browse-hero-sub">{t("browseDesc")}</p>
+          </div>
+          <div className="browse-hero-actions">
+            {flag("custom_test") && (
+              <button type="button" className="btn btn-ghost browse-hero-cta" onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "customTest" }))}>
+                <Icon name="exam" size={15} /> {fa ? "آزمون‌ساز" : "Create test"}
+              </button>
+            )}
+            <button type="button" className={`browse-filter-btn ${showFil || activeChips.length ? "on" : ""}`} onClick={() => setShowFil((v) => !v)} aria-expanded={showFil}>
+              <Icon name="settings" size={15} />
+              <span>{t("browseFilters")}</span>
+              {activeChips.length > 0 && <span className="browse-filter-badge">{activeChips.length}</span>}
+            </button>
+          </div>
         </div>
-        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "flex-end" }}>
-          {flag("custom_test") && <button type="button" className="btn btn-sm btn-accent" onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "customTest" }))} title={lang === "fa" ? "از بانک، آزمون دلخواه بساز" : "Build a custom test from the bank"}>
-            <Icon name="exam" size={14} /> {lang === "fa" ? "آزمون‌ساز" : "Create test"}
-          </button>}
-          <button type="button" className={`btn btn-sm ${showFil || activeChips.length ? "btn-primary" : "btn-ghost"}`} onClick={() => setShowFil((v) => !v)} aria-expanded={showFil}>
-            <Icon name="settings" size={14} /> {t("browseFilters")}{activeChips.length ? ` (${activeChips.length})` : ""}
-          </button>
+        {/* stats pills */}
+        <div className="browse-hero-stats">
+          <span className="browse-stat-pill">
+            <span className="browse-stat-dot" style={{ background: "#0ea5e9" }} />
+            {busy && !data ? <Spinner /> : <><b>{total.toLocaleString(fa ? "fa-IR" : "en-US")}</b> {fa ? "سؤال" : "questions"}</>}
+          </span>
+          {data?.bankTotal != null && data.bankTotal !== total && (
+            <span className="browse-stat-pill muted">{fa ? "از" : "of"} {data.bankTotal.toLocaleString(fa ? "fa-IR" : "en-US")} {fa ? "کل بانک" : "total"}</span>
+          )}
+          {active > 0 && <span className="browse-stat-pill accent">{active} {fa ? "فیلتر فعال" : "active filters"}</span>}
+          {ranked && <span className="browse-stat-pill" style={{ background: "#fef3c7", color: "#92400e", borderColor: "#fde68a" }}>✨ {fa ? "مرتبط‌ترین" : "ranked"}</span>}
         </div>
       </div>
 
-      <SearchBox
-        value={term}
-        onChange={setTerm}
-        onSearch={(q) => { setQuery(q); setPage(1); }}
-        suggest={suggest}
-        onPick={onPick}
-        placeholder={t("browseSearch")}
-        storageKey="bank"
-      />
+      {/* ===== Search — glass card ===== */}
+      <div className="browse-search-card">
+        <SearchBox
+          value={term}
+          onChange={setTerm}
+          onSearch={(q) => { setQuery(q); setPage(1); }}
+          suggest={suggest}
+          onPick={onPick}
+          placeholder={t("browseSearch")}
+          storageKey="bank"
+        />
+      </div>
 
+      {/* ===== Active chips — colorful pills ===== */}
       {(activeChips.length > 0 || query.trim()) && (
-        <div className="fchips" aria-label={fa ? "فیلترهای فعال" : "Active filters"}>
+        <div className="fchips browse-active-chips" aria-label={fa ? "فیلترهای فعال" : "Active filters"}>
           {query.trim() && (
-            <span className="fchip"><small>{fa ? "متن:" : "text:"}</small> {query}
+            <span className="fchip fchip-query">
+              <Icon name="search" size={12} />
+              <small>{fa ? "متن:" : "text:"}</small> {query}
               <button type="button" onClick={() => { setTerm(""); setQuery(""); setPage(1); }} aria-label={fa ? "حذف" : "remove"}><Icon name="close" size={11} /></button>
             </span>
           )}
           {activeChips.map((c) => (
-            <span className="fchip" key={`${c.key}:${c.value}`}><small>{c.facet}:</small> {c.label}
+            <span className="fchip" key={`${c.key}:${c.value}`}>
+              <Icon name={c.icon || "tag"} size={11} style={{ opacity: .7 }} />
+              <small>{c.facet}:</small> {c.label}
               <button type="button" onClick={() => toggle(c.key, c.value)} aria-label={fa ? "حذف" : "remove"}><Icon name="close" size={11} /></button>
             </span>
           ))}
-          <button type="button" className="fchip-clear" onClick={resetAll}>{t("browseReset")}</button>
+          <button type="button" className="fchip-clear" onClick={resetAll}><Icon name="close" size={12} /> {t("browseReset")}</button>
         </div>
       )}
 
+      {/* ===== Filter sheet — beautiful glass ===== */}
       {showFil && <div className="fsheet-back" onClick={() => setShowFil(false)} aria-hidden="true" />}
       {showFil && (
-        <div className="card browse-filters" role="dialog" aria-label={t("browseFilters")}>
+        <div className="card browse-filters browse-filters-new" role="dialog" aria-label={t("browseFilters")}>
+          <div className="browse-filters-head">
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <span style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg,#0ea5e9,#6366f1)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#fff" }}><Icon name="settings" size={16} /></span>
+              <div>
+                <div style={{ fontWeight: 800, fontSize: ".92rem" }}>{t("browseFilters")}</div>
+                <div className="small muted">{active} {fa ? "فیلتر فعال" : "active"} · {total.toLocaleString(fa ? "fa-IR" : "en-US")} {fa ? "نتیجه" : "results"}</div>
+              </div>
+            </div>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowFil(false)}><Icon name="close" size={14} /></button>
+          </div>
           <div className="facet-panel">
             {FACETS.filter((f) => more || PRIMARY.includes(f.key) || fil[f.key]?.length).map((f) => {
               const opts = facetOptions(f);
@@ -232,10 +281,13 @@ export default function Browse() {
               if (!allOpts.length && !fil[f.key]?.length) return null;
               const n = fil[f.key]?.length || 0;
               return (
-                <details className="facet" key={f.key} open={PRIMARY.includes(f.key) || n > 0}>
+                <details className="facet facet-new" key={f.key} open={PRIMARY.includes(f.key) || n > 0}>
                   <summary>
-                    <span>{t(f.label)}</span>
-                    {n > 0 ? <span className="cnt">{n}</span> : <Icon name="menu" size={13} />}
+                    <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                      <span className="facet-ico"><Icon name={f.icon} size={13} /></span>
+                      {t(f.label)}
+                    </span>
+                    {n > 0 ? <span className="cnt facet-cnt-on">{n}</span> : <span className="facet-count-muted">{allOpts.length}</span>}
                   </summary>
                   {allOpts.length > 8 && (
                     <input className="facet-search" value={facetQ[f.key] || ""} onChange={(e) => setFacetQ((s) => ({ ...s, [f.key]: e.target.value }))}
@@ -245,7 +297,7 @@ export default function Browse() {
                     {opts.slice(0, 60).map((o) => {
                       const on = (fil[f.key] || []).includes(o.value);
                       return (
-                        <label className={`facet-opt ${!o.count && !on ? "zero" : ""}`} key={o.value}>
+                        <label className={`facet-opt ${!o.count && !on ? "zero" : ""} ${on ? "on" : ""}`} key={o.value}>
                           <input type="checkbox" checked={on} onChange={() => toggle(f.key, o.value)} />
                           <span className="lbl">{(f.localize || f.key === "examType") ? vLabel(f.key, o.value) : o.label}</span>
                           <span className="n">{o.count}</span>
@@ -258,9 +310,9 @@ export default function Browse() {
               );
             })}
           </div>
-          <div className="row" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+          <div className="row" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginTop: 10 }}>
             <button className="btn btn-ghost btn-sm" type="button" onClick={() => setMore((v) => !v)}>
-              {more ? (fa ? "فیلترهای کمتر" : "Fewer filters") : (fa ? "فیلترهای بیشتر" : "More filters")}
+              <Icon name={more ? "chevronUp" : "chevronDown"} size={13} /> {more ? (fa ? "فیلترهای کمتر" : "Fewer filters") : (fa ? "فیلترهای بیشتر +" : "More filters")}
             </button>
             {active > 0 && (
               <button type="button" className="btn btn-ghost btn-sm" onClick={resetAll}>
@@ -278,27 +330,34 @@ export default function Browse() {
       )}
 
       {data?.premiumRequired && (
-        <div className="card browse-premium-gate">
-          <div style={{ fontWeight: 800 }}>{t("browsePremiumTitle")}</div>
-          <p className="muted small">{t("browsePremiumBody")}</p>
-          <button className="btn btn-accent" type="button" onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))}>
-            <Icon name="crown" size={15} /> {t("browseGoPremium")}
-          </button>
+        <div className="browse-premium-gate-new">
+          <div className="browse-premium-glow" aria-hidden="true" />
+          <div style={{ position: "relative", display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
+            <span style={{ width: 48, height: 48, borderRadius: 14, background: "linear-gradient(135deg,#f59e0b,#f97316)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 22, flex: "none", boxShadow: "0 8px 20px rgba(245,158,11,.35)" }}>👑</span>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <div style={{ fontWeight: 900, fontSize: "1rem" }}>{t("browsePremiumTitle")}</div>
+              <p className="muted small" style={{ margin: "4px 0 0", lineHeight: 1.7 }}>{t("browsePremiumBody")}</p>
+            </div>
+            <button className="btn btn-accent" type="button" onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))} style={{ boxShadow: "0 8px 20px rgba(245,158,11,.3)" }}>
+              <Icon name="crown" size={15} /> {t("browseGoPremium")}
+            </button>
+          </div>
         </div>
       )}
 
-      <div className="browse-toolbar">
-        <div className="muted small" role="status" aria-live="polite">
+      {/* ===== Toolbar — glass segmented ===== */}
+      <div className="browse-toolbar browse-toolbar-new">
+        <div className="muted small" role="status" aria-live="polite" style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {busy && !data ? <Spinner /> : (
             <>
-              {t("browseResults").replace("{n}", total.toLocaleString(fa ? "fa-IR" : "en-US"))}
-              {data?.bankTotal != null && data.bankTotal !== total && <> · <span title={fa ? "کل بانک" : "whole bank"}>{fa ? "از" : "of"} {data.bankTotal.toLocaleString(fa ? "fa-IR" : "en-US")}</span></>}
+              <span className="browse-toolbar-count"><b>{total.toLocaleString(fa ? "fa-IR" : "en-US")}</b> {fa ? "سؤال" : "results"}</span>
+              {data?.bankTotal != null && data.bankTotal !== total && <span className="muted">· {fa ? "از" : "of"} {data.bankTotal.toLocaleString(fa ? "fa-IR" : "en-US")}</span>}
               {busy && <span className="muted"> …</span>}
             </>
           )}
         </div>
-        <div className="seg" role="radiogroup" aria-label={t("sortByLabel")}>
-          {ranked && <button type="button" role="radio" aria-checked={effSort === "relevance"} className={effSort === "relevance" ? "on" : ""} onClick={() => setSort("relevance")}>{fa ? "مرتبط‌ترین" : "Relevance"}</button>}
+        <div className="seg seg-new" role="radiogroup" aria-label={t("sortByLabel")}>
+          {ranked && <button type="button" role="radio" aria-checked={effSort === "relevance"} className={effSort === "relevance" ? "on" : ""} onClick={() => setSort("relevance")}>✨ {fa ? "مرتبط‌ترین" : "Relevance"}</button>}
           <button type="button" role="radio" aria-checked={effSort === "newest_exam"} className={effSort === "newest_exam" ? "on" : ""} onClick={() => setSort("newest_exam")}>{t("sort_newest_exam")}</button>
           <button type="button" role="radio" aria-checked={effSort === "oldest_exam"} className={effSort === "oldest_exam" ? "on" : ""} onClick={() => setSort("oldest_exam")}>{t("sort_oldest_exam")}</button>
           <button type="button" role="radio" aria-checked={effSort === "last_modified"} className={effSort === "last_modified" ? "on" : ""} onClick={() => setSort("last_modified")}>{t("sort_last_modified")}</button>
@@ -308,47 +367,57 @@ export default function Browse() {
       {busy && !data && <div aria-hidden="true">{[0, 1, 2, 3, 4].map((i) => <div className="browse-sk" key={i} />)}</div>}
 
       {!busy && !total && (
-        <div className="card muted center pad24" role="status">
-          <div>{t("browseEmpty")}</div>
-          {/* zero-result recovery: offer the single removal most likely to help */}
+        <div className="card browse-empty-new" role="status">
+          <div style={{ fontSize: 42, lineHeight: 1, marginBottom: 10 }}>🔍</div>
+          <div style={{ fontWeight: 800, fontSize: "1.05rem" }}>{t("browseEmpty")}</div>
+          <p className="muted small" style={{ margin: "6px 0 0", maxWidth: 420, marginInline: "auto", lineHeight: 1.7 }}>{fa ? "فیلترها را کم کنید یا عبارت دیگری جست‌وجو کنید." : "Try fewer filters or a different query."}</p>
           {(activeChips.length > 0 || query.trim()) && (
-            <div className="browse-empty-tips">
+            <div className="browse-empty-tips" style={{ marginTop: 14 }}>
               {query.trim() && <button type="button" onClick={() => { setTerm(""); setQuery(""); setPage(1); }}>{fa ? "حذف متن جست‌وجو" : "Remove search text"}</button>}
               {activeChips.slice(-2).reverse().map((c) => (
                 <button type="button" key={`${c.key}:${c.value}`} onClick={() => toggle(c.key, c.value)}>{fa ? `حذف «${c.label}»` : `Remove "${c.label}"`}</button>
               ))}
-              <button type="button" onClick={resetAll}>{t("browseReset")}</button>
+              <button type="button" onClick={resetAll} className="browse-empty-reset">{t("browseReset")}</button>
             </div>
           )}
         </div>
       )}
 
-      <ul className="browse-list">
-        {(data?.cards || []).map((c) => (
-          <li key={c.id} className="browse-item card">
-            <button type="button" className="browse-item-main" onClick={() => setOpen(c.id)}>
-              <Highlight className="browse-q" text={c.q} ranges={c.hl} />
-              <div className="browse-meta">
-                {c.subject && !fil.subject.length && <span className="chip">{c.subject}</span>}
-                {c.chapter && <span className="chip">{c.chapter}</span>}
-                {c.concept && <span className="chip chip-soft">{c.concept}</span>}
-                {c.examType && <span className="chip chip-soft">{vLabel("examType", c.examType)}</span>}
-                {c.exam && <span className="chip chip-exam" dir="auto">{c.exam}</span>}
-                {c.keyless && <span className="chip" title={t("keylessTitle")}>🔑 {t("keylessBadge")}</span>}
-                {c.style && <span className="chip chip-soft">{vLabel("style", c.style)}</span>}
-                {c.saved && <span className="chip chip-soft" title={fa ? "ذخیره‌شده" : "saved"}>★</span>}
-                {c.attempted && <span className="chip chip-done"><Icon name="check" size={11} /></span>}
-              </div>
-            </button>
-          </li>
-        ))}
+      <ul className="browse-list browse-list-new">
+        {(data?.cards || []).map((c) => {
+          const grad = subjGrad(c.subject);
+          const diff = c.difficulty ? DIFF_COLOR[c.difficulty] : null;
+          return (
+            <li key={c.id} className="browse-item browse-item-new card">
+              <div className={`browse-item-accent bg-gradient-to-r ${grad}`} aria-hidden="true" />
+              <button type="button" className="browse-item-main" onClick={() => setOpen(c.id)}>
+                <div className="browse-item-top">
+                  <Highlight className="browse-q" text={c.q} ranges={c.hl} />
+                  <span className="browse-go"><Icon name="chevronDown" size={14} style={{ transform: "rotate(-90deg)" }} /></span>
+                </div>
+                <div className="browse-meta browse-meta-new">
+                  {c.subject && !fil.subject.length && <span className="chip chip-subject">{c.subject}</span>}
+                  {c.chapter && <span className="chip chip-chapter">{c.chapter}</span>}
+                  {c.concept && <span className="chip chip-soft">{c.concept}</span>}
+                  {c.examType && <span className="chip chip-examtype">{vLabel("examType", c.examType)}</span>}
+                  {c.exam && <span className="chip chip-exam" dir="auto">{c.exam}</span>}
+                  {c.difficulty && <span className={`chip chip-diff chip-diff-${c.difficulty}`}>{vLabel("difficulty", c.difficulty)}</span>}
+                  {c.keyless && <span className="chip chip-keyless" title={t("keylessTitle")}>🔑 {t("keylessBadge")}</span>}
+                  {c.style && <span className="chip chip-soft">{vLabel("style", c.style)}</span>}
+                  {c.saved && <span className="chip chip-soft" title={fa ? "ذخیره‌شده" : "saved"}>★</span>}
+                  {c.attempted && <span className="chip chip-done"><Icon name="check" size={11} /> {fa ? "حل‌شده" : "done"}</span>}
+                </div>
+              </button>
+            </li>
+          );
+        })}
       </ul>
 
       {pages > 1 && (
-        <div className="browse-pager">
-          <button type="button" className="btn btn-ghost btn-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} aria-label={t("prev")}>‹</button>
-          <span className="muted small" dir="ltr" aria-live="polite">{page} / {pages}</span>
-          <button type="button" className="btn btn-ghost btn-sm" disabled={page >= pages} onClick={() => setPage((p) => p + 1)} aria-label={t("next")}>›</button>
+        <div className="browse-pager browse-pager-new">
+          <button type="button" className="btn btn-ghost btn-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} aria-label={t("prev")}>‹ {fa ? "قبلی" : "Prev"}</button>
+          <span className="browse-pager-info" dir="ltr" aria-live="polite"><b>{page}</b> / {pages}</span>
+          <button type="button" className="btn btn-ghost btn-sm" disabled={page >= pages} onClick={() => setPage((p) => p + 1)} aria-label={t("next")}>{fa ? "بعدی" : "Next"} ›</button>
         </div>
       )}
 
@@ -362,42 +431,63 @@ function facetLabel(facets, key, value) {
   return o ? o.label : "";
 }
 
-/* Preview one question with its answer key and micro-lesson.
- *
- * Deliberately read-only: browsing is for looking things up, so answering here
- * must not consume hearts, break a streak or disturb the SRS schedule that the
- * learning path depends on. The learner picks an option, reveals the answer,
- * and reads the same درسنامه they would see in a lesson — nothing is recorded.
- */
 function BrowseCard({ id, onClose }) {
-  const { t } = useApp();
+  const { t, lang } = useApp();
+  const fa = lang !== "en";
   const [card, setCard] = useState(null);
+  const [err, setErr] = useState(null);
   const [sel, setSel] = useState(null);
   const [checked, setChecked] = useState(false);
   useEffect(() => {
-    setSel(null); setChecked(false);
-    api.get(`/learn/browse/${id}`).then((d) => setCard(d.card)).catch(() => setCard(null));
+    setSel(null); setChecked(false); setCard(null); setErr(null);
+    api.get(`/learn/browse/${id}`).then((d) => setCard(d.card)).catch((e) => {
+      const msg = e?.message || "";
+      if (/402|premium/i.test(msg) || e?.status === 402) setErr("premium");
+      else if (/404|not found/i.test(msg)) setErr("notfound");
+      else setErr(msg || "error");
+    });
   }, [id]);
 
   const Body = card ? (TYPE_MAP[card.type] || TYPE_MAP.mcq) : null;
-  const keyless = !!(card.source_meta && (card.source_meta.keyless || card.source_meta.key_available === false));
+  const keyless = !!(card?.source_meta && (card.source_meta.keyless || card.source_meta.key_available === false));
   const canCheck = card && Body && !keyless && (Body.canCheck ? Body.canCheck({ sel }, card) : sel != null);
 
   return (
     <Modal onClose={onClose} title={t("browseStudy")} wide>
-      {!card ? <Spinner /> : (
-        <div className="browse-preview">
+      {err === "premium" ? (
+        <div className="browse-preview-premium">
+          <div style={{ fontSize: 44, lineHeight: 1, marginBottom: 10 }}>👑</div>
+          <div style={{ fontWeight: 900, fontSize: "1.05rem" }}>{t("browsePremiumTitle")}</div>
+          <p className="muted small" style={{ margin: "8px 0 16px", lineHeight: 1.8, maxWidth: 420, marginInline: "auto" }}>{t("browsePremiumBody")}</p>
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
+            <button className="btn btn-accent" type="button" onClick={() => { onClose(); window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" })); }}>
+              <Icon name="crown" size={15} /> {t("browseGoPremium")}
+            </button>
+            <button className="btn btn-ghost" type="button" onClick={onClose}>{t("close") || (fa ? "بستن" : "Close")}</button>
+          </div>
+        </div>
+      ) : err ? (
+        <div className="card empty-state">
+          <div className="ico">⚠️</div>
+          <h3>{err === "notfound" ? (fa ? "سؤال یافت نشد" : "Not found") : err}</h3>
+          <button type="button" className="btn btn-ghost mt16" onClick={onClose}>{t("close") || (fa ? "بستن" : "Close")}</button>
+        </div>
+      ) : !card ? (
+        <div style={{ padding: 24, display: "flex", justifyContent: "center" }}><Spinner /></div>
+      ) : (
+        <div className="browse-preview browse-preview-new">
+          {card.subject && <div className="browse-preview-meta"><span className="chip chip-subject">{card.subject}</span>{card.chapter && <span className="chip chip-chapter">{card.chapter}</span>}{card.exam && <span className="chip chip-exam">{card.exam}</span>}</div>}
           <p className="browse-preview-q">{card.q}</p>
           <Body card={card} checked={checked} sel={sel} setSel={setSel} isCorrect={checked && Body.judge?.(card, { sel })} />
           {keyless && (
-            <div className="explain-box mt12" style={{ background: "rgba(213,160,27,.10)" }}>
+            <div className="explain-box mt12" style={{ background: "rgba(213,160,27,.10)", borderColor: "#fde68a" }}>
               <b>🔑 {t("keylessTitle")}</b>
               <Emphasis as="p" text={t("keylessNotice")} />
             </div>
           )}
           {!checked && !keyless && (
             <button type="button" className="btn btn-primary mt12" disabled={!canCheck} onClick={() => setChecked(true)}>
-              {t("checkAnswer") || "بررسی"}
+              {t("checkAnswer") || "بررسی"} <Icon name="check" size={14} />
             </button>
           )}
           {keyless && card.explain?.text && (

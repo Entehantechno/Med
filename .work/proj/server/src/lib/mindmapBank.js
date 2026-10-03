@@ -21,6 +21,33 @@ export const MINDMAP_SYSTEMS = ["cardio","pulmo","gastro","nephro","endo","neuro
 export const MINDMAP_TYPES = ["mind","approach"];
 export const MINDMAP_LEVELS = ["core","high_yield","emergency"];
 export const MINDMAP_BRANCHES = ["definition","etiology","patho","clinical","workup","treatment","complication","ddx","start","question","action"];
+export const MINDMAP_FREE_DAILY_LIMIT = 5; // competitive: free gets 5 maps/day, premium unlimited
+
+// --- daily limit helpers (free tier) ---
+try {
+  db.exec(`CREATE TABLE IF NOT EXISTS mindmap_daily_views (user_id INTEGER NOT NULL, day TEXT NOT NULL, cnt INTEGER DEFAULT 0, PRIMARY KEY (user_id, day))`);
+} catch {}
+export function mindmapDailyInfo(userId) {
+  const day = new Date().toISOString().slice(0,10);
+  try {
+    const row = db.prepare("SELECT cnt FROM mindmap_daily_views WHERE user_id=? AND day=?").get(userId, day);
+    const used = row ? row.cnt : 0;
+    return { day, used, limit: MINDMAP_FREE_DAILY_LIMIT, remaining: Math.max(0, MINDMAP_FREE_DAILY_LIMIT - used) };
+  } catch { return { day, used: 0, limit: MINDMAP_FREE_DAILY_LIMIT, remaining: MINDMAP_FREE_DAILY_LIMIT }; }
+}
+export function canViewMindmap(userId, isPremium) {
+  if (isPremium) return { allowed: true, remaining: Infinity };
+  const info = mindmapDailyInfo(userId);
+  return { allowed: info.remaining > 0, remaining: info.remaining, used: info.used, limit: info.limit };
+}
+export function recordMindmapView(userId, isPremium) {
+  if (isPremium) return;
+  const day = new Date().toISOString().slice(0,10);
+  try {
+    db.prepare(`INSERT INTO mindmap_daily_views (user_id, day, cnt) VALUES (?,?,1) ON CONFLICT(user_id, day) DO UPDATE SET cnt=cnt+1`).run(userId, day);
+    persistNow();
+  } catch {}
+}
 
 // --- text normalization (like cardfacets / textsearch) ---
 function normFa(s) {
@@ -159,17 +186,17 @@ export function searchMindmaps({
   const start = (p-1)*pageSize;
   const items = cards.slice(start, start+pageSize);
 
-  // premium gating (same as before, but per page)
+  // competitive gating: free = 3 previews + daily limit (5/day), premium = unlimited
   const previews = 3;
+  // daily limit will be enforced at route level via canViewMindmap; here we keep 3-preview logic
   const isLocked = (r) => r.is_premium && !isPremium;
-  // we need global index for locking (not page index)
   const allIds = cards.map(c=>c.id);
   const mapped = items.map(c => {
     const globalIdx = allIds.indexOf(c.id);
     const locked = isLocked(c) && globalIdx >= previews && !isPremium;
     const isPreview = isLocked(c) && globalIdx < previews;
     if (locked) {
-      return { ...c, locked:true, isPreview:false, nodes:[], edges:[], graph:{nodes:[],edges:[]}, summary: lang==="fa" ? "🔒 ویژه پرمیوم" : "🔒 Premium only", _haystack: undefined };
+      return { ...c, locked:true, isPreview:false, nodes:[], edges:[], graph:{nodes:[],edges:[]}, summary: lang==="fa" ? "🔒 ویژه پرمیوم — روزانه ۵ نقشه برای رایگان" : "🔒 Premium only — 5/day for free", _haystack: undefined };
     }
     return { ...c, locked:false, isPreview, _haystack: undefined };
   });
