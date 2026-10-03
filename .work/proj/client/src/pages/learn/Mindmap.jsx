@@ -3,7 +3,7 @@ import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
 
-/* MindMap Bank — 321 maps, premium + attractive UI
+/* MindMap Bank — 349 maps, premium + attractive UI
    - Glass cards, gradients, micro-animations, hover lift
    - Search + faceted chips with live counts
    - Graph: glass nodes, spring layout, mini-map
@@ -37,6 +37,13 @@ const SYSTEMS = [
   { id: "immuno", label_fa: "ایمنی", label_en: "Immune", icon: "🛡️", grad: "from-green-500 to-emerald-600", color: "#22c55e" },
   { id: "nutrition", label_fa: "تغذیه", label_en: "Nutr", icon: "🥗", grad: "from-lime-500 to-green-600", color: "#84cc16" },
   { id: "genetics", label_fa: "ژنتیک", label_en: "Gen", icon: "🧬", grad: "from-pink-500 to-rose-500", color: "#db2777" },
+  { id: "anatomy", label_fa: "آناتومی", label_en: "Anatomy", icon: "🧍", grad: "from-orange-500 to-red-500", color: "#ea580c" },
+  { id: "physio", label_fa: "فیزیولوژی", label_en: "Physio", icon: "⚡", grad: "from-cyan-500 to-blue-500", color: "#06b6d4" },
+  { id: "biochem", label_fa: "بیوشیمی", label_en: "Biochem", icon: "🧪", grad: "from-violet-500 to-purple-600", color: "#8b5cf6" },
+  { id: "histology", label_fa: "بافت‌شناسی", label_en: "Histology", icon: "🔬", grad: "from-pink-500 to-rose-500", color: "#ec4899" },
+  { id: "embryo", label_fa: "جنین‌شناسی", label_en: "Embryo", icon: "🌱", grad: "from-green-500 to-emerald-600", color: "#22c55e" },
+  { id: "micro", label_fa: "میکروب", label_en: "Micro", icon: "👾", grad: "from-teal-500 to-cyan-600", color: "#14b8a6" },
+  { id: "biophys", label_fa: "بیوفیزیک", label_en: "Biophys", icon: "🔭", grad: "from-indigo-500 to-violet-600", color: "#6366f1" },
   { id: "physics", label_fa: "فیزیک", label_en: "Phys", icon: "⚛️", grad: "from-indigo-500 to-violet-600", color: "#6366f1" },
   { id: "other", label_fa: "سایر", label_en: "Other", icon: "✨", grad: "from-slate-500 to-gray-600", color: "#64748b" },
 ];
@@ -154,7 +161,7 @@ export default function Mindmap({ onBack }) {
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-3xl shadow-lg shadow-amber-500/25">🔒</div>
             <h3 className="mt-4 text-xl font-black text-amber-900">{lang === "fa" ? "این نقشه ویژهٔ پرمیوم است" : "Premium Only"}</h3>
             <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-amber-800/80">
-              {lang === "fa" ? "با پرمیوم، ۳۲۱ مایندمپ و اپروچِ لینک‌دار به بانک را باز کنید — ۳ نقشه برای آشنایی رایگان است." : "Unlock 321 linked maps with Premium — 3 free to preview."}
+              {lang === "fa" ? "با پرمیوم، ۳۴۹ مایندمپ و اپروچِ لینک‌دار به بانک را باز کنید — ۳ نقشه برای آشنایی رایگان است." : "Unlock 349 linked maps with Premium — 3 free to preview."}
             </p>
             <div className="mt-6 flex justify-center gap-3">
               <button onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))} className="rounded-full bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3 text-sm font-black text-white shadow-lg shadow-amber-500/25 transition hover:scale-105 hover:shadow-xl">
@@ -291,7 +298,7 @@ export default function Mindmap({ onBack }) {
       {/* Top switch */}
       <div className="mb-4 flex gap-2">
         <button onClick={() => setMode("bank")} className={`rounded-full px-5 py-2.5 text-sm font-black shadow-sm transition ${mode === "bank" ? "bg-slate-900 text-white shadow-slate-900/20" : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"}`}>
-          ⭐ {lang === "fa" ? "بانکِ مایندمپ — ۳۲۱" : "MindMap Bank — 321"}
+          ⭐ {lang === "fa" ? "بانکِ مایندمپ — ۳۴۹" : "MindMap Bank — 349"}
         </button>
         <button onClick={() => setMode("classic")} className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${mode === "classic" ? "bg-slate-900 text-white" : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"}`}>
           🗺️ {lang === "fa" ? "نقشه‌های درسی" : "Lesson maps"}

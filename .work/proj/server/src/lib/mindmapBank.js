@@ -11,7 +11,7 @@
    - Advanced faceted search: OR inside facet, AND across, with live counts (like Qbank)
    - Full-text across title/summary/nodes (Persian-normalized, digits, branch)
    - Admin full control: CRUD, bulk, import/export CSV/JSON, duplicate, history, validation
-   - 321 maps (100 internal Harrison + 221 non-internal full syllabus) (see seedMindmapBank) — visually rich
+   - 349 maps (100 internal Harrison + 221 non-internal + 28 basic/high-density) (see seedMindmapBank) — visually rich
 */
 
 import { db, persistNow } from "../db.js";
@@ -408,7 +408,7 @@ export function seedMindmapBank() {
   try { db.exec(`CREATE TABLE IF NOT EXISTS question_mindmap_links (question_id INTEGER NOT NULL, mindmap_slug TEXT NOT NULL, node_slug TEXT, weight INTEGER DEFAULT 1, PRIMARY KEY (question_id, mindmap_slug))`); } catch {}
   let existing = 0;
   try { existing = db.prepare("SELECT COUNT(*) c FROM mindmap_bank").get().c; } catch { existing = 0; }
-  if (existing >= 321) return { seeded: 0, total: existing };
+  if (existing >= 349) return { seeded: 0, total: existing };
 
   const maps = [
     // 1-11 as before (kept for compat)
@@ -7599,7 +7599,678 @@ export function seedMindmapBank() {
         ]
       }
     },
-
+    {
+      slug: "anatomy-general",
+      title_fa: "آناتومی عمومی — اصطلاحات و پلان‌ها",
+      title_en: "General Anatomy — Terms & Planes",
+      type: "mind", system: "anatomy", level: "core",
+      summary_fa: "رفرنس: Gray's Anatomy 42e — پلان‌های آناتومیک، اصطلاحات وضعی، بافت‌شناسیِ پایه و اصولِ تصویربرداری؛ پایه‌ی تمامِ درس‌هایِ تشریح.",
+      summary_en: "Ref: Gray's Anatomy 42e — Anatomical planes, positional terms, basic histology & imaging principles; foundation for all anatomy.",
+      cover_url: "/covers/grainger.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: آناتومی عمومی", label_en: "Def: General Anatomy", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "anatomy-upper",
+      title_fa: "اندام فوقانی — شانه، بازو و دست",
+      title_en: "Upper Limb — Shoulder, Arm & Hand",
+      type: "mind", system: "anatomy", level: "core",
+      summary_fa: "رفرنس: Moore Clinically Oriented Anatomy 9e — استخوان‌ها، عضلات، عروقِ آگزیلاری، شبکه‌یِ بازویی و عصب‌هایِ مدین/اولنار/رادیال.",
+      summary_en: "Ref: Moore 9e — Bones, muscles, axillary vessels, brachial plexus & median/ulnar/radial nerves.",
+      cover_url: "/covers/grainger.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اندام فوقانی", label_en: "Def: Upper Limb", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "anatomy-lower",
+      title_fa: "اندام تحتانی — لگن، ران و پا",
+      title_en: "Lower Limb — Pelvis, Thigh & Foot",
+      type: "mind", system: "anatomy", level: "core",
+      summary_fa: "رفرنس: Moore 9e — لگن، مفصلِ هیپ، ران، زانو (لیگامان‌ها و منیسک)، عصبِ سیاتیک و عروقِ فمورال.",
+      summary_en: "Ref: Moore 9e — Pelvis, hip, thigh, knee (ligaments & meniscus), sciatic nerve & femoral vessels.",
+      cover_url: "/covers/grainger.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اندام تحتانی", label_en: "Def: Lower Limb", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "physio-cell",
+      title_fa: "فیزیولوژی سلول و غشا — پمپ‌ها و کانال‌ها",
+      title_en: "Cell & Membrane Physiology — Pumps & Channels",
+      type: "mind", system: "physio", level: "core",
+      summary_fa: "رفرنس: Guyton & Hall 14e — پتانسیلِ غشا، Na/K پمپ، کانال‌هایِ یونی و انتقالِ پیام.",
+      summary_en: "Ref: Guyton 14e — Membrane potential, Na/K pump, ion channels & signaling.",
+      cover_url: "/covers/guyton-14e.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: فیزیولوژی سلول و غشا", label_en: "Def: Cell & Membrane Physiology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "physio-cardio",
+      title_fa: "فیزیولوژی قلب و عروق",
+      title_en: "Cardiovascular Physiology",
+      type: "mind", system: "physio", level: "core",
+      summary_fa: "رفرنس: Guyton 14e — چرخه‌یِ قلبی، برون‌ده، فشارِ شریانی و تنظیمِ عصبی-هورمونی.",
+      summary_en: "Ref: Guyton 14e — Cardiac cycle, output, arterial pressure & neuro-hormonal control.",
+      cover_url: "/covers/guyton-14e.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: فیزیولوژی قلب و عروق", label_en: "Def: Cardiovascular Physiology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "physio-resp",
+      title_fa: "فیزیولوژی تنفس و اسید-باز",
+      title_en: "Respiratory & Acid-Base Physiology",
+      type: "mind", system: "physio", level: "core",
+      summary_fa: "رفرنس: Guyton 14e — تهویه، انتشار، انتقالِ اکسیژن و تنظیمِ اسید-بازِ خون.",
+      summary_en: "Ref: Guyton 14e — Ventilation, diffusion, O2 transport & acid-base regulation.",
+      cover_url: "/covers/guyton-14e.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: فیزیولوژی تنفس و اسید-باز", label_en: "Def: Respiratory & Acid-Base Physiology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "biochem-enzymes",
+      title_fa: "آنزیم‌ها و متابولیسمِ انرژی",
+      title_en: "Enzymes & Energy Metabolism",
+      type: "mind", system: "biochem", level: "core",
+      summary_fa: "رفرنس: Harper's Biochemistry 31e — سینتیکِ آنزیمی، کوآنزیم‌ها و زنجیره‌یِ تنفسی.",
+      summary_en: "Ref: Harper 31e — Enzyme kinetics, coenzymes & respiratory chain.",
+      cover_url: "/covers/thompson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: آنزیم‌ها و متابولیسمِ انرژی", label_en: "Def: Enzymes & Energy Metabolism", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "biochem-carbo",
+      title_fa: "کربوهیدرات و چربی — متابولیسم",
+      title_en: "Carbohydrate & Lipid Metabolism",
+      type: "mind", system: "biochem", level: "core",
+      summary_fa: "رفرنس: Harper 31e — گلیکولیز، گلوکونئوژنز، بتااکسیداسیون و سنتزِ کلسترول.",
+      summary_en: "Ref: Harper 31e — Glycolysis, gluconeogenesis, β-oxidation & cholesterol synthesis.",
+      cover_url: "/covers/thompson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: کربوهیدرات و چربی", label_en: "Def: Carbohydrate & Lipid Metabolism", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "biochem-amino",
+      title_fa: "اسیدهای آمینه و پروتئین",
+      title_en: "Amino Acids & Proteins",
+      type: "mind", system: "biochem", level: "core",
+      summary_fa: "رفرنس: Harper 31e — چرخه‌یِ اوره، سنتزِ نوکلئوتید و اختلالاتِ متابولیکِ ارثی.",
+      summary_en: "Ref: Harper 31e — Urea cycle, nucleotide synthesis & inborn errors.",
+      cover_url: "/covers/thompson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اسیدهای آمینه و پروتئین", label_en: "Def: Amino Acids & Proteins", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "histology-epithelial",
+      title_fa: "بافت پوششی — انواع و غدد",
+      title_en: "Epithelial Tissue — Types & Glands",
+      type: "mind", system: "histology", level: "core",
+      summary_fa: "رفرنس: Junqueira's Histology 15e — اپیتلیومِ سنگفرشی/مکعبی/استوانه‌ای، مطبقِ کاذب و انتقالی.",
+      summary_en: "Ref: Junqueira 15e — Squamous/cuboidal/columnar, pseudostratified & transitional.",
+      cover_url: "/covers/junqueira-15e.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بافت پوششی", label_en: "Def: Epithelial Tissue", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "histology-connective",
+      title_fa: "بافت همبند — سست، متراکم، چربی و رتیکولر",
+      title_en: "Connective Tissue — Loose, Dense, Adipose & Reticular",
+      type: "mind", system: "histology", level: "core",
+      summary_fa: "رفرنس: Junqueira 15e — فیبروبلاست، کلاژن، الاستین و ماتریکسِ خارجِ سلولی.",
+      summary_en: "Ref: Junqueira 15e — Fibroblast, collagen, elastin & ECM.",
+      cover_url: "/covers/junqueira-15e.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بافت همبند", label_en: "Def: Connective Tissue", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "histology-blood",
+      title_fa: "خون، مغزِ استخوان و عضله",
+      title_en: "Blood, Marrow & Muscle",
+      type: "mind", system: "histology", level: "core",
+      summary_fa: "رفرنس: Junqueira 15e — گلبول‌ها، پلاکت، مغزِ استخوان و سه نوعِ عضله (اسکلتی/قلبی/صاف).",
+      summary_en: "Ref: Junqueira 15e — Blood cells, platelets, marrow & 3 muscle types.",
+      cover_url: "/covers/junqueira-15e.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: خون، مغزِ استخوان و عضله", label_en: "Def: Blood, Marrow & Muscle", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "embryo-general",
+      title_fa: "جنین‌شناسی عمومی — گامتوژنز تا لانه‌گزینی",
+      title_en: "General Embryology — Gametogenesis to Implantation",
+      type: "mind", system: "embryo", level: "core",
+      summary_fa: "رفرنس: Langman 14e — میوز، لقاح، تسهیم، بلاستولا و لانه‌گزینی.",
+      summary_en: "Ref: Langman 14e — Meiosis, fertilization, cleavage, blastula & implantation.",
+      cover_url: "/covers/thompson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: جنین‌شناسی عمومی", label_en: "Def: General Embryology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "embryo-organogenesis",
+      title_fa: "ارگانوژنز و نواقصِ مادرزادی",
+      title_en: "Organogenesis & Congenital Anomalies",
+      type: "mind", system: "embryo", level: "core",
+      summary_fa: "رفرنس: Langman 14e — چین‌خوردگی، نورولاسیون، قلب و نواقصِ لوله‌یِ عصبی.",
+      summary_en: "Ref: Langman 14e — Folding, neurulation, heart & NTDs.",
+      cover_url: "/covers/thompson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: ارگانوژنز و نواقصِ مادرزادی", label_en: "Def: Organogenesis & Congenital Anomalies", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "embryo-placenta",
+      title_fa: "جفت، پرده‌ها و تراتوژن‌ها",
+      title_en: "Placenta, Membranes & Teratogens",
+      type: "mind", system: "embryo", level: "core",
+      summary_fa: "رفرنس: Langman 14e — جفت، بندِ ناف، مایعِ آمنیوتیک و عواملِ تراتوژن.",
+      summary_en: "Ref: Langman 14e — Placenta, cord, amniotic fluid & teratogens.",
+      cover_url: "/covers/thompson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: جفت، پرده‌ها و تراتوژن‌ها", label_en: "Def: Placenta, Membranes & Teratogens", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "micro-bacteria",
+      title_fa: "باکتری‌شناسی — گرم مثبت/منفی و تشخیص",
+      title_en: "Bacteriology — Gram+ / Gram- & Diagnosis",
+      type: "mind", system: "micro", level: "core",
+      summary_fa: "رفرنس: Murray Medical Microbiology 9e — استاف، استرپ، انتروباکتریاسه و آنتی‌بیوگرام.",
+      summary_en: "Ref: Murray 9e — Staph, Strep, Enterobacteriaceae & antibiogram.",
+      cover_url: "/covers/mandell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: باکتری‌شناسی", label_en: "Def: Bacteriology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "micro-viruses",
+      title_fa: "ویروس‌شناسی — DNA/RNA و واکسن",
+      title_en: "Virology — DNA/RNA & Vaccines",
+      type: "mind", system: "micro", level: "core",
+      summary_fa: "رفرنس: Murray 9e — هرپس، آنفلوانزا، هپاتیت و HIV؛ اصولِ واکسیناسیون.",
+      summary_en: "Ref: Murray 9e — Herpes, influenza, hepatitis & HIV; vaccine principles.",
+      cover_url: "/covers/mandell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: ویروس‌شناسی", label_en: "Def: Virology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "micro-fungi-parasite",
+      title_fa: "قارچ و انگل — تشخیص و درمان",
+      title_en: "Fungi & Parasites — Diagnosis & Therapy",
+      type: "mind", system: "micro", level: "core",
+      summary_fa: "رفرنس: Murray 9e — کاندیدا، آسپرژیلوس، مالاریا و لیشمانیوز؛ درمانِ ضدقارچ/ضدانگل.",
+      summary_en: "Ref: Murray 9e — Candida, Aspergillus, malaria & leishmania; antifungals/antiparasitics.",
+      cover_url: "/covers/mandell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: قارچ و انگل", label_en: "Def: Fungi & Parasites", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "biophys-membrane",
+      title_fa: "بیوفیزیکِ غشا و انتقال",
+      title_en: "Membrane Biophysics & Transport",
+      type: "mind", system: "biophys", level: "core",
+      summary_fa: "رفرنس: Halliday Resnick + Ganong 26e — انتشار، اسمز، پمپ و کانالِ یونی.",
+      summary_en: "Ref: Halliday + Ganong 26e — Diffusion, osmosis, pumps & ion channels.",
+      cover_url: "/covers/halliday.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بیوفیزیکِ غشا و انتقال", label_en: "Def: Membrane Biophysics & Transport", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "biophys-signals",
+      title_fa: "سیگنال‌هایِ زیستی و بیوفیزیکِ قلب",
+      title_en: "Biological Signals & Cardiac Biophysics",
+      type: "mind", system: "biophys", level: "core",
+      summary_fa: "رفرنس: Ganong 26e — ECG، صدایِ قلب، همودینامیک و فیزیکِ تنفس.",
+      summary_en: "Ref: Ganong 26e — ECG, heart sounds, hemodynamics & respiratory physics.",
+      cover_url: "/covers/halliday.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: سیگنال‌هایِ زیستی و بیوفیزیکِ قلب", label_en: "Def: Biological Signals & Cardiac Biophysics", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "biophys-hemodynamics",
+      title_fa: "همودینامیک و فیزیکِ قلب و ریه",
+      title_en: "Hemodynamics & Cardiopulmonary Physics",
+      type: "mind", system: "biophys", level: "core",
+      summary_fa: "رفرنس: Halliday Resnick + Guyton 14e — قوانینِ همودینامیک، فشار، مقاومت و فیزیکِ تنفس.",
+      summary_en: "Ref: Halliday + Guyton 14e — Hemodynamic laws, pressure, resistance & respiratory physics.",
+      cover_url: "/covers/halliday.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: همودینامیک و فیزیکِ قلب و ریه", label_en: "Def: Hemodynamics & Cardiopulmonary Physics", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+        {
+      slug: "peds-nutrition",
+      title_fa: "تغذیه‌یِ شیرخوار و کودک",
+      title_en: "Infant & Child Nutrition",
+      type: "mind", system: "peds", level: "core",
+      summary_fa: "رفرنس: Nelson 21e — شیرِ مادر، مکمل‌ها، سوءتغذیه و چاقیِ کودکان.",
+      summary_en: "Ref: Nelson 21e — Breastfeeding, supplements, malnutrition & obesity.",
+      cover_url: "/covers/nelson-21e.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: تغذیه‌یِ شیرخوار و کودک", label_en: "Def: Infant & Child Nutrition", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-infection",
+      title_fa: "عفونت‌هایِ شایعِ کودکان",
+      title_en: "Common Pediatric Infections",
+      type: "mind", system: "peds", level: "core",
+      summary_fa: "رفرنس: Nelson 21e — اوتیت، پنومونی، اسهال و تب در کودک؛ واکسیناسیون.",
+      summary_en: "Ref: Nelson 21e — Otitis, pneumonia, diarrhea & fever; vaccines.",
+      cover_url: "/covers/nelson-21e.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: عفونت‌هایِ شایعِ کودکان", label_en: "Def: Common Pediatric Infections", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-neurodev",
+      title_fa: "تشنج و تاخیرِ تکامل",
+      title_en: "Seizure & Developmental Delay",
+      type: "mind", system: "peds", level: "core",
+      summary_fa: "رفرنس: Nelson 21e — تشنجِ تب‌دار، صرعِ کودکان و تأخیرِ تکامل.",
+      summary_en: "Ref: Nelson 21e — Febrile seizure, epilepsy & developmental delay.",
+      cover_url: "/covers/nelson-21e.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: تشنج و تاخیرِ تکامل", label_en: "Def: Seizure & Developmental Delay", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "rheum-vasculitis",
+      title_fa: "واسکولیت‌ها — اپروچ",
+      title_en: "Vasculitis — Approach",
+      type: "mind", system: "rheum", level: "core",
+      summary_fa: "رفرنس: Harrison 22e — واسکولیتِ عروقِ بزرگ/متوسط/کوچک، ANCA و درمان.",
+      summary_en: "Ref: Harrison 22e — Large/medium/small vessel, ANCA & therapy.",
+      cover_url: "/covers/harrison-22e.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: واسکولیت‌ها", label_en: "Def: Vasculitis", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "rheum-spondylo",
+      title_fa: "اسپوندیلوآرتروپاتی‌ها",
+      title_en: "Spondyloarthropathies",
+      type: "mind", system: "rheum", level: "core",
+      summary_fa: "رفرنس: Harrison 22e — اسپوندیلیتِ آنکیلوزان، پسوریاتیک و انتروپاتیک.",
+      summary_en: "Ref: Harrison 22e — Ankylosing, psoriatic & enteropathic.",
+      cover_url: "/covers/harrison-22e.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اسپوندیلوآرتروپاتی‌ها", label_en: "Def: Spondyloarthropathies", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "rheum-lupus",
+      title_fa: "لوپوس اریتماتویِ سیستمیک (SLE)",
+      title_en: "Systemic Lupus Erythematosus (SLE)",
+      type: "mind", system: "rheum", level: "core",
+      summary_fa: "رفرنس: Harrison 22e — کرایتریایِ SLE، درگیریِ کلیه/CNS و درمانِ ایمونوساپرسیو.",
+      summary_en: "Ref: Harrison 22e — Criteria, renal/CNS & immunosuppressive therapy.",
+      cover_url: "/covers/harrison-22e.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: لوپوس اریتماتویِ سیستمیک (SLE)", label_en: "Def: Systemic Lupus Erythematosus (SLE)", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "heme-transfusion",
+      title_fa: "انتقالِ خون و عوارض",
+      title_en: "Transfusion & Complications",
+      type: "mind", system: "heme", level: "core",
+      summary_fa: "رفرنس: Harrison 22e — اندیکاسیونِ ترانسفوزیون، واکنش‌ها و TRALI/TACO.",
+      summary_en: "Ref: Harrison 22e — Indications, reactions & TRALI/TACO.",
+      cover_url: "/covers/robbins-10e.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: انتقالِ خون و عوارض", label_en: "Def: Transfusion & Complications", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی و سبب", label_en: "Etiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهرِ بالینی", label_en: "Clinical", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی و تشخیص", label_en: "Workup", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری", label_en: "Treatment", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
   ];
 
   let inserted = 0;

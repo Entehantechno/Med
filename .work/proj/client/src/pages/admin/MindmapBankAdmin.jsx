@@ -4,7 +4,7 @@ import { useApp } from "../../context.jsx";
 import Icon from "../../components/Icon.jsx";
 
 /* MindMap Bank Admin — جذاب، کاربردی، دوسویه
-   - 321 نقشه، فیلترهای faceted، جستجوی زنده
+   - 349 نقشه، فیلترهای faceted، جستجوی زنده
    - کارت‌های شیشه‌ای با گرادیانِ سیستمی
    - ویرایشِ کامل + پیش‌نمایش گراف
    - اتصال دوسویه به بانک سؤال (همان جدول question_mindmap_links)
@@ -40,6 +40,13 @@ const SYSTEMS = [
   { id: "immuno", label_fa: "ایمنی", label_en: "Immune", icon: "🛡️", color: "#22c55e", grad: "from-green-500 to-emerald-600" },
   { id: "nutrition", label_fa: "تغذیه", label_en: "Nutr", icon: "🥗", color: "#84cc16", grad: "from-lime-500 to-green-600" },
   { id: "genetics", label_fa: "ژنتیک", label_en: "Gen", icon: "🧬", color: "#db2777", grad: "from-pink-500 to-rose-500" },
+  { id: "anatomy", label_fa: "آناتومی", label_en: "Anatomy", icon: "🧍", color: "#ea580c", grad: "from-orange-500 to-red-500" },
+  { id: "physio", label_fa: "فیزیولوژی", label_en: "Physio", icon: "⚡", color: "#06b6d4", grad: "from-cyan-500 to-blue-500" },
+  { id: "biochem", label_fa: "بیوشیمی", label_en: "Biochem", icon: "🧪", color: "#8b5cf6", grad: "from-violet-500 to-purple-600" },
+  { id: "histology", label_fa: "بافت‌شناسی", label_en: "Histology", icon: "🔬", color: "#ec4899", grad: "from-pink-500 to-rose-500" },
+  { id: "embryo", label_fa: "جنین‌شناسی", label_en: "Embryo", icon: "🌱", color: "#22c55e", grad: "from-green-500 to-emerald-600" },
+  { id: "micro", label_fa: "میکروب", label_en: "Micro", icon: "👾", color: "#14b8a6", grad: "from-teal-500 to-cyan-600" },
+  { id: "biophys", label_fa: "بیوفیزیک", label_en: "Biophys", icon: "🔭", color: "#6366f1", grad: "from-indigo-500 to-violet-600" },
   { id: "physics", label_fa: "فیزیک", label_en: "Phys", icon: "⚛️", color: "#6366f1", grad: "from-indigo-500 to-violet-600" },
   { id: "other", label_fa: "سایر", label_en: "Other", icon: "✨", color: "#64748b", grad: "from-slate-500 to-gray-600" },
 ];
@@ -190,17 +197,17 @@ export default function MindmapBankAdmin() {
         <div className="absolute -left-10 -bottom-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
         <div className="relative flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black">🧠 {isFa ? "بانک مایندمپ — ۳۲۱" : "MindMap Bank — 321"}</h1>
+            <h1 className="text-2xl font-black">🧠 {isFa ? "بانک مایندمپ — ۳۴۹" : "MindMap Bank — 349"}</h1>
             <p className="mt-1 text-sm text-violet-100">{isFa ? "تمام دروس + دوزبانه + اتصال دوسویه به بانک سؤال" : "All subjects, bilingual, bidirectional Qbank links"} • {total} {isFa ? "نقشه" : "maps"}</p>
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
               <span className="rounded-full bg-white/20 px-3 py-1 font-bold">Harrison 100</span>
-              <span className="rounded-full bg-white/20 px-3 py-1 font-bold">Nelson/Williams/Schwartz/Robbins 221</span>
-              <span className="rounded-full bg-white px-3 py-1 font-black text-violet-700">FA/EN</span>
+              <span className="rounded-full bg-white/20 px-3 py-1 font-bold">Nelson/Williams/Schwartz/Robbins 221 + علومِ پایه 28</span>
+              <span className="rounded-full bg-white px-3 py-1 font-black text-violet-700">FA/EN • 349</span>
             </div>
           </div>
           <div className="flex gap-2">
             <button onClick={() => openEdit(null)} className="rounded-full bg-white px-5 py-2.5 text-sm font-black text-violet-700 shadow hover:bg-violet-50">+ {isFa ? "مایندمپ جدید" : "New map"}</button>
-            <button onClick={seed} className="rounded-full bg-violet-900/30 px-4 py-2.5 text-sm font-bold text-white border border-white/20 hover:bg-violet-900/50">↻ {isFa ? "Seed 321" : "Seed 321"}</button>
+            <button onClick={seed} className="rounded-full bg-violet-900/30 px-4 py-2.5 text-sm font-bold text-white border border-white/20 hover:bg-violet-900/50">↻ {isFa ? "Seed 349" : "Seed 349"}</button>
           </div>
         </div>
       </div>
