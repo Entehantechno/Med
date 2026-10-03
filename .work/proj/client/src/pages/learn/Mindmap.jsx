@@ -3,7 +3,7 @@ import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
 
-/* MindMap Bank — 100 maps, premium + attractive UI
+/* MindMap Bank — 321 maps, premium + attractive UI
    - Glass cards, gradients, micro-animations, hover lift
    - Search + faceted chips with live counts
    - Graph: glass nodes, spring layout, mini-map
@@ -20,6 +20,24 @@ const SYSTEMS = [
   { id: "rheum", label_fa: "روماتو", label_en: "Rheum", icon: "🦴", grad: "from-fuchsia-500 to-purple-600", color: "#a855f7" },
   { id: "infect", label_fa: "عفونی", label_en: "Infect", icon: "🦠", grad: "from-green-500 to-emerald-600", color: "#16a34a" },
   { id: "emergency", label_fa: "اورژانس", label_en: "Emerg", icon: "🚨", grad: "from-red-500 to-orange-600", color: "#ef4444" },
+  { id: "peds", label_fa: "کودکان", label_en: "Peds", icon: "👶", grad: "from-pink-500 to-rose-600", color: "#ec4899" },
+  { id: "obgyn", label_fa: "زنان", label_en: "OB-GYN", icon: "🤰", grad: "from-rose-500 to-red-600", color: "#e11d48" },
+  { id: "surgery", label_fa: "جراحی", label_en: "Surgery", icon: "🔪", grad: "from-red-500 to-rose-600", color: "#dc2626" },
+  { id: "path", label_fa: "پاتولوژی", label_en: "Path", icon: "🧫", grad: "from-purple-500 to-violet-600", color: "#9333ea" },
+  { id: "pharm", label_fa: "دارو", label_en: "Pharm", icon: "💊", grad: "from-sky-500 to-blue-600", color: "#0ea5e9" },
+  { id: "radio", label_fa: "رادیولوژی", label_en: "Radio", icon: "📷", grad: "from-slate-500 to-gray-600", color: "#64748b" },
+  { id: "ent", label_fa: "گوش‌حلق", label_en: "ENT", icon: "👃", grad: "from-teal-500 to-emerald-600", color: "#14b8a6" },
+  { id: "uro", label_fa: "اورولوژی", label_en: "Uro", icon: "🚹", grad: "from-blue-500 to-indigo-600", color: "#2563eb" },
+  { id: "ortho", label_fa: "ارتوپدی", label_en: "Ortho", icon: "🦿", grad: "from-amber-500 to-orange-600", color: "#f59e0b" },
+  { id: "psych", label_fa: "روان", label_en: "Psych", icon: "🎭", grad: "from-violet-500 to-purple-600", color: "#8b5cf6" },
+  { id: "derm", label_fa: "پوست", label_en: "Derm", icon: "🖐️", grad: "from-orange-500 to-amber-600", color: "#f97316" },
+  { id: "ophth", label_fa: "چشم", label_en: "Eye", icon: "👁️", grad: "from-cyan-500 to-blue-600", color: "#06b6d4" },
+  { id: "stats", label_fa: "آمار", label_en: "Stats", icon: "📊", grad: "from-green-500 to-teal-600", color: "#16a34a" },
+  { id: "ethics", label_fa: "اخلاق", label_en: "Ethics", icon: "⚖️", grad: "from-slate-600 to-slate-700", color: "#334155" },
+  { id: "immuno", label_fa: "ایمنی", label_en: "Immune", icon: "🛡️", grad: "from-green-500 to-emerald-600", color: "#22c55e" },
+  { id: "nutrition", label_fa: "تغذیه", label_en: "Nutr", icon: "🥗", grad: "from-lime-500 to-green-600", color: "#84cc16" },
+  { id: "genetics", label_fa: "ژنتیک", label_en: "Gen", icon: "🧬", grad: "from-pink-500 to-rose-500", color: "#db2777" },
+  { id: "physics", label_fa: "فیزیک", label_en: "Phys", icon: "⚛️", grad: "from-indigo-500 to-violet-600", color: "#6366f1" },
   { id: "other", label_fa: "سایر", label_en: "Other", icon: "✨", grad: "from-slate-500 to-gray-600", color: "#64748b" },
 ];
 const TYPES = [
@@ -136,7 +154,7 @@ export default function Mindmap({ onBack }) {
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-3xl shadow-lg shadow-amber-500/25">🔒</div>
             <h3 className="mt-4 text-xl font-black text-amber-900">{lang === "fa" ? "این نقشه ویژهٔ پرمیوم است" : "Premium Only"}</h3>
             <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-amber-800/80">
-              {lang === "fa" ? "با پرمیوم، ۱۰۰ مایندمپ و اپروچِ لینک‌دار به بانک را باز کنید — ۳ نقشه برای آشنایی رایگان است." : "Unlock 100 linked maps with Premium — 3 free to preview."}
+              {lang === "fa" ? "با پرمیوم، ۳۲۱ مایندمپ و اپروچِ لینک‌دار به بانک را باز کنید — ۳ نقشه برای آشنایی رایگان است." : "Unlock 321 linked maps with Premium — 3 free to preview."}
             </p>
             <div className="mt-6 flex justify-center gap-3">
               <button onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))} className="rounded-full bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3 text-sm font-black text-white shadow-lg shadow-amber-500/25 transition hover:scale-105 hover:shadow-xl">
@@ -273,7 +291,7 @@ export default function Mindmap({ onBack }) {
       {/* Top switch */}
       <div className="mb-4 flex gap-2">
         <button onClick={() => setMode("bank")} className={`rounded-full px-5 py-2.5 text-sm font-black shadow-sm transition ${mode === "bank" ? "bg-slate-900 text-white shadow-slate-900/20" : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"}`}>
-          ⭐ {lang === "fa" ? "بانکِ مایندمپ — ۱۰۰" : "MindMap Bank — 100"}
+          ⭐ {lang === "fa" ? "بانکِ مایندمپ — ۳۲۱" : "MindMap Bank — 321"}
         </button>
         <button onClick={() => setMode("classic")} className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${mode === "classic" ? "bg-slate-900 text-white" : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"}`}>
           🗺️ {lang === "fa" ? "نقشه‌های درسی" : "Lesson maps"}
@@ -556,7 +574,7 @@ export default function Mindmap({ onBack }) {
                       <div className="rounded-[19px] bg-gradient-to-br from-violet-600 via-indigo-600 to-sky-600 p-6">
                         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
                           <div className="text-white">
-                            <h3 className="text-base font-black">✨ {lang === "fa" ? "۳ نقشه رایگان، ۹۷ تای دیگر با پرمیوم" : "3 free, 97 more with Premium"}</h3>
+                            <h3 className="text-base font-black">✨ {lang === "fa" ? "۳ نقشه رایگان، ۳۱۸ تای دیگر با پرمیوم" : "3 free, 318 more with Premium"}</h3>
                             <p className="mt-1 text-sm text-violet-100">{lang === "fa" ? "هر گره به بانکِ سؤالات لینک است — دو کلیک تا تسلط" : "Every node links to Qbank — 2 clicks to mastery"}</p>
                           </div>
                           <button onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))} className="shrink-0 rounded-full bg-white px-6 py-3 text-sm font-black text-violet-700 shadow-lg hover:bg-violet-50">

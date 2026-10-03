@@ -3535,7 +3535,7 @@ r.get("/mindmap-bank", authRequired, requireRole("admin","teacher"), (req, res) 
   const page = Math.max(1, parseInt(req.query.page,10)||1);
   const pageSize = Math.min(100, Math.max(1, parseInt(req.query.pageSize,10)||20));
   const status = (req.query.status || "").toString() || "active";
-  if (q || filters.system.length || filters.type.length || filters.level.length || req.query.status) {
+  if (q || filters.system.length || filters.type.length || filters.level.length || req.query.status || req.query.page || req.query.pageSize) {
     const out = adminSearchMindmaps({ lang, q, filters, sort, page, pageSize, isPremium: true, status: status || "active" });
     return res.json(out);
   }

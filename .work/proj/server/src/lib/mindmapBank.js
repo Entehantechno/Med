@@ -1,4 +1,4 @@
-/* mindmapBank.js — Premium MindMap + Approach Bank (2026-10-02 → 2026-10-04 — 100 maps)
+/* mindmapBank.js — Premium MindMap + Approach Bank (2026-10-02 → 2026-10-04 — 321 maps)
    A premium-only, bidirectionally linked knowledge graph:
 
    - MindMaps: hierarchical disease maps (definition → complications)
@@ -11,13 +11,13 @@
    - Advanced faceted search: OR inside facet, AND across, with live counts (like Qbank)
    - Full-text across title/summary/nodes (Persian-normalized, digits, branch)
    - Admin full control: CRUD, bulk, import/export CSV/JSON, duplicate, history, validation
-   - 50 high-yield Harrison-based maps (see seedMindmapBank) — visually rich
+   - 321 maps (100 internal Harrison + 221 non-internal full syllabus) (see seedMindmapBank) — visually rich
 */
 
 import { db, persistNow } from "../db.js";
 import { isEnabled } from "./flags.js";
 
-export const MINDMAP_SYSTEMS = ["cardio","pulmo","gastro","nephro","endo","neuro","heme","rheum","infect","emergency","other"];
+export const MINDMAP_SYSTEMS = ["cardio","pulmo","gastro","nephro","endo","neuro","heme","rheum","infect","emergency","other","peds","obgyn","surgery","path","pharm","radio","ent","uro","ortho","psych","derm","ophth","stats","ethics","immuno","nutrition","genetics","physics"];
 export const MINDMAP_TYPES = ["mind","approach"];
 export const MINDMAP_LEVELS = ["core","high_yield","emergency"];
 export const MINDMAP_BRANCHES = ["definition","etiology","patho","clinical","workup","treatment","complication","ddx","start","question","action"];
@@ -190,7 +190,7 @@ export function listMindmaps({ lang = "fa", system = null, type = null, isPremiu
   const filters = {};
   if (system) filters.system = [system];
   if (type) filters.type = [type];
-  const out = searchMindmaps({ lang, filters, isPremium, pageSize: 100 });
+  const out = searchMindmaps({ lang, filters, isPremium, pageSize: 500 });
   return { total: out.total, previews: out.previews, items: out.items, facetCounts: out.facetCounts };
 }
 
@@ -366,9 +366,30 @@ export function importCSV(csv) {
   return { imported, errors };
 }
 
-// Ensure history table
+// Ensure tables
 try {
   db.exec(`
+    CREATE TABLE IF NOT EXISTS mindmap_bank (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      slug TEXT UNIQUE NOT NULL,
+      title_fa TEXT, title_en TEXT,
+      type TEXT, system TEXT, level TEXT,
+      summary_fa TEXT, summary_en TEXT,
+      graph_json TEXT, cover_url TEXT,
+      is_premium INTEGER DEFAULT 1,
+      status TEXT DEFAULT 'active',
+      created_at TEXT, updated_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_mb_slug ON mindmap_bank(slug);
+    CREATE INDEX IF NOT EXISTS idx_mb_system ON mindmap_bank(system);
+    CREATE TABLE IF NOT EXISTS question_mindmap_links (
+      question_id INTEGER NOT NULL,
+      mindmap_slug TEXT NOT NULL,
+      node_slug TEXT,
+      weight INTEGER DEFAULT 1,
+      PRIMARY KEY (question_id, mindmap_slug)
+    );
+    CREATE INDEX IF NOT EXISTS idx_qml_slug ON question_mindmap_links(mindmap_slug);
     CREATE TABLE IF NOT EXISTS mindmap_history (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       slug TEXT NOT NULL,
@@ -383,8 +404,11 @@ try {
 
 // Seed 50 high-yield Harrison-based mindmaps — idempotent, premium + free mix
 export function seedMindmapBank() {
-  const existing = db.prepare("SELECT COUNT(*) c FROM mindmap_bank").get().c;
-  if (existing >= 100) return { seeded: 0, total: existing };
+  try { db.exec(`CREATE TABLE IF NOT EXISTS mindmap_bank (id INTEGER PRIMARY KEY AUTOINCREMENT, slug TEXT UNIQUE NOT NULL, title_fa TEXT, title_en TEXT, type TEXT, system TEXT, level TEXT, summary_fa TEXT, summary_en TEXT, graph_json TEXT, cover_url TEXT, is_premium INTEGER DEFAULT 1, status TEXT DEFAULT 'active', created_at TEXT, updated_at TEXT)`); } catch {}
+  try { db.exec(`CREATE TABLE IF NOT EXISTS question_mindmap_links (question_id INTEGER NOT NULL, mindmap_slug TEXT NOT NULL, node_slug TEXT, weight INTEGER DEFAULT 1, PRIMARY KEY (question_id, mindmap_slug))`); } catch {}
+  let existing = 0;
+  try { existing = db.prepare("SELECT COUNT(*) c FROM mindmap_bank").get().c; } catch { existing = 0; }
+  if (existing >= 321) return { seeded: 0, total: existing };
 
   const maps = [
     // 1-11 as before (kept for compat)
@@ -2271,6 +2295,5311 @@ export function seedMindmapBank() {
         edges: [{ from: "clin", to: "smear", label: "" }, { from: "smear", to: "rx", label: "" }]
       }
     },
+    {
+      slug: "peds-neonate",
+      title_fa: "نوزادان: ارزیابی، زردی و مشکلات شایع",
+      title_en: "Neonatology: assessment, jaundice & common problems",
+      type: "mind", system: "peds", level: "high_yield",
+      summary_fa: "نوزادان: ارزیابی، زردی و مشکلات شایع — Neonatology: assessment, jaundice & common problems. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Neonatology: assessment, jaundice & common problems — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: نوزادان: ارزیابی، زردی و مشکلات شایع", label_en: "Def: Neonatology: assessment, jaundice & common problems", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل نوزادان: ارزیابی، زردی و مشکلات شایع", label_en: "Etiology: risks & causes of Neonatology: assessment, jaundice & common problems", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های نوزادان: ارزیابی، زردی و مشکلات شایع", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-growth",
+      title_fa: "رشد و تکامل",
+      title_en: "Growth & development",
+      type: "mind", system: "peds", level: "core",
+      summary_fa: "رشد و تکامل — Growth & development. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Growth & development — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: رشد و تکامل", label_en: "Def: Growth & development", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل رشد و تکامل", label_en: "Etiology: risks & causes of Growth & development", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های رشد و تکامل", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-nutrition-peds",
+      title_fa: "تغذیه شیرخوار، شیر مادر و کمبودها",
+      title_en: "Infant nutrition, breastfeeding & deficiencies",
+      type: "mind", system: "peds", level: "core",
+      summary_fa: "تغذیه شیرخوار، شیر مادر و کمبودها — Infant nutrition, breastfeeding & deficiencies. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Infant nutrition, breastfeeding & deficiencies — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: تغذیه شیرخوار، شیر مادر و کمبودها", label_en: "Def: Infant nutrition, breastfeeding & deficiencies", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل تغذیه شیرخوار، شیر مادر و کمبودها", label_en: "Etiology: risks & causes of Infant nutrition, breastfeeding & deficiencies", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های تغذیه شیرخوار، شیر مادر و کمبودها", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-vaccine",
+      title_fa: "واکسیناسیون و ایمن‌سازی",
+      title_en: "Immunization",
+      type: "mind", system: "peds", level: "high_yield",
+      summary_fa: "واکسیناسیون و ایمن‌سازی — Immunization. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Immunization — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: واکسیناسیون و ایمن‌سازی", label_en: "Def: Immunization", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل واکسیناسیون و ایمن‌سازی", label_en: "Etiology: risks & causes of Immunization", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های واکسیناسیون و ایمن‌سازی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-fluid",
+      title_fa: "مایع‌درمانی، دهیدراتاسیون و الکترولیت",
+      title_en: "Fluids, dehydration & electrolytes",
+      type: "mind", system: "peds", level: "core",
+      summary_fa: "مایع‌درمانی، دهیدراتاسیون و الکترولیت — Fluids, dehydration & electrolytes. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Fluids, dehydration & electrolytes — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: مایع‌درمانی، دهیدراتاسیون و الکترولیت", label_en: "Def: Fluids, dehydration & electrolytes", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل مایع‌درمانی، دهیدراتاسیون و الکترولیت", label_en: "Etiology: risks & causes of Fluids, dehydration & electrolytes", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های مایع‌درمانی، دهیدراتاسیون و الکترولیت", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-gastro-peds",
+      title_fa: "گوارش کودکان: اسهال، ریفلاکس، سلیاک، یبوست",
+      title_en: "Pediatric GI: diarrhea, reflux, celiac, constipation",
+      type: "mind", system: "peds", level: "core",
+      summary_fa: "گوارش کودکان: اسهال، ریفلاکس، سلیاک، یبوست — Pediatric GI: diarrhea, reflux, celiac, constipation. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Pediatric GI: diarrhea, reflux, celiac, constipation — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: گوارش کودکان: اسهال، ریفلاکس، سلیاک، یبوست", label_en: "Def: Pediatric GI: diarrhea, reflux, celiac, constipation", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل گوارش کودکان: اسهال، ریفلاکس، سلیاک، یبوست", label_en: "Etiology: risks & causes of Pediatric GI: diarrhea, reflux, celiac, constipation", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های گوارش کودکان: اسهال، ریفلاکس، سلیاک، یبوست", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-resp-peds",
+      title_fa: "تنفسی کودکان: کروپ، برونشیولیت، آسم، پنومونی",
+      title_en: "Pediatric respiratory: croup, bronchiolitis, asthma, pneumonia",
+      type: "mind", system: "peds", level: "high_yield",
+      summary_fa: "تنفسی کودکان: کروپ، برونشیولیت، آسم، پنومونی — Pediatric respiratory: croup, bronchiolitis, asthma, pneumonia. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Pediatric respiratory: croup, bronchiolitis, asthma, pneumonia — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: تنفسی کودکان: کروپ، برونشیولیت، آسم، پنومونی", label_en: "Def: Pediatric respiratory: croup, bronchiolitis, asthma, pneumonia", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل تنفسی کودکان: کروپ، برونشیولیت، آسم، پنومونی", label_en: "Etiology: risks & causes of Pediatric respiratory: croup, bronchiolitis, asthma, pneumonia", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های تنفسی کودکان: کروپ، برونشیولیت، آسم، پنومونی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-infect-peds",
+      title_fa: "عفونی کودکان: تب، بیماری‌های بثوری، مننژیت",
+      title_en: "Pediatric infectious disease: fever, exanthems, meningitis",
+      type: "mind", system: "peds", level: "core",
+      summary_fa: "عفونی کودکان: تب، بیماری‌های بثوری، مننژیت — Pediatric infectious disease: fever, exanthems, meningitis. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Pediatric infectious disease: fever, exanthems, meningitis — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: عفونی کودکان: تب، بیماری‌های بثوری، مننژیت", label_en: "Def: Pediatric infectious disease: fever, exanthems, meningitis", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل عفونی کودکان: تب، بیماری‌های بثوری، مننژیت", label_en: "Etiology: risks & causes of Pediatric infectious disease: fever, exanthems, meningitis", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های عفونی کودکان: تب، بیماری‌های بثوری، مننژیت", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-cardio-peds",
+      title_fa: "قلب کودکان: بیماری‌های مادرزادی و سوفل",
+      title_en: "Pediatric cardiology: congenital disease & murmurs",
+      type: "mind", system: "peds", level: "core",
+      summary_fa: "قلب کودکان: بیماری‌های مادرزادی و سوفل — Pediatric cardiology: congenital disease & murmurs. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Pediatric cardiology: congenital disease & murmurs — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: قلب کودکان: بیماری‌های مادرزادی و سوفل", label_en: "Def: Pediatric cardiology: congenital disease & murmurs", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل قلب کودکان: بیماری‌های مادرزادی و سوفل", label_en: "Etiology: risks & causes of Pediatric cardiology: congenital disease & murmurs", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های قلب کودکان: بیماری‌های مادرزادی و سوفل", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-nephro-peds",
+      title_fa: "کلیه کودکان: سندرم نفروتیک، UTI، هماچوری",
+      title_en: "Pediatric nephrology: nephrotic syndrome, UTI, hematuria",
+      type: "mind", system: "peds", level: "high_yield",
+      summary_fa: "کلیه کودکان: سندرم نفروتیک، UTI، هماچوری — Pediatric nephrology: nephrotic syndrome, UTI, hematuria. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Pediatric nephrology: nephrotic syndrome, UTI, hematuria — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: کلیه کودکان: سندرم نفروتیک، UTI، هماچوری", label_en: "Def: Pediatric nephrology: nephrotic syndrome, UTI, hematuria", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل کلیه کودکان: سندرم نفروتیک، UTI، هماچوری", label_en: "Etiology: risks & causes of Pediatric nephrology: nephrotic syndrome, UTI, hematuria", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های کلیه کودکان: سندرم نفروتیک، UTI، هماچوری", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-heme-peds",
+      title_fa: "خون و انکولوژی کودکان",
+      title_en: "Pediatric hematology-oncology",
+      type: "mind", system: "peds", level: "core",
+      summary_fa: "خون و انکولوژی کودکان — Pediatric hematology-oncology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Pediatric hematology-oncology — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: خون و انکولوژی کودکان", label_en: "Def: Pediatric hematology-oncology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل خون و انکولوژی کودکان", label_en: "Etiology: risks & causes of Pediatric hematology-oncology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های خون و انکولوژی کودکان", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-endo-peds",
+      title_fa: "غدد کودکان: دیابت، تیروئید، بلوغ، قد",
+      title_en: "Pediatric endocrinology: diabetes, thyroid, puberty, stature",
+      type: "mind", system: "peds", level: "core",
+      summary_fa: "غدد کودکان: دیابت، تیروئید، بلوغ، قد — Pediatric endocrinology: diabetes, thyroid, puberty, stature. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Pediatric endocrinology: diabetes, thyroid, puberty, stature — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: غدد کودکان: دیابت، تیروئید، بلوغ، قد", label_en: "Def: Pediatric endocrinology: diabetes, thyroid, puberty, stature", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل غدد کودکان: دیابت، تیروئید، بلوغ، قد", label_en: "Etiology: risks & causes of Pediatric endocrinology: diabetes, thyroid, puberty, stature", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های غدد کودکان: دیابت، تیروئید، بلوغ، قد", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-neuro-peds",
+      title_fa: "اعصاب کودکان: تشنج، تب و تشنج، تکامل عصبی",
+      title_en: "Pediatric neurology: seizures, febrile convulsion, neurodevelopment",
+      type: "mind", system: "peds", level: "high_yield",
+      summary_fa: "اعصاب کودکان: تشنج، تب و تشنج، تکامل عصبی — Pediatric neurology: seizures, febrile convulsion, neurodevelopment. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Pediatric neurology: seizures, febrile convulsion, neurodevelopment — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اعصاب کودکان: تشنج، تب و تشنج، تکامل عصبی", label_en: "Def: Pediatric neurology: seizures, febrile convulsion, neurodevelopment", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اعصاب کودکان: تشنج، تب و تشنج، تکامل عصبی", label_en: "Etiology: risks & causes of Pediatric neurology: seizures, febrile convulsion, neurodevelopment", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اعصاب کودکان: تشنج، تب و تشنج، تکامل عصبی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-genetic-peds",
+      title_fa: "ژنتیک و بیماری‌های متابولیک ارثی",
+      title_en: "Genetics & inborn errors of metabolism",
+      type: "mind", system: "peds", level: "core",
+      summary_fa: "ژنتیک و بیماری‌های متابولیک ارثی — Genetics & inborn errors of metabolism. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Genetics & inborn errors of metabolism — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: ژنتیک و بیماری‌های متابولیک ارثی", label_en: "Def: Genetics & inborn errors of metabolism", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل ژنتیک و بیماری‌های متابولیک ارثی", label_en: "Etiology: risks & causes of Genetics & inborn errors of metabolism", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های ژنتیک و بیماری‌های متابولیک ارثی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-immuno-peds",
+      title_fa: "نقص ایمنی و آلرژی در کودکان",
+      title_en: "Immunodeficiency & allergy in children",
+      type: "mind", system: "peds", level: "core",
+      summary_fa: "نقص ایمنی و آلرژی در کودکان — Immunodeficiency & allergy in children. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Immunodeficiency & allergy in children — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: نقص ایمنی و آلرژی در کودکان", label_en: "Def: Immunodeficiency & allergy in children", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل نقص ایمنی و آلرژی در کودکان", label_en: "Etiology: risks & causes of Immunodeficiency & allergy in children", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های نقص ایمنی و آلرژی در کودکان", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-rheum-peds",
+      title_fa: "روماتولوژی کودکان: آرتریت ایدیوپاتیک، HSP، تب روماتیسمی",
+      title_en: "Pediatric rheumatology: JIA, HSP, rheumatic fever",
+      type: "mind", system: "peds", level: "high_yield",
+      summary_fa: "روماتولوژی کودکان: آرتریت ایدیوپاتیک، HSP، تب روماتیسمی — Pediatric rheumatology: JIA, HSP, rheumatic fever. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Pediatric rheumatology: JIA, HSP, rheumatic fever — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: روماتولوژی کودکان: آرتریت ایدیوپاتیک، HSP، تب روماتیسمی", label_en: "Def: Pediatric rheumatology: JIA, HSP, rheumatic fever", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل روماتولوژی کودکان: آرتریت ایدیوپاتیک، HSP، تب روماتیسمی", label_en: "Etiology: risks & causes of Pediatric rheumatology: JIA, HSP, rheumatic fever", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های روماتولوژی کودکان: آرتریت ایدیوپاتیک، HSP، تب روماتیسمی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-emergency-peds",
+      title_fa: "اورژانس و مسمومیت در کودکان",
+      title_en: "Pediatric emergencies & poisoning",
+      type: "mind", system: "peds", level: "emergency",
+      summary_fa: "اورژانس و مسمومیت در کودکان — Pediatric emergencies & poisoning. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Pediatric emergencies & poisoning — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اورژانس و مسمومیت در کودکان", label_en: "Def: Pediatric emergencies & poisoning", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اورژانس و مسمومیت در کودکان", label_en: "Etiology: risks & causes of Pediatric emergencies & poisoning", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اورژانس و مسمومیت در کودکان", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-adolescent",
+      title_fa: "نوجوانان و طب رفتاری کودکان",
+      title_en: "Adolescent medicine & behavioural pediatrics",
+      type: "mind", system: "peds", level: "core",
+      summary_fa: "نوجوانان و طب رفتاری کودکان — Adolescent medicine & behavioural pediatrics. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Adolescent medicine & behavioural pediatrics — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: نوجوانان و طب رفتاری کودکان", label_en: "Def: Adolescent medicine & behavioural pediatrics", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل نوجوانان و طب رفتاری کودکان", label_en: "Etiology: risks & causes of Adolescent medicine & behavioural pediatrics", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های نوجوانان و طب رفتاری کودکان", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "peds-derm-peds",
+      title_fa: "پوست و بیماری‌های شایع سرپایی کودکان",
+      title_en: "Pediatric dermatology & common outpatient problems",
+      type: "mind", system: "peds", level: "high_yield",
+      summary_fa: "پوست و بیماری‌های شایع سرپایی کودکان — Pediatric dermatology & common outpatient problems. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Nelson 21e.",
+      summary_en: "Pediatric dermatology & common outpatient problems — Structured review: definition, etiology, pathophys, clinical, workup & management per Nelson 21e.",
+      cover_url: "/covers/nelson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پوست و بیماری‌های شایع سرپایی کودکان", label_en: "Def: Pediatric dermatology & common outpatient problems", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پوست و بیماری‌های شایع سرپایی کودکان", label_en: "Etiology: risks & causes of Pediatric dermatology & common outpatient problems", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پوست و بیماری‌های شایع سرپایی کودکان", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-physio",
+      title_fa: "فیزیولوژی بارداری و مراقبت‌های پیش از زایمان",
+      title_en: "Pregnancy physiology & prenatal care",
+      type: "mind", system: "obgyn", level: "core",
+      summary_fa: "فیزیولوژی بارداری و مراقبت‌های پیش از زایمان — Pregnancy physiology & prenatal care. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Pregnancy physiology & prenatal care — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: فیزیولوژی بارداری و مراقبت‌های پیش از زایمان", label_en: "Def: Pregnancy physiology & prenatal care", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل فیزیولوژی بارداری و مراقبت‌های پیش از زایمان", label_en: "Etiology: risks & causes of Pregnancy physiology & prenatal care", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های فیزیولوژی بارداری و مراقبت‌های پیش از زایمان", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-early-preg",
+      title_fa: "خون‌ریزی سه‌ماهه اول: سقط، حاملگی خارج رحمی، مول",
+      title_en: "First-trimester bleeding: abortion, ectopic, molar pregnancy",
+      type: "mind", system: "obgyn", level: "core",
+      summary_fa: "خون‌ریزی سه‌ماهه اول: سقط، حاملگی خارج رحمی، مول — First-trimester bleeding: abortion, ectopic, molar pregnancy. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "First-trimester bleeding: abortion, ectopic, molar pregnancy — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: خون‌ریزی سه‌ماهه اول: سقط، حاملگی خارج رحمی، مول", label_en: "Def: First-trimester bleeding: abortion, ectopic, molar pregnancy", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل خون‌ریزی سه‌ماهه اول: سقط، حاملگی خارج رحمی، مول", label_en: "Etiology: risks & causes of First-trimester bleeding: abortion, ectopic, molar pregnancy", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های خون‌ریزی سه‌ماهه اول: سقط، حاملگی خارج رحمی، مول", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-htn-preg",
+      title_fa: "پرفشاری خون در بارداری و پره‌اکلامپسی",
+      title_en: "Hypertension in pregnancy & preeclampsia",
+      type: "mind", system: "obgyn", level: "high_yield",
+      summary_fa: "پرفشاری خون در بارداری و پره‌اکلامپسی — Hypertension in pregnancy & preeclampsia. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Hypertension in pregnancy & preeclampsia — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پرفشاری خون در بارداری و پره‌اکلامپسی", label_en: "Def: Hypertension in pregnancy & preeclampsia", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پرفشاری خون در بارداری و پره‌اکلامپسی", label_en: "Etiology: risks & causes of Hypertension in pregnancy & preeclampsia", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پرفشاری خون در بارداری و پره‌اکلامپسی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-gdm",
+      title_fa: "دیابت و بیماری‌های طبی در بارداری",
+      title_en: "Diabetes & medical disorders in pregnancy",
+      type: "mind", system: "obgyn", level: "core",
+      summary_fa: "دیابت و بیماری‌های طبی در بارداری — Diabetes & medical disorders in pregnancy. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Diabetes & medical disorders in pregnancy — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: دیابت و بیماری‌های طبی در بارداری", label_en: "Def: Diabetes & medical disorders in pregnancy", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل دیابت و بیماری‌های طبی در بارداری", label_en: "Etiology: risks & causes of Diabetes & medical disorders in pregnancy", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های دیابت و بیماری‌های طبی در بارداری", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-infect-preg",
+      title_fa: "عفونت‌ها در بارداری: TORCH، GBS، HIV",
+      title_en: "Infections in pregnancy: TORCH, GBS, HIV",
+      type: "mind", system: "obgyn", level: "core",
+      summary_fa: "عفونت‌ها در بارداری: TORCH، GBS، HIV — Infections in pregnancy: TORCH, GBS, HIV. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Infections in pregnancy: TORCH, GBS, HIV — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: عفونت‌ها در بارداری: TORCH، GBS، HIV", label_en: "Def: Infections in pregnancy: TORCH, GBS, HIV", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل عفونت‌ها در بارداری: TORCH، GBS، HIV", label_en: "Etiology: risks & causes of Infections in pregnancy: TORCH, GBS, HIV", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های عفونت‌ها در بارداری: TORCH، GBS، HIV", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-preterm",
+      title_fa: "زایمان زودرس و پارگی زودرس پرده‌ها",
+      title_en: "Preterm labour & PROM",
+      type: "mind", system: "obgyn", level: "emergency",
+      summary_fa: "زایمان زودرس و پارگی زودرس پرده‌ها — Preterm labour & PROM. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Preterm labour & PROM — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: زایمان زودرس و پارگی زودرس پرده‌ها", label_en: "Def: Preterm labour & PROM", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل زایمان زودرس و پارگی زودرس پرده‌ها", label_en: "Etiology: risks & causes of Preterm labour & PROM", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های زایمان زودرس و پارگی زودرس پرده‌ها", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-late-bleed",
+      title_fa: "خون‌ریزی سه‌ماهه سوم: جفت سرراهی و دکولمان",
+      title_en: "Third-trimester bleeding: placenta previa & abruption",
+      type: "mind", system: "obgyn", level: "emergency",
+      summary_fa: "خون‌ریزی سه‌ماهه سوم: جفت سرراهی و دکولمان — Third-trimester bleeding: placenta previa & abruption. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Third-trimester bleeding: placenta previa & abruption — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: خون‌ریزی سه‌ماهه سوم: جفت سرراهی و دکولمان", label_en: "Def: Third-trimester bleeding: placenta previa & abruption", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل خون‌ریزی سه‌ماهه سوم: جفت سرراهی و دکولمان", label_en: "Etiology: risks & causes of Third-trimester bleeding: placenta previa & abruption", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های خون‌ریزی سه‌ماهه سوم: جفت سرراهی و دکولمان", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-fetal",
+      title_fa: "ارزیابی سلامت جنین و رشد جنین",
+      title_en: "Fetal surveillance & fetal growth",
+      type: "mind", system: "obgyn", level: "core",
+      summary_fa: "ارزیابی سلامت جنین و رشد جنین — Fetal surveillance & fetal growth. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Fetal surveillance & fetal growth — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: ارزیابی سلامت جنین و رشد جنین", label_en: "Def: Fetal surveillance & fetal growth", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل ارزیابی سلامت جنین و رشد جنین", label_en: "Etiology: risks & causes of Fetal surveillance & fetal growth", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های ارزیابی سلامت جنین و رشد جنین", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-labor",
+      title_fa: "زایمان طبیعی، القا و مراحل لیبر",
+      title_en: "Normal labour, induction & stages",
+      type: "mind", system: "obgyn", level: "high_yield",
+      summary_fa: "زایمان طبیعی، القا و مراحل لیبر — Normal labour, induction & stages. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Normal labour, induction & stages — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: زایمان طبیعی، القا و مراحل لیبر", label_en: "Def: Normal labour, induction & stages", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل زایمان طبیعی، القا و مراحل لیبر", label_en: "Etiology: risks & causes of Normal labour, induction & stages", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های زایمان طبیعی، القا و مراحل لیبر", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-cesarean",
+      title_fa: "سزارین، زایمان با ابزار و عوارض زایمان",
+      title_en: "Cesarean, operative delivery & delivery complications",
+      type: "mind", system: "obgyn", level: "core",
+      summary_fa: "سزارین، زایمان با ابزار و عوارض زایمان — Cesarean, operative delivery & delivery complications. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Cesarean, operative delivery & delivery complications — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: سزارین، زایمان با ابزار و عوارض زایمان", label_en: "Def: Cesarean, operative delivery & delivery complications", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل سزارین، زایمان با ابزار و عوارض زایمان", label_en: "Etiology: risks & causes of Cesarean, operative delivery & delivery complications", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های سزارین، زایمان با ابزار و عوارض زایمان", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-pph",
+      title_fa: "خون‌ریزی پس از زایمان و دوران نفاس",
+      title_en: "Postpartum hemorrhage & the puerperium",
+      type: "mind", system: "obgyn", level: "core",
+      summary_fa: "خون‌ریزی پس از زایمان و دوران نفاس — Postpartum hemorrhage & the puerperium. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Postpartum hemorrhage & the puerperium — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: خون‌ریزی پس از زایمان و دوران نفاس", label_en: "Def: Postpartum hemorrhage & the puerperium", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل خون‌ریزی پس از زایمان و دوران نفاس", label_en: "Etiology: risks & causes of Postpartum hemorrhage & the puerperium", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های خون‌ریزی پس از زایمان و دوران نفاس", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-multiple",
+      title_fa: "چندقلویی، Rh و ایزوایمونیزاسیون",
+      title_en: "Multiple gestation, Rh & alloimmunization",
+      type: "mind", system: "obgyn", level: "high_yield",
+      summary_fa: "چندقلویی، Rh و ایزوایمونیزاسیون — Multiple gestation, Rh & alloimmunization. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Multiple gestation, Rh & alloimmunization — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: چندقلویی، Rh و ایزوایمونیزاسیون", label_en: "Def: Multiple gestation, Rh & alloimmunization", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل چندقلویی، Rh و ایزوایمونیزاسیون", label_en: "Etiology: risks & causes of Multiple gestation, Rh & alloimmunization", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های چندقلویی، Rh و ایزوایمونیزاسیون", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-menstrual",
+      title_fa: "اختلالات قاعدگی و خون‌ریزی غیرطبیعی رحم",
+      title_en: "Menstrual disorders & abnormal uterine bleeding",
+      type: "mind", system: "obgyn", level: "core",
+      summary_fa: "اختلالات قاعدگی و خون‌ریزی غیرطبیعی رحم — Menstrual disorders & abnormal uterine bleeding. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Menstrual disorders & abnormal uterine bleeding — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اختلالات قاعدگی و خون‌ریزی غیرطبیعی رحم", label_en: "Def: Menstrual disorders & abnormal uterine bleeding", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اختلالات قاعدگی و خون‌ریزی غیرطبیعی رحم", label_en: "Etiology: risks & causes of Menstrual disorders & abnormal uterine bleeding", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اختلالات قاعدگی و خون‌ریزی غیرطبیعی رحم", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-amenorrhea",
+      title_fa: "آمنوره، PCOS و هیرسوتیسم",
+      title_en: "Amenorrhea, PCOS & hirsutism",
+      type: "mind", system: "obgyn", level: "core",
+      summary_fa: "آمنوره، PCOS و هیرسوتیسم — Amenorrhea, PCOS & hirsutism. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Amenorrhea, PCOS & hirsutism — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: آمنوره، PCOS و هیرسوتیسم", label_en: "Def: Amenorrhea, PCOS & hirsutism", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل آمنوره، PCOS و هیرسوتیسم", label_en: "Etiology: risks & causes of Amenorrhea, PCOS & hirsutism", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های آمنوره، PCOS و هیرسوتیسم", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-infertility",
+      title_fa: "ناباروری و تکنیک‌های کمک‌باروری",
+      title_en: "Infertility & assisted reproduction",
+      type: "mind", system: "obgyn", level: "high_yield",
+      summary_fa: "ناباروری و تکنیک‌های کمک‌باروری — Infertility & assisted reproduction. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Infertility & assisted reproduction — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: ناباروری و تکنیک‌های کمک‌باروری", label_en: "Def: Infertility & assisted reproduction", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل ناباروری و تکنیک‌های کمک‌باروری", label_en: "Etiology: risks & causes of Infertility & assisted reproduction", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های ناباروری و تکنیک‌های کمک‌باروری", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-contraception",
+      title_fa: "پیشگیری از بارداری",
+      title_en: "Contraception",
+      type: "mind", system: "obgyn", level: "core",
+      summary_fa: "پیشگیری از بارداری — Contraception. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Contraception — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پیشگیری از بارداری", label_en: "Def: Contraception", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پیشگیری از بارداری", label_en: "Etiology: risks & causes of Contraception", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پیشگیری از بارداری", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-menopause",
+      title_fa: "یائسگی و هورمون‌درمانی",
+      title_en: "Menopause & hormone therapy",
+      type: "mind", system: "obgyn", level: "core",
+      summary_fa: "یائسگی و هورمون‌درمانی — Menopause & hormone therapy. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Menopause & hormone therapy — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: یائسگی و هورمون‌درمانی", label_en: "Def: Menopause & hormone therapy", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل یائسگی و هورمون‌درمانی", label_en: "Etiology: risks & causes of Menopause & hormone therapy", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های یائسگی و هورمون‌درمانی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-vaginitis",
+      title_fa: "عفونت‌های دستگاه تناسلی و PID",
+      title_en: "Genital tract infections & PID",
+      type: "mind", system: "obgyn", level: "high_yield",
+      summary_fa: "عفونت‌های دستگاه تناسلی و PID — Genital tract infections & PID. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Genital tract infections & PID — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: عفونت‌های دستگاه تناسلی و PID", label_en: "Def: Genital tract infections & PID", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل عفونت‌های دستگاه تناسلی و PID", label_en: "Etiology: risks & causes of Genital tract infections & PID", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های عفونت‌های دستگاه تناسلی و PID", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-fibroid",
+      title_fa: "فیبروم، آدنومیوز و آندومتریوز",
+      title_en: "Fibroids, adenomyosis & endometriosis",
+      type: "mind", system: "obgyn", level: "core",
+      summary_fa: "فیبروم، آدنومیوز و آندومتریوز — Fibroids, adenomyosis & endometriosis. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Fibroids, adenomyosis & endometriosis — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: فیبروم، آدنومیوز و آندومتریوز", label_en: "Def: Fibroids, adenomyosis & endometriosis", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل فیبروم، آدنومیوز و آندومتریوز", label_en: "Etiology: risks & causes of Fibroids, adenomyosis & endometriosis", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های فیبروم، آدنومیوز و آندومتریوز", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-cervix",
+      title_fa: "غربالگری و سرطان دهانه رحم",
+      title_en: "Cervical screening & cervical cancer",
+      type: "mind", system: "obgyn", level: "core",
+      summary_fa: "غربالگری و سرطان دهانه رحم — Cervical screening & cervical cancer. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Cervical screening & cervical cancer — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: غربالگری و سرطان دهانه رحم", label_en: "Def: Cervical screening & cervical cancer", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل غربالگری و سرطان دهانه رحم", label_en: "Etiology: risks & causes of Cervical screening & cervical cancer", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های غربالگری و سرطان دهانه رحم", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-endometrium",
+      title_fa: "هیپرپلازی و سرطان آندومتر",
+      title_en: "Endometrial hyperplasia & cancer",
+      type: "mind", system: "obgyn", level: "high_yield",
+      summary_fa: "هیپرپلازی و سرطان آندومتر — Endometrial hyperplasia & cancer. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Endometrial hyperplasia & cancer — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: هیپرپلازی و سرطان آندومتر", label_en: "Def: Endometrial hyperplasia & cancer", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل هیپرپلازی و سرطان آندومتر", label_en: "Etiology: risks & causes of Endometrial hyperplasia & cancer", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های هیپرپلازی و سرطان آندومتر", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-ovary",
+      title_fa: "توده‌های تخمدان و سرطان تخمدان",
+      title_en: "Ovarian masses & ovarian cancer",
+      type: "mind", system: "obgyn", level: "core",
+      summary_fa: "توده‌های تخمدان و سرطان تخمدان — Ovarian masses & ovarian cancer. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Ovarian masses & ovarian cancer — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: توده‌های تخمدان و سرطان تخمدان", label_en: "Def: Ovarian masses & ovarian cancer", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل توده‌های تخمدان و سرطان تخمدان", label_en: "Etiology: risks & causes of Ovarian masses & ovarian cancer", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های توده‌های تخمدان و سرطان تخمدان", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-vulva",
+      title_fa: "بیماری‌های ولو و واژن",
+      title_en: "Vulvar & vaginal disease",
+      type: "mind", system: "obgyn", level: "core",
+      summary_fa: "بیماری‌های ولو و واژن — Vulvar & vaginal disease. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Vulvar & vaginal disease — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بیماری‌های ولو و واژن", label_en: "Def: Vulvar & vaginal disease", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل بیماری‌های ولو و واژن", label_en: "Etiology: risks & causes of Vulvar & vaginal disease", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های بیماری‌های ولو و واژن", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-pelvic-floor",
+      title_fa: "پرولاپس اعضای لگن و بی‌اختیاری ادرار",
+      title_en: "Pelvic organ prolapse & urinary incontinence",
+      type: "mind", system: "obgyn", level: "high_yield",
+      summary_fa: "پرولاپس اعضای لگن و بی‌اختیاری ادرار — Pelvic organ prolapse & urinary incontinence. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Pelvic organ prolapse & urinary incontinence — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پرولاپس اعضای لگن و بی‌اختیاری ادرار", label_en: "Def: Pelvic organ prolapse & urinary incontinence", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پرولاپس اعضای لگن و بی‌اختیاری ادرار", label_en: "Etiology: risks & causes of Pelvic organ prolapse & urinary incontinence", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پرولاپس اعضای لگن و بی‌اختیاری ادرار", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "obgyn-breast-obgyn",
+      title_fa: "بیماری‌های پستان در زنان",
+      title_en: "Breast disease in gynecology",
+      type: "mind", system: "obgyn", level: "core",
+      summary_fa: "بیماری‌های پستان در زنان — Breast disease in gynecology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Williams Obstetrics 26e / Williams Gynecology 4e.",
+      summary_en: "Breast disease in gynecology — Structured review: definition, etiology, pathophys, clinical, workup & management per Williams Obstetrics 26e / Williams Gynecology 4e.",
+      cover_url: "/covers/williams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بیماری‌های پستان در زنان", label_en: "Def: Breast disease in gynecology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل بیماری‌های پستان در زنان", label_en: "Etiology: risks & causes of Breast disease in gynecology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های بیماری‌های پستان در زنان", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-preop",
+      title_fa: "ارزیابی پیش از عمل، مایعات و تغذیه جراحی",
+      title_en: "Preoperative evaluation, fluids & surgical nutrition",
+      type: "mind", system: "surgery", level: "core",
+      summary_fa: "ارزیابی پیش از عمل، مایعات و تغذیه جراحی — Preoperative evaluation, fluids & surgical nutrition. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Preoperative evaluation, fluids & surgical nutrition — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: ارزیابی پیش از عمل، مایعات و تغذیه جراحی", label_en: "Def: Preoperative evaluation, fluids & surgical nutrition", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل ارزیابی پیش از عمل، مایعات و تغذیه جراحی", label_en: "Etiology: risks & causes of Preoperative evaluation, fluids & surgical nutrition", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های ارزیابی پیش از عمل، مایعات و تغذیه جراحی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-wound",
+      title_fa: "زخم، ترمیم زخم و عفونت‌های جراحی",
+      title_en: "Wounds, healing & surgical infections",
+      type: "mind", system: "surgery", level: "high_yield",
+      summary_fa: "زخم، ترمیم زخم و عفونت‌های جراحی — Wounds, healing & surgical infections. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Wounds, healing & surgical infections — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: زخم، ترمیم زخم و عفونت‌های جراحی", label_en: "Def: Wounds, healing & surgical infections", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل زخم، ترمیم زخم و عفونت‌های جراحی", label_en: "Etiology: risks & causes of Wounds, healing & surgical infections", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های زخم، ترمیم زخم و عفونت‌های جراحی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-trauma",
+      title_fa: "تروما: ارزیابی اولیه، شوک و احیا",
+      title_en: "Trauma: primary survey, shock & resuscitation",
+      type: "mind", system: "surgery", level: "emergency",
+      summary_fa: "تروما: ارزیابی اولیه، شوک و احیا — Trauma: primary survey, shock & resuscitation. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Trauma: primary survey, shock & resuscitation — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: تروما: ارزیابی اولیه، شوک و احیا", label_en: "Def: Trauma: primary survey, shock & resuscitation", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل تروما: ارزیابی اولیه، شوک و احیا", label_en: "Etiology: risks & causes of Trauma: primary survey, shock & resuscitation", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های تروما: ارزیابی اولیه، شوک و احیا", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-abd-trauma",
+      title_fa: "ترومای شکم، کبد و طحال",
+      title_en: "Abdominal, liver & splenic trauma",
+      type: "mind", system: "surgery", level: "emergency",
+      summary_fa: "ترومای شکم، کبد و طحال — Abdominal, liver & splenic trauma. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Abdominal, liver & splenic trauma — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: ترومای شکم، کبد و طحال", label_en: "Def: Abdominal, liver & splenic trauma", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل ترومای شکم، کبد و طحال", label_en: "Etiology: risks & causes of Abdominal, liver & splenic trauma", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های ترومای شکم، کبد و طحال", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-head-neck-trauma",
+      title_fa: "ترومای سر، گردن و ستون فقرات",
+      title_en: "Head, neck & spine trauma",
+      type: "mind", system: "surgery", level: "emergency",
+      summary_fa: "ترومای سر، گردن و ستون فقرات — Head, neck & spine trauma. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Head, neck & spine trauma — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: ترومای سر، گردن و ستون فقرات", label_en: "Def: Head, neck & spine trauma", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل ترومای سر، گردن و ستون فقرات", label_en: "Etiology: risks & causes of Head, neck & spine trauma", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های ترومای سر، گردن و ستون فقرات", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-burn",
+      title_fa: "سوختگی",
+      title_en: "Burns",
+      type: "mind", system: "surgery", level: "emergency",
+      summary_fa: "سوختگی — Burns. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Burns — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: سوختگی", label_en: "Def: Burns", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل سوختگی", label_en: "Etiology: risks & causes of Burns", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های سوختگی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-acute-abd",
+      title_fa: "شکم حاد و آپاندیسیت",
+      title_en: "Acute abdomen & appendicitis",
+      type: "mind", system: "surgery", level: "emergency",
+      summary_fa: "شکم حاد و آپاندیسیت — Acute abdomen & appendicitis. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Acute abdomen & appendicitis — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: شکم حاد و آپاندیسیت", label_en: "Def: Acute abdomen & appendicitis", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل شکم حاد و آپاندیسیت", label_en: "Etiology: risks & causes of Acute abdomen & appendicitis", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های شکم حاد و آپاندیسیت", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-obstruction",
+      title_fa: "انسداد روده، ولولوس و فتق",
+      title_en: "Bowel obstruction, volvulus & hernia",
+      type: "mind", system: "surgery", level: "high_yield",
+      summary_fa: "انسداد روده، ولولوس و فتق — Bowel obstruction, volvulus & hernia. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Bowel obstruction, volvulus & hernia — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: انسداد روده، ولولوس و فتق", label_en: "Def: Bowel obstruction, volvulus & hernia", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل انسداد روده، ولولوس و فتق", label_en: "Etiology: risks & causes of Bowel obstruction, volvulus & hernia", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های انسداد روده، ولولوس و فتق", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-biliary-surg",
+      title_fa: "جراحی صفرا: کوله‌سیستیت، کلانژیت، سنگ مجرا",
+      title_en: "Biliary surgery: cholecystitis, cholangitis, CBD stones",
+      type: "mind", system: "surgery", level: "core",
+      summary_fa: "جراحی صفرا: کوله‌سیستیت، کلانژیت، سنگ مجرا — Biliary surgery: cholecystitis, cholangitis, CBD stones. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Biliary surgery: cholecystitis, cholangitis, CBD stones — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: جراحی صفرا: کوله‌سیستیت، کلانژیت، سنگ مجرا", label_en: "Def: Biliary surgery: cholecystitis, cholangitis, CBD stones", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل جراحی صفرا: کوله‌سیستیت، کلانژیت، سنگ مجرا", label_en: "Etiology: risks & causes of Biliary surgery: cholecystitis, cholangitis, CBD stones", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های جراحی صفرا: کوله‌سیستیت، کلانژیت، سنگ مجرا", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-pancreas-surg",
+      title_fa: "پانکراتیت و تومورهای پانکراس",
+      title_en: "Pancreatitis & pancreatic tumours",
+      type: "mind", system: "surgery", level: "core",
+      summary_fa: "پانکراتیت و تومورهای پانکراس — Pancreatitis & pancreatic tumours. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Pancreatitis & pancreatic tumours — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پانکراتیت و تومورهای پانکراس", label_en: "Def: Pancreatitis & pancreatic tumours", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پانکراتیت و تومورهای پانکراس", label_en: "Etiology: risks & causes of Pancreatitis & pancreatic tumours", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پانکراتیت و تومورهای پانکراس", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-upper-gi-surg",
+      title_fa: "جراحی معده و مری",
+      title_en: "Gastric & esophageal surgery",
+      type: "mind", system: "surgery", level: "high_yield",
+      summary_fa: "جراحی معده و مری — Gastric & esophageal surgery. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Gastric & esophageal surgery — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: جراحی معده و مری", label_en: "Def: Gastric & esophageal surgery", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل جراحی معده و مری", label_en: "Etiology: risks & causes of Gastric & esophageal surgery", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های جراحی معده و مری", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-colorectal-surg",
+      title_fa: "جراحی کولورکتال: سرطان، دیورتیکولیت، بیماری‌های آنورکتال",
+      title_en: "Colorectal surgery: cancer, diverticulitis, anorectal disease",
+      type: "mind", system: "surgery", level: "core",
+      summary_fa: "جراحی کولورکتال: سرطان، دیورتیکولیت، بیماری‌های آنورکتال — Colorectal surgery: cancer, diverticulitis, anorectal disease. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Colorectal surgery: cancer, diverticulitis, anorectal disease — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: جراحی کولورکتال: سرطان، دیورتیکولیت، بیماری‌های آنورکتال", label_en: "Def: Colorectal surgery: cancer, diverticulitis, anorectal disease", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل جراحی کولورکتال: سرطان، دیورتیکولیت، بیماری‌های آنورکتال", label_en: "Etiology: risks & causes of Colorectal surgery: cancer, diverticulitis, anorectal disease", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های جراحی کولورکتال: سرطان، دیورتیکولیت، بیماری‌های آنورکتال", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-breast-surg",
+      title_fa: "بیماری‌های پستان",
+      title_en: "Breast disease",
+      type: "mind", system: "surgery", level: "core",
+      summary_fa: "بیماری‌های پستان — Breast disease. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Breast disease — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بیماری‌های پستان", label_en: "Def: Breast disease", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل بیماری‌های پستان", label_en: "Etiology: risks & causes of Breast disease", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های بیماری‌های پستان", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-thyroid-surg",
+      title_fa: "جراحی تیروئید و پاراتیروئید",
+      title_en: "Thyroid & parathyroid surgery",
+      type: "mind", system: "surgery", level: "high_yield",
+      summary_fa: "جراحی تیروئید و پاراتیروئید — Thyroid & parathyroid surgery. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Thyroid & parathyroid surgery — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: جراحی تیروئید و پاراتیروئید", label_en: "Def: Thyroid & parathyroid surgery", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل جراحی تیروئید و پاراتیروئید", label_en: "Etiology: risks & causes of Thyroid & parathyroid surgery", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های جراحی تیروئید و پاراتیروئید", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-vascular-surg",
+      title_fa: "جراحی عروق: آنوریسم، ایسکمی اندام، واریس",
+      title_en: "Vascular surgery: aneurysm, limb ischemia, varicose veins",
+      type: "mind", system: "surgery", level: "core",
+      summary_fa: "جراحی عروق: آنوریسم، ایسکمی اندام، واریس — Vascular surgery: aneurysm, limb ischemia, varicose veins. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Vascular surgery: aneurysm, limb ischemia, varicose veins — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: جراحی عروق: آنوریسم، ایسکمی اندام، واریس", label_en: "Def: Vascular surgery: aneurysm, limb ischemia, varicose veins", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل جراحی عروق: آنوریسم، ایسکمی اندام، واریس", label_en: "Etiology: risks & causes of Vascular surgery: aneurysm, limb ischemia, varicose veins", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های جراحی عروق: آنوریسم، ایسکمی اندام، واریس", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-thoracic-surg",
+      title_fa: "جراحی توراکس و مدیاستن",
+      title_en: "Thoracic & mediastinal surgery",
+      type: "mind", system: "surgery", level: "core",
+      summary_fa: "جراحی توراکس و مدیاستن — Thoracic & mediastinal surgery. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Thoracic & mediastinal surgery — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: جراحی توراکس و مدیاستن", label_en: "Def: Thoracic & mediastinal surgery", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل جراحی توراکس و مدیاستن", label_en: "Etiology: risks & causes of Thoracic & mediastinal surgery", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های جراحی توراکس و مدیاستن", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-peds-surg",
+      title_fa: "جراحی کودکان",
+      title_en: "Pediatric surgery",
+      type: "mind", system: "surgery", level: "high_yield",
+      summary_fa: "جراحی کودکان — Pediatric surgery. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Pediatric surgery — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: جراحی کودکان", label_en: "Def: Pediatric surgery", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل جراحی کودکان", label_en: "Etiology: risks & causes of Pediatric surgery", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های جراحی کودکان", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-hernia-wall",
+      title_fa: "جدار شکم و فتق‌ها",
+      title_en: "Abdominal wall & hernias",
+      type: "mind", system: "surgery", level: "core",
+      summary_fa: "جدار شکم و فتق‌ها — Abdominal wall & hernias. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Abdominal wall & hernias — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: جدار شکم و فتق‌ها", label_en: "Def: Abdominal wall & hernias", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل جدار شکم و فتق‌ها", label_en: "Etiology: risks & causes of Abdominal wall & hernias", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های جدار شکم و فتق‌ها", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "surgery-transplant",
+      title_fa: "پیوند اعضا و انکولوژی جراحی",
+      title_en: "Transplantation & surgical oncology",
+      type: "mind", system: "surgery", level: "core",
+      summary_fa: "پیوند اعضا و انکولوژی جراحی — Transplantation & surgical oncology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Schwartz 11e.",
+      summary_en: "Transplantation & surgical oncology — Structured review: definition, etiology, pathophys, clinical, workup & management per Schwartz 11e.",
+      cover_url: "/covers/schwartz.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پیوند اعضا و انکولوژی جراحی", label_en: "Def: Transplantation & surgical oncology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پیوند اعضا و انکولوژی جراحی", label_en: "Etiology: risks & causes of Transplantation & surgical oncology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پیوند اعضا و انکولوژی جراحی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-cell-injury",
+      title_fa: "آسیب سلولی، تطابق و مرگ سلولی",
+      title_en: "Cell injury, adaptation & cell death",
+      type: "mind", system: "path", level: "high_yield",
+      summary_fa: "آسیب سلولی، تطابق و مرگ سلولی — Cell injury, adaptation & cell death. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Cell injury, adaptation & cell death — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: آسیب سلولی، تطابق و مرگ سلولی", label_en: "Def: Cell injury, adaptation & cell death", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل آسیب سلولی، تطابق و مرگ سلولی", label_en: "Etiology: risks & causes of Cell injury, adaptation & cell death", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های آسیب سلولی، تطابق و مرگ سلولی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-inflammation",
+      title_fa: "التهاب حاد و مزمن، ترمیم",
+      title_en: "Acute & chronic inflammation, repair",
+      type: "mind", system: "path", level: "emergency",
+      summary_fa: "التهاب حاد و مزمن، ترمیم — Acute & chronic inflammation, repair. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Acute & chronic inflammation, repair — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: التهاب حاد و مزمن، ترمیم", label_en: "Def: Acute & chronic inflammation, repair", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل التهاب حاد و مزمن، ترمیم", label_en: "Etiology: risks & causes of Acute & chronic inflammation, repair", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های التهاب حاد و مزمن، ترمیم", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-hemodynamic",
+      title_fa: "اختلالات همودینامیک: ادم، ترومبوز، آمبولی، شوک",
+      title_en: "Hemodynamic disorders: edema, thrombosis, embolism, shock",
+      type: "mind", system: "path", level: "emergency",
+      summary_fa: "اختلالات همودینامیک: ادم، ترومبوز، آمبولی، شوک — Hemodynamic disorders: edema, thrombosis, embolism, shock. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Hemodynamic disorders: edema, thrombosis, embolism, shock — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اختلالات همودینامیک: ادم، ترومبوز، آمبولی، شوک", label_en: "Def: Hemodynamic disorders: edema, thrombosis, embolism, shock", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اختلالات همودینامیک: ادم، ترومبوز، آمبولی، شوک", label_en: "Etiology: risks & causes of Hemodynamic disorders: edema, thrombosis, embolism, shock", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اختلالات همودینامیک: ادم، ترومبوز، آمبولی، شوک", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-genetics-path",
+      title_fa: "بیماری‌های ژنتیک",
+      title_en: "Genetic disorders",
+      type: "mind", system: "path", level: "high_yield",
+      summary_fa: "بیماری‌های ژنتیک — Genetic disorders. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Genetic disorders — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بیماری‌های ژنتیک", label_en: "Def: Genetic disorders", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل بیماری‌های ژنتیک", label_en: "Etiology: risks & causes of Genetic disorders", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های بیماری‌های ژنتیک", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-immuno-path",
+      title_fa: "بیماری‌های سیستم ایمنی: حساسیت، اتوایمیون، نقص ایمنی، آمیلوئید",
+      title_en: "Immune disorders: hypersensitivity, autoimmunity, immunodeficiency, amyloid",
+      type: "mind", system: "path", level: "core",
+      summary_fa: "بیماری‌های سیستم ایمنی: حساسیت، اتوایمیون، نقص ایمنی، آمیلوئید — Immune disorders: hypersensitivity, autoimmunity, immunodeficiency, amyloid. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Immune disorders: hypersensitivity, autoimmunity, immunodeficiency, amyloid — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بیماری‌های سیستم ایمنی: حساسیت، اتوایمیون، نقص ایمنی، آمیلوئید", label_en: "Def: Immune disorders: hypersensitivity, autoimmunity, immunodeficiency, amyloid", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل بیماری‌های سیستم ایمنی: حساسیت، اتوایمیون، نقص ایمنی، آمیلوئید", label_en: "Etiology: risks & causes of Immune disorders: hypersensitivity, autoimmunity, immunodeficiency, amyloid", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های بیماری‌های سیستم ایمنی: حساسیت، اتوایمیون، نقص ایمنی، آمیلوئید", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-neoplasia",
+      title_fa: "نئوپلازی: نام‌گذاری، سرطان‌زایی، انکوژن‌ها",
+      title_en: "Neoplasia: nomenclature, carcinogenesis, oncogenes",
+      type: "mind", system: "path", level: "core",
+      summary_fa: "نئوپلازی: نام‌گذاری، سرطان‌زایی، انکوژن‌ها — Neoplasia: nomenclature, carcinogenesis, oncogenes. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Neoplasia: nomenclature, carcinogenesis, oncogenes — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: نئوپلازی: نام‌گذاری، سرطان‌زایی، انکوژن‌ها", label_en: "Def: Neoplasia: nomenclature, carcinogenesis, oncogenes", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل نئوپلازی: نام‌گذاری، سرطان‌زایی، انکوژن‌ها", label_en: "Etiology: risks & causes of Neoplasia: nomenclature, carcinogenesis, oncogenes", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های نئوپلازی: نام‌گذاری، سرطان‌زایی، انکوژن‌ها", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-environment",
+      title_fa: "بیماری‌های محیطی و تغذیه‌ای",
+      title_en: "Environmental & nutritional pathology",
+      type: "mind", system: "path", level: "high_yield",
+      summary_fa: "بیماری‌های محیطی و تغذیه‌ای — Environmental & nutritional pathology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Environmental & nutritional pathology — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بیماری‌های محیطی و تغذیه‌ای", label_en: "Def: Environmental & nutritional pathology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل بیماری‌های محیطی و تغذیه‌ای", label_en: "Etiology: risks & causes of Environmental & nutritional pathology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های بیماری‌های محیطی و تغذیه‌ای", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-infect-path",
+      title_fa: "بیماری‌های عفونی در پاتولوژی",
+      title_en: "Infectious disease pathology",
+      type: "mind", system: "path", level: "core",
+      summary_fa: "بیماری‌های عفونی در پاتولوژی — Infectious disease pathology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Infectious disease pathology — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بیماری‌های عفونی در پاتولوژی", label_en: "Def: Infectious disease pathology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل بیماری‌های عفونی در پاتولوژی", label_en: "Etiology: risks & causes of Infectious disease pathology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های بیماری‌های عفونی در پاتولوژی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-vessels",
+      title_fa: "پاتولوژی عروق: آترواسکلروز، واسکولیت، آنوریسم",
+      title_en: "Vascular pathology: atherosclerosis, vasculitis, aneurysm",
+      type: "mind", system: "path", level: "core",
+      summary_fa: "پاتولوژی عروق: آترواسکلروز، واسکولیت، آنوریسم — Vascular pathology: atherosclerosis, vasculitis, aneurysm. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Vascular pathology: atherosclerosis, vasculitis, aneurysm — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پاتولوژی عروق: آترواسکلروز، واسکولیت، آنوریسم", label_en: "Def: Vascular pathology: atherosclerosis, vasculitis, aneurysm", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پاتولوژی عروق: آترواسکلروز، واسکولیت، آنوریسم", label_en: "Etiology: risks & causes of Vascular pathology: atherosclerosis, vasculitis, aneurysm", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پاتولوژی عروق: آترواسکلروز، واسکولیت، آنوریسم", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-heart-path",
+      title_fa: "پاتولوژی قلب",
+      title_en: "Cardiac pathology",
+      type: "mind", system: "path", level: "high_yield",
+      summary_fa: "پاتولوژی قلب — Cardiac pathology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Cardiac pathology — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پاتولوژی قلب", label_en: "Def: Cardiac pathology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پاتولوژی قلب", label_en: "Etiology: risks & causes of Cardiac pathology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پاتولوژی قلب", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-heme-path",
+      title_fa: "پاتولوژی خون: کم‌خونی، لوسمی، لنفوم",
+      title_en: "Hematopathology: anemia, leukemia, lymphoma",
+      type: "mind", system: "path", level: "core",
+      summary_fa: "پاتولوژی خون: کم‌خونی، لوسمی، لنفوم — Hematopathology: anemia, leukemia, lymphoma. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Hematopathology: anemia, leukemia, lymphoma — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پاتولوژی خون: کم‌خونی، لوسمی، لنفوم", label_en: "Def: Hematopathology: anemia, leukemia, lymphoma", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پاتولوژی خون: کم‌خونی، لوسمی، لنفوم", label_en: "Etiology: risks & causes of Hematopathology: anemia, leukemia, lymphoma", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پاتولوژی خون: کم‌خونی، لوسمی، لنفوم", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-lung-path",
+      title_fa: "پاتولوژی ریه",
+      title_en: "Pulmonary pathology",
+      type: "mind", system: "path", level: "core",
+      summary_fa: "پاتولوژی ریه — Pulmonary pathology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Pulmonary pathology — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پاتولوژی ریه", label_en: "Def: Pulmonary pathology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پاتولوژی ریه", label_en: "Etiology: risks & causes of Pulmonary pathology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پاتولوژی ریه", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-gi-path",
+      title_fa: "پاتولوژی دستگاه گوارش",
+      title_en: "Gastrointestinal pathology",
+      type: "mind", system: "path", level: "high_yield",
+      summary_fa: "پاتولوژی دستگاه گوارش — Gastrointestinal pathology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Gastrointestinal pathology — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پاتولوژی دستگاه گوارش", label_en: "Def: Gastrointestinal pathology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پاتولوژی دستگاه گوارش", label_en: "Etiology: risks & causes of Gastrointestinal pathology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پاتولوژی دستگاه گوارش", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-liver-path",
+      title_fa: "پاتولوژی کبد، صفرا و پانکراس",
+      title_en: "Liver, biliary & pancreatic pathology",
+      type: "mind", system: "path", level: "core",
+      summary_fa: "پاتولوژی کبد، صفرا و پانکراس — Liver, biliary & pancreatic pathology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Liver, biliary & pancreatic pathology — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پاتولوژی کبد، صفرا و پانکراس", label_en: "Def: Liver, biliary & pancreatic pathology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پاتولوژی کبد، صفرا و پانکراس", label_en: "Etiology: risks & causes of Liver, biliary & pancreatic pathology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پاتولوژی کبد، صفرا و پانکراس", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-kidney-path",
+      title_fa: "پاتولوژی کلیه و مجاری ادراری",
+      title_en: "Renal & urinary tract pathology",
+      type: "mind", system: "path", level: "core",
+      summary_fa: "پاتولوژی کلیه و مجاری ادراری — Renal & urinary tract pathology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Renal & urinary tract pathology — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پاتولوژی کلیه و مجاری ادراری", label_en: "Def: Renal & urinary tract pathology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پاتولوژی کلیه و مجاری ادراری", label_en: "Etiology: risks & causes of Renal & urinary tract pathology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پاتولوژی کلیه و مجاری ادراری", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-male-path",
+      title_fa: "پاتولوژی دستگاه تناسلی مرد",
+      title_en: "Male genital pathology",
+      type: "mind", system: "path", level: "high_yield",
+      summary_fa: "پاتولوژی دستگاه تناسلی مرد — Male genital pathology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Male genital pathology — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پاتولوژی دستگاه تناسلی مرد", label_en: "Def: Male genital pathology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پاتولوژی دستگاه تناسلی مرد", label_en: "Etiology: risks & causes of Male genital pathology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پاتولوژی دستگاه تناسلی مرد", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-female-path",
+      title_fa: "پاتولوژی دستگاه تناسلی زن و پستان",
+      title_en: "Female genital & breast pathology",
+      type: "mind", system: "path", level: "core",
+      summary_fa: "پاتولوژی دستگاه تناسلی زن و پستان — Female genital & breast pathology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Female genital & breast pathology — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پاتولوژی دستگاه تناسلی زن و پستان", label_en: "Def: Female genital & breast pathology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پاتولوژی دستگاه تناسلی زن و پستان", label_en: "Etiology: risks & causes of Female genital & breast pathology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پاتولوژی دستگاه تناسلی زن و پستان", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-endo-path",
+      title_fa: "پاتولوژی غدد",
+      title_en: "Endocrine pathology",
+      type: "mind", system: "path", level: "core",
+      summary_fa: "پاتولوژی غدد — Endocrine pathology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Endocrine pathology — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پاتولوژی غدد", label_en: "Def: Endocrine pathology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پاتولوژی غدد", label_en: "Etiology: risks & causes of Endocrine pathology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پاتولوژی غدد", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-skin-bone-path",
+      title_fa: "پاتولوژی پوست، استخوان، مفصل و بافت نرم",
+      title_en: "Skin, bone, joint & soft-tissue pathology",
+      type: "mind", system: "path", level: "high_yield",
+      summary_fa: "پاتولوژی پوست، استخوان، مفصل و بافت نرم — Skin, bone, joint & soft-tissue pathology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Skin, bone, joint & soft-tissue pathology — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پاتولوژی پوست، استخوان، مفصل و بافت نرم", label_en: "Def: Skin, bone, joint & soft-tissue pathology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پاتولوژی پوست، استخوان، مفصل و بافت نرم", label_en: "Etiology: risks & causes of Skin, bone, joint & soft-tissue pathology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پاتولوژی پوست، استخوان، مفصل و بافت نرم", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "path-cns-path",
+      title_fa: "پاتولوژی سیستم عصبی",
+      title_en: "Neuropathology",
+      type: "mind", system: "path", level: "core",
+      summary_fa: "پاتولوژی سیستم عصبی — Neuropathology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Robbins 10e.",
+      summary_en: "Neuropathology — Structured review: definition, etiology, pathophys, clinical, workup & management per Robbins 10e.",
+      cover_url: "/covers/robbins.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پاتولوژی سیستم عصبی", label_en: "Def: Neuropathology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پاتولوژی سیستم عصبی", label_en: "Etiology: risks & causes of Neuropathology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پاتولوژی سیستم عصبی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "pharm-general",
+      title_fa: "فارماکوکینتیک و فارماکودینامیک",
+      title_en: "Pharmacokinetics & pharmacodynamics",
+      type: "mind", system: "pharm", level: "core",
+      summary_fa: "فارماکوکینتیک و فارماکودینامیک — Pharmacokinetics & pharmacodynamics. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Katzung 15e / Goodman & Gilman 14e.",
+      summary_en: "Pharmacokinetics & pharmacodynamics — Structured review: definition, etiology, pathophys, clinical, workup & management per Katzung 15e / Goodman & Gilman 14e.",
+      cover_url: "/covers/katzung.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: فارماکوکینتیک و فارماکودینامیک", label_en: "Def: Pharmacokinetics & pharmacodynamics", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل فارماکوکینتیک و فارماکودینامیک", label_en: "Etiology: risks & causes of Pharmacokinetics & pharmacodynamics", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های فارماکوکینتیک و فارماکودینامیک", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "pharm-ans",
+      title_fa: "داروهای سیستم عصبی خودکار",
+      title_en: "Autonomic drugs",
+      type: "mind", system: "pharm", level: "high_yield",
+      summary_fa: "داروهای سیستم عصبی خودکار — Autonomic drugs. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Katzung 15e / Goodman & Gilman 14e.",
+      summary_en: "Autonomic drugs — Structured review: definition, etiology, pathophys, clinical, workup & management per Katzung 15e / Goodman & Gilman 14e.",
+      cover_url: "/covers/katzung.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: داروهای سیستم عصبی خودکار", label_en: "Def: Autonomic drugs", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل داروهای سیستم عصبی خودکار", label_en: "Etiology: risks & causes of Autonomic drugs", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های داروهای سیستم عصبی خودکار", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "pharm-cv-pharm",
+      title_fa: "داروهای قلبی‌عروقی",
+      title_en: "Cardiovascular drugs",
+      type: "mind", system: "pharm", level: "core",
+      summary_fa: "داروهای قلبی‌عروقی — Cardiovascular drugs. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Katzung 15e / Goodman & Gilman 14e.",
+      summary_en: "Cardiovascular drugs — Structured review: definition, etiology, pathophys, clinical, workup & management per Katzung 15e / Goodman & Gilman 14e.",
+      cover_url: "/covers/katzung.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: داروهای قلبی‌عروقی", label_en: "Def: Cardiovascular drugs", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل داروهای قلبی‌عروقی", label_en: "Etiology: risks & causes of Cardiovascular drugs", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های داروهای قلبی‌عروقی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "pharm-diuretic",
+      title_fa: "دیورتیک‌ها و داروهای کلیه",
+      title_en: "Diuretics & renal drugs",
+      type: "mind", system: "pharm", level: "core",
+      summary_fa: "دیورتیک‌ها و داروهای کلیه — Diuretics & renal drugs. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Katzung 15e / Goodman & Gilman 14e.",
+      summary_en: "Diuretics & renal drugs — Structured review: definition, etiology, pathophys, clinical, workup & management per Katzung 15e / Goodman & Gilman 14e.",
+      cover_url: "/covers/katzung.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: دیورتیک‌ها و داروهای کلیه", label_en: "Def: Diuretics & renal drugs", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل دیورتیک‌ها و داروهای کلیه", label_en: "Etiology: risks & causes of Diuretics & renal drugs", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های دیورتیک‌ها و داروهای کلیه", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "pharm-anticoag",
+      title_fa: "داروهای ضدانعقاد، ضدپلاکت و خون",
+      title_en: "Anticoagulants, antiplatelets & hematologic drugs",
+      type: "mind", system: "pharm", level: "high_yield",
+      summary_fa: "داروهای ضدانعقاد، ضدپلاکت و خون — Anticoagulants, antiplatelets & hematologic drugs. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Katzung 15e / Goodman & Gilman 14e.",
+      summary_en: "Anticoagulants, antiplatelets & hematologic drugs — Structured review: definition, etiology, pathophys, clinical, workup & management per Katzung 15e / Goodman & Gilman 14e.",
+      cover_url: "/covers/katzung.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: داروهای ضدانعقاد، ضدپلاکت و خون", label_en: "Def: Anticoagulants, antiplatelets & hematologic drugs", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل داروهای ضدانعقاد، ضدپلاکت و خون", label_en: "Etiology: risks & causes of Anticoagulants, antiplatelets & hematologic drugs", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های داروهای ضدانعقاد، ضدپلاکت و خون", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "pharm-cns-pharm",
+      title_fa: "داروهای سیستم عصبی مرکزی: ضدتشنج، بیهوشی، آرام‌بخش",
+      title_en: "CNS drugs: antiepileptics, anesthetics, sedatives",
+      type: "mind", system: "pharm", level: "core",
+      summary_fa: "داروهای سیستم عصبی مرکزی: ضدتشنج، بیهوشی، آرام‌بخش — CNS drugs: antiepileptics, anesthetics, sedatives. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Katzung 15e / Goodman & Gilman 14e.",
+      summary_en: "CNS drugs: antiepileptics, anesthetics, sedatives — Structured review: definition, etiology, pathophys, clinical, workup & management per Katzung 15e / Goodman & Gilman 14e.",
+      cover_url: "/covers/katzung.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: داروهای سیستم عصبی مرکزی: ضدتشنج، بیهوشی، آرام‌بخش", label_en: "Def: CNS drugs: antiepileptics, anesthetics, sedatives", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل داروهای سیستم عصبی مرکزی: ضدتشنج، بیهوشی، آرام‌بخش", label_en: "Etiology: risks & causes of CNS drugs: antiepileptics, anesthetics, sedatives", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های داروهای سیستم عصبی مرکزی: ضدتشنج، بیهوشی، آرام‌بخش", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "pharm-psych-pharm",
+      title_fa: "داروهای روان‌پزشکی",
+      title_en: "Psychiatric drugs",
+      type: "mind", system: "pharm", level: "core",
+      summary_fa: "داروهای روان‌پزشکی — Psychiatric drugs. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Katzung 15e / Goodman & Gilman 14e.",
+      summary_en: "Psychiatric drugs — Structured review: definition, etiology, pathophys, clinical, workup & management per Katzung 15e / Goodman & Gilman 14e.",
+      cover_url: "/covers/katzung.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: داروهای روان‌پزشکی", label_en: "Def: Psychiatric drugs", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل داروهای روان‌پزشکی", label_en: "Etiology: risks & causes of Psychiatric drugs", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های داروهای روان‌پزشکی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "pharm-opioid-pain",
+      title_fa: "اپیوئیدها، NSAIDها و داروهای درد و نقرس",
+      title_en: "Opioids, NSAIDs, pain & gout drugs",
+      type: "mind", system: "pharm", level: "high_yield",
+      summary_fa: "اپیوئیدها، NSAIDها و داروهای درد و نقرس — Opioids, NSAIDs, pain & gout drugs. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Katzung 15e / Goodman & Gilman 14e.",
+      summary_en: "Opioids, NSAIDs, pain & gout drugs — Structured review: definition, etiology, pathophys, clinical, workup & management per Katzung 15e / Goodman & Gilman 14e.",
+      cover_url: "/covers/katzung.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اپیوئیدها، NSAIDها و داروهای درد و نقرس", label_en: "Def: Opioids, NSAIDs, pain & gout drugs", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اپیوئیدها، NSAIDها و داروهای درد و نقرس", label_en: "Etiology: risks & causes of Opioids, NSAIDs, pain & gout drugs", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اپیوئیدها، NSAIDها و داروهای درد و نقرس", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "pharm-parkinson-pharm",
+      title_fa: "داروهای پارکینسون، آلزایمر، میگرن و شل‌کننده‌ها",
+      title_en: "Parkinson, Alzheimer, migraine & muscle relaxant drugs",
+      type: "mind", system: "pharm", level: "core",
+      summary_fa: "داروهای پارکینسون، آلزایمر، میگرن و شل‌کننده‌ها — Parkinson, Alzheimer, migraine & muscle relaxant drugs. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Katzung 15e / Goodman & Gilman 14e.",
+      summary_en: "Parkinson, Alzheimer, migraine & muscle relaxant drugs — Structured review: definition, etiology, pathophys, clinical, workup & management per Katzung 15e / Goodman & Gilman 14e.",
+      cover_url: "/covers/katzung.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: داروهای پارکینسون، آلزایمر، میگرن و شل‌کننده‌ها", label_en: "Def: Parkinson, Alzheimer, migraine & muscle relaxant drugs", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل داروهای پارکینسون، آلزایمر، میگرن و شل‌کننده‌ها", label_en: "Etiology: risks & causes of Parkinson, Alzheimer, migraine & muscle relaxant drugs", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های داروهای پارکینسون، آلزایمر، میگرن و شل‌کننده‌ها", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "pharm-antibiotic",
+      title_fa: "آنتی‌بیوتیک‌ها",
+      title_en: "Antibacterial drugs",
+      type: "mind", system: "pharm", level: "core",
+      summary_fa: "آنتی‌بیوتیک‌ها — Antibacterial drugs. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Katzung 15e / Goodman & Gilman 14e.",
+      summary_en: "Antibacterial drugs — Structured review: definition, etiology, pathophys, clinical, workup & management per Katzung 15e / Goodman & Gilman 14e.",
+      cover_url: "/covers/katzung.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: آنتی‌بیوتیک‌ها", label_en: "Def: Antibacterial drugs", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل آنتی‌بیوتیک‌ها", label_en: "Etiology: risks & causes of Antibacterial drugs", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های آنتی‌بیوتیک‌ها", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "pharm-antimicrobial-other",
+      title_fa: "داروهای ضدقارچ، ضدویروس، ضدانگل",
+      title_en: "Antifungal, antiviral & antiparasitic drugs",
+      type: "mind", system: "pharm", level: "high_yield",
+      summary_fa: "داروهای ضدقارچ، ضدویروس، ضدانگل — Antifungal, antiviral & antiparasitic drugs. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Katzung 15e / Goodman & Gilman 14e.",
+      summary_en: "Antifungal, antiviral & antiparasitic drugs — Structured review: definition, etiology, pathophys, clinical, workup & management per Katzung 15e / Goodman & Gilman 14e.",
+      cover_url: "/covers/katzung.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: داروهای ضدقارچ، ضدویروس، ضدانگل", label_en: "Def: Antifungal, antiviral & antiparasitic drugs", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل داروهای ضدقارچ، ضدویروس، ضدانگل", label_en: "Etiology: risks & causes of Antifungal, antiviral & antiparasitic drugs", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های داروهای ضدقارچ، ضدویروس، ضدانگل", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "pharm-endo-pharm",
+      title_fa: "داروهای غدد: انسولین، تیروئید، کورتون، هورمون‌های جنسی",
+      title_en: "Endocrine drugs: insulin, thyroid, steroids, sex hormones",
+      type: "mind", system: "pharm", level: "core",
+      summary_fa: "داروهای غدد: انسولین، تیروئید، کورتون، هورمون‌های جنسی — Endocrine drugs: insulin, thyroid, steroids, sex hormones. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Katzung 15e / Goodman & Gilman 14e.",
+      summary_en: "Endocrine drugs: insulin, thyroid, steroids, sex hormones — Structured review: definition, etiology, pathophys, clinical, workup & management per Katzung 15e / Goodman & Gilman 14e.",
+      cover_url: "/covers/katzung.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: داروهای غدد: انسولین، تیروئید، کورتون، هورمون‌های جنسی", label_en: "Def: Endocrine drugs: insulin, thyroid, steroids, sex hormones", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل داروهای غدد: انسولین، تیروئید، کورتون، هورمون‌های جنسی", label_en: "Etiology: risks & causes of Endocrine drugs: insulin, thyroid, steroids, sex hormones", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های داروهای غدد: انسولین، تیروئید، کورتون، هورمون‌های جنسی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "pharm-gi-pharm",
+      title_fa: "داروهای گوارشی",
+      title_en: "Gastrointestinal drugs",
+      type: "mind", system: "pharm", level: "core",
+      summary_fa: "داروهای گوارشی — Gastrointestinal drugs. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Katzung 15e / Goodman & Gilman 14e.",
+      summary_en: "Gastrointestinal drugs — Structured review: definition, etiology, pathophys, clinical, workup & management per Katzung 15e / Goodman & Gilman 14e.",
+      cover_url: "/covers/katzung.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: داروهای گوارشی", label_en: "Def: Gastrointestinal drugs", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل داروهای گوارشی", label_en: "Etiology: risks & causes of Gastrointestinal drugs", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های داروهای گوارشی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "pharm-resp-pharm",
+      title_fa: "داروهای تنفسی، آنتی‌هیستامین‌ها و ضدسرفه",
+      title_en: "Respiratory drugs, antihistamines & antitussives",
+      type: "mind", system: "pharm", level: "high_yield",
+      summary_fa: "داروهای تنفسی، آنتی‌هیستامین‌ها و ضدسرفه — Respiratory drugs, antihistamines & antitussives. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Katzung 15e / Goodman & Gilman 14e.",
+      summary_en: "Respiratory drugs, antihistamines & antitussives — Structured review: definition, etiology, pathophys, clinical, workup & management per Katzung 15e / Goodman & Gilman 14e.",
+      cover_url: "/covers/katzung.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: داروهای تنفسی، آنتی‌هیستامین‌ها و ضدسرفه", label_en: "Def: Respiratory drugs, antihistamines & antitussives", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل داروهای تنفسی، آنتی‌هیستامین‌ها و ضدسرفه", label_en: "Etiology: risks & causes of Respiratory drugs, antihistamines & antitussives", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های داروهای تنفسی، آنتی‌هیستامین‌ها و ضدسرفه", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "pharm-chemo-immuno",
+      title_fa: "داروهای شیمی‌درمانی و تعدیل‌کننده ایمنی",
+      title_en: "Chemotherapy & immunomodulators",
+      type: "mind", system: "pharm", level: "core",
+      summary_fa: "داروهای شیمی‌درمانی و تعدیل‌کننده ایمنی — Chemotherapy & immunomodulators. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Katzung 15e / Goodman & Gilman 14e.",
+      summary_en: "Chemotherapy & immunomodulators — Structured review: definition, etiology, pathophys, clinical, workup & management per Katzung 15e / Goodman & Gilman 14e.",
+      cover_url: "/covers/katzung.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: داروهای شیمی‌درمانی و تعدیل‌کننده ایمنی", label_en: "Def: Chemotherapy & immunomodulators", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل داروهای شیمی‌درمانی و تعدیل‌کننده ایمنی", label_en: "Etiology: risks & causes of Chemotherapy & immunomodulators", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های داروهای شیمی‌درمانی و تعدیل‌کننده ایمنی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "pharm-tox-pharm",
+      title_fa: "سم‌شناسی، تداخلات و داروها در بارداری",
+      title_en: "Toxicology, interactions & drugs in pregnancy",
+      type: "mind", system: "pharm", level: "core",
+      summary_fa: "سم‌شناسی، تداخلات و داروها در بارداری — Toxicology, interactions & drugs in pregnancy. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Katzung 15e / Goodman & Gilman 14e.",
+      summary_en: "Toxicology, interactions & drugs in pregnancy — Structured review: definition, etiology, pathophys, clinical, workup & management per Katzung 15e / Goodman & Gilman 14e.",
+      cover_url: "/covers/katzung.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: سم‌شناسی، تداخلات و داروها در بارداری", label_en: "Def: Toxicology, interactions & drugs in pregnancy", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل سم‌شناسی، تداخلات و داروها در بارداری", label_en: "Etiology: risks & causes of Toxicology, interactions & drugs in pregnancy", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های سم‌شناسی، تداخلات و داروها در بارداری", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "radio-physics",
+      title_fa: "فیزیک پرتو، حفاظت و کنتراست",
+      title_en: "Imaging physics, radiation safety & contrast",
+      type: "mind", system: "radio", level: "high_yield",
+      summary_fa: "فیزیک پرتو، حفاظت و کنتراست — Imaging physics, radiation safety & contrast. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Grainger & Allison 7e / Learning Radiology 4e.",
+      summary_en: "Imaging physics, radiation safety & contrast — Structured review: definition, etiology, pathophys, clinical, workup & management per Grainger & Allison 7e / Learning Radiology 4e.",
+      cover_url: "/covers/grainger.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: فیزیک پرتو، حفاظت و کنتراست", label_en: "Def: Imaging physics, radiation safety & contrast", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل فیزیک پرتو، حفاظت و کنتراست", label_en: "Etiology: risks & causes of Imaging physics, radiation safety & contrast", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های فیزیک پرتو، حفاظت و کنتراست", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "radio-modality",
+      title_fa: "انتخاب روش تصویربرداری",
+      title_en: "Choosing the imaging modality",
+      type: "mind", system: "radio", level: "core",
+      summary_fa: "انتخاب روش تصویربرداری — Choosing the imaging modality. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Grainger & Allison 7e / Learning Radiology 4e.",
+      summary_en: "Choosing the imaging modality — Structured review: definition, etiology, pathophys, clinical, workup & management per Grainger & Allison 7e / Learning Radiology 4e.",
+      cover_url: "/covers/grainger.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: انتخاب روش تصویربرداری", label_en: "Def: Choosing the imaging modality", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل انتخاب روش تصویربرداری", label_en: "Etiology: risks & causes of Choosing the imaging modality", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های انتخاب روش تصویربرداری", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "radio-chest-xr",
+      title_fa: "رادیوگرافی قفسه سینه",
+      title_en: "Chest radiography",
+      type: "mind", system: "radio", level: "core",
+      summary_fa: "رادیوگرافی قفسه سینه — Chest radiography. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Grainger & Allison 7e / Learning Radiology 4e.",
+      summary_en: "Chest radiography — Structured review: definition, etiology, pathophys, clinical, workup & management per Grainger & Allison 7e / Learning Radiology 4e.",
+      cover_url: "/covers/grainger.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: رادیوگرافی قفسه سینه", label_en: "Def: Chest radiography", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل رادیوگرافی قفسه سینه", label_en: "Etiology: risks & causes of Chest radiography", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های رادیوگرافی قفسه سینه", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "radio-chest-ct",
+      title_fa: "سی‌تی‌اسکن قفسه سینه و ریه",
+      title_en: "Chest CT & pulmonary imaging",
+      type: "mind", system: "radio", level: "high_yield",
+      summary_fa: "سی‌تی‌اسکن قفسه سینه و ریه — Chest CT & pulmonary imaging. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Grainger & Allison 7e / Learning Radiology 4e.",
+      summary_en: "Chest CT & pulmonary imaging — Structured review: definition, etiology, pathophys, clinical, workup & management per Grainger & Allison 7e / Learning Radiology 4e.",
+      cover_url: "/covers/grainger.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: سی‌تی‌اسکن قفسه سینه و ریه", label_en: "Def: Chest CT & pulmonary imaging", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل سی‌تی‌اسکن قفسه سینه و ریه", label_en: "Etiology: risks & causes of Chest CT & pulmonary imaging", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های سی‌تی‌اسکن قفسه سینه و ریه", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "radio-cardiac",
+      title_fa: "تصویربرداری قلب و عروق",
+      title_en: "Cardiovascular imaging",
+      type: "mind", system: "radio", level: "core",
+      summary_fa: "تصویربرداری قلب و عروق — Cardiovascular imaging. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Grainger & Allison 7e / Learning Radiology 4e.",
+      summary_en: "Cardiovascular imaging — Structured review: definition, etiology, pathophys, clinical, workup & management per Grainger & Allison 7e / Learning Radiology 4e.",
+      cover_url: "/covers/grainger.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: تصویربرداری قلب و عروق", label_en: "Def: Cardiovascular imaging", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل تصویربرداری قلب و عروق", label_en: "Etiology: risks & causes of Cardiovascular imaging", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های تصویربرداری قلب و عروق", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "radio-abd-xr",
+      title_fa: "رادیوگرافی و سونوگرافی شکم",
+      title_en: "Abdominal radiography & ultrasound",
+      type: "mind", system: "radio", level: "emergency",
+      summary_fa: "رادیوگرافی و سونوگرافی شکم — Abdominal radiography & ultrasound. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Grainger & Allison 7e / Learning Radiology 4e.",
+      summary_en: "Abdominal radiography & ultrasound — Structured review: definition, etiology, pathophys, clinical, workup & management per Grainger & Allison 7e / Learning Radiology 4e.",
+      cover_url: "/covers/grainger.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: رادیوگرافی و سونوگرافی شکم", label_en: "Def: Abdominal radiography & ultrasound", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل رادیوگرافی و سونوگرافی شکم", label_en: "Etiology: risks & causes of Abdominal radiography & ultrasound", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های رادیوگرافی و سونوگرافی شکم", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "radio-abd-ct",
+      title_fa: "سی‌تی و MRI شکم و لگن",
+      title_en: "Abdominopelvic CT & MRI",
+      type: "mind", system: "radio", level: "emergency",
+      summary_fa: "سی‌تی و MRI شکم و لگن — Abdominopelvic CT & MRI. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Grainger & Allison 7e / Learning Radiology 4e.",
+      summary_en: "Abdominopelvic CT & MRI — Structured review: definition, etiology, pathophys, clinical, workup & management per Grainger & Allison 7e / Learning Radiology 4e.",
+      cover_url: "/covers/grainger.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: سی‌تی و MRI شکم و لگن", label_en: "Def: Abdominopelvic CT & MRI", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل سی‌تی و MRI شکم و لگن", label_en: "Etiology: risks & causes of Abdominopelvic CT & MRI", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های سی‌تی و MRI شکم و لگن", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "radio-neuro-img",
+      title_fa: "تصویربرداری مغز و ستون فقرات",
+      title_en: "Neuroimaging",
+      type: "mind", system: "radio", level: "core",
+      summary_fa: "تصویربرداری مغز و ستون فقرات — Neuroimaging. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Grainger & Allison 7e / Learning Radiology 4e.",
+      summary_en: "Neuroimaging — Structured review: definition, etiology, pathophys, clinical, workup & management per Grainger & Allison 7e / Learning Radiology 4e.",
+      cover_url: "/covers/grainger.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: تصویربرداری مغز و ستون فقرات", label_en: "Def: Neuroimaging", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل تصویربرداری مغز و ستون فقرات", label_en: "Etiology: risks & causes of Neuroimaging", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های تصویربرداری مغز و ستون فقرات", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "radio-msk-img",
+      title_fa: "تصویربرداری اسکلتی‌عضلانی",
+      title_en: "Musculoskeletal imaging",
+      type: "mind", system: "radio", level: "core",
+      summary_fa: "تصویربرداری اسکلتی‌عضلانی — Musculoskeletal imaging. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Grainger & Allison 7e / Learning Radiology 4e.",
+      summary_en: "Musculoskeletal imaging — Structured review: definition, etiology, pathophys, clinical, workup & management per Grainger & Allison 7e / Learning Radiology 4e.",
+      cover_url: "/covers/grainger.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: تصویربرداری اسکلتی‌عضلانی", label_en: "Def: Musculoskeletal imaging", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل تصویربرداری اسکلتی‌عضلانی", label_en: "Etiology: risks & causes of Musculoskeletal imaging", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های تصویربرداری اسکلتی‌عضلانی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "radio-peds-img",
+      title_fa: "تصویربرداری کودکان",
+      title_en: "Pediatric imaging",
+      type: "mind", system: "radio", level: "high_yield",
+      summary_fa: "تصویربرداری کودکان — Pediatric imaging. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Grainger & Allison 7e / Learning Radiology 4e.",
+      summary_en: "Pediatric imaging — Structured review: definition, etiology, pathophys, clinical, workup & management per Grainger & Allison 7e / Learning Radiology 4e.",
+      cover_url: "/covers/grainger.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: تصویربرداری کودکان", label_en: "Def: Pediatric imaging", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل تصویربرداری کودکان", label_en: "Etiology: risks & causes of Pediatric imaging", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های تصویربرداری کودکان", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "radio-gu-img",
+      title_fa: "تصویربرداری ادراری‌تناسلی و زنان",
+      title_en: "Genitourinary & gynecologic imaging",
+      type: "mind", system: "radio", level: "core",
+      summary_fa: "تصویربرداری ادراری‌تناسلی و زنان — Genitourinary & gynecologic imaging. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Grainger & Allison 7e / Learning Radiology 4e.",
+      summary_en: "Genitourinary & gynecologic imaging — Structured review: definition, etiology, pathophys, clinical, workup & management per Grainger & Allison 7e / Learning Radiology 4e.",
+      cover_url: "/covers/grainger.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: تصویربرداری ادراری‌تناسلی و زنان", label_en: "Def: Genitourinary & gynecologic imaging", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل تصویربرداری ادراری‌تناسلی و زنان", label_en: "Etiology: risks & causes of Genitourinary & gynecologic imaging", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های تصویربرداری ادراری‌تناسلی و زنان", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "radio-nuclear",
+      title_fa: "پزشکی هسته‌ای",
+      title_en: "Nuclear medicine",
+      type: "mind", system: "radio", level: "core",
+      summary_fa: "پزشکی هسته‌ای — Nuclear medicine. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Grainger & Allison 7e / Learning Radiology 4e.",
+      summary_en: "Nuclear medicine — Structured review: definition, etiology, pathophys, clinical, workup & management per Grainger & Allison 7e / Learning Radiology 4e.",
+      cover_url: "/covers/grainger.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پزشکی هسته‌ای", label_en: "Def: Nuclear medicine", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پزشکی هسته‌ای", label_en: "Etiology: risks & causes of Nuclear medicine", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پزشکی هسته‌ای", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "radio-trauma-img",
+      title_fa: "تصویربرداری در تروما و اورژانس",
+      title_en: "Trauma & emergency imaging",
+      type: "mind", system: "radio", level: "emergency",
+      summary_fa: "تصویربرداری در تروما و اورژانس — Trauma & emergency imaging. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Grainger & Allison 7e / Learning Radiology 4e.",
+      summary_en: "Trauma & emergency imaging — Structured review: definition, etiology, pathophys, clinical, workup & management per Grainger & Allison 7e / Learning Radiology 4e.",
+      cover_url: "/covers/grainger.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: تصویربرداری در تروما و اورژانس", label_en: "Def: Trauma & emergency imaging", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل تصویربرداری در تروما و اورژانس", label_en: "Etiology: risks & causes of Trauma & emergency imaging", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های تصویربرداری در تروما و اورژانس", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ent-ear-anatomy",
+      title_fa: "آناتومی و فیزیولوژی گوش، شنوایی‌سنجی",
+      title_en: "Ear anatomy, physiology & audiometry",
+      type: "mind", system: "ent", level: "core",
+      summary_fa: "آناتومی و فیزیولوژی گوش، شنوایی‌سنجی — Ear anatomy, physiology & audiometry. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Cummings 7e.",
+      summary_en: "Ear anatomy, physiology & audiometry — Structured review: definition, etiology, pathophys, clinical, workup & management per Cummings 7e.",
+      cover_url: "/covers/cummings.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: آناتومی و فیزیولوژی گوش، شنوایی‌سنجی", label_en: "Def: Ear anatomy, physiology & audiometry", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل آناتومی و فیزیولوژی گوش، شنوایی‌سنجی", label_en: "Etiology: risks & causes of Ear anatomy, physiology & audiometry", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های آناتومی و فیزیولوژی گوش، شنوایی‌سنجی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ent-external-ear",
+      title_fa: "بیماری‌های گوش خارجی",
+      title_en: "External ear disease",
+      type: "mind", system: "ent", level: "core",
+      summary_fa: "بیماری‌های گوش خارجی — External ear disease. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Cummings 7e.",
+      summary_en: "External ear disease — Structured review: definition, etiology, pathophys, clinical, workup & management per Cummings 7e.",
+      cover_url: "/covers/cummings.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بیماری‌های گوش خارجی", label_en: "Def: External ear disease", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل بیماری‌های گوش خارجی", label_en: "Etiology: risks & causes of External ear disease", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های بیماری‌های گوش خارجی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ent-otitis-media",
+      title_fa: "اوتیت میانی و عوارض آن",
+      title_en: "Otitis media & its complications",
+      type: "mind", system: "ent", level: "high_yield",
+      summary_fa: "اوتیت میانی و عوارض آن — Otitis media & its complications. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Cummings 7e.",
+      summary_en: "Otitis media & its complications — Structured review: definition, etiology, pathophys, clinical, workup & management per Cummings 7e.",
+      cover_url: "/covers/cummings.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اوتیت میانی و عوارض آن", label_en: "Def: Otitis media & its complications", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اوتیت میانی و عوارض آن", label_en: "Etiology: risks & causes of Otitis media & its complications", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اوتیت میانی و عوارض آن", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ent-hearing-loss",
+      title_fa: "کاهش شنوایی، اتواسکلروز و وزوز",
+      title_en: "Hearing loss, otosclerosis & tinnitus",
+      type: "mind", system: "ent", level: "core",
+      summary_fa: "کاهش شنوایی، اتواسکلروز و وزوز — Hearing loss, otosclerosis & tinnitus. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Cummings 7e.",
+      summary_en: "Hearing loss, otosclerosis & tinnitus — Structured review: definition, etiology, pathophys, clinical, workup & management per Cummings 7e.",
+      cover_url: "/covers/cummings.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: کاهش شنوایی، اتواسکلروز و وزوز", label_en: "Def: Hearing loss, otosclerosis & tinnitus", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل کاهش شنوایی، اتواسکلروز و وزوز", label_en: "Etiology: risks & causes of Hearing loss, otosclerosis & tinnitus", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های کاهش شنوایی، اتواسکلروز و وزوز", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ent-vertigo",
+      title_fa: "سرگیجه و بیماری‌های دهلیزی",
+      title_en: "Vertigo & vestibular disorders",
+      type: "mind", system: "ent", level: "core",
+      summary_fa: "سرگیجه و بیماری‌های دهلیزی — Vertigo & vestibular disorders. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Cummings 7e.",
+      summary_en: "Vertigo & vestibular disorders — Structured review: definition, etiology, pathophys, clinical, workup & management per Cummings 7e.",
+      cover_url: "/covers/cummings.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: سرگیجه و بیماری‌های دهلیزی", label_en: "Def: Vertigo & vestibular disorders", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل سرگیجه و بیماری‌های دهلیزی", label_en: "Etiology: risks & causes of Vertigo & vestibular disorders", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های سرگیجه و بیماری‌های دهلیزی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ent-facial-nerve",
+      title_fa: "فلج عصب صورتی و بیماری‌های عصب کرانیال",
+      title_en: "Facial nerve palsy",
+      type: "mind", system: "ent", level: "high_yield",
+      summary_fa: "فلج عصب صورتی و بیماری‌های عصب کرانیال — Facial nerve palsy. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Cummings 7e.",
+      summary_en: "Facial nerve palsy — Structured review: definition, etiology, pathophys, clinical, workup & management per Cummings 7e.",
+      cover_url: "/covers/cummings.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: فلج عصب صورتی و بیماری‌های عصب کرانیال", label_en: "Def: Facial nerve palsy", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل فلج عصب صورتی و بیماری‌های عصب کرانیال", label_en: "Etiology: risks & causes of Facial nerve palsy", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های فلج عصب صورتی و بیماری‌های عصب کرانیال", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ent-nose-sinus",
+      title_fa: "بینی: انسداد، اپیستاکسی، سپتوم، ترومای بینی",
+      title_en: "Nose: obstruction, epistaxis, septum, nasal trauma",
+      type: "mind", system: "ent", level: "emergency",
+      summary_fa: "بینی: انسداد، اپیستاکسی، سپتوم، ترومای بینی — Nose: obstruction, epistaxis, septum, nasal trauma. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Cummings 7e.",
+      summary_en: "Nose: obstruction, epistaxis, septum, nasal trauma — Structured review: definition, etiology, pathophys, clinical, workup & management per Cummings 7e.",
+      cover_url: "/covers/cummings.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بینی: انسداد، اپیستاکسی، سپتوم، ترومای بینی", label_en: "Def: Nose: obstruction, epistaxis, septum, nasal trauma", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل بینی: انسداد، اپیستاکسی، سپتوم، ترومای بینی", label_en: "Etiology: risks & causes of Nose: obstruction, epistaxis, septum, nasal trauma", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های بینی: انسداد، اپیستاکسی، سپتوم، ترومای بینی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ent-rhinitis-sinusitis",
+      title_fa: "رینیت و سینوزیت",
+      title_en: "Rhinitis & sinusitis",
+      type: "mind", system: "ent", level: "core",
+      summary_fa: "رینیت و سینوزیت — Rhinitis & sinusitis. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Cummings 7e.",
+      summary_en: "Rhinitis & sinusitis — Structured review: definition, etiology, pathophys, clinical, workup & management per Cummings 7e.",
+      cover_url: "/covers/cummings.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: رینیت و سینوزیت", label_en: "Def: Rhinitis & sinusitis", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل رینیت و سینوزیت", label_en: "Etiology: risks & causes of Rhinitis & sinusitis", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های رینیت و سینوزیت", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ent-nasopharynx",
+      title_fa: "نازوفارنکس، آدنوئید و تومورهای سینونازال",
+      title_en: "Nasopharynx, adenoids & sinonasal tumours",
+      type: "mind", system: "ent", level: "high_yield",
+      summary_fa: "نازوفارنکس، آدنوئید و تومورهای سینونازال — Nasopharynx, adenoids & sinonasal tumours. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Cummings 7e.",
+      summary_en: "Nasopharynx, adenoids & sinonasal tumours — Structured review: definition, etiology, pathophys, clinical, workup & management per Cummings 7e.",
+      cover_url: "/covers/cummings.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: نازوفارنکس، آدنوئید و تومورهای سینونازال", label_en: "Def: Nasopharynx, adenoids & sinonasal tumours", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل نازوفارنکس، آدنوئید و تومورهای سینونازال", label_en: "Etiology: risks & causes of Nasopharynx, adenoids & sinonasal tumours", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های نازوفارنکس، آدنوئید و تومورهای سینونازال", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ent-tonsil-pharynx",
+      title_fa: "لوزه، فارنژیت و آبسه‌های گردن",
+      title_en: "Tonsils, pharyngitis & deep neck abscesses",
+      type: "mind", system: "ent", level: "core",
+      summary_fa: "لوزه، فارنژیت و آبسه‌های گردن — Tonsils, pharyngitis & deep neck abscesses. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Cummings 7e.",
+      summary_en: "Tonsils, pharyngitis & deep neck abscesses — Structured review: definition, etiology, pathophys, clinical, workup & management per Cummings 7e.",
+      cover_url: "/covers/cummings.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: لوزه، فارنژیت و آبسه‌های گردن", label_en: "Def: Tonsils, pharyngitis & deep neck abscesses", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل لوزه، فارنژیت و آبسه‌های گردن", label_en: "Etiology: risks & causes of Tonsils, pharyngitis & deep neck abscesses", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های لوزه، فارنژیت و آبسه‌های گردن", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ent-larynx",
+      title_fa: "حنجره: خشونت صدا، استریدور و تومورها",
+      title_en: "Larynx: hoarseness, stridor & tumours",
+      type: "mind", system: "ent", level: "core",
+      summary_fa: "حنجره: خشونت صدا، استریدور و تومورها — Larynx: hoarseness, stridor & tumours. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Cummings 7e.",
+      summary_en: "Larynx: hoarseness, stridor & tumours — Structured review: definition, etiology, pathophys, clinical, workup & management per Cummings 7e.",
+      cover_url: "/covers/cummings.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: حنجره: خشونت صدا، استریدور و تومورها", label_en: "Def: Larynx: hoarseness, stridor & tumours", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل حنجره: خشونت صدا، استریدور و تومورها", label_en: "Etiology: risks & causes of Larynx: hoarseness, stridor & tumours", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های حنجره: خشونت صدا، استریدور و تومورها", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ent-salivary",
+      title_fa: "غدد بزاقی",
+      title_en: "Salivary glands",
+      type: "mind", system: "ent", level: "high_yield",
+      summary_fa: "غدد بزاقی — Salivary glands. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Cummings 7e.",
+      summary_en: "Salivary glands — Structured review: definition, etiology, pathophys, clinical, workup & management per Cummings 7e.",
+      cover_url: "/covers/cummings.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: غدد بزاقی", label_en: "Def: Salivary glands", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل غدد بزاقی", label_en: "Etiology: risks & causes of Salivary glands", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های غدد بزاقی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ent-neck-mass",
+      title_fa: "توده‌های گردن و بیماری‌های مادرزادی گردن",
+      title_en: "Neck masses & congenital neck lesions",
+      type: "mind", system: "ent", level: "core",
+      summary_fa: "توده‌های گردن و بیماری‌های مادرزادی گردن — Neck masses & congenital neck lesions. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Cummings 7e.",
+      summary_en: "Neck masses & congenital neck lesions — Structured review: definition, etiology, pathophys, clinical, workup & management per Cummings 7e.",
+      cover_url: "/covers/cummings.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: توده‌های گردن و بیماری‌های مادرزادی گردن", label_en: "Def: Neck masses & congenital neck lesions", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل توده‌های گردن و بیماری‌های مادرزادی گردن", label_en: "Etiology: risks & causes of Neck masses & congenital neck lesions", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های توده‌های گردن و بیماری‌های مادرزادی گردن", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ent-oral-cavity",
+      title_fa: "حفره دهان و اوروفارنکس",
+      title_en: "Oral cavity & oropharynx",
+      type: "mind", system: "ent", level: "core",
+      summary_fa: "حفره دهان و اوروفارنکس — Oral cavity & oropharynx. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Cummings 7e.",
+      summary_en: "Oral cavity & oropharynx — Structured review: definition, etiology, pathophys, clinical, workup & management per Cummings 7e.",
+      cover_url: "/covers/cummings.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: حفره دهان و اوروفارنکس", label_en: "Def: Oral cavity & oropharynx", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل حفره دهان و اوروفارنکس", label_en: "Etiology: risks & causes of Oral cavity & oropharynx", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های حفره دهان و اوروفارنکس", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ent-airway-fb",
+      title_fa: "اجسام خارجی راه هوایی و مری، اورژانس‌های ENT",
+      title_en: "Airway & esophageal foreign bodies, ENT emergencies",
+      type: "mind", system: "ent", level: "emergency",
+      summary_fa: "اجسام خارجی راه هوایی و مری، اورژانس‌های ENT — Airway & esophageal foreign bodies, ENT emergencies. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Cummings 7e.",
+      summary_en: "Airway & esophageal foreign bodies, ENT emergencies — Structured review: definition, etiology, pathophys, clinical, workup & management per Cummings 7e.",
+      cover_url: "/covers/cummings.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اجسام خارجی راه هوایی و مری، اورژانس‌های ENT", label_en: "Def: Airway & esophageal foreign bodies, ENT emergencies", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اجسام خارجی راه هوایی و مری، اورژانس‌های ENT", label_en: "Etiology: risks & causes of Airway & esophageal foreign bodies, ENT emergencies", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اجسام خارجی راه هوایی و مری، اورژانس‌های ENT", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ent-facial-trauma",
+      title_fa: "ترومای صورت و شکستگی‌های فک و صورت",
+      title_en: "Facial trauma & maxillofacial fractures",
+      type: "mind", system: "ent", level: "emergency",
+      summary_fa: "ترومای صورت و شکستگی‌های فک و صورت — Facial trauma & maxillofacial fractures. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Cummings 7e.",
+      summary_en: "Facial trauma & maxillofacial fractures — Structured review: definition, etiology, pathophys, clinical, workup & management per Cummings 7e.",
+      cover_url: "/covers/cummings.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: ترومای صورت و شکستگی‌های فک و صورت", label_en: "Def: Facial trauma & maxillofacial fractures", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل ترومای صورت و شکستگی‌های فک و صورت", label_en: "Etiology: risks & causes of Facial trauma & maxillofacial fractures", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های ترومای صورت و شکستگی‌های فک و صورت", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "uro-symptoms",
+      title_fa: "علائم ادراری و ارزیابی اورولوژیک",
+      title_en: "Urologic symptoms & evaluation",
+      type: "mind", system: "uro", level: "core",
+      summary_fa: "علائم ادراری و ارزیابی اورولوژیک — Urologic symptoms & evaluation. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Campbell-Walsh 12e.",
+      summary_en: "Urologic symptoms & evaluation — Structured review: definition, etiology, pathophys, clinical, workup & management per Campbell-Walsh 12e.",
+      cover_url: "/covers/campbell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: علائم ادراری و ارزیابی اورولوژیک", label_en: "Def: Urologic symptoms & evaluation", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل علائم ادراری و ارزیابی اورولوژیک", label_en: "Etiology: risks & causes of Urologic symptoms & evaluation", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های علائم ادراری و ارزیابی اورولوژیک", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "uro-uti-uro",
+      title_fa: "عفونت‌های ادراری و پروستاتیت",
+      title_en: "Urinary tract infection & prostatitis",
+      type: "mind", system: "uro", level: "high_yield",
+      summary_fa: "عفونت‌های ادراری و پروستاتیت — Urinary tract infection & prostatitis. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Campbell-Walsh 12e.",
+      summary_en: "Urinary tract infection & prostatitis — Structured review: definition, etiology, pathophys, clinical, workup & management per Campbell-Walsh 12e.",
+      cover_url: "/covers/campbell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: عفونت‌های ادراری و پروستاتیت", label_en: "Def: Urinary tract infection & prostatitis", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل عفونت‌های ادراری و پروستاتیت", label_en: "Etiology: risks & causes of Urinary tract infection & prostatitis", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های عفونت‌های ادراری و پروستاتیت", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "uro-stones-uro",
+      title_fa: "سنگ‌های ادراری و کولیک کلیوی",
+      title_en: "Urolithiasis & renal colic",
+      type: "mind", system: "uro", level: "core",
+      summary_fa: "سنگ‌های ادراری و کولیک کلیوی — Urolithiasis & renal colic. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Campbell-Walsh 12e.",
+      summary_en: "Urolithiasis & renal colic — Structured review: definition, etiology, pathophys, clinical, workup & management per Campbell-Walsh 12e.",
+      cover_url: "/covers/campbell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: سنگ‌های ادراری و کولیک کلیوی", label_en: "Def: Urolithiasis & renal colic", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل سنگ‌های ادراری و کولیک کلیوی", label_en: "Etiology: risks & causes of Urolithiasis & renal colic", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های سنگ‌های ادراری و کولیک کلیوی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "uro-bph",
+      title_fa: "هیپرپلازی خوش‌خیم پروستات",
+      title_en: "Benign prostatic hyperplasia",
+      type: "mind", system: "uro", level: "core",
+      summary_fa: "هیپرپلازی خوش‌خیم پروستات — Benign prostatic hyperplasia. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Campbell-Walsh 12e.",
+      summary_en: "Benign prostatic hyperplasia — Structured review: definition, etiology, pathophys, clinical, workup & management per Campbell-Walsh 12e.",
+      cover_url: "/covers/campbell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: هیپرپلازی خوش‌خیم پروستات", label_en: "Def: Benign prostatic hyperplasia", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل هیپرپلازی خوش‌خیم پروستات", label_en: "Etiology: risks & causes of Benign prostatic hyperplasia", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های هیپرپلازی خوش‌خیم پروستات", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "uro-prostate-ca",
+      title_fa: "سرطان پروستات",
+      title_en: "Prostate cancer",
+      type: "mind", system: "uro", level: "high_yield",
+      summary_fa: "سرطان پروستات — Prostate cancer. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Campbell-Walsh 12e.",
+      summary_en: "Prostate cancer — Structured review: definition, etiology, pathophys, clinical, workup & management per Campbell-Walsh 12e.",
+      cover_url: "/covers/campbell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: سرطان پروستات", label_en: "Def: Prostate cancer", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل سرطان پروستات", label_en: "Etiology: risks & causes of Prostate cancer", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های سرطان پروستات", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "uro-bladder-ca",
+      title_fa: "سرطان مثانه و هماچوری",
+      title_en: "Bladder cancer & hematuria",
+      type: "mind", system: "uro", level: "core",
+      summary_fa: "سرطان مثانه و هماچوری — Bladder cancer & hematuria. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Campbell-Walsh 12e.",
+      summary_en: "Bladder cancer & hematuria — Structured review: definition, etiology, pathophys, clinical, workup & management per Campbell-Walsh 12e.",
+      cover_url: "/covers/campbell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: سرطان مثانه و هماچوری", label_en: "Def: Bladder cancer & hematuria", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل سرطان مثانه و هماچوری", label_en: "Etiology: risks & causes of Bladder cancer & hematuria", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های سرطان مثانه و هماچوری", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "uro-kidney-ca",
+      title_fa: "توده‌ها و سرطان کلیه",
+      title_en: "Renal masses & kidney cancer",
+      type: "mind", system: "uro", level: "core",
+      summary_fa: "توده‌ها و سرطان کلیه — Renal masses & kidney cancer. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Campbell-Walsh 12e.",
+      summary_en: "Renal masses & kidney cancer — Structured review: definition, etiology, pathophys, clinical, workup & management per Campbell-Walsh 12e.",
+      cover_url: "/covers/campbell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: توده‌ها و سرطان کلیه", label_en: "Def: Renal masses & kidney cancer", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل توده‌ها و سرطان کلیه", label_en: "Etiology: risks & causes of Renal masses & kidney cancer", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های توده‌ها و سرطان کلیه", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "uro-testis-ca",
+      title_fa: "تومورهای بیضه",
+      title_en: "Testicular tumours",
+      type: "mind", system: "uro", level: "high_yield",
+      summary_fa: "تومورهای بیضه — Testicular tumours. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Campbell-Walsh 12e.",
+      summary_en: "Testicular tumours — Structured review: definition, etiology, pathophys, clinical, workup & management per Campbell-Walsh 12e.",
+      cover_url: "/covers/campbell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: تومورهای بیضه", label_en: "Def: Testicular tumours", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل تومورهای بیضه", label_en: "Etiology: risks & causes of Testicular tumours", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های تومورهای بیضه", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "uro-scrotum",
+      title_fa: "بیماری‌های اسکروتوم: تورشن، هیدروسل، واریکوسل",
+      title_en: "Scrotal disorders: torsion, hydrocele, varicocele",
+      type: "mind", system: "uro", level: "core",
+      summary_fa: "بیماری‌های اسکروتوم: تورشن، هیدروسل، واریکوسل — Scrotal disorders: torsion, hydrocele, varicocele. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Campbell-Walsh 12e.",
+      summary_en: "Scrotal disorders: torsion, hydrocele, varicocele — Structured review: definition, etiology, pathophys, clinical, workup & management per Campbell-Walsh 12e.",
+      cover_url: "/covers/campbell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بیماری‌های اسکروتوم: تورشن، هیدروسل، واریکوسل", label_en: "Def: Scrotal disorders: torsion, hydrocele, varicocele", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل بیماری‌های اسکروتوم: تورشن، هیدروسل، واریکوسل", label_en: "Etiology: risks & causes of Scrotal disorders: torsion, hydrocele, varicocele", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های بیماری‌های اسکروتوم: تورشن، هیدروسل، واریکوسل", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "uro-peds-uro",
+      title_fa: "اورولوژی کودکان: بیضه نزول‌نکرده، هیپوسپادیاس، ریفلاکس",
+      title_en: "Pediatric urology: undescended testis, hypospadias, reflux",
+      type: "mind", system: "uro", level: "core",
+      summary_fa: "اورولوژی کودکان: بیضه نزول‌نکرده، هیپوسپادیاس، ریفلاکس — Pediatric urology: undescended testis, hypospadias, reflux. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Campbell-Walsh 12e.",
+      summary_en: "Pediatric urology: undescended testis, hypospadias, reflux — Structured review: definition, etiology, pathophys, clinical, workup & management per Campbell-Walsh 12e.",
+      cover_url: "/covers/campbell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اورولوژی کودکان: بیضه نزول‌نکرده، هیپوسپادیاس، ریفلاکس", label_en: "Def: Pediatric urology: undescended testis, hypospadias, reflux", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اورولوژی کودکان: بیضه نزول‌نکرده، هیپوسپادیاس، ریفلاکس", label_en: "Etiology: risks & causes of Pediatric urology: undescended testis, hypospadias, reflux", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اورولوژی کودکان: بیضه نزول‌نکرده، هیپوسپادیاس، ریفلاکس", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "uro-trauma-uro",
+      title_fa: "ترومای ادراری‌تناسلی",
+      title_en: "Genitourinary trauma",
+      type: "mind", system: "uro", level: "emergency",
+      summary_fa: "ترومای ادراری‌تناسلی — Genitourinary trauma. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Campbell-Walsh 12e.",
+      summary_en: "Genitourinary trauma — Structured review: definition, etiology, pathophys, clinical, workup & management per Campbell-Walsh 12e.",
+      cover_url: "/covers/campbell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: ترومای ادراری‌تناسلی", label_en: "Def: Genitourinary trauma", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل ترومای ادراری‌تناسلی", label_en: "Etiology: risks & causes of Genitourinary trauma", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های ترومای ادراری‌تناسلی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "uro-obstruction-uro",
+      title_fa: "انسداد ادراری، هیدرونفروز و تنگی پیشابراه",
+      title_en: "Urinary obstruction, hydronephrosis & urethral stricture",
+      type: "mind", system: "uro", level: "core",
+      summary_fa: "انسداد ادراری، هیدرونفروز و تنگی پیشابراه — Urinary obstruction, hydronephrosis & urethral stricture. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Campbell-Walsh 12e.",
+      summary_en: "Urinary obstruction, hydronephrosis & urethral stricture — Structured review: definition, etiology, pathophys, clinical, workup & management per Campbell-Walsh 12e.",
+      cover_url: "/covers/campbell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: انسداد ادراری، هیدرونفروز و تنگی پیشابراه", label_en: "Def: Urinary obstruction, hydronephrosis & urethral stricture", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل انسداد ادراری، هیدرونفروز و تنگی پیشابراه", label_en: "Etiology: risks & causes of Urinary obstruction, hydronephrosis & urethral stricture", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های انسداد ادراری، هیدرونفروز و تنگی پیشابراه", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "uro-incontinence",
+      title_fa: "بی‌اختیاری ادرار و مثانه نوروژنیک",
+      title_en: "Urinary incontinence & neurogenic bladder",
+      type: "mind", system: "uro", level: "core",
+      summary_fa: "بی‌اختیاری ادرار و مثانه نوروژنیک — Urinary incontinence & neurogenic bladder. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Campbell-Walsh 12e.",
+      summary_en: "Urinary incontinence & neurogenic bladder — Structured review: definition, etiology, pathophys, clinical, workup & management per Campbell-Walsh 12e.",
+      cover_url: "/covers/campbell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بی‌اختیاری ادرار و مثانه نوروژنیک", label_en: "Def: Urinary incontinence & neurogenic bladder", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل بی‌اختیاری ادرار و مثانه نوروژنیک", label_en: "Etiology: risks & causes of Urinary incontinence & neurogenic bladder", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های بی‌اختیاری ادرار و مثانه نوروژنیک", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "uro-andrology",
+      title_fa: "ناباروری مردان و اختلال نعوظ",
+      title_en: "Male infertility & erectile dysfunction",
+      type: "mind", system: "uro", level: "high_yield",
+      summary_fa: "ناباروری مردان و اختلال نعوظ — Male infertility & erectile dysfunction. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Campbell-Walsh 12e.",
+      summary_en: "Male infertility & erectile dysfunction — Structured review: definition, etiology, pathophys, clinical, workup & management per Campbell-Walsh 12e.",
+      cover_url: "/covers/campbell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: ناباروری مردان و اختلال نعوظ", label_en: "Def: Male infertility & erectile dysfunction", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل ناباروری مردان و اختلال نعوظ", label_en: "Etiology: risks & causes of Male infertility & erectile dysfunction", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های ناباروری مردان و اختلال نعوظ", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "infect-fever",
+      title_fa: "تب با منشأ ناشناخته و اصول عفونی",
+      title_en: "Fever of unknown origin & principles",
+      type: "mind", system: "infect", level: "core",
+      summary_fa: "تب با منشأ ناشناخته و اصول عفونی — Fever of unknown origin & principles. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Mandell 10e.",
+      summary_en: "Fever of unknown origin & principles — Structured review: definition, etiology, pathophys, clinical, workup & management per Mandell 10e.",
+      cover_url: "/covers/mandell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: تب با منشأ ناشناخته و اصول عفونی", label_en: "Def: Fever of unknown origin & principles", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل تب با منشأ ناشناخته و اصول عفونی", label_en: "Etiology: risks & causes of Fever of unknown origin & principles", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های تب با منشأ ناشناخته و اصول عفونی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "infect-resp-inf",
+      title_fa: "عفونت‌های تنفسی: پنومونی، آنفلوانزا، سل",
+      title_en: "Respiratory infections: pneumonia, influenza, TB",
+      type: "mind", system: "infect", level: "core",
+      summary_fa: "عفونت‌های تنفسی: پنومونی، آنفلوانزا، سل — Respiratory infections: pneumonia, influenza, TB. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Mandell 10e.",
+      summary_en: "Respiratory infections: pneumonia, influenza, TB — Structured review: definition, etiology, pathophys, clinical, workup & management per Mandell 10e.",
+      cover_url: "/covers/mandell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: عفونت‌های تنفسی: پنومونی، آنفلوانزا، سل", label_en: "Def: Respiratory infections: pneumonia, influenza, TB", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل عفونت‌های تنفسی: پنومونی، آنفلوانزا، سل", label_en: "Etiology: risks & causes of Respiratory infections: pneumonia, influenza, TB", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های عفونت‌های تنفسی: پنومونی، آنفلوانزا، سل", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "infect-cns-inf",
+      title_fa: "مننژیت و انسفالیت",
+      title_en: "Meningitis & encephalitis",
+      type: "mind", system: "infect", level: "high_yield",
+      summary_fa: "مننژیت و انسفالیت — Meningitis & encephalitis. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Mandell 10e.",
+      summary_en: "Meningitis & encephalitis — Structured review: definition, etiology, pathophys, clinical, workup & management per Mandell 10e.",
+      cover_url: "/covers/mandell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: مننژیت و انسفالیت", label_en: "Def: Meningitis & encephalitis", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل مننژیت و انسفالیت", label_en: "Etiology: risks & causes of Meningitis & encephalitis", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های مننژیت و انسفالیت", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "infect-gi-inf",
+      title_fa: "عفونت‌های گوارشی و مسمومیت غذایی",
+      title_en: "GI infections & food poisoning",
+      type: "mind", system: "infect", level: "emergency",
+      summary_fa: "عفونت‌های گوارشی و مسمومیت غذایی — GI infections & food poisoning. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Mandell 10e.",
+      summary_en: "GI infections & food poisoning — Structured review: definition, etiology, pathophys, clinical, workup & management per Mandell 10e.",
+      cover_url: "/covers/mandell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: عفونت‌های گوارشی و مسمومیت غذایی", label_en: "Def: GI infections & food poisoning", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل عفونت‌های گوارشی و مسمومیت غذایی", label_en: "Etiology: risks & causes of GI infections & food poisoning", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های عفونت‌های گوارشی و مسمومیت غذایی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "infect-std",
+      title_fa: "عفونت‌های آمیزشی و HIV",
+      title_en: "Sexually transmitted infections & HIV",
+      type: "mind", system: "infect", level: "core",
+      summary_fa: "عفونت‌های آمیزشی و HIV — Sexually transmitted infections & HIV. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Mandell 10e.",
+      summary_en: "Sexually transmitted infections & HIV — Structured review: definition, etiology, pathophys, clinical, workup & management per Mandell 10e.",
+      cover_url: "/covers/mandell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: عفونت‌های آمیزشی و HIV", label_en: "Def: Sexually transmitted infections & HIV", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل عفونت‌های آمیزشی و HIV", label_en: "Etiology: risks & causes of Sexually transmitted infections & HIV", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های عفونت‌های آمیزشی و HIV", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "infect-skin-inf",
+      title_fa: "عفونت‌های پوست، بافت نرم، استخوان و مفصل",
+      title_en: "Skin, soft-tissue, bone & joint infections",
+      type: "mind", system: "infect", level: "high_yield",
+      summary_fa: "عفونت‌های پوست، بافت نرم، استخوان و مفصل — Skin, soft-tissue, bone & joint infections. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Mandell 10e.",
+      summary_en: "Skin, soft-tissue, bone & joint infections — Structured review: definition, etiology, pathophys, clinical, workup & management per Mandell 10e.",
+      cover_url: "/covers/mandell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: عفونت‌های پوست، بافت نرم، استخوان و مفصل", label_en: "Def: Skin, soft-tissue, bone & joint infections", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل عفونت‌های پوست، بافت نرم، استخوان و مفصل", label_en: "Etiology: risks & causes of Skin, soft-tissue, bone & joint infections", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های عفونت‌های پوست، بافت نرم، استخوان و مفصل", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "infect-zoonotic",
+      title_fa: "بیماری‌های منتقله از ناقلین و مشترک: مالاریا، تب کریمه کنگو، بروسلوز",
+      title_en: "Vector-borne & zoonotic: malaria, CCHF, brucellosis",
+      type: "mind", system: "infect", level: "core",
+      summary_fa: "بیماری‌های منتقله از ناقلین و مشترک: مالاریا، تب کریمه کنگو، بروسلوز — Vector-borne & zoonotic: malaria, CCHF, brucellosis. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Mandell 10e.",
+      summary_en: "Vector-borne & zoonotic: malaria, CCHF, brucellosis — Structured review: definition, etiology, pathophys, clinical, workup & management per Mandell 10e.",
+      cover_url: "/covers/mandell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بیماری‌های منتقله از ناقلین و مشترک: مالاریا، تب کریمه کنگو، بروسلوز", label_en: "Def: Vector-borne & zoonotic: malaria, CCHF, brucellosis", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل بیماری‌های منتقله از ناقلین و مشترک: مالاریا، تب کریمه کنگو، بروسلوز", label_en: "Etiology: risks & causes of Vector-borne & zoonotic: malaria, CCHF, brucellosis", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های بیماری‌های منتقله از ناقلین و مشترک: مالاریا، تب کریمه کنگو، بروسلوز", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "infect-nosocomial",
+      title_fa: "عفونت‌های بیمارستانی و مقاومت آنتی‌بیوتیکی",
+      title_en: "Nosocomial infections & antimicrobial resistance",
+      type: "mind", system: "infect", level: "core",
+      summary_fa: "عفونت‌های بیمارستانی و مقاومت آنتی‌بیوتیکی — Nosocomial infections & antimicrobial resistance. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Mandell 10e.",
+      summary_en: "Nosocomial infections & antimicrobial resistance — Structured review: definition, etiology, pathophys, clinical, workup & management per Mandell 10e.",
+      cover_url: "/covers/mandell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: عفونت‌های بیمارستانی و مقاومت آنتی‌بیوتیکی", label_en: "Def: Nosocomial infections & antimicrobial resistance", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل عفونت‌های بیمارستانی و مقاومت آنتی‌بیوتیکی", label_en: "Etiology: risks & causes of Nosocomial infections & antimicrobial resistance", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های عفونت‌های بیمارستانی و مقاومت آنتی‌بیوتیکی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "infect-immunocomp",
+      title_fa: "عفونت در بیماران نقص ایمنی و پیوند",
+      title_en: "Infections in the immunocompromised",
+      type: "mind", system: "infect", level: "high_yield",
+      summary_fa: "عفونت در بیماران نقص ایمنی و پیوند — Infections in the immunocompromised. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Mandell 10e.",
+      summary_en: "Infections in the immunocompromised — Structured review: definition, etiology, pathophys, clinical, workup & management per Mandell 10e.",
+      cover_url: "/covers/mandell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: عفونت در بیماران نقص ایمنی و پیوند", label_en: "Def: Infections in the immunocompromised", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل عفونت در بیماران نقص ایمنی و پیوند", label_en: "Etiology: risks & causes of Infections in the immunocompromised", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های عفونت در بیماران نقص ایمنی و پیوند", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "infect-vaccine-adult",
+      title_fa: "واکسیناسیون بزرگسالان و پیشگیری",
+      title_en: "Adult immunization & prophylaxis",
+      type: "mind", system: "infect", level: "core",
+      summary_fa: "واکسیناسیون بزرگسالان و پیشگیری — Adult immunization & prophylaxis. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Mandell 10e.",
+      summary_en: "Adult immunization & prophylaxis — Structured review: definition, etiology, pathophys, clinical, workup & management per Mandell 10e.",
+      cover_url: "/covers/mandell.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: واکسیناسیون بزرگسالان و پیشگیری", label_en: "Def: Adult immunization & prophylaxis", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل واکسیناسیون بزرگسالان و پیشگیری", label_en: "Etiology: risks & causes of Adult immunization & prophylaxis", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های واکسیناسیون بزرگسالان و پیشگیری", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "neuro-stroke",
+      title_fa: "سکته مغزی و حوادث عروقی مغز",
+      title_en: "Stroke & cerebrovascular disease",
+      type: "mind", system: "neuro", level: "core",
+      summary_fa: "سکته مغزی و حوادث عروقی مغز — Stroke & cerebrovascular disease. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Adams & Victor 12e / Bradley.",
+      summary_en: "Stroke & cerebrovascular disease — Structured review: definition, etiology, pathophys, clinical, workup & management per Adams & Victor 12e / Bradley.",
+      cover_url: "/covers/adams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: سکته مغزی و حوادث عروقی مغز", label_en: "Def: Stroke & cerebrovascular disease", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل سکته مغزی و حوادث عروقی مغز", label_en: "Etiology: risks & causes of Stroke & cerebrovascular disease", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های سکته مغزی و حوادث عروقی مغز", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "neuro-headache",
+      title_fa: "سردرد: میگرن، تنشی، خوشه‌ای",
+      title_en: "Headache: migraine, tension, cluster",
+      type: "mind", system: "neuro", level: "high_yield",
+      summary_fa: "سردرد: میگرن، تنشی، خوشه‌ای — Headache: migraine, tension, cluster. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Adams & Victor 12e / Bradley.",
+      summary_en: "Headache: migraine, tension, cluster — Structured review: definition, etiology, pathophys, clinical, workup & management per Adams & Victor 12e / Bradley.",
+      cover_url: "/covers/adams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: سردرد: میگرن، تنشی، خوشه‌ای", label_en: "Def: Headache: migraine, tension, cluster", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل سردرد: میگرن، تنشی، خوشه‌ای", label_en: "Etiology: risks & causes of Headache: migraine, tension, cluster", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های سردرد: میگرن، تنشی، خوشه‌ای", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "neuro-epilepsy",
+      title_fa: "صرع و تشنج",
+      title_en: "Epilepsy & seizures",
+      type: "mind", system: "neuro", level: "core",
+      summary_fa: "صرع و تشنج — Epilepsy & seizures. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Adams & Victor 12e / Bradley.",
+      summary_en: "Epilepsy & seizures — Structured review: definition, etiology, pathophys, clinical, workup & management per Adams & Victor 12e / Bradley.",
+      cover_url: "/covers/adams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: صرع و تشنج", label_en: "Def: Epilepsy & seizures", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل صرع و تشنج", label_en: "Etiology: risks & causes of Epilepsy & seizures", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های صرع و تشنج", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "neuro-movement",
+      title_fa: "پارکینسون و اختلالات حرکتی",
+      title_en: "Parkinson & movement disorders",
+      type: "mind", system: "neuro", level: "core",
+      summary_fa: "پارکینسون و اختلالات حرکتی — Parkinson & movement disorders. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Adams & Victor 12e / Bradley.",
+      summary_en: "Parkinson & movement disorders — Structured review: definition, etiology, pathophys, clinical, workup & management per Adams & Victor 12e / Bradley.",
+      cover_url: "/covers/adams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پارکینسون و اختلالات حرکتی", label_en: "Def: Parkinson & movement disorders", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پارکینسون و اختلالات حرکتی", label_en: "Etiology: risks & causes of Parkinson & movement disorders", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پارکینسون و اختلالات حرکتی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "neuro-dementia",
+      title_fa: "دمانس، دلیریوم و اختلالات شناختی",
+      title_en: "Dementia, delirium & cognitive disorders",
+      type: "mind", system: "neuro", level: "high_yield",
+      summary_fa: "دمانس، دلیریوم و اختلالات شناختی — Dementia, delirium & cognitive disorders. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Adams & Victor 12e / Bradley.",
+      summary_en: "Dementia, delirium & cognitive disorders — Structured review: definition, etiology, pathophys, clinical, workup & management per Adams & Victor 12e / Bradley.",
+      cover_url: "/covers/adams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: دمانس، دلیریوم و اختلالات شناختی", label_en: "Def: Dementia, delirium & cognitive disorders", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل دمانس، دلیریوم و اختلالات شناختی", label_en: "Etiology: risks & causes of Dementia, delirium & cognitive disorders", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های دمانس، دلیریوم و اختلالات شناختی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "neuro-ms",
+      title_fa: "مولتیپل اسکلروزیس و بیماری‌های دمیلینه",
+      title_en: "Multiple sclerosis & demyelinating disease",
+      type: "mind", system: "neuro", level: "core",
+      summary_fa: "مولتیپل اسکلروزیس و بیماری‌های دمیلینه — Multiple sclerosis & demyelinating disease. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Adams & Victor 12e / Bradley.",
+      summary_en: "Multiple sclerosis & demyelinating disease — Structured review: definition, etiology, pathophys, clinical, workup & management per Adams & Victor 12e / Bradley.",
+      cover_url: "/covers/adams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: مولتیپل اسکلروزیس و بیماری‌های دمیلینه", label_en: "Def: Multiple sclerosis & demyelinating disease", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل مولتیپل اسکلروزیس و بیماری‌های دمیلینه", label_en: "Etiology: risks & causes of Multiple sclerosis & demyelinating disease", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های مولتیپل اسکلروزیس و بیماری‌های دمیلینه", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "neuro-neuromuscular",
+      title_fa: "بیماری‌های عصبی‌عضلانی: میاستنی، گیلن‌باره، نوروپاتی",
+      title_en: "Neuromuscular disease: myasthenia, GBS, neuropathy",
+      type: "mind", system: "neuro", level: "core",
+      summary_fa: "بیماری‌های عصبی‌عضلانی: میاستنی، گیلن‌باره، نوروپاتی — Neuromuscular disease: myasthenia, GBS, neuropathy. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Adams & Victor 12e / Bradley.",
+      summary_en: "Neuromuscular disease: myasthenia, GBS, neuropathy — Structured review: definition, etiology, pathophys, clinical, workup & management per Adams & Victor 12e / Bradley.",
+      cover_url: "/covers/adams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بیماری‌های عصبی‌عضلانی: میاستنی، گیلن‌باره، نوروپاتی", label_en: "Def: Neuromuscular disease: myasthenia, GBS, neuropathy", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل بیماری‌های عصبی‌عضلانی: میاستنی، گیلن‌باره، نوروپاتی", label_en: "Etiology: risks & causes of Neuromuscular disease: myasthenia, GBS, neuropathy", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های بیماری‌های عصبی‌عضلانی: میاستنی، گیلن‌باره، نوروپاتی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "neuro-coma",
+      title_fa: "کما، اختلال هوشیاری و مرگ مغزی",
+      title_en: "Coma, altered consciousness & brain death",
+      type: "mind", system: "neuro", level: "high_yield",
+      summary_fa: "کما، اختلال هوشیاری و مرگ مغزی — Coma, altered consciousness & brain death. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Adams & Victor 12e / Bradley.",
+      summary_en: "Coma, altered consciousness & brain death — Structured review: definition, etiology, pathophys, clinical, workup & management per Adams & Victor 12e / Bradley.",
+      cover_url: "/covers/adams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: کما، اختلال هوشیاری و مرگ مغزی", label_en: "Def: Coma, altered consciousness & brain death", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل کما، اختلال هوشیاری و مرگ مغزی", label_en: "Etiology: risks & causes of Coma, altered consciousness & brain death", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های کما، اختلال هوشیاری و مرگ مغزی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "neuro-spine",
+      title_fa: "بیماری‌های نخاع و ریشه‌های عصبی",
+      title_en: "Spinal cord & root disorders",
+      type: "mind", system: "neuro", level: "core",
+      summary_fa: "بیماری‌های نخاع و ریشه‌های عصبی — Spinal cord & root disorders. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Adams & Victor 12e / Bradley.",
+      summary_en: "Spinal cord & root disorders — Structured review: definition, etiology, pathophys, clinical, workup & management per Adams & Victor 12e / Bradley.",
+      cover_url: "/covers/adams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بیماری‌های نخاع و ریشه‌های عصبی", label_en: "Def: Spinal cord & root disorders", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل بیماری‌های نخاع و ریشه‌های عصبی", label_en: "Etiology: risks & causes of Spinal cord & root disorders", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های بیماری‌های نخاع و ریشه‌های عصبی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "neuro-cranial",
+      title_fa: "اعصاب کرانیال و اختلالات بینایی-شنوایی عصبی",
+      title_en: "Cranial nerves & neuro-ophthalmology",
+      type: "mind", system: "neuro", level: "core",
+      summary_fa: "اعصاب کرانیال و اختلالات بینایی-شنوایی عصبی — Cranial nerves & neuro-ophthalmology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Adams & Victor 12e / Bradley.",
+      summary_en: "Cranial nerves & neuro-ophthalmology — Structured review: definition, etiology, pathophys, clinical, workup & management per Adams & Victor 12e / Bradley.",
+      cover_url: "/covers/adams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اعصاب کرانیال و اختلالات بینایی-شنوایی عصبی", label_en: "Def: Cranial nerves & neuro-ophthalmology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اعصاب کرانیال و اختلالات بینایی-شنوایی عصبی", label_en: "Etiology: risks & causes of Cranial nerves & neuro-ophthalmology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اعصاب کرانیال و اختلالات بینایی-شنوایی عصبی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "neuro-infection-neuro",
+      title_fa: "عفونت‌های سیستم عصبی و تومورها",
+      title_en: "CNS infections & tumours",
+      type: "mind", system: "neuro", level: "high_yield",
+      summary_fa: "عفونت‌های سیستم عصبی و تومورها — CNS infections & tumours. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Adams & Victor 12e / Bradley.",
+      summary_en: "CNS infections & tumours — Structured review: definition, etiology, pathophys, clinical, workup & management per Adams & Victor 12e / Bradley.",
+      cover_url: "/covers/adams.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: عفونت‌های سیستم عصبی و تومورها", label_en: "Def: CNS infections & tumours", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل عفونت‌های سیستم عصبی و تومورها", label_en: "Etiology: risks & causes of CNS infections & tumours", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های عفونت‌های سیستم عصبی و تومورها", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ortho-fracture-general",
+      title_fa: "اصول شکستگی‌ها و عوارض",
+      title_en: "Fracture principles & complications",
+      type: "mind", system: "ortho", level: "core",
+      summary_fa: "اصول شکستگی‌ها و عوارض — Fracture principles & complications. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Miller 6e / Campbell Operative 14e.",
+      summary_en: "Fracture principles & complications — Structured review: definition, etiology, pathophys, clinical, workup & management per Miller 6e / Campbell Operative 14e.",
+      cover_url: "/covers/miller.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اصول شکستگی‌ها و عوارض", label_en: "Def: Fracture principles & complications", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اصول شکستگی‌ها و عوارض", label_en: "Etiology: risks & causes of Fracture principles & complications", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اصول شکستگی‌ها و عوارض", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ortho-upper-limb",
+      title_fa: "شکستگی‌ها و آسیب‌های اندام فوقانی",
+      title_en: "Upper-limb fractures & injuries",
+      type: "mind", system: "ortho", level: "core",
+      summary_fa: "شکستگی‌ها و آسیب‌های اندام فوقانی — Upper-limb fractures & injuries. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Miller 6e / Campbell Operative 14e.",
+      summary_en: "Upper-limb fractures & injuries — Structured review: definition, etiology, pathophys, clinical, workup & management per Miller 6e / Campbell Operative 14e.",
+      cover_url: "/covers/miller.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: شکستگی‌ها و آسیب‌های اندام فوقانی", label_en: "Def: Upper-limb fractures & injuries", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل شکستگی‌ها و آسیب‌های اندام فوقانی", label_en: "Etiology: risks & causes of Upper-limb fractures & injuries", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های شکستگی‌ها و آسیب‌های اندام فوقانی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ortho-lower-limb",
+      title_fa: "شکستگی‌ها و آسیب‌های اندام تحتانی",
+      title_en: "Lower-limb fractures & injuries",
+      type: "mind", system: "ortho", level: "high_yield",
+      summary_fa: "شکستگی‌ها و آسیب‌های اندام تحتانی — Lower-limb fractures & injuries. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Miller 6e / Campbell Operative 14e.",
+      summary_en: "Lower-limb fractures & injuries — Structured review: definition, etiology, pathophys, clinical, workup & management per Miller 6e / Campbell Operative 14e.",
+      cover_url: "/covers/miller.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: شکستگی‌ها و آسیب‌های اندام تحتانی", label_en: "Def: Lower-limb fractures & injuries", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل شکستگی‌ها و آسیب‌های اندام تحتانی", label_en: "Etiology: risks & causes of Lower-limb fractures & injuries", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های شکستگی‌ها و آسیب‌های اندام تحتانی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ortho-knee",
+      title_fa: "آسیب‌های زانو: رباط‌ها و منیسک",
+      title_en: "Knee injuries: ligaments & meniscus",
+      type: "mind", system: "ortho", level: "core",
+      summary_fa: "آسیب‌های زانو: رباط‌ها و منیسک — Knee injuries: ligaments & meniscus. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Miller 6e / Campbell Operative 14e.",
+      summary_en: "Knee injuries: ligaments & meniscus — Structured review: definition, etiology, pathophys, clinical, workup & management per Miller 6e / Campbell Operative 14e.",
+      cover_url: "/covers/miller.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: آسیب‌های زانو: رباط‌ها و منیسک", label_en: "Def: Knee injuries: ligaments & meniscus", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل آسیب‌های زانو: رباط‌ها و منیسک", label_en: "Etiology: risks & causes of Knee injuries: ligaments & meniscus", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های آسیب‌های زانو: رباط‌ها و منیسک", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ortho-spine-ortho",
+      title_fa: "ستون فقرات: کمردرد، دیسک، اسکولیوز",
+      title_en: "Spine: back pain, disc, scoliosis",
+      type: "mind", system: "ortho", level: "core",
+      summary_fa: "ستون فقرات: کمردرد، دیسک، اسکولیوز — Spine: back pain, disc, scoliosis. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Miller 6e / Campbell Operative 14e.",
+      summary_en: "Spine: back pain, disc, scoliosis — Structured review: definition, etiology, pathophys, clinical, workup & management per Miller 6e / Campbell Operative 14e.",
+      cover_url: "/covers/miller.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: ستون فقرات: کمردرد، دیسک، اسکولیوز", label_en: "Def: Spine: back pain, disc, scoliosis", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل ستون فقرات: کمردرد، دیسک، اسکولیوز", label_en: "Etiology: risks & causes of Spine: back pain, disc, scoliosis", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های ستون فقرات: کمردرد، دیسک، اسکولیوز", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ortho-peds-ortho",
+      title_fa: "ارتوپدی کودکان: DDH، پرتس، SCFE، پاچنبری",
+      title_en: "Pediatric orthopedics: DDH, Perthes, SCFE, clubfoot",
+      type: "mind", system: "ortho", level: "high_yield",
+      summary_fa: "ارتوپدی کودکان: DDH، پرتس، SCFE، پاچنبری — Pediatric orthopedics: DDH, Perthes, SCFE, clubfoot. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Miller 6e / Campbell Operative 14e.",
+      summary_en: "Pediatric orthopedics: DDH, Perthes, SCFE, clubfoot — Structured review: definition, etiology, pathophys, clinical, workup & management per Miller 6e / Campbell Operative 14e.",
+      cover_url: "/covers/miller.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: ارتوپدی کودکان: DDH، پرتس، SCFE، پاچنبری", label_en: "Def: Pediatric orthopedics: DDH, Perthes, SCFE, clubfoot", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل ارتوپدی کودکان: DDH، پرتس، SCFE، پاچنبری", label_en: "Etiology: risks & causes of Pediatric orthopedics: DDH, Perthes, SCFE, clubfoot", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های ارتوپدی کودکان: DDH، پرتس، SCFE، پاچنبری", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ortho-bone-infection",
+      title_fa: "عفونت‌های استخوان و مفصل",
+      title_en: "Bone & joint infections",
+      type: "mind", system: "ortho", level: "core",
+      summary_fa: "عفونت‌های استخوان و مفصل — Bone & joint infections. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Miller 6e / Campbell Operative 14e.",
+      summary_en: "Bone & joint infections — Structured review: definition, etiology, pathophys, clinical, workup & management per Miller 6e / Campbell Operative 14e.",
+      cover_url: "/covers/miller.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: عفونت‌های استخوان و مفصل", label_en: "Def: Bone & joint infections", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل عفونت‌های استخوان و مفصل", label_en: "Etiology: risks & causes of Bone & joint infections", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های عفونت‌های استخوان و مفصل", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ortho-bone-tumor",
+      title_fa: "تومورهای استخوان و بافت نرم",
+      title_en: "Bone & soft-tissue tumours",
+      type: "mind", system: "ortho", level: "core",
+      summary_fa: "تومورهای استخوان و بافت نرم — Bone & soft-tissue tumours. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Miller 6e / Campbell Operative 14e.",
+      summary_en: "Bone & soft-tissue tumours — Structured review: definition, etiology, pathophys, clinical, workup & management per Miller 6e / Campbell Operative 14e.",
+      cover_url: "/covers/miller.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: تومورهای استخوان و بافت نرم", label_en: "Def: Bone & soft-tissue tumours", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل تومورهای استخوان و بافت نرم", label_en: "Etiology: risks & causes of Bone & soft-tissue tumours", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های تومورهای استخوان و بافت نرم", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ortho-hand-nerve",
+      title_fa: "دست و آسیب‌های عصب محیطی",
+      title_en: "Hand & peripheral nerve injuries",
+      type: "mind", system: "ortho", level: "high_yield",
+      summary_fa: "دست و آسیب‌های عصب محیطی — Hand & peripheral nerve injuries. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Miller 6e / Campbell Operative 14e.",
+      summary_en: "Hand & peripheral nerve injuries — Structured review: definition, etiology, pathophys, clinical, workup & management per Miller 6e / Campbell Operative 14e.",
+      cover_url: "/covers/miller.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: دست و آسیب‌های عصب محیطی", label_en: "Def: Hand & peripheral nerve injuries", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل دست و آسیب‌های عصب محیطی", label_en: "Etiology: risks & causes of Hand & peripheral nerve injuries", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های دست و آسیب‌های عصب محیطی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ortho-degenerative",
+      title_fa: "استئوآرتریت، آرتروپلاستی و بیماری‌های دژنراتیو",
+      title_en: "Osteoarthritis, arthroplasty & degenerative disease",
+      type: "mind", system: "ortho", level: "core",
+      summary_fa: "استئوآرتریت، آرتروپلاستی و بیماری‌های دژنراتیو — Osteoarthritis, arthroplasty & degenerative disease. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Miller 6e / Campbell Operative 14e.",
+      summary_en: "Osteoarthritis, arthroplasty & degenerative disease — Structured review: definition, etiology, pathophys, clinical, workup & management per Miller 6e / Campbell Operative 14e.",
+      cover_url: "/covers/miller.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: استئوآرتریت، آرتروپلاستی و بیماری‌های دژنراتیو", label_en: "Def: Osteoarthritis, arthroplasty & degenerative disease", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل استئوآرتریت، آرتروپلاستی و بیماری‌های دژنراتیو", label_en: "Etiology: risks & causes of Osteoarthritis, arthroplasty & degenerative disease", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های استئوآرتریت، آرتروپلاستی و بیماری‌های دژنراتیو", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "psych-mood",
+      title_fa: "اختلالات خلقی: افسردگی و دوقطبی",
+      title_en: "Mood disorders: depression & bipolar",
+      type: "mind", system: "psych", level: "core",
+      summary_fa: "اختلالات خلقی: افسردگی و دوقطبی — Mood disorders: depression & bipolar. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Kaplan & Sadock 12e.",
+      summary_en: "Mood disorders: depression & bipolar — Structured review: definition, etiology, pathophys, clinical, workup & management per Kaplan & Sadock 12e.",
+      cover_url: "/covers/kaplan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اختلالات خلقی: افسردگی و دوقطبی", label_en: "Def: Mood disorders: depression & bipolar", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اختلالات خلقی: افسردگی و دوقطبی", label_en: "Etiology: risks & causes of Mood disorders: depression & bipolar", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اختلالات خلقی: افسردگی و دوقطبی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "psych-psychosis",
+      title_fa: "اسکیزوفرنی و اختلالات سایکوتیک",
+      title_en: "Schizophrenia & psychotic disorders",
+      type: "mind", system: "psych", level: "high_yield",
+      summary_fa: "اسکیزوفرنی و اختلالات سایکوتیک — Schizophrenia & psychotic disorders. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Kaplan & Sadock 12e.",
+      summary_en: "Schizophrenia & psychotic disorders — Structured review: definition, etiology, pathophys, clinical, workup & management per Kaplan & Sadock 12e.",
+      cover_url: "/covers/kaplan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اسکیزوفرنی و اختلالات سایکوتیک", label_en: "Def: Schizophrenia & psychotic disorders", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اسکیزوفرنی و اختلالات سایکوتیک", label_en: "Etiology: risks & causes of Schizophrenia & psychotic disorders", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اسکیزوفرنی و اختلالات سایکوتیک", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "psych-anxiety",
+      title_fa: "اختلالات اضطرابی، وسواس و PTSD",
+      title_en: "Anxiety, OCD & PTSD",
+      type: "mind", system: "psych", level: "core",
+      summary_fa: "اختلالات اضطرابی، وسواس و PTSD — Anxiety, OCD & PTSD. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Kaplan & Sadock 12e.",
+      summary_en: "Anxiety, OCD & PTSD — Structured review: definition, etiology, pathophys, clinical, workup & management per Kaplan & Sadock 12e.",
+      cover_url: "/covers/kaplan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اختلالات اضطرابی، وسواس و PTSD", label_en: "Def: Anxiety, OCD & PTSD", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اختلالات اضطرابی، وسواس و PTSD", label_en: "Etiology: risks & causes of Anxiety, OCD & PTSD", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اختلالات اضطرابی، وسواس و PTSD", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "psych-somatic",
+      title_fa: "اختلالات جسمانی‌شکل، تجزیه‌ای و ساختگی",
+      title_en: "Somatic symptom, dissociative & factitious disorders",
+      type: "mind", system: "psych", level: "core",
+      summary_fa: "اختلالات جسمانی‌شکل، تجزیه‌ای و ساختگی — Somatic symptom, dissociative & factitious disorders. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Kaplan & Sadock 12e.",
+      summary_en: "Somatic symptom, dissociative & factitious disorders — Structured review: definition, etiology, pathophys, clinical, workup & management per Kaplan & Sadock 12e.",
+      cover_url: "/covers/kaplan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اختلالات جسمانی‌شکل، تجزیه‌ای و ساختگی", label_en: "Def: Somatic symptom, dissociative & factitious disorders", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اختلالات جسمانی‌شکل، تجزیه‌ای و ساختگی", label_en: "Etiology: risks & causes of Somatic symptom, dissociative & factitious disorders", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اختلالات جسمانی‌شکل، تجزیه‌ای و ساختگی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "psych-substance",
+      title_fa: "سوءمصرف مواد و وابستگی",
+      title_en: "Substance use disorders",
+      type: "mind", system: "psych", level: "high_yield",
+      summary_fa: "سوءمصرف مواد و وابستگی — Substance use disorders. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Kaplan & Sadock 12e.",
+      summary_en: "Substance use disorders — Structured review: definition, etiology, pathophys, clinical, workup & management per Kaplan & Sadock 12e.",
+      cover_url: "/covers/kaplan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: سوءمصرف مواد و وابستگی", label_en: "Def: Substance use disorders", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل سوءمصرف مواد و وابستگی", label_en: "Etiology: risks & causes of Substance use disorders", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های سوءمصرف مواد و وابستگی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "psych-personality",
+      title_fa: "اختلالات شخصیت",
+      title_en: "Personality disorders",
+      type: "mind", system: "psych", level: "core",
+      summary_fa: "اختلالات شخصیت — Personality disorders. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Kaplan & Sadock 12e.",
+      summary_en: "Personality disorders — Structured review: definition, etiology, pathophys, clinical, workup & management per Kaplan & Sadock 12e.",
+      cover_url: "/covers/kaplan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اختلالات شخصیت", label_en: "Def: Personality disorders", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اختلالات شخصیت", label_en: "Etiology: risks & causes of Personality disorders", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اختلالات شخصیت", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "psych-child-psych",
+      title_fa: "روان‌پزشکی کودک و نوجوان",
+      title_en: "Child & adolescent psychiatry",
+      type: "mind", system: "psych", level: "core",
+      summary_fa: "روان‌پزشکی کودک و نوجوان — Child & adolescent psychiatry. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Kaplan & Sadock 12e.",
+      summary_en: "Child & adolescent psychiatry — Structured review: definition, etiology, pathophys, clinical, workup & management per Kaplan & Sadock 12e.",
+      cover_url: "/covers/kaplan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: روان‌پزشکی کودک و نوجوان", label_en: "Def: Child & adolescent psychiatry", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل روان‌پزشکی کودک و نوجوان", label_en: "Etiology: risks & causes of Child & adolescent psychiatry", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های روان‌پزشکی کودک و نوجوان", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "psych-organic",
+      title_fa: "دلیریوم، دمانس و اختلالات عصبی‌شناختی",
+      title_en: "Delirium, dementia & neurocognitive disorders",
+      type: "mind", system: "psych", level: "high_yield",
+      summary_fa: "دلیریوم، دمانس و اختلالات عصبی‌شناختی — Delirium, dementia & neurocognitive disorders. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Kaplan & Sadock 12e.",
+      summary_en: "Delirium, dementia & neurocognitive disorders — Structured review: definition, etiology, pathophys, clinical, workup & management per Kaplan & Sadock 12e.",
+      cover_url: "/covers/kaplan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: دلیریوم، دمانس و اختلالات عصبی‌شناختی", label_en: "Def: Delirium, dementia & neurocognitive disorders", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل دلیریوم، دمانس و اختلالات عصبی‌شناختی", label_en: "Etiology: risks & causes of Delirium, dementia & neurocognitive disorders", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های دلیریوم، دمانس و اختلالات عصبی‌شناختی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "psych-eating-sleep",
+      title_fa: "اختلالات خوردن، خواب و جنسی",
+      title_en: "Eating, sleep & sexual disorders",
+      type: "mind", system: "psych", level: "core",
+      summary_fa: "اختلالات خوردن، خواب و جنسی — Eating, sleep & sexual disorders. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Kaplan & Sadock 12e.",
+      summary_en: "Eating, sleep & sexual disorders — Structured review: definition, etiology, pathophys, clinical, workup & management per Kaplan & Sadock 12e.",
+      cover_url: "/covers/kaplan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اختلالات خوردن، خواب و جنسی", label_en: "Def: Eating, sleep & sexual disorders", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اختلالات خوردن، خواب و جنسی", label_en: "Etiology: risks & causes of Eating, sleep & sexual disorders", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اختلالات خوردن، خواب و جنسی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "psych-emergency-psych",
+      title_fa: "اورژانس‌های روان‌پزشکی و درمان‌ها",
+      title_en: "Psychiatric emergencies & treatments",
+      type: "mind", system: "psych", level: "emergency",
+      summary_fa: "اورژانس‌های روان‌پزشکی و درمان‌ها — Psychiatric emergencies & treatments. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Kaplan & Sadock 12e.",
+      summary_en: "Psychiatric emergencies & treatments — Structured review: definition, etiology, pathophys, clinical, workup & management per Kaplan & Sadock 12e.",
+      cover_url: "/covers/kaplan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اورژانس‌های روان‌پزشکی و درمان‌ها", label_en: "Def: Psychiatric emergencies & treatments", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اورژانس‌های روان‌پزشکی و درمان‌ها", label_en: "Etiology: risks & causes of Psychiatric emergencies & treatments", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اورژانس‌های روان‌پزشکی و درمان‌ها", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "derm-eczema",
+      title_fa: "درماتیت‌ها و اگزما",
+      title_en: "Dermatitis & eczema",
+      type: "mind", system: "derm", level: "high_yield",
+      summary_fa: "درماتیت‌ها و اگزما — Dermatitis & eczema. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Fitzpatrick 9e.",
+      summary_en: "Dermatitis & eczema — Structured review: definition, etiology, pathophys, clinical, workup & management per Fitzpatrick 9e.",
+      cover_url: "/covers/fitzpatrick.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: درماتیت‌ها و اگزما", label_en: "Def: Dermatitis & eczema", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل درماتیت‌ها و اگزما", label_en: "Etiology: risks & causes of Dermatitis & eczema", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های درماتیت‌ها و اگزما", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "derm-papulosquamous",
+      title_fa: "پسوریازیس و بیماری‌های پاپولواسکوآموس",
+      title_en: "Psoriasis & papulosquamous disease",
+      type: "mind", system: "derm", level: "core",
+      summary_fa: "پسوریازیس و بیماری‌های پاپولواسکوآموس — Psoriasis & papulosquamous disease. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Fitzpatrick 9e.",
+      summary_en: "Psoriasis & papulosquamous disease — Structured review: definition, etiology, pathophys, clinical, workup & management per Fitzpatrick 9e.",
+      cover_url: "/covers/fitzpatrick.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پسوریازیس و بیماری‌های پاپولواسکوآموس", label_en: "Def: Psoriasis & papulosquamous disease", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پسوریازیس و بیماری‌های پاپولواسکوآموس", label_en: "Etiology: risks & causes of Psoriasis & papulosquamous disease", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پسوریازیس و بیماری‌های پاپولواسکوآموس", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "derm-acne",
+      title_fa: "آکنه، روزاسه و بیماری‌های مو و ناخن",
+      title_en: "Acne, rosacea, hair & nail disorders",
+      type: "mind", system: "derm", level: "core",
+      summary_fa: "آکنه، روزاسه و بیماری‌های مو و ناخن — Acne, rosacea, hair & nail disorders. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Fitzpatrick 9e.",
+      summary_en: "Acne, rosacea, hair & nail disorders — Structured review: definition, etiology, pathophys, clinical, workup & management per Fitzpatrick 9e.",
+      cover_url: "/covers/fitzpatrick.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: آکنه، روزاسه و بیماری‌های مو و ناخن", label_en: "Def: Acne, rosacea, hair & nail disorders", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل آکنه، روزاسه و بیماری‌های مو و ناخن", label_en: "Etiology: risks & causes of Acne, rosacea, hair & nail disorders", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های آکنه، روزاسه و بیماری‌های مو و ناخن", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "derm-infection-derm",
+      title_fa: "عفونت‌های پوستی: باکتریایی، قارچی، ویروسی، انگلی",
+      title_en: "Skin infections: bacterial, fungal, viral, parasitic",
+      type: "mind", system: "derm", level: "high_yield",
+      summary_fa: "عفونت‌های پوستی: باکتریایی، قارچی، ویروسی، انگلی — Skin infections: bacterial, fungal, viral, parasitic. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Fitzpatrick 9e.",
+      summary_en: "Skin infections: bacterial, fungal, viral, parasitic — Structured review: definition, etiology, pathophys, clinical, workup & management per Fitzpatrick 9e.",
+      cover_url: "/covers/fitzpatrick.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: عفونت‌های پوستی: باکتریایی، قارچی، ویروسی، انگلی", label_en: "Def: Skin infections: bacterial, fungal, viral, parasitic", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل عفونت‌های پوستی: باکتریایی، قارچی، ویروسی، انگلی", label_en: "Etiology: risks & causes of Skin infections: bacterial, fungal, viral, parasitic", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های عفونت‌های پوستی: باکتریایی، قارچی، ویروسی، انگلی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "derm-bullous",
+      title_fa: "بیماری‌های تاولی و واکنش‌های دارویی",
+      title_en: "Bullous disease & drug eruptions",
+      type: "mind", system: "derm", level: "core",
+      summary_fa: "بیماری‌های تاولی و واکنش‌های دارویی — Bullous disease & drug eruptions. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Fitzpatrick 9e.",
+      summary_en: "Bullous disease & drug eruptions — Structured review: definition, etiology, pathophys, clinical, workup & management per Fitzpatrick 9e.",
+      cover_url: "/covers/fitzpatrick.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بیماری‌های تاولی و واکنش‌های دارویی", label_en: "Def: Bullous disease & drug eruptions", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل بیماری‌های تاولی و واکنش‌های دارویی", label_en: "Etiology: risks & causes of Bullous disease & drug eruptions", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های بیماری‌های تاولی و واکنش‌های دارویی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "derm-skin-tumor",
+      title_fa: "تومورهای پوست: ملانوم، BCC، SCC و ضایعات پیش‌بدخیم",
+      title_en: "Skin tumours: melanoma, BCC, SCC & premalignant lesions",
+      type: "mind", system: "derm", level: "core",
+      summary_fa: "تومورهای پوست: ملانوم، BCC، SCC و ضایعات پیش‌بدخیم — Skin tumours: melanoma, BCC, SCC & premalignant lesions. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Fitzpatrick 9e.",
+      summary_en: "Skin tumours: melanoma, BCC, SCC & premalignant lesions — Structured review: definition, etiology, pathophys, clinical, workup & management per Fitzpatrick 9e.",
+      cover_url: "/covers/fitzpatrick.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: تومورهای پوست: ملانوم، BCC، SCC و ضایعات پیش‌بدخیم", label_en: "Def: Skin tumours: melanoma, BCC, SCC & premalignant lesions", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل تومورهای پوست: ملانوم، BCC، SCC و ضایعات پیش‌بدخیم", label_en: "Etiology: risks & causes of Skin tumours: melanoma, BCC, SCC & premalignant lesions", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های تومورهای پوست: ملانوم، BCC، SCC و ضایعات پیش‌بدخیم", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "derm-pigment-systemic",
+      title_fa: "اختلالات رنگدانه و تظاهرات پوستی بیماری‌های سیستمیک",
+      title_en: "Pigmentary disorders & cutaneous signs of systemic disease",
+      type: "mind", system: "derm", level: "high_yield",
+      summary_fa: "اختلالات رنگدانه و تظاهرات پوستی بیماری‌های سیستمیک — Pigmentary disorders & cutaneous signs of systemic disease. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Fitzpatrick 9e.",
+      summary_en: "Pigmentary disorders & cutaneous signs of systemic disease — Structured review: definition, etiology, pathophys, clinical, workup & management per Fitzpatrick 9e.",
+      cover_url: "/covers/fitzpatrick.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اختلالات رنگدانه و تظاهرات پوستی بیماری‌های سیستمیک", label_en: "Def: Pigmentary disorders & cutaneous signs of systemic disease", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اختلالات رنگدانه و تظاهرات پوستی بیماری‌های سیستمیک", label_en: "Etiology: risks & causes of Pigmentary disorders & cutaneous signs of systemic disease", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اختلالات رنگدانه و تظاهرات پوستی بیماری‌های سیستمیک", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ophth-red-eye",
+      title_fa: "چشم قرمز: کونژنکتیویت، کراتیت، یووئیت",
+      title_en: "Red eye: conjunctivitis, keratitis, uveitis",
+      type: "mind", system: "ophth", level: "core",
+      summary_fa: "چشم قرمز: کونژنکتیویت، کراتیت، یووئیت — Red eye: conjunctivitis, keratitis, uveitis. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Vaughan Asbury 19e.",
+      summary_en: "Red eye: conjunctivitis, keratitis, uveitis — Structured review: definition, etiology, pathophys, clinical, workup & management per Vaughan Asbury 19e.",
+      cover_url: "/covers/vaughan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: چشم قرمز: کونژنکتیویت، کراتیت، یووئیت", label_en: "Def: Red eye: conjunctivitis, keratitis, uveitis", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل چشم قرمز: کونژنکتیویت، کراتیت، یووئیت", label_en: "Etiology: risks & causes of Red eye: conjunctivitis, keratitis, uveitis", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های چشم قرمز: کونژنکتیویت، کراتیت، یووئیت", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ophth-glaucoma",
+      title_fa: "گلوکوم",
+      title_en: "Glaucoma",
+      type: "mind", system: "ophth", level: "core",
+      summary_fa: "گلوکوم — Glaucoma. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Vaughan Asbury 19e.",
+      summary_en: "Glaucoma — Structured review: definition, etiology, pathophys, clinical, workup & management per Vaughan Asbury 19e.",
+      cover_url: "/covers/vaughan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: گلوکوم", label_en: "Def: Glaucoma", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل گلوکوم", label_en: "Etiology: risks & causes of Glaucoma", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های گلوکوم", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ophth-cataract-lens",
+      title_fa: "کاتاراکت و عیوب انکساری",
+      title_en: "Cataract & refractive errors",
+      type: "mind", system: "ophth", level: "high_yield",
+      summary_fa: "کاتاراکت و عیوب انکساری — Cataract & refractive errors. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Vaughan Asbury 19e.",
+      summary_en: "Cataract & refractive errors — Structured review: definition, etiology, pathophys, clinical, workup & management per Vaughan Asbury 19e.",
+      cover_url: "/covers/vaughan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: کاتاراکت و عیوب انکساری", label_en: "Def: Cataract & refractive errors", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل کاتاراکت و عیوب انکساری", label_en: "Etiology: risks & causes of Cataract & refractive errors", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های کاتاراکت و عیوب انکساری", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ophth-retina",
+      title_fa: "بیماری‌های شبکیه: دیابت، انسداد عروقی، جداشدگی",
+      title_en: "Retinal disease: diabetic, vascular occlusion, detachment",
+      type: "mind", system: "ophth", level: "core",
+      summary_fa: "بیماری‌های شبکیه: دیابت، انسداد عروقی، جداشدگی — Retinal disease: diabetic, vascular occlusion, detachment. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Vaughan Asbury 19e.",
+      summary_en: "Retinal disease: diabetic, vascular occlusion, detachment — Structured review: definition, etiology, pathophys, clinical, workup & management per Vaughan Asbury 19e.",
+      cover_url: "/covers/vaughan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بیماری‌های شبکیه: دیابت، انسداد عروقی، جداشدگی", label_en: "Def: Retinal disease: diabetic, vascular occlusion, detachment", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل بیماری‌های شبکیه: دیابت، انسداد عروقی، جداشدگی", label_en: "Etiology: risks & causes of Retinal disease: diabetic, vascular occlusion, detachment", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های بیماری‌های شبکیه: دیابت، انسداد عروقی، جداشدگی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ophth-neuro-ophth",
+      title_fa: "نورواُفتالمولوژی: عصب بینایی، مردمک، حرکات چشم",
+      title_en: "Neuro-ophthalmology: optic nerve, pupils, eye movements",
+      type: "mind", system: "ophth", level: "core",
+      summary_fa: "نورواُفتالمولوژی: عصب بینایی، مردمک، حرکات چشم — Neuro-ophthalmology: optic nerve, pupils, eye movements. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Vaughan Asbury 19e.",
+      summary_en: "Neuro-ophthalmology: optic nerve, pupils, eye movements — Structured review: definition, etiology, pathophys, clinical, workup & management per Vaughan Asbury 19e.",
+      cover_url: "/covers/vaughan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: نورواُفتالمولوژی: عصب بینایی، مردمک، حرکات چشم", label_en: "Def: Neuro-ophthalmology: optic nerve, pupils, eye movements", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل نورواُفتالمولوژی: عصب بینایی، مردمک، حرکات چشم", label_en: "Etiology: risks & causes of Neuro-ophthalmology: optic nerve, pupils, eye movements", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های نورواُفتالمولوژی: عصب بینایی، مردمک، حرکات چشم", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ophth-lid-orbit",
+      title_fa: "پلک، مجاری اشکی و اوربیت",
+      title_en: "Eyelid, lacrimal system & orbit",
+      type: "mind", system: "ophth", level: "high_yield",
+      summary_fa: "پلک، مجاری اشکی و اوربیت — Eyelid, lacrimal system & orbit. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Vaughan Asbury 19e.",
+      summary_en: "Eyelid, lacrimal system & orbit — Structured review: definition, etiology, pathophys, clinical, workup & management per Vaughan Asbury 19e.",
+      cover_url: "/covers/vaughan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پلک، مجاری اشکی و اوربیت", label_en: "Def: Eyelid, lacrimal system & orbit", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پلک، مجاری اشکی و اوربیت", label_en: "Etiology: risks & causes of Eyelid, lacrimal system & orbit", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پلک، مجاری اشکی و اوربیت", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ophth-trauma-eye",
+      title_fa: "ترومای چشم و اورژانس‌ها",
+      title_en: "Ocular trauma & emergencies",
+      type: "mind", system: "ophth", level: "emergency",
+      summary_fa: "ترومای چشم و اورژانس‌ها — Ocular trauma & emergencies. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Vaughan Asbury 19e.",
+      summary_en: "Ocular trauma & emergencies — Structured review: definition, etiology, pathophys, clinical, workup & management per Vaughan Asbury 19e.",
+      cover_url: "/covers/vaughan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: ترومای چشم و اورژانس‌ها", label_en: "Def: Ocular trauma & emergencies", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل ترومای چشم و اورژانس‌ها", label_en: "Etiology: risks & causes of Ocular trauma & emergencies", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های ترومای چشم و اورژانس‌ها", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ophth-strabismus",
+      title_fa: "استرابیسم و چشم‌پزشکی کودکان",
+      title_en: "Strabismus & pediatric ophthalmology",
+      type: "mind", system: "ophth", level: "core",
+      summary_fa: "استرابیسم و چشم‌پزشکی کودکان — Strabismus & pediatric ophthalmology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Vaughan Asbury 19e.",
+      summary_en: "Strabismus & pediatric ophthalmology — Structured review: definition, etiology, pathophys, clinical, workup & management per Vaughan Asbury 19e.",
+      cover_url: "/covers/vaughan.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: استرابیسم و چشم‌پزشکی کودکان", label_en: "Def: Strabismus & pediatric ophthalmology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل استرابیسم و چشم‌پزشکی کودکان", label_en: "Etiology: risks & causes of Strabismus & pediatric ophthalmology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های استرابیسم و چشم‌پزشکی کودکان", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "stats-study-design",
+      title_fa: "طراحی مطالعات",
+      title_en: "Study designs",
+      type: "mind", system: "stats", level: "high_yield",
+      summary_fa: "طراحی مطالعات — Study designs. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Park 26e / Gordis 6e.",
+      summary_en: "Study designs — Structured review: definition, etiology, pathophys, clinical, workup & management per Park 26e / Gordis 6e.",
+      cover_url: "/covers/park.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: طراحی مطالعات", label_en: "Def: Study designs", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل طراحی مطالعات", label_en: "Etiology: risks & causes of Study designs", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های طراحی مطالعات", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "stats-measures",
+      title_fa: "شاخص‌های اپیدمیولوژیک: بروز، شیوع، خطر",
+      title_en: "Epidemiologic measures: incidence, prevalence, risk",
+      type: "mind", system: "stats", level: "core",
+      summary_fa: "شاخص‌های اپیدمیولوژیک: بروز، شیوع، خطر — Epidemiologic measures: incidence, prevalence, risk. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Park 26e / Gordis 6e.",
+      summary_en: "Epidemiologic measures: incidence, prevalence, risk — Structured review: definition, etiology, pathophys, clinical, workup & management per Park 26e / Gordis 6e.",
+      cover_url: "/covers/park.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: شاخص‌های اپیدمیولوژیک: بروز، شیوع، خطر", label_en: "Def: Epidemiologic measures: incidence, prevalence, risk", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل شاخص‌های اپیدمیولوژیک: بروز، شیوع، خطر", label_en: "Etiology: risks & causes of Epidemiologic measures: incidence, prevalence, risk", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های شاخص‌های اپیدمیولوژیک: بروز، شیوع، خطر", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "stats-diagnostic",
+      title_fa: "تست‌های تشخیصی: حساسیت، ویژگی، ارزش اخباری",
+      title_en: "Diagnostic tests: sensitivity, specificity, predictive values",
+      type: "mind", system: "stats", level: "core",
+      summary_fa: "تست‌های تشخیصی: حساسیت، ویژگی، ارزش اخباری — Diagnostic tests: sensitivity, specificity, predictive values. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Park 26e / Gordis 6e.",
+      summary_en: "Diagnostic tests: sensitivity, specificity, predictive values — Structured review: definition, etiology, pathophys, clinical, workup & management per Park 26e / Gordis 6e.",
+      cover_url: "/covers/park.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: تست‌های تشخیصی: حساسیت، ویژگی، ارزش اخباری", label_en: "Def: Diagnostic tests: sensitivity, specificity, predictive values", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل تست‌های تشخیصی: حساسیت، ویژگی، ارزش اخباری", label_en: "Etiology: risks & causes of Diagnostic tests: sensitivity, specificity, predictive values", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های تست‌های تشخیصی: حساسیت، ویژگی، ارزش اخباری", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "stats-bias",
+      title_fa: "سوگیری، مخدوش‌کنندگی و علیت",
+      title_en: "Bias, confounding & causation",
+      type: "mind", system: "stats", level: "high_yield",
+      summary_fa: "سوگیری، مخدوش‌کنندگی و علیت — Bias, confounding & causation. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Park 26e / Gordis 6e.",
+      summary_en: "Bias, confounding & causation — Structured review: definition, etiology, pathophys, clinical, workup & management per Park 26e / Gordis 6e.",
+      cover_url: "/covers/park.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: سوگیری، مخدوش‌کنندگی و علیت", label_en: "Def: Bias, confounding & causation", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل سوگیری، مخدوش‌کنندگی و علیت", label_en: "Etiology: risks & causes of Bias, confounding & causation", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های سوگیری، مخدوش‌کنندگی و علیت", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "stats-biostat",
+      title_fa: "آمار زیستی: توزیع، آزمون‌های آماری، p-value",
+      title_en: "Biostatistics: distributions, tests, p-values",
+      type: "mind", system: "stats", level: "core",
+      summary_fa: "آمار زیستی: توزیع، آزمون‌های آماری، p-value — Biostatistics: distributions, tests, p-values. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Park 26e / Gordis 6e.",
+      summary_en: "Biostatistics: distributions, tests, p-values — Structured review: definition, etiology, pathophys, clinical, workup & management per Park 26e / Gordis 6e.",
+      cover_url: "/covers/park.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: آمار زیستی: توزیع، آزمون‌های آماری، p-value", label_en: "Def: Biostatistics: distributions, tests, p-values", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل آمار زیستی: توزیع، آزمون‌های آماری، p-value", label_en: "Etiology: risks & causes of Biostatistics: distributions, tests, p-values", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های آمار زیستی: توزیع، آزمون‌های آماری، p-value", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "stats-public-health",
+      title_fa: "بهداشت عمومی، پیشگیری و اپیدمیولوژی بیماری‌ها",
+      title_en: "Public health, prevention & disease epidemiology",
+      type: "mind", system: "stats", level: "core",
+      summary_fa: "بهداشت عمومی، پیشگیری و اپیدمیولوژی بیماری‌ها — Public health, prevention & disease epidemiology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Park 26e / Gordis 6e.",
+      summary_en: "Public health, prevention & disease epidemiology — Structured review: definition, etiology, pathophys, clinical, workup & management per Park 26e / Gordis 6e.",
+      cover_url: "/covers/park.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: بهداشت عمومی، پیشگیری و اپیدمیولوژی بیماری‌ها", label_en: "Def: Public health, prevention & disease epidemiology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل بهداشت عمومی، پیشگیری و اپیدمیولوژی بیماری‌ها", label_en: "Etiology: risks & causes of Public health, prevention & disease epidemiology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های بهداشت عمومی، پیشگیری و اپیدمیولوژی بیماری‌ها", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ethics-consent",
+      title_fa: "رضایت آگاهانه و خودمختاری بیمار",
+      title_en: "Informed consent & autonomy",
+      type: "mind", system: "ethics", level: "high_yield",
+      summary_fa: "رضایت آگاهانه و خودمختاری بیمار — Informed consent & autonomy. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Beauchamp & Childress 8e.",
+      summary_en: "Informed consent & autonomy — Structured review: definition, etiology, pathophys, clinical, workup & management per Beauchamp & Childress 8e.",
+      cover_url: "/covers/beauchamp.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: رضایت آگاهانه و خودمختاری بیمار", label_en: "Def: Informed consent & autonomy", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل رضایت آگاهانه و خودمختاری بیمار", label_en: "Etiology: risks & causes of Informed consent & autonomy", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های رضایت آگاهانه و خودمختاری بیمار", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ethics-confidentiality",
+      title_fa: "رازداری و حقیقت‌گویی",
+      title_en: "Confidentiality & truth-telling",
+      type: "mind", system: "ethics", level: "core",
+      summary_fa: "رازداری و حقیقت‌گویی — Confidentiality & truth-telling. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Beauchamp & Childress 8e.",
+      summary_en: "Confidentiality & truth-telling — Structured review: definition, etiology, pathophys, clinical, workup & management per Beauchamp & Childress 8e.",
+      cover_url: "/covers/beauchamp.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: رازداری و حقیقت‌گویی", label_en: "Def: Confidentiality & truth-telling", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل رازداری و حقیقت‌گویی", label_en: "Etiology: risks & causes of Confidentiality & truth-telling", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های رازداری و حقیقت‌گویی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ethics-end-of-life",
+      title_fa: "پایان زندگی، اتانازی و تخصیص منابع",
+      title_en: "End of life, euthanasia & resource allocation",
+      type: "mind", system: "ethics", level: "core",
+      summary_fa: "پایان زندگی، اتانازی و تخصیص منابع — End of life, euthanasia & resource allocation. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Beauchamp & Childress 8e.",
+      summary_en: "End of life, euthanasia & resource allocation — Structured review: definition, etiology, pathophys, clinical, workup & management per Beauchamp & Childress 8e.",
+      cover_url: "/covers/beauchamp.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پایان زندگی، اتانازی و تخصیص منابع", label_en: "Def: End of life, euthanasia & resource allocation", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پایان زندگی، اتانازی و تخصیص منابع", label_en: "Etiology: risks & causes of End of life, euthanasia & resource allocation", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پایان زندگی، اتانازی و تخصیص منابع", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "ethics-professionalism",
+      title_fa: "حرفه‌ای‌گری، خطای پزشکی و تعارض منافع",
+      title_en: "Professionalism, medical error & conflict of interest",
+      type: "mind", system: "ethics", level: "high_yield",
+      summary_fa: "حرفه‌ای‌گری، خطای پزشکی و تعارض منافع — Professionalism, medical error & conflict of interest. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Beauchamp & Childress 8e.",
+      summary_en: "Professionalism, medical error & conflict of interest — Structured review: definition, etiology, pathophys, clinical, workup & management per Beauchamp & Childress 8e.",
+      cover_url: "/covers/beauchamp.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: حرفه‌ای‌گری، خطای پزشکی و تعارض منافع", label_en: "Def: Professionalism, medical error & conflict of interest", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل حرفه‌ای‌گری، خطای پزشکی و تعارض منافع", label_en: "Etiology: risks & causes of Professionalism, medical error & conflict of interest", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های حرفه‌ای‌گری، خطای پزشکی و تعارض منافع", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "immuno-innate-adaptive",
+      title_fa: "ایمنی ذاتی و اکتسابی، سلول‌ها و آنتی‌بادی‌ها",
+      title_en: "Innate & adaptive immunity, cells & antibodies",
+      type: "mind", system: "immuno", level: "core",
+      summary_fa: "ایمنی ذاتی و اکتسابی، سلول‌ها و آنتی‌بادی‌ها — Innate & adaptive immunity, cells & antibodies. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Janeway 10e / Abbas 10e.",
+      summary_en: "Innate & adaptive immunity, cells & antibodies — Structured review: definition, etiology, pathophys, clinical, workup & management per Janeway 10e / Abbas 10e.",
+      cover_url: "/covers/janeway.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: ایمنی ذاتی و اکتسابی، سلول‌ها و آنتی‌بادی‌ها", label_en: "Def: Innate & adaptive immunity, cells & antibodies", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل ایمنی ذاتی و اکتسابی، سلول‌ها و آنتی‌بادی‌ها", label_en: "Etiology: risks & causes of Innate & adaptive immunity, cells & antibodies", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های ایمنی ذاتی و اکتسابی، سلول‌ها و آنتی‌بادی‌ها", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "immuno-hypersensitivity",
+      title_fa: "واکنش‌های حساسیتی و آلرژی",
+      title_en: "Hypersensitivity & allergy",
+      type: "mind", system: "immuno", level: "core",
+      summary_fa: "واکنش‌های حساسیتی و آلرژی — Hypersensitivity & allergy. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Janeway 10e / Abbas 10e.",
+      summary_en: "Hypersensitivity & allergy — Structured review: definition, etiology, pathophys, clinical, workup & management per Janeway 10e / Abbas 10e.",
+      cover_url: "/covers/janeway.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: واکنش‌های حساسیتی و آلرژی", label_en: "Def: Hypersensitivity & allergy", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل واکنش‌های حساسیتی و آلرژی", label_en: "Etiology: risks & causes of Hypersensitivity & allergy", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های واکنش‌های حساسیتی و آلرژی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "immuno-immunodeficiency",
+      title_fa: "نقص‌های ایمنی",
+      title_en: "Immunodeficiencies",
+      type: "mind", system: "immuno", level: "high_yield",
+      summary_fa: "نقص‌های ایمنی — Immunodeficiencies. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Janeway 10e / Abbas 10e.",
+      summary_en: "Immunodeficiencies — Structured review: definition, etiology, pathophys, clinical, workup & management per Janeway 10e / Abbas 10e.",
+      cover_url: "/covers/janeway.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: نقص‌های ایمنی", label_en: "Def: Immunodeficiencies", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل نقص‌های ایمنی", label_en: "Etiology: risks & causes of Immunodeficiencies", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های نقص‌های ایمنی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "immuno-autoimmunity-transplant",
+      title_fa: "خودایمنی، پیوند و ایمونولوژی تومور",
+      title_en: "Autoimmunity, transplantation & tumour immunology",
+      type: "mind", system: "immuno", level: "core",
+      summary_fa: "خودایمنی، پیوند و ایمونولوژی تومور — Autoimmunity, transplantation & tumour immunology. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Janeway 10e / Abbas 10e.",
+      summary_en: "Autoimmunity, transplantation & tumour immunology — Structured review: definition, etiology, pathophys, clinical, workup & management per Janeway 10e / Abbas 10e.",
+      cover_url: "/covers/janeway.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: خودایمنی، پیوند و ایمونولوژی تومور", label_en: "Def: Autoimmunity, transplantation & tumour immunology", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل خودایمنی، پیوند و ایمونولوژی تومور", label_en: "Etiology: risks & causes of Autoimmunity, transplantation & tumour immunology", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های خودایمنی، پیوند و ایمونولوژی تومور", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "nutrition-macro",
+      title_fa: "درشت‌مغذی‌ها و نیازهای انرژی",
+      title_en: "Macronutrients & energy requirements",
+      type: "mind", system: "nutrition", level: "core",
+      summary_fa: "درشت‌مغذی‌ها و نیازهای انرژی — Macronutrients & energy requirements. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Krause 15e / Harrison Nutrition.",
+      summary_en: "Macronutrients & energy requirements — Structured review: definition, etiology, pathophys, clinical, workup & management per Krause 15e / Harrison Nutrition.",
+      cover_url: "/covers/krause.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: درشت‌مغذی‌ها و نیازهای انرژی", label_en: "Def: Macronutrients & energy requirements", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل درشت‌مغذی‌ها و نیازهای انرژی", label_en: "Etiology: risks & causes of Macronutrients & energy requirements", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های درشت‌مغذی‌ها و نیازهای انرژی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "nutrition-micro",
+      title_fa: "ویتامین‌ها و ریزمغذی‌ها",
+      title_en: "Vitamins & micronutrients",
+      type: "mind", system: "nutrition", level: "high_yield",
+      summary_fa: "ویتامین‌ها و ریزمغذی‌ها — Vitamins & micronutrients. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Krause 15e / Harrison Nutrition.",
+      summary_en: "Vitamins & micronutrients — Structured review: definition, etiology, pathophys, clinical, workup & management per Krause 15e / Harrison Nutrition.",
+      cover_url: "/covers/krause.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: ویتامین‌ها و ریزمغذی‌ها", label_en: "Def: Vitamins & micronutrients", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل ویتامین‌ها و ریزمغذی‌ها", label_en: "Etiology: risks & causes of Vitamins & micronutrients", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های ویتامین‌ها و ریزمغذی‌ها", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "nutrition-clinical-nutrition",
+      title_fa: "تغذیه بالینی، سوءتغذیه و تغذیه بیمارستانی",
+      title_en: "Clinical nutrition, malnutrition & hospital feeding",
+      type: "mind", system: "nutrition", level: "core",
+      summary_fa: "تغذیه بالینی، سوءتغذیه و تغذیه بیمارستانی — Clinical nutrition, malnutrition & hospital feeding. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Krause 15e / Harrison Nutrition.",
+      summary_en: "Clinical nutrition, malnutrition & hospital feeding — Structured review: definition, etiology, pathophys, clinical, workup & management per Krause 15e / Harrison Nutrition.",
+      cover_url: "/covers/krause.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: تغذیه بالینی، سوءتغذیه و تغذیه بیمارستانی", label_en: "Def: Clinical nutrition, malnutrition & hospital feeding", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل تغذیه بالینی، سوءتغذیه و تغذیه بیمارستانی", label_en: "Etiology: risks & causes of Clinical nutrition, malnutrition & hospital feeding", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های تغذیه بالینی، سوءتغذیه و تغذیه بیمارستانی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "genetics-mendelian",
+      title_fa: "الگوهای توارث مندلی",
+      title_en: "Mendelian inheritance",
+      type: "mind", system: "genetics", level: "core",
+      summary_fa: "الگوهای توارث مندلی — Mendelian inheritance. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Thompson & Thompson 9e.",
+      summary_en: "Mendelian inheritance — Structured review: definition, etiology, pathophys, clinical, workup & management per Thompson & Thompson 9e.",
+      cover_url: "/covers/thompson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: الگوهای توارث مندلی", label_en: "Def: Mendelian inheritance", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل الگوهای توارث مندلی", label_en: "Etiology: risks & causes of Mendelian inheritance", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های الگوهای توارث مندلی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "genetics-chromosomal",
+      title_fa: "اختلالات کروموزومی",
+      title_en: "Chromosomal disorders",
+      type: "mind", system: "genetics", level: "high_yield",
+      summary_fa: "اختلالات کروموزومی — Chromosomal disorders. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Thompson & Thompson 9e.",
+      summary_en: "Chromosomal disorders — Structured review: definition, etiology, pathophys, clinical, workup & management per Thompson & Thompson 9e.",
+      cover_url: "/covers/thompson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: اختلالات کروموزومی", label_en: "Def: Chromosomal disorders", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل اختلالات کروموزومی", label_en: "Etiology: risks & causes of Chromosomal disorders", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های اختلالات کروموزومی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "genetics-molecular",
+      title_fa: "ژنتیک مولکولی، غربالگری و مشاوره",
+      title_en: "Molecular genetics, screening & counselling",
+      type: "mind", system: "genetics", level: "core",
+      summary_fa: "ژنتیک مولکولی، غربالگری و مشاوره — Molecular genetics, screening & counselling. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Thompson & Thompson 9e.",
+      summary_en: "Molecular genetics, screening & counselling — Structured review: definition, etiology, pathophys, clinical, workup & management per Thompson & Thompson 9e.",
+      cover_url: "/covers/thompson.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: ژنتیک مولکولی، غربالگری و مشاوره", label_en: "Def: Molecular genetics, screening & counselling", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل ژنتیک مولکولی، غربالگری و مشاوره", label_en: "Etiology: risks & causes of Molecular genetics, screening & counselling", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های ژنتیک مولکولی، غربالگری و مشاوره", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "physics-radiation",
+      title_fa: "پرتوها و حفاظت پرتویی",
+      title_en: "Radiation & radiation protection",
+      type: "mind", system: "physics", level: "core",
+      summary_fa: "پرتوها و حفاظت پرتویی — Radiation & radiation protection. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Halliday & Medical Physics.",
+      summary_en: "Radiation & radiation protection — Structured review: definition, etiology, pathophys, clinical, workup & management per Halliday & Medical Physics.",
+      cover_url: "/covers/halliday.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: پرتوها و حفاظت پرتویی", label_en: "Def: Radiation & radiation protection", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل پرتوها و حفاظت پرتویی", label_en: "Etiology: risks & causes of Radiation & radiation protection", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های پرتوها و حفاظت پرتویی", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "physics-imaging-physics",
+      title_fa: "فیزیک تصویربرداری: سونوگرافی، MRI، CT",
+      title_en: "Imaging physics: ultrasound, MRI, CT",
+      type: "mind", system: "physics", level: "high_yield",
+      summary_fa: "فیزیک تصویربرداری: سونوگرافی، MRI، CT — Imaging physics: ultrasound, MRI, CT. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Halliday & Medical Physics.",
+      summary_en: "Imaging physics: ultrasound, MRI, CT — Structured review: definition, etiology, pathophys, clinical, workup & management per Halliday & Medical Physics.",
+      cover_url: "/covers/halliday.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: فیزیک تصویربرداری: سونوگرافی، MRI، CT", label_en: "Def: Imaging physics: ultrasound, MRI, CT", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل فیزیک تصویربرداری: سونوگرافی، MRI، CT", label_en: "Etiology: risks & causes of Imaging physics: ultrasound, MRI, CT", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های فیزیک تصویربرداری: سونوگرافی، MRI، CT", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+    {
+      slug: "physics-laser-electricity",
+      title_fa: "لیزر، الکتریسیته و بیوفیزیک",
+      title_en: "Laser, electricity & biophysics",
+      type: "mind", system: "physics", level: "core",
+      summary_fa: "لیزر، الکتریسیته و بیوفیزیک — Laser, electricity & biophysics. مروری ساختاریافته بر تعریف، سبب‌شناسی، پاتوفیزیولوژی، تظاهرات بالینی، بررسی و درمان بر اساس Halliday & Medical Physics.",
+      summary_en: "Laser, electricity & biophysics — Structured review: definition, etiology, pathophys, clinical, workup & management per Halliday & Medical Physics.",
+      cover_url: "/covers/halliday.jpg",
+      graph_json: {
+        nodes: [
+          { id: "def", label_fa: "تعریف: لیزر، الکتریسیته و بیوفیزیک", label_en: "Def: Laser, electricity & biophysics", branch: "definition", x: 0, y: 0 },
+          { id: "eti", label_fa: "اتیولوژی/سبب: عوامل خطر و علل لیزر، الکتریسیته و بیوفیزیک", label_en: "Etiology: risks & causes of Laser, electricity & biophysics", branch: "etiology", x: -220, y: 110 },
+          { id: "clin", label_fa: "تظاهر بالینی: علائم و نشانه‌های لیزر، الکتریسیته و بیوفیزیک", label_en: "Clinical: signs & symptoms", branch: "clinical", x: 220, y: 110 },
+          { id: "workup", label_fa: "بررسی: آزمایش، تصویربرداری و معیارهای تشخیصی", label_en: "Workup: labs, imaging & criteria", branch: "workup", x: -220, y: 230 },
+          { id: "rx", label_fa: "درمان و پیگیری: اصول درمان و عوارض", label_en: "Rx & follow-up: management & complications", branch: "treatment", x: 220, y: 230 },
+        ],
+        edges: [
+          { from: "def", to: "eti", label: "" },
+          { from: "eti", to: "clin", label: "" },
+          { from: "clin", to: "workup", label: "" },
+          { from: "workup", to: "rx", label: "" },
+        ]
+      }
+    },
+
   ];
 
   let inserted = 0;
