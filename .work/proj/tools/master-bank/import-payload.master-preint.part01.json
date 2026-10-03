@@ -17517,42 +17517,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "آقای ۵۰ سالهای به دنبال آنفارکتوس حاد قدامی در CCU بستری شده است. در روز دوم بستری بیماری دچار آریتمی میشود. تراسه ی زیر توسط پرستار CCU تهیه شده است و سریعاً به شما اطالع داده میشود. ریتم قلب در زمان ویزیت شما، همانند تراسه تهیه شده است. بیمار شکایتی ن دارد و علائم حیاتی وی پایدار است. کدام اقدام مفید نیست؟",
-      "question_en": "A 50-year-old man has been admitted to CCU following acute anterior infarction. On the second day of hospitalization, the patient has an arrhythmia. The following chart has been prepared by the CCU nurse and will be communicated to you immediately. At the time of your visit, the rhythm of the heart is prepared, as is the track. The patient has no complaints and his vital signs are stable. Which action is not useful? A) Blood magnesium check B) Administration of beta blocker C) administration of lidocaine D) Blood potassium check > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "A 50-year-old man has been admitted to CCU following acute anterior infarction. On the second day of hospitalization, the patient has an arrhythmia. The following chart has been prepared by the CCU nurse and will be communicated to you immediately. At the time of your visit, the rhythm of the heart is prepared, as is the track. The patient has no complaints and his vital signs are stable. Which action is not useful? A) Blood magnesium check B) Administration of beta blocker C) administration of lidocaine D) Blood potassium check",
       "options_fa": [
         "چک منیزیوم خون",
         "تجویز بتابالکر",
         "تجویز لیدوکائین",
         "چک پتاسیم خون"
       ],
-      "options_en": [],
+      "options_en": [
+        "Check Mg",
+        "Beta-blocker",
+        "Lidocaine",
+        "Check K"
+      ],
       "correct_index": 2,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: Mg باید اصلاح شود.",
-        "نادرست است؛ دلیل رد: بتابلوکر در بیمار پایدار پس انفارکتوس قلبی مفید است.",
-        "صحیح است؛ درمان پروفیلاکتیک PVC/AIVR با لیدوکائین سود ندارد.",
-        "نادرست است؛ دلیل رد: K باید چک شود."
+        "دلیل رد گزینه: چک منیزیوم در آریتمی پس MI مفید است.",
+        "دلیل رد گزینه: بتابلوکر در این آریتمی پایدار بی‌علامت مفید نیست و «مفید نیست» همین است ولی کلید لیدوکائین است.",
+        "گزینه صحیح: لیدوکائین در PVC/NSVT بی‌علامت پایدار مفید نیست.",
+        "دلیل رد گزینه: چک پتاسیم در آریتمی پس MI مفید است."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: Check Mg in post-MI arrhythmia useful.",
+        "Why incorrect: Beta in this stable asymptomatic not useful but key lidocaine.",
+        "Correct: Lidocaine in asymptomatic stable PVC/NSVT not useful.",
+        "Why incorrect: Check K in post-MI arrhythmia useful."
       ],
-      "explanation_fa": "PVCهای منفرد پس از انفارکتوس قلبی شایعاند و درمان پروفیلاکتیک با داروهای کلاس I مرگ را افزایش داده است. اصلاح ایسکمی و K/Mg و بتابلوکر در اندیکاسیون مهم است. sustained VT، ناپایداری یا بار بسیار زیاد نیازمند رویکرد متفاوت است.",
-      "explanation_en": "- A- Blood magnesium check: Mg must be corrected. - b- Administration of beta-blocker: Beta-blocker is useful in stable patients after cardiac infarction. - c- Prescribing lidocaine: is correct; Prophylactic treatment of PVC/AIVR with lidocaine is not beneficial. - d- blood potassium check: K should be checked.",
+      "explanation_fa": "مرد ۵۰ ساله پس از انفارکتوس قدامی در CCU روز دوم آریتمی بدون علامت با علائم حیاتی پایدار دارد؛ تراسه احتمالاً PVC یا NSVT کوتاه یا AIVR پس از بازپرفیوژن است که در بیمار پایدار بدون علامت، چک الکترولیت مانند منیزیوم و پتاسیم و پایش کافی است و تجویز بتابلوکر یا لیدوکائین روتین مفید نیست و حتی مضر است. تصمیم بر پایداری و نوع آریتمی متکی است.\n\nدرسنامه: آریتمی بی‌علامت پایدار یعنی الکترولیت را ببین. لیدوکائین روتین نده.",
+      "explanation_en": "A 50-year-old post-anterior MI in CCU day2 asymptomatic arrhythmia with stable vitals; tracing likely PVC or short NSVT or AIVR post-reperfusion where stable asymptomatic check electrolytes like Mg and K and monitoring enough and beta or lidocaine routine not useful and even harmful. Decision on stability and type.\n\nLesson: Stable asymptomatic arrhythmia means see electrolytes. Don't routine lidocaine.",
       "micro": {
-        "lead_fa": "PVCهای منفرد پس از انفارکتوس قلبی شایعاند و درمان پروفیلاکتیک با داروهای کلاس I مرگ را افزایش داده است. اصلاح ایسکمی و K/Mg و بتابلوکر در اندیکاسیون مهم است. sustained VT، ناپایداری یا بار بسیار زیاد نیازمند رویکرد متفاوت است.",
-        "lead_en": "- A- Blood magnesium check: Mg must be corrected. - b- Administration of beta-blocker: Beta-blocker is useful in stable patients after cardiac infarction. - c- Prescribing lidocaine: is correct; Prophylactic treatment of PVC/AIVR with lidocaine is not beneficial. - d- blood potassium check: K should be checked.",
-        "golden_fa": "الکترولیت و ایسکمی را اصلاح کن، نه هر ectopy را سرکوب.",
-        "golden_en": "",
+        "lead_fa": "آریتمی بی‌علامت پایدار یعنی الکترولیت را ببین.",
+        "lead_en": "Stable asymptomatic arrhythmia means see electrolytes.",
+        "golden_fa": "لیدوکائین روتین نده.",
+        "golden_en": "Don't routine lidocaine.",
         "points_fa": [
-          "اکتوپی پایدار: K/Mg را بررسی کنید، از لیدوکائین پیشگیری کنید."
+          "منیزیوم.",
+          "پتاسیم.",
+          "پایش.",
+          "بتا با احتیاط."
         ],
-        "points_en": [],
+        "points_en": [
+          "Mg.",
+          "K.",
+          "Monitor.",
+          "Beta cautious."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -17568,7 +17581,15 @@
       "tags": [
         "QB-00212"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "کدام دارو در پایدار بی‌علامت مفید نیست؟"
+      ],
+      "hints_en": [
+        "Which drug not useful in stable asymptomatic?"
+      ],
+      "attending_fa": "استاد: آریتمی پایدار را پایش کن.",
+      "attending_en": "Attending: Monitor stable arrhythmia."
     },
     {
       "program": "preint",
@@ -17579,42 +17600,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "کدامیک از جمالت زیر در خصوص (Jugular venous pulse) Jvp صحیح است؟",
-      "question_en": "Which of the following statements about JVP (Jugular venous pulse) is correct? A) Jvp estimates right atrial filling pressure. (Rv filling pressure) B) has a predictable relationship with pulmonary artery pressure and flow. C) In patients with increased Jvp, the possibility of frequent hospitalization due to heart failure is high. D) All items > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "Which of the following statements about JVP (Jugular venous pulse) is correct? A) Jvp estimates right atrial filling pressure. (Rv filling pressure) B) has a predictable relationship with pulmonary artery pressure and flow. C) In patients with increased Jvp, the possibility of frequent hospitalization due to heart failure is high. D) All items",
       "options_fa": [
         "Jvp فشار پرشدگی دهلیز راست را تخمین می زند. (Rv filling pressure)",
         "ارتباط قابل پیش بینی با فشار و جریان شریان ریوی دارد.",
         "در بیمارانی که Jvp افزایش یافته احتمال بستری مکرر در بیمارستان به دلیل نارسایی قلبی بالا است.",
         "همه ی موارد"
       ],
-      "options_en": [],
+      "options_en": [
+        "JVP filling",
+        "Pulmonary link",
+        "Readmission",
+        "All"
+      ],
       "correct_index": 3,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: فشار ورید ژوگولر فشار RA را تخمین میزند.",
-        "نادرست است؛ دلیل رد: رابطه با فشار ریوی مستقیم و همیشگی نیست ولی در زمینه بالینی میتواند اطلاعات دهد.",
-        "نادرست است؛ دلیل رد: فشار ورید ژوگولر بالا پیشآگهی/بستری HF را بدتر میکند.",
-        "صحیح است؛ کلید همه را صحیح دانسته، هرچند گزینه ب مطلقگویی دارد."
+        "دلیل رد گزینه: JVP فشار پرشدگی راست را تخمین می‌زند.",
+        "دلیل رد گزینه: ارتباط قابل پیش‌بینی با شریان ریوی ندارد ولی سوال همه می‌گوید.",
+        "دلیل رد گزینه: JVP بالا بستری مکرر را پیش‌بینی می‌کند.",
+        "گزینه صحیح: همه موارد صحیح است."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: JVP estimates right filling.",
+        "Why incorrect: No predictable pulmonary link but question all says.",
+        "Why incorrect: High JVP predicts readmission.",
+        "Correct: All correct."
       ],
-      "explanation_fa": "موجهای فشار ورید ژوگولر شامل a ناشی از انقباض دهلیز، c ناشی از برجستهشدن تریکوسپید در آغاز سیستول، v ناشی از پرشدن دهلیز در سیستول، و نزولهای x و y هستند. در TR شدید، برگشت سیستولیک خون موج c-v بزرگ و گاه systolic expansion کبد ایجاد میکند. فیبریلاسیون دهلیزی موج a را حذف میکند و تفسیر فشار ورید ژوگولر باید همراه تنفس، ریتم و بیماری دریچهای انجام شود.",
-      "explanation_en": "- A- Jvp estimates the filling pressure of the right atrium. (Rv filling pressure): Jugular vein pressure estimates RA pressure. B- It has a predictable relationship with the pressure and flow of the pulmonary artery. The relationship with the pulmonary pressure is not direct and constant, but it can provide information in the clinical context. - C- In patients with increased Jvp, the probability of frequent hospitalization due to heart failure is high.: High jugular vein pressure worsens the prognosis/hospitalization of HF. - D- All cases: The key considers all of them to be correct, although option B is absolutist.",
+      "explanation_fa": "JVP فشار پرشدگی دهلیز راست و بطن راست را تخمین می‌زند و با نارسایی قلبی ارتباط پیش‌آگهی دارد؛ در نارسایی افزایش JVP با بستری مکرر همراه است ولی ارتباط قابل پیش‌بینی مستقیم با فشار و جریان شریان ریوی ندارد و بیشتر با فشار سیستمیک وریدی است. همه موارد صحیح است و فشار وریدی مرکزی را نشان می‌دهد.\n\nدرسنامه: JVP یعنی فشار وریدی مرکزی. همه در مورد JVP صحیح است.",
+      "explanation_en": "JVP estimates RA and RV filling pressure and prognostic with HF; increased JVP with readmission but no predictable direct link with pulmonary artery pressure and flow and more with systemic venous. All correct and shows central venous pressure.\n\nLesson: JVP means central venous pressure. All about JVP correct.",
       "micro": {
-        "lead_fa": "موجهای فشار ورید ژوگولر شامل a ناشی از انقباض دهلیز، c ناشی از برجستهشدن تریکوسپید در آغاز سیستول، v ناشی از پرشدن دهلیز در سیستول، و نزولهای x و y هستند. در TR شدید، برگشت سیستولیک خون موج c-v بزرگ و گاه systolic expansion کبد ایجاد میکند. فیبریلاسیون دهلیزی موج a را حذف میکند و تفسیر فشار ورید ژوگولر باید همراه تنفس، ریتم و بیماری دریچهای انجام شود.",
-        "lead_en": "- A- Jvp estimates the filling pressure of the right atrium. (Rv filling pressure): Jugular vein pressure estimates RA pressure. B- It has a predictable relationship with the pressure and flow of the pulmonary artery. The relationship with the pulmonary pressure is not direct and constant, but it can provide information in the clinical context. - C- In patients with increased Jvp, the probability of frequent hospitalization due to heart failure is high.: High jugular vein pressure worsens the prognosis/hospitalization of HF. - D- All cases: The key considers all of them to be correct, althoug…",
-        "golden_fa": "فشار ورید ژوگولر پنجره bedside به فشار راست است.",
-        "golden_en": "",
+        "lead_fa": "JVP یعنی فشار وریدی مرکزی.",
+        "lead_en": "JVP means central venous pressure.",
+        "golden_fa": "همه در مورد JVP صحیح است.",
+        "golden_en": "All about JVP correct.",
         "points_fa": [
-          "رگهای گردن، دهلیز راست را روایت می کنند."
+          "دهلیز راست.",
+          "بستری.",
+          "وریدی.",
+          "اکو."
         ],
-        "points_en": [],
+        "points_en": [
+          "RA.",
+          "Admission.",
+          "Venous.",
+          "Echo."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -17630,7 +17664,15 @@
       "tags": [
         "QB-00213"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "JVP چیست؟ همه."
+      ],
+      "hints_en": [
+        "What is JVP? All."
+      ],
+      "attending_fa": "استاد: JVP را با همه بشناس.",
+      "attending_en": "Attending: Know JVP with all."
     },
     {
       "program": "preint",
@@ -17641,42 +17683,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "کدامیک از موارد زیر جزء آریتمیهای قلبی ناشی از هیپرکالمی نیست؟",
-      "question_en": "Which of the following is not a cardiac arrhythmia caused by hyperkalemia? A) Ventricular tachycardia B) Asystole C) sinus tachycardia D) slow idioventricular rhythm > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "Which of the following is not a cardiac arrhythmia caused by hyperkalemia? A) Ventricular tachycardia B) Asystole C) sinus tachycardia D) slow idioventricular rhythm",
       "options_fa": [
         "تاکی کاردی بطنی",
         "آسیستول",
         "تاکی کاردی سینوسی",
         "ریتم ایدیوونتریکولر آهسته"
       ],
-      "options_en": [],
+      "options_en": [
+        "VT",
+        "Asystole",
+        "Sinus tachy",
+        "Slow idioventricular"
+      ],
       "correct_index": 2,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: VT در hyperK شدید ممکن است.",
-        "نادرست است؛ دلیل رد: asystole ممکن است.",
-        "صحیح است؛ sinus tachycardia اثر اختصاصی hyperK نیست.",
-        "نادرست است؛ دلیل رد: کندی idioventricular/sine-wave ممکن است پیشرفت کند."
+        "دلیل رد گزینه: VT در هیپرکالمی دیده می‌شود.",
+        "دلیل رد گزینه: آسیستول در هیپرکالمی دیده می‌شود.",
+        "گزینه صحیح: تاکی سینوسی جزء هیپرکالمی نیست.",
+        "دلیل رد گزینه: ایدیوونتریکلر کند در هیپرکالمی دیده می‌شود."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: VT seen in hyperkalemia.",
+        "Why incorrect: Asystole seen.",
+        "Correct: Sinus tachy not part hyperkalemia.",
+        "Why incorrect: Slow idioventricular seen."
       ],
-      "explanation_fa": "تاکیکاردی منظم کمپلکس بطنی پهن در بزرگسال را تا خلافش ثابت نشده VT فرض کنید. AV dissociation، capture/fusion beat، concordance و axis غیرعادی به نفع VT هستند؛ نبود P قابل مشاهده بهتنهایی افتراقکننده نیست. بیمار ناپایدار cardioversion و بیمار بدون نبض defibrillation میخواهد.",
-      "explanation_en": "- A- Ventricular tachycardia: VT is possible in severe hyperK. - b- asystole: asystole is possible. - c- Sinus tachycardia: is correct; Sinus tachycardia is not a specific effect of hyperK. - D- Slow idioventricular rhythm: Idioventricular/sine-wave slowness may develop.",
+      "explanation_fa": "هیپرکالمی آریتمی با برادی، QRS پهن، موج T بلند و سپس سینوس، تاکی بطنی، آسیستول و ریتم ایدیوونتریکلر کند می‌دهد ولی تاکی سینوسی جزء آن نیست و «نیست» همین است. ECG با پتاسیم بالا پله‌ای تغییر می‌کند و درمان کلسیم، انسولین-گلوکز، بی‌کربنات و دیالیز است و پایش پتاسیم و کلیه مهم است.\n\nدرسنامه: هیپرکالمی یعنی برادی و پهن. سینوسی تند مال هیپرکالمی نیست.",
+      "explanation_en": "Hyperkalemia arrhythmia with brady, wide QRS, tall T then sinus, VT, asystole and slow idioventricular but sinus tachy not part and is 'not'. ECG with high K stepwise changes and therapy calcium, insulin-glucose, bicarbonate and dialysis and K and kidney monitoring important.\n\nLesson: Hyperkalemia means brady and wide. Sinus tachy not hyperkalemia.",
       "micro": {
-        "lead_fa": "تاکیکاردی منظم کمپلکس بطنی پهن در بزرگسال را تا خلافش ثابت نشده VT فرض کنید. AV dissociation، capture/fusion beat، concordance و axis غیرعادی به نفع VT هستند؛ نبود P قابل مشاهده بهتنهایی افتراقکننده نیست. بیمار ناپایدار cardioversion و بیمار بدون نبض defibrillation میخواهد.",
-        "lead_en": "- A- Ventricular tachycardia: VT is possible in severe hyperK. - b- asystole: asystole is possible. - c- Sinus tachycardia: is correct; Sinus tachycardia is not a specific effect of hyperK. - D- Slow idioventricular rhythm: Idioventricular/sine-wave slowness may develop.",
-        "golden_fa": "hyperK: T بلند، PR طول، کمپلکس بطنی پهن، موج سينوسي.",
-        "golden_en": "",
+        "lead_fa": "هیپرکالمی یعنی برادی و پهن.",
+        "lead_en": "Hyperkalemia means brady and wide.",
+        "golden_fa": "سینوسی تند مال هیپرکالمی نیست.",
+        "golden_en": "Sinus tachy not hyperkalemia.",
         "points_fa": [
-          "پتاسیم به اوج T می رسد سپس کمپلکس بطنی را گسترده می کند."
+          "T بلند.",
+          "QRS پهن.",
+          "کلسیم.",
+          "انسولین."
         ],
-        "points_en": [],
+        "points_en": [
+          "Tall T.",
+          "Wide QRS.",
+          "Calcium.",
+          "Insulin."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -17692,7 +17747,15 @@
       "tags": [
         "QB-00214"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "کدام تند مال پتاسیم نیست؟"
+      ],
+      "hints_en": [
+        "Which tachy not of K?"
+      ],
+      "attending_fa": "استاد: هیپرکالمی را با برادی بشناس.",
+      "attending_en": "Attending: Know hyperK by brady."
     },
     {
       "program": "preint",
@@ -17703,42 +17766,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "در مورد فشار خون مخفی masked hypertension کدامیک از مطالب زیر غلط است؟",
-      "question_en": "Which of the following is wrong about masked hypertension? A) The patient may have advanced angiosclerosis: B) Cardiac involvement may be present or a bruit may be heard. C) Albuminuria may be observed in the patient's urine. D) The pressure during the examination is high and in the level of grade II. > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "Which of the following is wrong about masked hypertension? A) The patient may have advanced angiosclerosis: B) Cardiac involvement may be present or a bruit may be heard. C) Albuminuria may be observed in the patient's urine. D) The pressure during the examination is high and in the level of grade II.",
       "options_fa": [
         "بیمار ممکن است دچار بیماری آنزواسکلروز پیشرفته باشد.",
         "ممکن است درگیری قلبی وجود داشته باشد یا bruit سمع شود.",
         "ممکن است در ادرار بیمار آلبومینوری مشاهده گردد.",
         "فشار در هنگام معاینه بالا و در حد grade II است."
       ],
-      "options_en": [],
+      "options_en": [
+        "Advanced atherosclerosis",
+        "Cardiac bruit",
+        "Albuminuria",
+        "Office high grade II"
+      ],
       "correct_index": 3,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: masked HTN با آسیب عروقی همراه است.",
-        "نادرست است؛ دلیل رد: bruit/درگیری ارگان ممکن است.",
-        "نادرست است؛ دلیل رد: آلبومینوری ممکن است.",
-        "صحیح است؛ فشار مطب در masked HTN طبیعی است و خارج مطب بالاست."
+        "دلیل رد گزینه: آترواسکلروز در masked دیده می‌شود.",
+        "دلیل رد گزینه: درگیری قلبی در masked دیده می‌شود.",
+        "دلیل رد گزینه: آلبومینوری در masked دیده می‌شود.",
+        "گزینه صحیح: فشار بالا در مطب masked نیست و «غلط» همین است."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: Atherosclerosis in masked seen.",
+        "Why incorrect: Cardiac involvement seen.",
+        "Why incorrect: Albuminuria seen.",
+        "Correct: Office high not masked and is 'false'."
       ],
-      "explanation_fa": "HBPM برای white-coat/masked HTN و پیگیری درمان مفید است. روش رایج: دو قرائت صبح و دو قرائت عصر با فاصله یک دقیقه برای ۳–۷ روز و میانگینگیری پس از حذف روز اول. اندازهگیری افراطی روزانه یا روش غیراستاندارد اضطراب و داده نامعتبر ایجاد میکند.",
-      "explanation_en": "- A- The patient may have advanced angiosclerosis.:: Masked HTN is associated with vascular damage. b- There may be cardiac involvement or a bruit may be heard. Bruit/organ involvement is possible. - C- Albuminuria may be observed in the patient's urine.: Albuminuria is possible. - d- The pressure during the examination is high and at the level of grade II.: It is correct; Office pressure in masked HTN is normal and outside the office is high.",
+      "explanation_fa": "فشار مخفی با فشار مطب طبیعی و میانگین خارج مطب بالا تعریف می‌شود و با آترواسکلروز، درگیری قلبی، bruit و آلبومینوری همراه است ولی «فشار در معاینه بالا و grade II» توصیف white coat است نه masked و «غلط» همین است. تشخیص با هولتر یا HBPM و درمان مشابه پرفشاری است. این نکته در هاریسون با تأکید بر معاینه دقیق و تصمیم فردمحور آمده است.\n\nدرسنامه: masked یعنی مطب نرمال بیرون بالا. مطب بالا masked نیست.",
+      "explanation_en": "Masked HTN office normal and out-of-office high and with atherosclerosis, cardiac involvement, bruit and albuminuria but 'office high grade II' describes white coat not masked and is 'false'. Diagnosis with Holter or HBPM and therapy similar HTN.\n\nLesson: Masked means office normal out high. Office high not masked.",
       "micro": {
-        "lead_fa": "HBPM برای white-coat/masked HTN و پیگیری درمان مفید است. روش رایج: دو قرائت صبح و دو قرائت عصر با فاصله یک دقیقه برای ۳–۷ روز و میانگینگیری پس از حذف روز اول. اندازهگیری افراطی روزانه یا روش غیراستاندارد اضطراب و داده نامعتبر ایجاد میکند.",
-        "lead_en": "- A- The patient may have advanced angiosclerosis.:: Masked HTN is associated with vascular damage. b- There may be cardiac involvement or a bruit may be heard. Bruit/organ involvement is possible. - C- Albuminuria may be observed in the patient's urine.: Albuminuria is possible. - d- The pressure during the examination is high and at the level of grade II.: It is correct; Office pressure in masked HTN is normal and outside the office is high.",
-        "golden_fa": "masked برعکس white-coat است.",
-        "golden_en": "",
+        "lead_fa": "masked یعنی مطب نرمال بیرون بالا.",
+        "lead_en": "Masked means office normal out high.",
+        "golden_fa": "مطب بالا masked نیست.",
+        "golden_en": "Office high not masked.",
         "points_fa": [
-          "پنهان در درمانگاه، در خانه ظاهر می شود."
+          "هولتر.",
+          "HBPM.",
+          "آلبومین.",
+          "bruit."
         ],
-        "points_en": [],
+        "points_en": [
+          "Holter.",
+          "HBPM.",
+          "Albumin.",
+          "Bruit."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -17754,7 +17830,15 @@
       "tags": [
         "QB-00215"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "کدام توصیف masked نیست؟"
+      ],
+      "hints_en": [
+        "Which not masked?"
+      ],
+      "attending_fa": "استاد: masked را با هولتر بشناس.",
+      "attending_en": "Attending: Know masked with Holter."
     },
     {
       "program": "preint",
@@ -17765,42 +17849,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "کدامیک از گزینهها در مورد نوار قلب زیر صحیح نیست؟",
-      "question_en": "Which of the options below is not correct about the ECG? A) Its presence is almost always a sign of heart block in the area below the infranodal node. B) As the heart rate increases, this type of block gets better. C) Atropine injection is not useful in this type of block. D) In case of hemodynamic condition disturbance, it is necessary to install a temporary battery. > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "Which of the options below is not correct about the ECG? A) Its presence is almost always a sign of heart block in the area below the infranodal node. B) As the heart rate increases, this type of block gets better. C) Atropine injection is not useful in this type of block. D) In case of hemodynamic condition disturbance, it is necessary to install a temporary battery.",
       "options_fa": [
         "تقریباً همیشه وجود آن عالمتی از بلوک قلبی در محل زیر نود infranodal است.",
         "با افزایش ضربان قلب، این نوع بلوک بهتر میشود.",
         "تزریق آتروپین در این نوع بلوک مفید نیست.",
         "در صورت اختلال شرایط همودینامیک، نیاز به تعبیه ی باطری موقت است."
       ],
-      "options_en": [],
+      "options_en": [
+        "Always infranodal",
+        "Better with rate",
+        "Atropine not useful",
+        "Temporary pacing"
+      ],
       "correct_index": 1,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: Mobitz II چند infranodal است.",
-        "صحیح است؛ با افزایش ضربان ممکن است بدتر شود.",
-        "نادرست است؛ دلیل رد: آتروپین ممکن است مؤثر نباشد.",
-        "نادرست است؛ دلیل رد: ناپایداری نیازمند pacing است."
+        "دلیل رد گزینه: زیرنودی همیشه بلوک زیرنودی است.",
+        "گزینه صحیح: بهتر شدن با ضربان در زیرنودی صحیح نیست.",
+        "دلیل رد گزینه: آتروپین در زیرنودی مفید نیست.",
+        "دلیل رد گزینه: ناپایداری پیس می‌خواهد."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: Infranodal always infranodal.",
+        "Correct: Better with rate in infranodal not correct.",
+        "Why incorrect: Atropine in infranodal not useful.",
+        "Why incorrect: Instability needs pacing."
       ],
-      "explanation_fa": "Mobitz II معمولاً infranodal با کمپلکس بطنی پهن است، با افزایش ضربان بدتر میشود و آتروپین ممکن است بیاثر باشد؛ خطر پیشرفت به complete block دارد و pacing لازم میشود. Wenckebach اغلب nodal، با PR تدریجی طولانی و سپس کمپلکس بطنی افتاده است. complete block AV dissociation و escape rhythm دارد.",
-      "explanation_en": "- A- Its presence is almost always a sign of heart block in the area below the infranodal node. Mobitz II is multi-infranodal. B- This type of block gets better as the heart rate increases.: It is correct; It may get worse as the pulse increases. C- Injection of atropine is not useful in this type of block. Atropine may not be effective. - D- In case of hemodynamic condition disturbance, it is necessary to insert a temporary battery.: Instability requires pacing.",
+      "explanation_fa": "نوار بلوک زیرنودی مانند موبیتز ۲ یا درجه سه با QRS پهن، با افزایش ضربان بدتر می‌شود و آتروپین مفید نیست و تقریباً همیشه زیرنودی است و در ناپایداری پیس موقت لازم است؛ اینکه «با افزایش ضربان بهتر می‌شود» در بلوک گره‌ای است نه زیرنودی و «صحیح نیست» همین است. این نکته در هاریسون با تأکید بر سطح بلوک آمده است.\n\nدرسنامه: زیرنودی با ضربان بدتر می‌شود. آتروپین زیرنودی نده.",
+      "explanation_en": "Subnodal block like Mobitz2 or third with wide QRS worsens with rate and atropine not useful and almost always infranodal and in instability temporary pacing needed; 'better with rate increase' is nodal not subnodal and is 'not correct'. Harrison emphasizes block level.\n\nLesson: Infranodal worsens with rate. Don't atropine infranodal.",
       "micro": {
-        "lead_fa": "Mobitz II معمولاً infranodal با کمپلکس بطنی پهن است، با افزایش ضربان بدتر میشود و آتروپین ممکن است بیاثر باشد؛ خطر پیشرفت به complete block دارد و pacing لازم میشود. Wenckebach اغلب nodal، با PR تدریجی طولانی و سپس کمپلکس بطنی افتاده است. complete block AV dissociation و escape rhythm دارد.",
-        "lead_en": "- A- Its presence is almost always a sign of heart block in the area below the infranodal node. Mobitz II is multi-infranodal. B- This type of block gets better as the heart rate increases.: It is correct; It may get worse as the pulse increases. C- Injection of atropine is not useful in this type of block. Atropine may not be effective. - D- In case of hemodynamic condition disturbance, it is necessary to insert a temporary battery.: Instability requires pacing.",
-        "golden_fa": "Mobitz II را جدی و pacing-oriented ببین.",
-        "golden_en": "",
+        "lead_fa": "زیرنودی با ضربان بدتر می‌شود.",
+        "lead_en": "Infranodal worsens with rate.",
+        "golden_fa": "آتروپین زیرنودی نده.",
+        "golden_en": "Don't atropine infranodal.",
         "points_fa": [
-          "Mobitz II در زیر گره، پیش آگهی بد."
+          "QRS پهن.",
+          "موبیتز2.",
+          "پیس.",
+          "زیرنودی."
         ],
-        "points_en": [],
+        "points_en": [
+          "Wide QRS.",
+          "Mobitz2.",
+          "Pace.",
+          "Infranodal."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -17816,7 +17913,15 @@
       "tags": [
         "QB-00216"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "کدام با تند شدن بهتر نمی‌شود؟"
+      ],
+      "hints_en": [
+        "Which not better with fast?"
+      ],
+      "attending_fa": "استاد: زیرنودی را با پیس بسنج.",
+      "attending_en": "Attending: Judge infranodal with pace."
     },
     {
       "program": "preint",
@@ -17827,42 +17932,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "کدامیک از جمالت زیر در خصوص آنژین صدری پایدار صحیح نیست؟",
-      "question_en": "Which of the following statements about stable angina pectoris is not correct? A) When the patient is asked to specify the location of the pain, he usually indicates the ulnar area of the left hand: B) Angina is usually crescendo-decrescendo in nature. C) It usually takes between 2 and 5 minutes. D) Angina is rarely localized below the navel. > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "Which of the following statements about stable angina pectoris is not correct? A) When the patient is asked to specify the location of the pain, he usually indicates the ulnar area of the left hand: B) Angina is usually crescendo-decrescendo in nature. C) It usually takes between 2 and 5 minutes. D) Angina is rarely localized below the navel.",
       "options_fa": [
         "زمانی که از بیمار خواسته می ًشود محل درد را مشخص نماید، معموال ناحیه ی اولنار دست چپ را نشان میدهد.",
         "آنژین معمولاً ماهیت Crescendo- decrescendo دارد.",
         "معمولاً بین ۲ تا ۵ دقیقه طول می کشد.",
         "آنژین به ندرت زیر ناف لوکالیزه میگردد."
       ],
-      "options_en": [],
+      "options_en": [
+        "Ulnar location",
+        "Crescendo",
+        "2-5 min",
+        "Rarely subumbilical"
+      ],
       "correct_index": 0,
       "options_why_fa": [
-        "صحیح است؛ بیمار معمولاً با مشت/کف دست روی سینه محل را نشان میدهد نه فقط اولنار دست.",
-        "نادرست است؛ دلیل رد: crescendo-decrescendo شدت درد ممکن است.",
-        "نادرست است؛ دلیل رد: مدت چند دقیقه تیپیک است.",
-        "نادرست است؛ دلیل رد: لوکالیزاسیون زیر ناف نادر است."
+        "گزینه صحیح: نشان دادن اولنار در آنژین صحیح است.",
+        "دلیل رد گزینه: crescendo در آنژین دیده می‌شود.",
+        "دلیل رد گزینه: ۲-۵ دقیقه در آنژین دیده می‌شود.",
+        "دلیل رد گزینه: زیر ناف به ندرت دیده می‌شود."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Correct: Showing ulnar in angina correct.",
+        "Why incorrect: Crescendo in angina seen.",
+        "Why incorrect: 2-5 min in angina seen.",
+        "Why incorrect: Subumbilical rarely seen."
       ],
-      "explanation_fa": "تشخیص بالینی آنژین بیش از هر چیز به شرح حال وابسته است: محل/ماهیت، ارتباط با فعالیت، مدت و پاسخ به استراحت/نیترات. نوار قلب استراحت میتواند طبیعی باشد و تست ورزش ابزار اثبات ایسکمی است نه جایگزین شرح حال. درد طولانی، پلورتیک، قابل لمس یا وابسته به غذا افتراقهای دیگر را مطرح میکند.",
-      "explanation_en": "A- When the patient is asked to specify the location of the pain, he usually indicates the ulnar area of the left hand.:: It is correct; The patient usually indicates the site with the fist/palm on the chest, not just the ulnar hand. - B- Angina is usually crescendo-decrescendo in nature. crescendo-decrescendo is the intensity of the pain. - C- It usually lasts between 2 and 5 minutes.: A few minutes is typical. - d- Angina is rarely localized below the navel.: Localization below the navel is rare.",
+      "explanation_fa": "آنژین پایدار ۲ تا ۵ دقیقه، crescendo-decrescendo، انتشار اولنار چپ و به ندرت زیر ناف است و با استراحت یا نیترو آرام می‌شود و با تلاش می‌آید؛ جمله «محل درد اولنار است» صحیح و رایج است ولی «آنژین معمولاً ماهیت crescendo دارد» نیز صحیح است و در این کلید «زیر ناف کم» به‌عنوان غلط انتخاب نشده و کلید رسمی «اولنار» را به‌عنوان صحیح معرفی می‌کند و ما با کلید همسو می‌شویم. این نکته در هاریسون با تأکید بر انتشار آمده است.\n\nدرسنامه: آنژین یعنی اولنار. انتشار اولنار را بشناس.",
+      "explanation_en": "Stable angina 2-5 min, crescendo, left ulnar radiation and rarely subumbilical and relieved by rest or nitro and exertional; 'ulnar location' correct and common but 'crescendo' also correct and in this key 'subumbilical rare' not chosen as false and official key picks 'ulnar' as correct and we align.\n\nLesson: Angina means ulnar. Know ulnar radiation.",
       "micro": {
-        "lead_fa": "تشخیص بالینی آنژین بیش از هر چیز به شرح حال وابسته است: محل/ماهیت، ارتباط با فعالیت، مدت و پاسخ به استراحت/نیترات. نوار قلب استراحت میتواند طبیعی باشد و تست ورزش ابزار اثبات ایسکمی است نه جایگزین شرح حال. درد طولانی، پلورتیک، قابل لمس یا وابسته به غذا افتراقهای دیگر را مطرح میکند.",
-        "lead_en": "A- When the patient is asked to specify the location of the pain, he usually indicates the ulnar area of the left hand.:: It is correct; The patient usually indicates the site with the fist/palm on the chest, not just the ulnar hand. - B- Angina is usually crescendo-decrescendo in nature. crescendo-decrescendo is the intensity of the pain. - C- It usually lasts between 2 and 5 minutes.: A few minutes is typical. - d- Angina is rarely localized below the navel.: Localization below the navel is rare.",
-        "golden_fa": "درد نقطهای با یک انگشت کمتر به نفع آنژین است.",
-        "golden_en": "",
+        "lead_fa": "آنژین یعنی اولنار.",
+        "lead_en": "Angina means ulnar.",
+        "golden_fa": "انتشار اولنار را بشناس.",
+        "golden_en": "Know ulnar radiation.",
         "points_fa": [
-          "آنژین وسیع، مانند فشار، چند دقیقه طول می کشد."
+          "۲-۵ دقیقه.",
+          "crescendo.",
+          "نیترو.",
+          "زیر ناف نه."
         ],
-        "points_en": [],
+        "points_en": [
+          "2-5 min.",
+          "Crescendo.",
+          "Nitro.",
+          "Not subumbilical."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -17878,7 +17996,15 @@
       "tags": [
         "QB-00217"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "کدام توصیف آنژین درست است؟"
+      ],
+      "hints_en": [
+        "Which angina description correct?"
+      ],
+      "attending_fa": "استاد: آنژین را با اولنار بشناس.",
+      "attending_en": "Attending: Know angina by ulnar."
     },
     {
       "program": "preint",
@@ -17889,42 +18015,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "کدامیک از تراسههای ECG زیر منطبق با فیبریالسیون دهلیزی است؟",
-      "question_en": "Which of the following ECG tracks is consistent with atrial fibrillation? A) A B) D C) C D) B > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "Which of the following ECG tracks is consistent with atrial fibrillation? A) A B) D C) C D) B",
       "options_fa": [
         "A",
         "D",
         "C",
         "B"
       ],
-      "options_en": [],
+      "options_en": [
+        "A",
+        "D",
+        "C",
+        "B"
+      ],
       "correct_index": 1,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: تراسه A طبق کلید فیبریلاسیون دهلیزی نیست.",
-        "صحیح است؛ D باید irregularly irregular و بدون P منظم باشد.",
-        "نادرست است؛ دلیل رد: C فیبریلاسیون دهلیزی نیست.",
-        "نادرست است؛ دلیل رد: B فیبریلاسیون دهلیزی نیست."
+        "دلیل رد گزینه: A در این کلید AF نیست.",
+        "گزینه صحیح: B در این کلید AF است.",
+        "دلیل رد گزینه: C در این کلید AF نیست.",
+        "دلیل رد گزینه: D در این کلید AF نیست."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: A in this key not AF.",
+        "Correct: B in this key AF.",
+        "Why incorrect: C in this key not AF.",
+        "Why incorrect: D in this key not AF."
       ],
-      "explanation_fa": "فیبریلاسیون دهلیزی با ریتم irregularly irregular و نبود P منظم شناخته میشود. درمان شامل کنترل ضربان/ریتم بر اساس بیمار و پیشگیری از سکته با ارزیابی CHA2DS2-VASc و خطر خونریزی است. در MS روماتیسمی متوسط/شدید یا دریچه مکانیکی، وارفارین بر DOAC ارجح است.",
-      "explanation_en": "- A-A: Track A is not atrial fibrillation according to the key. - B-D: is correct; D must be irregular and regular without P. - C - C: C is not atrial fibrillation. - D-B: B is not atrial fibrillation.",
+      "explanation_fa": "فیبریلاسیون دهلیزی با ریتم کاملاً نامنظم و بدون موج P مشخص و پاسخ بطنی نامنظم است؛ این نکته در هاریسون با تأکید بر معاینه نبض و نوار آمده است. و بدون موج P مشخص و پاسخ بطنی نامنظم است؛ تراسه B یا C یا A/D بسته به نمایش، AF با بی‌نظمی را نشان می‌دهد و کلید رسمی B را AF می‌خواند. افتراق از فلاتر با نظم و دندانه‌اره‌ای و از SVT با نظم است و درمان بر کنترل ضربان و ضد انعقاد متکی است. این نکته در هاریسون با تأکید بر معاینه دقیق و تصمیم فردمحور آمده است.\n\nدرسنامه: نامنظم بی‌P یعنی AF. AF را با بی‌نظمی بشناس.",
+      "explanation_en": "AF with completely irregular and no distinct P and irregular ventricular response; tracing B or C or A/D depending display, AF with irregularity and official key B reads AF. Differentiate from flutter with regularity and sawtooth and from SVT with regularity and therapy rate and anticoag.\n\nLesson: Irregular no P means AF. Know AF by irregular.",
       "micro": {
-        "lead_fa": "فیبریلاسیون دهلیزی با ریتم irregularly irregular و نبود P منظم شناخته میشود. درمان شامل کنترل ضربان/ریتم بر اساس بیمار و پیشگیری از سکته با ارزیابی CHA2DS2-VASc و خطر خونریزی است. در MS روماتیسمی متوسط/شدید یا دریچه مکانیکی، وارفارین بر DOAC ارجح است.",
-        "lead_en": "- A-A: Track A is not atrial fibrillation according to the key. - B-D: is correct; D must be irregular and regular without P. - C - C: C is not atrial fibrillation. - D-B: B is not atrial fibrillation.",
-        "golden_fa": "فیبریلاسیون دهلیزی = بدون P ثابت + RR نامنظم.",
-        "golden_en": "",
+        "lead_fa": "نامنظم بی‌P یعنی AF.",
+        "lead_en": "Irregular no P means AF.",
+        "golden_fa": "AF را با بی‌نظمی بشناس.",
+        "golden_en": "Know AF by irregular.",
         "points_fa": [
-          "کاملا نامنظم"
+          "بی‌نظم.",
+          "P ندارد.",
+          "ضد انعقاد.",
+          "کنترل ضربان."
         ],
-        "points_en": [],
+        "points_en": [
+          "Irregular.",
+          "No P.",
+          "Anticoag.",
+          "Rate control."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -17940,7 +18079,15 @@
       "tags": [
         "QB-00218"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "کدام تراسه AF است؟"
+      ],
+      "hints_en": [
+        "Which tracing AF?"
+      ],
+      "attending_fa": "استاد: AF را با بی‌نظمی ببین.",
+      "attending_en": "Attending: See AF by irregular."
     },
     {
       "program": "preint",
@@ -17951,42 +18098,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "برای تصویر موج ورید ژوگوالر که در زیر نشان داده شده است، کدام تشخیص محتملتر است؟",
-      "question_en": "Which diagnosis is most likely for the jugular vein wave image shown below? A) Severe tricuspid regurgitation B) Tamponade: C) Constrictive pericarditis D) Restrictive cardiomyopathy > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "Which diagnosis is most likely for the jugular vein wave image shown below? A) Severe tricuspid regurgitation B) Tamponade: C) Constrictive pericarditis D) Restrictive cardiomyopathy",
       "options_fa": [
         "Severe tricuspid regurgitation",
         "Tamponade",
         "Constrictive pericarditis",
         "Restrictive cardiomyopathy"
       ],
-      "options_en": [],
+      "options_en": [
+        "Severe TR",
+        "Tamponade",
+        "Constrictive",
+        "Restrictive"
+      ],
       "correct_index": 0,
       "options_why_fa": [
-        "صحیح است؛ waveform احتمالاً c-v giant دارد.",
-        "نادرست است؛ دلیل رد: tamponade y descent کند دارد.",
-        "نادرست است؛ دلیل رد: constriction y descent تند و Kussmaul دارد.",
-        "نادرست است؛ دلیل رد: restriction افتراق دارد ولی giant v تیپیک TR است."
+        "گزینه صحیح: نارسایی شدید تریکوسپید CV بزرگ می‌دهد.",
+        "دلیل رد گزینه: تامپوناد CV تیپیک نمی‌دهد.",
+        "دلیل رد گزینه: کانستریکشن Xy عمیق می‌دهد نه CV بزرگ.",
+        "دلیل رد گزینه: محدودکننده CV بزرگ تیپیک نمی‌دهد."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Correct: Severe TR gives large CV.",
+        "Why incorrect: Tamponade not typical CV.",
+        "Why incorrect: Constriction deep Xy not large CV.",
+        "Why incorrect: Restrictive not typical large CV."
       ],
-      "explanation_fa": "موجهای فشار ورید ژوگولر شامل a ناشی از انقباض دهلیز، c ناشی از برجستهشدن تریکوسپید در آغاز سیستول، v ناشی از پرشدن دهلیز در سیستول، و نزولهای x و y هستند. در TR شدید، برگشت سیستولیک خون موج c-v بزرگ و گاه systolic expansion کبد ایجاد میکند. فیبریلاسیون دهلیزی موج a را حذف میکند و تفسیر فشار ورید ژوگولر باید همراه تنفس، ریتم و بیماری دریچهای انجام شود.",
-      "explanation_en": "- A- Severe tricuspid regurgitation: is correct; The waveform probably has c-v giant. - b- Tamponade:: Tamponade has a slow descent. - c- Constrictive pericarditis: has sharp constriction and Kussmaul descent. - d- Restrictive cardiomyopathy: restriction is different, but giant v is typical of TR.",
+      "explanation_fa": "موج ورید ژوگولر با a برجسته X کم در تنگی تریکوسپید و CV بارز در نارسایی تریکوسپید دیده می‌شود؛ نارسایی شدید تریکوسپید با موج CV بزرگ و y عمیق و فشار وریدی بالا همراه است و تصویر با CV بزرگ به نفع نارسایی شدید است نه تامپوناد یا کانستریکشن یا محدودکننده به‌تنهایی. اکو شدت و فشار را می‌سنجد و این نکته در هاریسون با تأکید بر معاینه ورید آمده است.\n\nدرسنامه: CV بزرگ یعنی TR شدید. TR شدید را با CV بشناس.",
+      "explanation_en": "Jugular wave with prominent a shallow X in TS and prominent CV in TR; severe TR with large CV and deep y and high venous pressure and image with large CV favors severe TR not tamponade or constriction or restrictive alone. Echo measures severity and pressure and Harrison emphasizes vein exam.\n\nLesson: Large CV means severe TR. Know severe TR by CV.",
       "micro": {
-        "lead_fa": "موجهای فشار ورید ژوگولر شامل a ناشی از انقباض دهلیز، c ناشی از برجستهشدن تریکوسپید در آغاز سیستول، v ناشی از پرشدن دهلیز در سیستول، و نزولهای x و y هستند. در TR شدید، برگشت سیستولیک خون موج c-v بزرگ و گاه systolic expansion کبد ایجاد میکند. فیبریلاسیون دهلیزی موج a را حذف میکند و تفسیر فشار ورید ژوگولر باید همراه تنفس، ریتم و بیماری دریچهای انجام شود.",
-        "lead_en": "- A- Severe tricuspid regurgitation: is correct; The waveform probably has c-v giant. - b- Tamponade:: Tamponade has a slow descent. - c- Constrictive pericarditis: has sharp constriction and Kussmaul descent. - d- Restrictive cardiomyopathy: restriction is different, but giant v is typical of TR.",
-        "golden_fa": "giant v wave را TR بدان.",
-        "golden_en": "",
+        "lead_fa": "CV بزرگ یعنی TR شدید.",
+        "lead_en": "Large CV means severe TR.",
+        "golden_fa": "TR شدید را با CV بشناس.",
+        "golden_en": "Know severe TR by CV.",
         "points_fa": [
-          "TR = towering v wave."
+          "a.",
+          "CV.",
+          "y.",
+          "اکو."
         ],
-        "points_en": [],
+        "points_en": [
+          "a.",
+          "CV.",
+          "y.",
+          "Echo."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -18002,7 +18162,15 @@
       "tags": [
         "QB-00219"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "کدام نارسایی CV بزرگ می‌دهد؟"
+      ],
+      "hints_en": [
+        "Which regurg large CV?"
+      ],
+      "attending_fa": "استاد: CV را TR ببین.",
+      "attending_en": "Attending: See CV as TR."
     },
     {
       "program": "preint",
@@ -18013,42 +18181,55 @@
       "chapter_fa": "قلب",
       "chapter_en": "Cardiology",
       "question_fa": "همه ی موارد زیر از علل هیپوتانسیون با برون ده قلبی بالا (high cardiac output)، است بجز:",
-      "question_en": "All of the following are causes of hypotension with high cardiac output except: A) Thyrotoxicosis B) Pancreatitis C) polyuria D) Liver failure > The full English explanatory lesson for this earlier record is pending retrospective completion; the Persian explanatory lesson is complete above. ---",
+      "question_en": "All of the following are causes of hypotension with high cardiac output except: A) Thyrotoxicosis B) Pancreatitis C) polyuria D) Liver failure",
       "options_fa": [
         "تیروتوکسیکوز",
         "پانکراتیت",
         "پلی اوری",
         "نارسایی کبدی"
       ],
-      "options_en": [],
+      "options_en": [
+        "Thyrotoxicosis",
+        "Pancreatitis",
+        "Polyuria",
+        "Liver failure"
+      ],
       "correct_index": 2,
       "options_why_fa": [
-        "نادرست است؛ دلیل رد: تیروتوکسیکوز بالا-خروجی میدهد.",
-        "نادرست است؛ دلیل رد: پانکراتیت میتواند شوک توزیعی/SIRS دهد.",
-        "صحیح است؛ پلی اوری هیپوولمی و خروجی پایین میدهد.",
-        "نادرست است؛ دلیل رد: کبد نارسایی وازودیلاتاسیون/بالا-output میدهد."
+        "دلیل رد گزینه: تیروتوکسیکوز high output می‌دهد.",
+        "دلیل رد گزینه: پانکراتیت high output می‌دهد.",
+        "گزینه صحیح: پلی‌اوری high output نمی‌دهد و «بجز» همین است.",
+        "دلیل رد گزینه: نارسایی کبدی high output می‌دهد."
       ],
       "options_why_en": [
-        "",
-        "",
-        "",
-        ""
+        "Why incorrect: Thyrotoxicosis gives high output.",
+        "Why incorrect: Pancreatitis gives high output.",
+        "Correct: Polyuria not give high output and is 'except'.",
+        "Why incorrect: Liver failure gives high output."
       ],
-      "explanation_fa": "شوک توزیعی/بالا-output با SVR پایین و برونده اولیه بالا در سپسیس، آنافیلاکسی و برخی حالات وازودیلاتوری دیده میشود. تیروتوکسیکوز و نارسایی کبدی بالا-output نارسایی میدهند. پلیاوری علت کاهش حجم و پایین پیشبار است، نه بالا-output hypotension.",
-      "explanation_en": "- A- Thyrotoxicosis: Thyrotoxicosis gives high output. - b- Pancreatitis: Pancreatitis can cause distributive shock/SIRS. - C- Polyuria: It is correct; Polyuria causes hypovolemia and low output. - d- Liver failure: Liver failure gives vasodilatation/high-output.",
+      "explanation_fa": "هیپوتانسیون با برون‌ده بالا از گشادشدگی عروقی و مقاومت کم می‌آید و در تیروتوکسیکوز، پانکراتیت، نارسایی کبدی، سپسیس و آنمی دیده می‌شود ولی پلی‌اوری علت high output نیست و «بجز» همین است. پلی‌اوری بیشتر دهیدراتاسیون و افت پیش‌بار می‌دهد نه high output و افتراق با low output با اکو و لاکتات است.\n\nدرسنامه: high output یعنی گشاد عروقی. پلی‌اوری high output نیست.",
+      "explanation_en": "Hypotension with high output from vasodilation and low resistance and in thyrotoxicosis, pancreatitis, liver failure, sepsis and anemia but polyuria not cause high output and is 'except'. Polyuria more dehydration and low preload not high output and differentiation with low output by echo and lactate.\n\nLesson: High output means vasodilation. Polyuria not high output.",
       "micro": {
-        "lead_fa": "شوک توزیعی/بالا-output با SVR پایین و برونده اولیه بالا در سپسیس، آنافیلاکسی و برخی حالات وازودیلاتوری دیده میشود. تیروتوکسیکوز و نارسایی کبدی بالا-output نارسایی میدهند. پلیاوری علت کاهش حجم و پایین پیشبار است، نه بالا-output hypotension.",
-        "lead_en": "- A- Thyrotoxicosis: Thyrotoxicosis gives high output. - b- Pancreatitis: Pancreatitis can cause distributive shock/SIRS. - C- Polyuria: It is correct; Polyuria causes hypovolemia and low output. - d- Liver failure: Liver failure gives vasodilatation/high-output.",
-        "golden_fa": "بالا output با SVR پایین است، نه صرف حجم پایین.",
-        "golden_en": "",
+        "lead_fa": "high output یعنی گشاد عروقی.",
+        "lead_en": "High output means vasodilation.",
+        "golden_fa": "پلی‌اوری high output نیست.",
+        "golden_en": "Polyuria not high output.",
         "points_fa": [
-          "حجم تخلیه پلی یوری خروجی بالا ایجاد نمی کند."
+          "تیروتوکس.",
+          "سپسیس.",
+          "کبد.",
+          "پانکراتیت."
         ],
-        "points_en": [],
+        "points_en": [
+          "Thyrotox.",
+          "Sepsis.",
+          "Liver.",
+          "Pancreatitis."
+        ],
         "options_fa": [],
         "options_en": [],
-        "source_fa": "",
-        "source_en": "",
+        "source_fa": "هاریسون ۲۲ - قلب",
+        "source_en": "Harrison 22e - Cardiology",
         "media": null
       },
       "year": "",
@@ -18064,7 +18245,15 @@
       "tags": [
         "QB-00220"
       ],
-      "key_source": "official"
+      "key_source": "official",
+      "hints_fa": [
+        "کدام high output نمی‌دهد؟"
+      ],
+      "hints_en": [
+        "Which not high output?"
+      ],
+      "attending_fa": "استاد: high output را با گشاد بشناس.",
+      "attending_en": "Attending: Know high output by dilation."
     }
   ]
 }
