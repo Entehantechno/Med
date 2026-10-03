@@ -3230,6 +3230,18 @@ r.get("/learn-cards/:id", ...P("learn.content"), (req, res) => {
   ).get(id);
   if (!c) return res.status(404).json({ error: "not found" });
   let d = {}; try { d = JSON.parse(c.data_json); } catch { /* */ }
+  // linked mindmaps (bidirectional)
+  let linkedMindmaps = [];
+  try {
+    const rows = db.prepare(`
+      SELECT qml.mindmap_slug, qml.node_slug, qml.weight, mb.title_fa, mb.title_en, mb.system, mb.type, mb.level
+      FROM question_mindmap_links qml
+      JOIN mindmap_bank mb ON mb.slug = qml.mindmap_slug
+      WHERE qml.question_id = ?
+      ORDER BY qml.weight ASC
+    `).all(id);
+    linkedMindmaps = rows;
+  } catch {}
   res.json({
     card: {
       id: c.id, active: c.active, type: d.type || "mcq", difficulty: c.difficulty || "medium",
@@ -3238,8 +3250,20 @@ r.get("/learn-cards/:id", ...P("learn.content"), (req, res) => {
       createdAt: c.created_at || "", updatedAt: c.updated_at || "", contentUpdatedAt: c.content_updated_at || c.updated_at || "",
       facets: cardFacets(d, { ...c, created_at: c.created_at, updated_at: c.content_updated_at || c.updated_at }),
       data: d,
+      linkedMindmaps,
     },
   });
+});
+r.get("/learn-cards/:id/mindmaps", ...P("learn.content"), (req, res) => {
+  const id = Number(req.params.id);
+  const rows = db.prepare(`
+    SELECT qml.mindmap_slug, qml.node_slug, qml.weight, mb.title_fa, mb.title_en, mb.system, mb.type, mb.level, mb.cover_url
+    FROM question_mindmap_links qml
+    JOIN mindmap_bank mb ON mb.slug = qml.mindmap_slug
+    WHERE qml.question_id = ?
+    ORDER BY qml.weight ASC
+  `).all(id);
+  res.json({ question_id: id, total: rows.length, mindmaps: rows });
 });
 
 r.get("/learn-cards/:id/history", ...P("learn.content"), (req, res) => {
@@ -3591,7 +3615,37 @@ r.get("/mindmap-bank/:slug", authRequired, requireRole("admin","teacher"), (req,
   const row = db.prepare("SELECT * FROM mindmap_bank WHERE slug=?").get(req.params.slug);
   if (!row) return res.status(404).json({ error: "not found" });
   try { row.graph_json = JSON.parse(row.graph_json); } catch {}
+  // include linked questions (bidirectional)
+  try {
+    const links = db.prepare(`
+      SELECT qml.question_id, qml.node_slug, qml.weight, f.data_json
+      FROM question_mindmap_links qml
+      JOIN flashcards f ON f.id = qml.question_id
+      WHERE qml.mindmap_slug = ?
+      ORDER BY qml.weight ASC, f.id DESC LIMIT 50
+    `).all(req.params.slug);
+    row.linkedQuestions = links.map(l => {
+      let d = {}; try { d = JSON.parse(l.data_json); } catch {}
+      const q = d.q_fa || d.q || d.title_fa || d.q_en || "";
+      return { question_id: l.question_id, node_slug: l.node_slug, weight: l.weight, q: q.slice(0, 160), type: d.type || "mcq" };
+    });
+  } catch { row.linkedQuestions = []; }
   res.json(row);
+});
+r.get("/mindmap-bank/:slug/links", authRequired, requireRole("admin","teacher"), (req, res) => {
+  const slug = req.params.slug;
+  const rows = db.prepare(`
+    SELECT qml.question_id, qml.mindmap_slug, qml.node_slug, qml.weight, f.data_json, f.active
+    FROM question_mindmap_links qml
+    JOIN flashcards f ON f.id = qml.question_id
+    WHERE qml.mindmap_slug = ?
+    ORDER BY qml.weight ASC, f.id DESC LIMIT 100
+  `).all(slug);
+  const links = rows.map(r => {
+    let d = {}; try { d = JSON.parse(r.data_json); } catch {}
+    return { question_id: r.question_id, mindmap_slug: r.mindmap_slug, node_slug: r.node_slug, weight: r.weight, active: !!r.active, q: (d.q_fa || d.q || d.title_fa || "").slice(0, 180), type: d.type || "mcq" };
+  });
+  res.json({ slug, total: links.length, links });
 });
 r.post("/mindmap-bank", authRequired, requireRole("admin","teacher"), (req, res) => {
   const data = req.body || {};

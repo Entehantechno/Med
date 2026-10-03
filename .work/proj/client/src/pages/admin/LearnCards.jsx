@@ -552,6 +552,102 @@ function CardModal({ card, onClose, onSaved }) {
   return <CardModalInner card={full} onClose={onClose} onSaved={onSaved} />;
 }
 
+function MindmapLinkPanel({ cardId, isNew, lang }) {
+  const isFa = lang === "fa";
+  const [linked, setLinked] = useState([]);
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState([]);
+  const [selected, setSelected] = useState("");
+  const [node, setNode] = useState("");
+  const [weight, setWeight] = useState(1);
+  const [nodes, setNodes] = useState([]);
+  const [msg, setMsg] = useState("");
+  const load = async () => {
+    if (isNew || !cardId) return;
+    try { const r = await api.get(`/admin/learn-cards/${cardId}/mindmaps`); setLinked(r.mindmaps || []); } catch {}
+  };
+  useEffect(() => { load(); }, [cardId]);
+  useEffect(() => {
+    if (!selected) { setNodes([]); setNode(""); return; }
+    api.get(`/admin/mindmap-bank/${selected}`).then(row => {
+      let g = row.graph_json;
+      if (typeof g === "string") try { g = JSON.parse(g); } catch { g = {}; }
+      setNodes(g.nodes || []);
+    }).catch(() => setNodes([]));
+  }, [selected]);
+  const doSearch = async () => {
+    if (!search.trim()) return;
+    const r = await api.get(`/admin/mindmap-bank?lang=${lang}&q=${encodeURIComponent(search.trim())}&pageSize=12`);
+    setResults(r.items || []);
+  };
+  const doLink = async () => {
+    if (!selected) return;
+    await api.post("/admin/mindmap-bank/link", { question_id: Number(cardId), mindmap_slug: selected, node_slug: node || null, weight: Number(weight) || 1 });
+    setMsg(isFa ? "اتصال برقرار شد ↔ دوسویه" : "Linked ↔ bidirectional");
+    setTimeout(() => setMsg(""), 2000);
+    setSelected(""); setNode(""); setWeight(1); setSearch(""); setResults([]);
+    load();
+  };
+  const doUnlink = async (slug) => {
+    await api.post("/admin/mindmap-bank/unlink", { question_id: Number(cardId), mindmap_slug: slug });
+    load();
+  };
+  if (isNew) {
+    return (
+      <div className="rounded-2xl border-2 border-dashed border-sky-200 bg-sky-50/60 p-4">
+        <div className="flex items-center gap-2 text-sm font-black text-slate-800"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-600 text-white">🔗</span> {isFa ? "اتصال به بانک مایندمپ — دوسویه" : "Link to MindMap Bank — bidirectional"}</div>
+        <p className="mt-2 text-xs text-slate-600">{isFa ? "پس از ذخیرهٔ سؤال، می‌توانید از همین‌جا یا از پنلِ مایندمپ آن را به نقشه‌ها متصل کنید. اتصال از هر طرف، خودکار در طرف دیگر هم دیده می‌شود." : "Save the question first, then link it to any mindmap here or from the MindMap panel. A link from either side instantly appears on the other."}</p>
+      </div>
+    );
+  }
+  return (
+    <div className="rounded-2xl border-2 border-sky-200 bg-gradient-to-br from-sky-50 to-indigo-50 p-4">
+      <div className="flex items-center gap-2">
+        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-600 text-white">🔗</span>
+        <span className="text-sm font-black text-slate-900">{isFa ? "اتصال دوسویه به بانک مایندمپ" : "Bidirectional MindMap links"}</span>
+        <span className="ms-auto rounded-full bg-white px-3 py-1 text-xs font-bold border">{linked.length} {isFa ? "نقشه" : "maps"}</span>
+      </div>
+      <p className="mt-1 text-xs text-slate-600">{isFa ? "هر اتصالِ اینجا، خودکار در بانک مایندمپ هم نمایش داده می‌شود و برعکس — یک جدول، دو نما." : "Every link here also appears in the MindMap Bank (single table, two views)."} <span className="font-bold text-sky-700">↔ {isFa ? "دوسویه" : "bidirectional"}</span></p>
+
+      <div className="mt-3 flex gap-2">
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder={isFa ? "جستجوی مایندمپ: مثلاً آناتومی نوزاد، STEMI..." : "Search mindmaps: neonate, STEMI..."} className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm" style={{ direction: isFa ? "rtl" : "ltr" }} />
+        <button type="button" onClick={doSearch} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white">🔎</button>
+      </div>
+      {results.length > 0 && (
+        <div className="mt-3 grid gap-2">
+          {results.map(m => (
+            <label key={m.slug} className={`flex cursor-pointer items-center gap-3 rounded-xl border bg-white p-3 hover:border-sky-300 ${selected === m.slug ? "ring-2 ring-sky-500 border-sky-500" : "border-slate-200"}`}>
+              <input type="radio" name="mmPick" checked={selected === m.slug} onChange={() => setSelected(m.slug)} />
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg text-white text-sm" style={{ background: "#6366f1" }}>{m.type === "approach" ? "🧭" : "🧠"}</span>
+              <span className="flex-1 text-sm"><b>{m.slug}</b> — {isFa ? m.title_fa : m.title_en} <span className="text-xs text-slate-500">({m.system} • {m.level})</span></span>
+            </label>
+          ))}
+        </div>
+      )}
+      {selected && (
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <select value={node} onChange={e => setNode(e.target.value)} className="rounded-xl border bg-white px-3 py-2.5 text-sm">
+            <option value="">{isFa ? "گره (اختیاری)" : "Node (optional)"}</option>
+            {nodes.map(n => <option key={n.id} value={n.id}>{n.id} — {isFa ? n.label_fa : n.label_en}</option>)}
+          </select>
+          <input type="number" min={1} max={99} value={weight} onChange={e => setWeight(e.target.value)} className="rounded-xl border bg-white px-3 py-2.5 text-sm" placeholder="weight" />
+          <button type="button" disabled={!selected} onClick={doLink} className="rounded-full bg-sky-600 px-5 py-2.5 text-sm font-black text-white disabled:opacity-40 hover:bg-sky-700">🔗 {isFa ? "اتصال" : "Link"} ↔</button>
+        </div>
+      )}
+      {msg && <div className="mt-2 text-xs font-bold text-emerald-700">{msg}</div>}
+      <div className="mt-4 grid gap-2">
+        {linked.length === 0 ? <div className="rounded-xl border border-dashed bg-white/70 p-4 text-center text-sm text-slate-500">{isFa ? "هنوز نقشه‌ای لینک نشده" : "No linked mindmaps yet"}</div> : linked.map(l => (
+          <div key={l.mindmap_slug} className="flex items-center gap-3 rounded-xl border border-white bg-white p-3 shadow-sm">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600 text-xs font-black text-white">🧠</span>
+            <span className="flex-1 text-sm"><b>{l.mindmap_slug}</b> — {isFa ? l.title_fa : l.title_en} {l.node_slug ? <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">{l.node_slug}</span> : null} <span className="text-xs text-slate-500">{l.system} • w{l.weight}</span></span>
+            <button type="button" onClick={() => doUnlink(l.mindmap_slug)} className="rounded-full bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100">✕ {isFa ? "قطع" : "Unlink"}</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CardModalInner({ card, onClose, onSaved }) {
   const { t, lang } = useApp();
   const isNew = !card.id;
@@ -832,6 +928,10 @@ function CardModalInner({ card, onClose, onSaved }) {
       <MediaUpload value={f.mnemonic.media?.url ? f.mnemonic.media : mediaState(f.mnemonic.image)}
         onChange={(v) => set("mnemonic", { ...f.mnemonic, media: v, image: v.kind === "image" ? v.url : "" })}
         label={`${t("mnemonicImage")} / ${lang === "fa" ? "ویدیو" : "video"} (${t("optional")})`} />
+
+      {/* BIDIRECTIONAL MINDMAP LINKS — دوسویه، خودکار */}
+      <div className="divider" />
+      <MindmapLinkPanel cardId={card.id} isNew={isNew} lang={lang} />
 
       {/* LIVE PREVIEW — exactly how the learner sees the lesson */}
       {(previewMicro.lead || previewMicro.golden || previewMicro.points.length) ? (
