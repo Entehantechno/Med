@@ -11,28 +11,21 @@
 
 ## نتایج کلی
 
-- **سالم:** 11602 / 11604 (100.0٪)
-- **ناسالم:** 2 / 11604 (0.0٪)
+- **سالم:** 11604 / 11604 (100.0٪)
+- **ناسالم:** 0 / 11604 (0.0٪)
 - **انواع اشکال:**
-  - `BAD_WHY_PREFIX`: 4
-  - `NULL_KEY`: 2
-  - `SINGLE_PARAGRAPH`: 2
-  - `LEAD_NOT_SOCRATIC`: 2
 
 ## توزیع به تفکیک فایل (Top 20)
 
 | فایل | کل | جزئیات |
 |---|---|---|
-| `import-payload.master-preint.part22.json` | 2 | BAD_WHY_PREFIX:4, NULL_KEY:2, SINGLE_PARAGRAPH:2 |
 
 ## فهرست ناسالم (۲۰۰ اول — کامل در CSV)
 
-CSV: `AUDIT-BANK-FAILURES-2026-10-04.csv` — 2 ردیف
+CSV: `AUDIT-BANK-FAILURES-2026-10-04.csv` — 0 ردیف
 
 | فایل | QNo | QID | موضوع | فصل | CI | طول | اشکالات |
 |---|---|---|---|---|---|---|---|
-| `import-payload.master-preint.part22.json` | 1 | QB-04880 | کودکان |  | None | 748 | NULL_KEY: correct_index نامعتبر/None<br>SINGLE_PARAGRAPH: تک‌پاراگرافی (<3 پاراگراف)<br>BAD_WHY_PREFIX[2]: حاوی «دلیل بررسی گزینه:»<br>… +2 |
-| `import-payload.master-preint.part22.json` | 53 | QB-04877 | کودکان |  | None | 713 | NULL_KEY: correct_index نامعتبر/None<br>SINGLE_PARAGRAPH: تک‌پاراگرافی (<3 پاراگراف)<br>BAD_WHY_PREFIX[0]: حاوی «دلیل بررسی گزینه:»<br>… +2 |
 
 ## اولویت اصلاح
 
@@ -42,4 +35,4 @@ CSV: `AUDIT-BANK-FAILURES-2026-10-04.csv` — 2 ردیف
 4. P3 — SHORT_POINT
 
 ---
-_تولید: 2 ناسالم از 11604_
+_تولید: 0 ناسالم از 11604_
