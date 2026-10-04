@@ -23,6 +23,15 @@ import { isLearnContent } from "../lib/content-track.js";
 import { normDigits } from "../lib/textsearch.js";
 import { sendPrivateJson } from "../lib/http-cache.js";
 
+
+// robust student_no splitter: comma, semicolon, whitespace, Persian comma/semicolon, slash, pipe, colon
+function splitStudentNos(input){
+  if (Array.isArray(input)) input = input.join("\n");
+  return String(input||"")
+    .split(/[\n\r\t ,;،؛\/\|:]+/)
+    .map(s=> String(s).trim().replace(/\u200c/g,""))
+    .filter(Boolean);
+}
 const r = Router();
 
 // Class codes gate enrolment → unpredictable (CSPRNG) rather than Math.random.
@@ -658,7 +667,7 @@ r.post("/:id/members/resolve", authRequired, requireRole("teacher", "admin"), (r
   const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(req.params.id);
   if (!cl) return res.status(404).json({ error: "not_found" });
   if (req.user.role === "teacher" && cl.university_id !== currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university" });
-  const raw = Array.isArray(req.body?.studentNos) ? req.body.studentNos : String(req.body?.studentNos || "").split(/[\s,;]+/);
+  const raw = Array.isArray(req.body?.studentNos) ? req.body.studentNos : splitStudentNos(req.body?.studentNos);
   const names = req.body?.names || {};
   const createMissing = !!req.body?.createMissing;
   const existing = [], missing = [], wrongUniversity = [], healed=[], created = [], limitBlocked = [];

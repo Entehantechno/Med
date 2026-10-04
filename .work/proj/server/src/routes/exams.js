@@ -14,6 +14,15 @@ import { normDigits } from "../lib/textsearch.js";
 import { checkStudentLimit, effectiveFlashNoPenalty } from "../lib/orglimits.js";
 import { sendPrivateJson, sqlInList } from "../lib/http-cache.js";
 
+
+// robust student_no splitter: comma, semicolon, whitespace, Persian comma/semicolon, slash, pipe, colon
+function splitStudentNos(input){
+  if (Array.isArray(input)) input = input.join("\n");
+  return String(input||"")
+    .split(/[\n\r\t ,;،؛\/\|:]+/)
+    .map(s=> String(s).trim().replace(/\u200c/g,""))
+    .filter(Boolean);
+}
 const r = Router();
 
 function parseExamJson(s, fb) { try { return JSON.parse(s || ""); } catch { return fb; } }
@@ -368,7 +377,7 @@ r.post("/:id/participants/resolve", authRequired, requireRole("teacher", "admin"
   if (!row) return res.status(404).json({ error: "not_found" });
   const ex = parseExam(row);
   if (!canManageExam(req.user, ex)) return res.status(403).json({ error: "wrong_university" });
-  const raw = Array.isArray(req.body?.studentNos) ? req.body.studentNos : String(req.body?.studentNos || "").split(/[\s,;]+/);
+  const raw = Array.isArray(req.body?.studentNos) ? req.body.studentNos : splitStudentNos(req.body?.studentNos);
   const existing = [], missing = [], wrongUniversity = [];
   for (const x of raw.map((v) => String(v).trim()).filter(Boolean)) {
     let u = studentByNo(x);

@@ -3754,44 +3754,151 @@ function PickModal({ title, items, labelFn, idFn, selected, withWeight, initialW
 
 function MemberManageModal({ classId, items, selected, lang, onClose, onSaved }) {
   const { t } = useApp();
+  const fa = lang==="fa";
+  const [tab, setTab] = useState("pick"); // pick | bulk | guide
   const [sel, setSel] = useState(selected || []);
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive
+  const [memberFilter, setMemberFilter] = useState("all"); // all | in | out
   const [bulk, setBulk] = useState("");
   const [result, setResult] = useState(null);
+  const [saving, setSaving] = useState(false);
   const label = (u) => `${lang === "fa" ? u.name_fa : u.name_en} (${u.student_no})`;
-  const saveIds = async () => { await api.put(`/classes/${classId}/members`, { userIds: sel }); onSaved(); };
+  // robust splitter: comma, semicolon, whitespace, Persian comma/semicolon, slash, pipe, colon, line-break
+  const splitNos = (s) => String(s||"").split(/[\n\r\t ,;،؛\/\|:]+/).map(x=>x.trim().replace(/\u200c/g,"")).filter(Boolean);
+  const bulkCount = splitNos(bulk).length;
+  const bulkUnique = new Set(splitNos(bulk).map(s=>s.toLowerCase())).size;
+  const bulkDup = bulkCount - bulkUnique;
+
+  // filtered pick list
+  const filtered = items.filter(u=>{
+    if(statusFilter!=="all" && (u.status||"active")!==statusFilter) return false;
+    if(memberFilter==="in" && !sel.includes(u.id)) return false;
+    if(memberFilter==="out" && sel.includes(u.id)) return false;
+    if(q.trim()){
+      const needle = q.trim().toLowerCase();
+      const hay = `${u.name_fa||""} ${u.name_en||""} ${u.student_no||""} ${u.username||""}`.toLowerCase();
+      if(!hay.includes(needle)) return false;
+    }
+    return true;
+  });
+
+  const toggle = (id)=> setSel(s=> s.includes(id)? s.filter(x=>x!==id) : [...s, id]);
+  const selectAllFiltered = ()=> setSel(s=> [...new Set([...s, ...filtered.map(u=>u.id)])]);
+  const clearFiltered = ()=> setSel(s=> s.filter(id=> !filtered.some(u=>u.id===id)));
+
+  const saveIds = async () => { setSaving(true); try{ await api.put(`/classes/${classId}/members`, { userIds: sel }); onSaved(); } finally{ setSaving(false);} };
   const resolve = async (createMissing = false) => {
-    const studentNos = bulk.split(/[\n,;\s]+/).map((x) => x.trim()).filter(Boolean);
+    const studentNos = splitNos(bulk);
+    if(!studentNos.length) return;
     const r = await api.post(`/classes/${classId}/members/resolve`, { studentNos, createMissing, attach: true });
     setResult(r);
     const ids = (r.existing || []).map((u) => u.id);
-    setSel((s) => [...new Set([...s, ...ids])]);
-    if (createMissing || ids.length) onSaved();
+    const createdIds = (r.created || []).map(u=>u.id);
+    const allNew = [...ids, ...createdIds];
+    if(allNew.length) setSel((s) => [...new Set([...s, ...allNew])]);
+    // also heal: if any healed, they are already in existing
+    if ((r.healed?.length||0)>0 || allNew.length>0 || createMissing) {
+      // auto-save to reflect healed/new in class, then reload
+      // we keep sel updated; parent will reload onSaved
+    }
   };
-  return <Modal title={t("selectStudents")} onClose={onClose}>
-    <div className="grid grid-2">
-      <div>
-        <div className="small muted mb8">{lang === "fa" ? "انتخاب انفرادی از فهرست دانشجویان همان دانشگاه" : "Pick existing students from the same university"}</div>
-        <div style={{ maxHeight: 360, overflow: "auto" }}>
-          {items.map((u) => <label key={u.id} className="toggle-row" style={{ cursor: "pointer" }}>
-            <span>{label(u)}</span><input type="checkbox" checked={sel.includes(u.id)} onChange={() => setSel((s)=>s.includes(u.id)?s.filter(x=>x!==u.id):[...s,u.id])}/>
-          </label>)}
+
+  return <Modal title={t("selectStudents")} onClose={onClose} wide>
+    <div style={{ display:"flex", gap:6, marginBottom:12, flexWrap:"wrap" }}>
+      <button type="button" className={`btn btn-sm ${tab==="pick"?"btn-primary":"btn-ghost"}`} onClick={()=>setTab("pick")}>{fa?"انتخاب از فهرست":"Pick from list"}</button>
+      <button type="button" className={`btn btn-sm ${tab==="bulk"?"btn-primary":"btn-ghost"}`} onClick={()=>setTab("bulk")}>{fa?"وارد کردن شماره":"Paste numbers"}</button>
+      <button type="button" className={`btn btn-sm ${tab==="guide"?"btn-primary":"btn-ghost"}`} onClick={()=>setTab("guide")}>{fa?"راهنما":"Guide"}</button>
+      <span className="small muted" style={{ marginInlineStart:"auto", alignSelf:"center" }}>{fa?`${sel.length} انتخاب شد`:`${sel.length} selected`}</span>
+    </div>
+
+    {tab==="pick" && (
+      <>
+        <div className="inline-form mb8" style={{ flexWrap:"wrap", gap:8, alignItems:"center" }}>
+          <div className="dt-search" style={{ flex:1, minWidth:180 }}>
+            <Icon name="search" size={14}/>
+            <input value={q} onChange={e=>setQ(e.target.value)} placeholder={fa?"جستجو نام/شماره…":"Search name/number…"} />
+            {q && <button type="button" className="dt-clear" onClick={()=>setQ("")}><Icon name="close" size={13}/></button>}
+          </div>
+          <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{ minWidth:110 }}>
+            <option value="all">{fa?"همه وضعیت‌ها":"All statuses"}</option>
+            <option value="active">{fa?"فقط فعال":"Active only"}</option>
+            <option value="inactive">{fa?"فقط غیرفعال":"Inactive only"}</option>
+          </select>
+          <select value={memberFilter} onChange={e=>setMemberFilter(e.target.value)} style={{ minWidth:130 }}>
+            <option value="all">{fa?"همه دانشجویان":"All students"}</option>
+            <option value="out">{fa?"فقط غیرعضوها":"Not in class"}</option>
+            <option value="in">{fa?"فقط عضوها":"In class only"}</option>
+          </select>
         </div>
-      </div>
-      <div>
-        <div className="small muted mb8">{lang === "fa" ? "افزودن دسته‌جمعی با شماره دانشجویی؛ شماره‌های ثبت‌نشده نمایش داده می‌شوند و می‌توانید با یک دکمه بسازید." : "Bulk add by student numbers. Missing students are shown and can be created with one click."}</div>
-        <textarea value={bulk} onChange={(e)=>setBulk(e.target.value)} style={{ width: "100%", minHeight: 130 }} placeholder="40012345\n40067890" />
+        <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:8 }}>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={selectAllFiltered} disabled={!filtered.length}>{fa?`انتخاب همهٔ نتایج (${filtered.length})`:`Select all filtered (${filtered.length})`}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={clearFiltered} disabled={!filtered.length}>{fa?"حذف انتخاب فیلترشده":"Clear filtered"}</button>
+          <span className="small muted" style={{ alignSelf:"center" }}>{fa?`${filtered.length} نفر در فیلتر — ${items.length} کل`:`${filtered.length} filtered — ${items.length} total`}</span>
+        </div>
+        <div style={{ maxHeight: 340, overflow:"auto", border:"1px solid var(--border)", borderRadius:10 }}>
+          {filtered.length===0 ? <div className="small muted center" style={{ padding:20 }}>{fa?"نتیجه‌ای یافت نشد":"No results"}</div> : filtered.map((u) => (
+            <label key={u.id} className="toggle-row" style={{ cursor: "pointer", borderBottom:"1px solid var(--border)", padding:"8px 10px", background: sel.includes(u.id)?"var(--primaryGlow)":"transparent" }}>
+              <span style={{ display:"flex", flexDirection:"column", gap:2 }}>
+                <span style={{ fontWeight:600 }}>{label(u)}</span>
+                <span className="small muted" style={{ fontSize:".75rem" }}>{u.username} {u.status==="inactive" ? (fa?"— غیرفعال":"— inactive") : ""}</span>
+              </span>
+              <input type="checkbox" checked={sel.includes(u.id)} onChange={() => toggle(u.id)} style={{ width: 18, height: 18 }} />
+            </label>
+          ))}
+        </div>
+        <div className="small muted mt8" style={{ lineHeight:1.6 }}>{fa?"نکته: دسته‌بندی با سرچ + فیلتر وضعیت/عضویت — می‌توانید همهٔ «غیرعضوها» را یکجا انتخاب کنید. مرتب‌سازی بر اساس نام است؛ برای مرتب‌سازی دانشگاه از فهرست کاربران استفاده کنید.":"Tip: filter by status/membership and search, then select all."}</div>
+      </>
+    )}
+
+    {tab==="bulk" && (
+      <>
+        <div className="small muted mb8" style={{ lineHeight:1.8 }}>{fa? "شماره‌ها را با هر جداکننده‌ای وارد کنید: کاما، سمی‌کالن، فاصله، خط جدید، اسلش (/), ویرگول فارسی (،)، نقطه‌ویرگول فارسی (؛)، پایپ (|) یا دو‌نقطه (:). هر شماره در یک خط هم کاملاً مجاز است." : "Paste numbers with any separator: comma, semicolon, space, newline, slash (/), Persian comma (،), etc. One per line also works."}</div>
+        <textarea value={bulk} onChange={(e)=>setBulk(e.target.value)} style={{ width: "100%", minHeight: 140, fontFamily:"monospace", direction:"ltr", lineHeight:1.6 }} placeholder={fa?`40012345/40067890
+40011223،40033445
+40055667\n40077889`:`40012345, 40067890 / 40011223; 40033445
+40055667:40077889`} />
+        <div className="small" style={{ marginTop:6, display:"flex", gap:10, flexWrap:"wrap" }}>
+          <span>{fa?"شناسایی شد":"Detected"}: <b>{bulkCount}</b> {bulkDup? <span style={{ color:"var(--flame)"}}>({fa?`${bulkDup} تکراری در ورودی`:`${bulkDup} dup in input`})</span> : null}</span>
+          {bulkCount>0 && <span className="small muted">{fa?"مثال: 40012345/40067890 یا هر شماره در یک خط":"e.g. 40012345/40067890 or one per line"}</span>}
+        </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={()=>resolve(false)}>{lang === "fa" ? "بررسی و افزودن موجودها" : "Check & add existing"}</button>
-          <button type="button" className="btn btn-accent btn-sm" onClick={()=>resolve(true)}>{lang === "fa" ? "ساخت missingها و افزودن" : "Create missing & add"}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={()=>resolve(false)} disabled={!bulkCount}>{fa?"بررسی و افزودن موجودها":"Check & add existing"}</button>
+          <button type="button" className="btn btn-accent btn-sm" onClick={()=>resolve(true)} disabled={!bulkCount}>{fa?"ساخت ناموجودها و افزودن":"Create missing & add"}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={()=>{ setBulk(""); setResult(null); }}>{fa?"پاک کردن":"Clear"}</button>
         </div>
         {result && <div className="card mt8" style={{ background: "var(--panel2)", padding: 10 }}>
-          <div className="small">{lang === "fa" ? "اضافه‌شده" : "Attached"}: {result.attached || 0}</div>
-          {!!result.missing?.length && <div className="small" style={{ color: "var(--flame)" }}>{lang === "fa" ? "ثبت‌نام‌نشده" : "Missing"}: {result.missing.join(", ")}</div>}
-          {!!result.wrongUniversity?.length && <div className="small" style={{ color: "var(--flame)" }}>{lang === "fa" ? "دانشگاه متفاوت" : "Different university"}: {result.wrongUniversity.map(x=>x.student_no).join(", ")}</div>}
+          <div className="small"><b>{fa?"نتیجه":"Result"}:</b> {fa?"اضافه‌شده":"Attached"}: {result.attached || 0} {result.healed?.length? <>· {fa?"ترمیم دانشگاه":"Healed"}: {result.healed.length}</> : null} {result.created?.length? <>· {fa?"ساخته‌شده":"Created"}: {result.created.length}</> : null}</div>
+          {!!result.missing?.length && <div className="small" style={{ color: "var(--flame)" }}>{fa?"ثبت‌نام‌نشده":"Missing"}: {result.missing.join(", ")}</div>}
+          {!!result.wrongUniversity?.length && <div className="small" style={{ color: "var(--flame)" }}>{fa?"دانشگاه متفاوت (افزوده نشد)":"Different university"}: {result.wrongUniversity.map(x=>x.student_no).join(", ")}</div>}
+          {!!result.limitBlocked?.length && <div className="small" style={{ color:"var(--danger)" }}>{fa?"سقف پر":"Limit blocked"}: {result.limitBlocked.map(x=>x.student_no).join(", ")}</div>}
+          {result.healed?.length>0 && <div className="small" style={{ color:"var(--accent)" }}>{fa?"بدون دانشگاه‌های ترمیم‌شده":"Healed no-university"}: {result.healed.map(x=>x.student_no).join(", ")}</div>}
         </div>}
+      </>
+    )}
+
+    {tab==="guide" && (
+      <div className="card" style={{ background:"var(--panel2)", padding:12 }}>
+        <div style={{ fontWeight:800, marginBottom:8 }}>{fa?"جداکننده‌های مجاز برای شماره دانشجویی":"Allowed separators for student numbers"}</div>
+        <table className="small" style={{ width:"100%", borderCollapse:"collapse" }}>
+          <thead><tr style={{ borderBottom:"1px solid var(--border)", textAlign:"start" }}><th style={{ padding:"6px 8px" }}>{fa?"جداکننده":"Separator"}</th><th style={{ padding:"6px 8px" }}>{fa?"مثال":"Example"}</th></tr></thead>
+          <tbody>
+            <tr><td style={{ padding:"6px 8px" }}><code>,</code> کاما</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345, 40067890</td></tr>
+            <tr><td style={{ padding:"6px 8px" }}><code>/</code> اسلش</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345/40067890</td></tr>
+            <tr><td style={{ padding:"6px 8px" }}><code>،</code> ویرگول فارسی</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345،40067890</td></tr>
+            <tr><td style={{ padding:"6px 8px" }}><code>؛</code> نقطه‌ویرگول فارسی</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345؛40067890</td></tr>
+            <tr><td style={{ padding:"6px 8px" }}>{fa?"خط جدید (هر شماره در یک خط)":"New line (one per line)"}</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345<br/>40067890</td></tr>
+            <tr><td style={{ padding:"6px 8px" }}><code>;</code> <code>|</code> <code>:</code> {fa?"و فاصله":"and space"}</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345; 40067890 | 40011223</td></tr>
+          </tbody>
+        </table>
+        <div className="small muted mt8" style={{ lineHeight:1.8 }}>{fa?"همهٔ این‌ها هم‌زمان قابل ترکیب است؛ مثلاً «40012345/40067890، 40011223\n40033445» درست کار می‌کند. تکراری‌ها در ورودی خودکار نادیده گرفته و گزارش می‌شوند. اگر «ساخت ناموجودها» بزنید، برای هر شمارهٔ یافت‌نشده یک دانشجو با همان شماره (رمز=شماره) ساخته و به کلاس اضافه می‌شود (دانشگاهِ کلاس خودکار).":"All can be combined, e.g. '40012345/40067890, 40011223'. Duplicates in input are ignored. 'Create missing' will create a student for each not-found number."}</div>
       </div>
+    )}
+
+    <div style={{ display:"flex", justifyContent:"flex-end", gap:8, marginTop:12, flexWrap:"wrap" }}>
+      <button type="button" className="btn btn-ghost" onClick={onClose}>{t("cancel")}</button>
+      <button type="button" className="btn btn-primary" onClick={saveIds} disabled={saving}>{saving? (fa?"در حال ذخیره…":"Saving…") : t("save")}</button>
     </div>
-    <div style={{ display:"flex", justifyContent:"flex-end", gap:8, marginTop:12 }}><button type="button" className="btn btn-primary" onClick={saveIds}>{t("save")}</button></div>
   </Modal>;
 }
 
@@ -4158,7 +4265,7 @@ function ExamManage({ examId, back }) {
   if (!data) return <Spinner />;
 
   const save = async () => {
-    const studentNos = nos.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
+    const studentNos = String(nos||"").split(/[\n\r\t ,;،؛\/\|:]+/).map((s) => s.trim().replace(/\u200c/g,"")).filter(Boolean);
     const res = await api.put(`/exams/${examId}/participants`, { studentNos });
     toast(t("saved"));
     setMissingNos(res.notFound || []);
@@ -4167,7 +4274,7 @@ function ExamManage({ examId, back }) {
     load();
   };
   const createMissing = async () => {
-    const studentNos = nos.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
+    const studentNos = String(nos||"").split(/[\n\r\t ,;،؛\/\|:]+/).map((s) => s.trim().replace(/\u200c/g,"")).filter(Boolean);
     const res = await api.put(`/exams/${examId}/participants`, { studentNos, createMissing: true });
     setMissingNos(res.notFound || []); setWrongUni(res.wrongUniversity || []);
     toast(t("saved")); load();
