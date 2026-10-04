@@ -1,0 +1,3 @@
+file,question_no,qid,subject,chapter,correct_index,expl_len,reasons
+import-payload.master-preint.part22.json,1,QB-04880,کودکان,,,748,NULL_KEY: correct_index نامعتبر/None | SINGLE_PARAGRAPH: تک‌پاراگرافی (<3 پاراگراف) | BAD_WHY_PREFIX[2]: حاوی «دلیل بررسی گزینه:» | BAD_WHY_PREFIX[3]: حاوی «دلیل بررسی گزینه:» | LEAD_NOT_SOCRATIC: بدون علامت سؤال «؟»
+import-payload.master-preint.part22.json,53,QB-04877,کودکان,,,713,NULL_KEY: correct_index نامعتبر/None | SINGLE_PARAGRAPH: تک‌پاراگرافی (<3 پاراگراف) | BAD_WHY_PREFIX[0]: حاوی «دلیل بررسی گزینه:» | BAD_WHY_PREFIX[3]: حاوی «دلیل بررسی گزینه:» | LEAD_NOT_SOCRATIC: بدون علامت سؤال «؟»
