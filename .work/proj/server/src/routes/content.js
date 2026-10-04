@@ -8,6 +8,7 @@ import { hashPassword, hashPasswordSync } from "../lib/password.js";
 import { db, persistNow } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { toCSV, parseCSV } from "../lib/csv.js";
+import { checkStudentLimit } from "../lib/orglimits.js";
 import { normalizeRubric } from "../lib/grading-rubric.js";
 import { resolveAiConfig } from "../lib/ai-engine.js";
 import { DEFAULT_LAB_TESTS, DEFAULT_IMAGING, DEFAULT_PARACLINIC, cleanOrderList } from "../data/order-catalog-defaults.js";
@@ -987,12 +988,12 @@ r.get("/users/import/template.csv", authRequired, requireRole("teacher","admin")
 });
 
 // Bulk-import students from a CSV/pasted text.
-// Accepts columns: name (or first name), family (or last name), student_no (or studentNo/id), email, university_code, class_code.
+// Robust parser: BOM-aware, quoted-field aware, delimiter auto-detected (comma, semicolon, tab, Persian comma)،
+ // header optional and normalized. Columns: نام / name, نام خانوادگی / family, شماره دانشجویی / student_no (الزامی), ایمیل / email, کد دانشگاه / university_code, کد کلاس / class_code.
 // Header row optional and auto-detected by column names. For each student: username=student_no, password=student_no.
 // Optional: university_code per row (admin only; teacher rows forced to teacher's university), class_code per row or class_id query/body to auto-enroll.
 r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res) => {
   let { csv = "", university_id, class_id, class_code, university_code } = req.body || {};
-  // class_id may come as query param as well
   if (!class_id && req.query.class_id) class_id = Number(req.query.class_id);
   if (!class_code && req.query.class_code) class_code = String(req.query.class_code);
   if (!university_code && req.query.university_code) university_code = String(req.query.university_code);
@@ -1003,123 +1004,266 @@ r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res
     const uByCode = db.prepare("SELECT id FROM universities WHERE code=?").get(String(university_code).trim().toUpperCase());
     if (uByCode) university_id = uByCode.id;
   }
-  const lines = String(csv).split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-  if (!lines.length) return res.status(400).json({ error: "empty" });
-
-  // Detect header and map columns by name when possible
-  const headerRe = /(name|نام|family|خانوادگ|student|شماره|no|id|email|ایمیل|university|دانشگاه|class|کلاس|code|کد)/i;
-  const firstCols = lines[0].split(/[,;\t]/).map((s) => s.trim());
-  const firstLow = firstCols.map((s)=>s.toLowerCase());
-  const hasHeader = firstLow.some((c) => headerRe.test(c));
-  // Build col index map when header present
-  let colMap = null;
-  if (hasHeader) {
-    colMap = {};
-    firstLow.forEach((h,i)=>{
-      if (/(student|شماره|student_no|شماره دانشجوی)/.test(h)) colMap.sno = i;
-      else if (/email|ایمیل/.test(h)) colMap.email = i;
-      else if (/university_code|کد دانشگاه/.test(h)) colMap.u_code = i;
-      else if (/class_code|کد کلاس/.test(h)) colMap.c_code = i;
-      else if (/(نام خانوادگ|family|last)/.test(h)) colMap.family = i;
-      else if (/(نام$|^name$|first)/.test(h)) colMap.name = i;
+  let rawCsv = String(csv || "").replace(/^\uFEFF/, "");
+  if (!rawCsv.trim()) return res.status(400).json({ error: "empty", message_fa: "فایل خالی است" });
+  // --- robust CSV split: detect delimiter, respect quotes ---
+  const rawLines = rawCsv.split(/\r?\n/);
+  const nonEmptyLines = rawLines.map(l=>l.trimEnd()).filter(l=>l.trim()!=="");
+  if (!nonEmptyLines.length) return res.status(400).json({ error: "empty" });
+  function detectDelim(sample){
+    const cands = [",", ";", "\t", "،"];
+    let best=",", bestCount=-1;
+    for(const d of cands){
+      let cnt=0, inQ=false;
+      for(let i=0;i<sample.length;i++){
+        const ch=sample[i];
+        if(ch=='"'){ if(sample[i+1]=='"'){ i++; } else inQ=!inQ; }
+        else if(!inQ && ch===d) cnt++;
+      }
+      if(cnt>bestCount){ bestCount=cnt; best=d; }
+    }
+    return best;
+  }
+  const delim = detectDelim(nonEmptyLines.slice(0,5).join("\n"));
+  function splitLine(line){
+    const out=[]; let cur="", inQ=false;
+    for(let i=0;i<line.length;i++){
+      const ch=line[i], nxt=line[i+1];
+      if(inQ){
+        if(ch=='"' && nxt=='"'){ cur+='"'; i++; }
+        else if(ch=='"'){ inQ=false; }
+        else cur+=ch;
+      } else {
+        if(ch=='"'){ inQ=true; }
+        else if(ch===delim){ out.push(cur); cur=""; }
+        else cur+=ch;
+      }
+    }
+    out.push(cur);
+    return out.map(s=>String(s).trim());
+  }
+  // Normalize header token: remove BOM/zero-width, lower, remove parenthetical, collapse spaces
+  function normHeader(h){
+    let s=String(h||"").replace(/^\uFEFF/, "").trim().toLowerCase();
+    s=s.replace(/[\u200c\u200f\u202a-\u202e]/g, "");
+    s=s.replace(/\(.*?\)/g, "").replace(/\[.*?\]/g, "").trim();
+    s=s.replace(/\s+/g, " ").replace(/[\/\-_\.]+/g, " ").trim();
+    return s;
+  }
+  const firstColsRaw = splitLine(nonEmptyLines[0]);
+  const firstNorm = firstColsRaw.map(normHeader);
+  // header detection: if any token looks like a column name, treat as header
+  const headerTests = [
+    /(^|\s)(name|first|given)(\s|$)/, /(نام)(\s|$)/,
+    /(family|last|surname|خانوادگ)/,
+    /(student|شماره|student\s*no|شماره\s*دانش)/,
+    /(email|ایمیل)/,
+    /(university|دانشگاه)/,
+    /(class|کلاس)/
+  ];
+  const headerScore = firstNorm.filter(h=> headerTests.some(re=>re.test(h))).length;
+  const hasHeader = headerScore>=1 && firstNorm.some(h=> headerTests.some(re=>re.test(h)));
+  let colMap=null;
+  let headerRowIdx=-1;
+  if(hasHeader){
+    headerRowIdx=0;
+    colMap={};
+    firstNorm.forEach((h,i)=>{
+      if(/(student|شماره|student\s*no|شماره\s*دانش)/.test(h) && colMap.sno==null) colMap.sno=i;
+      else if(/(email|ایمیل)/.test(h) && colMap.email==null) colMap.email=i;
+      else if(/(university.*code|کد\s*دانشگاه)/.test(h) && colMap.u_code==null) colMap.u_code=i;
+      else if(/(class.*code|کد\s*کلاس)/.test(h) && colMap.c_code==null) colMap.c_code=i;
+      else if(/(family|last|surname|خانوادگ)/.test(h) && colMap.family==null) colMap.family=i;
+      else if(/(^name$|نام$|first|given)/.test(h) && colMap.name==null) {
+        // careful: "نام خانوادگی" already captured as family, don't reassign name
+        if(!/(خانوادگ|family|last)/.test(h)) colMap.name=i;
+      }
     });
-    // fallback: if no sno header found, assume last column is sno (legacy)
-    if (colMap.sno==null) {
-      // try to guess: column with numeric pattern or last
-      colMap.sno = firstCols.length-1;
+    // also support English header "name,family" vs Persian "نام,نام خانوادگی": if family not found but there are two name-like cols, assume second is family
+    if(colMap.family==null){
+      const nameIdxs = firstNorm.map((h,i)=> /(name|نام)/.test(h) ? i : -1).filter(i=>i>=0);
+      if(nameIdxs.length>=2){ colMap.name = nameIdxs[0]; colMap.family = nameIdxs[1]; }
+    }
+    if(colMap.sno==null){
+      // last resort: assume last column is sno
+      colMap.sno = firstColsRaw.length-1;
     }
   }
-  const dataLines = hasHeader ? lines.slice(1) : lines;
-
+  const dataLinesRaw = hasHeader ? nonEmptyLines.slice(1) : nonEmptyLines;
   // Resolve optional global class to enroll into (admin may choose class before import)
-  let globalClassId = null;
+  let globalClassId = null; let globalClassUni=null;
   if (class_id) {
-    const c = db.prepare("SELECT id, university_id FROM classes WHERE id=?").get(Number(class_id));
+    const c = db.prepare("SELECT id, university_id, code FROM classes WHERE id=?").get(Number(class_id));
     if (c) {
       if (req.user.role==="teacher") {
         const me = db.prepare("SELECT university_id FROM users WHERE id=?").get(req.user.id);
         if (c.university_id && me?.university_id && c.university_id!==me.university_id) {
-          // teacher cannot enroll into another university's class
-        } else globalClassId = c.id;
-      } else globalClassId = c.id;
+        } else { globalClassId = c.id; globalClassUni=c.university_id; }
+      } else { globalClassId = c.id; globalClassUni=c.university_id; }
     }
   } else if (class_code) {
     const c = db.prepare("SELECT id, university_id FROM classes WHERE code=?").get(String(class_code).trim());
-    if (c) globalClassId = c.id;
+    if (c) { globalClassId = c.id; globalClassUni=c.university_id; }
   }
-
   const insUser = db.prepare(
     "INSERT INTO users (username,password_hash,name_fa,name_en,student_no,email,role,status,university_id) VALUES (?,?,?,?,?,?, 'student','active', ?)"
   );
-  const findByNo = db.prepare("SELECT id FROM users WHERE student_no=? OR username=?");
+  const findByNo = db.prepare("SELECT id, university_id, name_fa FROM users WHERE student_no=? OR username=?");
   const insMember = db.prepare("INSERT OR IGNORE INTO class_members (class_id,user_id) VALUES (?,?)");
-
+  const updUni = db.prepare("UPDATE users SET university_id=? WHERE id=? AND (university_id IS NULL OR university_id='')");
   let created = 0, skipped = 0;
-  const errors = [], duplicates = [], enrolled = [];
+  const failures = []; // detailed per-row failures
+  const duplicates = []; // for compatibility
+  const enrolled = [];
+  const seenInFile = new Map(); // sno(lower) -> line
+  // student_no validation: allow 3-20 chars, must contain at least 2 alphanumerics/digits
+  function isValidSno(s){
+    s=String(s||"").trim();
+    if(!s) return false;
+    if(s.length<2 || s.length>30) return false;
+    // must not be just header words
+    if(/^(نام|family|student|شماره|ایمیل|email|university|class|کد)/i.test(s)) return false;
+    // allow digits, letters, .,_,-, but at least 2 chars that are alnum
+    if(!/[A-Za-z0-9\u0600-\u06FF]{2}/.test(s)) return false;
+    // Persian header words like "شماره دانشجویی" should be rejected as valid sno
+    if(/شماره|دانشجو/i.test(s) && s.length>15) return false;
+    return true;
+  }
   const tx = db.transaction(() => {
-    dataLines.forEach((line, i) => {
-      const cols = line.split(/[,;\t]/).map((s) => s.trim());
+    dataLinesRaw.forEach((line, idx) => {
+      const lineNo = idx + 1 + (hasHeader ? 1 : 0) + 1; // 1-based, header is line 1 if present? Actually rawLines 1-based
+      // For accurate lineNo, use index in nonEmptyLines
+      const actualLineNo = hasHeader ? idx+2 : idx+1;
+      const cols = splitLine(line);
+      // If line was empty after split (all empty), skip silently
+      if(!cols.some(c=>String(c).trim()!=="")) { return; }
       let name = "", family = "", sno = "", email="", rowUcode="", rowCcode="";
       if (colMap) {
-        // header-aware extraction
-        name = colMap.name!=null ? (cols[colMap.name]||"") : "";
-        family = colMap.family!=null ? (cols[colMap.family]||"") : "";
-        sno = colMap.sno!=null ? (cols[colMap.sno]||"") : (cols[cols.length-1]||"");
-        email = colMap.email!=null ? (cols[colMap.email]||"") : "";
-        rowUcode = colMap.u_code!=null ? (cols[colMap.u_code]||"") : "";
-        rowCcode = colMap.c_code!=null ? (cols[colMap.c_code]||"") : "";
-        // fallback for simple 3-col without explicit map
-        if (!sno && cols.length>=3) sno = cols[2];
-        if (!name && cols.length>=2 && colMap.name==null) name = cols[0];
-        if (!family && cols.length>=3 && colMap.family==null) family = cols[1];
+        name = colMap.name!=null ? (cols[colMap.name]??"") : "";
+        family = colMap.family!=null ? (cols[colMap.family]??"") : "";
+        sno = colMap.sno!=null ? (cols[colMap.sno]??"") : (cols[cols.length-1]??"");
+        email = colMap.email!=null ? (cols[colMap.email]??"") : "";
+        rowUcode = colMap.u_code!=null ? (cols[colMap.u_code]??"") : "";
+        rowCcode = colMap.c_code!=null ? (cols[colMap.c_code]??"") : "";
+        // If cols shorter than header (e.g., 3-col data with 6-col header), fallback positions may be empty; try positional fallback for sno
+        if(!String(sno||"").trim() && cols.length>=1){
+          // guess: last non-empty col that looks like sno
+          for(let k=cols.length-1;k>=0;k--){
+            const cand=String(cols[k]||"").trim();
+            if(cand && /[0-9]/.test(cand) && !/(نام|family|ایمیل|@)/.test(cand)){ sno=cand; break; }
+          }
+          if(!String(sno||"").trim()) sno = cols[cols.length-1]??"";
+        }
       } else {
-        // Flexible legacy: [name, family, student_no]  OR  [full name, student_no]  OR  [student_no]
-        if (cols.length >= 3) { [name, family, sno] = cols; }
+        if (cols.length >= 3) { [name, family, sno] = cols; if(cols[3]) email=cols[3]; if(cols[4]) rowUcode=cols[4]; if(cols[5]) rowCcode=cols[5]; }
         else if (cols.length === 2) { [name, sno] = cols; }
-        else { sno = cols[0]; }
-        if (cols.length>=4) email = cols[3]||"";
-        if (cols.length>=5) rowUcode = cols[4]||"";
-        if (cols.length>=6) rowCcode = cols[5]||"";
+        else { sno = cols[0] ?? ""; }
       }
-      sno = String(sno || "").trim();
-      email = String(email||"").trim() || null;
-      if (!sno) { errors.push(`${t_line(i, hasHeader)}: ${req_no_sno()}`); skipped++; return; }
-      const fullName = [name, family].filter(Boolean).join(" ").trim() || sno;
+      sno = String(sno ?? "").trim().replace(/\u200c/g, "");
+      name = String(name ?? "").trim();
+      family = String(family ?? "").trim();
+      email = String(email ?? "").trim() || null;
+      rowUcode = String(rowUcode ?? "").trim();
+      rowCcode = String(rowCcode ?? "").trim();
+      const raw = cols.join(delim);
+      if (!sno) {
+        failures.push({ line: actualLineNo, sno: "", name: [name,family].filter(Boolean).join(" "), reason_fa: "شماره دانشجویی خالی است", reason_en: "missing student number", raw });
+        skipped++; return;
+      }
+      sno = sno.replace(/\s+/g, "");
+      if (!isValidSno(sno)) {
+        failures.push({ line: actualLineNo, sno, name: [name,family].filter(Boolean).join(" "), reason_fa: `شماره «${sno}» نامعتبر است (باید ۳-۳۰ نویسه شامل حروف/عدد باشد)`, reason_en: `invalid student number: ${sno}`, raw });
+        skipped++; return;
+      }
+      const lower = sno.toLowerCase();
+      if (seenInFile.has(lower)) {
+        const prevLine = seenInFile.get(lower);
+        failures.push({ line: actualLineNo, sno, name: [name,family].filter(Boolean).join(" "), reason_fa: `تکراری در همین فایل (سطر ${prevLine} هم همین شماره را دارد)`, reason_en: `duplicate in file (also line ${prevLine})`, raw });
+        duplicates.push({ student_no: sno, line: actualLineNo, reason: "duplicate_in_file" });
+        skipped++; return;
+      }
+      seenInFile.set(lower, actualLineNo);
       const existing = findByNo.get(sno, sno);
       let uid = existing?.id || null;
-      let isNew = !existing;
-      // per-row university override (admin only)
       let rowUniId = university_id || null;
       if (req.user.role!=="teacher" && rowUcode) {
-        const uByCode = db.prepare("SELECT id FROM universities WHERE code=?").get(String(rowUcode).trim().toUpperCase());
+        const uByCode = db.prepare("SELECT id FROM universities WHERE code=?").get(rowUcode.toUpperCase());
         if (uByCode) rowUniId = uByCode.id;
-        else { errors.push(`${t_line(i, hasHeader)}: university_code ${rowUcode} یافت نشد — از دانشگاه پیش‌فرض استفاده شد`); }
+        else {
+          failures.push({ line: actualLineNo, sno, name: [name,family].filter(Boolean).join(" "), reason_fa: `کد دانشگاه «${rowUcode}» یافت نشد — از دانشگاه انتخابی استفاده شد`, reason_en: `university_code ${rowUcode} not found`, raw, warning:true });
+          // not skipping, just warning
+        }
       }
+      // licence cap check before insert
+      if (!existing && rowUniId) {
+        const hit = checkStudentLimit(rowUniId, 1);
+        if (hit) {
+          failures.push({ line: actualLineNo, sno, name: [name,family].filter(Boolean).join(" "), reason_fa: `سقف دانشجویان دانشگاه پر است (${hit.current}/${hit.max})`, reason_en: `university student limit reached`, raw });
+          skipped++; return;
+        }
+      }
+      const fullName = [name, family].filter(Boolean).join(" ").trim() || sno;
       if (existing) {
-        // existing user: optionally enroll to class even if not newly created
-        duplicates.push({ student_no: sno, id: existing.id });
-        // do not count as created, but try enroll if class requested
+        duplicates.push({ student_no: sno, id: existing.id, line: actualLineNo });
+        // existing user: try to heal missing university and enroll
+        if (existing.university_id==null && rowUniId) {
+          try{ updUni.run(rowUniId, existing.id); }catch{}
+        } else if (existing.university_id==null && globalClassUni) {
+          try{ updUni.run(globalClassUni, existing.id); }catch{}
+        }
       } else {
+        // enforce university required for student
+        let finalUni = rowUniId;
+        if(!finalUni && globalClassUni) finalUni = globalClassUni;
+        // if still null and teacher, it's already teacher's uni; if admin and no uni, keep null but warn
         try {
-          const info = insUser.run(sno, hashPasswordSync(sno), fullName, fullName, sno, email, rowUniId);
+          const info = insUser.run(sno, hashPasswordSync(sno), fullName, fullName, sno, email, finalUni);
           uid = info.lastInsertRowid;
           created++;
-        } catch (e) { errors.push(`${sno}: ${e.message}`); skipped++; return; }
+        } catch (e) {
+          const msg = String(e.message||"");
+          if(/UNIQUE|unique/i.test(msg)){
+            failures.push({ line: actualLineNo, sno, name: fullName, reason_fa: "شماره تکراری در سامانه", reason_en: "duplicate in system", raw });
+            duplicates.push({ student_no: sno, line: actualLineNo });
+          } else {
+            failures.push({ line: actualLineNo, sno, name: fullName, reason_fa: e.message, reason_en: e.message, raw });
+          }
+          skipped++; return;
+        }
       }
-      // auto-enroll to class (global or per-row)
-      let targetClassId = globalClassId;
+      // auto-enroll to class (global or per-row) + heal university if needed
+      let targetClassId = globalClassId; let targetClassUni = globalClassUni;
       if (!targetClassId && rowCcode) {
-        const c = db.prepare("SELECT id FROM classes WHERE code=?").get(String(rowCcode).trim());
-        if (c) targetClassId = c.id;
+        const c = db.prepare("SELECT id, university_id FROM classes WHERE code=?").get(rowCcode.trim());
+        if (c) { targetClassId = c.id; targetClassUni=c.university_id; }
+        else {
+          failures.push({ line: actualLineNo, sno, name: fullName, reason_fa: `کد کلاس «${rowCcode}» یافت نشد — عضویت انجام نشد`, reason_en: `class_code ${rowCcode} not found`, raw, warning:true });
+        }
       }
       if (targetClassId && uid) {
-        try { insMember.run(targetClassId, uid); enrolled.push({ student_no: sno, class_id: targetClassId }); } catch {}
+        // heal university if user has none
+        const curUni = db.prepare("SELECT university_id FROM users WHERE id=?").get(uid)?.university_id;
+        if((curUni==null || curUni==="") && targetClassUni){
+          try{ updUni.run(targetClassUni, uid); }catch{}
+        }
+        // check same-university before enrol
+        const curUni2 = db.prepare("SELECT university_id FROM users WHERE id=?").get(uid)?.university_id;
+        const classRow = db.prepare("SELECT university_id FROM classes WHERE id=?").get(targetClassId);
+        if(classRow && curUni2!=null && classRow.university_id!=null && curUni2!==classRow.university_id){
+          failures.push({ line: actualLineNo, sno, name: fullName, reason_fa: `دانشگاه دانشجو (${curUni2}) با دانشگاه کلاس متفاوت است — افزوده نشد`, reason_en: `wrong university for class`, raw, warning:true });
+        } else {
+          try { insMember.run(targetClassId, uid); enrolled.push({ student_no: sno, class_id: targetClassId, line: actualLineNo }); } catch {}
+        }
       }
       if (existing) skipped++;
     });
   });
-  try { tx(); } catch (e) { return res.status(400).json({ error: e.message }); }
-  res.json({ created, skipped, total: dataLines.length, duplicates, enrolled: enrolled.length, errors: errors.slice(0, 30) });
+  try { tx(); } catch (e) { return res.status(400).json({ error: e.message, message_fa: String(e.message).slice(0,200) }); }
+  // Build warnings vs errors separation
+  const warnings = failures.filter(f=>f.warning).map(f=> `${t_line(f.line- (hasHeader?1:0), hasHeader)}: ${f.reason_fa}`);
+  const realFailures = failures.filter(f=>!f.warning);
+  const errors = realFailures.map(f=> `${t_line(f.line- (hasHeader?1:0), hasHeader)}: ${f.sno||""} — ${f.reason_fa}`);
+  res.json({ created, skipped: realFailures.length + duplicates.filter(d=>d.line).length, total: dataLinesRaw.length, duplicates, enrolled: enrolled.length, failures: realFailures, warnings, errors: errors.slice(0,50), hasHeader, delim });
 });
 function t_line(i, hasHeader) { return `line ${i + 1 + (hasHeader ? 1 : 0)}`; }
 function req_no_sno() { return "missing student number"; }

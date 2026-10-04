@@ -330,8 +330,12 @@ r.put("/:id/participants", authRequired, requireRole("teacher", "admin"), (req, 
   const notFound = [], wrongUniversity = [], created = [], limitBlocked = [];
   let studentLimit = null;
   for (const uid of userIds) {
-    const u = db.prepare("SELECT id, university_id FROM users WHERE id=? AND role='student'").get(uid);
-    if (u && u.university_id === ex.university_id) ids.add(u.id); else if (u) wrongUniversity.push({ id: uid });
+    let u = db.prepare("SELECT id, university_id FROM users WHERE id=? AND role='student'").get(uid);
+    if (!u) { wrongUniversity.push({ id: uid, reason:"not_found" }); continue; }
+    if (u.university_id==null || u.university_id===""){
+      try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, uid); u.university_id=ex.university_id; }catch{}
+    }
+    if (u.university_id === ex.university_id) ids.add(u.id); else wrongUniversity.push({ id: uid, existing: u });
   }
   for (const sn of studentNos) {
     const key = String(sn).trim(); if (!key) continue;
@@ -344,6 +348,9 @@ r.put("/:id/participants", authRequired, requireRole("teacher", "admin"), (req, 
       if (u) created.push(u);
     }
     if (!u) { notFound.push(key); continue; }
+    if (u.university_id==null || u.university_id===""){
+      try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, u.id); u.university_id=ex.university_id; }catch{}
+    }
     if (u.university_id !== ex.university_id) { wrongUniversity.push({ student_no: key, existing: u }); continue; }
     ids.add(u.id);
   }
@@ -364,8 +371,12 @@ r.post("/:id/participants/resolve", authRequired, requireRole("teacher", "admin"
   const raw = Array.isArray(req.body?.studentNos) ? req.body.studentNos : String(req.body?.studentNos || "").split(/[\s,;]+/);
   const existing = [], missing = [], wrongUniversity = [];
   for (const x of raw.map((v) => String(v).trim()).filter(Boolean)) {
-    const u = studentByNo(x);
-    if (!u) missing.push(x); else if (u.university_id !== ex.university_id) wrongUniversity.push({ student_no: x, existing: u }); else existing.push(u);
+    let u = studentByNo(x);
+    if (!u) { missing.push(x); continue; }
+    if (u.university_id==null || u.university_id===""){
+      try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, u.id); u.university_id=ex.university_id; }catch{}
+    }
+    if (u.university_id !== ex.university_id) wrongUniversity.push({ student_no: x, existing: u }); else existing.push(u);
   }
   res.json({ existing: [...new Map(existing.map((u)=>[u.id,u])).values()], missing, wrongUniversity });
 });

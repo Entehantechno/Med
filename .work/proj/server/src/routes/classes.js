@@ -633,8 +633,17 @@ r.put("/:id/members", authRequired, requireRole("teacher", "admin"), (req, res) 
   const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(cid);
   if (!cl) return res.status(404).json({ error: "not_found" });
   if (req.user.role === "teacher" && cl.university_id !== currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university" });
-  const allowed = userIds.filter((uid) => db.prepare("SELECT 1 FROM users WHERE id=? AND role='student' AND university_id=?").get(uid, cl.university_id));
-  const skipped = userIds.length - allowed.length;
+  const allowed=[]; const healed=[]; const blocked=[];
+  for(const uid of userIds){
+    const u=db.prepare("SELECT id, university_id, role FROM users WHERE id=?").get(uid);
+    if(!u || u.role!=="student"){ blocked.push(uid); continue; }
+    if(u.university_id==null || u.university_id===""){
+      // heal: bulk-imported student without university → assign to this class's university
+      try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(cl.university_id, uid); healed.push(uid); allowed.push(uid); } catch{}
+    } else if(u.university_id===cl.university_id){ allowed.push(uid); }
+    else { blocked.push(uid); }
+  }
+  const skipped = blocked.length;
   const tx = db.transaction(() => {
     db.prepare("DELETE FROM class_members WHERE class_id=?").run(cid);
     const ins = db.prepare("INSERT OR IGNORE INTO class_members (class_id,user_id) VALUES (?,?)");
@@ -642,7 +651,7 @@ r.put("/:id/members", authRequired, requireRole("teacher", "admin"), (req, res) 
   });
   tx();
   persistNow();
-  res.json({ ok: true, added: allowed.length, skipped });
+  res.json({ ok: true, added: allowed.length, skipped, healed: healed.length });
 });
 
 r.post("/:id/members/resolve", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -652,19 +661,20 @@ r.post("/:id/members/resolve", authRequired, requireRole("teacher", "admin"), (r
   const raw = Array.isArray(req.body?.studentNos) ? req.body.studentNos : String(req.body?.studentNos || "").split(/[\s,;]+/);
   const names = req.body?.names || {};
   const createMissing = !!req.body?.createMissing;
-  const existing = [], missing = [], wrongUniversity = [], created = [], limitBlocked = [];
+  const existing = [], missing = [], wrongUniversity = [], healed=[], created = [], limitBlocked = [];
   let studentLimit = null;
   for (const x of raw.map((v) => String(v).trim()).filter(Boolean)) {
     let u = studentByNo(x);
     if (!u && createMissing) {
-      // Licence: a full university can't mint more students — say so explicitly
-      // instead of silently listing them as "not found".
       const lim = checkStudentLimit(cl.university_id, 1);
       if (lim) { studentLimit = lim; limitBlocked.push({ student_no: x }); continue; }
       u = createStudentForUniversity({ sno: x, name: names[x] || x, universityId: cl.university_id, createdBy: req.user.id });
       if (u) created.push(u);
     }
     if (!u) { missing.push(x); continue; }
+    if (u.university_id==null || u.university_id===""){
+      try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(cl.university_id, u.id); u.university_id=cl.university_id; healed.push({ student_no: x, id: u.id }); }catch{}
+    }
     if (u.university_id !== cl.university_id) { wrongUniversity.push({ student_no: x, existing: u }); continue; }
     existing.push(u);
   }
@@ -674,7 +684,7 @@ r.post("/:id/members/resolve", authRequired, requireRole("teacher", "admin"), (r
     for (const u of unique) ins.run(cl.id, u.id);
     persistNow();
   }
-  res.json({ existing: unique, missing, wrongUniversity, created, attached: req.body?.attach === false ? 0 : unique.length,
+  res.json({ existing: unique, missing, wrongUniversity, healed, created, attached: req.body?.attach === false ? 0 : unique.length,
              limitBlocked, studentLimit });
 });
 

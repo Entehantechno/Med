@@ -1602,6 +1602,117 @@ r.delete("/users/:id", ...P("learn.users.delete"), (req, res) => {
   persistNow();
   res.json({ ok: true });
 });
+// bulk delete (selectable) — with per-id safety, reports blocked
+r.post("/users/bulk-delete", ...P("learn.users.delete"), (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(n=>parseInt(n,10)).filter(n=>n) : [];
+  if(!ids.length) return res.status(400).json({ error: "no ids" });
+  const deleted=[], blocked=[];
+  const adminCount = db.prepare("SELECT COUNT(*) c FROM users WHERE role='admin'").get().c;
+  let adminLeft = adminCount;
+  const tx=db.transaction(()=>{
+    for(const id of ids){
+      const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
+      if(!u){ blocked.push({id, reason:"not_found"}); continue; }
+      if(u.id===req.user.id){ blocked.push({id, reason:"cannot delete yourself", name: u.name_fa||u.username}); continue; }
+      if(u.role==="admin" && adminLeft<=1){ blocked.push({id, reason:"cannot delete last admin", name: u.name_fa||u.username}); continue; }
+      if(req.user.role==="teacher" && (u.university_id!==currentUniversityId(req.user) || !["student","teacher"].includes(u.role))){
+        blocked.push({id, reason:"wrong_university", name: u.name_fa||u.username}); continue;
+      }
+      if(!staffMayWriteUser(req.user, u)){ blocked.push({id, reason:"forbidden", name: u.name_fa||u.username}); continue; }
+      db.prepare("DELETE FROM learner_profiles WHERE user_id=?").run(id);
+      db.prepare("DELETE FROM node_progress WHERE user_id=?").run(id);
+      db.prepare("DELETE FROM srs_state WHERE user_id=?").run(id);
+      db.prepare("DELETE FROM xp_events WHERE user_id=?").run(id);
+      db.prepare("DELETE FROM notifications WHERE user_id=?").run(id);
+      db.prepare("DELETE FROM league_members WHERE user_id=?").run(id);
+      db.prepare("DELETE FROM class_members WHERE user_id=?").run(id);
+      db.prepare("DELETE FROM exam_participants WHERE user_id=?").run(id);
+      db.prepare("DELETE FROM users WHERE id=?").run(id);
+      deleted.push(id);
+      if(u.role==="admin") adminLeft--;
+    }
+  });
+  tx();
+  if(deleted.length) { audit(req, "user.bulk_delete", `users:${deleted.join(",")}`, { count: deleted.length }); persistNow(); }
+  res.json({ deleted, blocked, count: deleted.length });
+});
+// bulk assign to university (for students/teachers without university or move)
+r.post("/users/bulk-assign-university", ...P(PU), (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(n=>parseInt(n,10)).filter(n=>n) : [];
+  const uniId = parseInt(req.body?.university_id,10) || null;
+  if(!ids.length) return res.status(400).json({ error: "no ids" });
+  if(!uniId) return res.status(400).json({ error: "university_required" });
+  const uni=db.prepare("SELECT * FROM universities WHERE id=?").get(uniId);
+  if(!uni) return res.status(404).json({ error: "university not found" });
+  const assigned=[], blocked=[], limitBlocked=[];
+  let hit=null;
+  const need = ids.length;
+  hit = checkStudentLimit(uniId, need);
+  const tx=db.transaction(()=>{
+    for(const id of ids){
+      const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
+      if(!u){ blocked.push({id, reason:"not_found"}); continue; }
+      if(!["student","teacher"].includes(u.role)){ blocked.push({id, reason:"only student/teacher", name: u.name_fa||u.username}); continue; }
+      if(req.user.role==="teacher" && u.university_id!==currentUniversityId(req.user) && u.university_id!=null){ blocked.push({id, reason:"wrong_university"}); continue; }
+      if(u.university_id===uniId){ assigned.push(id); continue; }
+      if(u.role==="student"){
+        const perHit=checkStudentLimit(uniId, 1);
+        if(perHit){ limitBlocked.push({id, student_no: u.student_no}); continue; }
+      }
+      db.prepare("UPDATE users SET university_id=? WHERE id=?").run(uniId, id);
+      assigned.push(id);
+    }
+  });
+  tx();
+  if(assigned.length){ audit(req, "user.bulk_assign_uni", `universities:${uniId}`, { count: assigned.length }); persistNow(); }
+  res.json({ assigned, blocked, limitBlocked, count: assigned.length, studentLimit: hit });
+});
+r.post("/users/bulk-assign-class", ...P(PU), (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(n=>parseInt(n,10)).filter(n=>n) : [];
+  const classId = parseInt(req.body?.class_id,10) || null;
+  if(!ids.length) return res.status(400).json({ error: "no ids" });
+  if(!classId) return res.status(400).json({ error: "class_required" });
+  const cl=db.prepare("SELECT * FROM classes WHERE id=?").get(classId);
+  if(!cl) return res.status(404).json({ error: "class not found" });
+  if(req.user.role==="teacher" && cl.university_id!==currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university" });
+  const added=[], wrongUniversity=[], healed=[], blocked=[];
+  const tx=db.transaction(()=>{
+    for(const id of ids){
+      const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
+      if(!u || u.role!=="student"){ blocked.push({id, reason:"not student"}); continue; }
+      if(u.university_id==null || u.university_id===""){
+        try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(cl.university_id, id); healed.push(id); u.university_id=cl.university_id; }catch{}
+      }
+      if(u.university_id!==cl.university_id){ wrongUniversity.push({ id, student_no: u.student_no, university_id: u.university_id }); continue; }
+      try{ db.prepare("INSERT OR IGNORE INTO class_members (class_id,user_id) VALUES (?,?)").run(classId, id); added.push(id); }catch{}
+    }
+  });
+  tx(); if(added.length) persistNow();
+  res.json({ added, wrongUniversity, healed, blocked, count: added.length });
+});
+r.post("/users/bulk-assign-exam", ...P(PU), (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(n=>parseInt(n,10)).filter(n=>n) : [];
+  const examId = parseInt(req.body?.exam_id,10) || null;
+  if(!ids.length) return res.status(400).json({ error: "no ids" });
+  if(!examId) return res.status(400).json({ error: "exam_required" });
+  const ex=db.prepare("SELECT * FROM exams WHERE id=?").get(examId);
+  if(!ex) return res.status(404).json({ error: "exam not found" });
+  if(req.user.role==="teacher" && ex.university_id!==currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university" });
+  const added=[], wrongUniversity=[], healed=[], blocked=[];
+  const tx=db.transaction(()=>{
+    for(const id of ids){
+      const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
+      if(!u || u.role!=="student"){ blocked.push({id, reason:"not student"}); continue; }
+      if(u.university_id==null || u.university_id===""){
+        try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, id); healed.push(id); u.university_id=ex.university_id; }catch{}
+      }
+      if(u.university_id!==ex.university_id){ wrongUniversity.push({ id, student_no: u.student_no }); continue; }
+      try{ db.prepare("INSERT OR IGNORE INTO exam_participants (exam_id,user_id) VALUES (?,?)").run(examId, id); added.push(id); }catch{}
+    }
+  });
+  tx(); if(added.length) persistNow();
+  res.json({ added, wrongUniversity, healed, blocked, count: added.length });
+});
 
 /* ============ MICROLEARNING / CONTENT MANAGEMENT ============ */
 // list all flashcards with their micro-lesson status (for content curation)

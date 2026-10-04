@@ -471,10 +471,13 @@ function UsersManager({ scope = "all" }) {
   const { t, lang, impersonate: doImpersonate } = useApp();
   const toast = useToast();
   const scopeRoles = SCOPE_ROLES[scope] || SCOPE_ROLES.all;
-  const showUniTools = scope === "all" || scope === "uni";      // import + exam access
+  const showUniTools = scope === "all" || scope === "uni";
+  const faLang = lang === "fa";
   const [users, setUsers] = useState(null);
   const [cases, setCases] = useState([]);
   const [role, setRole] = useState("");
+  const [uniFilter, setUniFilter] = useState("");
+  const [unis, setUnis] = useState([]);
   const [q, setQ] = useState("");
   const [detail, setDetail] = useState(null);
   const [editing, setEditing] = useState(null);
@@ -485,6 +488,11 @@ function UsersManager({ scope = "all" }) {
   const [pwUser, setPwUser] = useState(null);
   const [casesErr, setCasesErr] = useState("");
   const [loadErr, setLoadErr] = useState("");
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkUni, setBulkUni] = useState("");
+  const [bulkClass, setBulkClass] = useState("");
+  const [bulkAction, setBulkAction] = useState(null); // uni | class | delete
+  const [classes, setClasses] = useState([]);
 
   const load = () => {
     setLoadErr("");
@@ -497,6 +505,11 @@ function UsersManager({ scope = "all" }) {
     setCasesErr("");
     api.get("/cases").then((d) => setCases(Array.isArray(d) ? d : [])).catch((e) => { setCases([]); setCasesErr(String(e.message || e)); });
   }, [showUniTools]);
+  useEffect(() => {
+    if (!showUniTools && scope!=="all") return;
+    api.get("/admin/universities").then(r=> setUnis(r.universities||[])).catch(()=>{});
+    api.get("/classes").then(r=> setClasses(r.classes||[])).catch(()=>{});
+  }, [showUniTools, scope]);
 
   const setStatus = async (u, status) => { await api.post(`/admin/users/${u.id}/status`, { status }); toast(t("saved")); load(); };
   const del = async (u) => { if (confirm(t("confirmDeleteUser"))) { try { await api.del(`/admin/users/${u.id}`); toast(t("saved")); load(); } catch (e) { toast(e.message); } } };
@@ -505,6 +518,59 @@ function UsersManager({ scope = "all" }) {
     catch (e) { toast(e.message); }
   };
   const caseTitle = (id) => { const c = cases.find((x) => x.id === id); return c ? biField(c, "title", lang) : `#${id}`; };
+  const uniNameOf = (u) => {
+    if (u.uni_name_fa || u.uni_name_en) return faLang ? (u.uni_name_fa||u.uni_name_en) : (u.uni_name_en||u.uni_name_fa);
+    if (u.university_id) {
+      const found = unis.find(x=> String(x.id)===String(u.university_id));
+      if (found) return faLang ? (found.name_fa||found.code) : (found.name_en||found.code);
+      return faLang ? `دانشگاه #${u.university_id}` : `Uni #${u.university_id}`;
+    }
+    return faLang ? "— بدون دانشگاه —" : "— no university —";
+  };
+  const filteredByUni = uniFilter ? (users||[]).filter(u=> String(u.university_id)===String(uniFilter)) : (users||[]);
+  // keep selection valid after filter change
+  useEffect(()=>{ setSelectedIds(new Set()); }, [uniFilter, role]);
+
+  const bulkDelete = async () => {
+    if (selectedIds.size===0) return;
+    const list = [...selectedIds];
+    if (!confirm(faLang ? `حذف ${list.length} کاربر انتخاب‌شده؟ این عمل قابل بازگشت نیست.` : `Delete ${list.length} selected users?`)) return;
+    try {
+      const r = await api.post("/admin/users/bulk-delete", { ids: list });
+      toast(faLang ? `حذف شد: ${r.deleted?.length||0} — مسدود: ${r.blocked?.length||0}` : `Deleted: ${r.deleted?.length||0} — blocked: ${r.blocked?.length||0}`);
+      if (r.blocked?.length) {
+        const msg = r.blocked.map(b=> `${b.id}: ${b.reason}`).join("\n");
+        toast(msg);
+      }
+      setSelectedIds(new Set());
+      load();
+    } catch(e){ toast(String(e.message||e)); }
+  };
+  const bulkAssignUni = async () => {
+    if (selectedIds.size===0 || !bulkUni) return toast(faLang ? "دانشگاه را انتخاب کنید" : "Pick a university");
+    const list=[...selectedIds];
+    try{
+      const r=await api.post("/admin/users/bulk-assign-university", { ids: list, university_id: Number(bulkUni) });
+      toast(faLang ? `انتساب انجام شد: ${r.assigned?.length||0} — مسدود: ${r.blocked?.length||0} — سقف: ${r.limitBlocked?.length||0}` : `Assigned: ${r.assigned?.length||0}`);
+      if(r.limitBlocked?.length) toast(faLang ? `سقف دانشگاه پر است — ${r.limitBlocked.length} نفر اضافه نشد` : `Limit blocked: ${r.limitBlocked.length}`);
+      setSelectedIds(new Set()); setBulkAction(null); setBulkUni(""); load();
+    }catch(e){ toast(String(e.message||e)); }
+  };
+  const bulkAssignClass = async () => {
+    if (selectedIds.size===0 || !bulkClass) return toast(faLang ? "کلاس را انتخاب کنید" : "Pick a class");
+    const list=[...selectedIds];
+    try{
+      const cl = classes.find(c=> String(c.id)===String(bulkClass));
+      if(!cl) return;
+      const r = await api.post("/admin/users/bulk-assign-class", { ids: list, class_id: Number(bulkClass) });
+      const msg = faLang ? `افزوده به کلاس «${cl.name_fa||cl.code||cl.id}»: ${r.added?.length||0} — ناهم‌دانشگاه: ${r.wrongUniversity?.length||0} — بدون دانشگاه ترمیم: ${r.healed?.length||0}` : `Added to class: ${r.added?.length||0}`;
+      toast(msg);
+      if(r.wrongUniversity?.length){
+        toast(faLang ? `${r.wrongUniversity.length} نفر به دلیل مغایرت دانشگاه افزوده نشد` : `${r.wrongUniversity.length} wrong university`);
+      }
+      setSelectedIds(new Set()); setBulkAction(null); setBulkClass(""); load();
+    }catch(e){ toast(String(e.message||e)); }
+  };
 
   if (detail) return <UserDetail id={detail} onBack={() => { setDetail(null); load(); }} />;
   if (!users) return <Spinner />;
@@ -524,24 +590,75 @@ function UsersManager({ scope = "all" }) {
       </div>
       <div className="small muted mb8">{heading}</div>
       {casesErr && <div className="err-banner mb8">{casesErr}</div>}
-      {scopeRoles.length > 1 && (
-        <div className="inline-form mb16" style={{ flexWrap: "wrap", gap: 8 }}>
+      <div className="inline-form mb12" style={{ flexWrap: "wrap", gap: 8, alignItems:"center" }}>
+        {scopeRoles.length > 1 && (
           <select value={role} onChange={(e) => setRole(e.target.value)}>
             <option value="">{t("allRoles")}</option>
             {scopeRoles.map((r) => <option key={r} value={r}>{t(r)}</option>)}
           </select>
+        )}
+        {(showUniTools || scope==="all") && (
+          <select value={uniFilter} onChange={(e)=> setUniFilter(e.target.value)} style={{ minWidth: 180 }}>
+            <option value="">{faLang ? "همه دانشگاه‌ها" : "All universities"}</option>
+            {unis.map(u=> <option key={u.id} value={u.id}>{faLang ? (u.name_fa||u.code) : (u.name_en||u.code)} — {u.code}</option>)}
+            <option value="null">{faLang ? "— بدون دانشگاه —" : "— no university —"}</option>
+          </select>
+        )}
+        {uniFilter && <span className="small muted">{faLang ? `${filteredByUni.length} نفر` : `${filteredByUni.length} users`}</span>}
+      </div>
+
+      {selectedIds.size>0 && (
+        <div className="card mb12" style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center", background:"var(--primaryGlow)", borderColor:"var(--primary)" }}>
+          <span className="small" style={{ fontWeight:800 }}>{faLang ? `${selectedIds.size} انتخاب شد` : `${selectedIds.size} selected`}</span>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={()=> setSelectedIds(new Set())}>{faLang?"پاک کردن انتخاب":"Clear"}</button>
+          <button type="button" className="btn btn-danger btn-sm" onClick={bulkDelete}><Icon name="trash" size={13}/> {faLang?"حذف انتخابی":"Delete selected"}</button>
+          {showUniTools && <button type="button" className="btn btn-ghost btn-sm" onClick={()=> setBulkAction(bulkAction==="uni"?null:"uni")}><Icon name="class" size={13}/> {faLang?"انتساب به دانشگاه":"Assign to university"}</button>}
+          {showUniTools && <button type="button" className="btn btn-ghost btn-sm" onClick={()=> setBulkAction(bulkAction==="class"?null:"class")}><Icon name="users" size={13}/> {faLang?"افزودن به کلاس":"Add to class"}</button>}
+          {bulkAction==="uni" && (
+            <span style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap" }}>
+              <select value={bulkUni} onChange={e=> setBulkUni(e.target.value)} style={{ minWidth:180 }}>
+                <option value="">{faLang?"— انتخاب دانشگاه —":"— pick university —"}</option>
+                {unis.map(u=> <option key={u.id} value={u.id}>{faLang?(u.name_fa||u.code):(u.name_en||u.code)} — {u.code}</option>)}
+              </select>
+              <button type="button" className="btn btn-primary btn-sm" onClick={bulkAssignUni}>{faLang?"تأیید انتساب":"Assign"}</button>
+            </span>
+          )}
+          {bulkAction==="class" && (
+            <span style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap" }}>
+              <select value={bulkClass} onChange={e=> setBulkClass(e.target.value)} style={{ minWidth:180 }}>
+                <option value="">{faLang?"— انتخاب کلاس —":"— pick class —"}</option>
+                {classes.map(c=> <option key={c.id} value={c.id}>{c.name_fa||c.name_en||c.code} {c.code?`(${c.code})`:""}</option>)}
+              </select>
+              <button type="button" className="btn btn-primary btn-sm" onClick={bulkAssignClass}>{faLang?"افزودن":"Add"}</button>
+            </span>
+          )}
         </div>
       )}
+
       <DataTable
-        rows={users}
+        rows={uniFilter ? filteredByUni : users}
+        selectable={true}
+        selectedIds={selectedIds}
+        onSelectionChange={setSelectedIds}
         initialSort={{ key: "name", dir: "asc" }}
         searchPlaceholder={t("searchByNameOrNo")}
-        searchKeys={[(u) => u.name_fa, (u) => u.name_en, (u) => u.username, (u) => u.student_no]}
+        searchKeys={[(u) => u.name_fa, (u) => u.name_en, (u) => u.username, (u) => u.student_no, (u)=> uniNameOf(u), (u)=> u.uni_name_fa, (u)=> u.uni_name_en]}
         rowKey={(u) => u.id}
         columns={[
           { key: "name", label: t("name"), sortValue: (u) => lang === "fa" ? u.name_fa : u.name_en,
             render: (u) => (<><button type="button" className="btn-link" onClick={() => setDetail(u.id)} style={{ background: "none", border: "none", color: "var(--primary)", cursor: "pointer", fontWeight: 700, padding: 0 }}>{lang === "fa" ? u.name_fa : u.name_en}</button><div className="small muted">{u.username}</div></>) },
-          { key: "student_no", label: t("studentNo"), render: (u) => u.student_no || "—" },
+          { key: "student_no", label: t("studentNo"), sortValue: (u)=> u.student_no||"", render: (u) => u.student_no || "—" },
+          { key: "university", label: faLang ? "دانشگاه" : "University", sortValue: (u)=> uniNameOf(u),
+            render: (u) => {
+              const name = uniNameOf(u);
+              const code = unis.find(x=> String(x.id)===String(u.university_id))?.code || (u.university_id ? "" : "");
+              const isNone = !u.university_id;
+              return <span style={{ display:"inline-flex", flexDirection:"column", gap:2 }}>
+                <span style={{ fontWeight:600, color: isNone?"var(--danger)":"inherit" }}>{name}</span>
+                {code && <span className="small muted" style={{ fontSize:".75rem" }}>{code}{u.city_fa?` — ${u.city_fa}`:""}</span>}
+              </span>;
+            }
+          },
           { key: "role", label: t("role"), sortValue: (u) => u.role, render: (u) => <Pill kind={u.role === "admin" ? "active" : "medium"}>{t(u.role)}</Pill> },
           ...(showAssignments ? [{ key: "assignments", label: t("assignments"), sortable: false, render: (u) => u.role === "student"
               ? ((u.caseIds || []).length ? (u.caseIds || []).map(caseTitle).join("، ") : <span className="muted small">{t("noStudentsExams")}</span>)
@@ -569,7 +686,6 @@ function UsersManager({ scope = "all" }) {
   );
 }
 
-// Legacy entry points now delegate to the unified manager, scoped per universe.
 function Users() { return <UsersManager scope="uni" />; }
 
 function AddStudentModal({ cases, onClose, onDone }) {
@@ -767,14 +883,83 @@ function StudentImportModal({ onClose, onDone }) {
       )}
 
       {result && (
-        <div className="micro-box small mb8" style={{ padding: "12px 14px", borderColor:"var(--accent)" }}>
-          ✅ {fa?"ساخته شد":"Created"}: <b>{result.created}</b> · {fa?"نادیده":"Skipped"}: {result.skipped} {result.enrolled ? <>· {fa?"عضو کلاس":"Enrolled"}: <b>{result.enrolled}</b></> : null}
-          {result.errors?.length > 0 && (
+        <div className="card" style={{ padding: 12, background: "var(--panel2)", borderColor: result.failures?.length?"var(--danger)":"var(--accent)" }}>
+          <div style={{ display:"flex", gap:12, flexWrap:"wrap", alignItems:"center", marginBottom:8 }}>
+            <span className="pill pill-active">✅ {fa?"ساخته شد":"Created"}: <b>{result.created}</b></span>
+            <span className="pill" style={{ background: result.failures?.length? "var(--dangerGlow)" : "var(--panel)" }}>❌ {fa?"ناموفق":"Failed"}: <b>{result.failures?.length ?? result.skipped ?? 0}</b></span>
+            {result.enrolled ? <span className="pill" style={{ background:"var(--accentGlow)" }}>🎓 {fa?"عضو کلاس":"Enrolled"}: <b>{result.enrolled}</b></span> : null}
+            <span className="small muted">{fa?"کل":"Total"}: {result.total} · {fa?"تکراری":"Duplicates"}: {result.duplicates?.length||0}</span>
+            <span className="small muted" style={{ marginInlineStart:"auto" }}>{result.delim ? <>جداکننده: <code>{result.delim==="\t"?"TAB":result.delim}</code> {result.hasHeader? (fa?"(هدر تشخیص داده شد)":"(header detected)") : ""}</> : null}</span>
+          </div>
+          {result.warnings?.length>0 && (
+            <div className="micro-box small mb8" style={{ borderColor:"var(--warn)", background:"var(--warnGlow)" }}>
+              ⚠️ {fa?"هشدارها":"Warnings"}:
+              <ul style={{ margin:"6px 0 0", paddingInlineStart:18 }}>{result.warnings.map((w,i)=><li key={i}>{w}</li>)}</ul>
+            </div>
+          )}
+          {result.failures?.length>0 ? (
+            <>
+              <div style={{ fontWeight:800, marginBottom:6, color:"var(--danger)" }}>{fa?`۹ تایی که وارد نشدند — ${result.failures.length} ردیف`:`${result.failures.length} rows failed`} — {fa?"هر ردیف دلیلش نوشته شده تا فوری اصلاح کنید":"each row shows why"}</div>
+              <div style={{ maxHeight: 260, overflow:"auto", border:"1px solid var(--border)", borderRadius:8 }}>
+                <table style={{ width:"100%", fontSize:".85rem", borderCollapse:"collapse" }}>
+                  <thead><tr style={{ background:"var(--panel)", position:"sticky", top:0 }}>
+                    <th style={{ padding:"6px 8px", textAlign:"start" }}>{fa?"سطر":"Line"}</th>
+                    <th style={{ padding:"6px 8px", textAlign:"start" }}>{fa?"نام":"Name"}</th>
+                    <th style={{ padding:"6px 8px", textAlign:"start" }}>{fa?"شماره":"Student No"}</th>
+                    <th style={{ padding:"6px 8px", textAlign:"start" }}>{fa?"دلیل":"Reason"}</th>
+                  </tr></thead>
+                  <tbody>
+                    {result.failures.map((f,i)=>(
+                      <tr key={i} style={{ borderTop:"1px solid var(--border)", background: i%2?"var(--panel2)":"transparent" }}>
+                        <td style={{ padding:"6px 8px" }}>{f.line}</td>
+                        <td style={{ padding:"6px 8px" }}>{f.name||"—"}</td>
+                        <td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>{f.sno||"—"}</td>
+                        <td style={{ padding:"6px 8px", color:"var(--danger)" }}>{fa?f.reason_fa:f.reason_en}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginTop:10 }}>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={()=>{
+                  const header = "line,student_no,name,reason_fa,reason_en,raw";
+                  const rows = result.failures.map(f=> [f.line, f.sno||"", `"${(f.name||"").replace(/"/g,'""')}"`, `"${(f.reason_fa||"").replace(/"/g,'""')}"`, `"${(f.reason_en||"").replace(/"/g,'""')}"`, `"${(f.raw||"").replace(/"/g,'""')}"`].join(","));
+                  const csv = "\uFEFF" + [header, ...rows].join("\n");
+                  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="failed-rows.csv"; a.click(); URL.revokeObjectURL(url);
+                }}>⬇️ {fa?"دانلود CSV ردیف‌های ناموفق":"Download failed rows CSV"}</button>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={()=>{
+                  const txt = result.failures.map(f=> `${fa?`سطر ${f.line}`:`line ${f.line}`}: ${f.sno} — ${fa?f.reason_fa:f.reason_en}`).join("\n");
+                  navigator.clipboard?.writeText(txt);
+                  toast(fa?"کپی شد — حالا در اکسل/شیت اصلاح کنید":"Copied");
+                }}>{fa?"کپی لیست ناموفق":"Copy failed list"}</button>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={()=>{
+                  const failedLines = new Set(result.failures.map(f=>f.line));
+                  const allLines = text.split(/\r?\n/);
+                  const hasHeader = result.hasHeader;
+                  const header = hasHeader ? allLines[0] : null;
+                  const keep = allLines.filter((_,idx)=>{
+                    const lineNo = idx+1;
+                    if(hasHeader && idx===0) return true;
+                    return !failedLines.has(lineNo);
+                  });
+                  setText(keep.join("\n"));
+                  toast(fa?"فقط ردیف‌های ناموفق نگه داشته شد — اصلاح کنید و دوباره وارد کنید":"Kept only failed rows — fix and retry");
+                }}>{fa?"فقط ناموفق‌ها را نگه‌دار":"Keep failed only"}</button>
+              </div>
+            </>
+          ) : result.errors?.length>0 ? (
             <ul style={{ margin: "8px 0 0", paddingInlineStart: 18 }}>
               {result.errors.map((e, i) => <li key={i} className="small">{e}</li>)}
             </ul>
+          ) : null}
+          {result.duplicates?.length>0 && (
+            <div className="small muted mt8" style={{ borderTop:"1px dashed var(--border)", paddingTop:8 }}>
+              {fa?"تکراری‌ها (نادیده گرفته شد)":"Duplicates (skipped)"}: {result.duplicates.slice(0,12).map(d=>d.student_no||d.id).join("، ")} {result.duplicates.length>12 ? `… +${result.duplicates.length-12}` : ""}
+            </div>
           )}
-          {result.duplicates?.length>0 && <div className="small muted mt8">{fa?"تکراری‌ها نادیده گرفته شد":"Duplicates skipped"}: {result.duplicates.slice(0,6).map(d=>d.student_no).join("، ")} {result.duplicates.length>6 ? `… +${result.duplicates.length-6}`:""}</div>}
+          <div className="small muted mt8" style={{ lineHeight:1.7 }}>
+            💡 {fa?"نکته: اگر «بدون دانشگاه» بودید و به کلاس اضافه می‌شوید، دانشگاهِ کلاس به پروفایل‌تان خودکار اضافه می‌شود (ترمیم). برای تغییر دسته‌جمعی دانشگاه، از جدول کاربران → انتخاب چند نفر → «انتساب به دانشگاه» استفاده کنید." : "Tip: if you had no university, adding to a class auto-fills the class's university. Use table → select → Assign to university for bulk moves."}
+          </div>
         </div>
       )}
 

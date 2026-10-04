@@ -41,6 +41,7 @@ export default function DataTable({
   storageKey, hotkey = false, highlightKeys,
   pageSize: pageSizeProp = DEFAULT_PAGE_SIZE,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
+  selectable = false, selectedIds = null, onSelectionChange = null,
 }) {
   const { t, lang } = useApp();
   const fa = lang !== "en";
@@ -130,6 +131,20 @@ export default function DataTable({
       <div className="table-wrap">
         <table>
           <thead><tr>
+            {selectable && (
+              <th style={{ width: 38, textAlign: "center" }}>
+                <input type="checkbox"
+                  checked={pageRows.length>0 && pageRows.every(r=> selectedIds?.has(rowKey?rowKey(r):r.id))}
+                  onChange={(e)=>{
+                    const next=new Set(selectedIds||[]);
+                    if(e.target.checked){ pageRows.forEach(r=> next.add(rowKey?rowKey(r):r.id)); }
+                    else { pageRows.forEach(r=> next.delete(rowKey?rowKey(r):r.id)); }
+                    onSelectionChange?.(next);
+                  }}
+                  aria-label={fa?"انتخاب همه در این صفحه":"Select all on page"}
+                />
+              </th>
+            )}
             {columns.map((c) => {
               const canSort = c.sortable !== false;
               const active = sort.key === c.key;
@@ -144,17 +159,25 @@ export default function DataTable({
           </tr></thead>
           <tbody>
             {sorted.length === 0 ? (
-              <tr><td colSpan={columns.length} className="small muted center" style={{ padding: 20 }}>
+              <tr><td colSpan={columns.length + (selectable?1:0)} className="small muted center" style={{ padding: 20 }}>
                 {empty || t("noData")}</td></tr>
-            ) : pageRows.map((row, i) => (
-              <tr key={rowKey ? rowKey(row, start + i) : (row.id ?? start + i)}>
+            ) : pageRows.map((row, i) => {
+              const rid = rowKey ? rowKey(row, start + i) : (row.id ?? start + i);
+              const checked = selectedIds?.has(rid);
+              return (
+              <tr key={rid} style={checked?{background:"var(--primaryGlow)"}:undefined}>
+                {selectable && <td style={{ textAlign: "center" }}><input type="checkbox" checked={!!checked} onChange={(e)=>{
+                  const next=new Set(selectedIds||[]);
+                  if(e.target.checked) next.add(rid); else next.delete(rid);
+                  onSelectionChange?.(next);
+                }} /></td>}
                 {columns.map((c) => {
                   const v = c.render ? c.render(row, dq) : row[c.key];
                   const canHl = dq.trim() && (typeof v === "string" || typeof v === "number") && (!highlightKeys || highlightKeys.includes(c.key));
                   return <td key={c.key}>{canHl ? <Highlight text={String(v)} ranges={highlightLocal(String(v), dq)} /> : v}</td>;
                 })}
               </tr>
-            ))}
+            );})}
           </tbody>
         </table>
       </div>
