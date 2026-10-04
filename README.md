@@ -4,6 +4,10 @@
 
 ## بسته‌های تحویل
 
+- `MED-School-GLOBAL-AUDIT-2026-10-04.zip` — **بسته ۲۰۲۶-۱۰-۰۴ — ممیزی سراسری Glass + بانک ۱۰۰٪ (نسخه ۱۰۸)**
+  - ممیزی سراسری زیبایی/کاربرپسندی با پژوهش ۲۰۲۶ (Landing تا RTL) — Glassmorphism سراسری Topbar/Sidenav/Tabbar/Home-Hero/Browse/Card/Table/Modal با blur 10–18px و reduced-motion؛ بیلد ۴٫۳۸s، ۱۶۰ compressed، sw `medschool-2026.09.26-academic-final-102`
+  - بانک ۵۴ payload (۱۱٬۶۰۴ سؤال): ۰ BROKEN، ۰ two-correct، ۰ short — اصلاح ۲۹ ردیف با correct_index دقیق (هاریسون ۲۲/نلسون ۲۱) + غنی‌سازی درسنامه چندپاراگرافی >۵۰۰ حرف و میکرو موضوعی؛ تکمیل part18 q73 و تأیید part22 defer؛ ۵۴ payload در ZIP
+
 - `MED-School-107-MINDMAP-COMPLETE.zip` — **بسته ۱۰۷ — مایندمپِ کامل ۳۳ نقشه + تکمیلِ دستیِ ادمین (۲۰۲۶-۱۰-۰۳)**
   - **تکمیلِ مایندمپ‌ها**: نفروتیک و سپسیس از ۳ گره به ۸ گره (definition→etiology→clinical→workup→treatment→complication با Harrison 22e) + CKD به‌عنوان ۳۰امین + ۳ ورودیِ دستیِ ادمین (هیپرکالمی اورژانس، حمله آسم، پانکراتیت حاد) با ۷-۸ گره و رفرنس — هر کدام ۳ لینکِ دقیق به بانکِ سؤالات (آزمون: هیپرکالمی ۱۶۷۶، آسم ۴۴۰، پانکراتیت ۱۱۴۶)
   - **ورودِ دستیِ ادمین (تستِ زنده)**: ۳ نقشه از طریق `POST /admin/mindmap-bank` با گرافِ کامل وارد شد؛ به‌عنوان کاربر تأیید شد: جستجوی `هیپرکالمی/آسم/پانکراتیت`، فیلتر `nephro`، جزئیاتِ گراف (۸ گره)، و `by-concept` → ۳ سؤال/گره و `Q→mindmap` دوسویه — آسمِ رایگان (is_premium=false) همیشه باز، بقیه ۳ پیش‌نمایش + قفلِ پرمیوم
