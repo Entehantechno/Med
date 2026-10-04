@@ -166,11 +166,17 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
               ))}
             </div>
           )}
-          {stats.length > 0 && (
+          {stats.length > 0 ? (
             <div className="lp-stats">
               {stats.map(([n, l]) => (
                 <div className="lp-stat" key={l}><div className="lp-stat-n">{n}</div><div className="lp-stat-l">{l}</div></div>
               ))}
+            </div>
+          ) : (
+            <div className="lp-stats" style={{ opacity: .55 }}>
+              <div className="lp-stat"><div className="lp-stat-n">—</div><div className="lp-stat-l">{tc("landStatLearners")}</div></div>
+              <div className="lp-stat"><div className="lp-stat-n">—</div><div className="lp-stat-l">{tc("landStatQuestions")}</div></div>
+              <div className="lp-stat"><div className="lp-stat-n">—</div><div className="lp-stat-l">{tc("landStatTopics")}</div></div>
             </div>
           )}
         </div>

@@ -616,73 +616,176 @@ function AddStudentModal({ cases, onClose, onDone }) {
   );
 }
 
-/* Bulk-import students from an Excel/CSV file (name, family, student number).
-   Each imported student logs in with their student number as both username and password. */
+/* Bulk-import students — بهترین حالت: راهنمای CSV + افزودن مستقیم به دانشگاه/کلاس + ثبت‌نام خودکار
+   Columns: نام, نام خانوادگی, شماره دانشجویی (الزامی), ایمیل(اختیاری), کد دانشگاه(اختیاری), کد کلاس(اختیاری)
+   Each imported student: username=student_no, password=student_no (قابل تغییر پس از ورود) — ثبت‌نام خودکار (active). */
 function StudentImportModal({ onClose, onDone }) {
-  const { t } = useApp();
+  const { t, lang } = useApp();
+  const fa = lang==="fa";
   const toast = useToast();
+  const [tab, setTab] = useState("upload"); // upload | guide
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [unis, setUnis] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [uniId, setUniId] = useState("");
+  const [classId, setClassId] = useState("");
   const fileRef = useRef(null);
+  const myRole = (()=>{ try{ const tok=getToken(); if(!tok) return ""; const p=JSON.parse(atob(tok.split(".")[1]||"")); return p.role||"";}catch{return ""}})();
+
+  useEffect(()=>{
+    api.get("/admin/universities").then(r=>setUnis(r.universities||r||[])).catch(()=>{});
+    api.get("/classes").then(r=>setClasses(r.classes||r||[])).catch(()=>{});
+    // for teacher, prefill own university
+    if (myRole==="teacher") {
+      api.get("/me").then(me=>{ if(me?.university_id) setUniId(String(me.university_id)); }).catch(()=>{});
+    }
+  },[]);
 
   const onFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    // .csv (and Excel saved-as-CSV) are plain text; read directly.
     const content = await file.text();
     setText(content);
+    setTab("upload");
   };
-
+  const downloadTemplate = async (l) => {
+    try {
+      const res = await fetch(`/api/users/import/template.csv?lang=${l}`, { headers:{ Authorization:`Bearer ${getToken()}` }});
+      if(!res.ok) throw new Error("template failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a=document.createElement("a"); a.href=url; a.download=`students-template-${l}.csv`; a.click(); URL.revokeObjectURL(url);
+    } catch{ 
+      // fallback inline
+      const tFa="نام,نام خانوادگی,شماره دانشجویی,ایمیل (اختیاری),کد دانشگاه (اختیاری),کد کلاس (اختیاری)\nعلی,رضایی,40012345,ali@example.com,TUMS,CLS-101\nمریم,کریمی,40067890,,SBMU,";
+      const tEn="name,family,student_no,email,university_code,class_code\nAli,Rezaei,40012345,ali@example.com,TUMS,CLS-101\nMaryam,Karimi,40067890,,SBMU,";
+      const blob=new Blob(["\uFEFF"+(l==="en"?tEn:tFa)],{type:"text/csv;charset=utf-8"});
+      const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`students-template-${l}.csv`; a.click(); URL.revokeObjectURL(url);
+    }
+  };
   const submit = async () => {
     if (!text.trim()) return toast(t("noData"));
     setBusy(true);
     try {
-      const r = await api.post("/users/import", { csv: text });
+      const payload={ csv:text };
+      if (uniId) payload.university_id=Number(uniId);
+      if (classId) payload.class_id=Number(classId);
+      const r = await api.post("/users/import", payload);
       setResult(r);
-      toast(`${t("importedCount")}: ${r.created}`);
-    } catch (e) { toast(String(e.message)); }
+      const msg = fa ? `✅ ${r.created} دانشجو ساخته شد${r.enrolled?` · ${r.enrolled} نفر به کلاس افزوده شد`:""} · نادیده: ${r.skipped}` : `✅ ${r.created} created${r.enrolled?` · ${r.enrolled} enrolled`:""} · skipped: ${r.skipped}`;
+      toast(msg);
+    } catch (e) { toast(String(e.message||e)); }
     finally { setBusy(false); }
   };
-
-  const template = "نام,نام خانوادگی,شماره دانشجویی\nعلی,رضایی,40012345\nمریم,کریمی,40067890";
+  const sampleFa = "نام,نام خانوادگی,شماره دانشجویی,ایمیل,کد دانشگاه,کد کلاس\nعلی,رضایی,40012345,ali@example.com,TUMS,CLS-101\nمریم,کریمی,40067890,,SBMU,\nرضا,احمدی,40011223,reza@example.com,,";
+  const sampleEn = "name,family,student_no,email,university_code,class_code\nAli,Rezaei,40012345,ali@example.com,TUMS,CLS-101\nMaryam,Karimi,40067890,,SBMU,\nReza,Ahmadi,40011223,reza@example.com,,";
 
   return (
-    <Modal title={t("importStudents")} onClose={onClose}>
-      <div className="small muted mb8">{t("studentImportHint")}</div>
-      <div className="micro-box small mb16" style={{ padding: "12px 14px" }}>
-        <Icon name="key" size={14} /> {t("studentImportLogin")}
+    <Modal title={fa ? "ورود دسته‌جمعی دانشجویان" : "Bulk import students"} onClose={onClose} wide>
+      <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
+        <button type="button" className={`btn btn-sm ${tab==="upload"?"btn-primary":"btn-ghost"}`} onClick={()=>setTab("upload")}>{fa ? "آپلود CSV" : "Upload CSV"}</button>
+        <button type="button" className={`btn btn-sm ${tab==="guide"?"btn-primary":"btn-ghost"}`} onClick={()=>setTab("guide")}>{fa ? "راهنمای CSV" : "Guide"}</button>
       </div>
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => fileRef.current?.click()}>
-          <Icon name="download" size={14} /> {t("chooseFile")}
-        </button>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setText(template)}>{t("useTemplate")}</button>
-        <input ref={fileRef} type="file" accept=".csv,text/csv,.txt" onChange={onFile} style={{ display: "none" }} />
-      </div>
+      {tab==="guide" ? (
+        <div className="card" style={{padding:14,background:"var(--panel2)"}}>
+          <div style={{fontWeight:800,marginBottom:8}}>{fa ? "ستون‌های CSV — فقط «شماره دانشجویی» الزامی است" : "CSV columns — only student_no is required"}</div>
+          <div style={{overflowX:"auto"}}>
+            <table className="small" style={{width:"100%",borderCollapse:"collapse"}}>
+              <thead><tr style={{textAlign:"start",borderBottom:"1px solid var(--border)"}}><th style={{padding:"6px 8px"}}>{fa?"ستون":"Column"}</th><th style={{padding:"6px 8px"}}>{fa?"الزامی؟":"Required?"}</th><th style={{padding:"6px 8px"}}>{fa?"توضیح":"Notes"}</th></tr></thead>
+              <tbody>
+                <tr><td style={{padding:"6px 8px"}}><code>student_no</code> / شماره دانشجویی</td><td style={{padding:"6px 8px"}}>✅</td><td style={{padding:"6px 8px"}}>{fa?"نام کاربری و رمز اولیه همین مقدار است":"username & initial password"}</td></tr>
+                <tr><td style={{padding:"6px 8px"}}><code>name</code> / نام</td><td style={{padding:"6px 8px"}}>{fa?"اختیاری":"optional"}</td><td style={{padding:"6px 8px"}}>{fa?"اگر خالی باشد، شماره دانشجویی نمایش داده می‌شود":"defaults to student_no"}</td></tr>
+                <tr><td style={{padding:"6px 8px"}}><code>family</code> / نام خانوادگی</td><td style={{padding:"6px 8px"}}>{fa?"اختیاری":"optional"}</td><td style={{padding:"6px 8px"}}>{fa?"با نام ترکیب می‌شود":"joined with name"}</td></tr>
+                <tr><td style={{padding:"6px 8px"}}><code>email</code> / ایمیل</td><td style={{padding:"6px 8px"}}>{fa?"اختیاری":"optional"}</td><td style={{padding:"6px 8px"}}>{fa?"اعتبارسنجی نمی‌شود؛ فقط ذخیره":"stored as-is"}</td></tr>
+                <tr><td style={{padding:"6px 8px"}}><code>university_code</code> / کد دانشگاه</td><td style={{padding:"6px 8px"}}>{fa?"اختیاری (ادمین)":"optional (admin)"}</td><td style={{padding:"6px 8px"}}>{fa?"مثلاً TUMS، SBMU، IUMS … — برای استاد نادیده گرفته می‌شود":"e.g. TUMS — ignored for teacher"}</td></tr>
+                <tr><td style={{padding:"6px 8px"}}><code>class_code</code> / کد کلاس</td><td style={{padding:"6px 8px"}}>{fa?"اختیاری":"optional"}</td><td style={{padding:"6px 8px"}}>{fa?"اگر پر باشد، پس از ساخت، عضو کلاس می‌شود (ثبت‌نام خودکار)":"auto-enroll to class"}</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div className="small muted mt8" style={{lineHeight:1.8}}>
+            {fa ? "• سطر اول اگر شامل «نام/شماره/ایمیل/کد» باشد به‌عنوان سرستون نادیده گرفته می‌شود — فرقی نمی‌کند فارسی یا انگلیسی باشد. • جداکننده: کاما، سمی‌کالن یا تب. • فایل اکسل را با «Save As → CSV UTF-8» ذخیره کنید." : "• First row is treated as header if it contains name/number/email/code. • Delimiters: comma, semicolon or tab. • Save Excel as CSV UTF-8."}
+          </div>
+          <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:12}}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={()=>downloadTemplate("fa")}>⬇️ {fa?"دانلود قالب فارسی":"Download FA template"}</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={()=>downloadTemplate("en")}>⬇️ Download EN template</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={()=>{setText(fa?sampleFa:sampleEn); setTab("upload");}}>{fa?"پر کردن نمونه":"Fill sample"}</button>
+          </div>
+          <div className="micro-box small mt12" style={{padding:"10px 12px"}}>💡 {fa ? "ثبت‌نام خودکار: دانشجو با وضعیت «فعال» ساخته می‌شود و با همان شماره دانشجویی می‌تواند وارد شود (رمز = شماره دانشجویی). اگر «افزودن به کلاس» انتخاب کنید یا ستون کد کلاس پر باشد، عضویت کلاس همان لحظه انجام می‌شود." : "Auto-enrollment: students are created active; login with student_no as both username & password. If a class is selected or class_code is filled, they are added to that class instantly."}</div>
+        </div>
+      ) : (
+        <>
+          <div className="small muted mb8">{fa ? "فایل CSV یا اکسلِ ذخیره‌شده به‌صورت CSV را بارگذاری کنید، یا مستقیماً در کادر زیر بچسبانید. فقط شماره دانشجویی الزامی است." : "Upload a CSV (or Excel saved as CSV) or paste rows below. Only student_no is required."}</div>
+          <div className="micro-box small mb12" style={{ padding: "10px 12px", display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
+            <Icon name="key" size={14} /> {fa ? "ورود با شماره دانشجویی / رمز = شماره دانشجویی — پس از ورود قابل تغییر است." : "Login with student_no / password = student_no — changeable after first login."}
+          </div>
 
-      <div className="field"><label>{t("pasteOrEdit")}</label>
-        <textarea value={text} onChange={(e) => setText(e.target.value)} style={{ minHeight: 140, fontFamily: "monospace", direction: "ltr" }}
-          placeholder={template} /></div>
+          {(myRole==="admin") && (
+            <div className="grid grid-2 mb12">
+              <label className="field"><span>{fa?"دانشگاه مقصد (اختیاری)":"Target university (optional)"}</span>
+                <select value={uniId} onChange={e=>setUniId(e.target.value)}>
+                  <option value="">{fa?"— دانشگاه فعلی/پیش‌فرض —":"— current / default —"}</option>
+                  {unis.map(u=><option key={u.id} value={u.id}>{fa? (u.name_fa||u.code) : (u.name_en||u.code)} — {u.code} {u.city_fa?`(${u.city_fa})`:""}</option>)}
+                </select>
+                <span className="small muted">{fa?"اگر خالی باشد، به دانشگاهِ جاری افزوده می‌شود. کد داخل CSV بر این انتخاب اولویت دارد.":"Leave empty for current. Code inside CSV overrides this."}</span>
+              </label>
+              <label className="field"><span>{fa?"افزودن مستقیم به کلاس (ثبت‌نام خودکار)":"Add directly to class (auto-enroll)"}</span>
+                <select value={classId} onChange={e=>setClassId(e.target.value)}>
+                  <option value="">{fa?"— فقط ساخت کاربر، بدون عضویت —":"— create only, no enrollment —"}</option>
+                  {classes.map(c=><option key={c.id} value={c.id}>{c.name_fa||c.name_en||c.code||c.id} {c.code?`(${c.code})`:""}</option>)}
+                </select>
+                <span className="small muted">{fa?"همهٔ ردیف‌های این فایل عضو این کلاس می‌شوند؛ ستون کد کلاس در CSV هم پشتیبانی می‌شود.":"All rows will be added to this class; CSV class_code column also works."}</span>
+              </label>
+            </div>
+          )}
+          {myRole==="teacher" && (
+            <div className="field mb12">
+              <label>{fa?"افزودن مستقیم به کلاس (ثبت‌نام خودکار)":"Add directly to class (auto-enroll)"}</label>
+              <select value={classId} onChange={e=>setClassId(e.target.value)}>
+                <option value="">{fa?"— فقط ساخت کاربر —":"— create only —"}</option>
+                {classes.map(c=><option key={c.id} value={c.id}>{c.name_fa||c.name_en||c.code||c.id} {c.code?`(${c.code})`:""}</option>)}
+              </select>
+              <span className="small muted">{fa?"دانشجویانِ این فایل هم‌زمان عضو کلاس می‌شوند (دانشگاه شما به‌صورت خودکار).":"Students will be enrolled in the selected class (your university auto-applied)."}</span>
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => fileRef.current?.click()}>
+              <Icon name="upload" size={14} /> {fa?"انتخاب فایل CSV":"Choose CSV file"}
+            </button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={()=>downloadTemplate(fa?"fa":"en")}>⬇️ {fa?"دانلود قالب CSV":"Download CSV template"}</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setText(fa?sampleFa:sampleEn)}>{fa?"نمونه را پر کن":"Fill sample"}</button>
+            <input ref={fileRef} type="file" accept=".csv,text/csv,.txt" onChange={onFile} style={{ display: "none" }} />
+          </div>
+
+          <div className="field"><label>{fa?"چسباندن/ویرایش CSV":"Paste / edit CSV"}</label>
+            <textarea value={text} onChange={(e) => setText(e.target.value)} style={{ minHeight: 160, fontFamily: "monospace", direction: "ltr", fontSize:".92rem", lineHeight:1.6 }}
+              placeholder={fa?sampleFa:sampleEn} /></div>
+        </>
+      )}
 
       {result && (
-        <div className="micro-box small mb8" style={{ padding: "12px 14px" }}>
-          ✅ {t("importedCount")}: <b>{result.created}</b> · {t("skipped")}: {result.skipped}
+        <div className="micro-box small mb8" style={{ padding: "12px 14px", borderColor:"var(--accent)" }}>
+          ✅ {fa?"ساخته شد":"Created"}: <b>{result.created}</b> · {fa?"نادیده":"Skipped"}: {result.skipped} {result.enrolled ? <>· {fa?"عضو کلاس":"Enrolled"}: <b>{result.enrolled}</b></> : null}
           {result.errors?.length > 0 && (
             <ul style={{ margin: "8px 0 0", paddingInlineStart: 18 }}>
               {result.errors.map((e, i) => <li key={i} className="small">{e}</li>)}
             </ul>
           )}
+          {result.duplicates?.length>0 && <div className="small muted mt8">{fa?"تکراری‌ها نادیده گرفته شد":"Duplicates skipped"}: {result.duplicates.slice(0,6).map(d=>d.student_no).join("، ")} {result.duplicates.length>6 ? `… +${result.duplicates.length-6}`:""}</div>}
         </div>
       )}
 
       <div className="modal-actions">
-        <button type="button" className="btn btn-ghost" onClick={onClose}>{t("close")}</button>
-        <button type="button" className="btn btn-primary" onClick={submit} disabled={busy}>
-          {busy ? t("loading") : t("import")}
-        </button>
-        {result && <button type="button" className="btn btn-accent" onClick={onDone}>{t("done")}</button>}
+        <button type="button" className="btn btn-ghost" onClick={onClose}>{fa?"بستن":"Close"}</button>
+        {tab==="guide" ? <button type="button" className="btn btn-primary" onClick={()=>setTab("upload")}>{fa?"رفتن به آپلود":"Go to upload"}</button> : (
+          <button type="button" className="btn btn-primary" onClick={submit} disabled={busy}>
+            {busy ? (fa?"در حال ورود…":"Importing…") : (fa?"ورود دسته‌جمعی":"Import")}
+          </button>
+        )}
+        {result && <button type="button" className="btn btn-accent" onClick={onDone}>{fa?"اتمام — بستن":"Done — close"}</button>}
       </div>
     </Modal>
   );

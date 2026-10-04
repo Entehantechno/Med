@@ -969,53 +969,157 @@ r.post("/users", authRequired, requireRole("teacher", "admin"), async (req, res)
   } catch (e) { res.status(400).json({ error: "username / student number already exists" }); }
 });
 
+// ── CSV template for bulk import (downloadable) ──
+r.get("/users/import/template.csv", authRequired, requireRole("teacher","admin"), (req,res)=>{
+  const lang = req.query.lang==="en" ? "en" : "fa";
+  const headerFa = "نام,نام خانوادگی,شماره دانشجویی,ایمیل (اختیاری),کد دانشگاه (اختیاری),کد کلاس (اختیاری)";
+  const headerEn = "name,family,student_no,email,university_code,class_code";
+  const header = lang==="en" ? headerEn : headerFa;
+  const sample = [
+    header,
+    lang==="en" ? "Ali,Rezaei,40012345,ali@example.com,TUMS,CLS-101" : "علی,رضایی,40012345,ali@example.com,TUMS,CLS-101",
+    lang==="en" ? "Maryam,Karimi,40067890,,SBMU," : "مریم,کریمی,40067890,,SBMU,",
+    lang==="en" ? "Reza,Ahmadi,40011223,reza@example.com,," : "رضا,احمدی,40011223,reza@example.com,,",
+  ].join("\n");
+  res.setHeader("Content-Type","text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition","attachment; filename=\"students-template.csv\"");
+  res.send("\uFEFF"+sample);
+});
+
 // Bulk-import students from a CSV/pasted text.
-// Accepts columns: name (or first name), family (or last name), student_no (or studentNo/id).
-// Header row optional. For each student: username = student number, password = student number.
+// Accepts columns: name (or first name), family (or last name), student_no (or studentNo/id), email, university_code, class_code.
+// Header row optional and auto-detected by column names. For each student: username=student_no, password=student_no.
+// Optional: university_code per row (admin only; teacher rows forced to teacher's university), class_code per row or class_id query/body to auto-enroll.
 r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res) => {
-  let { csv = "", university_id } = req.body || {};
-  // a teacher's imported students are pinned to the teacher's own university.
+  let { csv = "", university_id, class_id, class_code, university_code } = req.body || {};
+  // class_id may come as query param as well
+  if (!class_id && req.query.class_id) class_id = Number(req.query.class_id);
+  if (!class_code && req.query.class_code) class_code = String(req.query.class_code);
+  if (!university_code && req.query.university_code) university_code = String(req.query.university_code);
   if (req.user.role === "teacher") {
     const me = db.prepare("SELECT university_id FROM users WHERE id=?").get(req.user.id);
     university_id = me?.university_id || university_id || null;
+  } else if (university_code) {
+    const uByCode = db.prepare("SELECT id FROM universities WHERE code=?").get(String(university_code).trim().toUpperCase());
+    if (uByCode) university_id = uByCode.id;
   }
   const lines = String(csv).split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
   if (!lines.length) return res.status(400).json({ error: "empty" });
 
-  // Detect and skip a header row if present.
-  const headerRe = /(name|نام|family|خانوادگ|student|شماره|no|id)/i;
-  const first = lines[0].split(/[,;\t]/).map((s) => s.trim().toLowerCase());
-  const hasHeader = first.some((c) => headerRe.test(c));
+  // Detect header and map columns by name when possible
+  const headerRe = /(name|نام|family|خانوادگ|student|شماره|no|id|email|ایمیل|university|دانشگاه|class|کلاس|code|کد)/i;
+  const firstCols = lines[0].split(/[,;\t]/).map((s) => s.trim());
+  const firstLow = firstCols.map((s)=>s.toLowerCase());
+  const hasHeader = firstLow.some((c) => headerRe.test(c));
+  // Build col index map when header present
+  let colMap = null;
+  if (hasHeader) {
+    colMap = {};
+    firstLow.forEach((h,i)=>{
+      if (/(student|شماره|student_no|شماره دانشجوی)/.test(h)) colMap.sno = i;
+      else if (/email|ایمیل/.test(h)) colMap.email = i;
+      else if (/university_code|کد دانشگاه/.test(h)) colMap.u_code = i;
+      else if (/class_code|کد کلاس/.test(h)) colMap.c_code = i;
+      else if (/(نام خانوادگ|family|last)/.test(h)) colMap.family = i;
+      else if (/(نام$|^name$|first)/.test(h)) colMap.name = i;
+    });
+    // fallback: if no sno header found, assume last column is sno (legacy)
+    if (colMap.sno==null) {
+      // try to guess: column with numeric pattern or last
+      colMap.sno = firstCols.length-1;
+    }
+  }
   const dataLines = hasHeader ? lines.slice(1) : lines;
 
+  // Resolve optional global class to enroll into (admin may choose class before import)
+  let globalClassId = null;
+  if (class_id) {
+    const c = db.prepare("SELECT id, university_id FROM classes WHERE id=?").get(Number(class_id));
+    if (c) {
+      if (req.user.role==="teacher") {
+        const me = db.prepare("SELECT university_id FROM users WHERE id=?").get(req.user.id);
+        if (c.university_id && me?.university_id && c.university_id!==me.university_id) {
+          // teacher cannot enroll into another university's class
+        } else globalClassId = c.id;
+      } else globalClassId = c.id;
+    }
+  } else if (class_code) {
+    const c = db.prepare("SELECT id, university_id FROM classes WHERE code=?").get(String(class_code).trim());
+    if (c) globalClassId = c.id;
+  }
+
   const insUser = db.prepare(
-    "INSERT INTO users (username,password_hash,name_fa,name_en,student_no,role,status,university_id) VALUES (?,?,?,?,?, 'student','active', ?)"
+    "INSERT INTO users (username,password_hash,name_fa,name_en,student_no,email,role,status,university_id) VALUES (?,?,?,?,?,?, 'student','active', ?)"
   );
   const findByNo = db.prepare("SELECT id FROM users WHERE student_no=? OR username=?");
+  const insMember = db.prepare("INSERT OR IGNORE INTO class_members (class_id,user_id) VALUES (?,?)");
 
   let created = 0, skipped = 0;
-  const errors = [], duplicates = [];
+  const errors = [], duplicates = [], enrolled = [];
   const tx = db.transaction(() => {
     dataLines.forEach((line, i) => {
       const cols = line.split(/[,;\t]/).map((s) => s.trim());
-      // Flexible: [name, family, student_no]  OR  [full name, student_no]  OR  [student_no]
-      let name = "", family = "", sno = "";
-      if (cols.length >= 3) { [name, family, sno] = cols; }
-      else if (cols.length === 2) { [name, sno] = cols; }
-      else { sno = cols[0]; }
+      let name = "", family = "", sno = "", email="", rowUcode="", rowCcode="";
+      if (colMap) {
+        // header-aware extraction
+        name = colMap.name!=null ? (cols[colMap.name]||"") : "";
+        family = colMap.family!=null ? (cols[colMap.family]||"") : "";
+        sno = colMap.sno!=null ? (cols[colMap.sno]||"") : (cols[cols.length-1]||"");
+        email = colMap.email!=null ? (cols[colMap.email]||"") : "";
+        rowUcode = colMap.u_code!=null ? (cols[colMap.u_code]||"") : "";
+        rowCcode = colMap.c_code!=null ? (cols[colMap.c_code]||"") : "";
+        // fallback for simple 3-col without explicit map
+        if (!sno && cols.length>=3) sno = cols[2];
+        if (!name && cols.length>=2 && colMap.name==null) name = cols[0];
+        if (!family && cols.length>=3 && colMap.family==null) family = cols[1];
+      } else {
+        // Flexible legacy: [name, family, student_no]  OR  [full name, student_no]  OR  [student_no]
+        if (cols.length >= 3) { [name, family, sno] = cols; }
+        else if (cols.length === 2) { [name, sno] = cols; }
+        else { sno = cols[0]; }
+        if (cols.length>=4) email = cols[3]||"";
+        if (cols.length>=5) rowUcode = cols[4]||"";
+        if (cols.length>=6) rowCcode = cols[5]||"";
+      }
       sno = String(sno || "").trim();
+      email = String(email||"").trim() || null;
       if (!sno) { errors.push(`${t_line(i, hasHeader)}: ${req_no_sno()}`); skipped++; return; }
       const fullName = [name, family].filter(Boolean).join(" ").trim() || sno;
       const existing = findByNo.get(sno, sno);
-      if (existing) { duplicates.push({ student_no: sno, id: existing.id }); skipped++; return; } // already exists
-      try {
-        insUser.run(sno, hashPasswordSync(sno), fullName, fullName, sno, university_id || null);
-        created++;
-      } catch (e) { errors.push(`${sno}: ${e.message}`); skipped++; }
+      let uid = existing?.id || null;
+      let isNew = !existing;
+      // per-row university override (admin only)
+      let rowUniId = university_id || null;
+      if (req.user.role!=="teacher" && rowUcode) {
+        const uByCode = db.prepare("SELECT id FROM universities WHERE code=?").get(String(rowUcode).trim().toUpperCase());
+        if (uByCode) rowUniId = uByCode.id;
+        else { errors.push(`${t_line(i, hasHeader)}: university_code ${rowUcode} یافت نشد — از دانشگاه پیش‌فرض استفاده شد`); }
+      }
+      if (existing) {
+        // existing user: optionally enroll to class even if not newly created
+        duplicates.push({ student_no: sno, id: existing.id });
+        // do not count as created, but try enroll if class requested
+      } else {
+        try {
+          const info = insUser.run(sno, hashPasswordSync(sno), fullName, fullName, sno, email, rowUniId);
+          uid = info.lastInsertRowid;
+          created++;
+        } catch (e) { errors.push(`${sno}: ${e.message}`); skipped++; return; }
+      }
+      // auto-enroll to class (global or per-row)
+      let targetClassId = globalClassId;
+      if (!targetClassId && rowCcode) {
+        const c = db.prepare("SELECT id FROM classes WHERE code=?").get(String(rowCcode).trim());
+        if (c) targetClassId = c.id;
+      }
+      if (targetClassId && uid) {
+        try { insMember.run(targetClassId, uid); enrolled.push({ student_no: sno, class_id: targetClassId }); } catch {}
+      }
+      if (existing) skipped++;
     });
   });
   try { tx(); } catch (e) { return res.status(400).json({ error: e.message }); }
-  res.json({ created, skipped, total: dataLines.length, duplicates, errors: errors.slice(0, 20) });
+  res.json({ created, skipped, total: dataLines.length, duplicates, enrolled: enrolled.length, errors: errors.slice(0, 30) });
 });
 function t_line(i, hasHeader) { return `line ${i + 1 + (hasHeader ? 1 : 0)}`; }
 function req_no_sno() { return "missing student number"; }

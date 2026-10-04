@@ -1455,6 +1455,43 @@ export function initSchema() {
   // data, create one default institution and attach unscoped teachers/students.
   db.exec("INSERT OR IGNORE INTO universities (id,name_fa,name_en,city_fa,city_en,code,active) VALUES (1,'دانشگاه پیش‌فرض','Default University','','','DEFAULT',1)");
   db.exec("UPDATE users SET university_id=1 WHERE role IN ('teacher','student') AND university_id IS NULL");
+  // ── Seed full medical-universities catalog (65+). Code is the stable key; id=1 is preserved.
+  // Existing rows (e.g. Arak id=120 from old seed) are kept; new rows use AUTOINCREMENT.
+  try {
+    // Synchronous read — initSchema is sync, so we use fs (works in both ESM/CJS after build)
+    let list = [];
+    try {
+      const jPath = path.join(__dirname, "data", "medical-universities.json");
+      if (fs.existsSync(jPath)) list = JSON.parse(fs.readFileSync(jPath, "utf8"));
+    } catch {}
+    // Fallback: try JS file if JSON missing
+    if (!list.length) {
+      try {
+        const cPath = path.join(__dirname, "..", "..", "client", "src", "data", "medical-universities.js");
+        if (fs.existsSync(cPath)) {
+          const txt = fs.readFileSync(cPath, "utf8");
+          const m = txt.match(/MEDICAL_UNIVERSITIES\s*=\s*(\[[\s\S]*?\])(?:\s*;|\s*export)/);
+          if (m) list = eval("(" + m[1] + ")");
+        }
+      } catch {}
+    }
+    if (list && list.length) {
+      const ins = db.prepare("INSERT OR IGNORE INTO universities (name_fa,name_en,city_fa,city_en,code,active) VALUES (?,?,?,?,?,1)");
+      const byCode = db.prepare("SELECT id, name_fa FROM universities WHERE code=?");
+      for (const u of list) {
+        const code = String(u.code||"").trim().toUpperCase();
+        if (!code || code==="DEFAULT") continue;
+        const existing = byCode.get(code);
+        if (existing) {
+          if (!existing.name_fa || existing.name_fa!==u.name_fa) {
+            try { db.prepare("UPDATE universities SET name_fa=?, name_en=?, city_fa=?, city_en=? WHERE code=?").run(u.name_fa||"", u.name_en||"", u.city_fa||"", u.city_en||"", code); } catch {}
+          }
+          continue;
+        }
+        try { ins.run(u.name_fa||"", u.name_en||"", u.city_fa||"", u.city_en||"", code); } catch {}
+      }
+    }
+  } catch { /* best-effort seed */ }
   db.exec(`CREATE TABLE IF NOT EXISTS university_storage_namespaces (
       namespace TEXT PRIMARY KEY, university_id INTEGER NOT NULL, created_at TEXT DEFAULT (datetime('now'))
     )`);
