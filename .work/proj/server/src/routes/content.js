@@ -973,14 +973,15 @@ r.post("/users", authRequired, requireRole("teacher", "admin"), async (req, res)
 // ── CSV template for bulk import (downloadable) ──
 r.get("/users/import/template.csv", authRequired, requireRole("teacher","admin"), (req,res)=>{
   const lang = req.query.lang==="en" ? "en" : "fa";
-  const headerFa = "نام,نام خانوادگی,شماره دانشجویی,ایمیل (اختیاری),کد دانشگاه (اختیاری),کد کلاس (اختیاری)";
-  const headerEn = "name,family,student_no,email,university_code,class_code";
+  // تک‌نام: فقط «نام,شماره دانشجویی» — نام به هر زبانی
+  const headerFa = "نام,شماره دانشجویی";
+  const headerEn = "name,student_no";
   const header = lang==="en" ? headerEn : headerFa;
   const sample = [
     header,
-    lang==="en" ? "Ali,Rezaei,40012345,ali@example.com,TUMS,CLS-101" : "علی,رضایی,40012345,ali@example.com,TUMS,CLS-101",
-    lang==="en" ? "Maryam,Karimi,40067890,,SBMU," : "مریم,کریمی,40067890,,SBMU,",
-    lang==="en" ? "Reza,Ahmadi,40011223,reza@example.com,," : "رضا,احمدی,40011223,reza@example.com,,",
+    lang==="en" ? "Ali Rezaei,40012345" : "علی رضایی,40012345",
+    lang==="en" ? "Maryam Karimi,40067890" : "مریم کریمی,40067890",
+    lang==="en" ? "Hossein Ahmadi,40011223" : "حسین احمدی,40011223",
   ].join("\n");
   res.setHeader("Content-Type","text/csv; charset=utf-8");
   res.setHeader("Content-Disposition","attachment; filename=\"students-template.csv\"");

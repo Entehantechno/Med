@@ -762,21 +762,32 @@ function StudentImportModal({ onClose, onDone }) {
   const onFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const content = await file.text();
-    setText(content);
-    setTab("upload");
+    try {
+      const content = await file.text();
+      setText(content);
+      setTab("upload");
+      toast(fa ? `فایل خوانده شد: ${file.name} (${content.split(/\r?\n/).filter(l=>l.trim()).length} ردیف)` : `Loaded: ${file.name}`);
+    } catch(err){
+      toast(String(err.message||err));
+    } finally {
+      // allow re-selecting same file
+      e.target.value = "";
+    }
   };
   const downloadTemplate = async (l) => {
     try {
       const res = await fetch(`/api/users/import/template.csv?lang=${l}`, { headers:{ Authorization:`Bearer ${getToken()}` }});
-      if(!res.ok) throw new Error("template failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a=document.createElement("a"); a.href=url; a.download=`students-template-${l}.csv`; a.click(); URL.revokeObjectURL(url);
-    } catch{ 
-      // fallback inline
-      const tFa="نام,نام خانوادگی,شماره دانشجویی,ایمیل (اختیاری),کد دانشگاه (اختیاری),کد کلاس (اختیاری)\nعلی,رضایی,40012345,ali@example.com,TUMS,CLS-101\nمریم,کریمی,40067890,,SBMU,";
-      const tEn="name,family,student_no,email,university_code,class_code\nAli,Rezaei,40012345,ali@example.com,TUMS,CLS-101\nMaryam,Karimi,40067890,,SBMU,";
+      if(res.ok){
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a=document.createElement("a"); a.href=url; a.download=`students-template-${l}.csv`; a.click(); URL.revokeObjectURL(url);
+        return;
+      }
+      throw new Error("template failed");
+    } catch{
+      // fallback inline — تک‌نام: فقط «نام,شماره دانشجویی» (نام به هر زبانی)
+      const tFa="نام,شماره دانشجویی\nعلی رضایی,40012345\nمریم کریمی,40067890\nحسین احمدی,40011223";
+      const tEn="name,student_no\nAli Rezaei,40012345\nMaryam Karimi,40067890\nHossein Ahmadi,40011223";
       const blob=new Blob(["\uFEFF"+(l==="en"?tEn:tFa)],{type:"text/csv;charset=utf-8"});
       const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download=`students-template-${l}.csv`; a.click(); URL.revokeObjectURL(url);
     }
@@ -795,8 +806,8 @@ function StudentImportModal({ onClose, onDone }) {
     } catch (e) { toast(String(e.message||e)); }
     finally { setBusy(false); }
   };
-  const sampleFa = "نام,نام خانوادگی,شماره دانشجویی,ایمیل,کد دانشگاه,کد کلاس\nعلی,رضایی,40012345,ali@example.com,TUMS,CLS-101\nمریم,کریمی,40067890,,SBMU,\nرضا,احمدی,40011223,reza@example.com,,";
-  const sampleEn = "name,family,student_no,email,university_code,class_code\nAli,Rezaei,40012345,ali@example.com,TUMS,CLS-101\nMaryam,Karimi,40067890,,SBMU,\nReza,Ahmadi,40011223,reza@example.com,,";
+  const sampleFa = "نام,شماره دانشجویی\nعلی رضایی,40012345\nمریم کریمی,40067890\nحسین احمدی,40011223";
+  const sampleEn = "name,student_no\nAli Rezaei,40012345\nMaryam Karimi,40067890\nHossein Ahmadi,40011223";
 
   return (
     <Modal title={fa ? "ورود دسته‌جمعی دانشجویان" : "Bulk import students"} onClose={onClose} wide>
@@ -813,8 +824,7 @@ function StudentImportModal({ onClose, onDone }) {
               <thead><tr style={{textAlign:"start",borderBottom:"1px solid var(--border)"}}><th style={{padding:"6px 8px"}}>{fa?"ستون":"Column"}</th><th style={{padding:"6px 8px"}}>{fa?"الزامی؟":"Required?"}</th><th style={{padding:"6px 8px"}}>{fa?"توضیح":"Notes"}</th></tr></thead>
               <tbody>
                 <tr><td style={{padding:"6px 8px"}}><code>student_no</code> / شماره دانشجویی</td><td style={{padding:"6px 8px"}}>✅</td><td style={{padding:"6px 8px"}}>{fa?"نام کاربری و رمز اولیه همین مقدار است":"username & initial password"}</td></tr>
-                <tr><td style={{padding:"6px 8px"}}><code>name</code> / نام</td><td style={{padding:"6px 8px"}}>{fa?"اختیاری":"optional"}</td><td style={{padding:"6px 8px"}}>{fa?"اگر خالی باشد، شماره دانشجویی نمایش داده می‌شود":"defaults to student_no"}</td></tr>
-                <tr><td style={{padding:"6px 8px"}}><code>family</code> / نام خانوادگی</td><td style={{padding:"6px 8px"}}>{fa?"اختیاری":"optional"}</td><td style={{padding:"6px 8px"}}>{fa?"با نام ترکیب می‌شود":"joined with name"}</td></tr>
+                <tr><td style={{padding:"6px 8px"}}><code>name</code> / نام (تک‌ستون — هر زبانی)</td><td style={{padding:"6px 8px"}}>{fa?"اختیاری":"optional"}</td><td style={{padding:"6px 8px"}}>{fa?"نام کامل به هر زبانی؛ اگر خالی باشد شماره نمایش داده می‌شود":"full name in any language; defaults to student_no"}</td></tr>
                 <tr><td style={{padding:"6px 8px"}}><code>email</code> / ایمیل</td><td style={{padding:"6px 8px"}}>{fa?"اختیاری":"optional"}</td><td style={{padding:"6px 8px"}}>{fa?"اعتبارسنجی نمی‌شود؛ فقط ذخیره":"stored as-is"}</td></tr>
                 <tr><td style={{padding:"6px 8px"}}><code>university_code</code> / کد دانشگاه</td><td style={{padding:"6px 8px"}}>{fa?"اختیاری (ادمین)":"optional (admin)"}</td><td style={{padding:"6px 8px"}}>{fa?"مثلاً TUMS، SBMU، IUMS … — برای استاد نادیده گرفته می‌شود":"e.g. TUMS — ignored for teacher"}</td></tr>
                 <tr><td style={{padding:"6px 8px"}}><code>class_code</code> / کد کلاس</td><td style={{padding:"6px 8px"}}>{fa?"اختیاری":"optional"}</td><td style={{padding:"6px 8px"}}>{fa?"اگر پر باشد، پس از ساخت، عضو کلاس می‌شود (ثبت‌نام خودکار)":"auto-enroll to class"}</td></tr>
@@ -868,12 +878,12 @@ function StudentImportModal({ onClose, onDone }) {
           )}
 
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => fileRef.current?.click()}>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={(e)=>{e.preventDefault(); fileRef.current?.click();}}>
               <Icon name="upload" size={14} /> {fa?"انتخاب فایل CSV":"Choose CSV file"}
             </button>
             <button type="button" className="btn btn-ghost btn-sm" onClick={()=>downloadTemplate(fa?"fa":"en")}>⬇️ {fa?"دانلود قالب CSV":"Download CSV template"}</button>
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setText(fa?sampleFa:sampleEn)}>{fa?"نمونه را پر کن":"Fill sample"}</button>
-            <input ref={fileRef} type="file" accept=".csv,text/csv,.txt" onChange={onFile} style={{ display: "none" }} />
+            <input ref={fileRef} type="file" accept=".csv,.txt,text/csv,application/vnd.ms-excel,.xlsx" onChange={onFile} style={{ display: "none" }} />
           </div>
 
           <div className="field"><label>{fa?"چسباندن/ویرایش CSV":"Paste / edit CSV"}</label>
