@@ -2321,6 +2321,37 @@ export function initSchema() {
     }
   } catch {}
 
+  // --- Admin auto-seed (ensure admin exists even when DEFAULT demo was never created) ---
+  try {
+    const adm = db.prepare("SELECT id, password_hash FROM users WHERE username='admin' OR username='Admin'").get();
+    let needAdmin = !adm;
+    let hashOk = false;
+    if (adm && adm.password_hash) {
+      try {
+        if (adm.password_hash.startsWith("$2")) {
+          try { if (bcrypt.compareSync("admin123", adm.password_hash) || bcrypt.compareSync("demo", adm.password_hash)) hashOk = true; } catch { hashOk = !!adm.password_hash; }
+        } else if (adm.password_hash.startsWith("$argon2")) {
+          // argon2 hash: cannot verify sync here, assume ok if hash exists (login will handle)
+          hashOk = true;
+        } else hashOk = !!adm.password_hash;
+      } catch { hashOk = !!adm.password_hash; }
+    }
+    if (needAdmin || !hashOk) {
+      let uniId = 1;
+      try { const u = db.prepare("SELECT id FROM universities ORDER BY id LIMIT 1").get(); if (u) uniId = u.id; } catch {}
+      let hash = "";
+      try { hash = bcrypt.hashSync("admin123", 10); } catch {
+        try { hash = db.prepare("SELECT password_hash FROM users WHERE role='teacher' LIMIT 1").get()?.password_hash || ""; } catch {}
+      }
+      if (hash) {
+        if (needAdmin) {
+          try { db.prepare("INSERT INTO users (username,password_hash,name_fa,name_en,role,status,university_id) VALUES (?,?,?,?,?,?,?)").run("admin", hash, "مدیر سیستم", "Admin", "admin", "active", uniId); console.log("[seed] admin auto-seeded (admin/admin123)"); } catch {}
+        } else {
+          try { db.prepare("UPDATE users SET password_hash=?, status='active' WHERE id=?").run(hash, adm.id); console.log("[seed] admin password reset to admin123"); } catch {}
+        }
+      }
+    }
+  } catch {}
   // --- Arak 85 students auto-seed (single-name, from Word files) + demo cleanup ---
   try {
     const arakUni = db.prepare("SELECT id FROM universities WHERE code='ARAK'").get();

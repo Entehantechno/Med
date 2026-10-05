@@ -65,10 +65,10 @@ export default function Landing({ publicConfig, onGetStarted, onSignIn, onBlog, 
   // is omitted entirely, so the page never shows a fake or placeholder number.
   const s = live?.stats;
   const stats = [
-    [s?.learners, tc("landStatLearners")],
-    [s?.questions, tc("landStatQuestions")],
-    [s?.topics, tc("landStatTopics")],
-    [s?.xp, tc("landStatXp")],
+    [s?.learners, tc("landStatLearners"), "users", "var(--grad-primary)"],
+    [s?.questions, tc("landStatQuestions"), "help-circle", "var(--grad-green)"],
+    [s?.topics, tc("landStatTopics"), "book", "var(--grad-warm)"],
+    [s?.xp, tc("landStatXp"), "trophy", "var(--grad-gold)"],
   ].filter(([n]) => n != null && n !== "" && n !== "—" && n !== "0");
   const badges = live?.badges || [];
   const faqs = live?.faqs || [];
@@ -102,8 +102,11 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
       {/* ---- Top nav (the ONLY header; sticky, compact on phones) ---- */}
       <header className={`lp-nav${scrolled ? " raised" : ""}`}>
         <button type="button" className="lp-brand" onClick={() => { window.location.href = "/"; }} aria-label={fa ? "بازگشت به صفحه اصلی" : "Go to home"}>
-          <span className="lp-logo"><Icon name="cap" size={24} /></span>
-          <span className="lp-brand-name">MED School</span>
+          <span className="lp-logo"><Icon name="cap" size={22} /></span>
+          <span className="lp-brand-text">
+            <span className="lp-brand-name"><span className="lp-brand-med">MED</span> School</span>
+            <span className="lp-brand-tag">{fa ? "آموزش پزشکی هوشمند" : "Smart Medical Education"}</span>
+          </span>
         </button>
         <div className="lp-nav-actions">
           <button type="button" className="lp-icon-btn" onClick={toggleTheme} aria-label={fa ? (theme === "light" ? "حالت تاریک" : "حالت روشن") : (theme === "light" ? "Dark mode" : "Light mode")}>
@@ -127,7 +130,7 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
           <div id="lp-menu-sheet" className="lp-menu-sheet" role="dialog" aria-modal="true" aria-label={fa ? "منو" : "Menu"} onClick={(e) => e.stopPropagation()}>
             <div className="lp-menu-handle" />
             <div className="lp-menu-head">
-              <span className="lp-brand"><span className="lp-logo sm"><Icon name="cap" size={18} /></span> MED School</span>
+              <span className="lp-brand"><span className="lp-logo sm"><Icon name="cap" size={18} /></span><span className="lp-brand-text"><span className="lp-brand-name"><span className="lp-brand-med">MED</span> School</span><span className="lp-brand-tag">{fa ? "آموزش پزشکی هوشمند" : "Smart Medical Education"}</span></span></span>
               <button type="button" className="lp-icon-btn" onClick={() => setMenuOpen(false)} aria-label={fa ? "بستن" : "Close"}><Icon name="close" size={18} /></button>
             </div>
             <button type="button" className="lp-menu-item" {...warmAuth} onClick={() => { setMenuOpen(false); onGetStarted(); }}><Icon name="crown" size={18} /> {tc("landCtaPrimary")}</button>
@@ -168,15 +171,18 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
           )}
           {stats.length > 0 ? (
             <div className="lp-stats">
-              {stats.map(([n, l]) => (
-                <div className="lp-stat" key={l}><div className="lp-stat-n">{n}</div><div className="lp-stat-l">{l}</div></div>
+              {stats.map(([n, l, ic, grad]) => (
+                <div className="lp-stat" key={l}>
+                  <div className="lp-stat-ico" style={{ background: grad }}><Icon name={ic} size={18} /></div>
+                  <div className="lp-stat-body"><div className="lp-stat-n">{n}</div><div className="lp-stat-l">{l}</div></div>
+                </div>
               ))}
             </div>
           ) : (
-            <div className="lp-stats" style={{ opacity: .55 }}>
-              <div className="lp-stat"><div className="lp-stat-n">—</div><div className="lp-stat-l">{tc("landStatLearners")}</div></div>
-              <div className="lp-stat"><div className="lp-stat-n">—</div><div className="lp-stat-l">{tc("landStatQuestions")}</div></div>
-              <div className="lp-stat"><div className="lp-stat-n">—</div><div className="lp-stat-l">{tc("landStatTopics")}</div></div>
+            <div className="lp-stats lp-stats--placeholder" style={{ opacity: .6 }}>
+              <div className="lp-stat"><div className="lp-stat-ico" style={{ background: "var(--grad-primary)" }}><Icon name="users" size={18} /></div><div className="lp-stat-body"><div className="lp-stat-n">—</div><div className="lp-stat-l">{tc("landStatLearners")}</div></div></div>
+              <div className="lp-stat"><div className="lp-stat-ico" style={{ background: "var(--grad-green)" }}><Icon name="help-circle" size={18} /></div><div className="lp-stat-body"><div className="lp-stat-n">—</div><div className="lp-stat-l">{tc("landStatQuestions")}</div></div></div>
+              <div className="lp-stat"><div className="lp-stat-ico" style={{ background: "var(--grad-warm)" }}><Icon name="book" size={18} /></div><div className="lp-stat-body"><div className="lp-stat-n">—</div><div className="lp-stat-l">{tc("landStatTopics")}</div></div></div>
             </div>
           )}
         </div>
@@ -295,7 +301,7 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
       <footer className="lp-footer">
         <button type="button" className="lp-brand" onClick={() => { window.location.href = "/"; }} aria-label={fa ? "بازگشت به صفحه اصلی" : "Go to home"}>
           <span className="lp-logo"><Icon name="cap" size={20} /></span>
-          <span className="lp-brand-name">MED School</span>
+          <span className="lp-brand-text"><span className="lp-brand-name"><span className="lp-brand-med">MED</span> School</span><span className="lp-brand-tag">{fa ? "آموزش پزشکی هوشمند" : "Smart Medical Education"}</span></span>
         </button>
         <div className="lp-footer-tag">{tc("landFooterTagline")}</div>
         <div className="lp-footer-rights">© {new Date().getFullYear()} MED School — {tc("landRights")}</div>
