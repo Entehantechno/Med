@@ -1,0 +1,119 @@
+import { useEffect, useState } from "react";
+import { useApp } from "../../context.jsx";
+import { api } from "../../api.js";
+import Icon from "../../components/Icon.jsx";
+import { TYPE_MAP, MicroLesson } from "./QuestionTypes.jsx";
+
+/* Premium card library: licensed cards grouped by category, for premium users,
+   independent of the learning path. A promised premium benefit. */
+export default function Library() {
+  const { t, lang } = useApp();
+  const [data, setData] = useState(null);
+  const [premium, setPremium] = useState(true);
+  const [openCat, setOpenCat] = useState(null);
+  const [refs, setRefs] = useState(null);
+
+  useEffect(() => {
+    api.get(`/learn/library?lang=${lang}`)
+      .then((d) => { setData(d); setOpenCat(d.categories?.[0]?.name || null); })
+      .catch((e) => { if (String(e.message).includes("402") || String(e.message).includes("premium")) setPremium(false); setData({ categories: [] }); });
+  }, [lang]);
+  useEffect(() => {
+    api.get("/learn/references").then((d) => setRefs(d.references || [])).catch(() => setRefs([]));
+  }, []);
+
+  if (!data) return <div className="card"><div className="skeleton" style={{ height: 160 }} /></div>;
+
+  if (!premium)
+    return (
+      <div className="card empty-state">
+        <div className="ico"><Icon name="crown" size={40} /></div>
+        <h3>{t("premiumOnly")}</h3>
+        <div className="small muted">{t("premiumLibraryHint")}</div>
+        <button className="btn btn-accent mt16" type="button" onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))}>
+          <Icon name="crown" size={15} /> {t("browseGoPremium")}
+        </button>
+      </div>
+    );
+
+  return (
+    <div className="page">
+      {/* Reference bookshelf — bilingual, always visible above the premium question bank */}
+      {refs && refs.length > 0 && (
+        <div className="card ref-shelf mb16">
+          <div className="section-title" style={{ marginBottom: 8 }}><h3 style={{ display: "flex", alignItems: "center", gap: 8 }}><Icon name="book" size={20} /> {lang === "fa" ? "کتابخانهٔ مرجع" : "Reference Library"}</h3></div>
+          <div className="small muted mb12" style={{ lineHeight: 1.8 }}>
+            {lang === "fa"
+              ? "هر درسنامهٔ کوتاه در انتها یک دکمهٔ «مشاهده در رفرنس» دارد که مستقیماً به فصل مربوطه در کتاب مرجع می‌برد — هم فارسی و هم انگلیسی."
+              : "Every micro-lesson ends with a \u201CView in reference\u201D button that jumps straight to the relevant chapter — in both Persian and English."}
+          </div>
+          <div className="ref-grid">
+            {refs.map((r) => (
+              <button key={r.id || r.code} type="button" className="ref-card" style={{textAlign:"start"}} onClick={()=>{
+                const href=`/learn/reference/${r.code}`;
+                try{ window.history.pushState({}, "", href); }catch{}
+                window.dispatchEvent(new CustomEvent("medlab-go",{detail:`reference:${r.code}:`}));
+              }}>
+                {r.cover_url
+                  ? <img src={r.cover_url} alt={r.title_en||r.title_fa} style={{width:76,height:102,objectFit:"cover",borderRadius:8,border:"1px solid #e8e8e8",flexShrink:0}} loading="lazy" />
+                  : <div className="ref-card-icon" aria-hidden><Icon name="book" size={22} /></div>}
+                <div className="ref-card-body">
+                  <div className="ref-card-title">{lang === "fa" ? (r.title_fa || r.title_en) : (r.title_en || r.title_fa)}</div>
+                  <div className="ref-card-meta">{[r.short_title, r.edition, r.publisher].filter(Boolean).join(" • ")}{r.pdf_url ? ` • ${lang==="fa"?"PDF دارد":"has PDF"}` : ""}</div>
+                  <span className="ref-card-link">{lang === "fa" ? "مشاهده رفرنس ↗" : "Open ↗"}{r.source_url || r.sourceUrl ? <span className="small muted" style={{marginInlineStart:6}}>{lang==="fa"?"(ناشر)":"(publisher)"}</span> : null}{r.pdf_url ? <span className="chip" style={{marginInlineStart:6, background:"#e6ffed", border:"1px solid #b7ebc3", padding:"1px 6px", borderRadius:999, fontSize:11}}>PDF</span> : null}</span>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="section-title"><h2><Icon name="crown" size={22} /> {t("premiumLibrary")}</h2></div>
+      <div className="muted small mb16">{t("premiumLibraryHint")}</div>
+      {data.categories.length === 0 && <div className="card empty-state"><div className="ico"><Icon name="book" size={40} /></div><h3>{t("noData")}</h3></div>}
+      {data.categories.map((cat) => (
+        <div className="card mb8" key={cat.name}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}
+            onClick={() => setOpenCat(openCat === cat.name ? null : cat.name)}>
+            <strong>{cat.name} <span className="small muted">({cat.count})</span></strong>
+            <Icon name={openCat === cat.name ? "chevronUp" : "chevronDown"} size={16} />
+          </div>
+          {openCat === cat.name && <div className="mt8">{cat.cards.map((c) => <LibCard key={c.id} card={c} />)}</div>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* A self-study card: reveal answer + micro lesson, and save for later. */
+function LibCard({ card }) {
+  const { t } = useApp();
+  const [revealed, setRevealed] = useState(false);
+  const [saved, setSaved] = useState(null);
+  const Type = TYPE_MAP[card.type] || TYPE_MAP.mcq;
+
+  useEffect(() => { api.get(`/learn/library/save/${card.id}`).then((d) => setSaved(d.saved)).catch(() => setSaved(false)); }, [card.id]);
+  const toggleSave = async () => { const r = await api.post(`/learn/library/save/${card.id}`, {}); setSaved(r.saved); };
+
+  return (
+    <div className="lib-card">
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
+        <div style={{ fontWeight: 700, flex: 1, minWidth: 0 }}>{card.q}</div>
+        <button type="button" className={`btn btn-sm ${saved ? "btn-accent" : "btn-ghost"}`} onClick={toggleSave} title={t("saveForLater")}>
+          <Icon name="star" size={13} /> {saved ? t("savedCard") : t("saveCard")}
+        </button>
+      </div>
+      {!revealed
+        ? <button type="button" className="btn btn-ghost btn-sm mt8" onClick={() => setRevealed(true)}><Icon name="check" size={13} /> {t("showAnswer")}</button>
+        : (<div className="mt8">
+            <Type card={card} checked sel={correctSel(card)} setSel={() => {}} isCorrect />
+            {card.micro && <MicroLesson micro={card.micro} defaultOpen />}
+          </div>)}
+    </div>
+  );
+}
+// pre-select the correct option so revealed cards show the answer highlighted
+function correctSel(card) {
+  if (card.type === "mcq") { const i = (card.options || []).findIndex((o) => o.correct); return i >= 0 ? i : null; }
+  if (card.type === "truefalse") return card.answer;
+  return null;
+}

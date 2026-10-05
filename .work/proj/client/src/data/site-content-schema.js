@@ -1,0 +1,137 @@
+/* Schema describing every editable piece of site copy, grouped by section.
+   Used by the admin "Site Content" CMS tab. Each key maps to an i18n key; the
+   admin's value overrides the i18n default (per language) via `tc()`.
+   `multiline: true` renders a textarea instead of an input. */
+export const SITE_CONTENT_SCHEMA = [
+  {
+    id: "landing_hero",
+    title_fa: "لندینگ — بخش اصلی (Hero)",
+    title_en: "Landing — Hero",
+    keys: [
+      { key: "landHeroTitle", label_fa: "تیتر اصلی", label_en: "Headline", multiline: true },
+      { key: "landHeroSub", label_fa: "زیرتیتر", label_en: "Subheadline", multiline: true },
+      { key: "landCtaPrimary", label_fa: "دکمه اصلی", label_en: "Primary CTA" },
+      { key: "landCtaSecondary", label_fa: "دکمه دوم", label_en: "Secondary CTA" },
+      { key: "landTrust", label_fa: "نوار اعتماد", label_en: "Trust badge" },
+    ],
+  },
+  {
+    id: "landing_stats",
+    title_fa: "لندینگ — آمار",
+    title_en: "Landing — Stats",
+    keys: [
+      { key: "landStatLearners", label_fa: "برچسب کاربران", label_en: "Learners label" },
+      { key: "landStatQuestions", label_fa: "برچسب سوالات", label_en: "Questions label" },
+      { key: "landStatTopics", label_fa: "برچسب دروس", label_en: "Topics label" },
+      { key: "landStatXp", label_fa: "برچسب امتیاز", label_en: "XP label" },
+    ],
+  },
+  {
+    id: "landing_audiences",
+    title_fa: "لندینگ — دو مخاطب",
+    title_en: "Landing — Audiences",
+    keys: [
+      { key: "landAudiencesTitle", label_fa: "عنوان بخش", label_en: "Section title" },
+      { key: "landLearnerTitle", label_fa: "عنوان داوطلبان", label_en: "Learner title" },
+      { key: "landLearnerDesc", label_fa: "توضیح داوطلبان", label_en: "Learner desc", multiline: true },
+      { key: "landUniTitle", label_fa: "عنوان اساتید", label_en: "Faculty title" },
+      { key: "landUniDesc", label_fa: "توضیح اساتید", label_en: "Faculty desc", multiline: true },
+    ],
+  },
+  {
+    id: "landing_features",
+    title_fa: "لندینگ — ویژگی‌ها",
+    title_en: "Landing — Features",
+    keys: [
+      { key: "landFeaturesTitle", label_fa: "عنوان بخش", label_en: "Section title" },
+      { key: "landF1Title", label_fa: "ویژگی ۱ عنوان", label_en: "Feature 1 title" },
+      { key: "landF1Desc", label_fa: "ویژگی ۱ متن", label_en: "Feature 1 desc", multiline: true },
+      { key: "landF2Title", label_fa: "ویژگی ۲ عنوان", label_en: "Feature 2 title" },
+      { key: "landF2Desc", label_fa: "ویژگی ۲ متن", label_en: "Feature 2 desc", multiline: true },
+      { key: "landF3Title", label_fa: "ویژگی ۳ عنوان", label_en: "Feature 3 title" },
+      { key: "landF3Desc", label_fa: "ویژگی ۳ متن", label_en: "Feature 3 desc", multiline: true },
+      { key: "landF4Title", label_fa: "ویژگی ۴ عنوان", label_en: "Feature 4 title" },
+      { key: "landF4Desc", label_fa: "ویژگی ۴ متن", label_en: "Feature 4 desc", multiline: true },
+      { key: "landF5Title", label_fa: "ویژگی ۵ عنوان", label_en: "Feature 5 title" },
+      { key: "landF5Desc", label_fa: "ویژگی ۵ متن", label_en: "Feature 5 desc", multiline: true },
+      { key: "landF6Title", label_fa: "ویژگی ۶ عنوان", label_en: "Feature 6 title" },
+      { key: "landF6Desc", label_fa: "ویژگی ۶ متن", label_en: "Feature 6 desc", multiline: true },
+    ],
+  },
+  {
+    id: "landing_steps",
+    title_fa: "لندینگ — سه گام",
+    title_en: "Landing — Steps",
+    keys: [
+      { key: "landHowTitle", label_fa: "عنوان بخش", label_en: "Section title" },
+      { key: "landStep1Title", label_fa: "گام ۱ عنوان", label_en: "Step 1 title" },
+      { key: "landStep1Desc", label_fa: "گام ۱ متن", label_en: "Step 1 desc", multiline: true },
+      { key: "landStep2Title", label_fa: "گام ۲ عنوان", label_en: "Step 2 title" },
+      { key: "landStep2Desc", label_fa: "گام ۲ متن", label_en: "Step 2 desc", multiline: true },
+      { key: "landStep3Title", label_fa: "گام ۳ عنوان", label_en: "Step 3 title" },
+      { key: "landStep3Desc", label_fa: "گام ۳ متن", label_en: "Step 3 desc", multiline: true },
+    ],
+  },
+  {
+    id: "landing_gamify",
+    title_fa: "لندینگ — بازی‌گونه‌سازی",
+    title_en: "Landing — Gamification",
+    keys: [
+      { key: "landGamifyTitle", label_fa: "عنوان", label_en: "Title" },
+      { key: "landGamifyDesc", label_fa: "متن", label_en: "Description", multiline: true },
+    ],
+  },
+  {
+    id: "landing_testimonials",
+    title_fa: "لندینگ — نظرات کاربران",
+    title_en: "Landing — Testimonials",
+    keys: [
+      { key: "landTestiTitle", label_fa: "عنوان بخش", label_en: "Section title" },
+      { key: "landTesti1", label_fa: "نظر ۱", label_en: "Quote 1", multiline: true },
+      { key: "landTesti1Name", label_fa: "نام ۱", label_en: "Name 1" },
+      { key: "landTesti2", label_fa: "نظر ۲", label_en: "Quote 2", multiline: true },
+      { key: "landTesti2Name", label_fa: "نام ۲", label_en: "Name 2" },
+      { key: "landTesti3", label_fa: "نظر ۳", label_en: "Quote 3", multiline: true },
+      { key: "landTesti3Name", label_fa: "نام ۳", label_en: "Name 3" },
+    ],
+  },
+  {
+    id: "landing_final",
+    title_fa: "لندینگ — فراخوان نهایی و فوتر",
+    title_en: "Landing — Final CTA & Footer",
+    keys: [
+      { key: "landFinalTitle", label_fa: "عنوان فراخوان", label_en: "Final title" },
+      { key: "landFinalSub", label_fa: "زیرمتن فراخوان", label_en: "Final subtitle", multiline: true },
+      { key: "landFooterTagline", label_fa: "شعار فوتر", label_en: "Footer tagline" },
+      { key: "landRights", label_fa: "متن حقوق", label_en: "Rights text" },
+      { key: "landStore", label_fa: "دکمه فروشگاه", label_en: "Store button" },
+    ],
+  },
+  {
+    id: "learner_app",
+    title_fa: "اپ کاربر — متن‌ها و نوار",
+    title_en: "Learner app — texts & nav",
+    keys: [
+      { key: "learnPathHint", label_fa: "راهنمای مسیر یادگیری", label_en: "Learning-path hint", multiline: true },
+      { key: "navLearn", label_fa: "بخش: یادگیری", label_en: "Section: Learn" },
+      { key: "navTools", label_fa: "بخش: ابزارها", label_en: "Section: Tools" },
+      { key: "navCompete", label_fa: "بخش: رقابت و جامعه", label_en: "Section: Compete" },
+      { key: "navMine", label_fa: "بخش: من", label_en: "Section: Me" },
+      { key: "navStore", label_fa: "بخش: فروشگاه", label_en: "Section: Store" },
+      { key: "chooseProgram", label_fa: "سوال انتخاب دوره", label_en: "Choose-course prompt" },
+      { key: "programPreint", label_fa: "نام دورهٔ پره‌انترنی", label_en: "Pre-internship course name" },
+      { key: "programBasic", label_fa: "نام دورهٔ علوم پایه", label_en: "Basic-sciences course name" },
+    ],
+  },
+  {
+    id: "auth_page",
+    title_fa: "صفحهٔ ورود / ثبت‌نام",
+    title_en: "Login / Sign-up page",
+    keys: [
+      { key: "login", label_fa: "عنوان ورود", label_en: "Login title" },
+      { key: "createAccount", label_fa: "عنوان ثبت‌نام", label_en: "Create-account title" },
+      { key: "signupAsLearner", label_fa: "دکمهٔ ساخت حساب", label_en: "Create-account button" },
+      { key: "learnerTagline", label_fa: "شعار زیر عنوان ثبت‌نام", label_en: "Sign-up tagline", multiline: true },
+    ],
+  },
+];

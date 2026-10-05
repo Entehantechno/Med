@@ -1,0 +1,545 @@
+{
+ "round": 58,
+ "source": "round56 audit, approved for application by the user",
+ "include_outdated": true,
+ "files": {
+  "tools/master-bank/import-payload.master-preint.part23.json": {
+   "before": "937b90c4792521ad4d5154773538659f481952334db22ed0fe281d6ea12e9e92",
+   "after": "59b32d02aaf5afbbfd70b89a9461a8352f923a23bd21130b0dc7b82c00ed9904"
+  },
+  "tools/master-bank/import-payload.master-preint.part24.json": {
+   "before": "fbfa78078cbf3c19026d349d592c642a5445404dba327da035ad3c9f33c9d072",
+   "after": "2deb527ed3d2c54cecbbb84b1642219c7633a535bdee40a227ff79d88f59f8fe"
+  },
+  "tools/master-bank/import-payload.master-preint.part25.json": {
+   "before": "ee2b0b6a76bfb07ab5d34bee66ca6e372c5041e5c2452e35432766127475903d",
+   "after": "269d9b3b82822f8e8254e8cbe9c97c0715ff943693ce5638b3de72a46841dbef"
+  },
+  "tools/master-bank/import-payload.master-preint.part27.json": {
+   "before": "2715c6bc60c06c2fa4646d4a0ed4d4e0af7e64f1d34271124f5e24acb464e61f",
+   "after": "847f94089d8fd73c5503c24cb593d32996128296ef790fec2d886d82f233e793"
+  },
+  "tools/master-bank/import-payload.master-preint.part28.json": {
+   "before": "8cabf2c59eb3e8b5a298b3701e92c691556b3e2675f4ca1b802c72007ba649ad",
+   "after": "666f19a5f78324480b07428d6937490d61b0423479ba4174133697f15cc08580"
+  },
+  "tools/master-bank/import-payload.master-preint.part29.json": {
+   "before": "b77a4c482ea23dc2f4019a58eb1b23e04e77ff16619a8dffc36d00f4f7eae27d",
+   "after": "40a71f1cb90a39589dcf366df7c402a6a350f038803287c4f6eb69389d276873"
+  }
+ },
+ "rows": [
+  {
+   "part": 23,
+   "local_question": 98,
+   "id": "QB-05145",
+   "from": 1,
+   "to": 3,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 24,
+   "local_question": 102,
+   "id": "QB-05369",
+   "from": 3,
+   "to": 1,
+   "source": "round56 audit §5 (guideline update)"
+  },
+  {
+   "part": 24,
+   "local_question": 113,
+   "id": "QB-05380",
+   "from": 2,
+   "to": 0,
+   "source": "round56 audit §5 (guideline update)"
+  },
+  {
+   "part": 24,
+   "local_question": 123,
+   "id": "QB-05390",
+   "from": 3,
+   "to": 0,
+   "source": "round56 audit §5 (guideline update)"
+  },
+  {
+   "part": 24,
+   "local_question": 147,
+   "id": "QB-05414",
+   "from": 2,
+   "to": 1,
+   "source": "round56 audit §5 (guideline update)"
+  },
+  {
+   "part": 24,
+   "local_question": 213,
+   "id": "QB-05480",
+   "from": 3,
+   "to": 2,
+   "source": "round56 audit §5 (guideline update)"
+  },
+  {
+   "part": 25,
+   "local_question": 149,
+   "id": "QB-05636",
+   "from": 2,
+   "to": 3,
+   "source": "round56 audit §5 (guideline update)"
+  },
+  {
+   "part": 27,
+   "local_question": 100,
+   "id": "QB-06027",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 121,
+   "id": "QB-06048",
+   "from": 0,
+   "to": 2,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 126,
+   "id": "QB-06054",
+   "from": 0,
+   "to": 2,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 128,
+   "id": "QB-06056",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 129,
+   "id": "QB-06057",
+   "from": 0,
+   "to": 2,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 130,
+   "id": "QB-06058",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 132,
+   "id": "QB-06060",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 133,
+   "id": "QB-06062",
+   "from": 0,
+   "to": 3,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 134,
+   "id": "QB-06063",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 135,
+   "id": "QB-06064",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 137,
+   "id": "QB-06066",
+   "from": 0,
+   "to": 2,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 138,
+   "id": "QB-06067",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 141,
+   "id": "QB-06070",
+   "from": 0,
+   "to": 3,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 142,
+   "id": "QB-06071",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 143,
+   "id": "QB-06072",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 145,
+   "id": "QB-06074",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 146,
+   "id": "QB-06075",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 148,
+   "id": "QB-06077",
+   "from": 0,
+   "to": 3,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 151,
+   "id": "QB-06080",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 153,
+   "id": "QB-06082",
+   "from": 0,
+   "to": 2,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 154,
+   "id": "QB-06083",
+   "from": 0,
+   "to": 3,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 156,
+   "id": "QB-06085",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 160,
+   "id": "QB-06089",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 161,
+   "id": "QB-06090",
+   "from": 0,
+   "to": 2,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 162,
+   "id": "QB-06091",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 163,
+   "id": "QB-06092",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 164,
+   "id": "QB-06093",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 167,
+   "id": "QB-06096",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 170,
+   "id": "QB-06099",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 171,
+   "id": "QB-06100",
+   "from": 0,
+   "to": 2,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 172,
+   "id": "QB-06101",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 173,
+   "id": "QB-06102",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 174,
+   "id": "QB-06103",
+   "from": 0,
+   "to": 3,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 175,
+   "id": "QB-06104",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 176,
+   "id": "QB-06105",
+   "from": 0,
+   "to": 2,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 178,
+   "id": "QB-06107",
+   "from": 0,
+   "to": 2,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 180,
+   "id": "QB-06109",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 183,
+   "id": "QB-06112",
+   "from": 0,
+   "to": 2,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 184,
+   "id": "QB-06113",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 186,
+   "id": "QB-06115",
+   "from": 0,
+   "to": 3,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 203,
+   "id": "QB-06134",
+   "from": 3,
+   "to": 2,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 27,
+   "local_question": 204,
+   "id": "QB-06135",
+   "from": 1,
+   "to": 2,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 28,
+   "local_question": 23,
+   "id": "QB-06179",
+   "from": 0,
+   "to": 2,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 28,
+   "local_question": 27,
+   "id": "QB-06183",
+   "from": 0,
+   "to": 3,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 28,
+   "local_question": 28,
+   "id": "QB-06185",
+   "from": 0,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 28,
+   "local_question": 30,
+   "id": "QB-06187",
+   "from": 0,
+   "to": 3,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 28,
+   "local_question": 32,
+   "id": "QB-06189",
+   "from": 0,
+   "to": 3,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 28,
+   "local_question": 189,
+   "id": "QB-06371",
+   "from": 3,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 28,
+   "local_question": 218,
+   "id": "QB-06400",
+   "from": 1,
+   "to": 3,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 29,
+   "local_question": 59,
+   "id": "QB-06461",
+   "from": 1,
+   "to": 3,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 29,
+   "local_question": 103,
+   "id": "QB-06505",
+   "from": 2,
+   "to": 0,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 29,
+   "local_question": 110,
+   "id": "QB-06512",
+   "from": 3,
+   "to": 1,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 29,
+   "local_question": 132,
+   "id": "QB-06534",
+   "from": 0,
+   "to": 3,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 29,
+   "local_question": 166,
+   "id": "QB-06568",
+   "from": 0,
+   "to": 3,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 29,
+   "local_question": 183,
+   "id": "QB-06585",
+   "from": 2,
+   "to": 3,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 29,
+   "local_question": 191,
+   "id": "QB-06593",
+   "from": 3,
+   "to": 2,
+   "source": "round56 audit §4"
+  },
+  {
+   "part": 29,
+   "local_question": 218,
+   "id": "QB-06620",
+   "from": 3,
+   "to": 0,
+   "source": "round56 audit §4"
+  }
+ ]
+}

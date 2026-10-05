@@ -1,0 +1,4128 @@
+{
+  "method": "OFFLINE synthetic request sizing; NO live OpenRouter responses or charges",
+  "engineSha256": "9cfdf65ee5d80ebf9bfea74c4d5d66d7cf1edb6b5d4fbaf54320f7055b5ab8c2",
+  "runs": [
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 1,
+      "lang": "fa",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 2,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 13245,
+            "output": 107
+          },
+          "cl100k_base": {
+            "input": 24843,
+            "output": 208
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 1378,
+            "output": 80
+          },
+          "cl100k_base": {
+            "input": 2593,
+            "output": 128
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2184,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 2942,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1919,
+            "output": 1546
+          },
+          "cl100k_base": {
+            "input": 3081,
+            "output": 3007
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 18726,
+          "output": 2047
+        },
+        "cl100k_base": {
+          "input": 33459,
+          "output": 3909
+        }
+      }
+    },
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 1,
+      "lang": "fa",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 2,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 27075,
+            "output": 258
+          },
+          "cl100k_base": {
+            "input": 50608,
+            "output": 516
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 2209,
+            "output": 106
+          },
+          "cl100k_base": {
+            "input": 4225,
+            "output": 181
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 205,
+            "output": 48
+          },
+          "cl100k_base": {
+            "input": 438,
+            "output": 110
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2550,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 3599,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2261,
+            "output": 1546
+          },
+          "cl100k_base": {
+            "input": 3726,
+            "output": 3007
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 34300,
+          "output": 2272
+        },
+        "cl100k_base": {
+          "input": 62596,
+          "output": 4380
+        }
+      }
+    },
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 1,
+      "lang": "fa",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 2,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 55423,
+            "output": 567
+          },
+          "cl100k_base": {
+            "input": 103525,
+            "output": 1105
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 4328,
+            "output": 163
+          },
+          "cl100k_base": {
+            "input": 8081,
+            "output": 301
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 411,
+            "output": 96
+          },
+          "cl100k_base": {
+            "input": 876,
+            "output": 220
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 3326,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 4966,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2980,
+            "output": 1546
+          },
+          "cl100k_base": {
+            "input": 5067,
+            "output": 3007
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 66468,
+          "output": 2686
+        },
+        "cl100k_base": {
+          "input": 122515,
+          "output": 5199
+        }
+      }
+    },
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 1,
+      "lang": "en",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 2,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 9099,
+            "output": 66
+          },
+          "cl100k_base": {
+            "input": 10253,
+            "output": 75
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 970,
+            "output": 59
+          },
+          "cl100k_base": {
+            "input": 985,
+            "output": 61
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1941,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 2123,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1455,
+            "output": 961
+          },
+          "cl100k_base": {
+            "input": 1464,
+            "output": 970
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 13465,
+          "output": 1334
+        },
+        "cl100k_base": {
+          "input": 14825,
+          "output": 1353
+        }
+      }
+    },
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 1,
+      "lang": "en",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 2,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 18607,
+            "output": 172
+          },
+          "cl100k_base": {
+            "input": 20930,
+            "output": 184
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 1575,
+            "output": 72
+          },
+          "cl100k_base": {
+            "input": 1587,
+            "output": 75
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 141,
+            "output": 26
+          },
+          "cl100k_base": {
+            "input": 142,
+            "output": 26
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2219,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 2404,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1722,
+            "output": 961
+          },
+          "cl100k_base": {
+            "input": 1733,
+            "output": 970
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 24264,
+          "output": 1479
+        },
+        "cl100k_base": {
+          "input": 26796,
+          "output": 1502
+        }
+      }
+    },
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 1,
+      "lang": "en",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 2,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 37983,
+            "output": 362
+          },
+          "cl100k_base": {
+            "input": 42667,
+            "output": 393
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 2984,
+            "output": 111
+          },
+          "cl100k_base": {
+            "input": 3129,
+            "output": 116
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 283,
+            "output": 52
+          },
+          "cl100k_base": {
+            "input": 284,
+            "output": 52
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2787,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 2988,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2264,
+            "output": 961
+          },
+          "cl100k_base": {
+            "input": 2293,
+            "output": 970
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 46301,
+          "output": 1734
+        },
+        "cl100k_base": {
+          "input": 51361,
+          "output": 1778
+        }
+      }
+    },
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 2,
+      "lang": "fa",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 2,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 12222,
+            "output": 86
+          },
+          "cl100k_base": {
+            "input": 23565,
+            "output": 181
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 1326,
+            "output": 83
+          },
+          "cl100k_base": {
+            "input": 2543,
+            "output": 136
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1849,
+            "output": 258
+          },
+          "cl100k_base": {
+            "input": 2533,
+            "output": 464
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1705,
+            "output": 1217
+          },
+          "cl100k_base": {
+            "input": 2782,
+            "output": 2381
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 17102,
+          "output": 1644
+        },
+        "cl100k_base": {
+          "input": 31423,
+          "output": 3162
+        }
+      }
+    },
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 2,
+      "lang": "fa",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 2,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 24993,
+            "output": 235
+          },
+          "cl100k_base": {
+            "input": 48044,
+            "output": 482
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 2182,
+            "output": 117
+          },
+          "cl100k_base": {
+            "input": 4185,
+            "output": 205
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 205,
+            "output": 48
+          },
+          "cl100k_base": {
+            "input": 438,
+            "output": 110
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2220,
+            "output": 258
+          },
+          "cl100k_base": {
+            "input": 3199,
+            "output": 464
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2052,
+            "output": 1217
+          },
+          "cl100k_base": {
+            "input": 3436,
+            "output": 2381
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 31652,
+          "output": 1875
+        },
+        "cl100k_base": {
+          "input": 59302,
+          "output": 3642
+        }
+      }
+    },
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 2,
+      "lang": "fa",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 2,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 51277,
+            "output": 516
+          },
+          "cl100k_base": {
+            "input": 98525,
+            "output": 1049
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 4161,
+            "output": 174
+          },
+          "cl100k_base": {
+            "input": 7875,
+            "output": 324
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 411,
+            "output": 96
+          },
+          "cl100k_base": {
+            "input": 876,
+            "output": 220
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2969,
+            "output": 258
+          },
+          "cl100k_base": {
+            "input": 4542,
+            "output": 464
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2743,
+            "output": 1217
+          },
+          "cl100k_base": {
+            "input": 4752,
+            "output": 2381
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 61561,
+          "output": 2261
+        },
+        "cl100k_base": {
+          "input": 116570,
+          "output": 4438
+        }
+      }
+    },
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 2,
+      "lang": "en",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 2,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 8122,
+            "output": 63
+          },
+          "cl100k_base": {
+            "input": 9059,
+            "output": 64
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 964,
+            "output": 60
+          },
+          "cl100k_base": {
+            "input": 967,
+            "output": 62
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1679,
+            "output": 204
+          },
+          "cl100k_base": {
+            "input": 1830,
+            "output": 203
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1321,
+            "output": 767
+          },
+          "cl100k_base": {
+            "input": 1326,
+            "output": 777
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 12086,
+          "output": 1094
+        },
+        "cl100k_base": {
+          "input": 13182,
+          "output": 1106
+        }
+      }
+    },
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 2,
+      "lang": "en",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 2,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 16631,
+            "output": 166
+          },
+          "cl100k_base": {
+            "input": 18486,
+            "output": 170
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 1555,
+            "output": 78
+          },
+          "cl100k_base": {
+            "input": 1573,
+            "output": 82
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 141,
+            "output": 26
+          },
+          "cl100k_base": {
+            "input": 142,
+            "output": 26
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1959,
+            "output": 204
+          },
+          "cl100k_base": {
+            "input": 2114,
+            "output": 203
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1590,
+            "output": 767
+          },
+          "cl100k_base": {
+            "input": 1598,
+            "output": 777
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 21876,
+          "output": 1241
+        },
+        "cl100k_base": {
+          "input": 23913,
+          "output": 1258
+        }
+      }
+    },
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 2,
+      "lang": "en",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 2,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 33951,
+            "output": 332
+          },
+          "cl100k_base": {
+            "input": 37681,
+            "output": 341
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 2838,
+            "output": 117
+          },
+          "cl100k_base": {
+            "input": 2953,
+            "output": 123
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 283,
+            "output": 52
+          },
+          "cl100k_base": {
+            "input": 284,
+            "output": 52
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2499,
+            "output": 204
+          },
+          "cl100k_base": {
+            "input": 2657,
+            "output": 203
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2104,
+            "output": 767
+          },
+          "cl100k_base": {
+            "input": 2117,
+            "output": 777
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 41675,
+          "output": 1472
+        },
+        "cl100k_base": {
+          "input": 45692,
+          "output": 1496
+        }
+      }
+    },
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 3,
+      "lang": "fa",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 1,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 11433,
+            "output": 92
+          },
+          "cl100k_base": {
+            "input": 22521,
+            "output": 190
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 1328,
+            "output": 83
+          },
+          "cl100k_base": {
+            "input": 2530,
+            "output": 135
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1835,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 2494,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1767,
+            "output": 1472
+          },
+          "cl100k_base": {
+            "input": 2892,
+            "output": 2846
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 16363,
+          "output": 1961
+        },
+        "cl100k_base": {
+          "input": 30437,
+          "output": 3737
+        }
+      }
+    },
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 3,
+      "lang": "fa",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 1,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 23437,
+            "output": 257
+          },
+          "cl100k_base": {
+            "input": 45994,
+            "output": 523
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 2185,
+            "output": 109
+          },
+          "cl100k_base": {
+            "input": 4172,
+            "output": 188
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 205,
+            "output": 48
+          },
+          "cl100k_base": {
+            "input": 438,
+            "output": 110
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2218,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 3176,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2125,
+            "output": 1472
+          },
+          "cl100k_base": {
+            "input": 3561,
+            "output": 2846
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 30170,
+          "output": 2200
+        },
+        "cl100k_base": {
+          "input": 57341,
+          "output": 4233
+        }
+      }
+    },
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 3,
+      "lang": "fa",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 1,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 48151,
+            "output": 553
+          },
+          "cl100k_base": {
+            "input": 94395,
+            "output": 1116
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 4053,
+            "output": 166
+          },
+          "cl100k_base": {
+            "input": 7683,
+            "output": 307
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 411,
+            "output": 96
+          },
+          "cl100k_base": {
+            "input": 876,
+            "output": 220
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2981,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 4546,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2828,
+            "output": 1472
+          },
+          "cl100k_base": {
+            "input": 4902,
+            "output": 2846
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 58424,
+          "output": 2601
+        },
+        "cl100k_base": {
+          "input": 112402,
+          "output": 5055
+        }
+      }
+    },
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 3,
+      "lang": "en",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 1,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 7356,
+            "output": 73
+          },
+          "cl100k_base": {
+            "input": 7982,
+            "output": 74
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 974,
+            "output": 63
+          },
+          "cl100k_base": {
+            "input": 979,
+            "output": 65
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1684,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 1847,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1367,
+            "output": 922
+          },
+          "cl100k_base": {
+            "input": 1374,
+            "output": 929
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 11381,
+          "output": 1306
+        },
+        "cl100k_base": {
+          "input": 12182,
+          "output": 1315
+        }
+      }
+    },
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 3,
+      "lang": "en",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 1,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 15119,
+            "output": 196
+          },
+          "cl100k_base": {
+            "input": 16374,
+            "output": 200
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 1576,
+            "output": 76
+          },
+          "cl100k_base": {
+            "input": 1591,
+            "output": 79
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 141,
+            "output": 26
+          },
+          "cl100k_base": {
+            "input": 142,
+            "output": 26
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1979,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 2145,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1650,
+            "output": 922
+          },
+          "cl100k_base": {
+            "input": 1659,
+            "output": 929
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 20465,
+          "output": 1468
+        },
+        "cl100k_base": {
+          "input": 21911,
+          "output": 1481
+        }
+      }
+    },
+    {
+      "responseScenario": "authored_short",
+      "patientOutputFloor": 0,
+      "caseId": 3,
+      "lang": "en",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 1,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 30903,
+            "output": 383
+          },
+          "cl100k_base": {
+            "input": 33437,
+            "output": 393
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 2761,
+            "output": 115
+          },
+          "cl100k_base": {
+            "input": 2843,
+            "output": 120
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 283,
+            "output": 52
+          },
+          "cl100k_base": {
+            "input": 284,
+            "output": 52
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2544,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 2717,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2187,
+            "output": 922
+          },
+          "cl100k_base": {
+            "input": 2205,
+            "output": 929
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 38678,
+          "output": 1720
+        },
+        "cl100k_base": {
+          "input": 41486,
+          "output": 1741
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 1,
+      "lang": "fa",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 2,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 15295,
+            "output": 647
+          },
+          "cl100k_base": {
+            "input": 30583,
+            "output": 1720
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 1988,
+            "output": 80
+          },
+          "cl100k_base": {
+            "input": 4301,
+            "output": 128
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2724,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 4454,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2450,
+            "output": 1546
+          },
+          "cl100k_base": {
+            "input": 4584,
+            "output": 3007
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 22457,
+          "output": 2587
+        },
+        "cl100k_base": {
+          "input": 43922,
+          "output": 5421
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 1,
+      "lang": "fa",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 2,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 32315,
+            "output": 1298
+          },
+          "cl100k_base": {
+            "input": 65280,
+            "output": 3428
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 2929,
+            "output": 106
+          },
+          "cl100k_base": {
+            "input": 6241,
+            "output": 181
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 205,
+            "output": 48
+          },
+          "cl100k_base": {
+            "input": 438,
+            "output": 110
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 3587,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 6508,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 3288,
+            "output": 1546
+          },
+          "cl100k_base": {
+            "input": 6622,
+            "output": 3007
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 42324,
+          "output": 3312
+        },
+        "cl100k_base": {
+          "input": 85089,
+          "output": 7292
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 1,
+      "lang": "fa",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 2,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 66353,
+            "output": 2567
+          },
+          "cl100k_base": {
+            "input": 134129,
+            "output": 6705
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 5338,
+            "output": 163
+          },
+          "cl100k_base": {
+            "input": 10909,
+            "output": 301
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 411,
+            "output": 96
+          },
+          "cl100k_base": {
+            "input": 876,
+            "output": 220
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 5314,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 10554,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4959,
+            "output": 1546
+          },
+          "cl100k_base": {
+            "input": 10634,
+            "output": 3007
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 82375,
+          "output": 4686
+        },
+        "cl100k_base": {
+          "input": 167102,
+          "output": 10799
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 1,
+      "lang": "en",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 2,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 11269,
+            "output": 626
+          },
+          "cl100k_base": {
+            "input": 12423,
+            "output": 635
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 1600,
+            "output": 59
+          },
+          "cl100k_base": {
+            "input": 1615,
+            "output": 61
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2501,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 2683,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2006,
+            "output": 961
+          },
+          "cl100k_base": {
+            "input": 2015,
+            "output": 970
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 17376,
+          "output": 1894
+        },
+        "cl100k_base": {
+          "input": 18736,
+          "output": 1913
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 1,
+      "lang": "en",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 2,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 24018,
+            "output": 1250
+          },
+          "cl100k_base": {
+            "input": 26341,
+            "output": 1262
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 2331,
+            "output": 72
+          },
+          "cl100k_base": {
+            "input": 2343,
+            "output": 75
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 141,
+            "output": 26
+          },
+          "cl100k_base": {
+            "input": 142,
+            "output": 26
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 3297,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 3482,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2787,
+            "output": 961
+          },
+          "cl100k_base": {
+            "input": 2798,
+            "output": 970
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 32574,
+          "output": 2557
+        },
+        "cl100k_base": {
+          "input": 35106,
+          "output": 2580
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 1,
+      "lang": "en",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 2,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 49701,
+            "output": 2504
+          },
+          "cl100k_base": {
+            "input": 54385,
+            "output": 2535
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 4062,
+            "output": 111
+          },
+          "cl100k_base": {
+            "input": 4207,
+            "output": 116
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 283,
+            "output": 52
+          },
+          "cl100k_base": {
+            "input": 284,
+            "output": 52
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4929,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 5130,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4382,
+            "output": 961
+          },
+          "cl100k_base": {
+            "input": 4411,
+            "output": 970
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 63357,
+          "output": 3876
+        },
+        "cl100k_base": {
+          "input": 68417,
+          "output": 3920
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 2,
+      "lang": "fa",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 2,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 14342,
+            "output": 646
+          },
+          "cl100k_base": {
+            "input": 29501,
+            "output": 1749
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 1966,
+            "output": 83
+          },
+          "cl100k_base": {
+            "input": 4335,
+            "output": 136
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2409,
+            "output": 258
+          },
+          "cl100k_base": {
+            "input": 4101,
+            "output": 464
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2257,
+            "output": 1217
+          },
+          "cl100k_base": {
+            "input": 4342,
+            "output": 2381
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 20974,
+          "output": 2204
+        },
+        "cl100k_base": {
+          "input": 42279,
+          "output": 4730
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 2,
+      "lang": "fa",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 2,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 30413,
+            "output": 1305
+          },
+          "cl100k_base": {
+            "input": 63220,
+            "output": 3478
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 2902,
+            "output": 117
+          },
+          "cl100k_base": {
+            "input": 6201,
+            "output": 205
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 205,
+            "output": 48
+          },
+          "cl100k_base": {
+            "input": 438,
+            "output": 110
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 3287,
+            "output": 258
+          },
+          "cl100k_base": {
+            "input": 6192,
+            "output": 464
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 3110,
+            "output": 1217
+          },
+          "cl100k_base": {
+            "input": 6417,
+            "output": 2381
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 39917,
+          "output": 2945
+        },
+        "cl100k_base": {
+          "input": 82468,
+          "output": 6638
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 2,
+      "lang": "fa",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 2,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 62537,
+            "output": 2576
+          },
+          "cl100k_base": {
+            "input": 130053,
+            "output": 6817
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 5201,
+            "output": 174
+          },
+          "cl100k_base": {
+            "input": 10787,
+            "output": 324
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 411,
+            "output": 96
+          },
+          "cl100k_base": {
+            "input": 876,
+            "output": 220
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 5017,
+            "output": 258
+          },
+          "cl100k_base": {
+            "input": 10298,
+            "output": 464
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4784,
+            "output": 1217
+          },
+          "cl100k_base": {
+            "input": 10489,
+            "output": 2381
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 77950,
+          "output": 4321
+        },
+        "cl100k_base": {
+          "input": 162503,
+          "output": 10206
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 2,
+      "lang": "en",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 2,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 10250,
+            "output": 616
+          },
+          "cl100k_base": {
+            "input": 11187,
+            "output": 617
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 1580,
+            "output": 60
+          },
+          "cl100k_base": {
+            "input": 1583,
+            "output": 62
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2232,
+            "output": 204
+          },
+          "cl100k_base": {
+            "input": 2383,
+            "output": 203
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1866,
+            "output": 767
+          },
+          "cl100k_base": {
+            "input": 1871,
+            "output": 777
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 15928,
+          "output": 1647
+        },
+        "cl100k_base": {
+          "input": 17024,
+          "output": 1659
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 2,
+      "lang": "en",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 2,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 22000,
+            "output": 1237
+          },
+          "cl100k_base": {
+            "input": 23855,
+            "output": 1241
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 2311,
+            "output": 78
+          },
+          "cl100k_base": {
+            "input": 2329,
+            "output": 82
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 141,
+            "output": 26
+          },
+          "cl100k_base": {
+            "input": 142,
+            "output": 26
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 3030,
+            "output": 204
+          },
+          "cl100k_base": {
+            "input": 3185,
+            "output": 203
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2649,
+            "output": 767
+          },
+          "cl100k_base": {
+            "input": 2657,
+            "output": 777
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 30131,
+          "output": 2312
+        },
+        "cl100k_base": {
+          "input": 32168,
+          "output": 2329
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 2,
+      "lang": "en",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 2,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 45648,
+            "output": 2474
+          },
+          "cl100k_base": {
+            "input": 49378,
+            "output": 2483
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 3937,
+            "output": 117
+          },
+          "cl100k_base": {
+            "input": 4052,
+            "output": 123
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 283,
+            "output": 52
+          },
+          "cl100k_base": {
+            "input": 284,
+            "output": 52
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4641,
+            "output": 204
+          },
+          "cl100k_base": {
+            "input": 4799,
+            "output": 203
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4223,
+            "output": 767
+          },
+          "cl100k_base": {
+            "input": 4236,
+            "output": 777
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 58732,
+          "output": 3614
+        },
+        "cl100k_base": {
+          "input": 62749,
+          "output": 3638
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 3,
+      "lang": "fa",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 1,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 13533,
+            "output": 642
+          },
+          "cl100k_base": {
+            "input": 28401,
+            "output": 1730
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 1938,
+            "output": 83
+          },
+          "cl100k_base": {
+            "input": 4238,
+            "output": 135
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2385,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 4034,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2310,
+            "output": 1472
+          },
+          "cl100k_base": {
+            "input": 4425,
+            "output": 2846
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 20166,
+          "output": 2511
+        },
+        "cl100k_base": {
+          "input": 41098,
+          "output": 5277
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 3,
+      "lang": "fa",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 1,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 28597,
+            "output": 1277
+          },
+          "cl100k_base": {
+            "input": 60442,
+            "output": 3379
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 2875,
+            "output": 109
+          },
+          "cl100k_base": {
+            "input": 6104,
+            "output": 188
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 205,
+            "output": 48
+          },
+          "cl100k_base": {
+            "input": 438,
+            "output": 110
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 3235,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 6029,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 3135,
+            "output": 1472
+          },
+          "cl100k_base": {
+            "input": 6404,
+            "output": 2846
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 38047,
+          "output": 3220
+        },
+        "cl100k_base": {
+          "input": 79417,
+          "output": 7089
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 3,
+      "lang": "fa",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 1,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 58931,
+            "output": 2533
+          },
+          "cl100k_base": {
+            "input": 124579,
+            "output": 6660
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 5093,
+            "output": 166
+          },
+          "cl100k_base": {
+            "input": 10595,
+            "output": 307
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 411,
+            "output": 96
+          },
+          "cl100k_base": {
+            "input": 876,
+            "output": 220
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4949,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 10078,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4793,
+            "output": 1472
+          },
+          "cl100k_base": {
+            "input": 10419,
+            "output": 2846
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 74177,
+          "output": 4581
+        },
+        "cl100k_base": {
+          "input": 156547,
+          "output": 10599
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 3,
+      "lang": "en",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 1,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 9456,
+            "output": 633
+          },
+          "cl100k_base": {
+            "input": 10082,
+            "output": 634
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 1611,
+            "output": 63
+          },
+          "cl100k_base": {
+            "input": 1616,
+            "output": 65
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2244,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 2407,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 1920,
+            "output": 922
+          },
+          "cl100k_base": {
+            "input": 1927,
+            "output": 929
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 15231,
+          "output": 1866
+        },
+        "cl100k_base": {
+          "input": 16032,
+          "output": 1875
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 3,
+      "lang": "en",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 1,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 20488,
+            "output": 1267
+          },
+          "cl100k_base": {
+            "input": 21743,
+            "output": 1271
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 2332,
+            "output": 76
+          },
+          "cl100k_base": {
+            "input": 2347,
+            "output": 79
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 141,
+            "output": 26
+          },
+          "cl100k_base": {
+            "input": 142,
+            "output": 26
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 3050,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 3216,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2711,
+            "output": 922
+          },
+          "cl100k_base": {
+            "input": 2720,
+            "output": 929
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 28722,
+          "output": 2539
+        },
+        "cl100k_base": {
+          "input": 30168,
+          "output": 2552
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_60",
+      "patientOutputFloor": 60,
+      "caseId": 3,
+      "lang": "en",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 1,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 42656,
+            "output": 2539
+          },
+          "cl100k_base": {
+            "input": 45190,
+            "output": 2549
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 3888,
+            "output": 115
+          },
+          "cl100k_base": {
+            "input": 3970,
+            "output": 120
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 283,
+            "output": 52
+          },
+          "cl100k_base": {
+            "input": 284,
+            "output": 52
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4700,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 4873,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4324,
+            "output": 922
+          },
+          "cl100k_base": {
+            "input": 4342,
+            "output": 929
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 55851,
+          "output": 3876
+        },
+        "cl100k_base": {
+          "input": 58659,
+          "output": 3897
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 1,
+      "lang": "fa",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 2,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 17635,
+            "output": 1247
+          },
+          "cl100k_base": {
+            "input": 37135,
+            "output": 3400
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 2648,
+            "output": 80
+          },
+          "cl100k_base": {
+            "input": 6149,
+            "output": 128
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 3324,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 6134,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 3050,
+            "output": 1546
+          },
+          "cl100k_base": {
+            "input": 6264,
+            "output": 3007
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 26657,
+          "output": 3187
+        },
+        "cl100k_base": {
+          "input": 55682,
+          "output": 7101
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 1,
+      "lang": "fa",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 2,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 38255,
+            "output": 2498
+          },
+          "cl100k_base": {
+            "input": 81912,
+            "output": 6788
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 3829,
+            "output": 106
+          },
+          "cl100k_base": {
+            "input": 8761,
+            "output": 181
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 205,
+            "output": 48
+          },
+          "cl100k_base": {
+            "input": 438,
+            "output": 110
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4787,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 9868,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4488,
+            "output": 1546
+          },
+          "cl100k_base": {
+            "input": 9982,
+            "output": 3007
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 51564,
+          "output": 4512
+        },
+        "cl100k_base": {
+          "input": 110961,
+          "output": 10652
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 1,
+      "lang": "fa",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 2,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 79493,
+            "output": 4967
+          },
+          "cl100k_base": {
+            "input": 170921,
+            "output": 13425
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 6538,
+            "output": 163
+          },
+          "cl100k_base": {
+            "input": 14269,
+            "output": 301
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 411,
+            "output": 96
+          },
+          "cl100k_base": {
+            "input": 876,
+            "output": 220
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 7714,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 17274,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 7359,
+            "output": 1546
+          },
+          "cl100k_base": {
+            "input": 17354,
+            "output": 3007
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 101515,
+          "output": 7086
+        },
+        "cl100k_base": {
+          "input": 220694,
+          "output": 17519
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 1,
+      "lang": "en",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 2,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 13614,
+            "output": 1235
+          },
+          "cl100k_base": {
+            "input": 14768,
+            "output": 1244
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 2279,
+            "output": 59
+          },
+          "cl100k_base": {
+            "input": 2294,
+            "output": 61
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 3110,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 3292,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2615,
+            "output": 961
+          },
+          "cl100k_base": {
+            "input": 2624,
+            "output": 970
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 21618,
+          "output": 2503
+        },
+        "cl100k_base": {
+          "input": 22978,
+          "output": 2522
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 1,
+      "lang": "en",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 2,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 30059,
+            "output": 2468
+          },
+          "cl100k_base": {
+            "input": 32382,
+            "output": 2480
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 3234,
+            "output": 72
+          },
+          "cl100k_base": {
+            "input": 3246,
+            "output": 75
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 141,
+            "output": 26
+          },
+          "cl100k_base": {
+            "input": 142,
+            "output": 26
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4515,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 4700,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4005,
+            "output": 961
+          },
+          "cl100k_base": {
+            "input": 4016,
+            "output": 970
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 41954,
+          "output": 3775
+        },
+        "cl100k_base": {
+          "input": 44486,
+          "output": 3798
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 1,
+      "lang": "en",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 2,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 63050,
+            "output": 4947
+          },
+          "cl100k_base": {
+            "input": 67734,
+            "output": 4978
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 5308,
+            "output": 111
+          },
+          "cl100k_base": {
+            "input": 5453,
+            "output": 116
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 283,
+            "output": 52
+          },
+          "cl100k_base": {
+            "input": 284,
+            "output": 52
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 7372,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 7573,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 6825,
+            "output": 961
+          },
+          "cl100k_base": {
+            "input": 6854,
+            "output": 970
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 82838,
+          "output": 6319
+        },
+        "cl100k_base": {
+          "input": 87898,
+          "output": 6363
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 2,
+      "lang": "fa",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 2,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 16682,
+            "output": 1246
+          },
+          "cl100k_base": {
+            "input": 36053,
+            "output": 3429
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 2626,
+            "output": 83
+          },
+          "cl100k_base": {
+            "input": 6183,
+            "output": 136
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 3009,
+            "output": 258
+          },
+          "cl100k_base": {
+            "input": 5781,
+            "output": 464
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2857,
+            "output": 1217
+          },
+          "cl100k_base": {
+            "input": 6022,
+            "output": 2381
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 25174,
+          "output": 2804
+        },
+        "cl100k_base": {
+          "input": 54039,
+          "output": 6410
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 2,
+      "lang": "fa",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 2,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 36353,
+            "output": 2505
+          },
+          "cl100k_base": {
+            "input": 79852,
+            "output": 6838
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 3802,
+            "output": 117
+          },
+          "cl100k_base": {
+            "input": 8721,
+            "output": 205
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 205,
+            "output": 48
+          },
+          "cl100k_base": {
+            "input": 438,
+            "output": 110
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4487,
+            "output": 258
+          },
+          "cl100k_base": {
+            "input": 9552,
+            "output": 464
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4310,
+            "output": 1217
+          },
+          "cl100k_base": {
+            "input": 9777,
+            "output": 2381
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 49157,
+          "output": 4145
+        },
+        "cl100k_base": {
+          "input": 108340,
+          "output": 9998
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 2,
+      "lang": "fa",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 2,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 75677,
+            "output": 4976
+          },
+          "cl100k_base": {
+            "input": 166845,
+            "output": 13537
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 6401,
+            "output": 174
+          },
+          "cl100k_base": {
+            "input": 14147,
+            "output": 324
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 411,
+            "output": 96
+          },
+          "cl100k_base": {
+            "input": 876,
+            "output": 220
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 7417,
+            "output": 258
+          },
+          "cl100k_base": {
+            "input": 17018,
+            "output": 464
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 7184,
+            "output": 1217
+          },
+          "cl100k_base": {
+            "input": 17209,
+            "output": 2381
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 97090,
+          "output": 6721
+        },
+        "cl100k_base": {
+          "input": 216095,
+          "output": 16926
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 2,
+      "lang": "en",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 2,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 12665,
+            "output": 1232
+          },
+          "cl100k_base": {
+            "input": 13602,
+            "output": 1233
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 2245,
+            "output": 60
+          },
+          "cl100k_base": {
+            "input": 2248,
+            "output": 62
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2848,
+            "output": 204
+          },
+          "cl100k_base": {
+            "input": 2999,
+            "output": 203
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2482,
+            "output": 767
+          },
+          "cl100k_base": {
+            "input": 2487,
+            "output": 777
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 20240,
+          "output": 2263
+        },
+        "cl100k_base": {
+          "input": 21336,
+          "output": 2275
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 2,
+      "lang": "en",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 2,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 28083,
+            "output": 2462
+          },
+          "cl100k_base": {
+            "input": 29938,
+            "output": 2466
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 3214,
+            "output": 78
+          },
+          "cl100k_base": {
+            "input": 3232,
+            "output": 82
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 141,
+            "output": 26
+          },
+          "cl100k_base": {
+            "input": 142,
+            "output": 26
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4255,
+            "output": 204
+          },
+          "cl100k_base": {
+            "input": 4410,
+            "output": 203
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 3874,
+            "output": 767
+          },
+          "cl100k_base": {
+            "input": 3882,
+            "output": 777
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 39567,
+          "output": 3537
+        },
+        "cl100k_base": {
+          "input": 41604,
+          "output": 3554
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 2,
+      "lang": "en",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 2,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 59130,
+            "output": 4938
+          },
+          "cl100k_base": {
+            "input": 62860,
+            "output": 4947
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 5176,
+            "output": 117
+          },
+          "cl100k_base": {
+            "input": 5291,
+            "output": 123
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 283,
+            "output": 52
+          },
+          "cl100k_base": {
+            "input": 284,
+            "output": 52
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 7105,
+            "output": 204
+          },
+          "cl100k_base": {
+            "input": 7263,
+            "output": 203
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 6687,
+            "output": 767
+          },
+          "cl100k_base": {
+            "input": 6700,
+            "output": 777
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 78381,
+          "output": 6078
+        },
+        "cl100k_base": {
+          "input": 82398,
+          "output": 6102
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 3,
+      "lang": "fa",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 1,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 15873,
+            "output": 1242
+          },
+          "cl100k_base": {
+            "input": 34953,
+            "output": 3410
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 2598,
+            "output": 83
+          },
+          "cl100k_base": {
+            "input": 6086,
+            "output": 135
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2985,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 5714,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2910,
+            "output": 1472
+          },
+          "cl100k_base": {
+            "input": 6105,
+            "output": 2846
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 24366,
+          "output": 3111
+        },
+        "cl100k_base": {
+          "input": 52858,
+          "output": 6957
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 3,
+      "lang": "fa",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 1,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 34537,
+            "output": 2477
+          },
+          "cl100k_base": {
+            "input": 77074,
+            "output": 6739
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 3775,
+            "output": 109
+          },
+          "cl100k_base": {
+            "input": 8624,
+            "output": 188
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 205,
+            "output": 48
+          },
+          "cl100k_base": {
+            "input": 438,
+            "output": 110
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4435,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 9389,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4335,
+            "output": 1472
+          },
+          "cl100k_base": {
+            "input": 9764,
+            "output": 2846
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 47287,
+          "output": 4420
+        },
+        "cl100k_base": {
+          "input": 105289,
+          "output": 10449
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 3,
+      "lang": "fa",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 1,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 72071,
+            "output": 4933
+          },
+          "cl100k_base": {
+            "input": 161371,
+            "output": 13380
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 6293,
+            "output": 166
+          },
+          "cl100k_base": {
+            "input": 13955,
+            "output": 307
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 411,
+            "output": 96
+          },
+          "cl100k_base": {
+            "input": 876,
+            "output": 220
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 7349,
+            "output": 314
+          },
+          "cl100k_base": {
+            "input": 16798,
+            "output": 566
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 7193,
+            "output": 1472
+          },
+          "cl100k_base": {
+            "input": 17139,
+            "output": 2846
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 93317,
+          "output": 6981
+        },
+        "cl100k_base": {
+          "input": 210139,
+          "output": 17319
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 3,
+      "lang": "en",
+      "profile": "short",
+      "scope": "intern",
+      "patientTurns": 10,
+      "examTurns": 2,
+      "unrecordedOrders": 0,
+      "recordedOrders": 1,
+      "requestCount": 14,
+      "stageTotals": {
+        "patient": {
+          "requests": 10,
+          "o200k_base": {
+            "input": 11787,
+            "output": 1221
+          },
+          "cl100k_base": {
+            "input": 12413,
+            "output": 1222
+          }
+        },
+        "exam": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 2241,
+            "output": 63
+          },
+          "cl100k_base": {
+            "input": 2246,
+            "output": 65
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2832,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 2995,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 2508,
+            "output": 922
+          },
+          "cl100k_base": {
+            "input": 2515,
+            "output": 929
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 19368,
+          "output": 2454
+        },
+        "cl100k_base": {
+          "input": 20169,
+          "output": 2463
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 3,
+      "lang": "en",
+      "profile": "standard",
+      "scope": "intern",
+      "patientTurns": 20,
+      "examTurns": 3,
+      "unrecordedOrders": 2,
+      "recordedOrders": 1,
+      "requestCount": 27,
+      "stageTotals": {
+        "patient": {
+          "requests": 20,
+          "o200k_base": {
+            "input": 26361,
+            "output": 2457
+          },
+          "cl100k_base": {
+            "input": 27616,
+            "output": 2461
+          }
+        },
+        "exam": {
+          "requests": 3,
+          "o200k_base": {
+            "input": 3235,
+            "output": 76
+          },
+          "cl100k_base": {
+            "input": 3250,
+            "output": 79
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 2,
+          "o200k_base": {
+            "input": 141,
+            "output": 26
+          },
+          "cl100k_base": {
+            "input": 142,
+            "output": 26
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 4240,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 4406,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 3901,
+            "output": 922
+          },
+          "cl100k_base": {
+            "input": 3910,
+            "output": 929
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 37878,
+          "output": 3729
+        },
+        "cl100k_base": {
+          "input": 39324,
+          "output": 3742
+        }
+      }
+    },
+    {
+      "responseScenario": "length_stress_120",
+      "patientOutputFloor": 120,
+      "caseId": 3,
+      "lang": "en",
+      "profile": "long",
+      "scope": "intern",
+      "patientTurns": 40,
+      "examTurns": 5,
+      "unrecordedOrders": 4,
+      "recordedOrders": 1,
+      "requestCount": 51,
+      "stageTotals": {
+        "patient": {
+          "requests": 40,
+          "o200k_base": {
+            "input": 55592,
+            "output": 4905
+          },
+          "cl100k_base": {
+            "input": 58126,
+            "output": 4915
+          }
+        },
+        "exam": {
+          "requests": 5,
+          "o200k_base": {
+            "input": 5085,
+            "output": 115
+          },
+          "cl100k_base": {
+            "input": 5167,
+            "output": 120
+          }
+        },
+        "unrecorded_lab": {
+          "requests": 4,
+          "o200k_base": {
+            "input": 283,
+            "output": 52
+          },
+          "cl100k_base": {
+            "input": 284,
+            "output": 52
+          }
+        },
+        "scoring": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 7066,
+            "output": 248
+          },
+          "cl100k_base": {
+            "input": 7239,
+            "output": 247
+          }
+        },
+        "lesson": {
+          "requests": 1,
+          "o200k_base": {
+            "input": 6690,
+            "output": 922
+          },
+          "cl100k_base": {
+            "input": 6708,
+            "output": 929
+          }
+        }
+      },
+      "total": {
+        "o200k_base": {
+          "input": 74716,
+          "output": 6242
+        },
+        "cl100k_base": {
+          "input": 77524,
+          "output": 6263
+        }
+      }
+    }
+  ]
+}

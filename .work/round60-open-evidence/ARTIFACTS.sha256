@@ -1,0 +1,9 @@
+# پروندهٔ صحت‌سنجی خروجی‌های دور ۶۰
+# الگوریتم: SHA-256
+5360f6e5f78d6a12ed18d52e3d34736fbbac156619d1626f8c9f08d64d33b24d  .work/ROUND60-SUMMARY.md
+d511e3034a0b2c20ba019809b9b22367014d9c6366e146fefa178d6835aff000  .work/proj/docs/round60-open-evidence.json
+d4d9901abc12098064a353bb156ac989470381e45b934abcad6d2bbd1632e630  .work/round60-open-evidence/curate_round60.py
+4c279bd952d3db477476d94bc9c1a2cb5b93138955f0e16344d0e95261e18212  .work/round60-open-evidence/test_round60_review.py
+4aed87443324c3228e83939b2536c798ae03f6d7ef14638e32894a65b7bac694  .work/round60-open-evidence/evidence-brief.md
+75f0c5cfb269a1eab488828b4d60128d1963bc566303c8eaa527bacc467d6884  .work/round60-open-evidence/open-records.md
+5b7fca7554aaa0af3e68681de102d12464cf9502200b6f274081cbe0e1ec7b2d  .work/round60-open-evidence/TEST-RESULT.txt

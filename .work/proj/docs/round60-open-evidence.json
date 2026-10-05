@@ -1,0 +1,462 @@
+{
+  "status": "reviewed_not_applied",
+  "round": 60,
+  "count": 15,
+  "evidence_candidate_not_applied": 6,
+  "needs_editorial_rewrite": 9,
+  "authorization_fa": "این بسته صرفاً بازبینی شواهد است. هیچ کلید، پرسش، گزینه یا متن آموزشی تغییر نکرده و هیچ پیشنهاد آن برای اعمال آماده نیست.",
+  "scope_fa": "۱۳ ردیف مورد اختلاف دور ۵۸ به‌همراه ۲ ردیف منسوخِ باز، با متن و گزینه‌های فعلی دوباره خوانده شدند.",
+  "source_policy_fa": "پیوندها برای راستی‌آزمایی بالینی و آموزشی ثبت شده‌اند. منبع اصلی دفترچه بر آنها مقدم است و تصمیم درمانی فردی از این بسته استخراج نمی‌شود.",
+  "references": {
+    "who_csf": {
+      "title_fa": "جدول الگوی معمول مایع مغزی‌نخاعی در مننژیت باکتریایی و ویروسی — سازمان جهانی بهداشت",
+      "url": "https://www.ncbi.nlm.nih.gov/books/NBK614844/table/ch3.tab1/",
+      "use_fa": "برای مقایسهٔ غالب‌بودن نوتروفیل/لنفوسیت و گلوکز در مننژیت باکتریایی و ویروسی."
+    },
+    "merck_viral_meningitis": {
+      "title_fa": "مننژیت ویروسی — راهنمای حرفه‌ای مرک",
+      "url": "https://www.merckmanuals.com/professional/neurologic-disorders/meningitis/viral-meningitis",
+      "use_fa": "برای این نکته که گلوکز مایع مغزی‌نخاعی در مننژیت ویروسی معمولاً طبیعی یا فقط اندکی پایین است."
+    },
+    "winters_formula": {
+      "title_fa": "ارزیابی اختلالات اسید و باز — دانشگاه کلرادو",
+      "url": "https://medschool.cuanschutz.edu/docs/librariesprovider60/education-docs/heartbeat-im-res/suggested-read/evaluation-of-acid-base-disorders.pdf?sfvrsn=7d5f31b9_2",
+      "use_fa": "برای فرمول وینتر: فشار دی‌اکسیدکربن مورد انتظار برابر ۱٫۵ ضربدر بی‌کربنات به‌اضافهٔ ۸، با بازهٔ دو واحدی است."
+    },
+    "asccp_pregnancy": {
+      "title_fa": "راهنمای مدیریت نتایج غربالگری دهانهٔ رحم در بارداری — انجمن کولپوسکوپی و پاتولوژی گردن رحم آمریکا",
+      "url": "https://www.guidelinecentral.com/guideline/41167/",
+      "use_fa": "برای ممنوع‌بودن کورتاژ اندوسرویکال در بارداری و انجام نمونه‌برداری یا اقدام تشخیصی فقط هنگام شک به سرطان."
+    },
+    "uspstf_osteoporosis": {
+      "title_fa": "غربالگری پوکی استخوان برای پیشگیری از شکستگی — گروه خدمات پیشگیرانهٔ ایالات متحده",
+      "url": "https://www.uspreventiveservicestaskforce.org/uspstf/recommendation/osteoporosis-screening",
+      "use_fa": "برای این نکته که هم سیگار و هم مصرف زیاد الکل از عوامل خطر در زنان یائسهٔ زیر ۶۵ سال‌اند."
+    },
+    "acr_enterography": {
+      "title_fa": "پارامتر انجام سی‌تی انتروگرافی — کالج رادیولوژی آمریکا",
+      "url": "https://gravitas.acr.org/PPTS/DownloadPreviewDocument?DocId=75",
+      "use_fa": "برای نیاز سی‌تی انتروگرافی به مادهٔ حاجب خوراکی خنثی هنگام ارزیابی بیماری رودهٔ کوچک."
+    },
+    "oral_contrast_review": {
+      "title_fa": "کاربرد مادهٔ حاجب خوراکی در سال ۲۰۲۴ — مرور علمی دسترس‌آزاد",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC11300474/",
+      "use_fa": "برای تمایز مادهٔ حاجب خنثی در بیماری التهابی روده از پرهیز از مادهٔ حاجب خوراکی مثبت در ترومای شکمی حاد."
+    },
+    "mothertobaby_pseudoephedrine": {
+      "title_fa": "سودوافدرین در بارداری — مادر‌به‌کودک/کتابخانهٔ ملی پزشکی آمریکا",
+      "url": "https://www.ncbi.nlm.nih.gov/books/NBK582924/",
+      "use_fa": "برای ارتباط کوچک و غیرقطعی سودوافدرین با برخی ناهنجاری‌ها و توصیهٔ پرهیز در سه‌ماههٔ نخست."
+    },
+    "figo_ectopic": {
+      "title_fa": "مدیریت حاملگی خارج‌رحمی — فدراسیون بین‌المللی زنان و زایمان",
+      "url": "https://www.figo.org/sites/default/files/2020-03/1_MAS%20Ectopic.pdf",
+      "use_fa": "برای معیارهای درمان دارویی در بیمار پایدار: نبود پارگی یا ضربان، تودهٔ کوچک و تیتر کمتر از ۵۰۰۰."
+    },
+    "figo_mole": {
+      "title_fa": "پیگیری پس از مول هیداتی‌فرم — مرور مبتنی بر راهنمای فدراسیون بین‌المللی زنان و زایمان",
+      "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC7813445/",
+      "use_fa": "برای تفاوت پیگیری مول کامل و ناقص پس از طبیعی‌شدن تیتر هورمون بارداری."
+    },
+    "pregnancy_adnexal": {
+      "title_fa": "مدیریت توده‌های آدنکس در بارداری — مرور دسترس‌آزاد",
+      "url": "https://link.springer.com/article/10.1186/s10397-021-01084-9",
+      "use_fa": "برای وابستگی تصمیم به شکل سونوگرافی، علائم و پایداری توده و ترجیح پیگیری در تودهٔ خوش‌خیمِ بدون علامت."
+    },
+    "acog_tolerac": {
+      "title_fa": "زایمان واژینال پس از سزارین — بولتن کالج متخصصان زنان و زایمان آمریکا",
+      "url": "https://www.sdb.unipd.it/sites/sdb.unipd.it/files/VBAC%20ACOG%202017.pdf",
+      "use_fa": "برای این نکته که ناهنجاری ضربان قلب جنین شایع‌ترین نشانهٔ پارگی رحم در زایمان پس از سزارین است."
+    },
+    "nih_infant_hiv": {
+      "title_fa": "تشخیص اچ‌آی‌وی در شیرخوار و کودک — مؤسسهٔ ملی سلامت آمریکا",
+      "url": "https://clinicalinfo.hiv.gov/en/guidelines/perinatal/management-infants-diagnosis-hiv-infection-children",
+      "use_fa": "برای لزوم آزمون مولکولی ویروس در کودک زیر ۱۸ ماه و زمان‌بندی آزمون‌ها."
+    },
+    "cdc_egg_allergy": {
+      "title_fa": "واکسن آنفلوانزا و حساسیت به تخم‌مرغ — مرکز کنترل و پیشگیری بیماری آمریکا",
+      "url": "https://www.cdc.gov/flu/vaccines/egg-allergies.html",
+      "use_fa": "برای این نکته که حساسیت به تخم‌مرغ به‌تنهایی منع دریافت واکسن آنفلوانزا نیست."
+    },
+    "merck_conjunctivitis": {
+      "title_fa": "کونژونکتیویت ویروسی — راهنمای حرفه‌ای مرک",
+      "url": "https://www.merckmanuals.com/professional/eye-disorders/conjunctival-and-scleral-disorders/viral-conjunctivitis",
+      "use_fa": "برای هم‌پوشانی کموز، فوتوفوبی و حس جسم خارجی در طیف کونژونکتیویت ویروسی."
+    }
+  },
+  "rows": [
+    {
+      "part": 22,
+      "local_question": 166,
+      "id": "QB-04993",
+      "origin": "disputed",
+      "current_index": 3,
+      "current_option_fa": "مننژیت باکتلایر",
+      "original_open_reason_fa": "نمایهٔ مایع مغزی-نخاعی (سلول ۳۰۰ با ۸۵٪ لنفوسیت و قند ۱۵) بیشتر به مننژیت سلی/قارچی میخورد؛ دادهٔ قند نیز بریده شده است و تعیین تکلیف کلید به بازبینی کتابچه نیاز دارد.",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "requires_independent_second_review": true,
+      "status": "reviewed_not_applied",
+      "record_fingerprint_sha256": "501ade9e14fd16e0a17df6b44b161b209718b5fe2e64656e8e1022a3f956c6d3",
+      "review_route": "evidence_candidate_not_applied",
+      "review_route_fa": "پیشنهاد مبتنی بر شواهد؛ اعمال‌نشده",
+      "proposed_index": 2,
+      "proposed_option_fa": "مننگوانسفالیت ویرال",
+      "confidence_fa": "زیاد",
+      "evidence_fa": "گلوکز ۱۵، پروتئین ۱۲۵ و غلبهٔ لنفوسیتی با مننژیت سلی/قارچی همخوانی دارند؛ در الگوی معمول، مننژیت ویروسی گلوکز طبیعی یا فقط اندکی پایین دارد. بنابراین از میان چهار گزینه، مننگوانسفالیت ویروسی کمترین انطباق را دارد.",
+      "review_limit_fa": "الگوی مایع مغزی‌نخاعی به‌تنهایی تشخیص قطعی نمی‌دهد و مننژیت باکتریاییِ درمان‌شده می‌تواند غیرتیپیک باشد؛ این فقط پیشنهاد کلید آزمونی است، نه توصیهٔ درمانی.",
+      "reference_ids": [
+        "who_csf",
+        "merck_viral_meningitis"
+      ],
+      "next_step_fa": "پیش از هر اعمال، بازبینی مستقل بالینی و مجوز صریح کاربر لازم است؛ تا آن زمان کلید فعلی دست‌نخورده می‌ماند."
+    },
+    {
+      "part": 25,
+      "local_question": 98,
+      "id": "QB-05585",
+      "origin": "disputed",
+      "current_index": 2,
+      "current_option_fa": "کموزیس شدید",
+      "original_open_reason_fa": "کموزیس شدید در کونژونکتیویت ویروسی (آدنوویروس) شایع است؛ تفکیک ویروسی/باکتریایی با این یافته قطعی نیست.",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "requires_independent_second_review": true,
+      "status": "reviewed_not_applied",
+      "record_fingerprint_sha256": "79396797b75b260c5dae2ddc92256e8322bbd64f4861365f08e8460a34aae42b",
+      "review_route": "needs_editorial_rewrite",
+      "review_route_fa": "بازنویسی تحریریه‌ای",
+      "proposed_index": null,
+      "proposed_option_fa": null,
+      "confidence_fa": "نامشخص؛ پاسخ یکتا وجود ندارد",
+      "evidence_fa": "کموز، فوتوفوبی و حس جسم خارجی همگی می‌توانند در طیف کونژونکتیویت ویروسی، به‌ویژه درگیری قرنیه، دیده شوند. هیچ گزینه‌ای به‌تنهایی «کمتر به نفع ویروس» نیست.",
+      "review_limit_fa": "جابه‌جایی کلید به‌تنهایی نقص را برطرف نمی‌کند.",
+      "reference_ids": [
+        "merck_conjunctivitis"
+      ],
+      "next_step_fa": "پس از مجوز مستقل، پرسش به یک یافتهٔ افتراق‌دهندهٔ روشن مانند ترشح چرکی یا یافتهٔ معاینه‌ای مشخص محدود شود."
+    },
+    {
+      "part": 25,
+      "local_question": 145,
+      "id": "QB-05632",
+      "origin": "disputed",
+      "current_index": 2,
+      "current_option_fa": "کزاز",
+      "original_open_reason_fa": "کزاز با توکسوئید ایمنی طولانی میدهد ولی سرخک با دو نوبت ایمنی مادامالعمر ایجاد میکند؛ دو گزینه قابل بحثاند.",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "requires_independent_second_review": true,
+      "status": "reviewed_not_applied",
+      "record_fingerprint_sha256": "2b3962de972a90e6e6af1a451068e1de3091406bc67b1bfe41342c12097ee928",
+      "review_route": "needs_editorial_rewrite",
+      "review_route_fa": "بازنویسی تحریریه‌ای",
+      "proposed_index": null,
+      "proposed_option_fa": null,
+      "confidence_fa": "نامشخص؛ پاسخ یکتا وجود ندارد",
+      "evidence_fa": "عبارت «ایمنی بیشتری» معیار قابل سنجش، بازهٔ زمانی یا نوع ایمنی را مشخص نمی‌کند؛ مقایسهٔ چهار واکسن با این عبارت پاسخ یکتا نمی‌سازد.",
+      "review_limit_fa": "جابه‌جایی کلید به‌تنهایی نقص را برطرف نمی‌کند.",
+      "reference_ids": [],
+      "next_step_fa": "پس از مجوز مستقل، نوع ایمنی مورد نظر و دورهٔ پیگیری مشخص شود یا پرسش با یک گزارهٔ قابل راستی‌آزمایی جایگزین گردد."
+    },
+    {
+      "part": 27,
+      "local_question": 114,
+      "id": "QB-06041",
+      "origin": "disputed",
+      "current_index": 3,
+      "current_option_fa": "اسیدوز متابولیک و تنفسی توأم",
+      "original_open_reason_fa": "pH=۷/۱۰ با HCO3=۱۲ و PaCO2=۲۳ مطابق فرمول وینتر تقریباً با اسیدوز متابولیک ساده و جبران تنفسی سازگار است ولی گزینهٔ کلید آن را «توأم» میداند؛ نیازمند بازبینی کتابچه است.",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "requires_independent_second_review": true,
+      "status": "reviewed_not_applied",
+      "record_fingerprint_sha256": "74b76ef3fec9341b11fc9b4d13572a0a61568752b787fd6cce78c2a2b192352a",
+      "review_route": "evidence_candidate_not_applied",
+      "review_route_fa": "پیشنهاد مبتنی بر شواهد؛ اعمال‌نشده",
+      "proposed_index": 1,
+      "proposed_option_fa": "اسید وز متابولیک و آلکالوز تنفسی توأم",
+      "confidence_fa": "متوسط",
+      "evidence_fa": "با بی‌کربنات ۱۲، فرمول وینتر فشار دی‌اکسیدکربن مورد انتظار را ۲۶ با بازهٔ ۲۴ تا ۲۸ می‌دهد. مقدار ۲۳ اندکی پایین‌تر از بازه است و به آلکالوز تنفسیِ هم‌زمان اشاره می‌کند، نه اسیدوز تنفسیِ هم‌زمان.",
+      "review_limit_fa": "اختلاف یک واحدی با مرز بازه و گردشدن اعداد چاپی، بازبینی مستقل را ضروری می‌کند؛ این ردیف نباید هنوز به ابزار اعمال کلید افزوده شود.",
+      "reference_ids": [
+        "winters_formula"
+      ],
+      "next_step_fa": "پیش از هر اعمال، بازبینی مستقل بالینی و مجوز صریح کاربر لازم است؛ تا آن زمان کلید فعلی دست‌نخورده می‌ماند."
+    },
+    {
+      "part": 27,
+      "local_question": 140,
+      "id": "QB-06069",
+      "origin": "disputed",
+      "current_index": 0,
+      "current_option_fa": "هر 3 ماه باید کلپوسکوپی انجام شود",
+      "original_open_reason_fa": "برای LSIL در بارداری، بازهٔ کولپوسکوپی و پیگیری پس از زایمان بین منابع متفاوت است و گزینههای این ردیف هیچکدام استاندارد صریح نیستند.",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "requires_independent_second_review": true,
+      "status": "reviewed_not_applied",
+      "record_fingerprint_sha256": "c97b6722e50dd37e6f664829b8ce208e154e097808ee70de4979548929cda7c5",
+      "review_route": "evidence_candidate_not_applied",
+      "review_route_fa": "پیشنهاد مبتنی بر شواهد؛ اعمال‌نشده",
+      "proposed_index": 3,
+      "proposed_option_fa": ".در صورتی که شک بالینی قوی به سرطان وجود داشته باشد کلپوسکوپی بیوپسی باید انجام شود",
+      "confidence_fa": "زیاد",
+      "evidence_fa": "در بارداری، کورتاژ اندوسرویکال مجاز نیست و پیگیری سه‌ماهه برای ال‌اس‌آی‌الِ تنها، قاعدهٔ عمومی نیست. نمونه‌برداری یا اقدام تشخیصی در صورت شک به سرطان مسیر قابل دفاع است.",
+      "review_limit_fa": "آستانهٔ دقیق کولپوسکوپی به سابقه، نتیجهٔ ویروس پاپیلومای انسانی و برآورد خطر وابسته است؛ پیشنهاد فقط میان گزینه‌های چاپ‌شده انتخاب شده است.",
+      "reference_ids": [
+        "asccp_pregnancy"
+      ],
+      "next_step_fa": "پیش از هر اعمال، بازبینی مستقل بالینی و مجوز صریح کاربر لازم است؛ تا آن زمان کلید فعلی دست‌نخورده می‌ماند."
+    },
+    {
+      "part": 27,
+      "local_question": 150,
+      "id": "QB-06079",
+      "origin": "disputed",
+      "current_index": 0,
+      "current_option_fa": "سابقه مصرف سیگار در جوانی",
+      "original_open_reason_fa": "در نشانههای پیش از ۶۵ سالگی برای دانسیتومتری، اعتیاد به الکل و سابقهٔ مصرف سیگار هر دو عامل خطرند و گزینهٔ مورد نظر کتابچه مشخص نیست.",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "requires_independent_second_review": true,
+      "status": "reviewed_not_applied",
+      "record_fingerprint_sha256": "e0dc5f31964fa4d2950c02c07b69e98d536bfbd079e5d9406908e6d89cb5cf96",
+      "review_route": "needs_editorial_rewrite",
+      "review_route_fa": "بازنویسی تحریریه‌ای",
+      "proposed_index": null,
+      "proposed_option_fa": null,
+      "confidence_fa": "نامشخص؛ پاسخ یکتا وجود ندارد",
+      "evidence_fa": "راهنمای غربالگری پوکی استخوان، هم سیگار و هم مصرف زیاد الکل را عامل خطر می‌داند؛ بنابراین پرسش تک‌پاسخ نیست.",
+      "review_limit_fa": "جابه‌جایی کلید به‌تنهایی نقص را برطرف نمی‌کند.",
+      "reference_ids": [
+        "uspstf_osteoporosis"
+      ],
+      "next_step_fa": "پس از مجوز مستقل، سن، شدت مواجهه و منظور پرسش روشن یا گزینه‌ها طوری بازنویسی شوند که فقط یک عامل خطر معتبر بماند."
+    },
+    {
+      "part": 27,
+      "local_question": 166,
+      "id": "QB-06095",
+      "origin": "disputed",
+      "current_index": 0,
+      "current_option_fa": "ترومای شکمی",
+      "original_open_reason_fa": "کاربرد کنتراست خوراکی در سیتی شکم بین ترومای شکمی و بیماری التهابی روده قابل بحث است و رویکرد کتابچه مشخص نیست.",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "requires_independent_second_review": true,
+      "status": "reviewed_not_applied",
+      "record_fingerprint_sha256": "8c7abce8ca28ef4219f23c811a12431651e645e632fcf4356b2c5d3b8e3252a0",
+      "review_route": "evidence_candidate_not_applied",
+      "review_route_fa": "پیشنهاد مبتنی بر شواهد؛ اعمال‌نشده",
+      "proposed_index": 2,
+      "proposed_option_fa": "بیماری التهابی روده",
+      "confidence_fa": "زیاد",
+      "evidence_fa": "سی‌تی انتروگرافی برای بیماری التهابی روده از مادهٔ حاجب خوراکی خنثی استفاده می‌کند. در ترومای شکمی حاد، مادهٔ خوراکی مثبت معمولاً لازم نیست و می‌تواند ارزیابی را به تأخیر اندازد.",
+      "review_limit_fa": "نوع مادهٔ حاجب و پروتکل مرکز اهمیت دارد؛ این پیشنهاد دربارهٔ گزینهٔ استاندارد آزمونی است، نه نسخهٔ تصویربرداری برای بیمار واقعی.",
+      "reference_ids": [
+        "acr_enterography",
+        "oral_contrast_review"
+      ],
+      "next_step_fa": "پیش از هر اعمال، بازبینی مستقل بالینی و مجوز صریح کاربر لازم است؛ تا آن زمان کلید فعلی دست‌نخورده می‌ماند."
+    },
+    {
+      "part": 27,
+      "local_question": 169,
+      "id": "QB-06098",
+      "origin": "disputed",
+      "current_index": 0,
+      "current_option_fa": "توده پستان",
+      "original_open_reason_fa": "هر دو گزینهٔ سردرد شدید و لکنت زبان از اندیکاسیونهای قطع قرص ضدبارداریاند و تعیین گزینهٔ کتابچه نیازمند اصل منبع است.",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "requires_independent_second_review": true,
+      "status": "reviewed_not_applied",
+      "record_fingerprint_sha256": "d38e9f3205770e079677b4949168dda060ef43f8faa5b41a8dd313f09c05d6c0",
+      "review_route": "needs_editorial_rewrite",
+      "review_route_fa": "بازنویسی تحریریه‌ای",
+      "proposed_index": null,
+      "proposed_option_fa": null,
+      "confidence_fa": "نامشخص؛ پاسخ یکتا وجود ندارد",
+      "evidence_fa": "گزینهٔ چهارم به متن نامرتبط دفترچه آلوده شده و بیش از یک نشانهٔ عصبی در گزینه‌ها می‌تواند قطع فوری قرص ضدبارداری و ارزیابی را ایجاب کند؛ کلید یکتا ساخته نمی‌شود.",
+      "review_limit_fa": "جابه‌جایی کلید به‌تنهایی نقص را برطرف نمی‌کند.",
+      "reference_ids": [],
+      "next_step_fa": "پس از مجوز مستقل، متن گزینهٔ چهارم بازیابی یا بازنویسی و پرسش به یک نشانهٔ هشدار مشخص محدود شود."
+    },
+    {
+      "part": 27,
+      "local_question": 179,
+      "id": "QB-06108",
+      "origin": "disputed",
+      "current_index": 0,
+      "current_option_fa": "12 ماه",
+      "original_open_reason_fa": "فاصلهٔ مجاز تا بارداری بعدی پس از طبیعی شدن تیتر در مول (۶ یا ۱۲ ماه) بین منابع متفاوت است.",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "requires_independent_second_review": true,
+      "status": "reviewed_not_applied",
+      "record_fingerprint_sha256": "c3efa5d6f0f457c5dbe7fc4a535cd8aace3ffc4cb59560a69ec0ba89aa52c9b3",
+      "review_route": "needs_editorial_rewrite",
+      "review_route_fa": "بازنویسی تحریریه‌ای",
+      "proposed_index": null,
+      "proposed_option_fa": null,
+      "confidence_fa": "نامشخص؛ پاسخ یکتا وجود ندارد",
+      "evidence_fa": "مدت پیگیری و پرهیز از بارداری پس از مول به نوع مول کامل یا ناقص وابسته است؛ صورت پرسش این تمایز را نمی‌دهد و ۶ یا ۱۲ ماه از راهنماهای مختلف می‌آیند.",
+      "review_limit_fa": "جابه‌جایی کلید به‌تنهایی نقص را برطرف نمی‌کند.",
+      "reference_ids": [
+        "figo_mole"
+      ],
+      "next_step_fa": "پس از مجوز مستقل، نوع مول، روش و نقطهٔ شروع پایش مشخص و سپس یک بازهٔ یکتا نوشته شود."
+    },
+    {
+      "part": 27,
+      "local_question": 185,
+      "id": "QB-06114",
+      "origin": "disputed",
+      "current_index": 0,
+      "current_option_fa": "دکسترومتورفان",
+      "original_open_reason_fa": "بین ردیف ۱۶۲ همان فصل (کلرفنیرآمین) و این ردیف (دکسترومتورفان) برای یک سؤال، دو کلید متفاوت چاپ شده است؛ هیچکدام مستند فارماکولوژیک قوی ندارند.",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "requires_independent_second_review": true,
+      "status": "reviewed_not_applied",
+      "record_fingerprint_sha256": "17d8b1976102f2818922e676cc4e55b87b49c5a61e0f1ddcbdb52e9cfa32a862",
+      "review_route": "evidence_candidate_not_applied",
+      "review_route_fa": "پیشنهاد مبتنی بر شواهد؛ اعمال‌نشده",
+      "proposed_index": 2,
+      "proposed_option_fa": "پسودوافدرین",
+      "confidence_fa": "متوسط",
+      "evidence_fa": "منابع ایمنی دارو در بارداری برای سودوافدرین یک ارتباط کوچک و غیرقطعی با برخی ناهنجاری‌ها گزارش کرده‌اند و پرهیز در سه‌ماههٔ نخست را مطرح می‌کنند؛ برای دکسترومتورفان افزایش مورد انتظار خطر ناهنجاری گزارش نشده است.",
+      "review_limit_fa": "عبارت «می‌تواند منجر شود» بیش‌ازحد قطعی است و داده‌ها رابطهٔ قطعی را ثابت نمی‌کنند؛ پیش از هر تغییر، بازنویسی متن یا تأیید بالینی مستقل لازم است.",
+      "reference_ids": [
+        "mothertobaby_pseudoephedrine"
+      ],
+      "next_step_fa": "پیش از هر اعمال، بازبینی مستقل بالینی و مجوز صریح کاربر لازم است؛ تا آن زمان کلید فعلی دست‌نخورده می‌ماند."
+    },
+    {
+      "part": 27,
+      "local_question": 198,
+      "id": "QB-06129",
+      "origin": "disputed",
+      "current_index": 3,
+      "current_option_fa": "الپاراسکوپی",
+      "original_open_reason_fa": "با تیتر ۴۲۰۰ و تودهٔ آدنکس ۲×۱ سانتیمتری، متوترکسات و لاپاروسکوپی هر دو قابل دفاعاند و بخش انتهایی متن نیز بریده شده است.",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "requires_independent_second_review": true,
+      "status": "reviewed_not_applied",
+      "record_fingerprint_sha256": "eab59adb3d23c11b070eeee139d542ca839dcb46d55e8fc8effb0e4360ff3126",
+      "review_route": "evidence_candidate_not_applied",
+      "review_route_fa": "پیشنهاد مبتنی بر شواهد؛ اعمال‌نشده",
+      "proposed_index": 2,
+      "proposed_option_fa": "تجویز متوترکسات",
+      "confidence_fa": "متوسط",
+      "evidence_fa": "در سناریوی چاپ‌شده، بیمار پایدار است، توده ۲ سانتی‌متر، تیتر ۴۲۰۰ و مایع آزاد ندارد؛ این ویژگی‌ها با معیارهای متداول درمان دارویی با متوترکسات سازگارند و الزام فوری برای لاپاروسکوپی نشان نمی‌دهند.",
+      "review_limit_fa": "نبود اطلاعات دربارهٔ ضربان جنینی، آزمایش‌های پایه و امکان پیگیری سرپایی، انتخاب نهایی بالینی را محدود می‌کند؛ این صرفاً پیشنهاد آزمونیِ مشروط است.",
+      "reference_ids": [
+        "figo_ectopic"
+      ],
+      "next_step_fa": "پیش از هر اعمال، بازبینی مستقل بالینی و مجوز صریح کاربر لازم است؛ تا آن زمان کلید فعلی دست‌نخورده می‌ماند."
+    },
+    {
+      "part": 28,
+      "local_question": 25,
+      "id": "QB-06181",
+      "origin": "disputed",
+      "current_index": 0,
+      "current_option_fa": "الپاروسکوپی",
+      "original_open_reason_fa": "برای کیست ۶ سانتیمتری بدون علامت در هفتهٔ دهم، لاپاروسکوپی و بررسی مجدد در سه ماههٔ دوم هر دو در منابع مطرحاند.",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "requires_independent_second_review": true,
+      "status": "reviewed_not_applied",
+      "record_fingerprint_sha256": "735b5e9b8024a463958369d9c1919a72cb9b0d81cd7049125bda21f9fcfa71e7",
+      "review_route": "needs_editorial_rewrite",
+      "review_route_fa": "بازنویسی تحریریه‌ای",
+      "proposed_index": null,
+      "proposed_option_fa": null,
+      "confidence_fa": "نامشخص؛ پاسخ یکتا وجود ندارد",
+      "evidence_fa": "برای کیست ۶ سانتی‌متری در هفتهٔ دهم، تصمیم به شکل سونوگرافی، علائم و احتمال بدخیمی وابسته است. در متن فعلی این داده‌ها نیستند و پیگیری یا جراحی هر دو می‌توانند مطرح شوند.",
+      "review_limit_fa": "جابه‌جایی کلید به‌تنهایی نقص را برطرف نمی‌کند.",
+      "reference_ids": [
+        "pregnancy_adnexal"
+      ],
+      "next_step_fa": "پس از مجوز مستقل، مشخصات سونوگرافی و وضعیت علائم افزوده شود؛ اگر خوش‌خیم و بی‌علامت فرض می‌شود، زمان پیگیری نیز صریح باشد."
+    },
+    {
+      "part": 28,
+      "local_question": 50,
+      "id": "QB-06232",
+      "origin": "disputed",
+      "current_index": 1,
+      "current_option_fa": "تاکی کاردی مادر",
+      "original_open_reason_fa": "گزینهها برای نشانهٔ سزارین اورژانس مبهماند و هیچ الگوی غیرطمئنهٔ ضربان جنین در آنها ذکر نشده است.",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "requires_independent_second_review": true,
+      "status": "reviewed_not_applied",
+      "record_fingerprint_sha256": "c6bd2a87997ac10e9975112377f4ad4ba087c8628fa39859693ea20cd7303d08",
+      "review_route": "needs_editorial_rewrite",
+      "review_route_fa": "بازنویسی تحریریه‌ای",
+      "proposed_index": null,
+      "proposed_option_fa": null,
+      "confidence_fa": "نامشخص؛ پاسخ یکتا وجود ندارد",
+      "evidence_fa": "در زایمان پس از سزارین، ناهنجاری ضربان قلب جنین شایع‌ترین نشانهٔ پارگی رحم است، اما هیچ نوار یا الگوی جنینی در صورت سؤال نیست. تاکی‌کاردی مادر یک علامت غیر اختصاصی است و به‌تنهایی معیار یکتا برای سزارین اورژانس نیست.",
+      "review_limit_fa": "جابه‌جایی کلید به‌تنهایی نقص را برطرف نمی‌کند.",
+      "reference_ids": [
+        "acog_tolerac"
+      ],
+      "next_step_fa": "پس از مجوز مستقل، یک یافتهٔ مشخص جنینی یا مادری با زمینهٔ کافی افزوده و گزینه‌ها بر همان مبنا بازنویسی شوند."
+    },
+    {
+      "part": 23,
+      "local_question": 88,
+      "id": "QB-05135",
+      "origin": "outdated_open",
+      "current_index": 1,
+      "current_option_fa": "باید تست الیزا بالای ۴ ماهگی داشته باشیم تا قضاوت کنیم.",
+      "original_open_reason_fa": "کلید «ادامهٔ پایش» درست است ولی چارچوب سنجش با الیزا منسوخ شده؛ تشخیص قطعی امروز با آزمون مولکولی ویروسی و ELISA تنها پس از ۱۸ ماه معتبر است.",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "requires_independent_second_review": true,
+      "status": "reviewed_not_applied",
+      "record_fingerprint_sha256": "c1888019a60ee2cd1142fa8050e7ce2f85a8eca95b78a142921be33b9edbab1d",
+      "review_route": "needs_editorial_rewrite",
+      "review_route_fa": "بازنویسی تحریریه‌ای",
+      "proposed_index": null,
+      "proposed_option_fa": null,
+      "confidence_fa": "نامشخص؛ پاسخ یکتا وجود ندارد",
+      "evidence_fa": "در شیرخوار زیر ۱۸ ماه با مواجههٔ پیرامون تولد، تشخیص با آزمون مولکولی ویروس است، نه الایزا یا وسترن‌بلاتِ گزینه‌ها. بنابراین جابه‌جایی کلید، پرسش را امروزی نمی‌کند.",
+      "review_limit_fa": "جابه‌جایی کلید به‌تنهایی نقص را برطرف نمی‌کند.",
+      "reference_ids": [
+        "nih_infant_hiv"
+      ],
+      "next_step_fa": "پس از مجوز مستقل، زمان‌بندی آزمون مولکولی و وضعیت شیردهی یا پیشگیری دارویی در پرسش و گزینه‌ها بازنویسی شود."
+    },
+    {
+      "part": 24,
+      "local_question": 58,
+      "id": "QB-05325",
+      "origin": "outdated_open",
+      "current_index": 1,
+      "current_option_fa": "آنفلوانزا",
+      "original_open_reason_fa": "یه گزینهٔ MMR هم نه، کلید آنفلوانزا: در حساسیت به تخممرغ، واکسن آنفلوانزا امروز منع مطلق نیست (پروتکلهای امروزی تجویز در محیط مجهز را مجاز میدانند) و ایمنترین گزینهٔ این فهرست OPV است که فلج اطفال خوراکی در برنامهٔ کشوری حذف شده؛ دو گزینه مشکلدارند.",
+      "content_mutation_allowed": false,
+      "key_mutation_allowed": false,
+      "requires_independent_second_review": true,
+      "status": "reviewed_not_applied",
+      "record_fingerprint_sha256": "53e52a2a3b9ac6fbf8911b2ea3c1854f8388b5cf01246797fbc4f79a64c2636e",
+      "review_route": "needs_editorial_rewrite",
+      "review_route_fa": "بازنویسی تحریریه‌ای",
+      "proposed_index": null,
+      "proposed_option_fa": null,
+      "confidence_fa": "نامشخص؛ پاسخ یکتا وجود ندارد",
+      "evidence_fa": "حساسیت به تخم‌مرغ به‌تنهایی منع واکسن آنفلوانزا نیست و گزینه‌های قدیمی دربارهٔ واکسن خوراکی فلج اطفال نیز انتخاب امروزی و یکتایی نمی‌سازند.",
+      "review_limit_fa": "جابه‌جایی کلید به‌تنهایی نقص را برطرف نمی‌کند.",
+      "reference_ids": [
+        "cdc_egg_allergy"
+      ],
+      "next_step_fa": "پس از مجوز مستقل، سن کودک، برنامهٔ واکسیناسیون مورد نظر و منع واقعی واکسن در متن و گزینه‌ها روشن شود."
+    }
+  ]
+}

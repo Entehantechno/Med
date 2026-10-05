@@ -1,0 +1,236 @@
+
+/* WOFF2-only display font to avoid legacy font payload. */
+@font-face{font-family:"Estedad";font-style:normal;font-weight:900;font-display:swap;src:url("@fontsource/estedad/files/estedad-arabic-900-normal.woff2") format("woff2");unicode-range:U+0600-06FF,U+0750-077F,U+08A0-08FF,U+FB50-FDFF,U+FE70-FEFF;}
+/* Speed/UX fixes: image zoom for flashcards and hint images. */
+.zoomable-img{position:relative;cursor:zoom-in}
+.zoomable-img img{display:block;max-width:100%}
+.zoom-badge{position:absolute;inset-inline-end:8px;bottom:8px;display:inline-flex;align-items:center;gap:4px;background:rgba(15,23,42,.72);color:#fff;border-radius:999px;padding:4px 8px;font-size:.72rem;font-weight:700;backdrop-filter:blur(6px)}
+.hint-img{margin-top:10px;border-radius:12px;overflow:hidden;border:1px solid var(--border);background:var(--panel)}
+.hint-img img{max-height:220px;margin:auto;object-fit:contain}
+.img-zoom-back{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;background:rgba(0,0,0,.78);padding:24px;cursor:zoom-out}
+.img-zoom-back img{max-width:min(96vw,1200px);max-height:92vh;object-fit:contain;border-radius:14px;box-shadow:0 20px 80px rgba(0,0,0,.45);background:#fff;cursor:default}
+.img-zoom-close{position:fixed;top:16px;inset-inline-end:18px;width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.95);color:#111;font-size:28px;line-height:1;z-index:10000;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+
+/* Render off-screen sections lazily in modern browsers (CWV: LCP/INP). */
+.lp-section,.lp-gamify,.lp-final,.blog-related{content-visibility:auto;contain-intrinsic-size:320px;}
+.path-section-wrap{content-visibility:auto;contain-intrinsic-size:280px;}
+.dr-tutor{position:fixed;z-index:80;inset-inline-end:18px;bottom:18px}.dr-tutor-fab{width:52px;height:52px;border-radius:50%;background:var(--grad-primary);color:#fff;box-shadow:var(--shadow);font-size:24px}.dr-tutor-panel{position:absolute;inset-inline-end:0;bottom:62px;width:min(320px,88vw);padding:14px}.dr-tutor-input{display:flex;gap:6px}.dr-tutor-input input{flex:1;border:1px solid var(--border);border-radius:10px;padding:8px}.questionnaire-prompt{border-inline-start:4px solid var(--accent)}
+
+/* Histology / anatomy / radiology click-on-image (hotspot) */
+.hotspot-box{margin-top:12px}
+.hotspot-stage{position:relative;display:block;max-width:720px;margin:0 auto;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--panel2);touch-action:pan-y pinch-zoom;user-select:none;-webkit-user-select:none}
+.hotspot-stage.author{touch-action:none}
+.hotspot-stage img{display:block;width:100%;max-height:460px;object-fit:contain;background:#fff;pointer-events:none}
+.hotspot-stage.done{cursor:default;touch-action:pan-y pinch-zoom}
+.hotspot-stage.zoomed{overflow:auto;max-height:min(92vh,900px)}
+.hotspot-stage.zoomed img{width:160%;max-height:none}
+.hotspot-toolbar{display:flex;justify-content:center;gap:8px;margin-top:8px}
+.hotspot-layer{position:absolute;pointer-events:none;overflow:visible}
+.hotspot-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.hotspot-svg.author circle,.hotspot-svg.author rect,.hotspot-svg.author path{fill:rgba(47,127,209,.2);stroke:#2f7fd1;stroke-width:.55;stroke-dasharray:1.4 1.1}
+.hotspot-svg.reveal circle,.hotspot-svg.reveal rect,.hotspot-svg.reveal path{fill:rgba(40,167,69,.18);stroke:var(--ok,#28a745);stroke-width:.7;stroke-dasharray:1.2 1}
+.hotspot-click{position:absolute;transform:translate(-50%,-50%);width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.25);pointer-events:none;font-size:.78rem}
+.hotspot-click.bad{background:var(--danger)}
+.hotspot-click.ok{background:var(--ok)}
+.hotspot-click.pending{background:#2563eb;animation:hotspotPulse 1.1s ease-in-out infinite}
+@keyframes hotspotPulse{0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,.45)}70%{box-shadow:0 0 0 10px transparent}}
+.hotspot-target{position:absolute;transform:translate(-50%,-50%);border:2px dashed var(--ok);border-radius:50%;background:rgba(40,167,69,.12);pointer-events:none}
+.hotspot-admin-preview{position:relative;max-width:640px;margin:10px auto 0;border:1px dashed var(--border2);border-radius:14px;overflow:hidden;cursor:crosshair;background:var(--panel)}
+.hotspot-admin-preview img{display:block;width:100%;max-height:360px;object-fit:contain;background:#fff}
+.hotspot-stage.hotspot-admin-preview img{max-height:360px}
+.hotspot-target.admin{border-color:var(--primary);background:rgba(47,127,209,.12)}
+.hotspot-vertex{position:absolute;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;background:#2f7fd1;color:#fff;font-size:10px;font-weight:800;display:grid;place-items:center;box-shadow:0 2px 8px rgba(47,127,209,.4)}
+.hotspot-region-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.hotspot-confirm{display:flex;flex-direction:column;align-items:stretch;max-width:720px;margin:0 auto}
+@media(prefers-reduced-motion:reduce){.hotspot-click.pending{animation:none}}
+
+/* Professional flashcard picker filters/grouping */
+.picker-filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:8px 0 10px}.picker-filters select{min-width:0;border:1px solid var(--border);border-radius:10px;padding:8px;background:var(--panel);color:var(--text);font-family:inherit}.picker-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0 10px}.picker-list{display:grid;gap:6px}.picker-card-text{min-width:0;display:grid;gap:2px}.picker-card-text b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.picker-card-text small{color:var(--muted);font-size:.72rem}@media(max-width:760px){.picker-filters{grid-template-columns:1fr 1fr}.picker-toolbar{align-items:flex-start;flex-direction:column}}
+
+/* ================================================================
+   Restored professional functional micro-interactions
+   CSS-only, lightweight, preserves current MED School visual identity.
+   ================================================================ */
+:root{--motion-fast:140ms;--motion-med:220ms;--ease-pro:cubic-bezier(.2,.8,.2,1);--ease-pop:cubic-bezier(.34,1.56,.64,1);--ring:0 0 0 3px color-mix(in srgb,var(--primary) 22%,transparent)}
+button,a,[role="button"],input,textarea,select,.card,.lp-feature,.lp-aud-card,.lp-step,.lp-testi,.lp-faq{-webkit-tap-highlight-color:transparent}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,.lp-faq-q:focus-visible,.nav-tab-btn:focus-visible,.sidenav-title:focus-visible,.dt-clear:focus-visible{outline:2px solid var(--primary);outline-offset:3px;box-shadow:var(--ring)}
+.btn,.lp-btn-primary,.lp-btn-outline,.lp-btn-ghost,.lp-btn-store,.lp-icon-btn,.nav-tab-btn,.sidenav button,.mode-switch button,.set-seg-btn{transition:transform var(--motion-fast) var(--ease-pro),box-shadow var(--motion-med) ease,border-color var(--motion-med) ease,background-color var(--motion-med) ease,color var(--motion-med) ease,filter var(--motion-med) ease}
+.btn:active,.lp-btn-primary:active,.lp-btn-outline:active,.lp-btn-ghost:active,.lp-btn-store:active,.lp-icon-btn:active,.nav-tab-btn:active,.mode-switch button:active,.stat-card-link:active,.mod-card-row:active{transform:translateY(1px) scale(.985)}
+.btn:disabled,.lp-btn-primary:disabled,.lp-btn-outline:disabled{opacity:.62;filter:saturate(.65);transform:none;box-shadow:none}
+.btn-primary,.btn-accent,.lp-btn-primary{position:relative;isolation:isolate;overflow:hidden}.btn-primary::before,.btn-accent::before,.lp-btn-primary::before{content:"";position:absolute;inset:-2px;z-index:-1;border-radius:inherit;background:linear-gradient(120deg,transparent 0%,rgba(255,255,255,.34) 45%,transparent 62%);transform:translateX(-115%) skewX(-16deg);opacity:.9}.btn-primary:hover::before,.btn-accent:hover::before,.lp-btn-primary:hover::before{transform:translateX(115%) skewX(-16deg);transition:transform 760ms var(--ease-pro)}
+.field input:focus,.field textarea:focus,.field select:focus,.chat-input input:focus,.dt-search:focus-within{border-color:var(--primary)!important;box-shadow:0 0 0 4px color-mix(in srgb,var(--primary) 15%,transparent);background:var(--panel)}.field input,.field textarea,.field select,.chat-input input,.dt-search{transition:border-color var(--motion-med) ease,box-shadow var(--motion-med) ease,background-color var(--motion-med) ease}
+.lp-nav,.topbar{transition:box-shadow var(--motion-med) ease,background-color var(--motion-med) ease,border-color var(--motion-med) ease}.lp-brand,.brand{transition:transform var(--motion-fast) var(--ease-pro),opacity var(--motion-med) ease}.lp-brand:hover,.brand:hover{transform:translateY(-1px)}.lp-icon-btn:hover{transform:translateY(-1px) rotate(-3deg)}
+.lp-badge,.lp-trust-badge,.lp-chip,.tag,.pill{transition:transform var(--motion-fast) var(--ease-pro),box-shadow var(--motion-med) ease,border-color var(--motion-med) ease}.lp-badge:hover,.lp-trust-badge:hover,.lp-chip:hover,.tag:hover,.pill:hover{transform:translateY(-1px)}
+@media (min-width:900px){.lp-features{grid-template-columns:repeat(6,minmax(0,1fr));align-items:stretch}.lp-feature{grid-column:span 2;min-height:100%}.lp-feature:nth-child(1),.lp-feature:nth-child(6){grid-column:span 3}}
+.lp-feature,.lp-aud-card,.lp-step,.lp-testi,.lp-faq,.mock-card{transition:transform var(--motion-med) var(--ease-pop),box-shadow var(--motion-med) ease,border-color var(--motion-med) ease,background-color var(--motion-med) ease}.lp-feature:hover,.lp-aud-card:hover,.lp-step:hover,.lp-testi:hover,.lp-faq:hover{transform:translateY(-5px);box-shadow:0 22px 42px -28px rgba(38,82,122,.55);border-color:color-mix(in srgb,var(--primary) 36%,var(--border))}.lp-feature:hover .lp-feature-ico,.lp-aud-card:hover .lp-aud-ico,.lp-step:hover .lp-step-ico{transform:scale(1.06) rotate(-2deg)}.lp-feature-ico,.lp-aud-ico,.lp-step-ico,.mod-ico,.next-action-icon{transition:transform var(--motion-med) var(--ease-pop),box-shadow var(--motion-med) ease}
+.lp-faq-q{transition:color var(--motion-med) ease,background-color var(--motion-med) ease}.lp-faq.open{border-color:color-mix(in srgb,var(--primary) 36%,var(--border))}.lp-faq.open .lp-faq-q{color:var(--primary)}.lp-faq-a{animation:polishFadeUp 220ms var(--ease-pro) both}@keyframes polishFadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.mock-node.active{animation:polishPulse 1.8s ease-in-out infinite}@keyframes polishPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--accent) 35%,transparent)}50%{box-shadow:0 0 0 10px transparent}}.mock-lg-row{transition:transform var(--motion-fast) var(--ease-pro),background-color var(--motion-med) ease}.mock-lg-row:hover{transform:translateX(-2px);background:color-mix(in srgb,var(--primary) 8%,transparent)}[dir="ltr"] .mock-lg-row:hover{transform:translateX(2px)}
+.table-wrap tbody tr,.data-table tbody tr{transition:background-color var(--motion-fast) ease,transform var(--motion-fast) var(--ease-pro)}.table-wrap tbody tr:hover,.data-table tbody tr:hover{background:color-mix(in srgb,var(--primary) 7%,var(--panel))}.nav-tab-btn:hover,.sidenav button:hover{transform:translateX(-2px)}[dir="ltr"] .nav-tab-btn:hover,[dir="ltr"] .sidenav button:hover{transform:translateX(2px)}.nav-tab-btn.active{box-shadow:0 10px 22px -16px var(--primary)}.sidenav-group.open .sidenav-title{color:var(--primary)}
+.empty-state{background:radial-gradient(420px 160px at 50% 0%,color-mix(in srgb,var(--primary) 10%,transparent),transparent 70%),var(--panel)}.empty-state .ico{transition:transform var(--motion-med) var(--ease-pop)}.empty-state:hover .ico{transform:translateY(-2px) scale(1.05)}
+.toast{animation:toastIn 240ms var(--ease-pro) both}@keyframes toastIn{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}.route-fallback{animation:polishFadeUp 180ms var(--ease-pro) both}
+@media(max-width:640px){.lp-feature:hover,.lp-aud-card:hover,.lp-step:hover,.lp-testi:hover,.lp-faq:hover{transform:translateY(-2px)}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}.lp-feature:hover,.lp-aud-card:hover,.lp-step:hover,.lp-testi:hover,.lp-faq:hover,.btn:hover,.lp-btn-primary:hover,.lp-btn-outline:hover,.lp-btn-ghost:hover,.next-action-card:hover,.stat-card-link:hover,.mod-card:hover,.case-item:hover,.lp-brand:hover,.brand:hover,.nav-tab-btn:hover,.sidenav button:hover{transform:none!important}}
+.admin-mode-panel{margin:0 0 18px;display:grid;gap:8px}.admin-mode-hint{padding:0 4px;line-height:1.8}.mode-switch button.active{box-shadow:0 10px 24px -14px var(--primaryGlow),inset 0 0 0 1px color-mix(in srgb,var(--primary) 28%,transparent)}
+
+/* Admin upgrade: fast control hub + cross-universe command palette (admin only) */
+.admin-control-hub{overflow:hidden}.admin-hub-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.admin-hub-card{display:flex;align-items:flex-start;gap:10px;text-align:start;padding:12px;border:1px solid var(--border);border-radius:16px;background:color-mix(in srgb,var(--panel) 94%,var(--primary) 6%);color:var(--text);transition:transform var(--motion-fast) var(--ease-pro),box-shadow var(--motion-med) ease,border-color var(--motion-med) ease}.admin-hub-card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--primary) 36%,var(--border));box-shadow:0 14px 28px -24px var(--primary)}.admin-hub-icon{display:grid;place-items:center;flex:none;width:34px;height:34px;border-radius:12px;background:var(--grad-primary);color:#fff}.admin-hub-copy{display:grid;gap:3px;min-width:0}.admin-hub-copy b{font-size:.88rem}.admin-hub-copy small{font-size:.74rem;line-height:1.7;color:var(--muted)}.admin-command-list{display:grid;gap:6px;max-height:55vh;overflow:auto}.admin-command-list .btn{justify-content:flex-start}.admin-command-list .btn small{margin-inline-start:auto;font-size:.7rem}
+
+/* Accessibility upgrade: keyboard-only skip link and stable main landmark */
+.skip-link{position:absolute;inset-block-start:8px;inset-inline-start:8px;z-index:9999;transform:translateY(-140%);padding:10px 14px;border-radius:12px;background:var(--primary);color:#fff;font-weight:900;text-decoration:none;box-shadow:0 12px 30px -18px #000;transition:transform var(--motion-fast) var(--ease-pro)}.skip-link:focus,.skip-link:focus-visible{transform:translateY(0);outline:3px solid #fff;outline-offset:2px}.lp-main:focus,#learn-main:focus{outline:none}@media(max-width:560px){.lp-icon-btn,.lp-btn-primary,.lp-btn-outline,.lp-btn-ghost,.lp-btn-store{min-height:44px;min-width:44px}}
+
+/* New flashcard types: drawing + stepwise scaffolded questions (mobile-first) */
+.drawing-q,.stepwise-q{display:grid;gap:12px}.drawing-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--panel2);border:1px solid var(--border);border-radius:14px;padding:8px}.draw-color{width:28px;height:28px;border-radius:999px;border:2px solid #fff;box-shadow:0 0 0 1px var(--border);cursor:pointer}.draw-color.on{box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 36%,transparent)}.drawing-canvas{display:block;width:100%;border:1px solid var(--border);border-radius:18px;background:#fff;touch-action:none;cursor:crosshair;box-shadow:inset 0 0 0 1px rgba(0,0,0,.02)}.drawing-ref{border:1px solid var(--border);border-radius:14px;overflow:hidden;background:var(--panel2);text-align:center}.drawing-ref img{max-width:100%;max-height:240px;object-fit:contain}.drawing-rubric{display:grid;gap:6px;border:1px dashed var(--border);border-radius:14px;padding:10px;background:color-mix(in srgb,var(--panel) 92%,var(--primary) 8%)}.step-card{border:1px solid var(--border);border-radius:16px;background:var(--panel);padding:12px;display:grid;gap:8px}.step-card.ok{border-color:color-mix(in srgb,var(--green) 55%,var(--border));background:color-mix(in srgb,var(--panel) 90%,var(--green) 10%)}.step-card.bad{border-color:color-mix(in srgb,var(--danger) 45%,var(--border));background:color-mix(in srgb,var(--panel) 90%,var(--danger) 10%)}.step-no{font-weight:900;color:var(--primary);font-size:.82rem}.step-prompt{font-weight:800}.step-card textarea{width:100%;resize:vertical;border:1px solid var(--border);border-radius:12px;padding:10px;background:var(--panel2);color:var(--text);font-family:inherit}@media(max-width:560px){.drawing-toolbar{position:sticky;top:0;z-index:2}.drawing-canvas{border-radius:14px}.step-card{padding:10px}}
+
+/* Teacher live classroom board */
+.live-board{min-height:70vh}.live-board-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}.live-board-title{display:grid;gap:4px}.live-board-ranks{display:grid;gap:10px}.live-rank-row{display:grid;grid-template-columns:54px minmax(0,1fr) 92px 110px;gap:10px;align-items:center;padding:12px;border:1px solid var(--border);border-radius:18px;background:var(--panel);box-shadow:0 10px 26px -24px #000}.live-rank-row.top1{background:linear-gradient(135deg,color-mix(in srgb,var(--gold) 16%,var(--panel)),var(--panel))}.live-rank-medal{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:var(--grad-primary);color:#fff;font-weight:900}.live-rank-name{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.live-score{font-size:1.3rem;font-weight:900;color:var(--accent);text-align:center}.live-progress{min-width:0}.live-board-full{position:fixed;inset:0;z-index:9990;background:var(--bg);padding:24px;overflow:auto}.live-board-full .live-rank-row{font-size:1.15rem;padding:16px;grid-template-columns:70px minmax(0,1fr) 120px 140px}.live-board-full .live-rank-medal{width:56px;height:56px;font-size:1.2rem}@media(max-width:640px){.live-rank-row{grid-template-columns:44px minmax(0,1fr) 68px;gap:8px}.live-progress{grid-column:2/4}.live-score{font-size:1.05rem}.live-board-full{padding:12px}}
+
+/* Mobile admin audit fix: keep the admin menu toggle above panels and reliably tappable */
+.sidenav-mobile-toggle{position:relative;z-index:30;pointer-events:auto;touch-action:manipulation}.sidenav-mobile-toggle *{pointer-events:none}.sidenav.mobile-open{position:relative;z-index:25}
+
+/* Responsive containment audit fixes: prevent page-level horizontal overflow;
+   tables/charts keep their own internal scrolling instead of shifting the app. */
+/* overflow-x:hidden on html/body/#root/.app computes overflow-y to auto and
+   traps the admin panel so the page cannot scroll. Do NOT set overflow on
+   html+body together — that dual-scrollport is why the whole site froze
+   (only the signup overlay, which has its own overflow-y:auto, still moved).
+   Horizontal clip lives on inner wrappers; document Y scroll is restored in
+   scroll-unlock.css (loaded last). */
+html,body{max-width:100%}
+#root,.app{max-width:100%;overflow:visible}
+.container,.admin-layout,.admin-layout>div,.card,.page,.section-title{min-width:0;max-width:100%}.card{overflow-wrap:anywhere}.table-wrap,.data-table-wrap{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}.card svg,.chart svg,svg[role="img"]{max-width:100%;height:auto}.section-title{flex-wrap:wrap}.dt-search input{min-height:34px}.grid,.grid-2,.grid-3,.grid-4{min-width:0}.modal,.modal-card{max-width:min(96vw,1100px)}
+
+/* Mobile usability polish: make dense admin checkboxes/radios and small actions easier to tap */
+input[type="checkbox"],input[type="radio"]{min-width:22px;min-height:22px;accent-color:var(--primary);cursor:pointer}.btn-sm{min-height:34px}.table-wrap input[type="checkbox"],.table-wrap input[type="radio"]{min-width:24px;min-height:24px}.toggle-row{min-height:40px}@media(max-width:640px){input[type="checkbox"],input[type="radio"]{min-width:28px;min-height:28px}.btn-sm{min-height:38px}.table-wrap td,.table-wrap th{padding-top:10px;padding-bottom:10px}}
+
+/* Stronger touch target override for dense permission/feature-flag matrices */
+input[type="checkbox"],input[type="radio"]{width:26px!important;height:26px!important;min-width:26px!important;min-height:26px!important}@media(max-width:640px){input[type="checkbox"],input[type="radio"]{width:34px!important;height:34px!important;min-width:34px!important;min-height:34px!important}}
+
+/* Final mobile tap-target pass for dense admin tables/settings */
+.btn-link{min-height:34px;padding-block:4px}.btn-sm{min-width:44px}input,select,textarea{min-height:34px}@media(max-width:640px){input,select,textarea{min-height:38px}.btn-link{min-height:38px;display:inline-flex;align-items:center}.btn-sm{min-width:48px}}
+
+/* Teacher moderation for drawing submissions */
+.drawing-review-list{display:grid;gap:12px;max-height:70vh;overflow:auto;padding-inline-end:4px}.drawing-review-card textarea{width:100%;margin-top:8px;border:1px solid var(--border);border-radius:12px;background:var(--panel2);color:var(--text);padding:10px;font-family:inherit}.drawing-review-img{display:block;width:100%;max-height:440px;object-fit:contain;background:#fff;border:1px solid var(--border);border-radius:14px}.tag.ok{background:color-mix(in srgb,var(--green) 16%,var(--panel));color:var(--green)}.tag.bad{background:color-mix(in srgb,var(--danger) 14%,var(--panel));color:var(--danger)}
+.drawing-toolbar .chip-btn.on{background:color-mix(in srgb,var(--primary) 14%,var(--panel));border-color:color-mix(in srgb,var(--primary) 34%,var(--border));color:var(--primary)}.mc-options.compact{grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}.local-hints{display:grid;gap:8px;margin-bottom:10px}
+
+/* Live leaderboard drill-down: click a student to inspect submitted questions/answers */
+.live-board-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,420px);gap:12px;align-items:start}.live-rank-row.selected{outline:2px solid var(--primary);outline-offset:2px}.live-rank-name{border:0;background:transparent;color:var(--text);font:inherit;font-weight:900;padding:0;text-align:start;cursor:pointer}.live-rank-name:hover{color:var(--primary);text-decoration:underline}.live-student-detail{position:sticky;top:10px;max-height:72vh;overflow:auto}.live-answer-list{display:grid;gap:10px}.live-attempt{border:1px solid var(--border);border-radius:14px;padding:10px;background:var(--panel2)}.live-attempt-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.live-answer{border-top:1px dashed var(--border);margin-top:8px;padding-top:8px;display:grid;gap:4px}.live-answer-drawing{display:block;max-width:100%;max-height:220px;object-fit:contain;background:#fff;border:1px solid var(--border);border-radius:10px}@media(max-width:900px){.live-board-grid{grid-template-columns:1fr}.live-student-detail{position:static;max-height:none}.live-board-full .live-board-grid{grid-template-columns:1fr}}
+
+/* Teacher-facing class/exam analytics: strengths, weaknesses, hard items */
+.teaching-analytics .weak-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px dashed var(--border)}.teaching-analytics .weak-row:last-child{border-bottom:0}.teaching-analytics h4{margin:0 0 8px}.pbar.sm{height:7px;margin-top:5px}
+
+/* Flashcard type picker + KF / letter-puzzle player */
+.qtype-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px;margin-top:6px}
+.qtype-chip{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:10px 12px;border:1.5px solid var(--border);border-radius:12px;background:var(--panel2);text-align:start;cursor:pointer;font-family:inherit;color:var(--text);min-height:54px}
+.qtype-chip.on{border-color:var(--primary);background:color-mix(in srgb,var(--primary) 12%,var(--panel));color:var(--primary)}
+.qtype-chip .qt-name{font-weight:800;font-size:.82rem;display:inline-flex;align-items:center;gap:6px}
+.qtype-chip .qt-hint{font-size:.68rem;color:var(--muted);font-weight:600}
+.card-adv{border:1px solid var(--border);border-radius:12px;padding:10px 12px;margin:12px 0;background:var(--panel2)}
+.card-adv>summary{cursor:pointer;font-weight:800;color:var(--primary);list-style:none}
+.card-adv>summary::-webkit-details-marker{display:none}
+.kf-vignette{background:var(--panel2);border-inline-start:4px solid var(--primary);padding:14px 16px;border-radius:12px;margin-bottom:12px;line-height:1.9;font-weight:600}
+.kf-q,.puzzle-q{display:grid;gap:10px}
+.puzzle-built{min-height:52px;border:2px dashed var(--border);border-radius:14px;padding:8px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.puzzle-tiles{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.puzzle-tile{min-width:40px;min-height:44px;font-weight:800;font-size:1.1rem}
+.label-puzzle-img{position:relative;max-width:720px;margin:0 auto;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:#fff}
+.label-puzzle-img img{display:block;width:100%;max-height:460px;object-fit:contain}
+.label-pin{position:absolute;transform:translate(-50%,-50%);width:26px;height:26px;border-radius:50%;background:var(--primary);color:#fff;font-weight:800;font-size:.8rem;display:grid;place-items:center;border:2px solid #fff;box-shadow:0 4px 12px rgba(0,0,0,.25);cursor:pointer;padding:0;line-height:1}
+.label-pin.on{background:var(--gold,#e0a52e);transform:translate(-50%,-50%) scale(1.12)}
+.label-pin.ok{background:var(--ok)}
+.label-pin.bad{background:var(--danger)}
+.label-pin.static,.label-pin.admin{position:relative;transform:none;cursor:default;flex:0 0 auto}
+.label-pin.admin{position:absolute;transform:translate(-50%,-50%);pointer-events:none}
+.label-pin-bank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.label-pin-assign{display:grid;gap:6px}
+.label-pin-row{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;border:1px solid var(--border);background:var(--panel2);cursor:pointer}
+.label-pin-row.on{border-color:var(--primary);box-shadow:0 0 0 2px rgba(47,127,209,.18)}
+.label-pin-slot{font-weight:700;flex:1}
+.eb-compact.eb-screen{min-height:auto;padding:8px 0;background:transparent;place-items:stretch}
+.eb-compact .eb-card{max-width:none;box-shadow:var(--shadow-sm)}
+
+/* ===== Round 22: MCQ option images, pro drawing canvas, admin/site polish ===== */
+.mc-opt-body{display:flex;align-items:center;gap:10px;min-width:0;flex:1;text-align:start}
+.mc-opt-img{width:56px;height:56px;object-fit:cover;border-radius:10px;border:1px solid var(--border);background:var(--panel2);flex-shrink:0}
+@media(min-width:720px){.mc-opt-img{width:72px;height:72px}}
+
+.drawing-stage{position:relative;border-radius:18px;overflow:hidden;box-shadow:0 10px 28px -18px rgba(15,23,42,.45);border:1px solid var(--border)}
+.drawing-stage .drawing-canvas{border:0;border-radius:0;width:100%;display:block}
+.drawing-grid-overlay{position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(47,127,209,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(47,127,209,.16) 1px,transparent 1px);background-size:28px 28px;z-index:1}
+.draw-label{position:absolute;transform:translate(-50%,-50%);z-index:2;min-width:22px;height:22px;padding:0 6px;border-radius:999px;background:#2563eb;color:#fff;font-size:.72rem;font-weight:800;display:grid;place-items:center;box-shadow:0 4px 10px rgba(37,99,235,.35);pointer-events:none}
+.pro-drawing .drawing-toolbar{background:linear-gradient(180deg,color-mix(in srgb,var(--panel) 88%,var(--primary) 12%),var(--panel2));border-radius:16px;padding:10px 12px}
+.pro-drawing .drawing-toolbar .chip-btn{border-radius:999px}
+
+.admin-layout{gap:18px}
+.admin-layout .sidenav{border-radius:18px;padding:10px 8px;box-shadow:0 12px 32px -24px rgba(15,23,42,.5)}
+.admin-layout .nav-tab-btn{border-radius:12px;padding:8px 10px}
+.admin-layout .nav-tab-btn.active{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--primary) 35%,transparent)}
+.admin-mode-panel{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:10px 12px;margin-bottom:14px}
+.table-wrap table{border-collapse:separate;border-spacing:0}
+.table-wrap th{font-size:.78rem;letter-spacing:.01em;color:var(--muted);background:color-mix(in srgb,var(--panel2) 80%,var(--primary) 8%)}
+.table-wrap td,.table-wrap th{padding:10px 12px}
+.card.stat-card{border-radius:18px;background:linear-gradient(180deg,var(--panel),color-mix(in srgb,var(--panel) 88%,var(--primary) 12%))}
+.opt-editor{background:var(--panel2)}
+.qtype-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}
+.qtype-chip{border:1px solid var(--border);background:var(--panel);border-radius:14px;padding:10px;text-align:start;cursor:pointer}
+.qtype-chip.on{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 22%,transparent);background:color-mix(in srgb,var(--panel) 88%,var(--primary) 12%)}
+.topbar,.app>header{backdrop-filter:saturate(1.2) blur(10px)}
+.btn-primary{box-shadow:0 8px 18px -12px color-mix(in srgb,var(--primary) 70%,transparent)}
+
+/* Strikethrough / Elimination UX Polish */
+.opt {
+  display: flex;
+  align-items: center;
+  position: relative;
+  text-align: start;
+}
+.opt .opt-text {
+  flex: 1;
+  min-width: 0;
+}
+.opt-strike-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted, #8a99a8);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-inline-start: 10px;
+  padding: 0;
+  transition: all 0.15s ease;
+  opacity: 0.5;
+  flex-shrink: 0;
+  user-select: none;
+}
+.opt:hover .opt-strike-btn {
+  opacity: 0.85;
+}
+.opt-strike-btn:hover {
+  opacity: 1;
+  background: rgba(224, 84, 79, 0.12);
+  color: var(--danger, #e0544f);
+  border-color: rgba(224, 84, 79, 0.25);
+  transform: scale(1.08);
+}
+.opt-strike-btn.is-active {
+  opacity: 1;
+  background: rgba(74, 85, 104, 0.18);
+  color: var(--text, #2d3748);
+  border-color: var(--border, #cbd5e0);
+}
+.opt.elim {
+  opacity: 0.52;
+  filter: grayscale(0.4);
+  background: var(--panel2, rgba(0, 0, 0, 0.03));
+  border-color: var(--border);
+}
+.opt.elim .opt-text {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  text-decoration-color: var(--muted, #718096);
+}

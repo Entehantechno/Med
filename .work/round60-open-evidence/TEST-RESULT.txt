@@ -1,0 +1,11 @@
+reviewed 15 rows: 6 evidence candidates / 9 editorial rewrites; nothing applied
+test_curator_is_read_only_for_canonical_payloads (__main__.Round60OpenEvidenceTest.test_curator_is_read_only_for_canonical_payloads) ... ok
+test_every_candidate_matches_the_current_payload_without_changing_it (__main__.Round60OpenEvidenceTest.test_every_candidate_matches_the_current_payload_without_changing_it) ... ok
+test_exactly_the_fifteen_open_rows_are_covered_once (__main__.Round60OpenEvidenceTest.test_exactly_the_fifteen_open_rows_are_covered_once) ... ok
+test_references_are_declared_and_the_human_deliverables_exist (__main__.Round60OpenEvidenceTest.test_references_are_declared_and_the_human_deliverables_exist) ... ok
+test_routes_and_counts_are_deliberately_non_applying (__main__.Round60OpenEvidenceTest.test_routes_and_counts_are_deliberately_non_applying) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.313s
+
+OK

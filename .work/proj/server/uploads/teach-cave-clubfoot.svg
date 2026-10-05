@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 200" width="640" height="200" role="img">
+<title>CAVE clubfoot</title>
+<rect width="640" height="200" fill="#fff"/>
+<text x="320" y="24" text-anchor="middle" font-family="sans-serif" font-size="16" font-weight="700">کلاب‌فوت = CAVE</text>
+<g font-family="sans-serif" text-anchor="middle">
+<text x="80" y="90" font-size="28" font-weight="800" fill="#6d28d9">C</text><text x="80" y="130">Cavus</text>
+<text x="240" y="90" font-size="28" font-weight="800" fill="#2f7fd1">A</text><text x="240" y="130">Adductus</text>
+<text x="400" y="90" font-size="28" font-weight="800" fill="#c0392b">V</text><text x="400" y="130">Varus</text>
+<text x="560" y="90" font-size="28" font-weight="800" fill="#1a7f4b">E</text><text x="560" y="130">Equinus</text>
+</g></svg>

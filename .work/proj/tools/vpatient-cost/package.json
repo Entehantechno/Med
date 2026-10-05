@@ -1,0 +1,11 @@
+{
+  "name": "med-vpatient-offline-cost-meter",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "measure": "node measure.mjs"
+  },
+  "dependencies": {
+    "js-tiktoken": "1.0.21"
+  }
+}
