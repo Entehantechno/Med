@@ -841,15 +841,20 @@ html[dir="rtl"] .micro-ref-text{text-align:right}
    LANDING PAGE (marketing) — self-contained, theme-aware,
    works fully with inline styles/gradients (no external assets)
    ============================================================ */
-.landing{min-height:100vh;background:var(--bg);color:var(--text);overflow:visible}
+.landing{min-height:100vh;color:var(--text);overflow:visible;
+  background:
+    radial-gradient(1100px 560px at 85% -10%,rgba(58,142,222,.10),transparent 55%),
+    radial-gradient(900px 520px at 5% 5%,rgba(125,107,224,.07),transparent 50%),
+    var(--bg)}
 .landing *{box-sizing:border-box}
 
-/* nav */
+/* nav — glass over the same landing backdrop so the logo never looks cut out */
 .lp-nav{position:sticky;top:0;z-index:50;display:flex;align-items:center;justify-content:space-between;
-  gap:12px;padding:12px clamp(14px,4vw,40px);background:var(--panel-glass);backdrop-filter:blur(10px);
+  gap:12px;padding:12px clamp(14px,4vw,40px);background:var(--panel-glass);backdrop-filter:blur(12px) saturate(1.2);
+  -webkit-backdrop-filter:blur(12px) saturate(1.2);
   border-bottom:1px solid var(--border)}
 .lp-brand{display:flex;align-items:center;gap:10px;font-weight:800}
-.lp-logo{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff;background:var(--header)}
+.lp-logo{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff;background:var(--grad-primary);box-shadow:0 4px 14px -6px var(--primaryGlow), 0 2px 6px rgba(38,82,122,.16);border:1px solid rgba(255,255,255,.55)}
 .lp-brand-name{font-size:1.05rem}
 .lp-nav-actions{display:flex;align-items:center;gap:8px}
 .lp-icon-btn{width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:var(--panel);
