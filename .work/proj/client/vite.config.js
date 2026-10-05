@@ -13,8 +13,11 @@ export default defineConfig({
   esbuild: { drop: ["console", "debugger"] },
   server: {
     port: 5173,
+    host: "0.0.0.0",
+    allowedHosts: true,
+    hmr: { clientPort: 443 },
     proxy: {
-      "/api": "http://localhost:4000",
+      "/api": "http://localhost:3001",
     },
   },
   build: {

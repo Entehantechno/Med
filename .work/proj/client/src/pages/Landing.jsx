@@ -169,6 +169,20 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
               ))}
             </div>
           )}
+        </div>
+        {/* mock product preview */}
+        <div className="lp-hero-mock" aria-hidden="true">
+          <MockPath />
+        </div>
+      </section>
+
+      {/* ---- Stats — premium glass bar with distinct background (separate from hero) ---- */}
+      <section className="lp-stats-section" aria-label={fa ? "آمار پلتفرم" : "Platform stats"}>
+        <div className="lp-stats-inner">
+          <div className="lp-stats-head">
+            <span className="lp-stats-kicker"><Icon name="chart" size={14} /> {fa ? "آمار زنده" : "Live stats"}</span>
+            <span className="lp-stats-sub">{fa ? "اعتماد هزاران دانشجو و استاد" : "Trusted by thousands of students & faculty"}</span>
+          </div>
           {stats.length > 0 ? (
             <div className="lp-stats">
               {stats.map(([n, l, ic, grad]) => (
@@ -179,16 +193,13 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
               ))}
             </div>
           ) : (
-            <div className="lp-stats lp-stats--placeholder" style={{ opacity: .6 }}>
+            <div className="lp-stats lp-stats--placeholder">
               <div className="lp-stat"><div className="lp-stat-ico" style={{ background: "var(--grad-primary)" }}><Icon name="users" size={18} /></div><div className="lp-stat-body"><div className="lp-stat-n">—</div><div className="lp-stat-l">{tc("landStatLearners")}</div></div></div>
               <div className="lp-stat"><div className="lp-stat-ico" style={{ background: "var(--grad-green)" }}><Icon name="help-circle" size={18} /></div><div className="lp-stat-body"><div className="lp-stat-n">—</div><div className="lp-stat-l">{tc("landStatQuestions")}</div></div></div>
               <div className="lp-stat"><div className="lp-stat-ico" style={{ background: "var(--grad-warm)" }}><Icon name="book" size={18} /></div><div className="lp-stat-body"><div className="lp-stat-n">—</div><div className="lp-stat-l">{tc("landStatTopics")}</div></div></div>
+              <div className="lp-stat"><div className="lp-stat-ico" style={{ background: "var(--grad-gold)" }}><Icon name="trophy" size={18} /></div><div className="lp-stat-body"><div className="lp-stat-n">—</div><div className="lp-stat-l">{tc("landStatXp")}</div></div></div>
             </div>
           )}
-        </div>
-        {/* mock product preview */}
-        <div className="lp-hero-mock" aria-hidden="true">
-          <MockPath />
         </div>
       </section>
 
