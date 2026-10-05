@@ -2352,23 +2352,10 @@ export function initSchema() {
       }
     }
   } catch {}
-  // --- Arak 85 students auto-seed (single-name, from Word files) + demo cleanup ---
+  // --- Arak 85 students auto-seed (single-name, from Word files) ---
   try {
     const arakUni = db.prepare("SELECT id FROM universities WHERE code='ARAK'").get();
     if (arakUni) {
-      // 1) حذف کامل دمو (DEFAULT) اگر وجود داشت
-      try {
-        const demoUni = db.prepare("SELECT id FROM universities WHERE code='DEFAULT'").get();
-        if (demoUni) {
-          const c = db.prepare("SELECT COUNT(*) c FROM users WHERE role='student' AND university_id=?").get(demoUni.id).c;
-          if (c > 0) {
-            // cascade minimal: class_members etc will be cleaned via FK or manual
-            db.exec(`DELETE FROM class_members WHERE user_id IN (SELECT id FROM users WHERE role='student' AND university_id=${demoUni.id})`);
-            db.exec(`DELETE FROM exam_participants WHERE user_id IN (SELECT id FROM users WHERE role='student' AND university_id=${demoUni.id})`);
-            db.prepare("DELETE FROM users WHERE role='student' AND university_id=?").run(demoUni.id);
-          }
-        }
-      } catch {}
       // 2) ورود 85 دانشجوی اراک اگر هنوز وارد نشده‌اند
       try {
         const cnt = db.prepare("SELECT COUNT(*) c FROM users WHERE role='student' AND university_id=?").get(arakUni.id).c;

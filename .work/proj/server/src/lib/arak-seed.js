@@ -145,7 +145,7 @@ export function ensureArakHistology() {
           try {
             const base = db.prepare("SELECT data_json, difficulty, checklist_id FROM cases WHERE id IN (1,2) AND university_id=1").all();
             for (const b of base) { try { db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,active,university_id,created_by) VALUES (1,?,?,?,1,?,1)").run(b.difficulty, b.checklist_id, b.data_json, mainArak); } catch {} }
-            const ems = db.prepare("SELECT data_json, difficulty, checklist_id FROM cases WHERE data_json LIKE '%"track":"learn"%' AND data_json LIKE '%اورژانس%' LIMIT 10").all();
+            const ems = db.prepare("SELECT data_json, difficulty, checklist_id FROM cases WHERE json_extract(data_json,'$.track')='learn' AND data_json LIKE '%اورژانس%' LIMIT 10").all();
             for (const e of ems) { try { let d=JSON.parse(e.data_json); d.track="uni"; const j=JSON.stringify(d); db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,active,university_id,created_by) VALUES (1,?,?,?,1,?,1)").run(e.difficulty, e.checklist_id, j, mainArak); } catch {} }
           } catch {}
         }
