@@ -2403,6 +2403,16 @@ export function initSchema() {
     }
   } catch {}
 
+  // Ensure Arak histology demo and tenant copies are present (idempotent, bilingual, no new invention)
+  try {
+    // Use synchronous dynamic import via createRequire for ESM->CJS interop is not needed; we use async import but keep sync by not awaiting - fire and forget with persist handled inside arak-seed
+    import("./lib/arak-seed.js").then(mod=>{
+      if (mod && mod.ensureArakHistology) {
+        try { mod.ensureArakHistology(); } catch (e) { console.warn("[seed] arak histology:", e?.message || e); }
+      }
+    }).catch(e=>{ console.warn("[seed] arak-seed import failed:", e?.message || e); });
+  } catch (e) { console.warn("[seed] arak histology sync failed:", e?.message || e); }
+
   persistNow();
 }
 

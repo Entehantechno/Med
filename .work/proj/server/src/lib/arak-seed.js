@@ -24,26 +24,31 @@ function ensureUniversity() {
 }
 
 function ensureUsers() {
+  // Use username-based idempotency to avoid colliding with auto-increment student ids (85 Arak students).
   const users = [
-    { id:27, username:"arak_histology", name_fa:"استاد بافت‌شناسی اراک", role:"teacher", univ:ARAK_ID, is_expert:0 },
-    { id:28, username:"arak_expert", name_fa:"کارشناس آموزش اراک", role:"teacher", univ:ARAK_ID, is_expert:1 },
-    { id:29, username:"arak_other_teacher", name_fa:"استاد دیگر اراک", role:"teacher", univ:ARAK_ID, is_expert:0 },
+    { username:"arak_histology", name_fa:"استاد بافت‌شناسی اراک", role:"teacher", univ:ARAK_ID, is_expert:0 },
+    { username:"arak_expert", name_fa:"کارشناس آموزش اراک", role:"teacher", univ:ARAK_ID, is_expert:1 },
+    { username:"arak_other_teacher", name_fa:"استاد دیگر اراک", role:"teacher", univ:ARAK_ID, is_expert:0 },
+    { username:"arak_teacher", name_fa:"استاد اراک", role:"teacher", univ:13, is_expert:0 },
   ];
   for (const u of users) {
-    const has = db.prepare("SELECT id FROM users WHERE id=?").get(u.id);
+    const has = db.prepare("SELECT id, university_id FROM users WHERE username=?").get(u.username);
     if (!has) {
-      // password hash for '123456' - copy from existing seed style (use same as other teachers)
-      const hash = db.prepare("SELECT password FROM users WHERE role='teacher' LIMIT 1").get()?.password || "$2a$10$dummyhashdummyhashdummyhashdummyha";
-      db.prepare("INSERT OR IGNORE INTO users (id,username,password,name_fa,role,university_id,is_expert,active) VALUES (?,?,?,?,?,?,?,1)").run(u.id, u.username, hash, u.name_fa, u.role, u.univ, u.is_expert);
+      const hashRow = db.prepare("SELECT password_hash FROM users WHERE role='teacher' LIMIT 1").get();
+      const hash = hashRow?.password_hash || "$2a$10$dummyhashdummyhashdummyhashdummyha";
+      try { db.prepare("INSERT OR IGNORE INTO users (username,password_hash,name_fa,role,university_id,is_expert,status) VALUES (?,?,?,?,?,?,'active')").run(u.username, hash, u.name_fa, u.role, u.univ, u.is_expert); } catch {}
     } else {
-      db.prepare("UPDATE users SET university_id=?, is_expert=? WHERE id=?").run(u.univ, u.is_expert, u.id);
+      // heal university if misassigned (student collision previously set 120 incorrectly)
+      if (Number(has.university_id) !== Number(u.univ)) {
+        try { db.prepare("UPDATE users SET university_id=?, is_expert=? WHERE username=?").run(u.univ, u.is_expert, u.username); } catch {}
+      }
     }
   }
-  // ensure student 30 too
-  const s = db.prepare("SELECT id FROM users WHERE id=30").get();
+  // legacy arak_student (demo) - keep if not exists, under 120
+  const s = db.prepare("SELECT id FROM users WHERE username='arak_student'").get();
   if (!s) {
-    const hash = db.prepare("SELECT password FROM users WHERE role='teacher' LIMIT 1").get()?.password || "x";
-    db.prepare("INSERT OR IGNORE INTO users (id,username,password,name_fa,role,university_id,active) VALUES (?,?,?,?,?,1,1)").run(30, "arak_student", hash, "دانشجوی اراک", "student", ARAK_ID);
+    const hash = db.prepare("SELECT password_hash FROM users WHERE role='teacher' LIMIT 1").get()?.password_hash || "x";
+    try { db.prepare("INSERT OR IGNORE INTO users (username,password_hash,name_fa,role,university_id,status) VALUES (?,?,?,?,?,'active')").run("arak_student", hash, "دانشجوی اراک", "student", ARAK_ID); } catch {}
   }
 }
 
@@ -120,6 +125,33 @@ export function ensureArakHistology() {
         } catch {}
       }
     }
+    // Also ensure histology cards are available for the main Arak university (13) — tenant isolation requires copies under 13 so Arak students see the bank
+    try {
+      const mainArak = db.prepare("SELECT id FROM universities WHERE code='ARAK'").get()?.id || 13;
+      if (mainArak && mainArak !== ARAK_ID) {
+        // Check by title to avoid duplicates
+        const titles13 = new Set(db.prepare("SELECT data_json FROM flashcards WHERE university_id=?").all(mainArak).map(r=>{ try{return JSON.parse(r.data_json).title_fa;}catch{return ""}}));
+        for (const c of all) {
+          let d = c.data;
+          if (titles13.has(d.title_fa)) continue;
+          // clone to main Arak with new id
+          try { db.prepare("INSERT INTO flashcards (data_json, university_id, active, difficulty, version, created_at, updated_at, content_updated_at, revision, created_by, last_editor_id, last_action) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
+            .run(JSON.stringify(d), mainArak, 1, "medium", 1, new Date().toISOString(), new Date().toISOString(), new Date().toISOString(), 1, 27, 27, "created"); } catch {}
+          titles13.add(d.title_fa);
+        }
+        // Ensure academic cases for main Arak are not empty: clone 2 base cases + 10 emergency as uni copies if missing
+        const cntCases13 = db.prepare("SELECT COUNT(*) c FROM cases WHERE university_id=? AND active=1").get(mainArak).c;
+        if (cntCases13 === 0) {
+          try {
+            const base = db.prepare("SELECT data_json, difficulty, checklist_id FROM cases WHERE id IN (1,2) AND university_id=1").all();
+            for (const b of base) { try { db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,active,university_id,created_by) VALUES (1,?,?,?,1,?,1)").run(b.difficulty, b.checklist_id, b.data_json, mainArak); } catch {} }
+            const ems = db.prepare("SELECT data_json, difficulty, checklist_id FROM cases WHERE data_json LIKE '%"track":"learn"%' AND data_json LIKE '%اورژانس%' LIMIT 10").all();
+            for (const e of ems) { try { let d=JSON.parse(e.data_json); d.track="uni"; const j=JSON.stringify(d); db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,active,university_id,created_by) VALUES (1,?,?,?,1,?,1)").run(e.difficulty, e.checklist_id, j, mainArak); } catch {} }
+          } catch {}
+        }
+      }
+    } catch {}
+
     const cnt = db.prepare("SELECT COUNT(*) c FROM flashcards WHERE university_id=? AND active=1").get(ARAK_ID).c;
     const q1 = db.prepare("SELECT id, data_json FROM flashcards WHERE id=172").get();
     if (q1) {
