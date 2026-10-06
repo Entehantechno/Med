@@ -1791,6 +1791,10 @@ export function initSchema() {
   if (!cfAttemptCols.includes("answers_json")) db.exec("ALTER TABLE class_flashcard_attempts ADD COLUMN answers_json TEXT DEFAULT '[]'");
   if (!cfAttemptCols.includes("duration_sec")) db.exec("ALTER TABLE class_flashcard_attempts ADD COLUMN duration_sec INTEGER DEFAULT 0");
   const liveClassCols = db.prepare("PRAGMA table_info(classes)").all().map((c) => c.name);
+  // Additive migration: old classes remain untimed and retain existing behavior.
+  if (!liveClassCols.includes("exam_mode")) db.exec("ALTER TABLE classes ADD COLUMN exam_mode INTEGER NOT NULL DEFAULT 0");
+  if (!liveClassCols.includes("timer_enabled")) db.exec("ALTER TABLE classes ADD COLUMN timer_enabled INTEGER NOT NULL DEFAULT 0");
+  if (!liveClassCols.includes("timer_minutes")) db.exec("ALTER TABLE classes ADD COLUMN timer_minutes INTEGER NOT NULL DEFAULT 30");
   if (!liveClassCols.includes("live_board_enabled")) db.exec("ALTER TABLE classes ADD COLUMN live_board_enabled INTEGER NOT NULL DEFAULT 1");
   if (!liveClassCols.includes("live_board_anonymous")) db.exec("ALTER TABLE classes ADD COLUMN live_board_anonymous INTEGER NOT NULL DEFAULT 0");
   if (!liveClassCols.includes("university_id")) db.exec("ALTER TABLE classes ADD COLUMN university_id INTEGER");

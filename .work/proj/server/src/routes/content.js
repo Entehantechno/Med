@@ -185,9 +185,8 @@ r.get("/cases", authRequired, (req, res) => {
   if (req.user.role === "student" || req.user.role === "learner") list = list.map(studentSafeCase);
   // Learners use GET /learn/vpatient — do not dump either bank here.
   if (req.user.role === "learner") return res.json([]);
-  // Students only see cases the admin/teacher assigned to them.
+  // Same policy as case detail: direct, class and scheduled-exam access.
   if (req.user.role === "student") {
-    const allowed = assignedCaseIds(req.user.id);
     const maxBy = new Map();
     for (const a of db.prepare(
       "SELECT case_id, max_attempts FROM exam_assignments WHERE user_id=? AND active=1"
@@ -201,7 +200,7 @@ r.get("/cases", authRequired, (req, res) => {
       "SELECT case_id, MAX(score) best FROM attempts WHERE user_id=? GROUP BY case_id"
     ).all(req.user.id)) bestBy.set(r.case_id, r.best);
     list = list
-      .filter((c) => allowed.has(c.id))
+      .filter((c) => canAccessCase(req.user, c.id))
       .map((c) => ({
         ...c,
         maxAttempts: maxBy.get(c.id) ?? 1,

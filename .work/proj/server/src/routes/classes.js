@@ -438,10 +438,31 @@ function teacherMayAttachStudy(user, studyId) {
   if (creator.role === "admin") return false;
   return (creator.university_id || 1) === uni;
 }
+// Preserve omitted flags; accept explicit booleans, not JavaScript truthiness.
+function classExamSettings(body, current = {}) {
+  const next = {};
+  for (const [key, alias] of [["exam_mode", "examMode"], ["timer_enabled", "timerEnabled"]]) {
+    const value = body[key] !== undefined ? body[key] : body[alias];
+    if (value === undefined) next[key] = current[key] ?? 0;
+    else if ([true, 1, "1", "true"].includes(value)) next[key] = 1;
+    else if ([false, 0, "0", "false"].includes(value)) next[key] = 0;
+    else throw new Error(key);
+  }
+  const minutes = body.timer_minutes !== undefined ? body.timer_minutes : body.timerMinutes;
+  next.timer_minutes = minutes === undefined ? (current.timer_minutes ?? 30) : Number(minutes);
+  if ((minutes !== undefined && !["number", "string"].includes(typeof minutes)) ||
+      !Number.isSafeInteger(next.timer_minutes) || next.timer_minutes < 1 || next.timer_minutes > 1440) {
+    throw new Error("timer_minutes");
+  }
+  return next;
+}
 const HISTORY_FORMS = ["general", "internal", "obgyn", "cardio", "peds", "psych"];
 r.post("/", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const { name_fa, name_en, desc_fa, desc_en, maxAttempts = 1, gradingRole = "both",
           historyForm = "general", logTranscript, studyId = null, gradingRubric = null } = req.body || {};
+  let settings;
+  try { settings = classExamSettings(req.body || {}); }
+  catch (e) { return res.status(400).json({ error: "invalid_class_setting", field: e.message }); }
   let code = genCode();
   for (let i = 0; i < 5; i++) {
     const exists = db.prepare("SELECT 1 FROM classes WHERE code=?").get(code);
@@ -461,13 +482,13 @@ r.post("/", authRequired, requireRole("teacher", "admin"), (req, res) => {
   // Send logTranscript:false to keep a class private.
   const logOn = !(logTranscript === false || logTranscript === 0 || logTranscript === "0");
   const info = db.prepare(
-    `INSERT INTO classes (name_fa,name_en,desc_fa,desc_en,code,owner_id,max_attempts,grading_role,history_form,university_id,log_transcript,study_id,grading_json)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`
+    `INSERT INTO classes (name_fa,name_en,desc_fa,desc_en,code,owner_id,max_attempts,grading_role,history_form,university_id,log_transcript,study_id,grading_json,exam_mode,timer_enabled,timer_minutes)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   ).run(name_fa, name_en, desc_fa, desc_en, code, req.user.id, maxAttempts, role, hform, uni,
-        logOn ? 1 : 0, study, gradingJson);
+        logOn ? 1 : 0, study, gradingJson, settings.exam_mode, settings.timer_enabled, settings.timer_minutes);
   audit(req, "class.create", "class", { id: info.lastInsertRowid, log_transcript: logOn, study_id: study });
   persistNow();
-  res.json({ id: info.lastInsertRowid, code, logTranscript: logOn, studyId: study });
+  res.json({ id: info.lastInsertRowid, code, logTranscript: logOn, studyId: study, ...settings });
 });
 
 /* ---- Update class basic info ---- */
@@ -475,9 +496,12 @@ r.put("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const { name_fa, name_en, desc_fa, desc_en, maxAttempts, gradingRole, historyForm,
           liveBoardEnabled, liveBoardAnonymous, logTranscript, studyId, gradingRubric,
           flashNoPenalty, liveBoardSpeed } = req.body || {};
-  const cur = db.prepare("SELECT grading_role, history_form, university_id, live_board_enabled, live_board_anonymous, log_transcript, study_id, grading_json, flash_no_penalty, live_board_speed FROM classes WHERE id=?").get(req.params.id);
+  const cur = db.prepare("SELECT exam_mode, timer_enabled, timer_minutes, grading_role, history_form, university_id, live_board_enabled, live_board_anonymous, log_transcript, study_id, grading_json, flash_no_penalty, live_board_speed FROM classes WHERE id=?").get(req.params.id);
   if (!cur) return res.status(404).json({ error: "not found" });
   if (req.user.role === "teacher" && cur.university_id !== currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university" });
+  let settings;
+  try { settings = classExamSettings(req.body || {}, cur); }
+  catch (e) { return res.status(400).json({ error: "invalid_class_setting", field: e.message }); }
   const role = GRADING_ROLES.includes(gradingRole) ? gradingRole : (cur?.grading_role || "both");
   const hform = HISTORY_FORMS.includes(historyForm) ? historyForm : (cur?.history_form || "general");
   /* A field the caller did not send keeps its stored value. The previous
@@ -506,11 +530,12 @@ r.put("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const npNext  = flashNoPenalty === undefined ? (cur.flash_no_penalty ?? null) : triInput(flashNoPenalty);
   const spdNext = liveBoardSpeed === undefined ? (cur.live_board_speed ?? null) : triInput(liveBoardSpeed);
   db.prepare(
-    "UPDATE classes SET name_fa=?,name_en=?,desc_fa=?,desc_en=?,max_attempts=?,grading_role=?,history_form=?,live_board_enabled=?,live_board_anonymous=?,log_transcript=?,study_id=?,grading_json=?,flash_no_penalty=?,live_board_speed=? WHERE id=?"
-  ).run(name_fa, name_en, desc_fa, desc_en, maxAttempts ?? 1, role, hform, liveOn ? 1 : 0, liveAnon ? 1 : 0, logOn ? 1 : 0, study, gradingJson, npNext ?? null, spdNext ?? null, req.params.id);
+    "UPDATE classes SET name_fa=?,name_en=?,desc_fa=?,desc_en=?,max_attempts=?,grading_role=?,history_form=?,live_board_enabled=?,live_board_anonymous=?,log_transcript=?,study_id=?,grading_json=?,flash_no_penalty=?,live_board_speed=?,exam_mode=?,timer_enabled=?,timer_minutes=? WHERE id=?"
+  ).run(name_fa, name_en, desc_fa, desc_en, maxAttempts ?? 1, role, hform, liveOn ? 1 : 0, liveAnon ? 1 : 0, logOn ? 1 : 0, study, gradingJson, npNext ?? null, spdNext ?? null, settings.exam_mode, settings.timer_enabled, settings.timer_minutes, req.params.id);
+  persistNow();
   audit(req, "class.update", "class", { id: Number(req.params.id), log_transcript: logOn, live_board_enabled: liveOn, study_id: study, flash_no_penalty: npNext, live_board_speed: spdNext });
   res.json({ ok: true, logTranscript: logOn, studyId: study, gradingRubric: gradingJson ? JSON.parse(gradingJson) : null,
-    flashNoPenalty: npNext, liveBoardSpeed: spdNext });
+    flashNoPenalty: npNext, liveBoardSpeed: spdNext, ...settings });
 });
 r.delete("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(req.params.id);

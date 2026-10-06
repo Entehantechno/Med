@@ -88,8 +88,8 @@ describe("RBAC & access control", () => {
     const tk = await token("40012345");
     const res = await request(app).get("/api/cases").set("Authorization", `Bearer ${tk}`);
     expect(res.status).toBe(200);
-    // Ali is assigned case 1 only
-    expect(res.body.map((c) => c.id)).toEqual([1]);
+    // Direct assignment grants case 1; the active enrolled class also grants case 2.
+    expect(res.body.map((c) => c.id)).toEqual([1, 2]);
   });
 
   it("student cannot open a case that is neither assigned to them nor in any of their classes/exams", async () => {
