@@ -790,7 +790,7 @@ export function CardModalInner({ card, onClose, onSaved }) {
   };
 
   return (
-    <AuthoringModal sections={[{id:"question",title:lang==="fa"?"سؤال و پاسخ":"Question & answer"},{id:"lesson",title:lang==="fa"?"درسنامه و مرجع":"Lesson & references"},{id:"review",title:lang==="fa"?"بازبینی و تنظیمات":"Review & settings"}]} validate={()=>validateQuestion(f,lang)} title={isNew ? t("newCard") : t("edit")} onClose={onClose} onSave={save} wide>
+    <AuthoringModal value={f} sections={[{id:"question",title:lang==="fa"?"سؤال و پاسخ":"Question & answer"},{id:"lesson",title:lang==="fa"?"درسنامه و مرجع":"Lesson & references"},{id:"review",title:lang==="fa"?"بازبینی و تنظیمات":"Review & settings"}]} validate={()=>validateQuestion(f,lang)} title={isNew ? t("newCard") : t("edit")} onClose={onClose} onSave={save} wide>
       <AuthorSection id="question" title={lang==="fa"?"صورت سؤال و پاسخ":"Question & answer"}>
       <div className="grid grid-2">
         <div className="field"><label>{t("questionTypeLabel")}</label>

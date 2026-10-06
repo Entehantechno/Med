@@ -613,6 +613,9 @@ function csvImportReview(rows,kind) {
    if((row.type&&!['mcq','image'].includes(row.type))||(row.questionType&&!['mcq','image'].includes(row.questionType)))errors.push({row:i+2,message:'csv_basic_mcq_only'});
    const fa=(row.options_fa||'').split('|').map(x=>x.trim()),en=(row.options_en||'').split('|').map(x=>x.trim());
    const selected=new Set();
+   for(const [key,options] of [[row.correct_fa,fa],[row.correct_en,en]]){
+    if(key?.trim() && options.filter(x=>x===key.trim()).length!==1)errors.push({row:i+2,message:'invalid_or_ambiguous_answer_key'});
+   }
    fa.forEach((x,j)=>{if(x&&row.correct_fa&&x===row.correct_fa.trim())selected.add(j);});
    en.forEach((x,j)=>{if(x&&row.correct_en&&x===row.correct_en.trim())selected.add(j);});
    if(Math.max(fa.filter(Boolean).length,en.filter(Boolean).length)<2||selected.size!==1)errors.push({row:i+2,message:'exactly_one_correct_option_required'});
@@ -698,8 +701,8 @@ r.post("/flashcards-import", authRequired, requireRole("teacher", "admin"), (req
   const tx = db.transaction(() => {
     for (const row of rows) {
       if (!row.title_en && !row.title_fa) continue;
-      const fa = (row.options_fa || "").split("|").map((s) => s.trim()).filter(Boolean);
-      const en = (row.options_en || "").split("|").map((s) => s.trim()).filter(Boolean);
+      const fa = (row.options_fa || "").split("|").map((s) => s.trim());
+      const en = (row.options_en || "").split("|").map((s) => s.trim());
       const n = Math.max(fa.length, en.length);
       const options = [];
       for (let i = 0; i < n; i++) {

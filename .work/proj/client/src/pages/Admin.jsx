@@ -1167,7 +1167,7 @@ export function CaseModal({ caseObj, onClose, onSave }) {
   const paraResults = mkResultOps("paraclinicResults");
 
   return (
-    <AuthoringModal sections={[{id:"basics",title:lang==="fa"?"مشخصات و شکایت":"Basics & complaint"},{id:"history",title:lang==="fa"?"شرح‌حال و معاینه":"History & examination"},{id:"results",title:lang==="fa"?"ارزیابی و نتایج":"Assessment & results"},{id:"review",title:lang==="fa"?"بازبینی":"Review"}]} validate={()=>!(f.title_fa||f.title_en)?.trim()?(lang==="fa"?"عنوان کیس را در بخش مشخصات وارد کنید.":"Enter a case title in Basics."):null} title={caseObj.id ? t("edit") : t("newCase")} onClose={onClose} onSave={() => onSave({ ...f, age: +f.age || 0 }, caseObj.id)}>
+    <AuthoringModal value={f} sections={[{id:"basics",title:lang==="fa"?"مشخصات و شکایت":"Basics & complaint"},{id:"history",title:lang==="fa"?"شرح‌حال و معاینه":"History & examination"},{id:"results",title:lang==="fa"?"ارزیابی و نتایج":"Assessment & results"},{id:"review",title:lang==="fa"?"بازبینی":"Review"}]} validate={()=>!(f.title_fa||f.title_en)?.trim()?(lang==="fa"?"عنوان کیس را در بخش مشخصات وارد کنید.":"Enter a case title in Basics."):null} title={caseObj.id ? t("edit") : t("newCase")} onClose={onClose} onSave={() => onSave({ ...f, age: +f.age || 0 }, caseObj.id)}>
       <AuthorSection id="basics" title={lang==="fa"?"مشخصات بیمار":"Patient basics"}>
       <div className="grid grid-2">
         <AuthorField values={f} onChange={set} k="title_fa" label={`${t("caseTitle")} (FA)`} />
@@ -1700,7 +1700,7 @@ export function CardModal({ card, onClose, onSave }) {
   const correctIdx = f.options.findIndex((o) => o.correct);
 
   return (
-    <AuthoringModal sections={[{id:"basics",title:lang==="fa"?"نوع و عنوان":"Type & title"},{id:"answer",title:lang==="fa"?"صورت سؤال و پاسخ":"Question & answer"},{id:"teaching",title:lang==="fa"?"راهنما و درسنامه":"Hints & lesson"},{id:"review",title:lang==="fa"?"بازبینی":"Review"}]} validate={()=>validateQuestion(f,lang)} title={card.id ? t("edit") : t("newFlashcard")} onClose={onClose}
+    <AuthoringModal value={f} sections={[{id:"basics",title:lang==="fa"?"نوع و عنوان":"Type & title"},{id:"answer",title:lang==="fa"?"صورت سؤال و پاسخ":"Question & answer"},{id:"teaching",title:lang==="fa"?"راهنما و درسنامه":"Hints & lesson"},{id:"review",title:lang==="fa"?"بازبینی":"Review"}]} validate={()=>validateQuestion(f,lang)} title={card.id ? t("edit") : t("newFlashcard")} onClose={onClose}
       onSave={() => onSave(buildPayload(), card.id)}>
       <AuthorSection id="basics" title={lang==="fa"?"نوع سؤال و عنوان":"Question type & title"}>
       <div className="field">

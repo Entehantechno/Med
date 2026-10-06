@@ -42,3 +42,43 @@ it('preserves independent translations, empty English text, provenance and stabl
  const update=await request(app).put('/api/admin/learn-cards/'+id).auth(token,{type:'bearer'}).send({...payload,q_fa:'ویرایش'});expect(update.status).toBe(200);
  const row=db.prepare('SELECT * FROM flashcards WHERE id=?').get(id),d=JSON.parse(row.data_json);expect(row.public_code).toBe(before);expect(d.q_en).toBe('');expect(d.pairs).toEqual(payload.pairs);expect(d.micro.lead_en).toBe('lesson');expect(d.source_meta).toEqual(payload.source_meta);
 });
+it('keeps bilingual CSV option indices when one translation has a gap',async()=>{
+ const csv='title_en,options_fa,options_en,correct_fa,correct_en\nGap,الف||ج,A|B|C,ج,C';
+ const post=b=>request(app).post('/api/flashcards-import').auth(token,{type:'bearer'}).send(b);
+ expect((await post({csv,dryRun:true})).body.valid).toBe(true);
+ expect((await post({csv})).status).toBe(200);
+ const d=JSON.parse(db.prepare('SELECT data_json FROM flashcards ORDER BY id DESC LIMIT 1').get().data_json);
+ expect(d.options.map(o=>[o.fa,o.en])).toEqual([['الف','A'],['','B'],['ج','C']]);
+ expect(d.options.map(o=>o.correct)).toEqual([false,false,true]);
+});
+it('rejects a supplied unmatched translation key even if the other key matches',async()=>{
+ const before=db.prepare('SELECT COUNT(*) n FROM flashcards').get().n;
+ const csv='title_en,options_fa,options_en,correct_fa,correct_en\nBad,الف|ب,A|B,الف,Z';
+ const post=b=>request(app).post('/api/flashcards-import').auth(token,{type:'bearer'}).send(b);
+ expect((await post({csv,dryRun:true})).body.valid).toBe(false);
+ expect((await post({csv})).status).toBe(400);expect(db.prepare('SELECT COUNT(*) n FROM flashcards').get().n).toBe(before);
+});
+it.each([
+ ['conflicting','title_en,options_fa,options_en,correct_fa,correct_en\nQ,الف|ب,A|B,الف,B'],
+ ['duplicate-key','title_en,options_en,correct_en\nQ,A|A|B,A'],
+ ['unsupported','title_en,type,options_en,correct_en\nQ,drawing,A|B,A'],
+ ['wrong-track','title_en,track,options_en,correct_en\nQ,learn,A|B,A'],
+ ['atomic','title_en,options_en,correct_en\nGood,A|B,A\nBad,A|B,Z']
+])('rejects %s CSV without partial writes',async(_,csv)=>{
+ const before=db.prepare('SELECT COUNT(*) n FROM flashcards').get().n;
+ const r=await request(app).post('/api/flashcards-import').auth(token,{type:'bearer'}).send({csv});expect(r.status).toBe(400);expect(db.prepare('SELECT COUNT(*) n FROM flashcards').get().n).toBe(before);
+});
+it('requires explicit admin confirmation and valid university/password without changes',async()=>{
+ const before=db.prepare('SELECT COUNT(*) n FROM users').get().n;
+ for(const b of [{universityId:1,password:'Long-secret-12345'},{confirm:true,universityId:999999,password:'Long-secret-12345'},{confirm:true,universityId:1,password:'short'}]){
+  const r=await request(app).post('/api/admin/demo/prepare').auth(token,{type:'bearer'}).send(b);expect(r.status).toBe(400);
+ }
+ expect(db.prepare('SELECT COUNT(*) n FROM users').get().n).toBe(before);
+});
+it('retains disabled demo accounts and inactive cases',()=>{
+ db.prepare("UPDATE users SET status='inactive' WHERE username='demo_student_1'").run();
+ const id=db.prepare("SELECT id FROM cases WHERE source_key LIKE 'medschool:emergency:%:university:1' AND active=1 LIMIT 1").get().id;
+ db.prepare('UPDATE cases SET active=0 WHERE id=?').run(id);
+ const r=repairDemo({universityId:1,password:'Not-a-reset-12345',actorId:2});expect(r.accounts.find(a=>a.role==='student').status).toBe('inactive');expect(r.caseIds).not.toContain(id);
+ expect(db.prepare('SELECT active FROM cases WHERE id=?').get(id).active).toBe(0);
+});

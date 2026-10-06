@@ -1,1 +1,1 @@
-2026.10.06-r5-bootstrap-authoring
+2026.10.06-r6-regression-hardening

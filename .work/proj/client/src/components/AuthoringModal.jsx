@@ -39,13 +39,15 @@ export function AuthorSummary({data,clinical=false}) {
   </div>)}
  </div>;
 }
-export default function AuthoringModal({title,onClose,onSave,sections,children,validate}) {
+export default function AuthoringModal({title,onClose,onSave,sections,children,validate,value}) {
  const {lang}=useApp(),fa=lang==='fa';
  const [language,setLanguage]=useState(lang==='en'?'en':'fa');
  const [step,setStep]=useState(sections[0].id),[dirty,setDirty]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');
  const saving=useRef(false),body=useRef(null);
- const close=()=>{if(saving.current)return;if(!dirty||window.confirm(fa?'تغییرات ذخیره نشده کنار گذاشته شود؟':'Discard unsaved changes?'))onClose();};
- useEffect(()=>{const warn=e=>{if(dirty){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[dirty]);
+ const snapshot=JSON.stringify(value),initialSnapshot=useRef(snapshot);
+ const changed=dirty||(value!==undefined&&snapshot!==initialSnapshot.current);
+ const close=()=>{if(saving.current)return;if(!changed||window.confirm(fa?'تغییرات ذخیره نشده کنار گذاشته شود؟':'Discard unsaved changes?'))onClose();};
+ useEffect(()=>{const warn=e=>{if(changed){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[changed]);
  const save=async()=>{if(saving.current)return;const issue=validate?.();if(issue){setError(issue);setStep('all');setLanguage('both');return;}
   saving.current=true;setBusy(true);setError('');try{await onSave();}catch(e){setError(e.message||String(e));}finally{saving.current=false;setBusy(false);}};
  const navigate=id=>{setStep(id);body.current?.closest('.modal-body')?.scrollTo?.({top:0,behavior:'auto'});};
@@ -59,7 +61,7 @@ export default function AuthoringModal({title,onClose,onSave,sections,children,v
    </div>
    <nav className="author-steps" aria-label={fa?'بخش‌های ویرایش':'Editor sections'}>{sections.map((s,i)=><button type="button" key={s.id} aria-current={step===s.id?'step':undefined} onClick={()=>navigate(s.id)}><span>{i+1}</span>{s.title}</button>)}<button type="button" aria-pressed={step==='all'} onClick={()=>navigate('all')}>{fa?'نمایش همه':'Show all'}</button></nav>
    {error&&<div className="err-banner" role="alert">{error}</div>}
-   <p className="small muted" role="status">{dirty?(fa?'تغییرات ذخیره نشده':'Unsaved changes'):(fa?'ویرایش محتوا':'Editing content')}</p>
+   <p className="small muted" role="status">{changed?(fa?'تغییرات ذخیره نشده':'Unsaved changes'):(fa?'ویرایش محتوا':'Editing content')}</p>
    {children}
    {step!=='all'&&<div className="author-navigation"><button type="button" className="btn btn-ghost" disabled={index<=0} onClick={()=>navigate(sections[index-1].id)}>{fa?'بخش قبل':'Previous section'}</button><span>{index+1} / {sections.length}</span><button type="button" className="btn btn-ghost" disabled={index>=sections.length-1} onClick={()=>navigate(sections[index+1].id)}>{fa?'بخش بعد':'Next section'}</button></div>}
   </div></AuthorContext.Provider>

@@ -2,13 +2,14 @@
 // Never import/reset over a retained installation. An atomic hard link publishes
 // the complete image without replacing a database created by another process.
 import fs from 'node:fs';
+import {randomUUID} from 'node:crypto';
 import path from 'node:path';
 export function installBundledDemo({dbPath, dataDir, bundleDir}) {
   if (fs.existsSync(dbPath)) return {installed:false, reason:'existing_database'};
   const source=path.join(bundleDir,'medlab.db');
   if (!fs.existsSync(source)) return {installed:false,reason:'no_bundle'};
   fs.mkdirSync(path.dirname(dbPath),{recursive:true,mode:0o700});
-  const temp=dbPath+'.bootstrap-'+process.pid;
+  const temp=dbPath+'.bootstrap-'+process.pid+'-'+randomUUID();
   try {
     fs.copyFileSync(source,temp,fs.constants.COPYFILE_EXCL);
     fs.chmodSync(temp,0o600);
