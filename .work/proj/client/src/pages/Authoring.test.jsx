@@ -76,3 +76,31 @@ it('does not store empty MCQ placeholders as answer options',async()=>{
  const save=vi.fn();render(<CardModal card={{type:'mcq',title_en:'MCQ',options:[{en:'A',correct:true},{en:'B',correct:false},{fa:' ',en:'',correct:false},{fa:'',en:'',correct:false}]}} onClose={()=>{}} onSave={save}/>);
  fireEvent.click(screen.getByText('Save content'));await waitFor(()=>expect(save).toHaveBeenCalled());expect(save.mock.calls[0][0].options).toHaveLength(2);
 });
+it('accepts an English patient title when Persian contains whitespace and does not invent newborn age',async()=>{
+ const save=vi.fn();render(<CaseModal caseObj={{title_fa:' ',title_en:'Adult case',age:''}} onClose={()=>{}} onSave={save}/>);
+ fireEvent.click(screen.getByText('Save content'));await waitFor(()=>expect(save).toHaveBeenCalled());expect(save.mock.calls[0][0].age).toBeNull();
+});
+it.each(['abc',-2,false])('rejects invalid patient age %s without submitting',async age=>{
+ const save=vi.fn();render(<CaseModal caseObj={{title_en:'Case',age}} onClose={()=>{}} onSave={save}/>);
+ fireEvent.click(screen.getByText('Save content'));expect(await screen.findByRole('alert')).toHaveTextContent(/age/i);expect(save).not.toHaveBeenCalled();
+});
+it('preserves a real newborn age of zero',async()=>{
+ const save=vi.fn();render(<CaseModal caseObj={{title_en:'Newborn',age:0}} onClose={()=>{}} onSave={save}/>);
+ fireEvent.click(screen.getByText('Save content'));await waitFor(()=>expect(save).toHaveBeenCalled());expect(save.mock.calls[0][0].age).toBe(0);
+});
+it('lets faculty explicitly bind an existing approved policy while excluding foreign university policies',async()=>{
+ mocks.get.mockImplementation(url=>Promise.resolve(url.startsWith('/academic/policies')?{policies:[{id:7,university_id:1,ready:true,course_name_en:'Approved teaching',source_anchor:'Chapter 1'},{id:8,university_id:2,ready:true,course_name_en:'Other university'}]}:[]));
+ const save=vi.fn();render(<CaseModal caseObj={{title_en:'Case',university_id:1}} onClose={()=>{}} onSave={save}/>);
+ const select=await screen.findByLabelText('Approved teaching reference');
+ await waitFor(()=>expect(screen.getByRole('option',{name:/Approved teaching/})).toBeTruthy());
+ expect(screen.queryByRole('option',{name:/Other university/})).toBeNull();
+ fireEvent.change(select,{target:{value:'7'}});fireEvent.click(screen.getByText('Save content'));
+ await waitFor(()=>expect(save).toHaveBeenCalled());expect(save.mock.calls[0][0].reference_policy_id).toBe(7);
+});
+it('opens a legacy patient containing null result rows and string aliases for repair instead of crashing',async()=>{
+ const save=vi.fn();render(<CaseModal caseObj={{title_en:'Legacy patient',imagingResults:[null,{name_en:'CT chest',aliases:'CT، سی تی',result_en:'Keep this finding'}],images:[null]}} onClose={()=>{}} onSave={save}/>);
+ fireEvent.click(screen.getByText('Show all'));
+ expect(screen.getByDisplayValue('Keep this finding')).toBeInTheDocument();
+ fireEvent.click(screen.getByText('Save content'));await waitFor(()=>expect(save).toHaveBeenCalled());
+ expect(save.mock.calls[0][0].imagingResults).toEqual([{name_en:'CT chest',aliases:['CT','سی تی'],result_en:'Keep this finding'}]);
+});

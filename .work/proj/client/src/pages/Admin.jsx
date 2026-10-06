@@ -1,5 +1,5 @@
-import {acceptedAnswers,orderingRows,drawingRubrics,percentCoordinate} from "../lib/authoring-values.js";
-import {validateQuestion} from "../lib/authoring-validation.js";
+import {acceptedAnswers,orderingRows,drawingRubrics,percentCoordinate,patientEditorData} from "../lib/authoring-values.js";
+import {validateQuestion,validatePatient} from "../lib/authoring-validation.js";
 import AuthoringModal, {AuthorSection,AuthorField,AuthorSummary} from "../components/AuthoringModal.jsx";
 import DemoSetup from "../components/DemoSetup.jsx";
 import ContentCode from "../components/ContentCode.jsx";
@@ -1115,7 +1115,8 @@ function ResultEditor({ r, i, ops, t, withImage }) {
 }
 
 export function CaseModal({ caseObj, onClose, onSave }) {
-  const { t, lang } = useApp();
+  const { t, lang, user } = useApp();
+  const [initial] = useState(() => patientEditorData(caseObj));
   const [f, setF] = useState({
     title_fa: "", title_en: "", age: "", sex: "male", difficulty: "medium", history_form: "internal",
     specialty_fa: "", specialty_en: "", chief_fa: "", chief_en: "", history_fa: "", history_en: "",
@@ -1126,15 +1127,29 @@ export function CaseModal({ caseObj, onClose, onSave }) {
     lungSound: "", heartSound: "", problem_list_fa: "", problem_list_en: "", ddx_fa: "", ddx_en: "",
     diagnosis_fa: "", diagnosis_en: "", objectives_fa: "", objectives_en: "",
     vitals: { bp: "120/80", hr: "75", rr: "16", temp: "37", spo2: "98%" },
-    images: [], labResults: [], imagingResults: [], paraclinicResults: [], checklist_id: 1, ...caseObj,
+    images: [], labResults: [], imagingResults: [], paraclinicResults: [], checklist_id: 1, ...initial.data,
   });
   // load the editable OSCE checklists so the author can pick which rubric scores this case
   const [checklists, setChecklists] = useState([]);
   const [chkErr, setChkErr] = useState("");
+  const [policies, setPolicies] = useState([]);
+  const [policyErr, setPolicyErr] = useState("");
+  const universityId = Number(caseObj.university_id || user?.university_id || 1);
+  useEffect(() => {
+    let cancelled = false;
+    api.get(`/academic/policies?university_id=${universityId}`).then(d => {
+      if (!cancelled) setPolicies((Array.isArray(d?.policies) ? d.policies : []).filter(p => Number(p.university_id) === universityId && p.ready));
+    }).catch(e => { if (!cancelled) setPolicyErr(String(e.message || e)); });
+    return () => { cancelled = true; };
+  }, [universityId]);
   const [orderCat, setOrderCat] = useState({ labs: [], imaging: [] });
   const [catErr, setCatErr] = useState("");
   useEffect(() => {
-    api.get("/checklists").then((d) => setChecklists(Array.isArray(d) ? d : [])).catch((e) => { setChkErr(String(e.message || e)); setChecklists([]); });
+    api.get("/checklists").then((d) => {
+      const available = Array.isArray(d) ? d : [];
+      setChecklists(available);
+      if (!caseObj.id && available.length) setF(current => available.some(c => Number(c.id) === Number(current.checklist_id)) ? current : { ...current, checklist_id: available[0].id });
+    }).catch((e) => { setChkErr(String(e.message || e)); setChecklists([]); });
     api.get("/order-catalog").then((d) => setOrderCat(d && (d.labs || d.imaging) ? d : { labs: [], imaging: [] })).catch((e) => { setCatErr(String(e.message || e)); setOrderCat({ __err: true, labs: [], imaging: [] }); });
   }, []);
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
@@ -1159,7 +1174,7 @@ export function CaseModal({ caseObj, onClose, onSave }) {
         set(key, [...list, { name_fa, name_en, aliases, result_fa: "", result_en: "", imageUrl: "" }]);
       },
       setField: (i, k, v) => set(key, list.map((r, j) => j === i ? { ...r, [k]: v } : r)),
-      setAliases: (i, v) => set(key, list.map((r, j) => j === i ? { ...r, aliases: v.split(",").map((s) => s.trim()).filter(Boolean) } : r)),
+      setAliases: (i, v) => set(key, list.map((r, j) => j === i ? { ...r, aliases: v.split(/[,،\n]/).map((s) => s.trim()).filter(Boolean) } : r)),
       del: (i) => set(key, list.filter((_, j) => j !== i)),
     };
   };
@@ -1168,8 +1183,9 @@ export function CaseModal({ caseObj, onClose, onSave }) {
   const paraResults = mkResultOps("paraclinicResults");
 
   return (
-    <AuthoringModal value={f} sections={[{id:"basics",title:lang==="fa"?"مشخصات و شکایت":"Basics & complaint"},{id:"history",title:lang==="fa"?"شرح‌حال و معاینه":"History & examination"},{id:"results",title:lang==="fa"?"ارزیابی و نتایج":"Assessment & results"},{id:"review",title:lang==="fa"?"بازبینی":"Review"}]} validate={()=>!(f.title_fa||f.title_en)?.trim()?(lang==="fa"?"عنوان کیس را در بخش مشخصات وارد کنید.":"Enter a case title in Basics."):null} title={caseObj.id ? t("edit") : t("newCase")} onClose={onClose} onSave={() => onSave({ ...f, age: +f.age || 0 }, caseObj.id)}>
+    <AuthoringModal value={f} sections={[{id:"basics",title:lang==="fa"?"مشخصات و شکایت":"Basics & complaint"},{id:"history",title:lang==="fa"?"شرح‌حال و معاینه":"History & examination"},{id:"results",title:lang==="fa"?"ارزیابی و نتایج":"Assessment & results"},{id:"review",title:lang==="fa"?"بازبینی":"Review"}]} validate={()=>validatePatient(f,lang)} title={caseObj.id ? t("edit") : t("newCase")} onClose={onClose} onSave={() => onSave({ ...f, age: f.age == null || f.age === "" ? null : Number(f.age) }, caseObj.id)}>
       <AuthorSection id="basics" title={lang==="fa"?"مشخصات بیمار":"Patient basics"}>
+      {initial.repaired && <div role="status" className="small muted mb8">{lang === "fa" ? "قالب قدیمی نتایج برای ویرایش اصلاح شد. پیش از ذخیره، بخش نتایج و تصاویر را بازبینی کنید؛ دیتابیس هنوز تغییر نکرده است." : "Legacy result formatting was repaired for editing. Review results and images before saving; the database has not been changed."}</div>}
       <div className="grid grid-2">
         <AuthorField values={f} onChange={set} k="title_fa" label={`${t("caseTitle")} (FA)`} />
         <AuthorField values={f} onChange={set} k="title_en" label={`${t("caseTitle")} (EN)`} />
@@ -1191,6 +1207,17 @@ export function CaseModal({ caseObj, onClose, onSave }) {
             <option value="psych">{t("formPsych")}</option>
           </select>
           <div className="small muted mt4">{t("historyFormHint")}</div>
+        </div>
+        <div className="field">
+          <label htmlFor="case-reference-policy">{lang === "fa" ? "مرجع آموزشی تأییدشده" : "Approved teaching reference"}</label>
+          <select id="case-reference-policy" value={f.reference_policy_id || ""} onChange={e => setF(current => ({ ...current, reference_policy_id: Number(e.target.value) || null, refresh_reference_snapshot: false }))}>
+            <option value="" disabled={!!caseObj.reference_policy_id}>{lang === "fa" ? "بدون مرجع تأییدشده / پیش‌نویس" : "No approved reference / draft"}</option>
+            {f.reference_policy_id && !policies.some(p => Number(p.id) === Number(f.reference_policy_id)) && <option value={f.reference_policy_id}>{lang === "fa" ? "مرجع فعلی — وضعیت آماده تأیید نشده" : "Current reference — readiness not verified"}</option>}
+            {policies.map(p => <option key={p.id} value={p.id}>{(lang === "fa" ? p.course_name_fa || p.course_name_en : p.course_name_en || p.course_name_fa) || p.course_code} — {p.source_anchor}</option>)}
+          </select>
+          {policyErr && <div className="err-banner">{policyErr}</div>}
+          {!policies.some(p => Number(p.id) === Number(f.reference_policy_id)) && !(Number(f.reference_policy_id) === Number(caseObj.reference_policy_id) && caseObj.reference?.ready) && <div className="small muted mt4">{lang === "fa" ? "ذخیرهٔ پرونده ممکن است، اما درسنامهٔ مرجع‌محور تا انتخاب مرجع آماده مسدود می‌ماند. مرجع باید توسط مسئول آموزشی تأیید شود." : "The chart can be saved, but source-aware microlearning remains blocked until a ready reference is selected. Academic staff must approve the reference."}</div>}
+          {caseObj.id && Number(f.reference_policy_id) === Number(caseObj.reference_policy_id) && policies.some(p => Number(p.id) === Number(f.reference_policy_id)) && <label className="small mt4"><input type="checkbox" checked={!!f.refresh_reference_snapshot} onChange={e => set("refresh_reference_snapshot", e.target.checked)} />{lang === "fa" ? "نسخهٔ فعلی مرجع را برای مراجعات جدید ثبت کن" : "Use the current reference version for new encounters"}</label>}
         </div>
         <div className="field"><label><Icon name="check" size={14} /> {lang === "fa" ? "چک‌لیست ارزیابی (OSCE)" : "Assessment checklist (OSCE)"}</label>
           {chkErr && <div className="err-banner mb8">{chkErr}</div>}

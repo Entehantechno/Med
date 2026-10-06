@@ -19,3 +19,12 @@ export function validateQuestion(f,lang='fa'){
  if(f.type==='stepwise'&&!(f.steps||[]).some(x=>text(x.prompt_fa)||text(x.prompt_en)))return fail('متن حداقل یک مرحله را وارد کنید.','Enter at least one step prompt.');
  return null;
 }
+
+export function validatePatient(f, lang='fa') {
+ const fa=lang==='fa';
+ if(![f.title_fa,f.title_en].some(text))return fa?'عنوان کیس را در بخش مشخصات وارد کنید.':'Enter a case title in Basics.';
+ if(f.age!=null&&f.age!=='') {
+  if(!['number','string'].includes(typeof f.age)||!String(f.age).trim()||!Number.isFinite(Number(f.age))||Number(f.age)<0||Number(f.age)>150)return fa?'سن باید عددی بین صفر تا ۱۵۰ سال باشد؛ برای سن نامشخص فیلد را خالی بگذارید.':'Age must be a number from 0 to 150 years; leave it empty if unknown.';
+ }
+ return null;
+}

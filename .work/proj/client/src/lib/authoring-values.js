@@ -17,3 +17,19 @@ export function percentCoordinate(value,fallback=50) {
  const n=value==null||value===''?NaN:Number(value);
  return Number.isFinite(n)?Math.max(0,Math.min(100,n)):fallback;
 }
+
+// Repair only the editor's working copy. Persisted legacy charts are untouched
+// until the author reviews and saves; retain existing finding text and URLs.
+export function patientEditorData(chart={}) {
+ const data={...chart};
+ for(const key of ['labResults','imagingResults','paraclinicResults','images']) {
+  if(data[key]==null)continue;
+  const rows=Array.isArray(data[key])?data[key]:[data[key]];
+  data[key]=rows.filter(row=>row!=null).map(row=>{
+   const item=typeof row==='object'&&!Array.isArray(row)?{...row}:key==='images'?{url:String(row)}:{result_en:String(row)};
+   if(key!=='images'&&item.aliases!=null)item.aliases=acceptedAnswers(item.aliases);
+   return item;
+  });
+ }
+ return {data,repaired:JSON.stringify(data)!==JSON.stringify(chart)};
+}

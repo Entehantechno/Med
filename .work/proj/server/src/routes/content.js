@@ -1,3 +1,4 @@
+import { validateCase, normalizeCaseAge } from "../lib/case-validation.js";
 import { routingSettings } from "../lib/ai-routing.js";
 /* ================================================================
    content.js — Cases, flashcards, checklists, users, prompts,
@@ -166,6 +167,18 @@ export function canAccessCase(user, caseId) {
   return false;
 }
 
+function checkCaseInput(req, res, data, checklistId, difficulty) {
+  const field = validateCase(data);
+  if (field) { res.status(422).json({ error: "invalid_case", field, message: `Invalid patient field: ${field}` }); return false; }
+  if (!["easy", "medium", "hard"].includes(difficulty)) { res.status(422).json({ error: "invalid_case", field: "difficulty" }); return false; }
+  if (!Number.isInteger(Number(checklistId)) || Number(checklistId) <= 0 || !db.prepare("SELECT id FROM checklists WHERE id=?").get(Number(checklistId))) {
+    res.status(422).json({ error: "checklist_not_found", field: "checklist_id" }); return false;
+  }
+  if (!teacherSeesChecklist(req.user, Number(checklistId))) { res.status(403).json({ error: "checklist_not_accessible", field: "checklist_id" }); return false; }
+  normalizeCaseAge(data);
+  return true;
+}
+
 /* ---------------- CASES ---------------- */
 r.get("/cases", authRequired, (req, res) => {
   try {
@@ -261,6 +274,7 @@ r.get("/cases/:id", authRequired, async (req, res) => {
 });
 r.post("/cases", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const { difficulty = "medium", checklist_id = 1, reference_policy_id = null, ...data } = req.body || {};
+  if (!checkCaseInput(req, res, data, checklist_id, difficulty)) return;
   const wantLearn = req.user.role === "admin" && data.track === "learn";
   data.track = wantLearn ? "learn" : "university";
   const uni = wantLearn ? null : (req.user.role === "admin" ? (Number(req.body?.university_id) || currentUniversityId(req.user) || 1) : currentUniversityId(req.user));
@@ -288,7 +302,12 @@ r.put("/cases/:id", authRequired, requireRole("teacher", "admin"), (req, res) =>
   const row = db.prepare("SELECT * FROM cases WHERE id=?").get(req.params.id);
   if (!row) return res.status(404).json({ error: "not found" });
   if (!canManageUniResource(req.user, row)) return res.status(403).json({ error: "wrong_university" });
-  const { difficulty = row.difficulty, checklist_id = row.checklist_id, reference_policy_id, refresh_reference_snapshot = false, ...data } = req.body || {};
+  const { difficulty = row.difficulty, checklist_id = row.checklist_id, reference_policy_id, refresh_reference_snapshot = false, ...submitted } = req.body || {};
+  // Keep independently authored chart sections on partial updates; explicit []/null still clear fields.
+  let previous = {};
+  try { previous = JSON.parse(row.data_json); } catch { /* allow repair with a complete valid chart */ }
+  const data = { ...previous, ...submitted };
+  if (!checkCaseInput(req, res, data, checklist_id, difficulty)) return;
   const prevLearn = isLearnContent(row.data_json);
   if (req.user.role !== "admin") data.track = "university";
   else data.track = (data.track === "learn" || prevLearn) ? "learn" : "university";
@@ -606,7 +625,8 @@ function csvImportReview(rows,kind) {
  if(!rows.length)errors.push({row:1,message:'empty_csv'});
  if(rows.length>1000)errors.push({row:1,message:'maximum_1000_rows'});
  rows.forEach((row,i)=>{
-  if(!(row.title_fa||row.title_en||'').trim())errors.push({row:i+2,message:'title_required'});
+  if(![row.title_fa,row.title_en].some(v=>typeof v==='string'&&v.trim()))errors.push({row:i+2,message:'title_required'});
+  if(kind==='cases'){const field=validateCase(row);if(field&&field!=='title')errors.push({row:i+2,message:`invalid_case_${field}`});}
   if(row.track==='learn')errors.push({row:i+2,message:'university_only'});
   if(row.difficulty&&!['easy','medium','hard'].includes(row.difficulty))errors.push({row:i+2,message:'invalid_difficulty'});
   if(kind==='flashcards'){
@@ -635,7 +655,11 @@ r.post("/cases-import", authRequired, requireRole("teacher", "admin"), (req, res
   }
   let rows;
   try { rows = parseCSV(csv); } catch { return res.status(400).json({ error: "invalid csv" }); }
+  if (!uni || !db.prepare("SELECT id FROM universities WHERE id=? AND active=1").get(uni)) return res.status(422).json({error:"university_required"});
   const review=csvImportReview(rows,'cases');
+  if (!db.prepare("SELECT id FROM checklists WHERE id=1").get() || !teacherSeesChecklist(req.user, 1)) {
+    review.valid=false; review.errors.push({row:1,message:'default_checklist_unavailable'});
+  }
   if(req.body.dryRun===true)return res.json(review);
   if(!review.valid)return res.status(400).json({error:'csv_validation_failed',...review});
   const ins = db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id,created_by) VALUES (1,?,1,?,?,?)");
@@ -644,8 +668,8 @@ r.post("/cases-import", authRequired, requireRole("teacher", "admin"), (req, res
     for (const row of rows) {
       if (!row.title_en && !row.title_fa) continue;
       const { difficulty = "medium", age, ...rest } = row;
-      const data = { ...rest, age: +age || 0,
-        vitals: { bp: "120/80", hr: "75", rr: "16", temp: "37", spo2: "98%" }, images: [] };
+      const data = normalizeCaseAge({ ...rest, track: "university", age: age ?? null,
+        vitals: { bp: "120/80", hr: "75", rr: "16", temp: "37", spo2: "98%" }, images: [] });
       ins.run(difficulty, JSON.stringify(data), uni, req.user.id);
       count++;
     }
@@ -790,6 +814,7 @@ function checklistOwnerId(id) {
 function teacherSeesChecklist(user, id) {
   if (user.role === "admin" || user.role === "content_manager") return true;
   if (user.role !== "teacher") return false;
+  if (checklistOwnerId(id) == null) return true; // Shipped templates stay usable across universities.
   const unis = checklistUniversityIds(id);
   if (!unis.size) {
     // NULL owner = a SHIPPED system template (seed); every teacher may use it
@@ -823,6 +848,7 @@ r.get("/checklists", authRequired, requireRole("teacher", "admin", "content_mana
     if (req.user.role === "teacher") {
       const mine = currentUniversityId(req.user);
       rows = rows.filter((row) => {
+        if (row.owner_id == null) return true;
         const unis = uniBy.get(row.id);
         if (!unis || !unis.size) {
           const owner = checklistOwnerId(row.id);

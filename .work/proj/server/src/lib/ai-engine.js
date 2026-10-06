@@ -707,43 +707,57 @@ export async function patientReply({ caseData, userText, history = [], lang, pro
 /* Case-level "medical images" are never shown up front any more; they are
    delivered only when the student orders a study whose name matches the
    image label (e.g. label "ECG — ST elevation" ↔ order "ECG"). */
-export function matchCaseImage(caseData, names) {
-  const imgs = (caseData?.images || []).filter((im) => im && im.url);
-  if (!imgs.length) return null;
-  const keys = (names || []).map(norm).filter((k) => k && k.length >= 2);
-  if (!keys.length) return null;
-  for (const im of imgs) {
-    const label = norm(`${im.label_fa || ""} ${im.label_en || ""}`);
-    if (!label) continue;
-    if (keys.some((k) => label.includes(k) || (k.length >= 4 && k.includes(label)))) return im.url;
-    // token-level: any 3+-char token of the order name present in the label
-    const toks = keys.flatMap((k) => k.split(/[\s()/،,-]+/)).filter((t) => t.length >= 3 && !/^(the|of|and|scan|test|study|x|ray)$/.test(t));
-    if (toks.some((t) => label.includes(t))) return im.url;
+// Whole medical names/aliases outrank bounded descriptive matches. Never match
+// CT inside electrocardiogram, nor attach an image on one shared anatomy token.
+const studyName = value => typeof value === "string" ? norm(value).replace(/[^\p{L}\p{N}]+/gu, " ").trim().replace(/\s+/g, " ") : "";
+const rowsOf = value => Array.isArray(value) ? value.filter(x => x && typeof x === "object" && !Array.isArray(x)) : [];
+const studyAliases = value => Array.isArray(value) ? value.filter(x => typeof x === "string") : typeof value === "string" ? value.split(/[,،\n]/).map(x => x.trim()).filter(Boolean) : [];
+function resolveStudy(rows, queries, namesFor) {
+  // Parenthesized uppercase abbreviations are explicit aliases, not arbitrary
+  // anatomy words: Electrocardiogram (ECG) may match an ECG-labelled image.
+  const expand = values => values.flatMap(v => typeof v === "string" ? [v, ...Array.from(v.matchAll(/\(([A-Z][A-Z0-9-]{1,11})\)/g), m => m[1])] : []);
+  const keys = expand(queries).map(studyName).filter(Boolean);
+  let score = 0, matches = [];
+  for (const item of rows) {
+    let best = 0;
+    for (const name of expand(namesFor(item)).map(studyName).filter(Boolean)) {
+      for (const key of keys) {
+        if (name === key) best = Math.max(best, 100000 + key.length);
+        else if (key.length >= 2 && name.length >= 2 && (` ${name} `.includes(` ${key} `) || ` ${key} `.includes(` ${name} `))) best = Math.max(best, Math.min(name.length, key.length));
+      }
+    }
+    if (best > score) { score = best; matches = [item]; }
+    else if (best && best === score) matches.push(item);
   }
-  return null;
+  return { item: matches.length === 1 ? matches[0] : null, ambiguous: matches.length > 1 };
+}
+function resolveImage(caseData, names) {
+  return resolveStudy(rowsOf(caseData?.images).filter(im => im.url), names || [], im => [im.label_fa, im.label_en]);
+}
+export function matchCaseImage(caseData, names) {
+  return resolveImage(caseData, names).item?.url || null;
+}
+function resolveRecordedResult(caseData, kind, query) {
+  // Older charts put paraclinical studies under imaging; retain that compatibility.
+  const list = kind === "imaging"
+    ? [...rowsOf(caseData?.imagingResults), ...rowsOf(caseData?.paraclinicResults)]
+    : kind === "paraclinic"
+      ? [...rowsOf(caseData?.paraclinicResults), ...rowsOf(caseData?.imagingResults)]
+      : rowsOf(caseData?.labResults);
+  return resolveStudy(list, [query], item => [item.name_fa, item.name_en, ...studyAliases(item.aliases)]);
 }
 export function findRecordedResult(caseData, kind, query) {
-  // Paraclinical studies (ECG, PFT, EEG…) live in `paraclinicResults`; older
-  // cases recorded the ECG under imagingResults, so fall back to that list.
-  const list = kind === "imaging"
-    ? [...(caseData.imagingResults || []), ...(caseData.paraclinicResults || [])]
-    : kind === "paraclinic"
-      ? [...(caseData.paraclinicResults || []), ...(caseData.imagingResults || [])]
-      : (caseData.labResults || []);
-  const nq = norm(query);
-  if (!nq) return null;
-  // match by name/alias (either language), tolerant of partial words
-  for (const item of list) {
-    const names = [item.name_fa, item.name_en, ...(item.aliases || [])].filter(Boolean);
-    if (names.some((n) => { const nn = norm(n); return nn && (nn.includes(nq) || (nn.length >= 3 && nq.includes(nn))); })) {
-      return item;
-    }
-  }
-  return null;
+  return resolveRecordedResult(caseData, kind, query).item;
+}
+function ambiguousStudy(lang) {
+  return { found: false, ambiguous: true, source: "chart", imageUrl: null,
+    text: lang === "fa" ? "چند نتیجه با این نام وجود دارد؛ نام دقیق آزمایش یا تصویربرداری را انتخاب کنید." : "Several studies match this name; please select the specific test or imaging study." };
 }
 
 export async function labImagingResult({ caseData, kind, query, lang, prompts, aiCfg }) {
-  const found = findRecordedResult(caseData, kind, query);
+  const resolved = resolveRecordedResult(caseData, kind, query);
+  if (resolved.ambiguous) return ambiguousStudy(lang);
+  const found = resolved.item;
   if (found) {
     const val = lang === "fa" ? (found.result_fa || found.result_en) : (found.result_en || found.result_fa);
     const name = lang === "fa" ? (found.name_fa || found.name_en) : (found.name_en || found.name_fa);
@@ -755,13 +769,15 @@ export async function labImagingResult({ caseData, kind, query, lang, prompts, a
     return {
       text: `📋 ${header} — ${name}: ${val || (lang === "fa" ? "ثبت شده" : "recorded")}`,
       found: true,
-      imageUrl: found.imageUrl || found.url || matchCaseImage(caseData, [found.name_fa, found.name_en, ...(found.aliases || [])]) || null,
+      imageUrl: found.imageUrl || found.url || matchCaseImage(caseData, [found.name_fa, found.name_en, ...studyAliases(found.aliases)]) || null,
       source: "chart",
     };
   }
   // Not in the structured results, but the author may have attached a picture
   // with a matching label under "medical images" → deliver it with the order.
-  const looseImage = kind === "lab" ? null : matchCaseImage(caseData, [query]);
+  const imageMatch = kind === "lab" ? { item: null } : resolveImage(caseData, [query]);
+  if (imageMatch.ambiguous) return ambiguousStudy(lang);
+  const looseImage = imageMatch.item?.url;
   if (looseImage) {
     const header = kind === "imaging"
       ? (lang === "fa" ? "گزارش رادیولوژی" : "Radiology report")
