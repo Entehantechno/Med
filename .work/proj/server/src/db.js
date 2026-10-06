@@ -370,6 +370,9 @@ export function initSchema() {
     code TEXT UNIQUE,
     owner_id INTEGER,
     max_attempts INTEGER DEFAULT 1,
+    exam_mode TEXT DEFAULT 'perQuestion',
+    timer_enabled INTEGER DEFAULT 0,
+    timer_minutes INTEGER DEFAULT 30,
     active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now'))
   );
@@ -1791,10 +1794,6 @@ export function initSchema() {
   if (!cfAttemptCols.includes("answers_json")) db.exec("ALTER TABLE class_flashcard_attempts ADD COLUMN answers_json TEXT DEFAULT '[]'");
   if (!cfAttemptCols.includes("duration_sec")) db.exec("ALTER TABLE class_flashcard_attempts ADD COLUMN duration_sec INTEGER DEFAULT 0");
   const liveClassCols = db.prepare("PRAGMA table_info(classes)").all().map((c) => c.name);
-  // Additive migration: old classes remain untimed and retain existing behavior.
-  if (!liveClassCols.includes("exam_mode")) db.exec("ALTER TABLE classes ADD COLUMN exam_mode INTEGER NOT NULL DEFAULT 0");
-  if (!liveClassCols.includes("timer_enabled")) db.exec("ALTER TABLE classes ADD COLUMN timer_enabled INTEGER NOT NULL DEFAULT 0");
-  if (!liveClassCols.includes("timer_minutes")) db.exec("ALTER TABLE classes ADD COLUMN timer_minutes INTEGER NOT NULL DEFAULT 30");
   if (!liveClassCols.includes("live_board_enabled")) db.exec("ALTER TABLE classes ADD COLUMN live_board_enabled INTEGER NOT NULL DEFAULT 1");
   if (!liveClassCols.includes("live_board_anonymous")) db.exec("ALTER TABLE classes ADD COLUMN live_board_anonymous INTEGER NOT NULL DEFAULT 0");
   if (!liveClassCols.includes("university_id")) db.exec("ALTER TABLE classes ADD COLUMN university_id INTEGER");
@@ -2054,7 +2053,27 @@ export function initSchema() {
      row at start time so a later change cannot retroactively re-interpret data
      that was already collected. */
   {
-    const ccols = db.prepare("PRAGMA table_info(classes)").all().map((c) => c.name);
+    const classColumns = db.prepare("PRAGMA table_info(classes)").all();
+    const ccols = classColumns.map((c) => c.name);
+    if (ccols.length) {
+      if (!ccols.includes("exam_mode")) db.exec("ALTER TABLE classes ADD COLUMN exam_mode TEXT DEFAULT 'perQuestion'");
+      else if (classColumns.find((c) => c.name === "exam_mode").type.toUpperCase() !== "TEXT") {
+        // The previous demo package used an INTEGER flag. Replace only this
+        // column atomically, retaining class IDs, memberships and other fields.
+        // Legacy 0/1 had no mode semantics; both migrate to perQuestion.
+        db.transaction(() => {
+          db.exec("ALTER TABLE classes RENAME COLUMN exam_mode TO _legacy_exam_mode");
+          db.exec("ALTER TABLE classes ADD COLUMN exam_mode TEXT DEFAULT 'perQuestion'");
+          db.exec(`UPDATE classes SET exam_mode = CASE
+            WHEN typeof(_legacy_exam_mode)='text' AND length(trim(_legacy_exam_mode)) > 0
+              AND _legacy_exam_mode NOT IN ('0','1') THEN _legacy_exam_mode
+            ELSE 'perQuestion' END`);
+          db.exec("ALTER TABLE classes DROP COLUMN _legacy_exam_mode");
+        })();
+      }
+      if (!ccols.includes("timer_enabled")) db.exec("ALTER TABLE classes ADD COLUMN timer_enabled INTEGER DEFAULT 0");
+      if (!ccols.includes("timer_minutes")) db.exec("ALTER TABLE classes ADD COLUMN timer_minutes INTEGER DEFAULT 30");
+    }
     if (ccols.length && !ccols.includes("log_transcript"))
       db.exec("ALTER TABLE classes ADD COLUMN log_transcript INTEGER NOT NULL DEFAULT 0");
     const ecols = db.prepare("PRAGMA table_info(exams)").all().map((c) => c.name);

@@ -1,7 +1,7 @@
 import { beforeAll, describe, it, expect } from 'vitest';
 import { execFileSync } from 'node:child_process';
 import request from 'supertest';
-import { initDb, db, reloadDb, persistNow } from '../src/db.js';
+import { initDb, db, reloadDb, persistNow, initSchema } from '../src/db.js';
 import { createApp } from '../src/app.js';
 let app, teacher, student;
 const basic = { name_fa: 'آزمایش', name_en: 'Test', desc_fa: '', desc_en: '', maxAttempts: 2 };
@@ -15,24 +15,32 @@ beforeAll(async () => {
 }, 60000);
 describe('class exam settings', () => {
   it('creates, updates, preserves omitted flags, and persists them', async () => {
-    const created = await request(app).post('/api/classes').set(auth(teacher)).send({ ...basic, exam_mode: true, timer_enabled: '1', timer_minutes: 45 });
+    const created = await request(app).post('/api/classes').set(auth(teacher)).send({ ...basic, exam_mode: "bulk", timer_enabled: '1', timer_minutes: 45 });
     expect(created.status).toBe(200);
     const id = created.body.id;
+    const uid = db.prepare("SELECT id FROM users WHERE username='40012345'").get().id;
+    db.prepare('INSERT INTO class_members (class_id,user_id) VALUES (?,?)').run(id, uid);
+    for (const tk of [teacher, student]) {
+      const detail = await request(app).get(`/api/classes/${id}`).set(auth(tk));
+      expect(detail.status).toBe(200);
+      expect(detail.body.class).toMatchObject({ exam_mode: 'bulk', timer_enabled: 1, timer_minutes: 45 });
+      if (tk === student) expect(detail.body.class).not.toHaveProperty('code');
+    }
     const read = () => db.prepare('SELECT exam_mode,timer_enabled,timer_minutes FROM classes WHERE id=?').get(id);
-    expect(read()).toEqual({ exam_mode: 1, timer_enabled: 1, timer_minutes: 45 });
+    expect(read()).toEqual({ exam_mode: "bulk", timer_enabled: 1, timer_minutes: 45 });
     expect((await request(app).put(`/api/classes/${id}`).set(auth(teacher)).send(basic)).status).toBe(200);
-    expect(read()).toEqual({ exam_mode: 1, timer_enabled: 1, timer_minutes: 45 });
-    expect((await request(app).put(`/api/classes/${id}`).set(auth(teacher)).send({ ...basic, examMode: 'false', timerEnabled: false, timerMinutes: 60 })).status).toBe(200);
+    expect(read()).toEqual({ exam_mode: "bulk", timer_enabled: 1, timer_minutes: 45 });
+    expect((await request(app).put(`/api/classes/${id}`).set(auth(teacher)).send({ ...basic, examMode: 'perQuestion', timerEnabled: false, timerMinutes: 60 })).status).toBe(200);
     await reloadDb();
-    expect(read()).toEqual({ exam_mode: 0, timer_enabled: 0, timer_minutes: 60 });
+    expect(read()).toEqual({ exam_mode: "perQuestion", timer_enabled: 0, timer_minutes: 60 });
     const list = await request(app).get('/api/classes').set(auth(teacher));
     expect(list.body.find(c => c.id === id)).toMatchObject(read());
     expect((await request(app).put(`/api/classes/${id}`).set(auth(student)).send({ timer_enabled: true })).status).toBe(403);
   });
   it('defaults to untimed and rejects invalid settings without inserting', async () => {
     const created = await request(app).post('/api/classes').set(auth(teacher)).send(basic);
-    expect(created.body).toMatchObject({ exam_mode: 0, timer_enabled: 0, timer_minutes: 30 });
-    for (const bad of [{ timer_minutes: 0 }, { timer_minutes: null }, { timer_minutes: 1.5 }, { timer_minutes: 1441 }, { timer_minutes: 'oops' }, { exam_mode: 'yes' }, { timer_enabled: {} }]) {
+    expect(created.body).toMatchObject({ exam_mode: "perQuestion", timer_enabled: 0, timer_minutes: 30 });
+    for (const bad of [{ timer_minutes: 0 }, { timer_minutes: null }, { timer_minutes: 1.5 }, { timer_minutes: 1441 }, { timer_minutes: 'oops' }, { exam_mode: true }, { exam_mode: null }, { exam_mode: '' }, { exam_mode: 'x'.repeat(65) }, { timer_enabled: {} }]) {
       expect((await request(app).post('/api/classes').set(auth(teacher)).send({ ...basic, ...bad })).status).toBe(400);
       expect((await request(app).put(`/api/classes/${created.body.id}`).set(auth(teacher)).send({ ...basic, ...bad })).status).toBe(400);
     }
@@ -83,4 +91,30 @@ describe('explicit demo account restoration', () => {
       expect(result.body.user.role).toBe(role);
     }
   }, 60000);
+});
+
+describe('class schema upgrades', () => {
+  it('adds missing settings to legacy classes and preserves memberships', async () => {
+    const members = db.prepare('SELECT * FROM class_members ORDER BY id').all();
+    db.exec('ALTER TABLE classes DROP COLUMN exam_mode');
+    db.exec('ALTER TABLE classes DROP COLUMN timer_enabled');
+    db.exec('ALTER TABLE classes DROP COLUMN timer_minutes');
+    persistNow(); await reloadDb(); initSchema();
+    expect(db.prepare('SELECT exam_mode,timer_enabled,timer_minutes FROM classes WHERE id=1').get())
+      .toEqual({ exam_mode: 'perQuestion', timer_enabled: 0, timer_minutes: 30 });
+    expect(db.prepare('SELECT * FROM class_members ORDER BY id').all()).toEqual(members);
+  });
+  it('upgrades the prior INTEGER mode, preserves timer values, and is repeatable', async () => {
+    db.exec('ALTER TABLE classes DROP COLUMN exam_mode');
+    db.exec('ALTER TABLE classes ADD COLUMN exam_mode INTEGER NOT NULL DEFAULT 0');
+    db.prepare('UPDATE classes SET exam_mode=1,timer_enabled=1,timer_minutes=55 WHERE id=1').run();
+    for (let i = 0; i < 2; i++) {
+      persistNow(); await reloadDb(); initSchema();
+      const col = db.prepare('PRAGMA table_info(classes)').all().find(c => c.name === 'exam_mode');
+      expect(col.type).toBe('TEXT');
+      expect(col.dflt_value).toBe("'perQuestion'");
+      expect(db.prepare('SELECT exam_mode,timer_enabled,timer_minutes FROM classes WHERE id=1').get())
+        .toEqual({ exam_mode: 'perQuestion', timer_enabled: 1, timer_minutes: 55 });
+    }
+  });
 });

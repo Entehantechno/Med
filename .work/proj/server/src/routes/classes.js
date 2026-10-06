@@ -63,7 +63,11 @@ function decorateClass(cl, { forStudent = false } = {}) {
   if (!cl) return cl;
   let gradingRubric = null;
   try { if (cl.grading_json) gradingRubric = JSON.parse(cl.grading_json); } catch { /* */ }
-  const out = { ...cl, gradingRubric };
+  const out = { ...cl, gradingRubric,
+    exam_mode: cl.exam_mode ?? "perQuestion",
+    timer_enabled: cl.timer_enabled ?? 0,
+    timer_minutes: cl.timer_minutes ?? 30,
+  };
   // Resolved feature flags (class override → university → global default).
   out.flashNoPenalty = effectiveFlashNoPenalty(cl);
   out.liveBoardSpeed = effectiveLiveBoardSpeed(cl);
@@ -440,8 +444,12 @@ function teacherMayAttachStudy(user, studyId) {
 }
 // Preserve omitted flags; accept explicit booleans, not JavaScript truthiness.
 function classExamSettings(body, current = {}) {
-  const next = {};
-  for (const [key, alias] of [["exam_mode", "examMode"], ["timer_enabled", "timerEnabled"]]) {
+  const mode = body.exam_mode !== undefined ? body.exam_mode : body.examMode;
+  const next = { exam_mode: mode === undefined ? (current.exam_mode ?? "perQuestion") : mode };
+  if (typeof next.exam_mode !== "string" || !next.exam_mode.trim() || next.exam_mode.length > 64) {
+    throw new Error("exam_mode");
+  }
+  for (const [key, alias] of [["timer_enabled", "timerEnabled"]]) {
     const value = body[key] !== undefined ? body[key] : body[alias];
     if (value === undefined) next[key] = current[key] ?? 0;
     else if ([true, 1, "1", "true"].includes(value)) next[key] = 1;
