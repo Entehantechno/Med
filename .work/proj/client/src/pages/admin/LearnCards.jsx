@@ -1,3 +1,4 @@
+import ContentCode from "../../components/ContentCode.jsx";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useApp } from "../../context.jsx";
 import { api, getToken } from "../../api.js";
@@ -37,6 +38,7 @@ const actionLabel = (v, t) => ({ created: t("actCreated"), imported: t("actImpor
 
 export default function LearnCards({ jump, onJumpConsumed } = {}) {
   const { t, lang } = useApp();
+  const fa = lang === "fa";
   const toast = useToast();
   const [cards, setCards] = useState(null);
   const [subjects, setSubjects] = useState([]);
@@ -450,19 +452,13 @@ export default function LearnCards({ jump, onJumpConsumed } = {}) {
 
       <DataTable
         rows={sorted}
-        initialSort={{ key: "id", dir: "desc" }}
-        searchKeys={[(c) => `#${c.id}`, (c) => c.q, (c) => c.category, (c) => c.subject, (c) => c.facets?.chapter, (c) => c.facets?.concept, (c) => c.facets?.examLabel, (c) => c.type]}
+        selectable selectedIds={sel} onSelectionChange={setSel} exportable
+        defaultHiddenColumns={['media','usedIn']}
+        searchKeys={[(c) => c.public_code, (c) => `#${c.id}`, (c) => c.q, (c) => c.category, (c) => c.subject, (c) => c.facets?.chapter, (c) => c.facets?.concept, (c) => c.facets?.examLabel, (c) => c.type]}
         storageKey="admin-bank"
         hotkey
         rowKey={(c) => c.id}
         columns={[
-          { key: "_sel", label: (
-              <input type="checkbox" checked={allInViewSelected} onChange={selectAllInView}
-                title={t("bulkSelectAll")} aria-label={t("bulkSelectAll")} />
-            ), sortable: false, thStyle: { width: 34 }, render: (c) => (
-              <input type="checkbox" checked={sel.has(c.id)} onChange={() => toggleSel(c.id)}
-                onClick={(e) => e.stopPropagation()} aria-label={`select ${c.id}`} />
-            ) },
           { key: "q", label: t("questionText"), sortValue: (c) => c.q, render: (c, q) => (
             <div className="lc-qcell" style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", opacity: c.active ? 1 : .5 }}>
               <span>{q ? <Highlight text={c.q} ranges={highlightLocal(c.q, q)} /> : c.q}</span>
@@ -472,6 +468,9 @@ export default function LearnCards({ jump, onJumpConsumed } = {}) {
               {c.hasExplain ? <span className="lc-badge cat" title={t("hasExplainF")}>🗝️</span> : null}
               {c.category ? <span className="lc-badge cat">{c.category}</span> : null}
             </div>) },
+          { key: "public_code", label: fa ? 'کد ثابت' : 'Permanent code', render: c => <ContentCode code={c.public_code} /> },
+          { key: "active", label: fa ? 'وضعیت' : 'Status', render: c => c.active ? (fa ? 'فعال' : 'Active') : (fa ? 'غیرفعال' : 'Inactive') },
+          { key: "difficulty", label: t('difficulty'), render: c => t(c.difficulty) },
           { key: "subject", label: t("subjectCol"), sortValue: (c) => c.subject, render: (c) => c.subject || <span className="muted small">—</span> },
           // Chapter + exam sitting make the provenance readable at a glance:
           // an admin scanning the table can see WHICH exam a question is from

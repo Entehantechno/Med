@@ -421,7 +421,7 @@ export default function Browse() {
       )}
 
       <ul className="browse-list browse-list-new">
-        {(data?.cards || []).map((c) => {
+        {(data?.cards || []).map((c, index) => {
           const grad = subjGrad(c.subject);
           const diff = c.difficulty ? DIFF_COLOR[c.difficulty] : null;
           return (
@@ -433,6 +433,8 @@ export default function Browse() {
                   <span className="browse-go"><Icon name="chevronDown" size={14} style={{ transform: "rotate(-90deg)" }} /></span>
                 </div>
                 <div className="browse-meta browse-meta-new">
+                  <span className="small muted">{fa ? 'ردیف' : 'Row'} {(page-1)*(data?.per || 20)+index+1}</span>
+                  {c.public_code && <code dir="ltr" style={{fontSize:11,overflowWrap:'anywhere'}}>{c.public_code}</code>}
                   {c.subject && !fil.subject.length && <span className="chip chip-subject">{c.subject}</span>}
                   {c.chapter && <span className="chip chip-chapter">{c.chapter}</span>}
                   {c.concept && <span className="chip chip-soft">{c.concept}</span>}

@@ -119,7 +119,7 @@ async function main() {
   try { const { ensureDefaultEducationPosts } = await import("./lib/blog.js"); const n = ensureDefaultEducationPosts(); if (n) console.log(`📝 ensured ${n} default education blog post change(s)`); } catch (e) { console.warn("default blog posts skipped", e?.message || e); }
 
   // Load the past-exam question banks that ship with the release. This is
-  // idempotent — questions already present are skipped by fingerprint — so it
+  // idempotent — questions already present are skipped by permanent source identity (legacy: fingerprint) — so it
   // is safe on every restart, and it means a fresh deployment comes up with a
   // populated learning path instead of an empty one.
   bootState.phase = "question-bank";

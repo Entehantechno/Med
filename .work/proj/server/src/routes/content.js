@@ -19,7 +19,12 @@ import { isLearnContent, caseIsLearn } from "../lib/content-track.js";
 import { policyRow, policyReadiness, referenceSnapshotForPolicy, publicReferenceSnapshot } from "../lib/reference-governance.js";
 
 const r = Router();
-const parse = (row, extra = {}) => ({ ...JSON.parse(row.data_json), id: row.id, version: row.version, difficulty: row.difficulty, university_id: row.university_id || null, ...extra });
+r.use('/cases', authRequired, (req, res, next) => {
+  if (['learner', 'content_manager', 'support'].includes(req.user.role)) return res.status(403).json({ error: 'university_only' });
+  if (req.body?.track === 'learn') return res.status(400).json({ error: 'university_only' });
+  next();
+});
+const parse = (row, extra = {}) => ({ ...JSON.parse(row.data_json), id: row.id, version: row.version, difficulty: row.difficulty, public_code: row.public_code, active: row.active, updated_at: row.updated_at, university_id: row.university_id || null, ...extra });
 function tenantFilterFor(user) {
   if (user.role === "teacher" || user.role === "student") return currentUniversityId(user) || -1;
   return null;
@@ -50,7 +55,7 @@ function caseReferenceExtra(row) {
    roles we whitelist exactly those. Teachers/admins still get the full record
    (they author the cases). */
 const STUDENT_SAFE_CASE_FIELDS = [
-  "id", "version", "difficulty",
+  "id", "public_code", "version", "difficulty",
   "specialty_fa", "specialty_en", "age", "sex",
   "chief_fa", "chief_en", "history_form",
   // NOTE: `images` and `title_*` are intentionally NOT sent to students:
@@ -121,8 +126,8 @@ export function canAccessCase(user, caseId) {
     if (!row || isLearnContent(row.data_json)) return false;
     return (row.university_id || 1) === currentUniversityId(user);
   }
-  if (user.role === "learner") return caseIsLearn(caseId);
-  if (user.role === "content_manager" || user.role === "support") return caseIsLearn(caseId);
+  if (user.role === "learner") return false;
+  if (user.role === "content_manager" || user.role === "support") return false;
   if (user.role !== "student") return false;
   if (caseIsLearn(caseId)) return false;
   const tenant = currentUniversityId(user);
@@ -164,7 +169,8 @@ export function canAccessCase(user, caseId) {
 /* ---------------- CASES ---------------- */
 r.get("/cases", authRequired, (req, res) => {
   try {
-  let rows = db.prepare("SELECT * FROM cases WHERE active=1 ORDER BY id").all();
+  const includeInactive = ['admin','teacher'].includes(req.user.role) && req.query.status === 'all';
+  let rows = db.prepare(`SELECT * FROM cases ${includeInactive ? '' : 'WHERE active=1'} ORDER BY id`).all();
   const uni = tenantFilterFor(req.user);
   if (uni) rows = rows.filter((row) => (row.university_id || 1) === uni);
   if (req.user.role === "teacher" && !isUniversityExpert(req.user)) {
@@ -426,6 +432,7 @@ r.get("/flashcards", authRequired, (req, res) => {
      different product, and for admins listing 11 600 full cards (50 MB JSON)
      froze the page. The split is done in SQL so the bank rows are never even
      parsed here. */
+  const activeSql = ["admin","teacher"].includes(req.user.role) && req.query.status === "all" ? "1=1" : "active=1";
   const learnRole = req.user.role === "learner" || req.user.role === "content_manager" || req.user.role === "support";
   // json_valid() guard: json_extract() on a corrupt row would throw and 500
   // the whole list — a corrupt card is treated as a university card and then
@@ -437,11 +444,11 @@ r.get("/flashcards", authRequired, (req, res) => {
   if (wantIds) {
     const ph = wantIds.map(() => "?").join(",");
     rows = db.prepare(
-      `SELECT * FROM flashcards WHERE active=1 AND id IN (${ph}) AND ${learnRole ? "" : "NOT "}COALESCE(${bankSql}, 0) ORDER BY id`
+      `SELECT * FROM flashcards WHERE ${activeSql} AND id IN (${ph}) AND ${learnRole ? "" : "NOT "}COALESCE(${bankSql}, 0) ORDER BY id`
     ).all(...wantIds);
   } else {
     rows = db.prepare(
-      `SELECT * FROM flashcards WHERE active=1 AND ${learnRole ? "" : "NOT "}COALESCE(${bankSql}, 0) ORDER BY id`
+      `SELECT * FROM flashcards WHERE ${activeSql} AND ${learnRole ? "" : "NOT "}COALESCE(${bankSql}, 0) ORDER BY id`
     ).all();
   }
   const uniId = tenantFilterFor(req.user);
@@ -568,10 +575,10 @@ r.delete("/flashcards/:id", authRequired, requireRole("teacher", "admin"), (req,
 });
 
 /* ---------------- CSV IMPORT / EXPORT ---------------- */
-const CASE_COLS = ["title_fa","title_en","specialty_fa","specialty_en","age","sex","difficulty",
+const CASE_COLS = ["public_code","title_fa","title_en","specialty_fa","specialty_en","age","sex","difficulty",
   "chief_fa","chief_en","history_fa","history_en","pmh_fa","pmh_en","meds_fa","meds_en",
   "diagnosis_fa","diagnosis_en","objectives_fa","objectives_en"];
-const CARD_COLS = ["title_fa","title_en","category_fa","category_en","difficulty","questionType",
+const CARD_COLS = ["public_code","title_fa","title_en","category_fa","category_en","difficulty","questionType",
   "answerMode","questionText_fa","questionText_en","correct_fa","correct_en","options_fa","options_en",
   "hints_fa","hints_en"];
 
@@ -583,7 +590,7 @@ r.get("/cases-export.csv", authRequired, requireRole("teacher", "admin"), (req, 
   if (uni) raw = raw.filter((row) => (row.university_id || 1) === uni);
   if (req.user.role === "teacher" && !isUniversityExpert(req.user)) raw = raw.filter((row) => row.created_by == null || Number(row.created_by) === Number(req.user.id));
   const rows = raw
-    .map((row) => { try { const d = JSON.parse(row.data_json); return { ...d, difficulty: row.difficulty }; } catch { return null; } })
+    .map((row) => { try { const d = JSON.parse(row.data_json); return { ...d, public_code: row.public_code, difficulty: row.difficulty }; } catch { return null; } })
     .filter(Boolean)
     .filter((d) => d.track !== "learn");
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
@@ -636,7 +643,7 @@ r.get("/flashcards-export.csv", authRequired, requireRole("teacher", "admin"), (
     const correct = (d.options || []).find((o) => o.correct) || {};
     return {
       title_fa: d.title_fa, title_en: d.title_en, category_fa: d.category_fa, category_en: d.category_en,
-      difficulty: row.difficulty, questionType: d.questionType || "image", answerMode: d.answerMode || "choice",
+      public_code: row.public_code, difficulty: row.difficulty, questionType: d.questionType || "image", answerMode: d.answerMode || "choice",
       questionText_fa: d.questionText_fa || "", questionText_en: d.questionText_en || "",
       correct_fa: correct.fa || "", correct_en: correct.en || "",
       options_fa: (d.options || []).map((o) => o.fa).join(" | "),

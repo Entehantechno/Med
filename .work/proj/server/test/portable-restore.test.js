@@ -80,6 +80,8 @@ describe("complete academic portable backup, transactional restore & tenant isol
     const cases = db.prepare("SELECT * FROM cases WHERE university_id=?").all(newUniId);
     expect(cases.length).toBeGreaterThan(0);
     expect(cases.every((c) => c.university_id === newUniId)).toBe(true);
+    const originalCode = db.prepare('SELECT public_code FROM cases WHERE id=?').get(caseId).public_code;
+    expect(cases.every(c=>c.public_code?.startsWith('VP-') && c.public_code !== originalCode)).toBe(true);
 
     const users = db.prepare("SELECT * FROM users WHERE university_id=?").all(newUniId);
     expect(users.length).toBeGreaterThan(0);

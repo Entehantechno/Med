@@ -39,7 +39,7 @@ export function getVpatientConfig() {
   let saved = {};
   try { saved = row ? JSON.parse(row.value) : {}; } catch { saved = {}; }
   const cfg = { ...DEFAULT_VPATIENT, ...saved };
-  cfg.enabled = saved.enabled === true;
+  cfg.enabled = false; // Virtual patients are academic-only.
   cfg.premium_only = saved.premium_only !== false;
   cfg.in_path = saved.in_path !== false;
   cfg.in_daily = saved.in_daily !== false;
@@ -59,7 +59,7 @@ export function caseXpMax(caseData) {
 
 export function saveVpatientConfig(input) {
   const cfg = {
-    enabled: input?.enabled === true,
+    enabled: false,
     premium_only: input?.premium_only !== false,
     in_path: input?.in_path !== false,
     in_daily: input?.in_daily !== false,
@@ -75,7 +75,7 @@ export function saveVpatientConfig(input) {
 
 /* Whether the feature is live at all (feature flag AND admin switch). */
 export function vpatientLive() {
-  return isEnabled("virtual_patient") && getVpatientConfig().enabled;
+  return false;
 }
 
 /* Access check for a given learner profile. Returns { ok, reason }.

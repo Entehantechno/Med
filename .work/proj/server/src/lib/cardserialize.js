@@ -123,7 +123,7 @@ export function serializeCard(c, lang) {
   const rawType = String(d.type || "mcq").toLowerCase();
   const type = rawType === "image" ? "mcq" : (rawType || "mcq");
   const base = {
-    id: c.id, difficulty: c.difficulty, type,
+    id: c.id, public_code: c.public_code, difficulty: c.difficulty, type,
     micro: serializeMicro(d, lang),
     explain: serializeExplain(d, lang),          // پاسخنامه (shown after answering)
     mnemonic: serializeMnemonic(d, lang),

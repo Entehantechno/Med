@@ -1,3 +1,4 @@
+import ContentCode from "../components/ContentCode.jsx";
 import "../search.css";
 import CompetitiveReferences from "./admin/CompetitiveReferences.jsx";
 import AiRoutesEditor from "../components/AiRoutesEditor.jsx";
@@ -140,7 +141,7 @@ export default function Admin({ home }) {
   ];
   const competitiveSections = [
     { title: t("navGroupPeople"), items: [["learnerMgmt", "users", "learn.users"], ["placementReport", "compass", "learn.view"], ["certificatesAdmin", "medal", "learn.users"], ["premiumAccounts", "crown", "learn.users"]] },
-    { title: t("navGroupContent"), items: [["learnCards", "flask", "learn.content"], ["competitiveReferences", "book", "learn.content"], ["contentStats", "chart", "learn.content"], ["mediaLibrary", "image", "learn.content"], ["pathManager", "book", "learn.content"], ["mascotsAdmin", "star", "learn.content"], ["vpatientAdmin", "patient", "learn.settings"], ["dxAdmin", "target", "learn.content"], ["blogAdmin", "book", "learn.content"], ["communityMod", "users", "learn.content"]] },
+    { title: t("navGroupContent"), items: [["learnCards", "flask", "learn.content"], ["competitiveReferences", "book", "learn.content"], ["contentStats", "chart", "learn.content"], ["mediaLibrary", "image", "learn.content"], ["pathManager", "book", "learn.content"], ["mascotsAdmin", "star", "learn.content"], ["dxAdmin", "target", "learn.content"], ["blogAdmin", "book", "learn.content"], ["communityMod", "users", "learn.content"]] },
     { title: t("navGroupMarketing"), items: [["adsMgmt", "image", "learn.ads"], ["storeManager", "store", "store.manage"], ["pricingEditor", "crown", "learn.settings"], ["groupPurchase", "users", "learn.settings"], ["payments", "crown", "learn.settings"]] },
     { title: t("navGroupSupport"), items: [["supportInbox", "chat", "learn.support"], ["helpCenter", "book", "learn.content"]] },
     { title: t("navGroupSystem"), items: [["remindersAdmin", "clock", "learn.settings"], ["pwaAdmin", "download", "learn.view"], ["twaAdmin", "download", "learn.settings"], ["seoAdmin", "settings", "learn.settings"], ["gamification", "bolt", "learn.settings"], ["fsrsOptimizer", "brain", "learn.settings"], ["bugHunt", "bug", "learn.settings"]] },
@@ -352,7 +353,6 @@ export default function Admin({ home }) {
             {tab === "communityMod" && <LazyAdminChunk><CommunityModeration /></LazyAdminChunk>}
             {tab === "pathManager" && <LazyAdminChunk><PathManager /></LazyAdminChunk>}
             {tab === "mascotsAdmin" && <MascotsAdmin />}
-            {tab === "vpatientAdmin" && <VpatientAdmin />}
             {tab === "roleEditor" && <LazyAdminChunk><RoleEditor /></LazyAdminChunk>}
             {tab === "storeManager" && <LazyAdminChunk><StoreManager /></LazyAdminChunk>}
             {tab === "pricingEditor" && <LazyAdminChunk><PricingEditor /></LazyAdminChunk>}
@@ -1035,11 +1035,12 @@ function Cases() {
   const { t, lang } = useApp();
   const [cases, setCases] = useState(null);
   const [editing, setEditing] = useState(null);
+  const [status, setStatus] = useState("active");
   const toast = useToast();
   const [loadErr, setLoadErr] = useState("");
   const load = () => {
     setLoadErr("");
-    api.get("/cases").then((d) => setCases(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setCases({ __err: true }); });
+    api.get("/cases?status=all").then((d) => setCases(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setCases({ __err: true }); });
   };
   useEffect(() => { load(); }, []);
   if (cases?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (lang === "fa" ? "بارگذاری کیس‌ها شکست خورد" : "Could not load cases")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCases(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
@@ -1057,15 +1058,25 @@ function Cases() {
           <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newCase")}</button>
         </div></div>
       <div className="small muted mb16"><Icon name="bookmark" size={16} /> {t("versionNote")}</div>
+      <label className="small">{lang === 'fa' ? 'فیلتر وضعیت' : 'Status filter'} <select value={status} onChange={e=>setStatus(e.target.value)}>
+        <option value="active">{lang === 'fa' ? 'فعال' : 'Active'}</option><option value="inactive">{lang === 'fa' ? 'غیرفعال / بایگانی' : 'Inactive / archived'}</option><option value="all">{lang === 'fa' ? 'همه' : 'All'}</option>
+      </select></label>
       <DataTable
-        rows={cases}
+        rows={cases.filter(c => status === "all" || (status === "active" ? !!c.active : !c.active))} exportable
+        storageKey="admin-cases"
+        defaultHiddenColumns={["university_id", "updated_at"]}
         initialSort={{ key: "title", dir: "asc" }}
-        searchKeys={[(c) => c.title_fa, (c) => c.title_en, (c) => c.specialty_fa, (c) => c.specialty_en]}
+        searchKeys={[(c) => c.public_code, (c) => c.title_fa, (c) => c.title_en, (c) => c.specialty_fa, (c) => c.specialty_en]}
         rowKey={(c) => c.id}
         columns={[
           { key: "title", label: t("caseTitle"), sortValue: (c) => biField(c, "title", lang), render: (c) => <>{biField(c, "title", lang)} <span className="badge-ver">v{c.version}</span></> },
+          { key: "active", label: lang === 'fa' ? 'وضعیت' : 'Status', render: c => c.active ? (lang === 'fa' ? 'فعال' : 'Active') : (lang === 'fa' ? 'بایگانی' : 'Archived') },
+          { key: "public_code", label: lang === 'fa' ? 'کد ثابت' : 'Permanent code', render: c => <ContentCode code={c.public_code} /> },
+          { key: "university_id", label: lang === 'fa' ? 'شناسه دانشگاه' : 'University ID' },
+          { key: "updated_at", label: lang === 'fa' ? 'آخرین ویرایش' : 'Last updated', render: c => c.updated_at || '—' },
           { key: "specialty", label: t("specialty"), sortValue: (c) => biField(c, "specialty", lang), render: (c) => biField(c, "specialty", lang) },
           { key: "difficulty", label: t("difficulty"), sortValue: (c) => c.difficulty, render: (c) => <Pill kind={c.difficulty}>{t(c.difficulty)}</Pill> },
+          { key: "reference", label: lang === 'fa' ? 'مرجع آموزشی' : 'Teaching reference', sortValue: c => c.reference?.ready ? 1 : 0, render: c => c.reference?.ready ? (lang === 'fa' ? 'آماده' : 'Ready') : (lang === 'fa' ? 'نیازمند تأیید' : 'Needs approval') },
           { key: "actions", label: "", sortable: false, thStyle: { textAlign: "end" }, render: (c) => (
             <span style={{ display: "flex", gap: 4, justifyContent: "flex-end", whiteSpace: "nowrap" }}>
               <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}>{t("edit")}</button>
@@ -1314,11 +1325,12 @@ function Flashcards() {
   const { t, lang } = useApp();
   const [cards, setCards] = useState(null);
   const [editing, setEditing] = useState(null);
+  const [status, setStatus] = useState("active");
   const toast = useToast();
   const [loadErr, setLoadErr] = useState("");
   const load = () => {
     setLoadErr("");
-    api.get("/flashcards").then((d) => setCards(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setCards({ __err: true }); });
+    api.get("/flashcards?status=all").then((d) => setCards(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setCards({ __err: true }); });
   };
   useEffect(() => { load(); }, []);
   if (cards?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (lang === "fa" ? "بارگذاری فلش‌کارت‌ها شکست خورد" : "Could not load flashcards")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCards(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
@@ -1336,13 +1348,22 @@ function Flashcards() {
           <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newFlashcard")}</button>
         </div></div>
       <div className="small muted mb16"><Icon name="bookmark" size={16} /> {t("versionNote")}</div>
+      <label className="small">{lang === 'fa' ? 'فیلتر وضعیت' : 'Status filter'} <select value={status} onChange={e=>setStatus(e.target.value)}>
+        <option value="active">{lang === 'fa' ? 'فعال' : 'Active'}</option><option value="inactive">{lang === 'fa' ? 'غیرفعال / بایگانی' : 'Inactive / archived'}</option><option value="all">{lang === 'fa' ? 'همه' : 'All'}</option>
+      </select></label>
       <DataTable
-        rows={cards}
+        rows={cards.filter(c => status === "all" || (status === "active" ? !!c.active : !c.active))} exportable
+        storageKey="admin-cards"
+        defaultHiddenColumns={["university_id", "updated_at"]}
         initialSort={{ key: "title", dir: "asc" }}
-        searchKeys={[(c) => c.title_fa, (c) => c.title_en]}
+        searchKeys={[(c) => c.public_code, (c) => c.title_fa, (c) => c.title_en]}
         rowKey={(c) => c.id}
         columns={[
           { key: "title", label: t("title"), sortValue: (c) => biField(c, "title", lang), render: (c) => <>{biField(c, "title", lang)} <span className="badge-ver">v{c.version}</span></> },
+          { key: "active", label: lang === 'fa' ? 'وضعیت' : 'Status', render: c => c.active ? (lang === 'fa' ? 'فعال' : 'Active') : (lang === 'fa' ? 'بایگانی' : 'Archived') },
+          { key: "public_code", label: lang === 'fa' ? 'کد ثابت' : 'Permanent code', render: c => <ContentCode code={c.public_code} /> },
+          { key: "university_id", label: lang === 'fa' ? 'شناسه دانشگاه' : 'University ID' },
+          { key: "updated_at", label: lang === 'fa' ? 'آخرین ویرایش' : 'Last updated', render: c => c.updated_at || '—' },
           { key: "type", label: lang === "fa" ? "نوع" : "Type", sortValue: (c) => flashTypeLabel(c.type, lang), render: (c) => <span className="tag">{flashTypeLabel(c.type, lang)}</span> },
           { key: "options", label: t("options"), sortValue: (c) => (c.options || []).length, render: (c) => (c.options || []).length },
           { key: "hints", label: t("hints"), sortValue: (c) => ((lang === "fa" ? c.hints_fa : c.hints_en) || []).length, render: (c) => ((lang === "fa" ? c.hints_fa : c.hints_en) || []).length },
@@ -9589,7 +9610,7 @@ function FeatureFlags() {
   // Grouped so ~70 switches stay scannable. Unknown keys fall into «سایر».
   const GROUPS = [
     [fa ? "یادگیری و مسیر" : "Learning & path", ["placement", "srs_review", "smart_practice", "checkpoint", "mastery", "legendary", "jump_ahead", "calibration", "confidence_assess", "calm_mode", "study_plan", "certificates", "onboarding"]],
-    [fa ? "بانک و ابزارهای مطالعه" : "Bank & study tools", ["bank_browse", "full_bank", "custom_test", "summaries", "summaries_free", "exam_sim", "mindmap", "mnemonics", "virtual_patient", "drawing_assist", "learner_cards", "notes", "flagged_review", "library", "mistakes_hub", "crowd_insights", "progress", "help_center"]],
+    [fa ? "بانک و ابزارهای مطالعه" : "Bank & study tools", ["bank_browse", "full_bank", "custom_test", "summaries", "summaries_free", "exam_sim", "mindmap", "mnemonics", "drawing_assist", "learner_cards", "notes", "flagged_review", "library", "mistakes_hub", "crowd_insights", "progress", "help_center"]],
     [fa ? "مقایسه با همتایان (دور ۹)" : "Peer benchmark (round 9)", ["option_stats", "peer_percentile", "daily_report", "hint", "save_flashcard", "premium_trial"]],
     [fa ? "انگیزش و رقابت" : "Motivation & competition", ["quests", "achievements", "leagues", "ranking", "anon_ranking", "ramp_event", "streak_wager", "monthly_quest", "streak_revival", "challenges", "friends", "community", "dx_challenge", "referral", "social_share", "smart_reminders"]],
     [fa ? "درآمد و تبلیغات" : "Revenue & ads", ["premium", "ads", "store", "group_purchase"]],

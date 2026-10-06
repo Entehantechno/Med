@@ -1,0 +1,23 @@
+// Manual release check; deliberately not in the unit suite.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { initDb,initSchema,db,persistNow,reloadDb } from '../src/db.js';
+import { ensureQuestionBanks } from '../src/lib/bankbootstrap.js';
+await initDb(); initSchema();
+const before = new Map(db.prepare('SELECT id,data_json FROM flashcards').all().map(r=>[r.id,r.data_json]));
+const casesBefore = db.prepare('SELECT COUNT(*) n FROM cases').get().n;
+initSchema();
+const first=await ensureQuestionBanks();
+assert.equal(first.inserted,0);assert.equal(first.failed,0);
+assert.equal(db.prepare('SELECT COUNT(*) n FROM cases').get().n,casesBefore);
+for (const r of db.prepare('SELECT id,data_json FROM flashcards').all()) assert.equal(r.data_json,before.get(r.id));
+const codes=db.prepare('SELECT id,public_code,source_key FROM flashcards ORDER BY id').all();
+assert.equal(codes.filter(r=>r.source_key?.startsWith('medschool:master-bank:')).length,11604);
+assert.equal(new Set(codes.map(r=>r.public_code)).size,codes.length);
+assert.equal(db.prepare("SELECT COUNT(*) n FROM cases WHERE json_extract(data_json,'$.track')='learn'").get().n,0);
+persistNow(); await reloadDb();initSchema();
+const second=await ensureQuestionBanks();assert.equal(second.inserted,0);
+assert.deepEqual(db.prepare('SELECT id,public_code,source_key FROM flashcards ORDER BY id').all(),codes);
+assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check,'ok');
+persistNow({throwOnError:true});
+console.log(JSON.stringify({first,second,bankIdentities:11604,totalCases:casesBefore,activeAcademicCases:db.prepare('SELECT COUNT(*) n FROM cases WHERE active=1').get().n,archivedCases:db.prepare('SELECT COUNT(*) n FROM cases WHERE active=0').get().n,integrity:'ok',bankImportPreservedContent:true,codesStableAfterRestart:true},null,2));

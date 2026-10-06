@@ -61,7 +61,7 @@ const forbiddenMatchers = [
   { name: "node_modules", test: (e) => e === "node_modules/" || e.includes("/node_modules/") || e.startsWith("node_modules/") },
   { name: "runtime data folder medschool-data", test: (e) => e === "medschool-data/" || e.startsWith("medschool-data/") },
   { name: "runtime data folder data", test: (e) => e === "data/" || e.startsWith("data/") },
-  { name: "SQLite/sql.js database file", test: (e) => /(^|\/)[^/]+\.(db|sqlite|sqlite3)(-|$|\.)?/i.test(e) },
+  { name: "SQLite/sql.js database file", test: (e) => e !== "demo-database/medlab.db" && /(^|\/)[^/]+\.(db|sqlite|sqlite3)(-|$|\.)?/i.test(e) },
   { name: "Playwright report/test-results", test: (e) => e.includes("playwright-report/") || e.includes("test-results/") },
   // Lean release: raw question-bank build inputs must never ship (payloads only).
   { name: "raw bank build inputs (sources/scrapers)", test: (e) => /^tools\/[^/]+-bank\/sources\//.test(e) || /^tools\/exam-booklets\//.test(e) },
@@ -512,5 +512,5 @@ if (errors.length) {
 }
 
 console.log(`✅ Release ZIP check passed: ${path.basename(zipPath)} (${sizeMb.toFixed(1)} MB, ${entries.length} files)`);
-console.log("Required root files are present; node_modules and runtime database/data folders are absent.");
+console.log("Required root files are present; node_modules and runtime data are absent (the designated demo database is allowed).");
 console.log(`Feature audit passed: ${featureChecks.length} key product/security/performance markers are present.`);

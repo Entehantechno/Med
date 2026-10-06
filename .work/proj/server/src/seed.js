@@ -225,8 +225,8 @@ insCase.run(2, 1, "hard", 2, JSON.stringify({
 
 
 insCase.run(3, 1, "medium", 1, JSON.stringify({
-  track: "learn",
-  title_fa: "تنگی نفس در مرد ۴۵ ساله (مسیر رقابتی)", title_en: "Dyspnea in a 45-year-old man (competitive track)",
+  track: "uni",
+  title_fa: "تنگی نفس در مرد ۴۵ ساله (دانشگاهی)", title_en: "Dyspnea in a 45-year-old man (academic)",
   specialty_fa: "قلب و عروق", specialty_en: "Cardiology", age: 45, sex: "male",
   chief_fa: "تنگی نفس ناگهانی از یک ساعت پیش", chief_en: "Sudden shortness of breath for one hour",
   history_fa: "تنگی نفس ناگهانی در حال نشستن، بدون درد قفسه سینه واضح، سابقه سفر طولانی هفته گذشته.",
@@ -246,14 +246,15 @@ insCase.run(3, 1, "medium", 1, JSON.stringify({
   objectives_en: "Suspect PE and order D-dimer and CTPA",
 }));
 
-// ---- Emergency Ten: high-yield internal-medicine cases (all in Emergency) ----
-// Imported from vp-emergency-ten.js so upgrades and fresh seeds share one source of truth.
+// ---- Academic emergency cases: stable source keys, never competitive ----
 {
-  const { EMERGENCY_TEN } = await import("./data/vp-emergency-ten.js");
-  for (const c of EMERGENCY_TEN) {
-    // Use auto-increment id (do NOT hardcode) so existing custom cases never collide.
-    db.prepare(`INSERT INTO cases (version,difficulty,checklist_id,data_json,active) VALUES (1,?,?,?,1)`)
-      .run(c.difficulty, c.checklist_id, JSON.stringify(c.data));
+  const { EMERGENCY_TEN } = await import('./data/vp-emergency-ten.js');
+  const universityId = db.prepare("SELECT id FROM universities WHERE code='ARAK'").get()?.id || 1;
+  for (const [i,c] of EMERGENCY_TEN.entries()) {
+    const key = `medschool:emergency:${i+1}:university:${universityId}`;
+    if (db.prepare("SELECT 1 FROM content_identity_registry WHERE kind='cases' AND source_key=?").get(key)) continue;
+    db.prepare('INSERT INTO cases (version,difficulty,checklist_id,data_json,active,university_id,source_key) VALUES (1,?,?,?,1,?,?)')
+      .run(c.difficulty,c.checklist_id,JSON.stringify({...c.data,track:'uni'}),universityId,key);
   }
 }
 
@@ -1369,6 +1370,10 @@ if (shareIds[1]) {
   if (restored) console.log(`   Restored ${restored} protocol instrument template(s) to their shipped state.`);
 }
 
+// Explicit demo seeding only. Production upgrade must not recreate deleted samples.
+const { ensureArakHistology } = await import('./lib/arak-seed.js');
+ensureArakHistology();
+db.prepare("UPDATE cases SET university_id=1 WHERE university_id IS NULL").run();
 persistNow();   // flush the seeded database to disk
 
 console.log("✅ Database seeded successfully.");

@@ -29,10 +29,9 @@ const { commitOfficialImport } = await import('../server/src/routes/admin.js');
 let inserted = 0;
 for (const file of files) {
   const body = JSON.parse(fs.readFileSync(path.join(banks, file)));
-  // Two intra-payload source records share the importer's normalized prefix.
-  // Keep them with the EXISTING premium-duplicate mode, not by disabling the
-  // application's normal deduplication or modifying the educational payloads.
-  const result = commitOfficialImport({ ...body, duplicates: 'premium' }, null);
+  // Stable publisher IDs distinguish genuinely separate source questions,
+  // even when their normalized text prefixes collide. No duplicate-mode bypass.
+  const result = commitOfficialImport(body, null);
   if (result.counters.errors || result.inserted !== body.questions.length) {
     throw new Error(`Incomplete import of ${file}: ${JSON.stringify(result)}`);
   }

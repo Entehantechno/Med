@@ -1,3 +1,4 @@
+import { masterSourceKey } from "../lib/content-identity.js";
 /* admin.js — Super-admin control panel API (role = 'admin' only).
    Full platform control: system overview, audit log, feature flags, learner
    management (ban/activate/XP/premium/reset/delete), impersonation, global
@@ -56,6 +57,8 @@ import {
 import { isLearnContent } from "../lib/content-track.js";
 
 const r = Router();
+// Retired competitive feature. Do not allow old clients to re-enable/import it.
+r.use('/vpatient', authRequired, (req, res) => res.status(410).json({ error: 'university_only' }));
 const admin = [authRequired, requireRole("admin")];      // full-admin-only
 const P = (...perms) => [authRequired, requirePerm(...perms)];   // permission-gated (ANY of the perms)
 // user-management routes are shared by the competitive admin (learn.users) and
@@ -1725,7 +1728,7 @@ r.get("/content/cards", ...P("learn.content"), (req, res) => {
     let d = {}; try { d = JSON.parse(c.data_json); } catch { d = {}; }
     const hasMicro = !!(d.micro && (d.micro.lead_fa || d.micro.golden_fa || d.micro.lead_en));
     cards.push({
-      id: c.id, active: c.active, type: d.type || "mcq", difficulty: c.difficulty,
+      id: c.id, public_code: c.public_code, active: c.active, type: d.type || "mcq", difficulty: c.difficulty,
       q: lang === "fa" ? (d.q_fa || d.title_fa) : (d.q_en || d.title_en),
       topic: d.topic || "", hasMicro,
     });
@@ -2300,7 +2303,7 @@ r.get("/learn-cards", ...P("learn.content"), (req, res) => {
   }
 
   const rows = db.prepare(
-    `SELECT f.id, f.data_json, f.difficulty, f.active, f.updated_at,
+    `SELECT f.id, f.public_code, f.data_json, f.difficulty, f.active, f.updated_at,
             f.created_at, f.content_updated_at, f.revision, f.last_action,
             COALESCE(u.name_fa, u.name_en, u.username) AS last_editor_name
        FROM flashcards f
@@ -2347,7 +2350,7 @@ r.get("/learn-cards", ...P("learn.content"), (req, res) => {
     const slug = d.topic || [...(nodeTopic[c.id] || [])][0] || "";
     const tp = topicBySlug[slug];
     return {
-      id: c.id, active: c.active, type: d.type || "mcq", difficulty: c.difficulty || "medium",
+      id: c.id, public_code: c.public_code, active: c.active, type: d.type || "mcq", difficulty: c.difficulty || "medium",
       track: d.track || "uni", premium: !!d.premium, category: d.category || "",
       q: (lang === "fa" ? (d.q_fa || d.title_fa) : (d.q_en || d.title_en)) || `#${c.id}`,
       usedIn: nodeUse[c.id] || [],
@@ -2369,7 +2372,7 @@ r.get("/learn-cards", ...P("learn.content"), (req, res) => {
       facets: cardFacets(d, { ...c, created_at: c.created_at, updated_at: c.content_updated_at || c.updated_at }),
       // normalised search text (stem fa+en, options, chapter, category, editor)
       // for the server-side `?q=` — built once per cache generation.
-      hay: normalizeText(`${d.q_fa || ""} ${d.q_en || ""} ${d.title_fa || ""} ${d.title_en || ""} #${c.id}`),
+      hay: normalizeText(`${c.public_code || ""} ${d.q_fa || ""} ${d.q_en || ""} ${d.title_fa || ""} ${d.title_en || ""} #${c.id}`),
       extra: normalizeText(`${(d.options || []).map((o) => `${o?.fa || ""} ${o?.en || ""} ${o?.why || ""}`).join(" ")} ${d.category || ""} ${d.source_meta?.chapter_fa || ""} ${d.source_meta?.chapter_en || ""} ${d.source_meta?.concept_fa || ""} ${d.source_meta?.subject_fa || ""} ${d.source_meta?.label_fa || ""} ${d.source_meta?.exam_type || ""} ${(d.hints_fa||[]).join(" ")} ${d.micro?.lead_fa || ""} ${d.micro?.golden_fa || ""} ${(d.micro?.points_fa||[]).join(" ")} ${d.micro?.source_fa || ""} ${d.explain?.text_fa || ""} ${d.explain?.text_en || ""} ${d.mnemonic?.scene_fa || ""} ${(d.mnemonic?.hooks_fa||[]).join(" ")} ${c.last_editor_name || ""} ${d.type || ""}`),
       // NOTE: the full card body (`data`) is NOT sent in the list by default.
       // With 11 600 cards it made this response 87 MB (4.3 MB brotli) and froze
@@ -3080,6 +3083,7 @@ function officialImportPlan(body = {}, dryRun = true) {
   const existing = existingFingerprintSet();
   const tombstones = cardTombstoneSet();
   const seen = new Set();
+  const sourceKeys = new Set(db.prepare("SELECT source_key FROM content_identity_registry WHERE kind='flashcards' AND source_key IS NOT NULL").all().map(r => r.source_key));
   const lessonCounts = new Map();
   const plan = [];
   const counters = { total: questions.length, path: 0, premium: 0, duplicate: 0, overflow: 0, bankOnly: 0, errors: 0 };
@@ -3087,15 +3091,17 @@ function officialImportPlan(body = {}, dryRun = true) {
     try {
       const fp = officialFingerprint(q);
       const deleted = tombstones.has(String(fp));
-      const inDb = existing.has(fp);
-      const duplicate = inDb || seen.has(fp) || deleted;
-      seen.add(fp);
+      const sourceKey = masterSourceKey(q);
+      const inDb = sourceKey ? sourceKeys.has(sourceKey) : existing.has(fp);
+      const identity = sourceKey || fp;
+      const duplicate = inDb || seen.has(identity) || deleted;
+      seen.add(identity);
       // Fast path for a fingerprint already present in THIS database: the
       // commit step skips it outright (idempotent bootstrap re-runs), so do
       // none of the topic/node resolution or card normalisation — with
       // 11k+ questions that keeps a warm-boot import pass to a few seconds.
       if (inDb || deleted) {
-        plan.push({ fingerprint: fp, question_no: q.question_no || plan.length + 1,
+        plan.push({ sourceKey, fingerprint: fp, question_no: q.question_no || plan.length + 1,
           duplicate: true, overflow: false, route: "premium_duplicate",
           subject_fa: q.subject_fa, chapter_fa: q.chapter_fa, part: 0,
           topic: { slug: "", parent: "", name_fa: "" }, data: null });
@@ -3143,7 +3149,7 @@ function officialImportPlan(body = {}, dryRun = true) {
         : bankOnly ? "bank_only"
           : overflow ? "premium_overflow" : "competitive_path";
       if (bankOnly) data.source_meta.needs_lesson = true;
-      plan.push({ fingerprint: fp, question_no: q.question_no || plan.length + 1, duplicate, overflow, route: data.source_meta.route, subject_fa: q.subject_fa, chapter_fa: q.chapter_fa, part,
+      plan.push({ sourceKey, fingerprint: fp, question_no: q.question_no || plan.length + 1, duplicate, overflow, route: data.source_meta.route, subject_fa: q.subject_fa, chapter_fa: q.chapter_fa, part,
       // surface the resolved topic so a reviewer can see which exam track the
       // subject lands in (major vs minor) before committing the import
       topic: { slug: topic.slug, parent: topic.parent, name_fa: topic.name_fa }, data });
@@ -3170,7 +3176,7 @@ export function commitOfficialImport(body = {}, actor = null) {
   const preview = officialImportPlan(body, true);
   const program = body.program || "preint";
   const maxPerLesson = Math.max(1, Math.min(25, Number(body.maxPerLesson || 15) || 15));
-  const ins = db.prepare("INSERT INTO flashcards (version,difficulty,data_json,active) VALUES (1,?,?,1)");
+  const ins = db.prepare("INSERT INTO flashcards (version,difficulty,data_json,active,source_key) VALUES (1,?,?,1,?)");
   let inserted = 0, attached = 0;
   const insertedIds = [];
   // Re-running the same import (a retry, or a second pass over the same bank)
@@ -3185,7 +3191,7 @@ export function commitOfficialImport(body = {}, actor = null) {
     for (const item of preview.plan) {
       if (item.error) continue;
       if (item.fingerprint && tombstones.has(String(item.fingerprint))) { skipped++; continue; }
-      if (item.duplicate && dupMode === "skip") { skipped++; continue; }
+      if ((item.sourceKey && item.duplicate) || (item.duplicate && dupMode === "skip")) { skipped++; continue; }
       const d = item.data;
       const topic = officialTopic({ program, subject_fa: d.source_meta.subject_fa, subject_en: d.source_meta.subject_en, subject_track: d.source_meta.subject_track, chapter_fa: d.source_meta.chapter_fa, chapter_en: d.source_meta.chapter_en }, false);
       d.topic = topic?.slug || d.topic;
@@ -3208,7 +3214,7 @@ export function commitOfficialImport(body = {}, actor = null) {
           node = null;
         }
       }
-      const info = ins.run(d.difficulty || "medium", JSON.stringify(d));
+      const info = ins.run(d.difficulty || "medium", JSON.stringify(d), item.sourceKey || null);
       insertedIds.push(info.lastInsertRowid);
       inserted++;
       if (node) {
@@ -3334,7 +3340,7 @@ r.get("/learn-cards/:id", ...P("learn.content"), (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "bad id" });
   const c = db.prepare(
-    `SELECT f.id, f.data_json, f.difficulty, f.active, f.updated_at, f.created_at,
+    `SELECT f.id, f.public_code, f.data_json, f.difficulty, f.active, f.updated_at, f.created_at,
             f.content_updated_at, f.revision, f.last_action,
             COALESCE(u.name_fa, u.name_en, u.username) AS last_editor_name
        FROM flashcards f LEFT JOIN users u ON u.id = f.last_editor_id WHERE f.id=?`
@@ -3355,7 +3361,7 @@ r.get("/learn-cards/:id", ...P("learn.content"), (req, res) => {
   } catch {}
   res.json({
     card: {
-      id: c.id, active: c.active, type: d.type || "mcq", difficulty: c.difficulty || "medium",
+      id: c.id, public_code: c.public_code, active: c.active, type: d.type || "mcq", difficulty: c.difficulty || "medium",
       track: d.track || "uni", premium: !!d.premium, category: d.category || "",
       revision: c.revision || 1, lastAction: c.last_action || "created", lastEditor: c.last_editor_name || "",
       createdAt: c.created_at || "", updatedAt: c.updated_at || "", contentUpdatedAt: c.content_updated_at || c.updated_at || "",

@@ -63,3 +63,43 @@ describe('DataTable pagination', () => {
     expect(screen.getByText(/Showing 1–25 of 30/)).toBeTruthy();
   });
 });
+
+describe('DataTable identity, selection and accessibility', () => {
+  it('numbers displayed rows across pages independently of their IDs', async () => {
+    const user=userEvent.setup();
+    render(<DataTable rows={mkRows(30).map(r=>({...r,id:r.id+1000}))} columns={columns} />);
+    expect(document.querySelector('[data-row-number="1"]')).toBeTruthy();
+    await user.click(screen.getByRole('button',{name:'Next'}));
+    expect(document.querySelector('[data-row-number="26"]')).toBeTruthy();
+    expect(document.querySelector('[data-row-number="1001"]')).toBeNull();
+  });
+  it('sorts using a keyboard-focusable header and exposes aria-sort', async () => {
+    const user=userEvent.setup();
+    render(<DataTable rows={[{id:1,q:'B'},{id:2,q:'A'}]} columns={columns} />);
+    const button=screen.getByRole('button',{name:'Question'});
+    button.focus(); await user.keyboard('{Enter}');
+    expect(button.closest('th').getAttribute('aria-sort')).toBe('ascending');
+    expect(screen.getAllByRole('row')[1].textContent).toContain('A');
+    await user.keyboard('{Enter}');
+    expect(button.closest('th').getAttribute('aria-sort')).toBe('descending');
+  });
+  it('selects only the current page and announces partial selection',async()=>{
+    const user=userEvent.setup(), change=vi.fn();
+    render(<DataTable rows={mkRows(30)} columns={columns} selectable selectedIds={new Set([1])} onSelectionChange={change} />);
+    const all=screen.getByLabelText('Select all on page');
+    expect(all.indeterminate).toBe(true);
+    await user.click(all);
+    expect(change.mock.calls[0][0].size).toBe(25);
+    expect(change.mock.calls[0][0].has(26)).toBe(false);
+  });
+  it('hides optional columns and restores the view without losing rows',async()=>{
+    const user=userEvent.setup();
+    render(<DataTable rows={[{id:1,q:'Question body',public_code:'Q-stable'}]} columns={[...columns,{key:'public_code',label:'Code'}]} />);
+    await user.click(screen.getByText('Table columns'));
+    await user.click(screen.getByLabelText('Column: Code'));
+    expect(screen.queryByText('Q-stable')).toBeNull();
+    expect(screen.getByText('Question body')).toBeTruthy();
+    await user.click(screen.getByRole('button',{name:'Reset view'}));
+    expect(screen.getByText('Q-stable')).toBeTruthy();
+  });
+});

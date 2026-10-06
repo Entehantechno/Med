@@ -139,16 +139,8 @@ export function ensureArakHistology() {
             .run(JSON.stringify(d), mainArak, 1, "medium", 1, new Date().toISOString(), new Date().toISOString(), new Date().toISOString(), 1, 27, 27, "created"); } catch {}
           titles13.add(d.title_fa);
         }
-        // Ensure academic cases for main Arak are not empty: clone 2 base cases + 10 emergency as uni copies if missing
-        const cntCases13 = db.prepare("SELECT COUNT(*) c FROM cases WHERE university_id=? AND active=1").get(mainArak).c;
-        if (cntCases13 === 0) {
-          try {
-            const base = db.prepare("SELECT data_json, difficulty, checklist_id FROM cases WHERE id IN (1,2) AND university_id=1").all();
-            for (const b of base) { try { db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,active,university_id,created_by) VALUES (1,?,?,?,1,?,1)").run(b.difficulty, b.checklist_id, b.data_json, mainArak); } catch {} }
-            const ems = db.prepare("SELECT data_json, difficulty, checklist_id FROM cases WHERE json_extract(data_json,'$.track')='learn' AND data_json LIKE '%اورژانس%' LIMIT 10").all();
-            for (const e of ems) { try { let d=JSON.parse(e.data_json); d.track="uni"; const j=JSON.stringify(d); db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,active,university_id,created_by) VALUES (1,?,?,?,1,?,1)").run(e.difficulty, e.checklist_id, j, mainArak); } catch {} }
-          } catch {}
-        }
+        // Case provisioning is explicit; never recreate deleted/edited cases at boot.
+
       }
     } catch {}
 

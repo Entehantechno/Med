@@ -1,5 +1,5 @@
 /* vp-emergency-ten.js — Ten high-yield Internal Medicine emergency cases
-   for the competitive Virtual Patient (track=learn), both FA & EN.
+   for the academic Virtual Patient (track=uni), both FA & EN.
    All patients present to the EMERGENCY DEPARTMENT (اورژانس) to avoid leaking
    the final ward/diagnosis. Bilingual, scientific, روان، referenced.
    Source cases: curated from the shared 10-case clinical compendium; vitals/
@@ -11,7 +11,7 @@ export const EMERGENCY_TEN = [
     difficulty: "hard",
     checklist_id: 1,
     data: {
-      track: "learn",
+      track: "uni",
       title_fa: "درد قفسه سینه در مرد ۵۸ ساله — اورژانس (سندرم حاد کرونری)",
       title_en: "Chest Pain in a 58-Year-Old Man — Emergency (Acute Coronary Syndrome)",
       specialty_fa: "طب داخلی - اورژانس",
@@ -70,7 +70,7 @@ export const EMERGENCY_TEN = [
     difficulty: "medium",
     checklist_id: 3,
     data: {
-      track: "learn",
+      track: "uni",
       title_fa: "تهوع و استفراغ مداوم در زن ۲۲ ساله دیابتی — اورژانس (DKA)",
       title_en: "Persistent Nausea & Vomiting in a 22-Year-Old Diabetic Woman — Emergency (DKA)",
       specialty_fa: "طب داخلی - اورژانس",
@@ -127,7 +127,7 @@ export const EMERGENCY_TEN = [
     difficulty: "medium",
     checklist_id: 1,
     data: {
-      track: "learn",
+      track: "uni",
       title_fa: "تنگی نفس و ورم پا در مرد ۶۸ ساله — اورژانس (نارسایی حاد قلب)",
       title_en: "Dyspnea & Leg Swelling in a 68-Year-Old Man — Emergency (ADHF)",
       specialty_fa: "طب داخلی - اورژانس",
@@ -183,7 +183,7 @@ export const EMERGENCY_TEN = [
     difficulty: "medium",
     checklist_id: 3,
     data: {
-      track: "learn",
+      track: "uni",
       title_fa: "تب و سرفه خلط‌دار در زن ۶۵ ساله — اورژانس (پنومونی اکتسابی)",
       title_en: "Fever & Productive Cough in a 65-Year-Old Woman — Emergency (CAP)",
       specialty_fa: "طب داخلی - اورژانس",
@@ -236,7 +236,7 @@ export const EMERGENCY_TEN = [
     difficulty: "hard",
     checklist_id: 2,
     data: {
-      track: "learn",
+      track: "uni",
       title_fa: "استفراغ خونی و ملنا در مرد ۵۲ ساله — اورژانس (خونریزی گوارشی فوقانی)",
       title_en: "Hematemesis & Melena in a 52-Year-Old Man — Emergency (UGIB)",
       specialty_fa: "طب داخلی - اورژانس",
@@ -291,7 +291,7 @@ export const EMERGENCY_TEN = [
     difficulty: "medium",
     checklist_id: 3,
     data: {
-      track: "learn",
+      track: "uni",
       title_fa: "تشدید تنگی‌نفس در مرد ۷۰ ساله COPD — اورژانس",
       title_en: "Worsening Dyspnea in a 70-Year-Old with COPD — Emergency",
       specialty_fa: "طب داخلی - اورژانس",
@@ -344,7 +344,7 @@ export const EMERGENCY_TEN = [
     difficulty: "medium",
     checklist_id: 3,
     data: {
-      track: "learn",
+      track: "uni",
       title_fa: "کاهش شدید ادرار و گیجی در زن ۷۴ ساله — اورژانس (آسیب حاد کلیه پیش‌کلیوی)",
       title_en: "Severe Oliguria & Confusion in a 74-Year-Old Woman — Emergency (Pre-renal AKI)",
       specialty_fa: "طب داخلی - اورژانس",
@@ -400,7 +400,7 @@ export const EMERGENCY_TEN = [
     difficulty: "hard",
     checklist_id: 3,
     data: {
-      track: "learn",
+      track: "uni",
       title_fa: "ضعف ناگهانی سمت راست و اختلال تکلم در زن ۶۶ ساله — اورژانس (سکته ایسکمیک)",
       title_en: "Sudden Right-Sided Weakness & Aphasia in a 66-Year-Old Woman — Emergency (Ischemic Stroke)",
       specialty_fa: "طب داخلی - اورژانس",
@@ -454,7 +454,7 @@ export const EMERGENCY_TEN = [
     difficulty: "hard",
     checklist_id: 3,
     data: {
-      track: "learn",
+      track: "uni",
       title_fa: "تورم شکم و زردی و گیجی در مرد ۵۶ ساله — اورژانس (سیروز از دست‌رفته)",
       title_en: "Abdominal Swelling, Jaundice & Confusion in a 56-Year-Old Man — Emergency (Decompensated Cirrhosis)",
       specialty_fa: "طب داخلی - اورژانس",
@@ -509,7 +509,7 @@ export const EMERGENCY_TEN = [
     difficulty: "medium",
     checklist_id: 3,
     data: {
-      track: "learn",
+      track: "uni",
       title_fa: "تب و لرز و درد پهلو در زن ۴۸ ساله — اورژانس (پیلونفریت و اوروسپسیس)",
       title_en: "Fever, Rigors & Flank Pain in a 48-Year-Old Woman — Emergency (Pyelonephritis & Urosepsis)",
       specialty_fa: "طب داخلی - اورژانس",

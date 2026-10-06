@@ -89,7 +89,7 @@ function bankManifest(files, curatorVersion) {
     let st = null; try { st = fs.statSync(f); } catch { /* */ }
     return `${path.basename(path.dirname(f))}/${path.basename(f)}:${st ? st.size : 0}:${st ? Math.floor(st.mtimeMs) : 0}`;
   });
-  return `v1|curator=${curatorVersion}|` + parts.join(",");
+  return `v2-source-identity|curator=${curatorVersion}|` + parts.join(",");
 }
 
 /* Cheap count for the cached path: one SQL aggregate instead of parsing 11k
