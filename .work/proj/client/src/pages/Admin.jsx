@@ -1,3 +1,4 @@
+import {acceptedAnswers,orderingRows} from "../lib/authoring-values.js";
 import {validateQuestion} from "../lib/authoring-validation.js";
 import AuthoringModal, {AuthorSection,AuthorField,AuthorSummary} from "../components/AuthoringModal.jsx";
 import DemoSetup from "../components/DemoSetup.jsx";
@@ -1468,6 +1469,8 @@ export function CardModal({ card, onClose, onSave }) {
     micro_lead_fa: "", micro_lead_en: "", micro_golden_fa: "", micro_golden_en: "",
     micro_source_fa: "", micro_source_en: "",
     ...card,
+    ...(card.type === 'order' && (card.items_fa?.length || card.items_en?.length)
+      ? orderingRows(card.items_fa || [], card.items_en || []) : {}),
     // pre-fill micro fields from an existing card's stored micro object
     ...(card.micro ? {
       micro_lead_fa: card.micro.lead_fa || "", micro_lead_en: card.micro.lead_en || "",
@@ -1577,8 +1580,8 @@ export function CardModal({ card, onClose, onSave }) {
       },
     };
     if (f.type === "fill") {
-      base.accept_fa = String(f.accept_fa || "").split(",").map((x) => x.trim()).filter(Boolean);
-      base.accept_en = String(f.accept_en || "").split(",").map((x) => x.trim()).filter(Boolean);
+      base.accept_fa = acceptedAnswers(f.accept_fa);
+      base.accept_en = acceptedAnswers(f.accept_en);
     }
     if (f.type === "match") base.pairs = f.pairs.filter((p) => p[0] || p[1] || p[2] || p[3]);
     if (f.type === "compare") {
@@ -1589,11 +1592,10 @@ export function CardModal({ card, onClose, onSave }) {
       base.entityB_en = f.entityB_en || "";
       base.features = (Array.isArray(f.features) ? f.features : [])
         .filter((row) => row && (row.fa || row.en))
-        .map((row) => ({ fa: row.fa || row.en || "", en: row.en || row.fa || "", belongs: belongsOf(row.belongs) }));
+        .map((row) => ({ fa: row.fa || "", en: row.en || "", belongs: belongsOf(row.belongs) }));
     }
     if (f.type === "order") {
-      base.items_fa = f.items_fa.filter(Boolean);
-      base.items_en = f.items_en.filter((_, i) => f.items_fa[i]);
+      Object.assign(base, orderingRows(f.items_fa, f.items_en));
     }
     if (f.type === "drawing") {
       const d = f.drawing || {};

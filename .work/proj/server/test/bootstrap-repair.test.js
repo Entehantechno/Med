@@ -82,3 +82,15 @@ it('retains disabled demo accounts and inactive cases',()=>{
  const r=repairDemo({universityId:1,password:'Not-a-reset-12345',actorId:2});expect(r.accounts.find(a=>a.role==='student').status).toBe('inactive');expect(r.caseIds).not.toContain(id);
  expect(db.prepare('SELECT active FROM cases WHERE id=?').get(id).active).toBe(0);
 });
+it.each([
+ {type:'order',items_fa:['',''],items_en:['first','second']},
+ {type:'compare',entityA_en:'A',entityB_en:'B',features:[{fa:'',en:'English only',belongs:'A'},{fa:'فقط فارسی',en:'',belongs:'B'}]},
+ {type:'fill',accept_fa:['الف','ب','ج'],accept_en:['A','B','C']}
+])('preserves $type authoring data and identity across academic create/edit/read',async data=>{
+ const payload={title_en:'R7 roundtrip',...data};
+ const created=await request(app).post('/api/flashcards').auth(token,{type:'bearer'}).send(payload);expect(created.status).toBe(200);
+ const id=created.body.id,before=db.prepare('SELECT public_code FROM flashcards WHERE id=?').get(id).public_code;
+ expect((await request(app).put('/api/flashcards/'+id).auth(token,{type:'bearer'}).send({...payload,title_en:'Edited'})).status).toBe(200);
+ const read=await request(app).get('/api/flashcards/'+id).auth(token,{type:'bearer'});expect(read.status).toBe(200);expect(read.body).toMatchObject(data);
+ expect(db.prepare('SELECT public_code FROM flashcards WHERE id=?').get(id).public_code).toBe(before);
+});

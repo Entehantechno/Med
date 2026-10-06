@@ -34,3 +34,24 @@ it('preserves English-only academic pairs and existing lesson points when saving
  render(<CardModal card={{type:'match',title_en:'Match',pairs:[['','left','','right']],micro:{lead_en:'Lesson',points_en:['Keep this'],options_fa:['Keep rationale']}}} onClose={()=>{}} onSave={save}/>);
  fireEvent.click(screen.getByRole('button',{name:'Save content'}));await waitFor(()=>expect(save).toHaveBeenCalled());const body=save.mock.calls[0][0];expect(body.pairs).toEqual([['','left','','right']]);expect(body.micro.points_en).toEqual(['Keep this']);expect(body.micro.options_fa).toEqual(['Keep rationale']);
 });
+it.each([
+ ['English-only',[],['first','second'],['',''],['first','second']],
+ ['mixed gaps',['الف','','ج'],['A','B','C'],['الف','','ج'],['A','B','C']]
+])('preserves %s academic ordering rows on save',async(_,fa,en,wantFa,wantEn)=>{
+ const save=vi.fn();render(<CardModal card={{type:'order',title_en:'Order',items_fa:fa,items_en:en}} onClose={()=>{}} onSave={save}/>);
+ fireEvent.click(screen.getByText('Save content'));await waitFor(()=>expect(save).toHaveBeenCalled());expect(save.mock.calls[0][0].items_fa).toEqual(wantFa);expect(save.mock.calls[0][0].items_en).toEqual(wantEn);
+});
+it('does not copy comparison translations into intentionally empty fields',async()=>{
+ const save=vi.fn(),features=[{fa:'',en:'English only',belongs:'A'},{fa:'فقط فارسی',en:'',belongs:'B'}];
+ render(<CardModal card={{type:'compare',title_en:'Compare',entityA_en:'A',entityB_en:'B',features}} onClose={()=>{}} onSave={save}/>);
+ fireEvent.click(screen.getByText('Save content'));await waitFor(()=>expect(save).toHaveBeenCalled());expect(save.mock.calls[0][0].features).toEqual(features);
+});
+it('parses Persian commas and newlines in academic accepted answers',async()=>{
+ const save=vi.fn();render(<CardModal card={{type:'fill',title_fa:'سؤال',accept_fa:'الف، ب\nج',accept_en:'A, B\nC'}} onClose={()=>{}} onSave={save}/>);
+ fireEvent.click(screen.getByText('Save content'));await waitFor(()=>expect(save).toHaveBeenCalled());expect(save.mock.calls[0][0].accept_fa).toEqual(['الف','ب','ج']);expect(save.mock.calls[0][0].accept_en).toEqual(['A','B','C']);
+});
+it('renders and edits existing English-only ordering rows without Persian placeholders',async()=>{
+ const save=vi.fn();render(<CardModal card={{type:'order',title_en:'Order',items_fa:[],items_en:['first','second']}} onClose={()=>{}} onSave={save}/>);
+ fireEvent.click(screen.getByText('Show all'));fireEvent.change(screen.getByDisplayValue('first'),{target:{value:'edited'}});fireEvent.click(screen.getByText('Save content'));
+ await waitFor(()=>expect(save).toHaveBeenCalled());expect(save.mock.calls[0][0].items_en).toEqual(['edited','second']);
+});

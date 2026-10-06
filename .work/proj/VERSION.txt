@@ -1,1 +1,1 @@
-2026.10.06-r6-regression-hardening
+2026.10.06-r7-authoring-roundtrip
