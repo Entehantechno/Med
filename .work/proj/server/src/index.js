@@ -28,6 +28,9 @@ const PORT = process.env.PORT || 4000;
    Warm boots (database already prepared) go through the same path but
    finish in ~1-2 s, so visitors never notice. */
 import http from "http";
+import fs from "node:fs";
+import {DB_PATH,DATA_DIR} from './lib/paths.js';
+import {installBundledDemo} from './lib/first-run.js';
 
 let realApp = null;                      // set once the full app is ready
 let bootState = { phase: "starting", startedAt: Date.now(), error: null };
@@ -74,6 +77,10 @@ server.listen(PORT, () => console.log(`🎓 MED School listening on http://local
 
 async function main() {
   bootState.phase = "database";
+  const freshInstallation = !fs.existsSync(DB_PATH);
+  const provisioning = installBundledDemo({dbPath:DB_PATH,dataDir:DATA_DIR,bundleDir:path.resolve(__dirname,'../../demo-database')});
+  if(provisioning.installed) console.warn('Demo database installed in the persistent DATA_DIR. Change/disable demo credentials before public use.');
+  console.log('[database]',DB_PATH);
   await initDb();                 // load the WASM SQLite engine first
   initSchema();                   // ensure all tables exist before we query them
 
@@ -81,7 +88,7 @@ async function main() {
   // seed once. On every later start (even after code changes) the existing data
   // is preserved — user accounts, exams, flashcards, attempts, everything stays.
   const existing = db.prepare("SELECT COUNT(*) n FROM users").get()?.n ?? 0;
-  if (existing === 0) {
+  if (existing === 0 && freshInstallation) {
     bootState.phase = "seed";
     console.log("🌱 First run — seeding initial content (this happens only once)…");
     // Flush and quiesce this process's writer before the child seed runs:
@@ -91,7 +98,7 @@ async function main() {
     try {
       // async child so the placeholder page keeps being served meanwhile
       await new Promise((resolve, reject) => {
-        const child = execFile(process.execPath, [path.join(__dirname, "seed.js")], { env: process.env, maxBuffer: 64 * 1024 * 1024 }, (err, stdout, stderr) => {
+        const child = execFile(process.execPath, [path.join(__dirname, "seed.js"), "--force"], { env: process.env, maxBuffer: 64 * 1024 * 1024 }, (err, stdout, stderr) => {
           if (stdout) process.stdout.write(stdout);
           if (stderr) process.stderr.write(stderr);
           err ? reject(err) : resolve();
@@ -110,7 +117,7 @@ async function main() {
         console.log("💾 post-seed backup snapshot saved to backups/");
       } catch (e) { console.warn("post-seed snapshot skipped:", e?.message || e); }
     } catch (e) {
-      console.error("Seed failed:", e.message);
+      throw new Error("Initial provisioning failed: " + e.message);
     }
   } else {
     console.log(`✓ Existing database detected (${existing} users) — data preserved, no seeding.`);

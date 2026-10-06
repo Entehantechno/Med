@@ -601,6 +601,26 @@ r.get("/cases-export.csv", authRequired, requireRole("teacher", "admin"), (req, 
   }
 });
 
+function csvImportReview(rows,kind) {
+ const errors=[];
+ if(!rows.length)errors.push({row:1,message:'empty_csv'});
+ if(rows.length>1000)errors.push({row:1,message:'maximum_1000_rows'});
+ rows.forEach((row,i)=>{
+  if(!(row.title_fa||row.title_en||'').trim())errors.push({row:i+2,message:'title_required'});
+  if(row.track==='learn')errors.push({row:i+2,message:'university_only'});
+  if(row.difficulty&&!['easy','medium','hard'].includes(row.difficulty))errors.push({row:i+2,message:'invalid_difficulty'});
+  if(kind==='flashcards'){
+   if((row.type&&!['mcq','image'].includes(row.type))||(row.questionType&&!['mcq','image'].includes(row.questionType)))errors.push({row:i+2,message:'csv_basic_mcq_only'});
+   const fa=(row.options_fa||'').split('|').map(x=>x.trim()),en=(row.options_en||'').split('|').map(x=>x.trim());
+   const selected=new Set();
+   fa.forEach((x,j)=>{if(x&&row.correct_fa&&x===row.correct_fa.trim())selected.add(j);});
+   en.forEach((x,j)=>{if(x&&row.correct_en&&x===row.correct_en.trim())selected.add(j);});
+   if(Math.max(fa.filter(Boolean).length,en.filter(Boolean).length)<2||selected.size!==1)errors.push({row:i+2,message:'exactly_one_correct_option_required'});
+  }
+ });
+ return {valid:!errors.length,total:rows.length,errors,preview:rows.slice(0,20).map((r,i)=>({row:i+2,title_fa:r.title_fa||'',title_en:r.title_en||''}))};
+}
+
 // Import cases from CSV (bulk create)
 r.post("/cases-import", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const { csv } = req.body || {};
@@ -612,6 +632,9 @@ r.post("/cases-import", authRequired, requireRole("teacher", "admin"), (req, res
   }
   let rows;
   try { rows = parseCSV(csv); } catch { return res.status(400).json({ error: "invalid csv" }); }
+  const review=csvImportReview(rows,'cases');
+  if(req.body.dryRun===true)return res.json(review);
+  if(!review.valid)return res.status(400).json({error:'csv_validation_failed',...review});
   const ins = db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id,created_by) VALUES (1,?,1,?,?,?)");
   let count = 0;
   const tx = db.transaction(() => {
@@ -667,6 +690,9 @@ r.post("/flashcards-import", authRequired, requireRole("teacher", "admin"), (req
     uni = currentUniversityId(req.user);
     if (!uni) return res.status(400).json({ error: "university_required" });
   }
+  const review=csvImportReview(rows,'flashcards');
+  if(req.body.dryRun===true)return res.json(review);
+  if(!review.valid)return res.status(400).json({error:'csv_validation_failed',...review});
   const ins = db.prepare("INSERT INTO flashcards (version,difficulty,data_json,university_id,created_by,last_editor_id,last_action,created_at,content_updated_at) VALUES (1,?,?,?, ?,?, 'created', datetime('now'), datetime('now'))");
   let count = 0;
   const tx = db.transaction(() => {
@@ -677,11 +703,12 @@ r.post("/flashcards-import", authRequired, requireRole("teacher", "admin"), (req
       const n = Math.max(fa.length, en.length);
       const options = [];
       for (let i = 0; i < n; i++) {
-        const of = fa[i] || en[i] || "", oe = en[i] || fa[i] || "";
+        const of = fa[i] || "", oe = en[i] || "";
+        if (!of && !oe) continue;
         options.push({ fa: of, en: oe,
-          correct: (row.correct_fa && of === row.correct_fa) || (row.correct_en && oe === row.correct_en) });
+          correct: !!((row.correct_fa && fa[i] === row.correct_fa.trim()) || (row.correct_en && en[i] === row.correct_en.trim())) });
       }
-      if (options.length && !options.some((o) => o.correct)) options[0].correct = true;
+      // Validation above requires an explicit, unambiguous answer key.
       const data = {
         track: "uni",
         title_fa: row.title_fa, title_en: row.title_en,

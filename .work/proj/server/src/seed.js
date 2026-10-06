@@ -1373,6 +1373,8 @@ if (shareIds[1]) {
 // Explicit demo seeding only. Production upgrade must not recreate deleted samples.
 const { ensureArakHistology } = await import('./lib/arak-seed.js');
 ensureArakHistology();
+const {seedDemoStudents}=await import('./lib/demo-students.js');
+seedDemoStudents();
 db.prepare("UPDATE cases SET university_id=1 WHERE university_id IS NULL").run();
 persistNow();   // flush the seeded database to disk
 

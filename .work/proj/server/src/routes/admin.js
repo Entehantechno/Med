@@ -1,3 +1,4 @@
+import {demoStatus,repairDemo} from '../lib/demo-repair.js';
 import { masterSourceKey } from "../lib/content-identity.js";
 /* admin.js — Super-admin control panel API (role = 'admin' only).
    Full platform control: system overview, audit log, feature flags, learner
@@ -61,6 +62,14 @@ const r = Router();
 r.use('/vpatient', authRequired, (req, res) => res.status(410).json({ error: 'university_only' }));
 const admin = [authRequired, requireRole("admin")];      // full-admin-only
 const P = (...perms) => [authRequired, requirePerm(...perms)];   // permission-gated (ANY of the perms)
+
+r.get('/demo/status',...admin,(req,res)=>res.json(demoStatus()));
+r.post('/demo/prepare',...admin,(req,res)=>{
+ if(req.body?.confirm!==true)return res.status(400).json({error:'confirmation_required'});
+ try{const result=repairDemo({universityId:req.body.universityId,password:req.body.password,actorId:req.user.id});
+ audit(req,'demo_prepare','university:'+result.universityId,{accounts:result.accounts,caseIds:result.caseIds});res.json(result);
+ }catch(e){res.status(400).json({error:e.message});}
+});
 // user-management routes are shared by the competitive admin (learn.users) and
 // the university teacher/admin (uni.users) — either perm grants access.
 const PU = ["learn.users", "uni.users"];
@@ -2443,8 +2452,8 @@ function buildLearnCard(b) {
   const data = {
     type: b.type || "mcq", track: "learn",
     premium: !!b.premium, category: b.category || "",
-    q_fa: b.q_fa || "", q_en: b.q_en || b.q_fa || "",
-    title_fa: b.q_fa || "", title_en: b.q_en || b.q_fa || "",
+    q_fa: b.q_fa || "", q_en: b.q_en ?? b.q_fa ?? "",
+    title_fa: b.q_fa || "", title_en: b.q_en ?? b.q_fa ?? "",
     hints_fa: Array.isArray(b.hints_fa) ? b.hints_fa : [],
     hints_en: Array.isArray(b.hints_en) ? b.hints_en : [],
   };
@@ -2454,7 +2463,7 @@ function buildLearnCard(b) {
     // and sent by the past-exam importer; cardserialize already exposes it to
     // the learner as the UWorld-style "why this option is right/wrong" note.
     data.options = (b.options || []).map((o) => ({
-      fa: o.fa || "", en: o.en || o.fa || "", correct: !!o.correct,
+      fa: o.fa || "", en: o.en ?? o.fa ?? "", correct: !!o.correct,
       ...(o.why_fa ? { why_fa: o.why_fa } : {}),
       ...(o.why_en ? { why_en: o.why_en } : {}),
     }));
@@ -2474,9 +2483,9 @@ function buildLearnCard(b) {
     data.items_en = Array.isArray(b.items_en) ? b.items_en : [];
   } else if (type === "compare") {
     // clinical compare & contrast: preserve entities + belongs-tagged features
-    data.entityA_fa = b.entityA_fa || ""; data.entityA_en = b.entityA_en || b.entityA_fa || "";
-    data.entityB_fa = b.entityB_fa || ""; data.entityB_en = b.entityB_en || b.entityB_fa || "";
-    data.features = Array.isArray(b.features) ? b.features.map((f) => ({ fa: f.fa || "", en: f.en || f.fa || "", belongs: ["A", "B", "both"].includes(f.belongs) ? f.belongs : "A" })) : [];
+    data.entityA_fa = b.entityA_fa || ""; data.entityA_en = b.entityA_en ?? b.entityA_fa ?? "";
+    data.entityB_fa = b.entityB_fa || ""; data.entityB_en = b.entityB_en ?? b.entityB_fa ?? "";
+    data.features = Array.isArray(b.features) ? b.features.map((f) => ({ fa: f.fa || "", en: f.en ?? f.fa ?? "", belongs: ["A", "B", "both"].includes(f.belongs) ? f.belongs : "A" })) : [];
   }
   // preserve the subject/topic slug across an import round-trip
   if (b.topic) data.topic = b.topic;

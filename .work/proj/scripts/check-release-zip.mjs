@@ -58,6 +58,7 @@ if (!has("package.json")) {
 }
 
 const forbiddenMatchers = [
+  { name: "extra documentation/report", test: e => /\.(md|docx?)$/i.test(e) || /^(docs|reports)\//.test(e) },
   { name: "node_modules", test: (e) => e === "node_modules/" || e.includes("/node_modules/") || e.startsWith("node_modules/") },
   { name: "runtime data folder medschool-data", test: (e) => e === "medschool-data/" || e.startsWith("medschool-data/") },
   { name: "runtime data folder data", test: (e) => e === "data/" || e.startsWith("data/") },
@@ -89,6 +90,12 @@ const readEntry = (entry) => {
     return "";
   }
 };
+
+// A public ZIP must not carry a machine-generated shared signing secret.
+for (const envFile of ['.env','.env.ready']) {
+  const match=readEntry(envFile).match(/^JWT_SECRET=(.*)$/m);
+  if(match && match[1].trim()) errors.push(`${envFile}: JWT_SECRET must be empty in a public release`);
+}
 
 // Feature-level release audit. This prevents a recurring class of mistakes:
 // a ZIP can have the right cPanel structure but still miss important product

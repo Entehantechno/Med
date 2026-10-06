@@ -2307,74 +2307,7 @@ export function initSchema() {
 
   // Sample content is created only by explicit seed, never rewritten at boot.
 
-  // --- Admin auto-seed (ensure admin exists even when DEFAULT demo was never created) ---
-  try {
-    const adm = db.prepare("SELECT id, password_hash FROM users WHERE username='admin' OR username='Admin'").get();
-    let needAdmin = !adm;
-    let hashOk = false;
-    if (adm && adm.password_hash) {
-      try {
-        if (adm.password_hash.startsWith("$2")) {
-          try { if (bcrypt.compareSync("admin123", adm.password_hash) || bcrypt.compareSync("demo", adm.password_hash)) hashOk = true; } catch { hashOk = !!adm.password_hash; }
-        } else if (adm.password_hash.startsWith("$argon2")) {
-          // argon2 hash: cannot verify sync here, assume ok if hash exists (login will handle)
-          hashOk = true;
-        } else hashOk = !!adm.password_hash;
-      } catch { hashOk = !!adm.password_hash; }
-    }
-    if (needAdmin || !hashOk) {
-      let uniId = 1;
-      try { const u = db.prepare("SELECT id FROM universities ORDER BY id LIMIT 1").get(); if (u) uniId = u.id; } catch {}
-      let hash = "";
-      try { hash = bcrypt.hashSync("admin123", 10); } catch {
-        try { hash = db.prepare("SELECT password_hash FROM users WHERE role='teacher' LIMIT 1").get()?.password_hash || ""; } catch {}
-      }
-      if (hash) {
-        if (needAdmin) {
-          try { db.prepare("INSERT INTO users (username,password_hash,name_fa,name_en,role,status,university_id) VALUES (?,?,?,?,?,?,?)").run("admin", hash, "مدیر سیستم", "Admin", "admin", "active", uniId); console.log("[seed] admin auto-seeded (admin/admin123)"); } catch {}
-        } else {
-          try { db.prepare("UPDATE users SET password_hash=?, status='active' WHERE id=?").run(hash, adm.id); console.log("[seed] admin password reset to admin123"); } catch {}
-        }
-      }
-    }
-  } catch {}
-  // --- Arak 85 students auto-seed (single-name, from Word files) ---
-  try {
-    const arakUni = db.prepare("SELECT id FROM universities WHERE code='ARAK'").get();
-    if (arakUni) {
-      // 2) ورود 85 دانشجوی اراک اگر هنوز وارد نشده‌اند
-      try {
-        const cnt = db.prepare("SELECT COUNT(*) c FROM users WHERE role='student' AND university_id=?").get(arakUni.id).c;
-        if (cnt < 80) { // threshold: if less than 80, we need to seed
-          let list = [];
-          try {
-            const jPath = path.join(__dirname, "data", "arak-students.json");
-            if (fs.existsSync(jPath)) list = JSON.parse(fs.readFileSync(jPath, "utf8"));
-          } catch {}
-          if (list && list.length) {
-            const findByNo = db.prepare("SELECT id FROM users WHERE student_no=? OR username=?");
-            const ins = db.prepare("INSERT OR IGNORE INTO users (username,password_hash,name_fa,name_en,student_no,role,status,university_id) VALUES (?,?,?,?,?,?,?,?)");
-            // use a dummy hash if bcrypt not yet loaded? use existing teacher hash as fallback
-            let fallbackHash = "";
-            try { fallbackHash = db.prepare("SELECT password_hash FROM users WHERE role='teacher' LIMIT 1").get()?.password_hash || ""; } catch {}
-            let added = 0;
-            for (const s of list) {
-              const sno = String(s.student_no||"").trim();
-              if (!sno) continue;
-              if (findByNo.get(sno, sno)) continue;
-              const full = String(s.name_fa||s.name_en||sno).trim() || sno;
-              let hash = fallbackHash;
-              try { if (bcrypt && bcrypt.hashSync) hash = bcrypt.hashSync(sno, 10); } catch { hash = fallbackHash || sno; }
-              // if bcrypt not available, fallbackHash is still a valid bcrypt hash (from teacher), but password will be teacher's password, not sno -- still allow login via fallback? better to ensure hash is sno
-              // if still fallback, keep it (admin can reset)
-              try { ins.run(sno, hash, full, full, sno, "student", "active", arakUni.id); added++; } catch {}
-            }
-            if (added) console.log(`[seed] Arak students auto-seeded: ${added} (total now ${cnt+added})`);
-          }
-        }
-      } catch (e) { console.warn("[seed] arak students:", e.message); }
-    }
-  } catch {}
+  // Account creation belongs to explicit provisioning, never schema migration.
 
   ensureContentIdentity(db);
   universityOnlyCases(db);

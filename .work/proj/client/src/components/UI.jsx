@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useId } from "react";
 import { createPortal } from "react-dom";
 import { useApp } from "../context.jsx";
 import Icon from "./Icon.jsx";
@@ -66,8 +66,24 @@ export function Pill({ kind, children }) {
   return <span className={`pill pill-${kind}`}>{children}</span>;
 }
 
-export function Modal({ title, children, onClose, onSave, saveLabel, wide }) {
+export function Modal({ title, children, onClose, onSave, saveLabel, wide, saveDisabled = false }) {
   const { t } = useApp();
+  const dialogRef=useRef(null),titleId=useId();
+  useEffect(()=>{
+    const previous=document.activeElement,dialog=dialogRef.current;
+    dialog?.focus();
+    const trap=e=>{
+      if(e.key!=='Tab'||!dialog)return;
+      const visible=el=>{for(let x=el;x&&x!==dialog;x=x.parentElement){const style=getComputedStyle(x);if(x.hidden||style.display==='none'||style.visibility==='hidden')return false;}return true;};
+      const items=[...dialog.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),a[href],[tabindex="0"]')].filter(visible);
+      if(!items.length){e.preventDefault();dialog.focus();return;}
+      if(e.shiftKey&&(document.activeElement===items[0]||document.activeElement===dialog)){e.preventDefault();items.at(-1).focus();}
+      else if(!e.shiftKey&&(document.activeElement===items.at(-1)||document.activeElement===dialog)){e.preventDefault();items[0].focus();}
+    };
+    dialog?.addEventListener('keydown',trap);
+    return()=>{dialog?.removeEventListener('keydown',trap);if(previous?.isConnected)previous.focus();};
+  },[]);
+
   useScrollLock(true);
   // Escape closes the dialog (standard modal affordance).
   useEffect(() => {
@@ -86,12 +102,12 @@ export function Modal({ title, children, onClose, onSave, saveLabel, wide }) {
   if (typeof document === "undefined") return null;
   return createPortal(
     <div className="modal-back" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className={`modal${wide ? " modal-wide" : ""}`} role="dialog" aria-modal="true">
-        <h3>{title}</h3>
+      <div className={`modal${wide ? " modal-wide" : ""}`} ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId}>
+        <h3 id={titleId}>{title}</h3>
         <div className="modal-body">{children}</div>
         <div className="modal-actions">
           <button type="button" className="btn btn-ghost" onClick={onClose}>{t("cancel")}</button>
-          {onSave && <button type="button" className="btn btn-primary" onClick={onSave}>{saveLabel || t("save")}</button>}
+          {onSave && <button type="button" className="btn btn-primary" disabled={saveDisabled} onClick={onSave}>{saveLabel || t("save")}</button>}
         </div>
       </div>
     </div>,
