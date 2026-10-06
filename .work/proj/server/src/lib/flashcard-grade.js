@@ -29,7 +29,7 @@ const norm = (s) => String(s || "").trim().toLowerCase().replace(/\s+/g, " ");
 function unionAccept(primary, ...extras) {
   const out = [];
   const seen = new Set();
-  for (const item of [...arr(primary), ...extras]) {
+  for (const item of [...arr(primary), ...extras.flatMap(x => Array.isArray(x) ? x : [x])]) {
     const t = String(item || "").trim();
     if (!t) continue;
     const key = norm(t);
@@ -44,6 +44,14 @@ function textMatches(got, accepted) {
   const g = norm(got);
   if (!g) return false;
   return accepted.some((a) => norm(a) === g);
+}
+
+// Reject absent/coerced values: null, false and [] are not a submitted zero.
+function answerNumber(value) {
+  if (typeof value !== "number" && typeof value !== "string") return NaN;
+  if (typeof value === "string" && !value.trim()) return NaN;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : NaN;
 }
 
 function coerceTf(v) {
@@ -149,9 +157,9 @@ export function gradeFlashcard(full, body = {}, opts = {}) {
   const lang = body.lang === "en" ? "en" : "fa";
 
   if (type === "hotspot") {
-    const x = Number(body.x), y = Number(body.y);
+    const x = answerNumber(body.x), y = answerNumber(body.y);
     const hs = full.hotspot || {};
-    const hit = Number.isFinite(x) && Number.isFinite(y) && pointHitsHotspot({ x, y }, hs);
+    const hit = Number.isFinite(x) && Number.isFinite(y) && x >= 0 && x <= 100 && y >= 0 && y <= 100 && pointHitsHotspot({ x, y }, hs);
     return {
       ok: !!hit,
       pointsFrac: hit ? 1 : 0,
@@ -199,7 +207,7 @@ export function gradeFlashcard(full, body = {}, opts = {}) {
         return String(got[L]) === R;
       });
     } else if (allowLegacy && pairs.length && keys.length === pairs.length) {
-      ok = pairs.every((_, i) => Number(got[i] ?? got[String(i)]) === i);
+      ok = pairs.every((_, i) => answerNumber(got[i] ?? got[String(i)]) === i);
     }
     return { ok, pointsFrac: ok ? 1 : 0 };
   }
@@ -211,7 +219,7 @@ export function gradeFlashcard(full, body = {}, opts = {}) {
     if (ids.length && !allNumeric) {
       ok = items.length > 0 && ids.length === items.length && ids.every((id, i) => tokIndex(full.id, "O", id, items.length) === i);
     } else if (allowLegacy) {
-      ok = items.length > 0 && ids.length === items.length && ids.every((v, i) => Number(v) === i);
+      ok = items.length > 0 && ids.length === items.length && ids.every((v, i) => answerNumber(v) === i);
     }
     return { ok, pointsFrac: ok ? 1 : 0 };
   }
@@ -223,7 +231,7 @@ export function gradeFlashcard(full, body = {}, opts = {}) {
       const base = { index: i + 1, answer: got, correct: false };
       if ((it.kind || "short") === "mcq") {
         const want = Number(it.correct || 0);
-        const ok = Number(got) === want;
+        const ok = answerNumber(got) === want;
         return {
           ...base,
           correct: ok,
@@ -272,7 +280,7 @@ export function gradeFlashcard(full, body = {}, opts = {}) {
     const assign = body.assign && typeof body.assign === "object" ? body.assign : {};
     const pinResults = pins.map((p, i) => {
       const got = assign[i] ?? assign[String(i)];
-      const legacyOk = allowLegacy && (got === `p${i}` || Number(got) === i);
+      const legacyOk = allowLegacy && (got === `p${i}` || answerNumber(got) === i);
       const ok = tokIndex(full.id, "P", got, pins.length) === i || legacyOk;
       return { i, ok, ...(body.reveal ? { expected: lang === "en" ? (p.label_en || p.label_fa) : (p.label_fa || p.label_en) } : {}) };
     });
@@ -297,7 +305,7 @@ export function gradeFlashcard(full, body = {}, opts = {}) {
     return { ok: true, pointsFrac: 0, pendingApproval: true };
   }
   const optsList = Array.isArray(full.options) ? full.options : [];
-  const idx = Number(body.optionIndex);
+  const idx = answerNumber(body.optionIndex);
   const ok = Number.isInteger(idx) && idx >= 0 && idx < optsList.length && !!optsList[idx]?.correct;
   const correctIdx = optsList.findIndex((o) => o.correct);
   return { ok, pointsFrac: ok ? 1 : 0, ...(body.reveal ? { reveal: { index: correctIdx } } : {}) };

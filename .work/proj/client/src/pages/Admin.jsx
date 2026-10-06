@@ -1,4 +1,4 @@
-import {acceptedAnswers,orderingRows} from "../lib/authoring-values.js";
+import {acceptedAnswers,orderingRows,drawingRubrics,percentCoordinate} from "../lib/authoring-values.js";
 import {validateQuestion} from "../lib/authoring-validation.js";
 import AuthoringModal, {AuthorSection,AuthorField,AuthorSummary} from "../components/AuthoringModal.jsx";
 import DemoSetup from "../components/DemoSetup.jsx";
@@ -1469,6 +1469,7 @@ export function CardModal({ card, onClose, onSave }) {
     micro_lead_fa: "", micro_lead_en: "", micro_golden_fa: "", micro_golden_en: "",
     micro_source_fa: "", micro_source_en: "",
     ...card,
+    ...(card.drawing ? {drawing:{...card.drawing,...drawingRubrics(card.drawing)}} : {}),
     ...(card.type === 'order' && (card.items_fa?.length || card.items_en?.length)
       ? orderingRows(card.items_fa || [], card.items_en || []) : {}),
     // pre-fill micro fields from an existing card's stored micro object
@@ -1579,6 +1580,7 @@ export function CardModal({ card, onClose, onSave }) {
         source_fa: f.micro_source_fa, source_en: f.micro_source_en,
       },
     };
+    if (f.type === "mcq") base.options = f.options.filter(o => o.fa?.trim() || o.en?.trim() || o.imageUrl?.trim());
     if (f.type === "fill") {
       base.accept_fa = acceptedAnswers(f.accept_fa);
       base.accept_en = acceptedAnswers(f.accept_en);
@@ -1601,8 +1603,7 @@ export function CardModal({ card, onClose, onSave }) {
       const d = f.drawing || {};
       base.drawing = {
         ...d,
-        rubric_fa: (d.rubric_fa || []).map((x) => String(x).trim()).filter(Boolean),
-        rubric_en: (d.rubric_en || []).filter((_, i) => ((d.rubric_fa || [])[i] || (d.rubric_en || [])[i])),
+        ...drawingRubrics(d),
         aspect: ["16:9", "4:3", "1:1", "3:4"].includes(d.aspect) ? d.aspect : "16:9",
         background: ["white", "cream", "dark"].includes(d.background) ? d.background : "white",
         traceReference: d.traceReference !== false,
@@ -1623,8 +1624,8 @@ export function CardModal({ card, onClose, onSave }) {
     if (f.type === "stepwise") {
       base.steps = (f.steps || []).filter((st) => st.prompt_fa || st.prompt_en).map((st) => ({
         ...st,
-        accept_fa: Array.isArray(st.accept_fa) ? st.accept_fa : String(st.accept_fa || st.answer_fa || "").split(",").map((x)=>x.trim()).filter(Boolean),
-        accept_en: Array.isArray(st.accept_en) ? st.accept_en : String(st.accept_en || st.answer_en || "").split(",").map((x)=>x.trim()).filter(Boolean),
+        accept_fa: acceptedAnswers(st.accept_fa || st.answer_fa),
+        accept_en: acceptedAnswers(st.accept_en || st.answer_en),
         options_fa: Array.isArray(st.options_fa) ? st.options_fa : String(st.options_fa || "").split(/[\n,]/).map((x)=>x.trim()).filter(Boolean),
         options_en: Array.isArray(st.options_en) ? st.options_en : String(st.options_en || "").split(/[\n,]/).map((x)=>x.trim()).filter(Boolean),
       }));
@@ -1637,8 +1638,8 @@ export function CardModal({ card, onClose, onSave }) {
           kind: it.kind === "mcq" ? "mcq" : "short",
           prompt_fa: it.prompt_fa || "", prompt_en: it.prompt_en || "",
           answer_fa: it.answer_fa || "", answer_en: it.answer_en || "",
-          accept_fa: Array.isArray(it.accept_fa) ? it.accept_fa : String(it.accept_fa || "").split(",").map((x) => x.trim()).filter(Boolean),
-          accept_en: Array.isArray(it.accept_en) ? it.accept_en : String(it.accept_en || "").split(",").map((x) => x.trim()).filter(Boolean),
+          accept_fa: acceptedAnswers(it.accept_fa),
+          accept_en: acceptedAnswers(it.accept_en),
           options_fa: Array.isArray(it.options_fa) ? it.options_fa : [],
           options_en: Array.isArray(it.options_en) ? it.options_en : [],
           correct: Number(it.correct || 0) || 0,
@@ -1648,8 +1649,8 @@ export function CardModal({ card, onClose, onSave }) {
     if (f.type === "puzzle") {
       const p = f.puzzle || {};
       const pins = (Array.isArray(p.pins) ? p.pins : []).filter((pin) => pin.label_fa || pin.label_en).map((pin) => ({
-        x: Math.max(0, Math.min(100, Number(pin.x) || 50)),
-        y: Math.max(0, Math.min(100, Number(pin.y) || 50)),
+        x: percentCoordinate(pin.x),
+        y: percentCoordinate(pin.y),
         label_fa: pin.label_fa || "",
         label_en: pin.label_en || "",
       }));

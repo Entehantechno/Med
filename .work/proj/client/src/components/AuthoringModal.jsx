@@ -62,7 +62,7 @@ export default function AuthoringModal({title,onClose,onSave,sections,children,v
    <nav className="author-steps" aria-label={fa?'بخش‌های ویرایش':'Editor sections'}>{sections.map((s,i)=><button type="button" key={s.id} aria-current={step===s.id?'step':undefined} onClick={()=>navigate(s.id)}><span>{i+1}</span>{s.title}</button>)}<button type="button" aria-pressed={step==='all'} onClick={()=>navigate('all')}>{fa?'نمایش همه':'Show all'}</button></nav>
    {error&&<div className="err-banner" role="alert">{error}</div>}
    <p className="small muted" role="status">{changed?(fa?'تغییرات ذخیره نشده':'Unsaved changes'):(fa?'ویرایش محتوا':'Editing content')}</p>
-   {children}
+   <fieldset disabled={busy} inert={busy?'':undefined} aria-label={fa?'محتوای فرم':'Content fields'} aria-busy={busy} style={{border:0,padding:0,margin:0,minWidth:0}}>{children}</fieldset>
    {step!=='all'&&<div className="author-navigation"><button type="button" className="btn btn-ghost" disabled={index<=0} onClick={()=>navigate(sections[index-1].id)}>{fa?'بخش قبل':'Previous section'}</button><span>{index+1} / {sections.length}</span><button type="button" className="btn btn-ghost" disabled={index>=sections.length-1} onClick={()=>navigate(sections[index+1].id)}>{fa?'بخش بعد':'Next section'}</button></div>}
   </div></AuthorContext.Provider>
  </Modal>;

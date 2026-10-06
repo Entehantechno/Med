@@ -24,3 +24,7 @@ it('retains the input-event warning while asynchronous values have not reached t
  const confirm=vi.spyOn(window,'confirm').mockReturnValue(false),close=vi.fn();render(<AuthoringModal value={{}} title="Pending" sections={[{id:'one',title:'One'}]} onClose={close}><input aria-label="Pending text"/></AuthoringModal>);
  fireEvent.change(screen.getByLabelText('Pending text'),{target:{value:'Pending'}});fireEvent.click(screen.getByText('cancel'));expect(confirm).toHaveBeenCalled();expect(close).not.toHaveBeenCalled();
 });
+it('disables content editing while saving and re-enables it on failure',async()=>{
+ let reject;render(<AuthoringModal value={{}} title="Pending" sections={[{id:'one',title:'One'}]} onClose={()=>{}} onSave={()=>new Promise((_,r)=>{reject=r;})}><input aria-label="Content"/><button>Add row</button></AuthoringModal>);
+ fireEvent.click(screen.getByText('Save content'));expect(screen.getByLabelText('Content')).toBeDisabled();expect(screen.getByText('Add row')).toBeDisabled();reject(new Error('Offline'));await screen.findByRole('alert');expect(screen.getByLabelText('Content')).not.toBeDisabled();
+});

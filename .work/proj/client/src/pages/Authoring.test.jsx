@@ -55,3 +55,24 @@ it('renders and edits existing English-only ordering rows without Persian placeh
  fireEvent.click(screen.getByText('Show all'));fireEvent.change(screen.getByDisplayValue('first'),{target:{value:'edited'}});fireEvent.click(screen.getByText('Save content'));
  await waitFor(()=>expect(save).toHaveBeenCalled());expect(save.mock.calls[0][0].items_en).toEqual(['edited','second']);
 });
+it('preserves zero-coordinate puzzle pins rather than moving them to the centre',async()=>{
+ const save=vi.fn();render(<CardModal card={{type:'puzzle',title_en:'Pins',puzzle:{imageUrl:'/uploads/test.png',pins:[{x:0,y:0,label_en:'Corner'}]}}} onClose={()=>{}} onSave={save}/>);
+ fireEvent.click(screen.getByText('Save content'));await waitFor(()=>expect(save).toHaveBeenCalled());expect(save.mock.calls[0][0].puzzle.pins[0]).toMatchObject({x:0,y:0});
+});
+it('keeps bilingual drawing rubric rows aligned, including English-only rows',async()=>{
+ const save=vi.fn();render(<CardModal card={{type:'drawing',title_en:'Draw',drawing:{rubric_fa:['الف','','ج'],rubric_en:['A','B','C']}}} onClose={()=>{}} onSave={save}/>);
+ fireEvent.click(screen.getByText('Save content'));await waitFor(()=>expect(save).toHaveBeenCalled());expect(save.mock.calls[0][0].drawing.rubric_fa).toEqual(['الف','','ج']);expect(save.mock.calls[0][0].drawing.rubric_en).toEqual(['A','B','C']);
+});
+it.each(['kf','stepwise'])('splits Persian/newline accepted answers for %s questions',async type=>{
+ const save=vi.fn(),item={kind:'short',prompt_en:'Diagnose',accept_fa:'الف، ب\nج',accept_en:'A, B\nC'};
+ render(<CardModal card={{type,title_en:'Nested',...(type==='kf'?{kf:{items:[item]}}:{steps:[item]})}} onClose={()=>{}} onSave={save}/>);
+ fireEvent.click(screen.getByText('Save content'));await waitFor(()=>expect(save).toHaveBeenCalled());const data=save.mock.calls[0][0],saved=type==='kf'?data.kf.items[0]:data.steps[0];expect(saved.accept_fa).toEqual(['الف','ب','ج']);expect(saved.accept_en).toEqual(['A','B','C']);
+});
+it('renders all English-only drawing rubric rows for editing',()=>{
+ render(<CardModal card={{type:'drawing',title_en:'Draw',drawing:{rubric_fa:[],rubric_en:['First criterion','Second criterion']}}} onClose={()=>{}} onSave={vi.fn()}/>);
+ fireEvent.click(screen.getByText('Show all'));expect(screen.getByDisplayValue('First criterion')).toBeInTheDocument();expect(screen.getByDisplayValue('Second criterion')).toBeInTheDocument();
+});
+it('does not store empty MCQ placeholders as answer options',async()=>{
+ const save=vi.fn();render(<CardModal card={{type:'mcq',title_en:'MCQ',options:[{en:'A',correct:true},{en:'B',correct:false},{fa:' ',en:'',correct:false},{fa:'',en:'',correct:false}]}} onClose={()=>{}} onSave={save}/>);
+ fireEvent.click(screen.getByText('Save content'));await waitFor(()=>expect(save).toHaveBeenCalled());expect(save.mock.calls[0][0].options).toHaveLength(2);
+});

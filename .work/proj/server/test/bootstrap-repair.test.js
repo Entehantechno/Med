@@ -94,3 +94,11 @@ it.each([
  const read=await request(app).get('/api/flashcards/'+id).auth(token,{type:'bearer'});expect(read.status).toBe(200);expect(read.body).toMatchObject(data);
  expect(db.prepare('SELECT public_code FROM flashcards WHERE id=?').get(id).public_code).toBe(before);
 });
+it.each([
+ {type:'mcq',options:[{en:'A',correct:true},{en:'B',correct:false}],body:{optionIndex:null}},
+ {type:'kf',kf:{items:[{kind:'mcq',correct:0,options_en:['A','B']}]},body:{answers:{0:false}}},
+ {type:'hotspot',hotspot:{x:0,y:0,r:5},body:{x:null,y:null}}
+])('never grades coerced empty $type submissions as correct through HTTP',async({body,...data})=>{
+ const created=await request(app).post('/api/flashcards').auth(token,{type:'bearer'}).send({title_en:'Empty is not zero',...data});expect(created.status).toBe(200);
+ const graded=await request(app).post('/api/flashcards/check').auth(token,{type:'bearer'}).send({cardId:created.body.id,...body});expect(graded.status).toBe(200);expect(graded.body.ok).toBe(false);expect(graded.body.pointsFrac).toBe(0);
+});
