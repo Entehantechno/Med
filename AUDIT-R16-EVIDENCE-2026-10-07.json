@@ -73,5 +73,14 @@
     "Invalid archive references proven; no unauthorized content disclosure demonstrated",
     "Application recreated in a fresh process with createApp, not deployment/index.js bootstrap",
     "Legacy archives with stale exam content references now fail validation rather than silently retaining source IDs"
-  ]
+  ],
+  "githubVerification": {
+    "publicationCommit": "0215d9c",
+    "transport": "GitHub contents API raw download",
+    "sha256": "a6e71ddda26d1c0ebb3509813818299f64bf45838c3dedc67c85a3b03cc2b104",
+    "gitBlob": "9bea4518a26aed5301460c183b1fbc36fc229885",
+    "bytes": 50364300,
+    "crc": "PASS",
+    "beforeR15Deletion": true
+  }
 }
