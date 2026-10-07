@@ -1,5 +1,5 @@
 import express from "express";
-import { db, persistNow } from "../db.js";
+import { db, persistNow, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 
 const r = express.Router();
@@ -33,6 +33,14 @@ function tutorContextDenied(user, ct, cid) {
   }
   if (ct === "exam" && !studentBelongsToExam(user.id, cid)) {
     return { status: 403, error: "not assigned", stage: "access" };
+  }
+  // Enrollment rows can outlive a university transfer or deactivation.
+  // Authorize the live parent and the student's current university as well.
+  const table = ct === "class" ? "classes" : "exams";
+  const parent = db.prepare(`SELECT university_id,active FROM ${table} WHERE id=?`).get(cid);
+  const uni = currentUniversityId(user);
+  if (!parent || !parent.active || !uni || Number(parent.university_id) !== Number(uni)) {
+    return { status: 403, error: "context_unavailable", stage: "access" };
   }
   return null;
 }
@@ -114,11 +122,14 @@ r.post("/message", authRequired, (req, res) => {
   if (!isEnabledFor(ct, cid)) return res.status(403).json({ error: "tutor_disabled" });
   const msg = String(b.message || "").trim().slice(0, 2000);
   if (!msg) return res.status(400).json({ error: "empty" });
-  db.prepare("INSERT INTO tutor_chats (user_id,context_type,context_id,role,message) VALUES (?,?,?,?,?)").run(req.user.id, ct, cid, "user", msg);
   const out = reply(msg, b.lang === "en" ? "en" : "fa");
-  db.prepare("INSERT INTO tutor_chats (user_id,context_type,context_id,role,message,meta_json) VALUES (?,?,?,?,?,?)")
-    .run(req.user.id, ct, cid, "tutor", out, JSON.stringify({ ai: false }));
-  persistNow();
+  // A success response promises a complete, durably saved exchange.
+  durableTransaction(() => {
+    db.prepare("INSERT INTO tutor_chats (user_id,context_type,context_id,role,message) VALUES (?,?,?,?,?)")
+      .run(req.user.id, ct, cid, "user", msg);
+    db.prepare("INSERT INTO tutor_chats (user_id,context_type,context_id,role,message,meta_json) VALUES (?,?,?,?,?,?)")
+      .run(req.user.id, ct, cid, "tutor", out, JSON.stringify({ ai: false }));
+  });
   res.json({ reply: out });
 });
 export default r;
