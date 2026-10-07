@@ -76,5 +76,14 @@
     "101 pre-existing server failures remain",
     "Only top-level context_id for class/exam/case/study is remapped; historical JSON payload is unchanged",
     "Database reload tested, not a full server restart in R14"
-  ]
+  ],
+  "githubVerification": {
+    "publicationCommit": "03f9790",
+    "transport": "GitHub contents API raw download",
+    "sha256": "d0d77d39464a34061a1b4900613781644b2fe0518fe9444a92432fcba32ae494",
+    "gitBlob": "afd044a0658d230b27f298e36282948b70f5b0a7",
+    "bytes": 50360592,
+    "crc": "PASS",
+    "beforeR13Deletion": true
+  }
 }
