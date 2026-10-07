@@ -1,4 +1,4 @@
-name: OpenRouter network probe (no credentials)
+name: OpenRouter connection and free-only smoke test
 
 on:
   push:
@@ -16,8 +16,11 @@ concurrency:
 jobs:
   public-catalog:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 15
     steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
       - name: Check official public catalog without any API key
         shell: bash
         run: |
@@ -41,6 +44,69 @@ jobs:
                   free.append(model['id'])
           result = {'catalog_http': 200, 'model_count': len(models), 'free_model_ids': sorted(free),
                     'api_key_used': False, 'inference_requests': 0,
-                    'warning': 'Catalog availability is not proof of a working inference endpoint or clinical quality.'}
-          print(json.dumps(result, indent=2))
+                    'warning': 'Catalog availability is not proof of inference availability or clinical quality.'}
+          with open('openrouter-public-catalog.json', 'w') as f:
+              json.dump(result, f)
+          message = json.dumps(result).replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+          print('::notice title=OpenRouter public connectivity::' + message)
+          PY
+      - name: Test local harness with a simulated provider
+        run: node --test scripts/benchmark-openrouter.test.mjs
+      - name: Optional real free-model smoke test
+        shell: bash
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_BENCHMARK_KEY }}
+        run: |
+          if [ -z "$OPENROUTER_API_KEY" ]; then
+            echo '::notice title=Real inference NOT run::OPENROUTER_BENCHMARK_KEY is not configured. Catalog and synthetic harness tests only.'
+            exit 0
+          fi
+          python3 - <<'PY' > openrouter-selected-models.txt
+          import json, urllib.request, urllib.parse
+          with open('openrouter-public-catalog.json') as f:
+              models = json.load(f)['free_model_ids']
+          # A bounded convenience sample, not a best-model recommendation.
+          preferred = ('deepseek/', 'qwen/', 'mistralai/')
+          def priority(m):
+              return next((i for i, prefix in enumerate(preferred) if m.startswith(prefix)), 3), m
+          selected = []
+          for model in sorted(models, key=priority)[:12]:
+              url = 'https://openrouter.ai/api/v1/models/' + '/'.join(urllib.parse.quote(x, safe='') for x in model.split('/')) + '/endpoints'
+              try:
+                  with urllib.request.urlopen(url, timeout=10) as r:
+                      data = json.load(r)
+                  if data.get('data', {}).get('endpoints'):
+                      selected.append(model)
+              except Exception:
+                  pass
+              if len(selected) == 3:
+                  break
+          print(','.join(selected))
+          PY
+          MODELS="$(cat openrouter-selected-models.txt)"
+          if [ -z "$MODELS" ]; then
+            echo '::error title=No eligible endpoints::No currently available free endpoints found in the bounded sample. No inference sent.'
+            exit 1
+          fi
+          # The runner independently rechecks pricing and endpoints, prohibits paid
+          # model lists/fallbacks, enforces zero-price routing and caps requests.
+          node scripts/benchmark-openrouter.mjs --models "$MODELS" --repeats 1 --output openrouter-smoke-result.json
+      - name: Publish non-secret smoke status as a check annotation
+        if: always()
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, os
+          if not os.path.isfile('openrouter-smoke-result.json'):
+              print('::notice title=Smoke result::No real-model result file. Check the optional-test step; synthetic success is not real inference.')
+              raise SystemExit(0)
+          with open('openrouter-smoke-result.json') as f:
+              report = json.load(f)
+          result = {'status': report.get('status'), 'request_count': len(report.get('requests', [])),
+                    'results': [{'model': r.get('model'), 'lang': r.get('lang'), 'checks': r.get('checks'), 'status': r.get('status')}
+                                for r in report.get('results', [])],
+                    'reported_costs': [r.get('reportedCost') for r in report.get('requests', [])],
+                    'warning': 'Narrow synthetic-case engine smoke checks, NOT medical certification or a best-model ranking.'}
+          message = json.dumps(result).replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+          print('::notice title=Free-model smoke status::' + message)
           PY
