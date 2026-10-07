@@ -193,6 +193,7 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
       throw Object.assign(new Error("session_failed"), { status: 502, data: { error: "session_failed", stage: "session" } });
     }
     sessionIdRef.current = sess.sessionId;
+    if (sess.caseCard) setCaseData(sess.caseCard);
     loggingRef.current = !!sess.loggingEnabled;
     setLoggingOn(!!sess.loggingEnabled);
     if (sess.gradingScope) setGradingScope(sess.gradingScope);
@@ -427,7 +428,7 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
     setInput(""); setTypingKind("chat"); setTyping(true);
     try {
       const reply = await api.post("/exam/patient-reply",
-        { caseId, userText: text, history: priorHistory, lang, classId, examId },
+        { caseId, sessionId: sessionIdRef.current, userText: text, history: priorHistory, lang, classId, examId },
         { timeoutMs: 60_000, stage: "chat" });
       if (generation !== encounterGeneration.current) return;
       const replyText = String(reply?.text || "").trim();
@@ -471,7 +472,7 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
       setTypingKind("order");
       setTyping(true);
       try {
-        const r = await api.post("/exam/order", { caseId, kind, query: q, lang, classId, examId },
+        const r = await api.post("/exam/order", { caseId, sessionId: sessionIdRef.current, kind, query: q, lang, classId, examId },
           { timeoutMs: 60_000, stage: "order" });
         if (generation !== encounterGeneration.current) return { ok: false };
         const text = String(r?.text || "").trim();

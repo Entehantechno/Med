@@ -41,12 +41,12 @@ it('creates a bilingual patient, assigns it, starts once, interviews/examines/or
   const started = await request(app).post('/api/exam/session-start').set(auth(student)).send(startBody);
   expect(started.status).toBe(200);
   expect((await request(app).post('/api/exam/session-start').set(auth(student)).send(startBody)).body.sessionId).toBe(started.body.sessionId);
-  const chat = await request(app).post('/api/exam/patient-reply').set(auth(student)).send({ caseId, userText: 'When did it start?', lang: 'en' });
+  const chat = await request(app).post('/api/exam/patient-reply').set(auth(student)).send({ caseId, sessionId: started.body.sessionId, userText: 'When did it start?', lang: 'en' });
   expect(chat.status).toBe(200); expect(chat.body.text).toContain('one hour');
-  const exam = await request(app).post('/api/exam/patient-reply').set(auth(student)).send({ caseId, userText: 'Check vital signs', lang: 'en' });
+  const exam = await request(app).post('/api/exam/patient-reply').set(auth(student)).send({ caseId, sessionId: started.body.sessionId, userText: 'Check vital signs', lang: 'en' });
   expect(exam.status).toBe(200); expect(exam.body.mode).toBe('exam'); expect(exam.body.text).toContain('110');
   for (const [kind, query, expected] of [['imaging','CT','Synthetic CT finding'],['paraclinic','ECG','Sinus tachycardia'],['lab','CBC','Synthetic CBC finding']]) {
-    const order = await request(app).post('/api/exam/order').set(auth(student)).send({ caseId, kind, query, lang: 'en' });
+    const order = await request(app).post('/api/exam/order').set(auth(student)).send({ caseId, sessionId: started.body.sessionId, kind, query, lang: 'en' });
     expect(order.status).toBe(200); expect(order.body.found).toBe(true); expect(order.body.text).toContain(expected);
     if (query === 'CT') expect(order.body.imageUrl).toBe('/uploads/r9-synthetic-ct.png');
   }

@@ -104,3 +104,10 @@ it('opens a legacy patient containing null result rows and string aliases for re
  fireEvent.click(screen.getByText('Save content'));await waitFor(()=>expect(save).toHaveBeenCalled());
  expect(save.mock.calls[0][0].imagingResults).toEqual([{name_en:'CT chest',aliases:['CT','سی تی'],result_en:'Keep this finding'}]);
 });
+it.each([409,503])('retains a patient draft and version after a rejected save (%s)',async status=>{
+ const save=vi.fn().mockRejectedValueOnce(Object.assign(new Error(`Save rejected ${status}`),{status})).mockResolvedValueOnce({ok:true});
+ const close=vi.fn();render(<CaseModal caseObj={{id:12,version:4,title_en:'Retained patient',history_fa:'حفظ شود'}} onClose={close} onSave={save}/>);
+ fireEvent.click(screen.getByText('Save content'));expect(await screen.findByRole('alert')).toHaveTextContent(`Save rejected ${status}`);
+ expect(screen.getByDisplayValue('Retained patient')).toBeInTheDocument();expect(close).not.toHaveBeenCalled();
+ fireEvent.click(screen.getByText('Save content'));await waitFor(()=>expect(save).toHaveBeenCalledTimes(2));expect(save.mock.calls[1][0]).toMatchObject({version:4,history_fa:'حفظ شود'});
+});

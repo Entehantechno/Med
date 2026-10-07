@@ -84,7 +84,15 @@ function persistNow({ force = false, throwOnError = false } = {}) {
     let buf = rawDb.export();           // Uint8Array over a fresh copy
     const tmp = `${DB_PATH}.tmp-${process.pid}`;
     const fd = fs.openSync(tmp, "w");
-    try { fs.writeSync(fd, buf, 0, buf.length, 0); fs.fsyncSync(fd); }
+    try {
+      let offset = 0;
+      while (offset < buf.length) {
+        const written = fs.writeSync(fd, buf, offset, buf.length - offset, offset);
+        if (!Number.isInteger(written) || written <= 0 || written > buf.length - offset) throw new Error("database_write_no_progress");
+        offset += written;
+      }
+      fs.fsyncSync(fd);
+    }
     finally { fs.closeSync(fd); }
     buf = null;
     fs.renameSync(tmp, DB_PATH);
@@ -92,8 +100,44 @@ function persistNow({ force = false, throwOnError = false } = {}) {
   } catch (e) {
     // Never crash a request because the flush failed, but do not stay silent:
     // an operator must know the disk is full / read-only before data is lost.
+    try { fs.unlinkSync(`${DB_PATH}.tmp-${process.pid}`); } catch { /* best effort temp cleanup */ }
     console.error("[db] persist failed:", e?.message || e);
     if (throwOnError) throw new Error("database_persistence_failed");
+  }
+}
+
+// Explicit synchronous authoring boundary. The existing transaction API keeps
+// its legacy behavior; callers opt in where a success response promises a saved
+// patient. Flush earlier writes first, then recover the last good disk image if
+// committing the new image fails. No full backup copy is allocated on success.
+export function durableTransaction(fn) {
+  persistNow({ throwOnError: true });
+  let committed = false;
+  rawDb.exec("BEGIN");
+  try {
+    const result = fn();
+    if (result && typeof result.then === "function") throw new Error("durable_transaction_must_be_synchronous");
+    rawDb.exec("COMMIT");
+    committed = true;
+    dirty = true;
+    persistNow({ throwOnError: true });
+    return result;
+  } catch (error) {
+    clearTimeout(saveTimer);
+    if (committed) {
+      const restored = tryOpenDbFile(DB_PATH);
+      if (!restored) {
+        rawDb.close(); rawDb = null; schemaReady = false; dirty = false;
+        throw new Error("database_recovery_failed");
+      }
+      rawDb.close();
+      rawDb = restored;
+      rawDb.exec("PRAGMA foreign_keys = ON;");
+    } else {
+      try { rawDb.exec("ROLLBACK"); } catch { /* preserve original error */ }
+    }
+    dirty = false;
+    throw error;
   }
 }
 
@@ -2127,6 +2171,10 @@ export function initSchema() {
   }
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_vp_start_request ON vp_sessions(user_id,start_request_id) WHERE start_request_id IS NOT NULL");
   // Reference snapshot columns for source-aware microlearning (added after initial creation)
+  // Nullable for historical sessions. Never invent a past clinical version.
+  if (!db.prepare("PRAGMA table_info(vp_sessions)").all().some(c => c.name === "encounter_snapshot_json")) {
+    db.exec("ALTER TABLE vp_sessions ADD COLUMN encounter_snapshot_json TEXT");
+  }
   if (!db.prepare("PRAGMA table_info(vp_sessions)").all().some(c => c.name === "reference_snapshot_json")) {
     db.exec("ALTER TABLE vp_sessions ADD COLUMN reference_snapshot_json TEXT");
   }

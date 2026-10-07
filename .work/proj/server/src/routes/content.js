@@ -6,7 +6,7 @@ import { routingSettings } from "../lib/ai-routing.js";
    ================================================================ */
 import { Router } from "express";
 import { hashPassword, hashPasswordSync } from "../lib/password.js";
-import { db, persistNow } from "../db.js";
+import { db, persistNow, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { toCSV, parseCSV } from "../lib/csv.js";
 import { checkStudentLimit } from "../lib/orglimits.js";
@@ -64,7 +64,7 @@ const STUDENT_SAFE_CASE_FIELDS = [
   // internal case title (often the diagnosis) is replaced by the chief complaint.
 ];
 const STUDENT_SAFE_EXTRAS = new Set(["maxAttempts", "attemptsUsed", "best", "university_id", "active"]);
-function studentSafeCase(full) {
+export function studentSafeCase(full) {
   const safe = {};
   for (const k of STUDENT_SAFE_CASE_FIELDS) if (full?.[k] !== undefined) safe[k] = full[k];
   // keep any caller-added non-data values (maxAttempts, attemptsUsed, ...)
@@ -291,10 +291,9 @@ r.post("/cases", authRequired, requireRole("teacher", "admin"), (req, res) => {
       snapshot = ref.snapshot;
     } else if (policyId) snapshot = referenceSnapshotForPolicy(policyId);
   }
-  const info = db.prepare(
+  const info = durableTransaction(() => db.prepare(
     "INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id,created_by,reference_policy_id,reference_snapshot_json) VALUES (1,?,?,?, ?,?,?,?)"
-  ).run(difficulty, checklist_id, JSON.stringify(data), uni, req.user.id, policyId, snapshot ? JSON.stringify(snapshot) : null);
-  persistNow();
+  ).run(difficulty, checklist_id, JSON.stringify(data), uni, req.user.id, policyId, snapshot ? JSON.stringify(snapshot) : null));
   res.json({ id: info.lastInsertRowid, version: 1, track: data.track, reference: snapshot ? publicReferenceSnapshot(snapshot) : null,
     warning: !wantLearn && !reference_policy_id ? "reference_policy_required_before_microlearning" : undefined });
 });
@@ -302,6 +301,11 @@ r.put("/cases/:id", authRequired, requireRole("teacher", "admin"), (req, res) =>
   const row = db.prepare("SELECT * FROM cases WHERE id=?").get(req.params.id);
   if (!row) return res.status(404).json({ error: "not found" });
   if (!canManageUniResource(req.user, row)) return res.status(403).json({ error: "wrong_university" });
+  if (req.body?.version !== undefined && (!Number.isInteger(req.body.version) || req.body.version !== row.version)) {
+    return res.status(409).json({ error: "case_version_conflict", currentVersion: row.version,
+      message_fa: "پرونده پس از بازشدن این فرم تغییر کرده است. متن خود را نگه دارید و نسخهٔ جدید را برای مقایسه باز کنید.",
+      message_en: "This patient was changed after the editor opened. Keep your text and reopen the latest version to compare before saving." });
+  }
   const { difficulty = row.difficulty, checklist_id = row.checklist_id, reference_policy_id, refresh_reference_snapshot = false, ...submitted } = req.body || {};
   // Keep independently authored chart sections on partial updates; explicit []/null still clear fields.
   let previous = {};
@@ -321,18 +325,20 @@ r.put("/cases/:id", authRequired, requireRole("teacher", "admin"), (req, res) =>
   }
   delete data.reference; delete data.reference_snapshot; delete data.reference_snapshot_json;
   delete data.university_id;
+  const newVersion = row.version + 1;
+  durableTransaction(() => {
   db.prepare("INSERT INTO case_versions (case_id,version,data_json) VALUES (?,?,?)")
     .run(row.id, row.version, row.data_json);
-  const newVersion = row.version + 1;
   db.prepare("UPDATE cases SET version=?,difficulty=?,checklist_id=?,data_json=?,reference_policy_id=?,reference_snapshot_json=?,updated_at=datetime('now') WHERE id=?")
     .run(newVersion, difficulty, checklist_id, JSON.stringify(data), policyId, snapshotJson, row.id);
+  });
   res.json({ id: row.id, version: newVersion, reference: snapshotJson ? publicReferenceSnapshot(snapshotJson) : null });
 });
 r.delete("/cases/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const row = db.prepare("SELECT * FROM cases WHERE id=?").get(req.params.id);
   if (!row) return res.status(404).json({ error: "not found" });
   if (!canManageUniResource(req.user, row)) return res.status(403).json({ error: "wrong_university" });
-  db.prepare("UPDATE cases SET active=0 WHERE id=?").run(req.params.id);
+  durableTransaction(() => db.prepare("UPDATE cases SET active=0 WHERE id=?").run(req.params.id));
   res.json({ ok: true });
 });
 r.get("/cases/:id/versions", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -664,7 +670,7 @@ r.post("/cases-import", authRequired, requireRole("teacher", "admin"), (req, res
   if(!review.valid)return res.status(400).json({error:'csv_validation_failed',...review});
   const ins = db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id,created_by) VALUES (1,?,1,?,?,?)");
   let count = 0;
-  const tx = db.transaction(() => {
+  durableTransaction(() => {
     for (const row of rows) {
       if (!row.title_en && !row.title_fa) continue;
       const { difficulty = "medium", age, ...rest } = row;
@@ -674,8 +680,6 @@ r.post("/cases-import", authRequired, requireRole("teacher", "admin"), (req, res
       count++;
     }
   });
-  tx();
-  persistNow();
   res.json({ ok: true, imported: count });
 });
 
@@ -1498,6 +1502,15 @@ r.put("/order-catalog", authRequired, requireRole("teacher", "admin"), (req, res
   } catch (e) {
     res.status(500).json({ error: "order_catalog_save_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
+});
+
+r.use((err, req, res, next) => {
+  if (["database_persistence_failed", "database_recovery_failed"].includes(err?.message)) {
+    return res.status(503).json({ error: err.message, stage: "save",
+      message_fa: "ذخیره روی دیسک انجام نشد؛ فرم را نگه دارید و پس از رفع مشکل ذخیره‌سازی دوباره تلاش کنید.",
+      message_en: "The disk save failed. Keep this form and retry after the storage problem is resolved." });
+  }
+  next(err);
 });
 
 export default r;

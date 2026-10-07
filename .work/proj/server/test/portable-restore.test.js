@@ -1,3 +1,5 @@
+import {sealEncounter,readEncounter} from "../src/lib/vp-encounter.js";
+import {normalizeRubric} from "../src/lib/grading-rubric.js";
 import { describe, it, expect, beforeEach } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
@@ -52,6 +54,9 @@ describe("complete academic portable backup, transactional restore & tenant isol
     const dummyImage = Buffer.from("FAKE_IMAGE_DATA_PNG_FOR_TESTING");
     fs.writeFileSync(path.join(mediaDir, "test_diagram.png"), dummyImage);
 
+    // Preserve a pinned faculty chart when every relational ID is remapped.
+    db.prepare("INSERT INTO vp_sessions (user_id,case_id,started_ms,encounter_snapshot_json) VALUES (?,?,?,?)").run(teacherId,caseId,Date.now(),sealEncounter({caseData:{id:caseId,meds_en:"Pinned portable chart"},checklist:{items:[]},gradingScope:"overall",gradingRubric:normalizeRubric(null)}));
+
     // Create full v2 bundle
     const bundle = createUniversityBundle(uni, { full: true });
     expect(bundle.manifest.schema).toBe("medschool.university-portable.v2");
@@ -90,6 +95,15 @@ describe("complete academic portable backup, transactional restore & tenant isol
     const policies = db.prepare("SELECT * FROM course_reference_policies WHERE university_id=?").all(newUniId);
     expect(policies.length).toBeGreaterThan(0);
     expect(policies.every((p) => p.university_id === newUniId)).toBe(true);
+
+    const sessions = db.prepare("SELECT s.* FROM vp_sessions s JOIN cases c ON c.id=s.case_id WHERE c.university_id=?").all(newUniId);
+    const pinnedSession = sessions.find(s=>s.encounter_snapshot_json && JSON.parse(s.encounter_snapshot_json).caseData.meds_en === "Pinned portable chart");
+    expect(pinnedSession).toBeTruthy();
+    const pinned = readEncounter(pinnedSession);
+    expect(pinned.caseData.id).toBe(pinnedSession.case_id);
+    expect(pinned.caseData.id).not.toBe(caseId);
+    expect(pinned.caseData.university_id).toBe(newUniId);
+    expect(pinned.caseData.public_code).toBe(db.prepare("SELECT public_code FROM cases WHERE id=?").get(pinnedSession.case_id).public_code);
 
     // Clean up test media
     try {

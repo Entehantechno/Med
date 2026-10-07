@@ -1,3 +1,4 @@
+import { sealEncounter, readEncounter } from "../lib/vp-encounter.js";
 /* University-scoped and Learning-domain PORTABLE export, validation, and transactional restore.
    Includes complete relationship graph, historical versions, sessions, research records,
    media packaging, and ID remapping with safe staging and rollback. */
@@ -710,6 +711,10 @@ function validateEntityShapes(data) {
       if (s.status === "integrity_failed")
         throw Error("case_snapshot_integrity_failed");
     }
+  }
+
+  for (const session of data.vp_sessions?.sessions || []) {
+    if (session.encounter_snapshot_json) readEncounter(session);
   }
 
   for (const c of data.flashcards) {
@@ -1621,13 +1626,22 @@ export async function importUniversityBundle(buffer, options = {}) {
         const tStudy = s.study_id ? studyMap.get(Number(s.study_id)) || null : null;
 
         if (tUser && tCase) {
+          let encounterJson = null;
+          if (s.encounter_snapshot_json) {
+            const pinned = readEncounter(s);
+            const target = db.prepare("SELECT public_code,university_id FROM cases WHERE id=?").get(tCase);
+            const checkId = checkMap.get(Number(pinned.caseData.checklist_id)) || null;
+            pinned.caseData = { ...pinned.caseData, id: tCase, checklist_id: checkId, public_code: target.public_code, university_id: target.university_id };
+            pinned.checklist = { ...pinned.checklist, id: checkId };
+            encounterJson = sealEncounter(pinned);
+          }
           const insSess = db
             .prepare(
               `INSERT INTO vp_sessions (
                 user_id, case_id, class_id, exam_id, study_id, logging_enabled,
                 started_at, started_ms, finished_at, attempt_id, duration_sec,
-                event_count, lang, start_request_id, reference_snapshot_json
-              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                event_count, lang, start_request_id, reference_snapshot_json, encounter_snapshot_json
+              ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             )
             .run(
               tUser,
@@ -1645,6 +1659,7 @@ export async function importUniversityBundle(buffer, options = {}) {
               s.lang,
               s.start_request_id,
               s.reference_snapshot_json,
+              encounterJson,
             );
           sessionMap.set(srcId, Number(insSess.lastInsertRowid));
         }

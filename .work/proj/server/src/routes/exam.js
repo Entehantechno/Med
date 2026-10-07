@@ -1,3 +1,4 @@
+import { sealEncounter, readEncounter } from "../lib/vp-encounter.js";
 import { evaluationFingerprint, retryScoreGet, retryScorePut, retryScoreDrop } from "../lib/vp-evaluation-retry.js";
 import { acquireCompletion, completionBusy, publicEvaluation } from "../lib/vp-completion.js";
 /* ================================================================
@@ -9,7 +10,7 @@ import { db, persistNow } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { validateBody, s as vs } from "../lib/validate.js";
 import { patientReply, evaluate, scoreChecklistWithLLM, enrichEvaluationWithLLM, labImagingResult, listAiProviders, asMessages, resolveAiConfig } from "../lib/ai-engine.js";
-import { getSetting, setSetting, canAccessCase } from "./content.js";
+import { getSetting, setSetting, canAccessCase, studentSafeCase } from "./content.js";
 import { caseInLiveExam } from "../lib/live-exam-content.js";
 import { caseIsLearn } from "../lib/content-track.js";
 import { DEFAULT_LAB_TESTS, DEFAULT_IMAGING, DEFAULT_PARACLINIC, cleanOrderList, catalogContainsQuery } from "../data/order-catalog-defaults.js";
@@ -280,6 +281,7 @@ function loadCase(id) {
       ? parseReferenceSnapshot(row.reference_snapshot_json)
       : referenceSnapshotForPolicy(row.reference_policy_id);
     return { ...JSON.parse(row.data_json), id: row.id, version: row.version, checklist_id: row.checklist_id,
+      public_code: row.public_code, difficulty: row.difficulty, university_id: row.university_id, active: row.active,
       reference_policy_id: row.reference_policy_id || null, reference_snapshot: referenceSnapshot };
   } catch {
     return null;
@@ -298,8 +300,8 @@ function loadChecklist(id) {
    resolves the privacy decision ONCE (snapshot of the class/exam logging
    switch) so a later toggle cannot reinterpret data already collected.
    The row exists even if the student never finishes — an abandoned session is
-   itself meaningful for a study (dropout), and it holds no content when
-   logging is off. */
+   itself meaningful for a study (dropout). Faculty-authored content is pinned;
+   learner conversation remains unrecorded when logging is off. */
 r.post("/session-start", authRequired, (req, res) => {
   try {
   const { caseId, classId, examId, lang = "fa", requestId = null } = req.body || {};
@@ -313,12 +315,6 @@ r.post("/session-start", authRequired, (req, res) => {
   if (!acc.allowed) return denyAccess(res, acc, "session");
   const { ownerClassId, ownerExamId } = containersFor(req.user, classId, examId, acc);
   const studyId = studyForContext({ classId: ownerClassId, examId: ownerExamId })?.id || null;
-  const s = startSession({
-    userId: req.user.id, caseId: caseData.id,
-    classId: ownerClassId, examId: ownerExamId, lang,
-    studyId, requestId, referenceSnapshotJson: JSON.stringify(caseData.reference_snapshot),
-  });
-  if (s.error) return res.status(s.status).json({ error: s.error, stage: "session" });
   // Tell the UI which criterion this class grades on, so the student sees it
   // before finishing (extern = up to the differential dx, intern = all sections).
   let gradingScope = "overall";
@@ -327,7 +323,16 @@ r.post("/session-start", authRequired, (req, res) => {
     if (role === "history") gradingScope = "extern";
     else if (role === "overall") gradingScope = "intern";
   }
-  const gradingRubric = resolveClassRubric(ownerClassId);
+  let gradingRubric = resolveClassRubric(ownerClassId);
+  const s = startSession({
+    userId: req.user.id, caseId: caseData.id,
+    classId: ownerClassId, examId: ownerExamId, lang,
+    studyId, requestId, encounterSnapshotJson: sealEncounter({ caseData, checklist: loadChecklist(caseData.checklist_id), gradingScope, gradingRubric }), referenceSnapshotJson: JSON.stringify(caseData.reference_snapshot),
+  });
+  if (s.error) return res.status(s.status).json({ error: s.error, stage: "session" });
+  const pinned = encounterOrDeny(res, getSession(s.sessionId), "session");
+  if (!pinned) return;
+
   if (studyId && !s.replayed) {
     recordStudyEvent({
       studyId, userId: req.user.id, eventType: "session_started",
@@ -335,7 +340,8 @@ r.post("/session-start", authRequired, (req, res) => {
       data: { caseId: caseData.id, sessionId: s.sessionId },
     });
   }
-  const payload = { ...s, gradingScope };
+  gradingRubric = pinned.gradingRubric;
+  const payload = { ...s, gradingScope: pinned.gradingScope, caseCard: studentSafeCase(pinned.caseData) };
   if (req.user.role !== "student" && req.user.role !== "learner") payload.gradingRubric = gradingRubric;
   res.json(payload);
   } catch (e) {
@@ -382,6 +388,10 @@ function interactionAccessGuard(req, res, caseId, classId, examId, acc, stage) {
   const ctx = { classId: ownerClassId, examId: ownerExamId };
   const studyId = studyForContext(ctx)?.id || null;
   return () => {
+    if (req.body?.sessionId) {
+      const session = getSession(req.body.sessionId);
+      if (!session || session.finished_at) { res.status(409).json({ error: "session_closed", stage }); return false; }
+    }
     const live = db.prepare("SELECT status,role,token_ver FROM users WHERE id=?").get(req.user.id);
     if (!live || live.status !== "active" || live.role !== req.user.role || Number(live.token_ver || 1) !== Number(req.user.ver || 1)) {
       res.status(401).json({ error: "authorization_changed", stage }); return false;
@@ -400,15 +410,50 @@ function interactionAccessGuard(req, res, caseId, classId, examId, acc, stage) {
   };
 }
 
+function encounterOrDeny(res, session, stage) {
+  try { return readEncounter(session); }
+  catch (error) {
+    res.status(409).json({ error: error.message, stage, attemptStored: false,
+      message_fa: "نسخهٔ ثابت این برخورد موجود یا معتبر نیست. بدون مصرف فرصت، یک برخورد جدید شروع کنید.",
+      message_en: "This encounter has no valid saved clinical version. Start a new encounter; no attempt was consumed." });
+    return null;
+  }
+}
+function interactionContext(req, res, stage) {
+  const { caseId, classId, examId, sessionId } = req.body || {};
+  if (!sessionId) {
+    if (process.env.VP_REQUIRE_AI_EVALUATION !== "0" && ["student", "learner"].includes(req.user.role)) {
+      res.status(400).json({ error: "session_id_required", stage }); return null;
+    }
+    return { caseId, classId, examId, session: null, snapshot: null };
+  }
+  const session = getSession(sessionId);
+  if (!session) { res.status(404).json({ error: "session_not_found", stage }); return null; }
+  if (Number(session.user_id) !== Number(req.user.id)) { res.status(403).json({ error: "not_your_session", stage }); return null; }
+  if (Number(session.case_id) !== Number(caseId) || (classId != null && Number(classId) !== Number(session.class_id)) || (examId != null && Number(examId) !== Number(session.exam_id))) {
+    res.status(409).json({ error: "session_context_mismatch", stage }); return null;
+  }
+  if (session.finished_at) { res.status(409).json({ error: "session_closed", stage }); return null; }
+  const context = { classId: session.class_id, examId: session.exam_id };
+  if (Number(session.study_id || 0) !== Number(studyForContext(context)?.id || 0)) {
+    res.status(409).json({ error: "study_context_changed", stage }); return null;
+  }
+  const snapshot = encounterOrDeny(res, session, stage);
+  return snapshot ? { caseId, ...context, session, snapshot } : null;
+}
+
 /* ---- Patient chat turn ---- */
 r.post("/patient-reply", authRequired, async (req, res) => {
   try {
-    const { caseId, userText, history = [], lang = "fa", classId, examId } = req.body || {};
+    const { userText, history = [], lang = "fa" } = req.body || {};
+    const context = interactionContext(req, res, "chat");
+    if (!context) return;
+    const { caseId, classId, examId } = context;
     const acc = hasAccess(req.user, caseId, classId, examId);
     if (!acc.allowed) return denyAccess(res, acc, "chat");
     const text = String(userText || "").trim();
     if (!text) return res.status(400).json({ error: "text_required", stage: "chat" });
-    const caseData = loadCase(caseId);
+    const caseData = context.snapshot?.caseData || loadCase(caseId);
     if (!caseData) return res.status(404).json({ error: "case not found", stage: "case" });
     if (refuseInactiveCase(res, req.user, caseId)) return;
     const { aiCfg, prompts } = engineContext(req, req.body);
@@ -431,8 +476,11 @@ r.post("/patient-reply", authRequired, async (req, res) => {
    deterministic template). `kind` = "lab" | "imaging". */
 r.post("/order", authRequired, async (req, res) => {
   try {
-    const { caseId, kind = "lab", query = "", lang = "fa", classId, examId } = req.body || {};
-    const caseData = loadCase(caseId);
+    const { kind = "lab", query = "", lang = "fa" } = req.body || {};
+    const context = interactionContext(req, res, "order");
+    if (!context) return;
+    const { caseId, classId, examId } = context;
+    const caseData = context.snapshot?.caseData || loadCase(caseId);
     if (!caseData) return res.status(404).json({ error: "case not found", stage: "case" });
     if (refuseInactiveCase(res, req.user, caseId)) return;
     // Access / attempt budget FIRST so an exhausted student still gets 403
@@ -516,7 +564,9 @@ r.post("/evaluate", authRequired, async (req, res) => {
     message_en: "This encounter is still being evaluated. Wait briefly, then retry to retrieve the result."
   });
   const session = (req.body?.session && typeof req.body.session === "object") ? req.body.session : {};
-  const caseData = loadCase(caseId);
+  const pinned = vpSession ? encounterOrDeny(res, vpSession, "evaluate") : null;
+  if (vpSession && !pinned) return;
+  const caseData = pinned?.caseData || loadCase(caseId);
   if (!caseData) return res.status(404).json({ error: "case not found", stage: "case" });
   if (refuseInactiveCase(res, req.user, caseId)) return;
   const acc = hasAccess(req.user, caseId, classId, examId);
@@ -537,7 +587,7 @@ r.post("/evaluate", authRequired, async (req, res) => {
     }
     return true;
   };
-  const checklist = loadChecklist(caseData.checklist_id);
+  const checklist = pinned?.checklist || loadChecklist(caseData.checklist_id);
   // Pin educational provenance to the session start. A later policy/catalog edit
   // must never rewrite what this learner was taught or what is audited here.
   const referenceSnapshot = parseReferenceSnapshot(vpSession?.reference_snapshot_json || caseData.reference_snapshot);
@@ -566,7 +616,8 @@ r.post("/evaluate", authRequired, async (req, res) => {
     if (role === "history") gradingScope = "extern";
     else if (role === "overall") gradingScope = "intern";
   }
-  const gradingRubric = resolveClassRubric(ownerClassId);
+  if (pinned) gradingScope = pinned.gradingScope;
+  const gradingRubric = pinned?.gradingRubric || resolveClassRubric(ownerClassId);
 
   // A final graded attempt must be AI-scored AND AI-taught by default.
   // Explicit offline mode is for diagnostics, never an implicit provider fallback.
