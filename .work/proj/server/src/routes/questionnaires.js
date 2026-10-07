@@ -10,14 +10,15 @@ const r = express.Router();
 const admin = [authRequired, requireRole("admin", "teacher", "content_manager")];
 const currentUniversityId = (user) => db.prepare("SELECT university_id FROM users WHERE id=?").get(user.id)?.university_id || null;
 function formInUniversity(f, uni) {
-  if (f.class_id) {
-    const cl = db.prepare("SELECT university_id FROM classes WHERE id=?").get(f.class_id);
-    return !!(cl && (cl.university_id || 1) === uni);
+  let linked = false;
+  for (const [field, table] of [["class_id", "classes"], ["exam_id", "exams"]]) {
+    if (f[field]) {
+      linked = true;
+      const row = db.prepare(`SELECT university_id FROM ${table} WHERE id=?`).get(f[field]);
+      if (!row || (row.university_id || 1) !== uni) return false;
+    }
   }
-  if (f.exam_id) {
-    const ex = db.prepare("SELECT university_id FROM exams WHERE id=?").get(f.exam_id);
-    return !!(ex && (ex.university_id || 1) === uni);
-  }
+  if (linked) return true;
   const creator = db.prepare("SELECT university_id, role FROM users WHERE id=?").get(f.created_by);
   if (!creator) return false;
   if (creator.role === "admin") return false;
@@ -94,7 +95,7 @@ r.put("/admin/forms/:id", ...admin, (req, res) => {
     WHERE id=?`).run(
     b.title_fa ?? old.title_fa ?? "", b.title_en ?? old.title_en ?? "",
     b.description_fa ?? old.description_fa ?? "", b.description_en ?? old.description_en ?? "",
-    scopeOf(b.scope ?? old.scope), nid(b.class_id ?? old.class_id), nid(b.exam_id ?? old.exam_id),
+    scopeOf(b.scope ?? old.scope), nid(b.class_id !== undefined ? b.class_id : old.class_id), nid(b.exam_id !== undefined ? b.exam_id : old.exam_id),
     JSON.stringify(Array.isArray(b.questions) ? b.questions : parse(old.questions_json, [])),
     b.active === undefined ? old.active : (b.active ? 1 : 0),
     b.require_after_finish === undefined ? old.require_after_finish : (b.require_after_finish ? 1 : 0),
@@ -156,18 +157,32 @@ r.post("/:id/responses", authRequired, (req, res) => {
   if (req.user.role !== "student") {
     return res.status(403).json({ error: "forbidden", stage: "access" });
   }
-  const classId = contextType === "class" || f.scope === "class" ? (contextId || f.class_id) : null;
-  const examId = contextType === "exam" || f.scope === "exam" ? (contextId || f.exam_id) : null;
-  if (classId) {
-    const mem = db.prepare("SELECT 1 FROM class_members WHERE class_id=? AND user_id=?").get(classId, req.user.id);
-    if (!mem) return res.status(403).json({ error: "not enrolled", stage: "access" });
-  }
-  if (examId) {
-    const mem = db.prepare("SELECT 1 FROM exam_participants WHERE exam_id=? AND user_id=?").get(examId, req.user.id);
-    if (!mem) return res.status(403).json({ error: "not assigned", stage: "access" });
-  }
-  if (!classId && !examId && !formInUniversity(f, currentUniversityId(req.user) || -1)) {
+  // Authorize the form itself independently of the caller-supplied context.
+  const uni = currentUniversityId(req.user) || -1;
+  if (!formInUniversity(f, uni)) {
     return res.status(403).json({ error: "wrong_university", stage: "access" });
+  }
+  if (!["general", "class", "exam"].includes(contextType)) {
+    return res.status(400).json({ error: "bad_context", stage: "access" });
+  }
+  if ((f.scope === "class" && contextType !== "class") ||
+      (f.scope === "exam" && contextType !== "exam") ||
+      (f.class_id && (contextType !== "class" || contextId !== Number(f.class_id))) ||
+      (f.exam_id && (contextType !== "exam" || contextId !== Number(f.exam_id)))) {
+    return res.status(403).json({ error: "form_context_mismatch", stage: "access" });
+  }
+  if (contextType === "class" || contextType === "exam") {
+    const isClass = contextType === "class";
+    const table = isClass ? "classes" : "exams";
+    const parent = contextId && db.prepare(`SELECT university_id,active FROM ${table} WHERE id=?`).get(contextId);
+    if (!parent || !parent.active || (parent.university_id || 1) !== uni) {
+      return res.status(403).json({ error: "context_unavailable", stage: "access" });
+    }
+    const members = isClass ? "class_members" : "exam_participants";
+    const column = isClass ? "class_id" : "exam_id";
+    if (!db.prepare(`SELECT 1 FROM ${members} WHERE ${column}=? AND user_id=?`).get(contextId, req.user.id)) {
+      return res.status(403).json({ error: isClass ? "not enrolled" : "not assigned", stage: "access" });
+    }
   }
 
   /* An anonymous form must not record WHO answered. We still need a stable

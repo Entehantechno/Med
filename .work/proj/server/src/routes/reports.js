@@ -86,6 +86,9 @@ const J = (s, d) => { try { return s ? JSON.parse(s) : d; } catch { return d; } 
 r.get("/summary", authRequired, requireRole("teacher", "admin"), (req, res) => {
   try {
   const uni = req.user.role === "teacher" ? currentUniversityId(req.user) : null;
+  if (req.user.role === "teacher" && !uni) {
+    return res.status(403).json({ error: "university_required", stage: "access" });
+  }
   const countUniBank = (table, universityId) => {
     const bankSql = "CASE WHEN json_valid(data_json) THEN json_extract(data_json, '$.track') = 'learn' ELSE 0 END";
     if (universityId) {

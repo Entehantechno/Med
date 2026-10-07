@@ -51,12 +51,9 @@ function windowState(exam, now = Date.now()) {
 }
 
 
-const uniIdMemo = new Map();
 const currentUniversityId = (user) => {
   if (!user?.id) return null;
-  if (uniIdMemo.has(user.id)) return uniIdMemo.get(user.id);
   const v = db.prepare("SELECT university_id FROM users WHERE id=?").get(user.id)?.university_id || null;
-  uniIdMemo.set(user.id, v);
   return v;
 };
 const studentByNo = (sno) => {
@@ -283,7 +280,10 @@ function saveBody(b, universityId = 1, prev = {}) {
   ];
 }
 r.post("/", authRequired, requireRole("teacher", "admin"), (req, res) => {
-  const uni = currentUniversityId(req.user) || Number(req.body?.university_id || 0) || 1;
+  // Teachers cannot choose a tenant or retain a revoked membership via a cache.
+  const uni = req.user.role === "teacher"
+    ? currentUniversityId(req.user)
+    : currentUniversityId(req.user) || Number(req.body?.university_id || 0) || 1;
   if (req.user.role === "teacher" && !uni) return res.status(400).json({ error: "university_required", message_fa: "برای استاد انتخاب دانشگاه الزامی است." });
   const b = req.body || {};
   if ((b.studyId || b.study_id) && !resolveStudyId(b.studyId ?? b.study_id)) return res.status(400).json({ error: "study_not_found" });
