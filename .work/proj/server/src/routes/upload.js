@@ -15,7 +15,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Uploaded media lives in the persistent DATA_DIR (outside the code) so it
 // survives site upgrades. See lib/paths.js.
 import { UPLOADS_DIR, ensureDataDirs, ACADEMIC_DIR } from "../lib/paths.js";
-import { uploadDestination, mediaUrlFor, mediaLocation } from "../lib/academic-storage.js";
+import { uploadDestination, mediaUrlFor, namespaceForUniversity } from "../lib/academic-storage.js";
 ensureDataDirs();
 export const UPLOAD_DIR = UPLOADS_DIR;
 
@@ -241,6 +241,9 @@ r.post("/pdf", authRequired, requireRole("teacher", "admin"), (req, res) => {
 // Counts how many flashcards AND virtual-patient cases reference each uploaded
 // URL so admins can safely spot (and delete) unused files. Reads every
 // data_json once.
+function mediaData(raw) {
+  try { const value = JSON.parse(raw); return value && typeof value === "object" && !Array.isArray(value) ? value : {}; } catch { return {}; }
+}
 function usageMap() {
   const usage = {};
   const bump = (url, refId) => {
@@ -258,7 +261,7 @@ function usageMap() {
   let rows = [];
   try { rows = db.prepare("SELECT id, data_json FROM flashcards").all(); } catch { rows = []; }
   for (const c of rows) {
-    let d = {}; try { d = JSON.parse(c.data_json); } catch { continue; }
+    const d = mediaData(c.data_json);
     bump(d.image, c.id); bump(d.imageUrl, c.id);
     scanMedia(d.media, c.id);
     scanMedia(d.micro?.media, c.id);
@@ -286,14 +289,20 @@ function usageMap() {
   // lung/heart auscultation recordings (an in-use sound must not be deletable).
   let caseRows = [];
   try { caseRows = db.prepare("SELECT id, data_json FROM cases WHERE active=1").all(); } catch { caseRows = []; }
-  for (const c of caseRows) {
-    let d = {}; try { d = JSON.parse(c.data_json); } catch { continue; }
-    bump(d.lungSound, `case${c.id}`);
-    bump(d.heartSound, `case${c.id}`);
-    scanMedia(d.images, `case${c.id}`);
-    scanMedia((d.labResults || []).map((r) => r?.imageUrl).filter(Boolean), `case${c.id}`);
-    scanMedia((d.imagingResults || []).map((r) => r?.imageUrl).filter(Boolean), `case${c.id}`);
-    scanMedia((d.paraclinicResults || []).map((r) => r?.imageUrl).filter(Boolean), `case${c.id}`);
+  const scanCase = (d, refId) => {
+    if (!d || typeof d !== "object") return;
+    bump(d.lungSound, refId);
+    bump(d.heartSound, refId);
+    scanMedia(d.images, refId);
+    for (const key of ["labResults", "imagingResults", "paraclinicResults"]) {
+      if (Array.isArray(d[key])) scanMedia(d[key].map(r => r?.imageUrl).filter(Boolean), refId);
+    }
+  };
+  for (const c of caseRows) scanCase(mediaData(c.data_json), `case${c.id}`);
+  // Frozen encounters (including completed history) still need their media
+  // after live authoring changes. Counting references does not expose content.
+  for (const session of db.prepare("SELECT id, encounter_snapshot_json FROM vp_sessions WHERE encounter_snapshot_json IS NOT NULL").all()) {
+    scanCase(mediaData(session.encounter_snapshot_json).caseData, `session${session.id}`);
   }
   return usage;
 }
@@ -316,17 +325,12 @@ r.get("/library", authRequired, requireRole("teacher", "admin"), (req, res) => {
     prefixMap.set(flat, "/uploads/");
     prefixMap.set(platform, "/uploads/platform/");
   } else {
-    let dir = UPLOAD_DIR;
-    let prefix = "/uploads/";
-    try {
-      const loc = mediaLocation(req.user);
-      dir = loc.directory;
-      prefix = loc.prefix;
-    } catch {
-      // fallback to flat
-    }
+    const universityId = Number(req.user?.university_id);
+    if (!Number.isInteger(universityId) || universityId <= 0) return res.status(403).json({ error: "university_required" });
+    const namespace = namespaceForUniversity(universityId);
+    const dir = path.join(ACADEMIC_DIR, namespace, "media");
     dirs = [dir];
-    prefixMap.set(dir, prefix);
+    prefixMap.set(dir, `/uploads/academic/${namespace}/`);
   }
   const usage = usageMap();
   const seen = new Set();

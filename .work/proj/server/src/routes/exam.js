@@ -6,7 +6,7 @@ import { acquireCompletion, completionBusy, publicEvaluation } from "../lib/vp-c
    All AI logic lives server-side; prompts pulled from DB.
    ================================================================ */
 import { Router } from "express";
-import { db, persistNow } from "../db.js";
+import { db, persistNow, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { validateBody, s as vs } from "../lib/validate.js";
 import { patientReply, evaluate, scoreChecklistWithLLM, enrichEvaluationWithLLM, labImagingResult, listAiProviders, asMessages, resolveAiConfig } from "../lib/ai-engine.js";
@@ -369,8 +369,7 @@ r.post("/session-abandon", authRequired, (req, res) => {
     const consent = assertConsent(req.user, { classId: owned.class_id, examId: owned.exam_id });
     if (!consent.ok) return denyAccess(res, { ...consent, allowed: false }, "session");
   }
-  const out = db.transaction(() => finishSession({ sessionId, userId: req.user.id, events, durationSec: 0, attemptId: null, persist: false }))();
-  persistNow({ throwOnError: true });
+  const out = durableTransaction(() => finishSession({ sessionId, userId: req.user.id, events, durationSec: 0, attemptId: null, persist: false }));
   if (out.error) return res.status(out.error === "session_not_found" ? 404 : 403).json({ error: out.error, stage: "session" });
   res.json({ ok: true, stored: out.stored, loggingEnabled: out.loggingEnabled });
   } catch (e) {
@@ -750,7 +749,7 @@ r.post("/evaluate", authRequired, async (req, res) => {
   } : null;
 
   let logResult = { stored: 0, loggingEnabled: logging, dropped: 0 };
-  const info = db.transaction(() => {
+  const info = durableTransaction(() => {
   const inserted = db.prepare(
     `INSERT INTO attempts (user_id,type,case_id,class_id,exam_id,content_version,score,transcript_json,eval_json,
        turns,tests,imaging_count,ddx_count,hints,duration_sec,lang,reference_snapshot_json)
@@ -782,18 +781,19 @@ r.post("/evaluate", authRequired, async (req, res) => {
     evalResult.meta.durationSecRecorded = finalDuration;
   }
   db.prepare("UPDATE attempts SET eval_json=? WHERE id=?").run(JSON.stringify(evalResult), inserted.lastInsertRowid);
-  return inserted;
-  })();
-  out.meta = evalResult.meta;
-  out.logging = { enabled: logResult.loggingEnabled, eventsStored: logResult.stored, eventsDropped: logResult.dropped };
   const studyId = studyForContext({ classId: ownerClassId, examId: ownerExamId })?.id || null;
   if (studyId) {
     recordStudyEvent({
       studyId, userId: req.user.id, eventType: "session_finished",
       contextType: ownerExamId ? "exam" : "class", contextId: ownerExamId || ownerClassId,
-      data: { attemptId: info.lastInsertRowid, caseId: caseData.id, score: evalResult.score, type: "vp" },
+      data: { attemptId: inserted.lastInsertRowid, caseId: caseData.id, score: evalResult.score, type: "vp" },
+      persist: false,
     });
   }
+  return inserted;
+  });
+  out.meta = evalResult.meta;
+  out.logging = { enabled: logResult.loggingEnabled, eventsStored: logResult.stored, eventsDropped: logResult.dropped };
 
   // ---- Competitive ranking XP (learners only) ----
   // The auto-evaluator's score% is converted to ranking XP via the admin-set

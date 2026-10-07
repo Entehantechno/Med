@@ -1,0 +1,72 @@
+{
+  "focused": {
+    "passed": 53,
+    "failed": 0
+  },
+  "client": {
+    "passed": 119,
+    "failed": 0
+  },
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "reproduced_before_fix": {
+    "passed": 0,
+    "failed": 5
+  },
+  "additional_membership_reproduction": "200 where revoked university membership required 403; fixed and retested",
+  "research_atomicity": "[db] persist failed: R11 research disk failure\nPASS: research completion rolls back on disk and SQL failures; retry/reload/replay preserves exactly one grade and research event.",
+  "package": {
+    "files": 1120,
+    "bytes": 50351006,
+    "sha256": "8989bc7755a948f8eb66a9dd683df5898678d5ff33d3d9b06d46beebed8c376b",
+    "unchangedEntries": 247,
+    "integrity": "ok",
+    "users": 116,
+    "cases": 23,
+    "cards": 11681,
+    "examModeType": "TEXT",
+    "examModeDefault": "'perQuestion'"
+  },
+  "http_smoke": {
+    "caseId": 24,
+    "sessionId": 1,
+    "attemptId": 4,
+    "sound": "/uploads/platform/snd_1791366816586_68527.mp3",
+    "teacherLibrary": true,
+    "studentDenied": true,
+    "learnerDenied": true,
+    "snapshotMediaProtected": true,
+    "evaluationMode": "explicit diagnostic mock, no external AI",
+    "restartReplay": true,
+    "restartMediaProtected": true,
+    "productionMissingAIStatus": 503
+  },
+  "real_external_ai_tested": false,
+  "full_server_suite": {
+    "passed": 1445,
+    "failed": 101,
+    "tests": 1546,
+    "files": 60,
+    "duration_seconds": 450.12
+  },
+  "browser": {
+    "browser": "153.0.8010.0",
+    "protectedMedia": "snd_1791366816586_68527.mp3",
+    "adminLibraryLoaded": true,
+    "deleteDisabled": true,
+    "mobileViewport": {
+      "width": 390,
+      "height": 844
+    },
+    "pageErrors": []
+  },
+  "zip_changes_after_http_smoke": [
+    "server/test/vp-pilot.test.js"
+  ],
+  "new_failure_names_vs_R10": [],
+  "resolved_vs_R10": [
+    "auscultation audio upload > library lists the uploaded audio as kind=audio"
+  ]
+}

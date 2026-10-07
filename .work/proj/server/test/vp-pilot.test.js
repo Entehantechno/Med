@@ -141,9 +141,16 @@ describe('10-student pilot isolation and completion safety',()=>{
   const failed=await submit(0,sid);
   rename.mockRestore();log.mockRestore();
   expect(failed.status).toBe(500);
+  expect(count()).toBe(0);
+  expect(db.prepare('SELECT attempt_id,finished_at FROM vp_sessions WHERE id=?').get(sid)).toEqual({attempt_id:null,finished_at:null});
   const calls=fetch.mock.calls.length;
+  const gradingCalls=()=>fetch.mock.calls.filter(([,init])=>JSON.parse(init.body).messages[0].content.includes('OSCE examiner')).length;
+  const graded=gradingCalls();
   const recovered=await submit(0,sid);expect(recovered.status).toBe(200);expect(count()).toBe(1);
-  expect(fetch.mock.calls.length).toBe(calls);
+  // The rolled-back result must not masquerade as a persisted replay. The
+  // scoring checkpoint survives, while the lesson is regenerated on retry.
+  expect(gradingCalls()).toBe(graded);
+  expect(fetch.mock.calls.length).toBe(calls+1);
  });
 
  it('retries a lost session-start response without opening another session',async()=>{
