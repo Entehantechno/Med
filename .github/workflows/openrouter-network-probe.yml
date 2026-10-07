@@ -66,9 +66,9 @@ jobs:
           with open('openrouter-public-catalog.json') as f:
               models = json.load(f)['free_model_ids']
           # A bounded convenience sample, not a best-model recommendation.
-          preferred = ('deepseek/', 'qwen/', 'mistralai/')
+          preferred = ('deepseek/', 'google/gemma-4-31b-it:', 'google/gemma-4-26b-a4b-it:', 'nvidia/nemotron-3-super-', 'qwen/', 'mistralai/')
           def priority(m):
-              return next((i for i, prefix in enumerate(preferred) if m.startswith(prefix)), 3), m
+              return next((i for i, prefix in enumerate(preferred) if m.startswith(prefix)), len(preferred)), m
           selected = []
           for model in sorted(models, key=priority)[:12]:
               url = 'https://openrouter.ai/api/v1/models/' + '/'.join(urllib.parse.quote(x, safe='') for x in model.split('/')) + '/endpoints'

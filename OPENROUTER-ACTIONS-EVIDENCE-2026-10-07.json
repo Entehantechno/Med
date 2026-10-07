@@ -1,0 +1,65 @@
+{
+  "runURL": "https://github.com/Entehantechno/Med/actions/runs/37583298769",
+  "status": "completed",
+  "conclusion": "success",
+  "catalog": {
+    "catalog_http": 200,
+    "model_count": 465,
+    "free_model_ids": [
+      "apodex/apodex-1.1-mini:free",
+      "cohere/north-mini-code:free",
+      "dots-studio/dots-3-note-preview:free",
+      "google/gemma-4-26b-a4b-it:free",
+      "google/gemma-4-31b-it:free",
+      "inclusionai/ling-3.0-flash-sante:free",
+      "liquid/lfm-2.5-2.6b:free",
+      "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
+      "nvidia/nemotron-3-super-120b-a12b:free",
+      "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "nvidia/nemotron-3.5-content-safety:free",
+      "nvidia/nemotron-3.5-lightning:free",
+      "poolside/laguna-s-2.1:free",
+      "poolside/laguna-xs-2.1:free",
+      "thinkingmachines/inkling-small:free",
+      "thinkingmachines/inkling:free"
+    ],
+    "api_key_used": false,
+    "inference_requests": 0,
+    "warning": "Catalog availability is not proof of inference availability or clinical quality."
+  },
+  "realInferenceStatus": "OPENROUTER_BENCHMARK_KEY is not configured. Catalog and synthetic harness tests only.",
+  "steps": [
+    {
+      "name": "Set up job",
+      "conclusion": "success"
+    },
+    {
+      "name": "Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+      "conclusion": "success"
+    },
+    {
+      "name": "Check official public catalog without any API key",
+      "conclusion": "success"
+    },
+    {
+      "name": "Test local harness with a simulated provider",
+      "conclusion": "success"
+    },
+    {
+      "name": "Optional real free-model smoke test",
+      "conclusion": "success"
+    },
+    {
+      "name": "Publish non-secret smoke status as a check annotation",
+      "conclusion": "success"
+    },
+    {
+      "name": "Post Run actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683",
+      "conclusion": "success"
+    },
+    {
+      "name": "Complete job",
+      "conclusion": "success"
+    }
+  ]
+}
