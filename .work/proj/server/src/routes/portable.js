@@ -1339,8 +1339,9 @@ export async function importUniversityBundle(buffer, options = {}) {
             name_fa, name_en, desc_fa, desc_en, code, owner_id, max_attempts,
             active, created_at, live_board_enabled, live_board_anonymous,
             university_id, grading_role, history_form, grading_json,
-            tutor_enabled, tutor_prompt, log_transcript, study_id
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            tutor_enabled, tutor_prompt, log_transcript, study_id,
+            exam_mode, timer_enabled, timer_minutes, flash_no_penalty, live_board_speed
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .run(
           c.name_fa,
@@ -1362,6 +1363,13 @@ export async function importUniversityBundle(buffer, options = {}) {
           c.tutor_prompt,
           c.log_transcript ?? 0,
           targetStudyId,
+          // Older bundles lack these fields; match schema defaults, while
+          // keeping explicit zero and nullable per-class overrides intact.
+          c.exam_mode ?? "perQuestion",
+          c.timer_enabled ?? 0,
+          c.timer_minutes ?? 30,
+          c.flash_no_penalty ?? null,
+          c.live_board_speed ?? null,
         );
       classMap.set(srcId, Number(insCls.lastInsertRowid));
     }
