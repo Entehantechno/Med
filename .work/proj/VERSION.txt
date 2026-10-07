@@ -1,1 +1,1 @@
-2026.10.07-r11-vp-media-durable-completion
+2026.10.07-r12-vp-portable-integrity

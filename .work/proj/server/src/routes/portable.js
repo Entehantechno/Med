@@ -9,7 +9,7 @@ import { namespaceForUniversity } from "../lib/academic-storage.js";
 import { syncUniversityTenantDatabase, syncLearningDomainDatabase } from "../lib/domain-storage.js";
 import { Router } from "express";
 import multer from "multer";
-import { db } from "../db.js";
+import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { requirePerm } from "../lib/rbac.js";
 import { audit } from "../lib/audit.js";
@@ -713,8 +713,29 @@ function validateEntityShapes(data) {
     }
   }
 
-  for (const session of data.vp_sessions?.sessions || []) {
+  const attemptsById = new Map();
+  for (const attempt of data.attempts) {
+    const id = Number(attempt.id);
+    if (!Number.isSafeInteger(id) || id < 1 || attemptsById.has(id)) throw Error("attempt_identity_invalid");
+    attemptsById.set(id, attempt);
+  }
+  const sessions = asArray(data.vp_sessions?.sessions || [], "vp_sessions.sessions");
+  const sessionIds = new Set();
+  for (const session of sessions) {
+    const id = Number(session.id);
+    if (!Number.isSafeInteger(id) || id < 1 || sessionIds.has(id) ||
+        !uids.has(Number(session.user_id)) || !cids.has(Number(session.case_id))) throw Error("session_graph_invalid");
+    sessionIds.add(id);
     if (session.encounter_snapshot_json) readEncounter(session);
+    if (session.attempt_id != null) {
+      const attempt = attemptsById.get(Number(session.attempt_id));
+      if (!attempt || ["user_id", "case_id", "class_id", "exam_id"].some(k => Number(session[k] || 0) !== Number(attempt[k] || 0))) {
+        throw Error("session_attempt_graph_invalid");
+      }
+    }
+  }
+  for (const event of asArray(data.vp_sessions?.events || [], "vp_sessions.events")) {
+    if (!sessionIds.has(Number(event.session_id))) throw Error("session_event_graph_invalid");
   }
 
   for (const c of data.flashcards) {
@@ -899,17 +920,24 @@ export async function importUniversityBundle(buffer, options = {}) {
   const stagingDir = path.join(PORTABLE_STAGING_DIR, stageId);
   fs.mkdirSync(stagingDir, { recursive: true, mode: 0o700 });
 
+  const createdMedia = [];
+  const createdDirectories = [];
   try {
-    // Stage media files first
+    // Stage media files first. Never silently overwrite colliding bundle names.
     const stagedMedia = [];
+    const stagedNames = new Set();
     for (const me of mediaEntries) {
-      const dest = path.join(stagingDir, safeFileName(me.name));
+      const name = safeFileName(me.name);
+      if (stagedNames.has(name)) throw Error("duplicate_media_name");
+      stagedNames.add(name);
+      const dest = path.join(stagingDir, name);
       fs.writeFileSync(dest, me.data);
       stagedMedia.push({ name: me.name, path: dest });
     }
 
-    // Begin atomic DB operations
-    db.exec("BEGIN IMMEDIATE TRANSACTION;");
+    // File writes below are synchronous and compensated on ordinary failures.
+    // The DB is acknowledged only after the entire restore is on disk.
+    return durableTransaction(() => {
 
     let targetUniId = null;
     let targetNs = null;
@@ -942,7 +970,30 @@ export async function importUniversityBundle(buffer, options = {}) {
       targetNs = namespaceForUniversity(targetUniId);
     }
 
+    const destRoot = path.join(ACADEMIC_DIR, targetNs);
+    for (const dir of [destRoot, ...["exports", "imports", "media"].map(n => path.join(destRoot, n))]) {
+      if (!fs.existsSync(dir)) createdDirectories.push(dir);
+    }
     const destDirs = namespaceDirs(targetNs);
+    const sourcePrefix = `/uploads/academic/${manifest.source.namespace}/`;
+    const targetPrefix = `/uploads/academic/${targetNs}/`;
+    const remapMedia = value => {
+      if (typeof value === "string") return value.startsWith(sourcePrefix) ? targetPrefix + value.slice(sourcePrefix.length) : value;
+      if (Array.isArray(value)) {
+        const mapped = value.map(remapMedia);
+        return mapped.every((v, i) => v === value[i]) ? value : mapped;
+      }
+      if (value && typeof value === "object") {
+        const entries = Object.entries(value), mapped = entries.map(([k, v]) => [k, remapMedia(v)]);
+        return mapped.every(([, v], i) => v === entries[i][1]) ? value : Object.fromEntries(mapped);
+      }
+      return value;
+    };
+    const remapMediaJson = raw => {
+      if (typeof raw !== "string") return raw;
+      const original = JSON.parse(raw), mapped = remapMedia(original);
+      return mapped === original ? raw : JSON.stringify(mapped);
+    };
 
     // ID Remap tables
     const userMap = new Map(); // srcId -> targetId
@@ -956,6 +1007,7 @@ export async function importUniversityBundle(buffer, options = {}) {
     const studyMap = new Map();
     const formMap = new Map();
     const sessionMap = new Map();
+    const attemptMap = new Map();
 
     // 1. Users
     for (const u of data.identities) {
@@ -1108,7 +1160,7 @@ export async function importUniversityBundle(buffer, options = {}) {
           c.version || 1,
           c.difficulty,
           targetCheckId,
-          c.data_json,
+          remapMediaJson(c.data_json),
           c.active ?? 1,
           c.updated_at || iso(),
           targetUniId,
@@ -1125,7 +1177,7 @@ export async function importUniversityBundle(buffer, options = {}) {
           db.prepare(
             `INSERT INTO case_versions (case_id, version, data_json, archived_at)
              VALUES (?, ?, ?, ?)`,
-          ).run(targetCaseId, cv.version, cv.data_json, cv.archived_at || iso());
+          ).run(targetCaseId, cv.version, remapMediaJson(cv.data_json), cv.archived_at || iso());
         }
       }
     }
@@ -1141,7 +1193,7 @@ export async function importUniversityBundle(buffer, options = {}) {
         .run(
           f.version || 1,
           f.difficulty,
-          f.data_json,
+          remapMediaJson(f.data_json),
           f.active ?? 1,
           f.updated_at || iso(),
           targetUniId,
@@ -1161,7 +1213,7 @@ export async function importUniversityBundle(buffer, options = {}) {
           db.prepare(
             `INSERT INTO flashcard_versions (flashcard_id, version, data_json, archived_at)
              VALUES (?, ?, ?, ?)`,
-          ).run(targetCardId, fv.version, fv.data_json, fv.archived_at || iso());
+          ).run(targetCardId, fv.version, remapMediaJson(fv.data_json), fv.archived_at || iso());
         }
       }
     }
@@ -1447,7 +1499,7 @@ export async function importUniversityBundle(buffer, options = {}) {
       const tClass = a.class_id ? classMap.get(Number(a.class_id)) || null : null;
       const tExam = a.exam_id ? examMap.get(Number(a.exam_id)) || null : null;
       if (tUser && tCase) {
-        db.prepare(
+        const insertedAttempt = db.prepare(
           `INSERT INTO attempts (
             user_id, type, case_id, class_id, exam_id, content_version, score,
             transcript_json, eval_json, turns, tests, imaging_count, ddx_count,
@@ -1483,6 +1535,7 @@ export async function importUniversityBundle(buffer, options = {}) {
           a.reviewed_at,
           a.reference_snapshot_json,
         );
+        attemptMap.set(Number(a.id), Number(insertedAttempt.lastInsertRowid));
       }
     }
 
@@ -1631,7 +1684,7 @@ export async function importUniversityBundle(buffer, options = {}) {
             const pinned = readEncounter(s);
             const target = db.prepare("SELECT public_code,university_id FROM cases WHERE id=?").get(tCase);
             const checkId = checkMap.get(Number(pinned.caseData.checklist_id)) || null;
-            pinned.caseData = { ...pinned.caseData, id: tCase, checklist_id: checkId, public_code: target.public_code, university_id: target.university_id };
+            pinned.caseData = { ...remapMedia(pinned.caseData), id: tCase, checklist_id: checkId, public_code: target.public_code, university_id: target.university_id };
             pinned.checklist = { ...pinned.checklist, id: checkId };
             encounterJson = sealEncounter(pinned);
           }
@@ -1653,7 +1706,7 @@ export async function importUniversityBundle(buffer, options = {}) {
               s.started_at,
               s.started_ms,
               s.finished_at,
-              null, // attempt_id can link separately if needed
+              s.attempt_id != null ? attemptMap.get(Number(s.attempt_id)) : null,
               s.duration_sec,
               s.event_count,
               s.lang,
@@ -1685,20 +1738,18 @@ export async function importUniversityBundle(buffer, options = {}) {
       }
     }
 
-    // Commit DB Transaction
-    db.exec("COMMIT;");
-
-    // Atomic move staged media to destination media directory
+    // Never overwrite existing destination media. An identical file can be
+    // reused; a content collision aborts before the database commit.
     for (const sm of stagedMedia) {
       const finalDest = path.join(destDirs.media, safeFileName(sm.name));
-      fs.copyFileSync(sm.path, finalDest);
-    }
-
-    // Clean up staging directory
-    try {
-      fs.rmSync(stagingDir, { recursive: true, force: true });
-    } catch {
-      // ignore
+      if (fs.existsSync(finalDest)) {
+        if (!fs.lstatSync(finalDest).isFile() || !fs.readFileSync(finalDest).equals(fs.readFileSync(sm.path))) throw Error("media_file_conflict");
+        continue;
+      }
+      const fd = fs.openSync(finalDest, "wx", 0o600);
+      createdMedia.push(finalDest);
+      try { fs.copyFileSync(sm.path, finalDest); fs.fsyncSync(fd); }
+      finally { fs.closeSync(fd); }
     }
 
     return {
@@ -1717,18 +1768,17 @@ export async function importUniversityBundle(buffer, options = {}) {
         media: stagedMedia.length,
       },
     };
+    });
   } catch (err) {
-    try {
-      db.exec("ROLLBACK;");
-    } catch {
-      // ignore
+    for (const file of createdMedia.reverse()) {
+      try { fs.unlinkSync(file); } catch { /* report original failure; never delete pre-existing files */ }
     }
-    try {
-      fs.rmSync(stagingDir, { recursive: true, force: true });
-    } catch {
-      // ignore
+    for (const dir of createdDirectories.reverse()) {
+      try { fs.rmdirSync(dir); } catch { /* preserve non-empty directories */ }
     }
     throw err;
+  } finally {
+    try { fs.rmSync(stagingDir, { recursive: true, force: true }); } catch { /* best effort staging cleanup */ }
   }
 }
 
@@ -1865,7 +1915,8 @@ export function createPortableRouter({ selectedUniversity }) {
       if (!uni)
         return res.status(403).json({ error: "university_context_required" });
       try {
-        const out = createUniversityBundle(uni);
+        // Keep the legacy preview default; full backups must be explicit.
+        const out = createUniversityBundle(uni, { full: req.body?.full === true });
         const dirs = namespaceDirs(out.namespace);
         const file = `${safeFileName(out.namespace)}-${out.manifest.created_at.replace(/[:.]/g, "-")}.zip`;
         const tmp = path.join(dirs.exports, `.${file}.tmp`);
