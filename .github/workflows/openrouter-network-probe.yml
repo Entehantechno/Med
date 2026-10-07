@@ -1,0 +1,46 @@
+name: OpenRouter network probe (no credentials)
+
+on:
+  push:
+    branches: ['arena/57508e9a-med']
+    paths: ['.github/workflows/openrouter-network-probe.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: openrouter-network-probe
+  cancel-in-progress: true
+
+jobs:
+  public-catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check official public catalog without any API key
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, ssl, urllib.request
+          url = 'https://openrouter.ai/api/v1/models'
+          request = urllib.request.Request(url, headers={'User-Agent': 'MED-network-preflight/1.0'})
+          with urllib.request.urlopen(request, timeout=30, context=ssl.create_default_context()) as response:
+              assert response.status == 200
+              data = json.load(response)
+          models = data.get('data')
+          assert isinstance(models, list) and models, 'Invalid or empty model catalog'
+          free = []
+          for model in models:
+              price = model.get('pricing') or {}
+              try:
+                  zero = all(float(price[k]) == 0 for k in ('prompt', 'completion')) and all(float(v) == 0 for v in price.values())
+              except (KeyError, TypeError, ValueError):
+                  zero = False
+              if str(model.get('id', '')).endswith(':free') and zero:
+                  free.append(model['id'])
+          result = {'catalog_http': 200, 'model_count': len(models), 'free_model_ids': sorted(free),
+                    'api_key_used': False, 'inference_requests': 0,
+                    'warning': 'Catalog availability is not proof of a working inference endpoint or clinical quality.'}
+          print(json.dumps(result, indent=2))
+          PY
