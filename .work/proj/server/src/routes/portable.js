@@ -648,6 +648,18 @@ export function createLearningBundle() {
   return { buffer: createPortableZip(entries), manifest };
 }
 
+// Empty legacy fields mean no explicit selection. Non-empty values must be
+// JSON ID arrays; never retain unparsed or unmapped source IDs in the target.
+function examContentIds(raw, field) {
+  if (raw == null || raw === "") return [];
+  let ids;
+  try { ids = typeof raw === "string" ? JSON.parse(raw) : null; } catch { /* invalid below */ }
+  if (!Array.isArray(ids) || ids.some(id =>
+    !["number", "string"].includes(typeof id) || !Number.isSafeInteger(Number(id)) || Number(id) < 1
+  )) throw Error(`exam_${field}_invalid`);
+  return ids.map(Number);
+}
+
 function validateEntityShapes(data) {
   const arrays = [
     "references",
@@ -747,6 +759,16 @@ function validateEntityShapes(data) {
       const ids = contextIds.get(row.context_type);
       if (ids && row.context_id != null && !ids.has(Number(row.context_id))) {
         throw Error(`${label}_context_invalid`);
+      }
+    }
+  }
+
+  for (const exam of data.exams) {
+    for (const [field, ids, label] of [
+      ["case_ids", cids, "case"], ["flashcard_ids", fids, "flashcard"],
+    ]) {
+      if (examContentIds(exam[field], field).some(id => !ids.has(id))) {
+        throw Error(`exam_${label}_graph_invalid`);
       }
     }
   }
@@ -1380,34 +1402,14 @@ export async function importUniversityBundle(buffer, options = {}) {
       const targetStudyId = e.study_id ? studyMap.get(Number(e.study_id)) || null : null;
       const targetOwner = e.owner_id ? userMap.get(Number(e.owner_id)) || null : null;
 
-      // Remap case_ids and flashcard_ids in JSON/list
-      let remappedCaseIds = "";
-      if (e.case_ids) {
-        try {
-          const parsed = JSON.parse(e.case_ids);
-          if (Array.isArray(parsed)) {
-            remappedCaseIds = JSON.stringify(
-              parsed.map((cid) => caseMap.get(Number(cid)) || cid).filter(Boolean),
-            );
-          }
-        } catch {
-          remappedCaseIds = e.case_ids;
-        }
-      }
-
-      let remappedCardIds = "";
-      if (e.flashcard_ids) {
-        try {
-          const parsed = JSON.parse(e.flashcard_ids);
-          if (Array.isArray(parsed)) {
-            remappedCardIds = JSON.stringify(
-              parsed.map((fid) => cardMap.get(Number(fid)) || fid).filter(Boolean),
-            );
-          }
-        } catch {
-          remappedCardIds = e.flashcard_ids;
-        }
-      }
+      // Validation above guarantees all selected content is in this archive.
+      const mapSelection = (field, map) => JSON.stringify(examContentIds(e[field], field).map(id => {
+        const target = map.get(id);
+        if (target == null) throw Error("exam_content_mapping_missing");
+        return target;
+      }));
+      const remappedCaseIds = mapSelection("case_ids", caseMap);
+      const remappedCardIds = mapSelection("flashcard_ids", cardMap);
 
       const insEx = db
         .prepare(
