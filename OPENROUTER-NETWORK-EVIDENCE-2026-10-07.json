@@ -1,0 +1,86 @@
+{
+  "date": "2026-10-07",
+  "purpose": "Unauthenticated network diagnosis, not model benchmarking",
+  "openrouterKeySent": false,
+  "inferenceRequests": 0,
+  "tlsCertificateVerificationDisabled": false,
+  "sni": "Correct destination hostname for every connection",
+  "matrix": [
+    {
+      "host": "openrouter.ai",
+      "ip": "104.18.2.115",
+      "requestedTLS": "TLSv1_2",
+      "tcpConnected": true,
+      "tlsEstablished": false,
+      "error": "SSLZeroReturnError: TLS/SSL connection has been closed (EOF) (_ssl.c:992)",
+      "ms": 6
+    },
+    {
+      "host": "openrouter.ai",
+      "ip": "104.18.2.115",
+      "requestedTLS": "TLSv1_3",
+      "tcpConnected": true,
+      "tlsEstablished": false,
+      "error": "SSLZeroReturnError: TLS/SSL connection has been closed (EOF) (_ssl.c:992)",
+      "ms": 1
+    },
+    {
+      "host": "openrouter.ai",
+      "ip": "104.18.3.115",
+      "requestedTLS": "TLSv1_2",
+      "tcpConnected": true,
+      "tlsEstablished": false,
+      "error": "SSLZeroReturnError: TLS/SSL connection has been closed (EOF) (_ssl.c:992)",
+      "ms": 1
+    },
+    {
+      "host": "openrouter.ai",
+      "ip": "104.18.3.115",
+      "requestedTLS": "TLSv1_3",
+      "tcpConnected": true,
+      "tlsEstablished": false,
+      "error": "SSLZeroReturnError: TLS/SSL connection has been closed (EOF) (_ssl.c:992)",
+      "ms": 2
+    },
+    {
+      "host": "api.github.com",
+      "ip": "20.29.134.17",
+      "requestedTLS": "default",
+      "tcpConnected": true,
+      "tlsEstablished": true,
+      "tls": "TLSv1.3",
+      "peerCertificatePresent": true,
+      "httpStatusLine": "HTTP/1.1 403 Forbidden",
+      "ms": 86
+    },
+    {
+      "host": "registry.npmjs.org",
+      "ip": "104.16.0.34",
+      "requestedTLS": "default",
+      "tcpConnected": true,
+      "tlsEstablished": true,
+      "tls": "TLSv1.2",
+      "peerCertificatePresent": true,
+      "httpStatusLine": "HTTP/1.1 200 OK",
+      "ms": 47
+    },
+    {
+      "host": "registry.npmjs.org",
+      "ip": "104.16.1.34",
+      "requestedTLS": "default",
+      "tcpConnected": true,
+      "tlsEstablished": true,
+      "tls": "TLSv1.2",
+      "peerCertificatePresent": true,
+      "httpStatusLine": "HTTP/1.1 200 OK",
+      "ms": 47
+    }
+  ],
+  "opensslOutput": "803B9C632F7F0000:error:0A000126:SSL routines:ssl3_read_n:unexpected eof while reading:../ssl/record/rec_layer_s3.c:318:\nCONNECTED(00000003)\n---\nno peer certificate available\n---\nNo client certificate CA names sent\n---\nSSL handshake has read 0 bytes and written 326 bytes\nVerification: OK\n---\nNew, (NONE), Cipher is (NONE)\nSecure Renegotiation IS NOT supported\nCompression: NONE\nExpansion: NONE\nNo ALPN negotiated\nEarly data was not sent\nVerify return code: 0 (ok)\n---\n",
+  "independentDNS": [
+    "104.18.2.115",
+    "104.18.3.115"
+  ],
+  "independentDNSSource": "https://dns.google/resolve?name=openrouter.ai&type=A",
+  "interpretation": "Consistent with egress filtering or an in-path close. Actual policy and exact failure origin not observable; operator confirmation required. TCP success and OpenSSL verify code 0 without a peer certificate do not prove successful TLS."
+}
