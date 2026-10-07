@@ -62,5 +62,14 @@
     "No browser smoke or external AI tests in R13",
     "101 pre-existing server failures remain",
     "Checks cover mapped entity IDs, attempt/session class-exam references and case/flashcard version parents, not every relation in all portable entities"
-  ]
+  ],
+  "githubVerification": {
+    "publicationCommit": "c7c05e1",
+    "transport": "GitHub contents API raw download",
+    "sha256": "134d5d4b18acc39476cc957e5b28d39d694baf121c1ac4bfd45dfa18d51735b8",
+    "gitBlob": "ba57a92c8679b469cedf3b378be58e45a23a7286",
+    "bytes": 50358250,
+    "crc": "PASS",
+    "beforeR12Deletion": true
+  }
 }
