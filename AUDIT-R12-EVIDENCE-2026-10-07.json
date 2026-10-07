@@ -68,5 +68,14 @@
     "Ordinary synchronous filesystem compensation, not a power-loss or multiprocess guarantee",
     "Root-relative media string values only; no embedded prose or absolute URL rewriting",
     "Existing 101 server failures remain"
-  ]
+  ],
+  "githubVerification": {
+    "publicationCommit": "dde52f4",
+    "transport": "GitHub contents API, raw response; raw.githubusercontent.com TLS unavailable in sandbox",
+    "bytes": 50355610,
+    "sha256": "c471d31354a55dcbbd29ceb379bf67b983e0cd2684a2c3b77cff90c38e20ca22",
+    "gitBlob": "a562064630297e8c49f9fe32dfa6c0ecf3bb66fa",
+    "zipCrc": "PASS",
+    "verifiedBeforeR11Deletion": true
+  }
 }
