@@ -70,5 +70,14 @@
     "Settings persistence and API-resolved flags verified, not a timed real-student examination",
     "Application recreated in a fresh process with createApp, not deployment/index.js bootstrap",
     "Null class overrides remain inherited from destination settings; no claim to clone global configuration"
-  ]
+  ],
+  "githubVerification": {
+    "publicationCommit": "50b10b4",
+    "transport": "GitHub contents API raw download",
+    "sha256": "23882dfb578391e0cb173269d7a882f472b78846d82e50da91028f49a062fbc4",
+    "gitBlob": "a16db3c8a101111df404eee5c9bce12239710870",
+    "bytes": 50362343,
+    "crc": "PASS",
+    "beforeR14Deletion": true
+  }
 }
