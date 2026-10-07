@@ -499,5 +499,14 @@
     "Broad automated regression plus targeted code review/HTTP checks, not exhaustive verification of all university screens and permissions",
     "Application recreated in a fresh process with createApp, not deployment/index.js bootstrap",
     "Historical grades, responses and demo data unchanged; valid new anonymous response and replacement tested"
-  ]
+  ],
+  "githubVerification": {
+    "publicationCommit": "0c7e473",
+    "transport": "GitHub contents API raw download",
+    "sha256": "87c71fcf0534028a3fd0538769d8965813a65e3d3c7aaeacc6a46d8af9576e02",
+    "gitBlob": "b6d0d626dd86a9e05e04b46691a9ca2245ae18fd",
+    "bytes": 50367442,
+    "crc": "PASS",
+    "beforeR16Deletion": true
+  }
 }
