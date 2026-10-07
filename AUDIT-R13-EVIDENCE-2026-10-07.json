@@ -1,0 +1,66 @@
+{
+  "beforeFix": {
+    "passed": 0,
+    "failed": 7
+  },
+  "newR13Tests": {
+    "passed": 10,
+    "failed": 0
+  },
+  "extractedPackageTests": {
+    "passed": 25,
+    "failed": 0
+  },
+  "client": {
+    "passed": 119,
+    "failed": 0
+  },
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "server": {
+    "passed": 1466,
+    "failed": 101,
+    "tests": 1567,
+    "files": 62,
+    "duration_seconds": 544.16
+  },
+  "newFailureNamesVsR12": [],
+  "build": "PASS; R13 service-worker stamp verified",
+  "package": {
+    "files": 1122,
+    "bytes": 50358250,
+    "sha256": "134d5d4b18acc39476cc957e5b28d39d694baf121c1ac4bfd45dfa18d51735b8",
+    "changedPredecessorEntries": [
+      "VERSION.txt",
+      "client/dist/sw.js",
+      "client/dist/sw.js.br",
+      "client/dist/sw.js.gz",
+      "server/src/routes/portable.js"
+    ],
+    "allOtherPredecessorBytesUnchanged": true,
+    "crc": "PASS",
+    "demo": {
+      "users": 116,
+      "cases": 23,
+      "flashcards": 11681
+    },
+    "exam_mode": "TEXT DEFAULT 'perQuestion'"
+  },
+  "http": {
+    "packageHttpLogin": true,
+    "fullExport": true,
+    "invalidArchiveStatus": 422,
+    "invalidArchiveError": "cases_identity_invalid",
+    "databaseUnchanged": true,
+    "validArchiveImportStatus": 200,
+    "importedUniversityId": 126,
+    "externalAI": false
+  },
+  "limitations": [
+    "No browser smoke or external AI tests in R13",
+    "101 pre-existing server failures remain",
+    "Checks cover mapped entity IDs, attempt/session class-exam references and case/flashcard version parents, not every relation in all portable entities"
+  ]
+}

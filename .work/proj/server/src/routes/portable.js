@@ -681,11 +681,32 @@ function validateEntityShapes(data) {
   checkTenant(data.classes, "class");
   checkTenant(data.exams, "exam");
 
+  // Every remapped entity needs a unique, positive source identity. Otherwise
+  // Map.set silently redirects dependent history to the last duplicate row.
+  for (const key of ["references", "policies", "checklists", "cases", "flashcards", "classes", "exams", "identities"]) {
+    const seen = new Set();
+    for (const row of data[key]) {
+      const id = Number(key === "identities" ? row.source_user_id || row.id : row.id);
+      if (!Number.isSafeInteger(id) || id < 1 || seen.has(id)) throw Error(`${key}_identity_invalid`);
+      seen.add(id);
+    }
+  }
+
   const rids = new Set(data.references.map((x) => Number(x.id)));
   const pids = new Set(data.policies.map((x) => Number(x.id)));
   const cids = new Set(data.cases.map((x) => Number(x.id)));
   const fids = new Set(data.flashcards.map((x) => Number(x.id)));
   const clids = new Set(data.classes.map((x) => Number(x.id)));
+  const examIds = new Set(data.exams.map((x) => Number(x.id)));
+  const validContext = row =>
+    (row.class_id == null || clids.has(Number(row.class_id))) &&
+    (row.exam_id == null || examIds.has(Number(row.exam_id)));
+  for (const version of asArray(data.case_versions, "case_versions")) {
+    if (!cids.has(Number(version.case_id))) throw Error("case_version_graph_invalid");
+  }
+  for (const version of asArray(data.flashcard_versions, "flashcard_versions")) {
+    if (!fids.has(Number(version.flashcard_id))) throw Error("flashcard_version_graph_invalid");
+  }
   const uids = new Set(
     data.identities.map((x) => Number(x.source_user_id || x.id)),
   );
@@ -717,6 +738,7 @@ function validateEntityShapes(data) {
   for (const attempt of data.attempts) {
     const id = Number(attempt.id);
     if (!Number.isSafeInteger(id) || id < 1 || attemptsById.has(id)) throw Error("attempt_identity_invalid");
+    if (!validContext(attempt)) throw Error("attempt_context_invalid");
     attemptsById.set(id, attempt);
   }
   const sessions = asArray(data.vp_sessions?.sessions || [], "vp_sessions.sessions");
@@ -725,6 +747,7 @@ function validateEntityShapes(data) {
     const id = Number(session.id);
     if (!Number.isSafeInteger(id) || id < 1 || sessionIds.has(id) ||
         !uids.has(Number(session.user_id)) || !cids.has(Number(session.case_id))) throw Error("session_graph_invalid");
+    if (!validContext(session)) throw Error("session_context_invalid");
     sessionIds.add(id);
     if (session.encounter_snapshot_json) readEncounter(session);
     if (session.attempt_id != null) {
