@@ -734,6 +734,23 @@ function validateEntityShapes(data) {
     }
   }
 
+  // Context IDs are foreign keys selected by context_type, not globally stable IDs.
+  const contextIds = new Map([
+    ["class", clids], ["exam", examIds], ["case", cids],
+    ["study", new Set(asArray(data.research?.studies || [], "research.studies").map(s => Number(s.id)))],
+  ]);
+  for (const [rows, label] of [
+    [data.questionnaires?.responses || [], "questionnaire"],
+    [data.research?.events || [], "research_event"],
+  ]) {
+    for (const row of asArray(rows, label)) {
+      const ids = contextIds.get(row.context_type);
+      if (ids && row.context_id != null && !ids.has(Number(row.context_id))) {
+        throw Error(`${label}_context_invalid`);
+      }
+    }
+  }
+
   const attemptsById = new Map();
   for (const attempt of data.attempts) {
     const id = Number(attempt.id);
@@ -1562,6 +1579,17 @@ export async function importUniversityBundle(buffer, options = {}) {
       }
     }
 
+    const contextMaps = new Map([
+      ["class", classMap], ["exam", examMap], ["case", caseMap], ["study", studyMap],
+    ]);
+    const remapContextId = row => {
+      const map = contextMaps.get(row.context_type);
+      if (!map || row.context_id == null) return row.context_id;
+      const target = map.get(Number(row.context_id));
+      if (target == null) throw Error("context_mapping_missing");
+      return target;
+    };
+
     // 14. Questionnaires
     const qData = data.questionnaires || {};
     if (hasTable("questionnaire_forms") && Array.isArray(qData.forms)) {
@@ -1611,7 +1639,7 @@ export async function importUniversityBundle(buffer, options = {}) {
             tForm,
             tUser,
             qr.context_type,
-            qr.context_id,
+            remapContextId(qr),
             qr.answers_json,
             qr.created_at || iso(),
             qr.pseudonym,
@@ -1635,7 +1663,7 @@ export async function importUniversityBundle(buffer, options = {}) {
             tUser,
             re.event_type,
             re.context_type,
-            re.context_id,
+            remapContextId(re),
             re.data_json,
             re.created_at || iso(),
           );
