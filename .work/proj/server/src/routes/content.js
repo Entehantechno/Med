@@ -7,7 +7,7 @@ import { routingSettings } from "../lib/ai-routing.js";
 import { Router } from "express";
 import { hashPassword, hashPasswordSync } from "../lib/password.js";
 import { db, persistNow, durableTransaction } from "../db.js";
-import { authRequired, requireRole } from "../lib/auth.js";
+import { authRequired, requireRole, bumpTokenVer, isJtiRevoked } from "../lib/auth.js";
 import { toCSV, parseCSV, splitCSVRecords } from "../lib/csv.js";
 import { checkStudentLimit } from "../lib/orglimits.js";
 import { normalizeRubric } from "../lib/grading-rubric.js";
@@ -96,7 +96,8 @@ function canManageStudentAccount(actor, target) {
   if (actor.role === "admin") return true;
   if (actor.role !== "teacher") return false;
   if (target.role !== "student") return false;
-  return (target.university_id || 1) === currentUniversityId(actor);
+  const uni = currentUniversityId(actor);
+  return uni != null && target.university_id != null && target.university_id === uni;
 }
 function caseIdsForUniversity(ids, universityId) {
   const uni = universityId || 1;
@@ -776,8 +777,8 @@ r.get("/catalogs", authRequired, requireRole("teacher", "admin"), (req, res) => 
 });
 r.post("/catalogs", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const { name_fa, name_en, items = [] } = req.body || {};
-  const info = db.prepare("INSERT INTO catalogs (name_fa,name_en,items_json,owner_id) VALUES (?,?,?,?)")
-    .run(name_fa, name_en, JSON.stringify(items), req.user.id);
+  const info = durableTransaction(() => db.prepare("INSERT INTO catalogs (name_fa,name_en,items_json,owner_id) VALUES (?,?,?,?)")
+    .run(name_fa, name_en, JSON.stringify(items), req.user.id));
   res.json({ id: info.lastInsertRowid });
 });
 r.put("/catalogs/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -785,15 +786,15 @@ r.put("/catalogs/:id", authRequired, requireRole("teacher", "admin"), (req, res)
   if (!row) return res.status(404).json({ error: "not_found", stage: "access" });
   if (!canManageCatalog(req.user, row)) return res.status(403).json({ error: "forbidden", stage: "access" });
   const { name_fa, name_en, items = [] } = req.body || {};
-  db.prepare("UPDATE catalogs SET name_fa=?,name_en=?,items_json=? WHERE id=?")
-    .run(name_fa, name_en, JSON.stringify(items), req.params.id);
+  durableTransaction(() => db.prepare("UPDATE catalogs SET name_fa=?,name_en=?,items_json=? WHERE id=?")
+    .run(name_fa, name_en, JSON.stringify(items), req.params.id));
   res.json({ ok: true });
 });
 r.delete("/catalogs/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const row = catalogRow(req.params.id);
   if (!row) return res.status(404).json({ error: "not_found", stage: "access" });
   if (!canManageCatalog(req.user, row)) return res.status(403).json({ error: "forbidden", stage: "access" });
-  db.prepare("DELETE FROM catalogs WHERE id=?").run(req.params.id);
+  durableTransaction(() => db.prepare("DELETE FROM catalogs WHERE id=?").run(req.params.id));
   res.json({ ok: true });
 });
 
@@ -894,16 +895,14 @@ r.put("/checklists/:id", authRequired, requireRole("teacher", "admin"), (req, re
     return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
   const { name_fa, name_en, items } = req.body || {};
-  db.prepare("UPDATE checklists SET name_fa=?,name_en=?,items_json=? WHERE id=?")
-    .run(name_fa, name_en, JSON.stringify(items || []), req.params.id);
-  persistNow();
+  durableTransaction(() => db.prepare("UPDATE checklists SET name_fa=?,name_en=?,items_json=? WHERE id=?")
+    .run(name_fa, name_en, JSON.stringify(items || []), req.params.id));
   res.json({ ok: true });
 });
 r.post("/checklists", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const { name_fa, name_en, items } = req.body || {};
-  const info = db.prepare("INSERT INTO checklists (name_fa,name_en,items_json,owner_id) VALUES (?,?,?,?)")
-    .run(name_fa || "چک‌لیست جدید", name_en || "New checklist", JSON.stringify(items || []), req.user.id);
-  persistNow();
+  const info = durableTransaction(() => db.prepare("INSERT INTO checklists (name_fa,name_en,items_json,owner_id) VALUES (?,?,?,?)")
+    .run(name_fa || "چک‌لیست جدید", name_en || "New checklist", JSON.stringify(items || []), req.user.id));
   res.json({ id: info.lastInsertRowid });
 });
 r.delete("/checklists/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -914,8 +913,7 @@ r.delete("/checklists/:id", authRequired, requireRole("teacher", "admin"), (req,
   }
   const used = db.prepare("SELECT id FROM cases WHERE checklist_id=? LIMIT 1").get(req.params.id);
   if (used) return res.status(409).json({ error: "checklist_in_use", stage: "access", case_id: used.id });
-  db.prepare("DELETE FROM checklists WHERE id=?").run(req.params.id);
-  persistNow();
+  durableTransaction(() => db.prepare("DELETE FROM checklists WHERE id=?").run(req.params.id));
   res.json({ ok: true });
 });
 
@@ -937,6 +935,7 @@ r.get("/users", authRequired, requireRole("teacher", "admin"), (req, res) => {
   let rows = db.prepare("SELECT id,username,student_no,name_fa,name_en,role,status,university_id FROM users ORDER BY id").all();
   if (req.user.role === "teacher") {
     const uni = currentUniversityId(req.user);
+    if (!uni) return res.status(400).json({ error: "university_required", stage: "access" });
     rows = rows.filter((u) => u.university_id === uni && (u.role === "student" || u.role === "teacher"));
   }
   // Optional ?role= filter (used by the student search box in exams/classes).
@@ -986,7 +985,7 @@ r.put("/assignments/:userId", authRequired, requireRole("teacher", "admin"), (re
   if (!target) return res.status(404).json({ error: "not found", stage: "access" });
   if (!canManageStudentAccount(req.user, target)) return res.status(403).json({ error: "wrong_university", stage: "access" });
   const allowed = caseIdsForUniversity(caseIds, target.university_id);
-  const tx = db.transaction(() => {
+  durableTransaction(() => {
     db.prepare("UPDATE exam_assignments SET active=0 WHERE user_id=?").run(uid);
     const up = db.prepare(
       `INSERT INTO exam_assignments (user_id,case_id,assigned_by,max_attempts,active)
@@ -995,8 +994,6 @@ r.put("/assignments/:userId", authRequired, requireRole("teacher", "admin"), (re
     );
     for (const cid of allowed) up.run(uid, cid, req.user.id, maxAttempts);
   });
-  tx();
-  persistNow();
   res.json({ ok: true, added: allowed.length, skipped: (Array.isArray(caseIds) ? caseIds.length : 0) - allowed.length });
 });
 // Create a user. For students, the student number is the username.
@@ -1337,18 +1334,36 @@ function t_line(i, hasHeader) { return `line ${i + 1 + (hasHeader ? 1 : 0)}`; }
 function req_no_sno() { return "missing student number"; }
 
 // Reset a user's password (admin/teacher)
-r.put("/users/:id/password", authRequired, requireRole("teacher", "admin"), async (req, res) => {
+r.put("/users/:id/password", authRequired, requireRole("teacher", "admin"), async (req, res, next) => {
   const { password } = req.body || {};
   if (!password) return res.status(400).json({ error: "password required" });
   const target = db.prepare("SELECT id, role, university_id FROM users WHERE id=?").get(req.params.id);
   if (!target) return res.status(404).json({ error: "not found", stage: "access" });
   if (!canManageStudentAccount(req.user, target)) return res.status(403).json({ error: "wrong_university", stage: "access" });
-  db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(await hashPassword(String(password)), req.params.id);
-  persistNow();
-  res.json({ ok: true });
+  try {
+    const hash = await hashPassword(String(password));
+    durableTransaction(() => {
+      // Hashing yields: both the caller's authorization and target membership
+      // can change before the write. Use current state, not the earlier row.
+      const actor = db.prepare("SELECT id, role, status, token_ver FROM users WHERE id=?").get(req.user.id);
+      const liveTarget = db.prepare("SELECT id, role, university_id FROM users WHERE id=?").get(req.params.id);
+      if (!liveTarget) throw Object.assign(new Error("not found"), {status:404});
+      if (!actor || actor.status !== "active" || !["admin", "teacher"].includes(actor.role) ||
+          (Number(actor.token_ver) || 1) !== (Number(req.user.ver) || 1) ||
+          isJtiRevoked(req.user.jti) || !canManageStudentAccount(actor, liveTarget)) {
+        throw Object.assign(new Error("wrong_university"), {status:403});
+      }
+      db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(hash, liveTarget.id);
+      bumpTokenVer(liveTarget.id);
+    });
+    res.json({ ok: true });
+  } catch (e) {
+    if (e.status) return res.status(e.status).json({error:e.message, stage:"access"});
+    next(e);
+  }
 });
 r.put("/users/:id/status", authRequired, requireRole("teacher", "admin"), (req, res) => {
-  const target = db.prepare("SELECT id, role, university_id FROM users WHERE id=?").get(req.params.id);
+  const target = db.prepare("SELECT id, role, university_id, status FROM users WHERE id=?").get(req.params.id);
   if (!target) return res.status(404).json({ error: "not found", stage: "access" });
   if (!canManageStudentAccount(req.user, target)) return res.status(403).json({ error: "wrong_university", stage: "access" });
   // Only the two account states the login check understands are accepted; an
@@ -1356,8 +1371,10 @@ r.put("/users/:id/status", authRequired, requireRole("teacher", "admin"), (req, 
   const status = req.body?.status === "active" ? "active" : req.body?.status === "inactive" ? "inactive" : null;
   if (!status) return res.status(400).json({ error: "invalid_status", stage: "access" });
   if (target.role === "admin" && target.id === req.user.id) return res.status(400).json({ error: "cannot ban yourself" });
-  db.prepare("UPDATE users SET status=? WHERE id=?").run(status, target.id);
-  persistNow();
+  durableTransaction(() => {
+    db.prepare("UPDATE users SET status=? WHERE id=?").run(status, target.id);
+    if (status !== target.status) bumpTokenVer(target.id);
+  });
   res.json({ ok: true });
 });
 
