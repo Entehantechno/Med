@@ -6,7 +6,7 @@
 import { Router } from "express";
 import { safeFilename } from "../lib/csv.js";
 import crypto from "crypto";
-import { db, persistNow, durableTransaction } from "../db.js";
+import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { hashPasswordSync } from "../lib/password.js";
 import { audit } from "../lib/audit.js";
@@ -129,7 +129,7 @@ r.get("/", authRequired, (req, res) => {
     classes = db.prepare(
       `SELECT c.* FROM classes c
          JOIN class_members m ON m.class_id = c.id
-       WHERE m.user_id=? AND c.active=1 ORDER BY c.id DESC`
+       WHERE m.user_id=? AND c.active=1 AND c.university_id=(SELECT university_id FROM users WHERE id=m.user_id) ORDER BY c.id DESC`
     ).all(req.user.id);
   } else if (req.user.role === "teacher") {
     const uni = currentUniversityId(req.user);
@@ -315,6 +315,7 @@ r.get("/:id", authRequired, (req, res) => {
   // student must be a member of an ACTIVE class (deactivated classes disappear
   // from the list; loading by id must not still offer start buttons).
   if (req.user.role === "student") {
+    if (!currentUniversityId(req.user) || cl.university_id !== currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university", stage: "access" });
     if (!cl.active) return res.status(404).json({ error: "not found", stage: "boot" });
     const mem = db.prepare("SELECT 1 FROM class_members WHERE class_id=? AND user_id=?").get(cl.id, req.user.id);
     if (!mem) return res.status(403).json({ error: "not enrolled", stage: "access" });
@@ -489,13 +490,12 @@ r.post("/", authRequired, requireRole("teacher", "admin"), (req, res) => {
   // Educational review is ON by default so the teacher can validate the chat.
   // Send logTranscript:false to keep a class private.
   const logOn = !(logTranscript === false || logTranscript === 0 || logTranscript === "0");
-  const info = db.prepare(
+  const info = durableTransaction(() => db.prepare(
     `INSERT INTO classes (name_fa,name_en,desc_fa,desc_en,code,owner_id,max_attempts,grading_role,history_form,university_id,log_transcript,study_id,grading_json,exam_mode,timer_enabled,timer_minutes)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   ).run(name_fa, name_en, desc_fa, desc_en, code, req.user.id, maxAttempts, role, hform, uni,
-        logOn ? 1 : 0, study, gradingJson, settings.exam_mode, settings.timer_enabled, settings.timer_minutes);
+        logOn ? 1 : 0, study, gradingJson, settings.exam_mode, settings.timer_enabled, settings.timer_minutes));
   audit(req, "class.create", "class", { id: info.lastInsertRowid, log_transcript: logOn, study_id: study });
-  persistNow();
   res.json({ id: info.lastInsertRowid, code, logTranscript: logOn, studyId: study, ...settings });
 });
 
@@ -504,7 +504,7 @@ r.put("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const { name_fa, name_en, desc_fa, desc_en, maxAttempts, gradingRole, historyForm,
           liveBoardEnabled, liveBoardAnonymous, logTranscript, studyId, gradingRubric,
           flashNoPenalty, liveBoardSpeed } = req.body || {};
-  const cur = db.prepare("SELECT exam_mode, timer_enabled, timer_minutes, grading_role, history_form, university_id, live_board_enabled, live_board_anonymous, log_transcript, study_id, grading_json, flash_no_penalty, live_board_speed FROM classes WHERE id=?").get(req.params.id);
+  const cur = db.prepare("SELECT name_fa,name_en,desc_fa,desc_en,max_attempts,exam_mode, timer_enabled, timer_minutes, grading_role, history_form, university_id, live_board_enabled, live_board_anonymous, log_transcript, study_id, grading_json, flash_no_penalty, live_board_speed FROM classes WHERE id=?").get(req.params.id);
   if (!cur) return res.status(404).json({ error: "not found" });
   if (req.user.role === "teacher" && cur.university_id !== currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university" });
   let settings;
@@ -537,10 +537,11 @@ r.put("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   // university (then global) default, true/false/"on"/"off" = forced for this class.
   const npNext  = flashNoPenalty === undefined ? (cur.flash_no_penalty ?? null) : triInput(flashNoPenalty);
   const spdNext = liveBoardSpeed === undefined ? (cur.live_board_speed ?? null) : triInput(liveBoardSpeed);
-  db.prepare(
-    "UPDATE classes SET name_fa=?,name_en=?,desc_fa=?,desc_en=?,max_attempts=?,grading_role=?,history_form=?,live_board_enabled=?,live_board_anonymous=?,log_transcript=?,study_id=?,grading_json=?,flash_no_penalty=?,live_board_speed=?,exam_mode=?,timer_enabled=?,timer_minutes=? WHERE id=?"
-  ).run(name_fa, name_en, desc_fa, desc_en, maxAttempts ?? 1, role, hform, liveOn ? 1 : 0, liveAnon ? 1 : 0, logOn ? 1 : 0, study, gradingJson, npNext ?? null, spdNext ?? null, settings.exam_mode, settings.timer_enabled, settings.timer_minutes, req.params.id);
-  persistNow();
+  durableTransaction(() => {
+    db.prepare(
+      "UPDATE classes SET name_fa=?,name_en=?,desc_fa=?,desc_en=?,max_attempts=?,grading_role=?,history_form=?,live_board_enabled=?,live_board_anonymous=?,log_transcript=?,study_id=?,grading_json=?,flash_no_penalty=?,live_board_speed=?,exam_mode=?,timer_enabled=?,timer_minutes=? WHERE id=?"
+    ).run(name_fa === undefined ? cur.name_fa : name_fa, name_en === undefined ? cur.name_en : name_en, desc_fa === undefined ? cur.desc_fa : desc_fa, desc_en === undefined ? cur.desc_en : desc_en, maxAttempts === undefined ? cur.max_attempts : maxAttempts, role, hform, liveOn ? 1 : 0, liveAnon ? 1 : 0, logOn ? 1 : 0, study, gradingJson, npNext ?? null, spdNext ?? null, settings.exam_mode, settings.timer_enabled, settings.timer_minutes, req.params.id);
+  });
   audit(req, "class.update", "class", { id: Number(req.params.id), log_transcript: logOn, live_board_enabled: liveOn, study_id: study, flash_no_penalty: npNext, live_board_speed: spdNext });
   res.json({ ok: true, logTranscript: logOn, studyId: study, gradingRubric: gradingJson ? JSON.parse(gradingJson) : null,
     flashNoPenalty: npNext, liveBoardSpeed: spdNext, ...settings });
@@ -551,8 +552,7 @@ r.delete("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   if (req.user.role === "teacher" && cl.university_id !== currentUniversityId(req.user)) {
     return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
-  db.prepare("UPDATE classes SET active=0 WHERE id=?").run(req.params.id);
-  persistNow();
+  durableTransaction(() => db.prepare("UPDATE classes SET active=0 WHERE id=?").run(req.params.id));
   res.json({ ok: true });
 });
 
@@ -569,12 +569,12 @@ r.put("/:id/cases", authRequired, requireRole("teacher", "admin"), (req, res) =>
     // Same-university only (SQL equivalent: COALESCE(university_id,1)).
     return (row.university_id || 1) === (cl.university_id || 1);
   });
-  const tx = db.transaction(() => {
+  durableTransaction(() => {
     db.prepare("DELETE FROM class_cases WHERE class_id=?").run(cid);
     const ins = db.prepare("INSERT OR IGNORE INTO class_cases (class_id,case_id,weight) VALUES (?,?,?)");
     for (const c of allowed) ins.run(cid, c.case_id, c.weight || 1);
   });
-  tx(); persistNow();
+
   res.json({ ok: true, added: allowed.length, skipped: cases.length - allowed.length });
 });
 
@@ -590,13 +590,12 @@ r.put("/:id/flashcards", authRequired, requireRole("teacher", "admin"), (req, re
     if (!row || isLearnContent(row.data_json)) return false;
     return (row.university_id || 1) === (cl.university_id || 1);
   });
-  const tx = db.transaction(() => {
+  durableTransaction(() => {
     db.prepare("DELETE FROM class_flashcards WHERE class_id=?").run(cid);
     const ins = db.prepare("INSERT OR IGNORE INTO class_flashcards (class_id,flashcard_id,weight,graded) VALUES (?,?,?,?)");
     for (const f of allowed) ins.run(cid, f.flashcard_id, f.weight || 1, f.graded === false ? 0 : 1);
   });
-  tx();
-  persistNow();
+
   res.json({ ok: true, added: allowed.length, skipped: flashcards.length - allowed.length });
 });
 
@@ -673,25 +672,28 @@ r.put("/:id/members", authRequired, requireRole("teacher", "admin"), (req, res) 
   const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(cid);
   if (!cl) return res.status(404).json({ error: "not_found" });
   if (req.user.role === "teacher" && cl.university_id !== currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university" });
-  const allowed=[]; const healed=[]; const blocked=[];
-  for(const uid of userIds){
-    const u=db.prepare("SELECT id, university_id, role FROM users WHERE id=?").get(uid);
-    if(!u || u.role!=="student"){ blocked.push(uid); continue; }
-    if(u.university_id==null || u.university_id===""){
-      // heal: bulk-imported student without university → assign to this class's university
-      try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(cl.university_id, uid); healed.push(uid); allowed.push(uid); } catch{}
-    } else if(u.university_id===cl.university_id){ allowed.push(uid); }
-    else { blocked.push(uid); }
-  }
-  const skipped = blocked.length;
-  const tx = db.transaction(() => {
-    db.prepare("DELETE FROM class_members WHERE class_id=?").run(cid);
-    const ins = db.prepare("INSERT OR IGNORE INTO class_members (class_id,user_id) VALUES (?,?)");
-    for (const uid of allowed) ins.run(cid, uid);
+  const result = durableTransaction(() => {
+    const allowed=[]; const healed=[]; const blocked=[];
+    for(const uid of userIds){
+      const u=db.prepare("SELECT id, university_id, role FROM users WHERE id=?").get(uid);
+      if(!u || u.role!=="student"){ blocked.push(uid); continue; }
+      if(u.university_id==null || u.university_id===""){
+        // heal: bulk-imported student without university → assign to this class's university
+        try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(cl.university_id, uid); healed.push(uid); allowed.push(uid); } catch{}
+      } else if(u.university_id===cl.university_id){ allowed.push(uid); }
+      else { blocked.push(uid); }
+    }
+    const skipped = blocked.length;
+    {
+      db.prepare("DELETE FROM class_members WHERE class_id=?").run(cid);
+      const ins = db.prepare("INSERT OR IGNORE INTO class_members (class_id,user_id) VALUES (?,?)");
+      for (const uid of allowed) ins.run(cid, uid);
+    }
+
+
+    return ({ ok: true, added: allowed.length, skipped, healed: healed.length });
   });
-  tx();
-  persistNow();
-  res.json({ ok: true, added: allowed.length, skipped, healed: healed.length });
+  res.json(result);
 });
 
 r.post("/:id/members/resolve", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -701,31 +703,34 @@ r.post("/:id/members/resolve", authRequired, requireRole("teacher", "admin"), (r
   const raw = Array.isArray(req.body?.studentNos) ? req.body.studentNos : splitStudentNos(req.body?.studentNos);
   const names = req.body?.names || {};
   const createMissing = !!req.body?.createMissing;
-  const existing = [], missing = [], wrongUniversity = [], healed=[], created = [], limitBlocked = [];
-  let studentLimit = null;
-  for (const x of raw.map((v) => String(v).trim()).filter(Boolean)) {
-    let u = studentByNo(x);
-    if (!u && createMissing) {
-      const lim = checkStudentLimit(cl.university_id, 1);
-      if (lim) { studentLimit = lim; limitBlocked.push({ student_no: x }); continue; }
-      u = createStudentForUniversity({ sno: x, name: names[x] || x, universityId: cl.university_id, createdBy: req.user.id });
-      if (u) created.push(u);
+  const result = durableTransaction(() => {
+    const existing = [], missing = [], wrongUniversity = [], healed=[], created = [], limitBlocked = [];
+    let studentLimit = null;
+    for (const x of raw.map((v) => String(v).trim()).filter(Boolean)) {
+      let u = studentByNo(x);
+      if (!u && createMissing) {
+        const lim = checkStudentLimit(cl.university_id, 1);
+        if (lim) { studentLimit = lim; limitBlocked.push({ student_no: x }); continue; }
+        u = createStudentForUniversity({ sno: x, name: names[x] || x, universityId: cl.university_id, createdBy: req.user.id });
+        if (u) created.push(u);
+      }
+      if (!u) { missing.push(x); continue; }
+      if (u.university_id==null || u.university_id===""){
+        try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(cl.university_id, u.id); u.university_id=cl.university_id; healed.push({ student_no: x, id: u.id }); }catch{}
+      }
+      if (u.university_id !== cl.university_id) { wrongUniversity.push({ student_no: x, existing: u }); continue; }
+      existing.push(u);
     }
-    if (!u) { missing.push(x); continue; }
-    if (u.university_id==null || u.university_id===""){
-      try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(cl.university_id, u.id); u.university_id=cl.university_id; healed.push({ student_no: x, id: u.id }); }catch{}
+    const unique = [...new Map(existing.map((u) => [u.id, u])).values()];
+    if (req.body?.attach !== false) {
+      const ins = db.prepare("INSERT OR IGNORE INTO class_members (class_id,user_id) VALUES (?,?)");
+      for (const u of unique) ins.run(cl.id, u.id);
+
     }
-    if (u.university_id !== cl.university_id) { wrongUniversity.push({ student_no: x, existing: u }); continue; }
-    existing.push(u);
-  }
-  const unique = [...new Map(existing.map((u) => [u.id, u])).values()];
-  if (req.body?.attach !== false) {
-    const ins = db.prepare("INSERT OR IGNORE INTO class_members (class_id,user_id) VALUES (?,?)");
-    for (const u of unique) ins.run(cl.id, u.id);
-    persistNow();
-  }
-  res.json({ existing: unique, missing, wrongUniversity, healed, created, attached: req.body?.attach === false ? 0 : unique.length,
-             limitBlocked, studentLimit });
+    return ({ existing: unique, missing, wrongUniversity, healed, created, attached: req.body?.attach === false ? 0 : unique.length,
+               limitBlocked, studentLimit });
+  });
+  res.json(result);
 });
 
 const parseJson = (s, fb) => { try { return JSON.parse(s || ""); } catch { return fb; } };
@@ -752,8 +757,8 @@ r.post("/:id/drawing-reviews/:attemptId/:answerIndex", authRequired, requireRole
   const status=req.body?.status === "approved" ? "approved" : "rejected";
   ans.points=status==='approved'?proposed:0; ans.solved=status==='approved'; ans.pendingApproval=false; ans.drawing={...(ans.drawing||{}), approval:{status, feedback:req.body?.feedback||"", reviewer_id:req.user.id, reviewed_at:new Date().toISOString(), points:ans.points}}; answers[idx]=ans;
   const newScore=Math.max(0, Math.min(100, Math.round((Number(at.score)||0)-prev+Number(ans.points||0))));
-  db.prepare("UPDATE class_flashcard_attempts SET score=?, answers_json=? WHERE id=?").run(newScore, JSON.stringify(answers), at.id);
-  persistNow(); res.json({ok:true, score:newScore, review:ans.drawing.approval});
+  durableTransaction(() => db.prepare("UPDATE class_flashcard_attempts SET score=?, answers_json=? WHERE id=?").run(newScore, JSON.stringify(answers), at.id));
+  res.json({ok:true, score:newScore, review:ans.drawing.approval});
 });
 
 
@@ -1371,25 +1376,28 @@ r.post("/:id/remedial", authRequired, requireRole("teacher", "admin"), (req, res
      shows. Reading `attempts.score` directly here (as an earlier version did)
      ignored a teacher's override, so the dashboard could flag a student as
      needing remedial while this endpoint selected nobody. */
-  const targets = explicit
-    || classProgress(cl).students.filter((x) => x.needsRemedial).map((x) => x.userId);
+  const targets = [...new Set(explicit
+    || classProgress(cl).students.filter((x) => x.needsRemedial).map((x) => x.userId))];
+  const eligible = new Set(db.prepare("SELECT u.id FROM class_members m JOIN users u ON u.id=m.user_id WHERE m.class_id=? AND u.role='student' AND u.university_id=?").all(cl.id, cl.university_id).map(u => u.id));
+  if (targets.some(uid => !eligible.has(uid))) return res.status(403).json({ error: "not_enrolled", stage: "access" });
 
   const maxAttempts = Math.max(1, Number(req.body?.maxAttempts) || 2);
   const byUser = new Map(db.prepare("SELECT id, user_id FROM exam_assignments WHERE case_id=?")
     .all(caseId).map((e) => [e.user_id, e.id]));
   let created = 0, updated = 0;
-  for (const uid of targets) {
-    if (byUser.has(uid)) {
-      db.prepare("UPDATE exam_assignments SET active=1, max_attempts=?, assigned_by=? WHERE id=?")
-        .run(maxAttempts, req.user.id, byUser.get(uid));
-      updated++;
-    } else {
-      db.prepare("INSERT INTO exam_assignments (user_id,case_id,assigned_by,max_attempts,active) VALUES (?,?,?,?,1)")
-        .run(uid, caseId, req.user.id, maxAttempts);
-      created++;
+  durableTransaction(() => {
+    for (const uid of targets) {
+      if (byUser.has(uid)) {
+        db.prepare("UPDATE exam_assignments SET active=1, max_attempts=?, assigned_by=? WHERE id=?")
+          .run(maxAttempts, req.user.id, byUser.get(uid));
+        updated++;
+      } else {
+        db.prepare("INSERT INTO exam_assignments (user_id,case_id,assigned_by,max_attempts,active) VALUES (?,?,?,?,1)")
+          .run(uid, caseId, req.user.id, maxAttempts);
+        created++;
+      }
     }
-  }
-  persistNow();
+  });
   audit(req, "class.remedial_assigned", "class",
         { id: cl.id, caseId, students: targets.length, threshold: REMEDIAL_THRESHOLD });
   res.json({ ok: true, caseId, assigned: targets.length, created, updated,

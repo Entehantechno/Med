@@ -2,7 +2,7 @@
    reports.js — Research analytics, exam results & CSV export.
    ================================================================ */
 import { Router } from "express";
-import { db, persistNow } from "../db.js";
+import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { toCSV, safeFilename } from "../lib/csv.js";
 import { isLearnContent, caseIsLearn } from "../lib/content-track.js";
@@ -29,9 +29,9 @@ function currentUniversityId(user) {
 function teacherOwnsStudent(user, studentUniversityId, studentRole) {
   if (user.role === "admin") return true;
   if (user.role !== "teacher") return false;
-  if (studentRole && studentRole !== "student") return false;
+  if (studentRole !== "student") return false;
   const uni = currentUniversityId(user);
-  return uni != null && (Number(studentUniversityId) || 1) === uni;
+  return uni != null && studentUniversityId != null && Number(studentUniversityId) === Number(uni);
 }
 function scopedAttemptRows(user) {
   const rows = rowsWithNames();
@@ -97,7 +97,7 @@ r.get("/summary", authRequired, requireRole("teacher", "admin"), (req, res) => {
     return db.prepare(`SELECT COUNT(*) n FROM ${table} WHERE active=1 AND NOT COALESCE(${bankSql}, 0)`).get().n;
   };
   const students = uni
-    ? db.prepare("SELECT COUNT(*) n FROM users WHERE role='student' AND COALESCE(university_id,1)=?").get(uni).n
+    ? db.prepare("SELECT COUNT(*) n FROM users WHERE role='student' AND university_id=?").get(uni).n
     : db.prepare("SELECT COUNT(*) n FROM users WHERE role='student'").get().n;
   const cases = countUniBank("cases", uni);
   const cards = countUniBank("flashcards", uni);
@@ -209,8 +209,7 @@ r.delete("/attempts/:id", authRequired, requireRole("teacher", "admin"), (req, r
   if (!teacherOwnsStudent(req.user, a.student_university_id, a.student_role)) {
     return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
-  db.prepare("DELETE FROM attempts WHERE id=?").run(req.params.id);
-  persistNow();
+  durableTransaction(() => db.prepare("DELETE FROM attempts WHERE id=?").run(req.params.id));
   res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: "attempt_delete_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
@@ -228,14 +227,26 @@ r.put("/attempts/:id/review", authRequired, requireRole("teacher", "admin"), (re
     return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
   const b = req.body || {};
-  const status = ["approved", "adjusted", "rejected"].includes(b.status) ? b.status : "approved";
+  if (!["approved", "adjusted", "rejected"].includes(b.status)) {
+    return res.status(400).json({ error: "invalid_review_status" });
+  }
+  const status = b.status;
   let teacherScore = null;
-  if (status === "adjusted") teacherScore = Math.max(0, Math.min(100, parseInt(b.teacher_score, 10) || 0));
+  if (status === "adjusted") {
+    const raw = b.teacher_score;
+    if (!["number", "string"].includes(typeof raw) || String(raw).trim() === "" ||
+        !Number.isFinite(Number(raw)) || Number(raw) < 0 || Number(raw) > 100) {
+      return res.status(400).json({ error: "invalid_teacher_score" });
+    }
+    // Preserve the existing integer-grade contract, but never coerce junk to 0.
+    teacherScore = Math.trunc(Number(raw));
+  }
   const feedback = String(b.teacher_feedback || "").slice(0, 4000);
-  db.prepare(`UPDATE attempts SET teacher_status=?, teacher_score=?, teacher_feedback=?,
-    reviewed_by=?, reviewed_at=datetime('now') WHERE id=?`)
-    .run(status, teacherScore, feedback, req.user.id, a.id);
-  persistNow();
+  durableTransaction(() => {
+    db.prepare(`UPDATE attempts SET teacher_status=?, teacher_score=?, teacher_feedback=?,
+      reviewed_by=?, reviewed_at=datetime('now') WHERE id=?`)
+      .run(status, teacherScore, feedback, req.user.id, a.id);
+  });
   res.json({ ok: true, status, teacher_score: teacherScore });
   } catch (e) {
     res.status(500).json({ error: "review_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });

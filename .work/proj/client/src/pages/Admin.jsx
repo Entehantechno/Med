@@ -1,3 +1,4 @@
+import { adminTabMode } from "../lib/admin-navigation.js";
 import {acceptedAnswers,orderingRows,drawingRubrics,percentCoordinate,patientEditorData} from "../lib/authoring-values.js";
 import {validateQuestion,validatePatient} from "../lib/authoring-validation.js";
 import AuthoringModal, {AuthorSection,AuthorField,AuthorSummary} from "../components/AuthoringModal.jsx";
@@ -200,7 +201,7 @@ export default function Admin({ home }) {
   // pick a tab AND close the mobile dropdown so the content is shown immediately.
   // The picker is cross-universe: overview cards and Ctrl+K can jump from
   // کلیات to دانشگاهی/رقابتی without leaving the user on a hidden tab.
-  const findModeForTab = (id) => generalNav.some(([x]) => x === id) ? "general" : uniNav.some(([x]) => x === id) ? "uni" : competitiveNav.some(([x]) => x === id) ? "learn" : null;
+  const findModeForTab = (id) => adminTabMode(id, mode, { general: generalNav, uni: uniNav, learn: competitiveNav });
   const pickTab = (id) => { const m = findModeForTab(id); if (m) setMode(m); setTab(id); setMobileNavOpen(false); };
   const jumpToCards = (filter) => { setCardsJump(filter); setMode("learn"); setTab("learnCards"); setMobileNavOpen(false); };
   const paletteNav = (() => {
@@ -467,7 +468,7 @@ const SCOPE_ROLES = {
   uni: ["student", "teacher", "admin"],
   competitive: ["learner"],
 };
-function UsersManager({ scope = "all" }) {
+export function UsersManager({ scope = "all" }) {
   const { t, lang, impersonate: doImpersonate } = useApp();
   const toast = useToast();
   const scopeRoles = SCOPE_ROLES[scope] || SCOPE_ROLES.all;
@@ -508,7 +509,7 @@ function UsersManager({ scope = "all" }) {
   useEffect(() => {
     if (!showUniTools && scope!=="all") return;
     api.get("/admin/universities").then(r=> setUnis(r.universities||[])).catch(()=>{});
-    api.get("/classes").then(r=> setClasses(r.classes||[])).catch(()=>{});
+    api.get("/classes").then(r=> setClasses(Array.isArray(r) ? r : Array.isArray(r?.classes) ? r.classes : [])).catch(()=>{});
   }, [showUniTools, scope]);
 
   const setStatus = async (u, status) => { await api.post(`/admin/users/${u.id}/status`, { status }); toast(t("saved")); load(); };
