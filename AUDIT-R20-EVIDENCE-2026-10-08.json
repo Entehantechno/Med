@@ -1,0 +1,79 @@
+{
+  "beforeFix": {
+    "passed": 0,
+    "failed": 5
+  },
+  "newR20Tests": {
+    "passed": 14,
+    "failed": 0
+  },
+  "initialFocused": {
+    "passed": 80,
+    "failed": 0
+  },
+  "extractedPackageTests": {
+    "passed": 14,
+    "failed": 0
+  },
+  "client": {
+    "passed": 119,
+    "failed": 0
+  },
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "server": {
+    "passed": 1592,
+    "failed": 101,
+    "tests": 1693,
+    "files": 69,
+    "duration_seconds": 602.21
+  },
+  "newFailureNamesVsR19": [],
+  "build": "PASS; R20 service-worker stamp verified",
+  "package": {
+    "files": 1129,
+    "bytes": 50375353,
+    "sha256": "639be9f8b2784abb7909ecc03a745dc93593fa0bb75d9bceea3a6290a9627c9d",
+    "changedPredecessorEntries": [
+      "VERSION.txt",
+      "client/dist/sw.js",
+      "client/dist/sw.js.br",
+      "client/dist/sw.js.gz",
+      "server/src/routes/questionnaires.js"
+    ],
+    "allOtherPredecessorBytesUnchanged": true,
+    "crc": "PASS",
+    "demo": {
+      "users": 116,
+      "cases": 23,
+      "flashcards": 11681
+    },
+    "exam_mode": "TEXT DEFAULT 'perQuestion'"
+  },
+  "http": {
+    "faultResponses": {
+      "create": 500,
+      "edit": 500,
+      "insert": 500,
+      "replace": 500
+    },
+    "externalAI": false,
+    "unassignedTeacherDenied": true,
+    "formId": 15,
+    "responseId": 7,
+    "failedWritesRolledBack": true,
+    "retryNoDuplicates": true,
+    "anonymousIdentityPreserved": true,
+    "studentStaffAccessDenied": true,
+    "freshApplicationProcessVerified": true
+  },
+  "limitations": [
+    "No browser or external AI tests in R20",
+    "101 pre-existing server failures remain",
+    "Synchronous persistence-failure injection, not power-loss or multiprocess certification",
+    "createApp restarted in a new process, not deployment/index.js bootstrap",
+    "Existing questionnaire ownership and anonymity policy otherwise unchanged; no new versioned tenant model or clinical content assessment"
+  ]
+}

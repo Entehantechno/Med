@@ -1,7 +1,7 @@
 import express from "express";
 import { safeFilename } from "../lib/csv.js";
 import { scoreOsceChecklist, scoreLikert, aggregateNps, RESEARCH_INSTRUMENTS } from "../data/research-instruments.js";
-import { db, persistNow } from "../db.js";
+import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { pseudonymFor } from "../lib/pseudonym.js";
 import { audit } from "../lib/audit.js";
@@ -53,20 +53,22 @@ r.post("/admin/forms", ...admin, (req, res) => {
   }
   const b = req.body || {};
   if (req.user.role === "teacher") {
+    if (!currentUniversityId(req.user)) {
+      return res.status(400).json({ error: "university_required", stage: "access" });
+    }
     const fake = { class_id: nid(b.class_id), exam_id: nid(b.exam_id), created_by: req.user.id };
     if ((fake.class_id || fake.exam_id) && !formInUniversity(fake, currentUniversityId(req.user) || -1)) {
       return res.status(403).json({ error: "wrong_university", stage: "access" });
     }
   }
   const qs = questionsOf(b);
-  const info = db.prepare(`INSERT INTO questionnaire_forms
+  const info = durableTransaction(() => db.prepare(`INSERT INTO questionnaire_forms
     (title_fa,title_en,description_fa,description_en,scope,class_id,exam_id,questions_json,active,require_after_finish,anonymous,created_by)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`).run(
     b.title_fa || "", b.title_en || "", b.description_fa || "", b.description_en || "",
     scopeOf(b.scope), nid(b.class_id), nid(b.exam_id), JSON.stringify(qs),
     b.active === false ? 0 : 1, b.require_after_finish === false ? 0 : 1, b.anonymous === false ? 0 : 1, req.user.id
-  );
-  persistNow();
+  ));
   res.json(clean(db.prepare("SELECT * FROM questionnaire_forms WHERE id=?").get(info.lastInsertRowid)));
 });
 
@@ -89,7 +91,7 @@ r.put("/admin/forms/:id", ...admin, (req, res) => {
       return res.status(403).json({ error: "wrong_university", stage: "access" });
     }
   }
-  db.prepare(`UPDATE questionnaire_forms SET
+  durableTransaction(() => db.prepare(`UPDATE questionnaire_forms SET
     title_fa=?, title_en=?, description_fa=?, description_en=?, scope=?, class_id=?, exam_id=?,
     questions_json=?, active=?, require_after_finish=?, anonymous=?, updated_at=datetime('now')
     WHERE id=?`).run(
@@ -100,8 +102,7 @@ r.put("/admin/forms/:id", ...admin, (req, res) => {
     b.active === undefined ? old.active : (b.active ? 1 : 0),
     b.require_after_finish === undefined ? old.require_after_finish : (b.require_after_finish ? 1 : 0),
     b.anonymous === undefined ? old.anonymous : (b.anonymous ? 1 : 0), id
-  );
-  persistNow();
+  ));
   res.json(clean(db.prepare("SELECT * FROM questionnaire_forms WHERE id=?").get(id)));
 });
 
@@ -195,23 +196,27 @@ r.post("/:id/responses", authRequired, (req, res) => {
      cannot deduplicate here: when the form is anonymous user_id is NULL, and in
      SQLite NULLs are distinct in a UNIQUE index — which used to let one student
      insert unlimited "anonymous" responses. */
-  const existing = db.prepare(
-    `SELECT id FROM questionnaire_responses
-      WHERE form_id=? AND pseudonym IS ? AND context_type=? AND context_id IS ?`
-  ).get(id, pseudo, contextType, contextId);
+  // The upsert and its acknowledgement share one durable boundary; a failed
+  // replacement must leave both disk and the in-memory original untouched.
+  const replaced = durableTransaction(() => {
+    const existing = db.prepare(
+      `SELECT id FROM questionnaire_responses
+        WHERE form_id=? AND pseudonym IS ? AND context_type=? AND context_id IS ?`
+    ).get(id, pseudo, contextType, contextId);
 
-  const answers = JSON.stringify(req.body?.answers || {});
-  if (existing) {
-    db.prepare(`UPDATE questionnaire_responses SET answers_json=?, user_id=?, updated_at=datetime('now') WHERE id=?`)
-      .run(answers, storedUserId, existing.id);
-  } else {
-    db.prepare(`INSERT INTO questionnaire_responses
-      (form_id,user_id,pseudonym,context_type,context_id,answers_json,created_at,updated_at)
-      VALUES (?,?,?,?,?,?,datetime('now'),datetime('now'))`)
-      .run(id, storedUserId, pseudo, contextType, contextId, answers);
-  }
-  persistNow();
-  res.json({ ok: true, replaced: !!existing });
+    const answers = JSON.stringify(req.body?.answers || {});
+    if (existing) {
+      db.prepare(`UPDATE questionnaire_responses SET answers_json=?, user_id=?, updated_at=datetime('now') WHERE id=?`)
+        .run(answers, storedUserId, existing.id);
+    } else {
+      db.prepare(`INSERT INTO questionnaire_responses
+        (form_id,user_id,pseudonym,context_type,context_id,answers_json,created_at,updated_at)
+        VALUES (?,?,?,?,?,?,datetime('now'),datetime('now'))`)
+        .run(id, storedUserId, pseudo, contextType, contextId, answers);
+    }
+    return !!existing;
+  });
+  res.json({ ok: true, replaced });
 });
 
 r.get("/admin/responses", ...admin, (req, res) => {
