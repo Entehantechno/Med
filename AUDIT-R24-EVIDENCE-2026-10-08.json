@@ -1,0 +1,864 @@
+{
+  "date": "2026-10-08",
+  "baseline_commit": "7983a97",
+  "user_bank_decision": "preserve_bank",
+  "server": {
+    "passed": 1817,
+    "failed": 47,
+    "tests": 1864,
+    "files": 73,
+    "duration_seconds": 591.05
+  },
+  "old_non_bank_failures_now_passing": 54,
+  "new_failures": [],
+  "new_server_test_count": 16,
+  "new_client_test_count": 1,
+  "server_red": {
+    "passed": 5,
+    "failed": 10,
+    "tests": 15,
+    "assertions": [
+      {
+        "file": "university-import-r24.test.js",
+        "name": "student CSV preserves a multiline quoted name with delimiter \",\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected { created: 2, skipped: +0, …(8) } to match object { created: 1, total: 1, skipped: +0 }"
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "student CSV preserves a multiline quoted name with delimiter \";\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected { created: 1, skipped: 1, …(8) } to match object { created: 1, total: 1, skipped: +0 }"
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "student CSV preserves a multiline quoted name with delimiter \"\\t\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected { created: 1, skipped: 1, …(8) } to match object { created: 1, total: 1, skipped: +0 }"
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "student CSV preserves a multiline quoted name with delimiter \"،\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected { created: 1, skipped: 1, …(8) } to match object { created: 1, total: 1, skipped: +0 }"
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "unterminated CSV quote rejects the entire request before any user is written",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "server provides exact failed records for retry even with blank lines and multiline names",
+        "status": "failed",
+        "first_error": "AssertionError: expected { created: 3, skipped: +0, …(8) } to match object { created: 1, skipped: 1, …(2) }"
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "basic text/choice flashcard CSV imports the supported question type",
+        "status": "failed",
+        "first_error": "AssertionError: expected 400 to be 200 // Object.is equality"
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "CSV cannot pretend to import unsupported drawing answers",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "cases import rolls back disk failure and persists a successful retry",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "flashcards import rolls back disk failure and persists a successful retry",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 503 // Object.is equality"
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "student CSV logical records support \"\\n\" separators",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "student CSV logical records support \"\\r\\n\" separators",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "student CSV logical records support \"\\r\" separators",
+        "status": "failed",
+        "first_error": "AssertionError: expected +0 to be 1 // Object.is equality"
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "flashcard dry-run and commit agree about unsupported answer modes",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "malformed second flashcard prevents the entire batch from inserting",
+        "status": "passed",
+        "first_error": null
+      }
+    ]
+  },
+  "client_red": {
+    "passed": 0,
+    "failed": 1,
+    "tests": 1,
+    "assertions": [
+      {
+        "file": "pages/Admin.university-r24.test.jsx",
+        "name": "retry uses server-provided logical CSV records without splitting quoted multiline fields",
+        "status": "failed",
+        "first_error": "AssertionError: expected 'name,student_no\\n\"Rejected' to be 'name,student_no\\n\"Rejected\\nName\",2002' // Object.is equality"
+      }
+    ]
+  },
+  "extracted_package_tests": {
+    "passed": 85,
+    "failed": 0,
+    "tests": 85,
+    "assertions": [
+      {
+        "file": "ai-routing-settings.test.js",
+        "name": "AI routing configuration API persists order and keys with explicit per-row clear at /api/settings/ai",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "ai-routing-settings.test.js",
+        "name": "AI routing configuration API rejects malformed activation without changing saved configuration at /api/settings/ai",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "ai-routing-settings.test.js",
+        "name": "AI routing configuration API invalidates old connection success after editing settings at /api/settings/ai",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "ai-routing-settings.test.js",
+        "name": "AI routing configuration API refuses student read/write at /api/settings/ai",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "ai-routing-settings.test.js",
+        "name": "AI routing configuration API inherits university list only when competitive settings are empty; separate list takes priority",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "ai-routing-settings.test.js",
+        "name": "AI routing configuration API admin test reports the used fallback, not the unavailable first model",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "ai-routing-settings.test.js",
+        "name": "AI routing configuration API blog rewrite uses ordered config without a legacy key",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "ai-routing-settings.test.js",
+        "name": "AI routing configuration API an intentionally empty university route list does not silently use competitive keys",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "ai-routing-settings.test.js",
+        "name": "retired competitive routing: configuration persistence cannot read or mutate configuration",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "ai-routing-settings.test.js",
+        "name": "retired competitive routing: invalid activation cannot read or mutate configuration",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "ai-routing-settings.test.js",
+        "name": "retired competitive routing: connection state cannot read or mutate configuration",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "ai-routing-settings.test.js",
+        "name": "retired competitive routing: student access cannot read or mutate configuration",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class members cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class resolve cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam ids cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam numbers cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam resolve cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV existing user cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV class-only destination cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV row class-code destination cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "create student cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university create: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university edit: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university defaults: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university member add: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university member remove: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university delete: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "student create: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV create and enrol: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV teacher without a university cannot select one in the request",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV student import cannot alter or enrol an administrator account",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV duplicate row is counted once rather than twice",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "editing university licensing preserves omitted inactive state",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university accepts boolean false when deactivating",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV rejects foreign class_id before creating or enrolling students",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV rejects foreign class_code before creating or enrolling students",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV rejects foreign row_code before creating or enrolling students",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class members does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class resolve does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam ids does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam numbers does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam resolve does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV existing user does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV enrolment SQL error rolls back newly created students",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class members accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class resolve accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam ids accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam numbers accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam resolve accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV existing user accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV class-only destination accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV row class-code destination accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "create student accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class members allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class resolve allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam ids allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam numbers allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam resolve allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV existing user allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "concurrent creation rechecks the last remaining seat after password hashing",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV admin may import into another university via a row class code",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV mixed batch counts rejected rows once and never crosses capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "admin legacy unassigned CSV import remains supported",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "student CSV preserves a multiline quoted name with delimiter \",\"",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "student CSV preserves a multiline quoted name with delimiter \";\"",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "student CSV preserves a multiline quoted name with delimiter \"\\t\"",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "student CSV preserves a multiline quoted name with delimiter \"،\"",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "unterminated CSV quote rejects the entire request before any user is written",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "server provides exact failed records for retry even with blank lines and multiline names",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "basic text/choice flashcard CSV imports the supported question type",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "CSV cannot pretend to import unsupported drawing answers",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "cases import rolls back disk failure and persists a successful retry",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "flashcards import rolls back disk failure and persists a successful retry",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "student CSV logical records support \"\\n\" separators",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "student CSV logical records support \"\\r\\n\" separators",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "student CSV logical records support \"\\r\" separators",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "flashcard dry-run and commit agree about unsupported answer modes",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-import-r24.test.js",
+        "name": "malformed second flashcard prevents the entire batch from inserting",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "vp-required-ai.test.js",
+        "name": "AI-required final evaluation defaults to required AI even without the environment setting",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "vp-required-ai.test.js",
+        "name": "AI-required final evaluation does not call teaching or store a grade after invalid scoring",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "vp-required-ai.test.js",
+        "name": "AI-required final evaluation does not store a final grade if the lesson is invalid",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "vp-required-ai.test.js",
+        "name": "AI-required final evaluation persists only when both model stages return valid responses",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "vp-required-ai.test.js",
+        "name": "AI-required final evaluation does not consume an attempt on quota failure and allows a subsequent successful retry",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "vp-required-ai.test.js",
+        "name": "AI-required final evaluation retains an explicit offline diagnostic mode, not the production default",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "vp-required-ai.test.js",
+        "name": "unapproved source still blocks attributed lesson output rather than trusting model text",
+        "status": "passed",
+        "first_error": null
+      }
+    ]
+  },
+  "client": {
+    "passed": 131,
+    "failed": 0,
+    "tests": 131
+  },
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "build": "passed",
+  "package": {
+    "sha256": "3d11b964ea8367bd925c196d0fdf15a6fef237219979e74d01cc2cb9872ca4b2",
+    "bytes": 50398465,
+    "files": 1140,
+    "crc": "passed",
+    "source_equality": "passed",
+    "retained_identical": 235,
+    "bank_files_identical_to_R23": 54,
+    "bank_sha256": {
+      "tools/master-bank/import-payload.master-preint.part01.json": "8183ec4caee08f06af4475afa940a8992e87f70c5abcff12d6c0f7ecffff710d",
+      "tools/master-bank/import-payload.master-preint.part02.json": "afaefdd03e9c9aa9b643ed85e7be470d4889068a4425f9712a51ddb1ec007304",
+      "tools/master-bank/import-payload.master-preint.part03.json": "a2196f5ea92c9e59a297becd5dc86c79c59f4b4eb7caee24a1d99558fce65c5b",
+      "tools/master-bank/import-payload.master-preint.part04.json": "68a24358cc53b7cd6fa7446132688e7d939f9ae5c0398afa3b5d87dc138caab8",
+      "tools/master-bank/import-payload.master-preint.part05.json": "3eed61f0b38a1438051fdb048be8182eceafeb3d125cd2ff46a63615ece3f71f",
+      "tools/master-bank/import-payload.master-preint.part06.json": "d8082ee58be5b750f76eefa771cd7aeea3180bac701c6d087608656b609e6dd9",
+      "tools/master-bank/import-payload.master-preint.part07.json": "5d0f2773b2ab3b60da7204dd67600ef71f3face9fed28d1400f49584dcbd988b",
+      "tools/master-bank/import-payload.master-preint.part08.json": "eb04e5f18b469c2ce44f352ceefe339cd39b6a827a66661320a2d5bc982f5d75",
+      "tools/master-bank/import-payload.master-preint.part09.json": "83e9082106acf7c7c037b7a65878c32f11196b7f4ffdcea7a157ebdf6bb2608d",
+      "tools/master-bank/import-payload.master-preint.part10.json": "6e845af8a99585bbff7a7dcf5a154095b631bf9605475f14d19249105234dc6a",
+      "tools/master-bank/import-payload.master-preint.part11.json": "0d799d3714a2c2fd8cee7a6d062f73f4aecf36303b8260f6cfd21fb563ff7af0",
+      "tools/master-bank/import-payload.master-preint.part12.json": "1732915256cf518323b481cee82399ffc61459a774473d43dd5540da45d0b0a0",
+      "tools/master-bank/import-payload.master-preint.part13.json": "0cfebe2eaa0fb7bd1817e298424543ba8e54b9d0230d18f8841de1b28f5b7af3",
+      "tools/master-bank/import-payload.master-preint.part14.json": "fc3b43c22e8e2f11799fad2b3482c31b64ca9a27722fff342981cff35187a96a",
+      "tools/master-bank/import-payload.master-preint.part15.json": "e20e4cf2494a16862707b5d7cdc8c9d596cd3deaee06629f908526682dbd8eee",
+      "tools/master-bank/import-payload.master-preint.part16.json": "981634da31a27714e26d16196097ba351b7cca3db96c0bd163b342ec1fef7b45",
+      "tools/master-bank/import-payload.master-preint.part17.json": "4ed25c860ea0a3c51296ae7920fd2e3fb625901463731dc1a1790d3740a1738e",
+      "tools/master-bank/import-payload.master-preint.part18.json": "57d622f7b3aa3dcbe190dc0d6f3fadab6d5f620d318a6ce22ebb5636b3beedcc",
+      "tools/master-bank/import-payload.master-preint.part19.json": "c48d19660dfbc55279925c558eae8b34513925660b11eb53e048bf051ea4e118",
+      "tools/master-bank/import-payload.master-preint.part20.json": "b885c4f4a70414912e4344294ede37a408a59f2e895ecdabdb0f8e2da33b4665",
+      "tools/master-bank/import-payload.master-preint.part21.json": "6e46ce1b1358486610a73068f79247af6f4922d4739710104221268600714696",
+      "tools/master-bank/import-payload.master-preint.part22.json": "9bef81b37d77d024203b67f5d4abfb277f8d17b61d7c9086f88b9be7f102703a",
+      "tools/master-bank/import-payload.master-preint.part23.json": "81cd85a5898a7c67f929494a16cc9443f89ca021ea0d4306676b240f6a9fb62b",
+      "tools/master-bank/import-payload.master-preint.part24.json": "e245282fc7b449f264a921df18e2b851f9c6a8e6397227417d12c00b082c4a18",
+      "tools/master-bank/import-payload.master-preint.part25.json": "af009f665bbbe0c9cb73dca90af9b44ca4758740373b8f3ca17cd3b1eb1096b4",
+      "tools/master-bank/import-payload.master-preint.part26.json": "0329863b8a4f8aa8650dd62a82635737b7bd3b785e960eb43ba92ef70aa7d6d4",
+      "tools/master-bank/import-payload.master-preint.part27.json": "350a1b87c31cccd33890887d061a1fdc5939ecad88f2158cf6e4d5c9f4698db4",
+      "tools/master-bank/import-payload.master-preint.part28.json": "a7f9a4337ca21ad8fef8d50e9f36bb6fe46dc1da9da73c7237d4e8972446dd91",
+      "tools/master-bank/import-payload.master-preint.part29.json": "443e7cf2a807df07ccc3688bbb132ecb49989b9fdd05010e9029225d99e5018d",
+      "tools/master-bank/import-payload.master-preint.part30.json": "00865517c8a6bbd90fe2754a1a64fafe3d70b3abb95fd11566d77b8f7971a228",
+      "tools/master-bank/import-payload.master-preint.part31.json": "821a1cbf7053e832eb81d616df5ea1c413157cf5e6c190eadf7bcd3fc0cfd2eb",
+      "tools/master-bank/import-payload.master-preint.part32.json": "52a00ab44f14feec2d90cc549a9d00225964fe11161ff60e46cfebb94ef62256",
+      "tools/master-bank/import-payload.master-preint.part33.json": "6a20ea1ed6a5ff461ff5cc4da9850da8befe116609a98474cf4d75ec29129c00",
+      "tools/master-bank/import-payload.master-preint.part34.json": "e35fdfe183c8f33016393fdf76b62475430d29871c2807f9bae4084c3d325232",
+      "tools/master-bank/import-payload.master-preint.part35.json": "f7f2c1bd663874bc349133d383c48b080c6b571f0f5885996b4fefb37c6eb392",
+      "tools/master-bank/import-payload.master-preint.part36.json": "cebe32bb8d0d309841460cbb25d73b6391a859d3c4e7c3e834493e6a8092c029",
+      "tools/master-bank/import-payload.master-preint.part37.json": "7da568095cefb94d600111b9b472e6a78b9040f32592c2e40fd92379cef2e003",
+      "tools/master-bank/import-payload.master-preint.part38.json": "b13d044805fd100e1805ad3b1c1dfb2023184d253485cd02c1701afb39ed797d",
+      "tools/master-bank/import-payload.master-preint.part39.json": "8a11b4e2f0f3139fa2e0af389ff78c70b48819ee6b952b6b3c4a028390b5bc2e",
+      "tools/master-bank/import-payload.master-preint.part40.json": "b39881f1ca1b042fad520d6db8f5c3bf29a6079fd6de6474067c8a74ef205411",
+      "tools/master-bank/import-payload.master-preint.part41.json": "e71b4eb4be1a7ba08b99222b002dc6882178824e481455842512cd9a32ee16c4",
+      "tools/master-bank/import-payload.master-preint.part42.json": "60e8b0384ec73b1fa7fe0a29be62dae4c7468f0b3c7fcaff1c55f1b1dc5c08ce",
+      "tools/master-bank/import-payload.master-preint.part43.json": "89c6f97033b3d07a6804be36e17d02977671dd7bf7aafdb3e42532919346f574",
+      "tools/master-bank/import-payload.master-preint.part44.json": "c28865ada70731ca5363541fe5578814aac64d8fbc6dcbb79b45b2cc6533698d",
+      "tools/master-bank/import-payload.master-preint.part45.json": "2acaa7867bbe6bab8f695659987d05ac8136ef1b7eb99f6cb17f830f4513a33c",
+      "tools/master-bank/import-payload.master-preint.part46.json": "e21950e3f172417d98cd1dfe618ab53b1a2cf01786364a49a5fad9bfd7f38594",
+      "tools/master-bank/import-payload.master-preint.part47.json": "5ed0996b16ddedcad2be7f8f2ac79fdb5e6607716a302319340810936b9fd2b4",
+      "tools/master-bank/import-payload.master-preint.part48.json": "92be551e59299c3bda6a475fe70c834b188b64dab0b82143b7e4cfad233b59de",
+      "tools/master-bank/import-payload.master-preint.part49.json": "daba9b0d44414f9accf1013dd8abb28a7cbf8f27f167877b83639f5dca9b4297",
+      "tools/master-bank/import-payload.master-preint.part50.json": "7c67a9a0ede9784c9124d99037b8cc839d226e8f0f1eba48383618931c4ce663",
+      "tools/master-bank/import-payload.master-preint.part51.json": "6e3c728d236d8d38f2117b8b7fd67cc3769ebd9991ff5d8f25b4d3681bbac91b",
+      "tools/master-bank/import-payload.master-residency.part01.json": "4dfd350fa54580fa9c54ed6c6815e36b71550dc82a5a4e6cd025eed1e6e8f3b8",
+      "tools/master-bank/import-payload.master-residency.part02.json": "456134e6592f70fac0f93e035de7cb4d990d6e5721f6eac2e557402de8c08c33",
+      "tools/master-bank/import-payload.master-residency.part03.json": "3e43e572cbf026a7ad90c445a4e8154181bd04f142fb1d0da06e9be81007cd99"
+    },
+    "jwt_secret": "blank"
+  },
+  "http": {
+    "checks": [
+      {
+        "method": "POST",
+        "path": "/auth/login",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/universities",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/users",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/auth/login",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/classes",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/users/import",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/classes/2",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/users/import",
+        "status": 400
+      },
+      {
+        "method": "POST",
+        "path": "/flashcards-import",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/flashcards-import",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/flashcards-import",
+        "status": 400
+      },
+      {
+        "method": "PUT",
+        "path": "/admin/vpatient",
+        "status": 410
+      },
+      {
+        "method": "POST",
+        "path": "/auth/login",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/learn/vpatient",
+        "status": 410
+      }
+    ]
+  },
+  "restart": {
+    "checks": [
+      {
+        "method": "POST",
+        "path": "/auth/login",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/universities",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/classes/2",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/auth/login",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/flashcards",
+        "status": 200
+      },
+      {
+        "restart": "multiline name, membership, capacity and flashcard persist"
+      }
+    ]
+  },
+  "browser": {
+    "import": {
+      "created": 1,
+      "skipped": 2,
+      "total": 3,
+      "failedRecords": 2,
+      "keepMultilineFailedCsv": "passed",
+      "blankLines": "passed"
+    },
+    "visited": [
+      "Dashboard",
+      "Reports & Research",
+      "Classes",
+      "Saved conversations",
+      "Results & gradebook",
+      "Drawing reviews",
+      "Virtual-patient grading",
+      "Exams",
+      "Exam results",
+      "Educational research",
+      "Users",
+      "Universities",
+      "Patient Bank",
+      "Flashcards",
+      "Auto complete catalogs",
+      "Checklists",
+      "Questionnaires"
+    ],
+    "errors": [],
+    "network": [],
+    "mobile": "390x844 screenshot; not exhaustive responsive certification"
+  },
+  "limits": [
+    "47 bank failures retained explicitly",
+    "No external AI or paid API calls",
+    "No power-loss/fsync/multiprocess certification",
+    "Tabs are smoke, not all-form E2E",
+    "No universal CSV parser/export or spreadsheet certification"
+  ]
+}

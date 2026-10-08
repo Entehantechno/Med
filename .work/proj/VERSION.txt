@@ -1,1 +1,1 @@
-2026.10.08-r23-university-enrolment-durability
+2026.10.08-r24-university-import-contracts

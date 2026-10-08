@@ -1,3 +1,4 @@
+import {approveTestReference} from './helpers/reference-fixture.js';
 import {grantOnlineConsent,withdrawConsent} from '../src/lib/consent.js';
 import fs from 'node:fs';
 import {describe,it,expect,beforeAll,beforeEach,afterEach,vi} from 'vitest';
@@ -24,7 +25,7 @@ function provider(delay=0){
  }));
 }
 beforeAll(async()=>{
- execSync('node src/seed.js --force',{stdio:'ignore'});await initDb();app=createApp();
+ execSync('node src/seed.js --force',{stdio:'ignore'});await initDb();app=createApp();await approveTestReference(app);
  const template=db.prepare("SELECT * FROM users WHERE username='40012345'").get();
  for(let i=0;i<10;i++){
   const id=db.prepare("INSERT INTO users(username,password_hash,role,name_en,university_id) VALUES (?,?,'student',?,?)").run(`pilot-${i}`,template.password_hash,`Pilot ${i}`,template.university_id).lastInsertRowid;

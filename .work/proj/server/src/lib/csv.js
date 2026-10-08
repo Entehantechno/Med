@@ -49,3 +49,23 @@ export function safeFilename(name, fallback = "export") {
   const s = String(name == null ? "" : name).replace(/[^A-Za-z0-9._-]+/g, "_").replace(/^[._-]+|[._-]+$/g, "").slice(0, 80);
   return s || fallback;
 }
+
+// Split logical CSV records, not physical lines. Keep original quoting so the
+// import response can return lossless failed records for correction/retry.
+export function splitCSVRecords(value) {
+  const text = String(value ?? "").replace(/^\uFEFF/, "");
+  const records = []; let start = 0, quoted = false;
+  for (let i = 0; i < text.length; i++) {
+    if (text[i] === '"') {
+      if (quoted && text[i + 1] === '"') { i++; continue; }
+      quoted = !quoted;
+    } else if (!quoted && (text[i] === '\n' || text[i] === '\r')) {
+      records.push(text.slice(start, i));
+      if (text[i] === '\r' && text[i + 1] === '\n') i++;
+      start = i + 1;
+    }
+  }
+  if (quoted) throw new Error("unterminated_csv_quote");
+  records.push(text.slice(start));
+  return records.map(r => r.trimEnd()).filter(r => r.trim() !== "");
+}

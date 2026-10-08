@@ -345,12 +345,12 @@ describe("VP cycle named stages (zip 28)", () => {
     expect(second.body.stage).toBe("evaluate");
   });
 
-  it("learner hub GET /learn/vpatient returns JSON with enabled", async () => {
+  it("retired learner hub returns 410 with disabled flag and no cases", async () => {
     const ltk = await token("learner", "demo");
     const res = await request(app).get("/api/learn/vpatient").set(A(ltk));
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(410);
     expect(String(res.headers["content-type"] || "")).toMatch(/json/);
-    expect(typeof res.body.enabled).toBe("boolean");
+    expect(res.body.enabled).toBe(false);expect(res.body.cases).toEqual([]);
   });
 
   it("student class cycle: consent status → session → chat → order → evaluate", async () => {
@@ -386,7 +386,7 @@ describe("VP cycle named stages (zip 28)", () => {
     expect(ev.status).toBe(200);
     expect(ev.body.score).toBeGreaterThanOrEqual(0);
   });
-  it("GET /cases/:id 404 stage case when inactive for a learner; teacher still reads it", async () => {
+  it("learner case reads stay forbidden; inactive session is not found; teacher can review", async () => {
     const ttk = await token("teacher");
     const created = await request(app).post("/api/cases").set(A(ttk))
       .send({ title_en: "Inactive VP", title_fa: "غیرفعال", chief_en: "x", chief_fa: "x" });
@@ -395,8 +395,8 @@ describe("VP cycle named stages (zip 28)", () => {
     expect(del.status).toBe(200);
     const ltk = await token("learner");
     const r = await request(app).get(`/api/cases/${created.body.id}`).set(A(ltk));
-    expect(r.status).toBe(404);
-    expect(r.body.stage).toBe("case");
+    expect(r.status).toBe(403);
+    expect(r.body.error).toBe("university_only");
     const teacherRead = await request(app).get(`/api/cases/${created.body.id}`).set(A(ttk));
     expect(teacherRead.status).toBe(200);
     const start = await request(app).post("/api/exam/session-start").set(A(ltk))
@@ -615,15 +615,15 @@ describe("zip-32 teacher results + daily reward + assignments", () => {
     expect(row.nCases).toBe(0);
   });
 
-  it("daily-reward with a non-daily caseId is 400 stage report", async () => {
+  it("retired daily reward returns 410 regardless of submitted case", async () => {
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
       .send({ config: { enabled: true, premium_only: false, in_daily: true, daily_gems: 15 } });
     const ltk = await token("learner");
     const r = await request(app).post("/api/learn/vpatient/daily-reward").set(A(ltk)).send({ caseId: 999999 });
-    expect(r.status).toBe(400);
-    expect(r.body.error).toBe("not_daily_case");
-    expect(r.body.stage).toBe("report");
+    expect(r.status).toBe(410);
+    expect(r.body.error).toBe("university_only");
+
   });
 });
 
@@ -675,11 +675,11 @@ describe("zip-33 assigned-case home + corrupt banks", () => {
     expect(Array.isArray(r.body.radar)).toBe(true);
   });
 
-  it("GET /admin/vpatient/cases as admin is JSON", async () => {
+  it("retired admin VP case list returns 410 JSON", async () => {
     const atk = await token("admin");
     const r = await request(app).get("/api/admin/vpatient/cases").set(A(atk));
-    expect(r.status).toBe(200);
-    expect(Array.isArray(r.body.cases)).toBe(true);
+    expect(r.status).toBe(410);
+    expect(r.body).toEqual({error:"university_only"});
   });
 });
 
@@ -1472,8 +1472,8 @@ describe("zip-40 source: export/import tenancy + teacher canAccessCase", () => {
 
   it("student and teacher lists are university-filtered and imports stamp university_id", () => {
     expect(contentJs).toContain('user.role === "teacher" || user.role === "student"');
-    expect(contentJs).toContain("INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id)");
-    expect(contentJs).toContain("INSERT INTO flashcards (version,difficulty,data_json,university_id)");
+    expect(contentJs).toContain("INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id,created_by)");
+    expect(contentJs).toContain("INSERT INTO flashcards (version,difficulty,data_json,university_id,created_by,last_editor_id,last_action,created_at,content_updated_at)");
   });
 
   it("teachers cannot run the VP cycle on another university's case", () => {
@@ -1979,7 +1979,7 @@ describe("zip-43 all question types + Learn VP exam reserve", () => {
     expect(chk.body.error).toBe("not_in_window");
   });
 
-  it("learner GET /cases is empty and a live exam case is not playable", async () => {
+  it("learner case listing is forbidden and live exam case is not playable", async () => {
     const ttk = await token("teacher");
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
@@ -1996,8 +1996,8 @@ describe("zip-43 all question types + Learn VP exam reserve", () => {
     expect(exam.status).toBe(200);
     const ltk = await token("learner");
     const list = await request(app).get("/api/cases").set(A(ltk));
-    expect(list.status).toBe(200);
-    expect(list.body).toEqual([]);
+    expect(list.status).toBe(403);
+    expect(list.body).toEqual({error:"university_only"});
     const peek = await request(app).get(`/api/cases/${created.body.id}`).set(A(ltk));
     expect(peek.status).toBe(403);
     const start = await request(app).post("/api/exam/session-start").set(A(ltk))
@@ -2005,10 +2005,8 @@ describe("zip-43 all question types + Learn VP exam reserve", () => {
     expect(start.status).toBe(403);
     expect(start.body.reason).toBe("university_only");
     const hub = await request(app).get("/api/learn/vpatient").set(A(ltk));
-    expect(hub.status).toBe(200);
-    if (hub.body.access) {
-      expect((hub.body.cases || []).some((c) => c.id === created.body.id)).toBe(false);
-    }
+    expect(hub.status).toBe(410);expect(hub.body.enabled).toBe(false);expect(hub.body.cases).toEqual([]);
+
   });
 });
 
@@ -2048,11 +2046,8 @@ describe("zip-44 case-of-day reserve + check gates + truefalse/compare", () => {
     expect(exam.status).toBe(200);
     const ltk = await token("learner");
     const hub = await request(app).get("/api/learn/vpatient").set(A(ltk));
-    expect(hub.status).toBe(200);
-    if (hub.body.access) {
-      expect((hub.body.cases || []).some((c) => c.id === created.body.id)).toBe(false);
-      expect(hub.body.daily_case_id === created.body.id).toBe(false);
-    }
+    expect(hub.status).toBe(410);expect(hub.body.enabled).toBe(false);expect(hub.body.cases).toEqual([]);
+
   });
 
   it("learner cannot check a university flashcard; student cannot check a learn-track card", async () => {
@@ -2143,8 +2138,8 @@ describe("zip-44 case-of-day reserve + check gates + truefalse/compare", () => {
       const ltk = await token("learner");
       const peek = await request(app).get(`/api/cases/${created.body.id}`).set(A(ltk));
       expect(peek.status).toBe(403);
-      expect(peek.body.reason).toBe("university_only");
-      expect(peek.body.stage).toBe("access");
+      expect(peek.body.error).toBe("university_only");
+
     } finally {
       await request(app).put("/api/admin/vpatient").set(A(atk))
         .send({ config: { enabled: true, premium_only: false, in_daily: true, daily_gems: 15 } });
@@ -2205,20 +2200,17 @@ describe("zip-45 learner cannot join university exam + inactive evaluate", () =>
       .send({ caseId: created.body.id, examId: exam.body.id, classId: 999, lang: "en", session });
     expect(ev.status).toBe(403);
     expect(ev.body.reason).toBe("university_only");
-    const learnCase = await request(app).post("/api/cases").set(A(atk))
-      .send({ title_en: "Learn45", title_fa: "رقابتی۴۵", chief_en: "x", chief_fa: "x", track: "learn" });
-    expect(learnCase.status).toBe(200);
+    const learnCase = legacyCase({ title_en: "Learn45", title_fa: "رقابتی۴۵", chief_en: "x", chief_fa: "x", track: "learn" });
     const evL = await request(app).post("/api/exam/evaluate").set(A(ltk))
       .send({ caseId: learnCase.body.id, examId: exam.body.id, classId: 999, lang: "en", session });
-    expect(evL.status).toBe(200);
-    const vpRow = db.prepare("SELECT exam_id, class_id FROM attempts WHERE id=?").get(evL.body.attemptId);
-    expect(vpRow.exam_id).toBeNull();
-    expect(vpRow.class_id).toBeNull();
+    expect(evL.status).toBe(403);expect(evL.body.reason).toBe("university_only");
+    expect(evL.body.attemptId).toBeUndefined();
     const fl = await request(app).post("/api/exam/flashcard-result").set(A(ltk))
       .send({ examId: exam.body.id, score: 99, lang: "en" });
+    // Competitive flashcards remain supported, unlike retired competitive VP.
     expect(fl.status).toBe(200);
-    const flRow = db.prepare("SELECT exam_id, score FROM attempts WHERE id=?").get(fl.body.attemptId);
-    expect(flRow.exam_id).toBeNull();
+    const flRow=db.prepare("SELECT exam_id,class_id FROM attempts WHERE id=?").get(fl.body.attemptId);
+    expect(flRow).toEqual({exam_id:null,class_id:null});
   });
 
   it("chat/order/evaluate of a deactivated case are 404 stage case", async () => {
@@ -2497,7 +2489,7 @@ describe("zip-47 source: show_ai strips checklist + learner class/exam gates", (
 describe("zip-48 competitive track is separate from university", () => {
   const session = { messages: [{ role: "student", text: "hello" }], tests: [], imaging: [], ddx: [], finalDx: "" };
 
-  it("learner playable hub and GET case only see track=learn", async () => {
+  it("retained learn VP cases stay inaccessible through both hub and direct reads", async () => {
     const ttk = await token("teacher");
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
@@ -2505,22 +2497,20 @@ describe("zip-48 competitive track is separate from university", () => {
     const uni = await request(app).post("/api/cases").set(A(ttk))
       .send({ title_en: "Uni48", title_fa: "دانشگاه۴۸", chief_en: "secret", chief_fa: "محرمانه" });
     expect(uni.status).toBe(200);
-    const learn = await request(app).post("/api/cases").set(A(atk))
-      .send({ title_en: "Learn48", title_fa: "رقابتی۴۸", chief_en: "dyspnea", chief_fa: "تنگی نفس", track: "learn" });
-    expect(learn.status).toBe(200);
-    expect(learn.body.track).toBe("learn");
+    const learn = legacyCase({ title_en: "Learn48", title_fa: "رقابتی۴۸", chief_en: "dyspnea", chief_fa: "تنگی نفس", track: "learn" });
+    expect(JSON.parse(db.prepare("SELECT data_json FROM cases WHERE id=?").get(learn.body.id).data_json).track).toBe("learn");
     const ltk = await token("learner");
     const peekUni = await request(app).get(`/api/cases/${uni.body.id}`).set(A(ltk));
     expect(peekUni.status).toBe(403);
-    expect(peekUni.body.reason).toBe("university_only");
+    expect(peekUni.body.error).toBe("university_only");
     const peekLearn = await request(app).get(`/api/cases/${learn.body.id}`).set(A(ltk));
-    expect(peekLearn.status).toBe(200);
-    expect(peekLearn.body.chief_en).toBe("dyspnea");
+    expect(peekLearn.status).toBe(403);
+    expect(peekLearn.body.chief_en).toBeUndefined();
     expect(peekLearn.body.diagnosis_en).toBeUndefined();
     const hub = await request(app).get("/api/learn/vpatient").set(A(ltk));
-    expect(hub.status).toBe(200);
+    expect(hub.status).toBe(410);expect(hub.body.enabled).toBe(false);expect(hub.body.cases).toEqual([]);
     const ids = (hub.body.cases || []).map((c) => c.id);
-    expect(ids).toContain(learn.body.id);
+    expect(ids).not.toContain(learn.body.id);
     expect(ids).not.toContain(uni.body.id);
     const stk = await token("40012345");
     const stuPeek = await request(app).get(`/api/cases/${learn.body.id}`).set(A(stk));
@@ -2577,10 +2567,10 @@ describe("zip-48 source: case track + playableCases learn-only", () => {
   const payJs = readFileSync(join(process.cwd(), "src/routes/payments.js"), "utf8");
   const learnApp = readFileSync(join(process.cwd(), "../client/src/pages/learn/LearnApp.jsx"), "utf8");
 
-  it("learners are gated to track=learn for VP and flashcards", () => {
+  it("competitive VP is blocked while learner flashcard and payment isolation remains", () => {
     expect(vpJs).toContain("isLearnContent(r.data_json)");
-    expect(contentJs).toContain("return caseIsLearn(caseId)");
-    expect(contentJs).toContain('reason: "university_only"');
+    expect(contentJs).toContain("['learner', 'content_manager', 'support'].includes(req.user.role)");
+    expect(contentJs).toContain("error: 'university_only'");
     expect(examJs).toContain('if (!caseIsLearn(caseId)) return { allowed: false, reason: "university_only" }');
     expect(payJs).toContain('requireRole("learner")');
     expect(learnApp).toContain('tab === "flashcards"');
@@ -2677,13 +2667,13 @@ describe("zip-49 flash + university-container isolation", () => {
     await request(app).put("/api/admin/vpatient").set(A(atk))
       .send({ config: { enabled: true, premium_only: false, in_daily: true, daily_gems: 15 } });
     const ltk = await token("learner");
-    const ev = await request(app).post("/api/exam/evaluate").set(A(ltk))
-      .send({ caseId: 3, examId: 1, classId: 1, lang: "en", durationSec: 8, session });
-    expect(ev.status).toBe(200);
-    const row = db.prepare("SELECT exam_id, class_id FROM attempts WHERE id=?").get(ev.body.attemptId);
-    expect(row.exam_id).toBeNull();
-    expect(row.class_id).toBeNull();
-    db.prepare("UPDATE attempts SET exam_id=1, class_id=1 WHERE id=?").run(ev.body.attemptId);
+    // A retained legacy attempt, not a newly authorized learner evaluation.
+    const learnerId=db.prepare("SELECT id FROM users WHERE username='learner'").get().id;
+    const cid=db.prepare("INSERT INTO classes(name_en,university_id) VALUES ('Retained class',1)").run().lastInsertRowid;
+    const eid=db.prepare("INSERT INTO exams(title_en,university_id) VALUES ('Retained exam',1)").run().lastInsertRowid;
+    const aid=db.prepare("INSERT INTO attempts(user_id,case_id,type,score,exam_id,class_id) VALUES (?,1,'vp',10,?,?)").run(learnerId,eid,cid).lastInsertRowid;
+    const ev={body:{attemptId:aid}};
+    const saved=db.prepare('SELECT * FROM attempts WHERE id=?').get(aid);
     const mine = await request(app).get("/api/reports/my").set(A(ltk));
     expect(mine.status).toBe(200);
     expect((mine.body || []).some((a) => a.id === ev.body.attemptId)).toBe(false);
@@ -2696,23 +2686,24 @@ describe("zip-49 flash + university-container isolation", () => {
     expect(prog.body.radar || []).toEqual([]);
     const stk = await token("40012345");
     const peek = await request(app).get(`/api/reports/progress/${uid}`).set(A(stk));
-    expect(peek.status).toBe(403);
+    expect(peek.status).toBe(403);expect(db.prepare("SELECT * FROM attempts WHERE id=?").get(aid)).toEqual(saved);
   });
 
   it("assignment and remedial refuse a learn-track case", async () => {
     const ttk = await token("teacher");
+    const legacyCaseId=legacyCase({title_en:"Retained historical case",track:"learn"}).body.id;
     const stuId = await studentId(ttk, "40012345");
     const put = await request(app).put(`/api/assignments/${stuId}`).set(A(ttk))
-      .send({ caseIds: [3], maxAttempts: 2 });
+      .send({ caseIds: [legacyCaseId], maxAttempts: 2 });
     expect(put.status).toBe(200);
     expect(put.body.added).toBe(0);
     const listed = await request(app).get(`/api/assignments/${stuId}`).set(A(ttk));
-    expect((listed.body || []).some((a) => a.case_id === 3)).toBe(false);
+    expect((listed.body || []).some((a) => a.case_id === legacyCaseId)).toBe(false);
     const live = await request(app).post("/api/cases").set(A(ttk))
       .send({ title_en: "Home rem 49", title_fa: "جبرانی۴۹", chief_en: "x", chief_fa: "x" });
     const cid = await makeClass(ttk, stuId, live.body.id);
     const rem = await request(app).post(`/api/classes/${cid}/remedial`).set(A(ttk))
-      .send({ caseId: 3, userIds: [stuId] });
+      .send({ caseId: legacyCaseId, userIds: [stuId] });
     expect(rem.status).toBe(403);
     expect(rem.body.error).toBe("wrong_track");
   });
@@ -2978,60 +2969,11 @@ describe("zip-51 isolation: role lock, import track, group pay, learner×uni", (
     expect(r.status).toBe(403);
   });
 
-  it("import-cases/import-cards stamp track=learn so clones leave the university bank", async () => {
-    const ttk = await token("teacher");
-    const atk = await token("admin");
-    await request(app).put("/api/admin/vpatient").set(A(atk))
-      .send({ config: { enabled: true, premium_only: false, in_daily: true, daily_gems: 15 } });
-    const uni = await request(app).post("/api/cases").set(A(ttk)).send({
-      title_en: "CloneSrc51", title_fa: "منبع۵۱", chief_en: "secret uni", chief_fa: "دانشگاه محرمانه",
-    });
-    expect(uni.status).toBe(200);
-    const card = await request(app).post("/api/flashcards").set(A(ttk)).send({
-      title_en: "CloneFc51", title_fa: "کارت۵۱", questionText_en: "q", questionText_fa: "س",
-      options: [{ en: "a", fa: "الف", correct: true }, { en: "b", fa: "ب", correct: false }],
-    });
-    expect(card.status).toBe(200);
-    const impC = await request(app).post("/api/admin/vpatient/import-cases").set(A(atk))
-      .send({ ids: [uni.body.id] });
-    expect(impC.status).toBe(200);
-    expect(impC.body.imported).toBe(1);
-    const impF = await request(app).post("/api/admin/vpatient/import-cards").set(A(atk))
-      .send({ ids: [card.body.id] });
-    expect(impF.status).toBe(200);
-    expect(impF.body.imported).toBe(1);
-
-    const teacherCases = await request(app).get("/api/cases").set(A(ttk));
-    expect((teacherCases.body || []).some((c) => /CloneSrc51 \(Competitive\)/.test(c.title_en || ""))).toBe(false);
-    const teacherCards = await request(app).get("/api/flashcards").set(A(ttk));
-    expect((teacherCards.body || []).filter((c) => c.title_en === "CloneFc51").every((c) => c.track !== "learn")).toBe(true);
-
-    const ltk = await token("learner");
-    const hub = await request(app).get("/api/learn/vpatient?lang=en").set(A(ltk));
-    expect(hub.status).toBe(200);
-    // Round 5: learners never receive the internal case title (it may name the
-    // diagnosis) — the hub card shows the chief complaint instead.
-    const clone = (hub.body.cases || []).find((c) => /secret uni/.test(c.chief || ""));
-    expect(clone).toBeTruthy();
-    expect(clone.title).toBe("");
-    const peek = await request(app).get(`/api/cases/${clone.id}`).set(A(ltk));
-    expect(peek.status).toBe(200);
-    const stk = await token("40012345");
-    const stuPeek = await request(app).get(`/api/cases/${clone.id}`).set(A(stk));
-    expect(stuPeek.status).toBe(403);
-    expect(stuPeek.body.error).toBe("wrong_track");
-
-    const learnerBank = await request(app).get("/api/flashcards").set(A(ltk));
-    const clonedCard = (learnerBank.body || []).find((c) => c.title_en === "CloneFc51" || c.title_fa === "کارت۵۱");
-    expect(clonedCard).toBeTruthy();
-    expect(clonedCard.track).toBe("learn");
-    const chk = await request(app).post("/api/flashcards/check").set(A(ltk))
-      .send({ cardId: clonedCard.id, optionIndex: 0 });
-    expect(chk.status).toBe(200);
-    const stuChk = await request(app).post("/api/flashcards/check").set(A(stk))
-      .send({ cardId: clonedCard.id, optionIndex: 0 });
-    expect(stuChk.status).toBe(403);
-  });
+  it("retired VP import endpoints cannot clone university cases or flashcards", async () => {
+ const atk=await token('admin'),before=db.prepare('SELECT * FROM cases ORDER BY id').all(),cards=db.prepare('SELECT * FROM flashcards ORDER BY id').all();
+ for(const path of ['import-cases','import-cards']){const r=await request(app).post('/api/admin/vpatient/'+path).set(A(atk)).send({ids:[1,2]});expect(r.status).toBe(410);expect(r.body.error).toBe('university_only');}
+ expect(db.prepare('SELECT * FROM cases ORDER BY id').all()).toEqual(before);expect(db.prepare('SELECT * FROM flashcards ORDER BY id').all()).toEqual(cards);
+ });
 
   it("student cannot buy or redeem a Learn group pack; learner×uni lists stay 403 university_only", async () => {
     const stk = await token("40012345");
@@ -3161,7 +3103,7 @@ describe("zip-52 phase 9: rubric strip + staff/checklist isolation", () => {
     expect(parsed.meta.rubric.roles.intern.sections.length).toBeGreaterThan(0);
   });
 
-  it("content_manager cannot open university cases/flash; learn track still works", async () => {
+  it("content manager cannot open any VP case; competitive flashcards remain separate", async () => {
     const ttk = await token("teacher");
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
@@ -3176,11 +3118,10 @@ describe("zip-52 phase 9: rubric strip + staff/checklist isolation", () => {
       options: [{ en: "a", fa: "الف", correct: true }, { en: "b", fa: "ب", correct: false }],
     });
     expect(uniCard.status).toBe(200);
-    const learn = await request(app).post("/api/cases").set(A(atk)).send({
+    const learn = legacyCase({
       title_en: "LearnStaff52", title_fa: "لرن۵۲", chief_en: "dyspnea", chief_fa: "تنگی",
       track: "learn", diagnosis_en: "PE",
     });
-    expect(learn.status).toBe(200);
     const learnCard = await request(app).post("/api/flashcards").set(A(atk)).send({
       track: "learn", title_en: "LearnFc52", title_fa: "فلش۵۲", type: "truefalse", answer: true,
     });
@@ -3188,19 +3129,19 @@ describe("zip-52 phase 9: rubric strip + staff/checklist isolation", () => {
 
     const ctk = await token("content");
     const list = await request(app).get("/api/cases").set(A(ctk));
-    expect(list.status).toBe(200);
-    expect((list.body || []).some((c) => c.id === uni.body.id)).toBe(false);
-    expect((list.body || []).every((c) => c.track === "learn")).toBe(true);
+    expect(list.status).toBe(403);
+    expect(list.body.error).toBe("university_only");
+
     const peekUni = await request(app).get(`/api/cases/${uni.body.id}`).set(A(ctk));
     expect(peekUni.status).toBe(403);
-    expect(peekUni.body.reason).toBe("university_only");
+    expect(peekUni.body.error).toBe("university_only");
     const start = await request(app).post("/api/exam/session-start").set(A(ctk))
       .send({ caseId: uni.body.id, lang: "en" });
     expect(start.status).toBe(403);
     expect(start.body.reason).toBe("university_only");
     const peekLearn = await request(app).get(`/api/cases/${learn.body.id}`).set(A(ctk));
-    expect(peekLearn.status).toBe(200);
-    expect(peekLearn.body.diagnosis_en).toBe("PE");
+    expect(peekLearn.status).toBe(403);
+    expect(peekLearn.body.diagnosis_en).toBeUndefined();
 
     const bank = await request(app).get("/api/flashcards").set(A(ctk));
     expect(bank.status).toBe(200);
@@ -3276,8 +3217,8 @@ describe("zip-52 source: rubric strip + staff/checklist isolation", () => {
     expect(examJs).toContain('if (user.role !== "student") return { allowed: false, reason: "not_assigned" }');
   });
 
-  it("content_manager is learn-only and checklist PUT is university-scoped", () => {
-    expect(contentJs).toContain("if (user.role === \"content_manager\" || user.role === \"support\") return caseIsLearn(caseId)");
+  it("VP content routes block competitive staff and checklist PUT remains university-scoped", () => {
+    expect(contentJs).toContain("['learner', 'content_manager', 'support'].includes(req.user.role)");
     expect(contentJs).toContain("function teacherManagesChecklist");
     // Teacher scoping is inlined in the checklists route: own-university rows
     // or own-authored (owner_id) rows only.
@@ -3299,11 +3240,10 @@ describe("zip-53 phase 10: teacher×learn VP + research/tutor/questionnaire tena
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
       .send({ config: { enabled: true, premium_only: false, in_daily: true, daily_gems: 15 } });
-    const learn = await request(app).post("/api/cases").set(A(atk)).send({
+    const learn = legacyCase({
       title_en: "LearnTeacher53", title_fa: "لرن۵۳", chief_en: "dyspnea", chief_fa: "تنگی",
       track: "learn", diagnosis_en: "PE-SECRET-53",
     });
-    expect(learn.status).toBe(200);
     const ttk = await token("teacher");
     const peek = await request(app).get(`/api/cases/${learn.body.id}`).set(A(ttk));
     expect(peek.status).toBe(403);
@@ -3323,10 +3263,9 @@ describe("zip-53 phase 10: teacher×learn VP + research/tutor/questionnaire tena
     const before = await request(app).get("/api/reports/summary").set(A(ttk));
     expect(before.status).toBe(200);
     const atk = await token("admin");
-    const learn = await request(app).post("/api/cases").set(A(atk)).send({
+    const learn = legacyCase({
       title_en: "CountLearn53", title_fa: "شمارش۵۳", chief_en: "x", chief_fa: "x", track: "learn",
     });
-    expect(learn.status).toBe(200);
     const after = await request(app).get("/api/reports/summary").set(A(ttk));
     expect(after.status).toBe(200);
     expect(after.body.cases).toBe(before.body.cases);
@@ -3463,11 +3402,10 @@ describe("zip-54 phase 11: consent/status, analysis, catalogs, unused checklists
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
       .send({ config: { enabled: true, premium_only: false, in_daily: true, daily_gems: 15 } });
-    const learn = await request(app).post("/api/cases").set(A(atk)).send({
+    const learn = legacyCase({
       title_en: "LearnStudent54", title_fa: "لرن۵۴", chief_en: "dyspnea", chief_fa: "تنگی",
       track: "learn", diagnosis_en: "PE-SECRET-54",
     });
-    expect(learn.status).toBe(200);
     const ttk = await token("teacher");
     const stuId = await studentId(ttk, "40012345");
     const home = await request(app).post("/api/cases").set(A(ttk))
@@ -4032,3 +3970,19 @@ describe("zip-57 source: admin form tenancy + consent roster gate + join-code st
     expect(classesPage).not.toMatch(/c\.code/);
   });
 });
+
+// Historical rows may remain after competitive VP retirement. Creating them
+// here is a test fixture, not an API that can recreate the removed feature.
+function legacyCase(data) {
+ const guards=db.prepare("SELECT name,sql FROM sqlite_master WHERE type='trigger' AND tbl_name='cases' AND sql LIKE '%virtual_patient_university_only%'").all();
+ expect(guards).toHaveLength(2);
+ // Reconstruct a pre-migration row in an isolated test transaction; both
+ // current guards are restored before any HTTP assertion runs.
+ const id=db.transaction(()=>{
+  for(const g of guards)db.exec('DROP TRIGGER "'+g.name+'"');
+  try{return db.prepare("INSERT INTO cases(data_json,university_id,checklist_id) VALUES (?,1,1)").run(JSON.stringify({...data,track:'learn'})).lastInsertRowid;}
+  finally{for(const g of guards)db.exec(g.sql);}
+ })();
+ expect(()=>db.prepare("INSERT INTO cases(data_json) VALUES (?)").run(JSON.stringify({track:'learn'}))).toThrow('virtual_patient_university_only');
+ expect(db.prepare('SELECT id FROM cases WHERE id=?').get(id)).toBeTruthy();return {body:{id}};
+}

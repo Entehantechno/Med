@@ -1698,75 +1698,12 @@ describe("TWA / Android app (assetlinks)", () => {
 });
 
 describe("Virtual Patient (competitive) gating", () => {
-  it("is OFF for learners by default", async () => {
-    const ltk = await token("learner");
-    const res = await request(app).get("/api/learn/vpatient").set("Authorization", `Bearer ${ltk}`);
-    expect(res.status).toBe(200);
-    expect(res.body.enabled).toBe(false);
-    expect(res.body.access).toBe(false);
-    expect(res.body.reason).toBe("off");
-    expect(res.body.cases).toBeUndefined();   // no case list leaked when off
-  });
-  it("admin can enable it; premium-only blocks a non-premium learner", async () => {
-    const atk = await token("admin");
-    const put = await request(app).put("/api/admin/vpatient").set("Authorization", `Bearer ${atk}`)
-      .send({ config: { enabled: true, premium_only: true, in_path: true, in_daily: true, daily_gems: 15 } });
-    expect(put.status).toBe(200);
-    expect(put.body.config.enabled).toBe(true);
-    const ltk = await token("learner");   // demo learner is NOT premium
-    const res = await request(app).get("/api/learn/vpatient").set("Authorization", `Bearer ${ltk}`);
-    expect(res.body.enabled).toBe(true);
-    expect(res.body.access).toBe(false);
-    expect(res.body.reason).toBe("premium");
-    expect(res.body.cases).toBeUndefined();
-  });
-  it("premium_only=false grants all learners access + case list + daily case", async () => {
-    const atk = await token("admin");
-    await request(app).put("/api/admin/vpatient").set("Authorization", `Bearer ${atk}`)
-      .send({ config: { enabled: true, premium_only: false, in_path: true, in_daily: true, daily_gems: 15 } });
-    const ltk = await token("learner");
-    const res = await request(app).get("/api/learn/vpatient").set("Authorization", `Bearer ${ltk}`);
-    expect(res.body.access).toBe(true);
-    expect(res.body.reason).toBeNull();
-    expect(Array.isArray(res.body.cases)).toBe(true);
-    expect(res.body.cases.length).toBeGreaterThan(0);
-    expect(res.body.daily_case_id).toBeTruthy();
-  });
-  it("the shared /exam engine honors the learner gate (blocks when off)", async () => {
-    const atk = await token("admin");
-    // turn it OFF
-    await request(app).put("/api/admin/vpatient").set("Authorization", `Bearer ${atk}`)
-      .send({ config: { enabled: false } });
-    const ltk = await token("learner");
-    const res = await request(app).post("/api/exam/patient-reply").set("Authorization", `Bearer ${ltk}`)
-      .send({ caseId: 3, userText: "سلام", history: [], lang: "fa" });
-    expect(res.status).toBe(403);
-    // turn it back ON (open) → learner can play the competitive-track case
-    await request(app).put("/api/admin/vpatient").set("Authorization", `Bearer ${atk}`)
-      .send({ config: { enabled: true, premium_only: false } });
-    const ok = await request(app).post("/api/exam/patient-reply").set("Authorization", `Bearer ${ltk}`)
-      .send({ caseId: 3, userText: "سلام", history: [], lang: "fa" });
-    expect(ok.status).toBe(200);
-    expect(ok.body.text).toBeTruthy();
-    expect(ok.body.source).toBe("mock");   // deterministic (no AI key) — zero cost
-  });
-  it("daily reward pays once per day then zero", async () => {
-    const atk = await token("admin");
-    await request(app).put("/api/admin/vpatient").set("Authorization", `Bearer ${atk}`)
-      .send({ config: { enabled: true, premium_only: false, in_daily: true, daily_gems: 15 } });
-    const ltk = await token("learner");
-    const first = await request(app).post("/api/learn/vpatient/daily-reward").set("Authorization", `Bearer ${ltk}`).send({});
-    expect(first.body.ok).toBe(true);
-    const second = await request(app).post("/api/learn/vpatient/daily-reward").set("Authorization", `Bearer ${ltk}`).send({});
-    expect(second.body.alreadyClaimed).toBe(true);
-    expect(second.body.gems).toBe(0);
-  });
-  it("non-admin cannot change the vpatient config", async () => {
-    const ltk = await token("learner");
-    const res = await request(app).put("/api/admin/vpatient").set("Authorization", `Bearer ${ltk}`)
-      .send({ config: { enabled: true } });
-    expect(res.status).toBe(403);
-  });
+  it("retired contract: is OFF for learners by default", async () => { await assertRetiredVp({"method":"get","path":"/api/learn/vpatient","body":{},"username":"learner","status":410}); });
+  it("retired contract: admin can enable it; premium-only blocks a non-premium learner", async () => { await assertRetiredVp({"method":"put","path":"/api/admin/vpatient","body":{"config":{"enabled":true,"premium_only":false,"in_daily":true}},"username":"admin","status":410}); });
+  it("retired contract: premium_only=false grants all learners access + case list + daily case", async () => { await assertRetiredVp({"method":"put","path":"/api/admin/vpatient","body":{"config":{"enabled":true,"premium_only":false,"in_daily":true}},"username":"admin","status":410}); });
+  it("retired contract: the shared /exam engine honors the learner gate (blocks when off)", async () => { await assertRetiredVp({"method":"post","path":"/api/exam/patient-reply","body":{"caseId":1,"userText":"hello"},"username":"learner","status":403}); });
+  it("retired contract: daily reward pays once per day then zero", async () => { await assertRetiredVp({"method":"post","path":"/api/learn/vpatient/daily-reward","body":{},"username":"learner","status":410}); });
+  it("retired contract: non-admin cannot change the vpatient config", async () => { await assertRetiredVp({"method":"put","path":"/api/admin/vpatient","body":{"config":{"enabled":true,"premium_only":false,"in_daily":true}},"username":"learner","status":410}); });
 });
 
 describe("Virtual Patient — ranking XP (auto-evaluator → XP)", () => {
@@ -1793,67 +1730,17 @@ describe("Virtual Patient — ranking XP (auto-evaluator → XP)", () => {
   const evalCase = (session) => request(app).post("/api/exam/evaluate")
     .set("Authorization", `Bearer ${ltk}`).send({ caseId: 3, lang: "fa", session });
 
-  it("admin can list per-case XP caps (case 3 shows 200)", async () => {
-    const res = await request(app).get("/api/admin/vpatient/cases?lang=fa").set("Authorization", `Bearer ${atk}`);
-    expect(res.status).toBe(200);
-    const c1 = res.body.cases.find((c) => c.id === 3);
-    expect(c1.xp_max).toBe(200);
-    expect(c1.effective).toBe(200);
-  });
+  it("retired contract: admin can list per-case XP caps (case 3 shows 200)", async () => { await assertRetiredVp({"method":"get","path":"/api/admin/vpatient/cases/1","body":{"caseId":1,"session":{"messages":[{"role":"student","text":"admin can list per-case XP caps (case 3 shows 200)"}],"tests":[],"imaging":[],"ddx":[]},"score":100},"username":"admin","status":410}); });
 
-  it("awards XP = score% × cap on first completion", async () => {
-    const before = (await request(app).get("/api/learn/profile").set("Authorization", `Bearer ${ltk}`)).body.profile.xp;
-    const res = await evalCase(weak);
-    expect(res.body.xpReward).toBeDefined();
-    const pct = res.body.score;
-    const expected = Math.round((pct / 100) * 200);
-    expect(res.body.xpReward.awarded).toBe(expected);
-    const after = (await request(app).get("/api/learn/profile").set("Authorization", `Bearer ${ltk}`)).body.profile.xp;
-    expect(after - before).toBe(expected);
-  });
+  it("retired contract: awards XP = score% × cap on first completion", async () => { await assertRetiredVp({"method":"post","path":"/api/exam/evaluate","body":{"caseId":1,"session":{"messages":[{"role":"student","text":"awards XP = score% × cap on first completion"}],"tests":[],"imaging":[],"ddx":[]},"score":100},"username":"learner","status":403}); });
 
-  it("replaying with a HIGHER score only tops up the delta (best-score policy)", async () => {
-    const beforeBest = (await evalCase(weak)).body.xpReward.best;   // establishes/keeps best
-    const before = (await request(app).get("/api/learn/profile").set("Authorization", `Bearer ${ltk}`)).body.profile.xp;
-    const res = await evalCase(strong);
-    expect(res.body.score).toBeGreaterThan(beforeBest);
-    const delta = res.body.xpReward.awarded;
-    const after = (await request(app).get("/api/learn/profile").set("Authorization", `Bearer ${ltk}`)).body.profile.xp;
-    expect(after - before).toBe(delta);
-    // total granted from this case == best% × cap (no double counting)
-    expect(res.body.xpReward.best).toBe(res.body.score);
-  });
+  it("retired contract: replaying with a HIGHER score only tops up the delta (best-score policy)", async () => { await assertRetiredVp({"method":"post","path":"/api/exam/evaluate","body":{"caseId":1,"session":{"messages":[{"role":"student","text":"replaying with a HIGHER score only tops up the delta (best-score policy)"}],"tests":[],"imaging":[],"ddx":[]},"score":100},"username":"learner","status":403}); });
 
-  it("replaying WORSE awards zero (no farming) and keeps best", async () => {
-    const prev = (await request(app).get("/api/learn/profile").set("Authorization", `Bearer ${ltk}`)).body.profile.xp;
-    const bestSoFar = (await evalCase(strong)).body.xpReward.best;
-    const res = await evalCase(weak);
-    expect(res.body.xpReward.awarded).toBe(0);
-    expect(res.body.xpReward.best).toBe(bestSoFar);
-    const now = (await request(app).get("/api/learn/profile").set("Authorization", `Bearer ${ltk}`)).body.profile.xp;
-    expect(now).toBe(prev);   // unchanged
-  });
+  it("retired contract: replaying WORSE awards zero (no farming) and keeps best", async () => { await assertRetiredVp({"method":"post","path":"/api/exam/evaluate","body":{"caseId":1,"session":{"messages":[{"role":"student","text":"replaying WORSE awards zero (no farming) and keeps best"}],"tests":[],"imaging":[],"ddx":[]},"score":100},"username":"learner","status":403}); });
 
-  it("award_xp=false disables XP entirely", async () => {
-    await request(app).put("/api/admin/vpatient").set("Authorization", `Bearer ${atk}`)
-      .send({ config: { enabled: true, premium_only: false, award_xp: false } });
-    const { db } = await import("../src/db.js");
-    db.prepare("DELETE FROM settings WHERE key=?").run(`vp_best_${uid}_3`);
-    const before = (await request(app).get("/api/learn/profile").set("Authorization", `Bearer ${ltk}`)).body.profile.xp;
-    const res = await evalCase(strong);
-    expect(res.body.xpReward.awarded).toBe(0);
-    const after = (await request(app).get("/api/learn/profile").set("Authorization", `Bearer ${ltk}`)).body.profile.xp;
-    expect(after).toBe(before);
-    // restore
-    await request(app).put("/api/admin/vpatient").set("Authorization", `Bearer ${atk}`)
-      .send({ config: { enabled: true, premium_only: false, award_xp: true } });
-  });
+  it("retired contract: award_xp=false disables XP entirely", async () => { await assertRetiredVp({"method":"post","path":"/api/exam/evaluate","body":{"caseId":1,"session":{"messages":[{"role":"student","text":"award_xp=false disables XP entirely"}],"tests":[],"imaging":[],"ddx":[]},"score":100},"username":"learner","status":403}); });
 
-  it("non-admin cannot set a case XP cap", async () => {
-    const res = await request(app).put("/api/admin/vpatient/cases/1").set("Authorization", `Bearer ${ltk}`)
-      .send({ xp_max: 999 });
-    expect(res.status).toBe(403);
-  });
+  it("retired contract: non-admin cannot set a case XP cap", async () => { await assertRetiredVp({"method":"put","path":"/api/admin/vpatient/cases/1","body":{"caseId":1,"session":{"messages":[{"role":"student","text":"non-admin cannot set a case XP cap"}],"tests":[],"imaging":[],"ddx":[]},"score":100},"username":"learner","status":410}); });
 });
 
 describe("Virtual Patient — separate AI config + prompts", () => {
@@ -1866,97 +1753,30 @@ describe("Virtual Patient — separate AI config + prompts", () => {
       .send({ config: { enabled: true, premium_only: false } });
   });
 
-  it("separate AI config starts empty and is admin-editable", async () => {
-    const g0 = await request(app).get("/api/admin/vpatient/ai").set("Authorization", `Bearer ${atk}`);
-    expect(g0.status).toBe(200);
-    expect(g0.body.config).toHaveProperty("apiKey");
-    const put = await request(app).put("/api/admin/vpatient/ai").set("Authorization", `Bearer ${atk}`)
-      .send({ provider: "OpenRouter", model: "openai/gpt-4o", apiKey: "", baseUrl: "https://openrouter.ai/api/v1" });
-    expect(put.status).toBe(200);
-    expect(put.body.config.provider).toBe("OpenRouter");
-    const g1 = await request(app).get("/api/admin/vpatient/ai").set("Authorization", `Bearer ${atk}`);
-    expect(g1.body.config.model).toBe("openai/gpt-4o");
-  });
+  it("retired contract: separate AI config starts empty and is admin-editable", async () => { await assertRetiredVp({"method":"put","path":"/api/admin/vpatient/ai","body":{"apiKey":"synthetic-no-request","model":"test/free","prompts":{"patient_en":"forbidden"}},"username":"admin","status":410}); });
 
-  it("separate config is INDEPENDENT of the university ai setting", async () => {
-    // change the university AI config; the vpatient one must not change
-    await request(app).put("/api/settings/ai").set("Authorization", `Bearer ${atk}`)
-      .send({ provider: "OpenAI", model: "uni-model", apiKey: "", baseUrl: "" });
-    const g = await request(app).get("/api/admin/vpatient/ai").set("Authorization", `Bearer ${atk}`);
-    expect(g.body.config.model).toBe("openai/gpt-4o");   // still the vpatient value
-  });
+  it("retired contract: separate config is INDEPENDENT of the university ai setting", async () => { await assertRetiredVp({"method":"get","path":"/api/admin/vpatient/ai","body":{"apiKey":"synthetic-no-request","model":"test/free","prompts":{"patient_en":"forbidden"}},"username":"admin","status":410}); });
 
-  it("separate prompts save partially and fall back per field", async () => {
-    const put = await request(app).put("/api/admin/vpatient/prompts").set("Authorization", `Bearer ${atk}`)
-      .send({ prompts: { patient_fa: "بیمار رقابتی — کوتاه جواب بده." } });
-    expect(put.status).toBe(200);
-    expect(put.body.prompts.patient_fa).toContain("رقابتی");
-    expect(put.body.prompts.patient_en).toBe("");   // blank → will fall back at runtime
-  });
+  it("retired contract: separate prompts save partially and fall back per field", async () => { await assertRetiredVp({"method":"put","path":"/api/admin/vpatient/prompts","body":{"apiKey":"synthetic-no-request","model":"test/free","prompts":{"patient_en":"forbidden"}},"username":"admin","status":410}); });
 
-  it("ai-test with no key reports mock mode (zero cost)", async () => {
-    const res = await request(app).post("/api/admin/vpatient/ai-test").set("Authorization", `Bearer ${atk}`).send({ lang: "fa" });
-    expect(res.status).toBe(200);
-    expect(res.body.connected).toBe(false);
-    expect(res.body.mode).toBe("mock");
-  });
+  it("retired contract: ai-test with no key reports mock mode (zero cost)", async () => { await assertRetiredVp({"method":"post","path":"/api/admin/vpatient/ai-test","body":{"apiKey":"synthetic-no-request","model":"test/free","prompts":{"patient_en":"forbidden"}},"username":"admin","status":410}); });
 
-  it("a competitive learner's play uses the engine (mock, no key) and works", async () => {
-    const res = await request(app).post("/api/exam/patient-reply").set("Authorization", `Bearer ${ltk}`)
-      .send({ caseId: 3, userText: "سلام", history: [], lang: "fa" });
-    expect(res.status).toBe(200);
-    expect(res.body.text).toBeTruthy();
-    expect(res.body.source).toBe("mock");
-  });
+  it("retired contract: a competitive learner's play uses the engine (mock, no key) and works", async () => { await assertRetiredVp({"method":"post","path":"/api/exam/patient-reply","body":{"caseId":1,"userText":"hello"},"username":"learner","status":403}); });
 
-  it("non-admin cannot read or write the separate AI config / prompts", async () => {
-    for (const path of ["/api/admin/vpatient/ai", "/api/admin/vpatient/prompts"]) {
-      const g = await request(app).get(path).set("Authorization", `Bearer ${ltk}`);
-      expect(g.status).toBe(403);
-      const p = await request(app).put(path).set("Authorization", `Bearer ${ltk}`).send({});
-      expect(p.status).toBe(403);
-    }
-  });
+  it("retired contract: non-admin cannot read or write the separate AI config / prompts", async () => { await assertRetiredVp({"method":"get","path":"/api/admin/vpatient/prompts","body":{"apiKey":"synthetic-no-request","model":"test/free","prompts":{"patient_en":"forbidden"}},"username":"learner","status":410}); });
 });
 
 describe("Virtual Patient — import from university library", () => {
   let atk;
   beforeAll(async () => { atk = await token("admin"); });
 
-  it("lists the university library (cases + cards)", async () => {
-    const res = await request(app).get("/api/admin/vpatient/library?lang=fa").set("Authorization", `Bearer ${atk}`);
-    expect(res.status).toBe(200);
-    expect(Array.isArray(res.body.cases)).toBe(true);
-    expect(Array.isArray(res.body.cards)).toBe(true);
-    expect(res.body.cases.length).toBeGreaterThan(0);
-  });
+  it("retired contract: lists the university library (cases + cards)", async () => { await assertRetiredVp({"method":"get","path":"/api/admin/vpatient/library","body":{},"username":"admin","status":410}); });
 
-  it("cloning a case creates an INDEPENDENT competitive copy (original untouched)", async () => {
-    const before = await request(app).get("/api/admin/vpatient/library?lang=fa").set("Authorization", `Bearer ${atk}`);
-    const n0 = before.body.cases.length;
-    const imp = await request(app).post("/api/admin/vpatient/import-cases").set("Authorization", `Bearer ${atk}`).send({ ids: [1] });
-    expect(imp.body.imported).toBe(1);
-    const after = await request(app).get("/api/admin/vpatient/library?lang=fa").set("Authorization", `Bearer ${atk}`);
-    expect(after.body.cases.length).toBe(n0 + 1);
-    expect(after.body.cases.some((c) => c.competitive)).toBe(true);
-    // original case 1 still exists and is NOT tagged competitive
-    const orig = after.body.cases.find((c) => c.id === 1);
-    expect(orig).toBeTruthy();
-    expect(orig.competitive).toBe(false);
-  });
+  it("retired contract: cloning a case creates an INDEPENDENT competitive copy (original untouched)", async () => { await assertRetiredVp({"method":"post","path":"/api/admin/vpatient/import-cases","body":{"ids":[1,2]},"username":"admin","status":410}); });
 
-  it("cloning flashcards works", async () => {
-    const imp = await request(app).post("/api/admin/vpatient/import-cards").set("Authorization", `Bearer ${atk}`).send({ ids: [1, 2] });
-    expect(imp.body.imported).toBeGreaterThanOrEqual(1);
-  });
+  it("retired contract: cloning flashcards works", async () => { await assertRetiredVp({"method":"post","path":"/api/admin/vpatient/import-cards","body":{"ids":[1,2]},"username":"admin","status":410}); });
 
-  it("non-admin cannot import", async () => {
-    const ltk = await token("learner");
-    const r1 = await request(app).post("/api/admin/vpatient/import-cases").set("Authorization", `Bearer ${ltk}`).send({ ids: [1] });
-    expect(r1.status).toBe(403);
-    const r2 = await request(app).get("/api/admin/vpatient/library").set("Authorization", `Bearer ${ltk}`);
-    expect(r2.status).toBe(403);
-  });
+  it("retired contract: non-admin cannot import", async () => { await assertRetiredVp({"method":"post","path":"/api/admin/vpatient/import-cases","body":{"ids":[1,2]},"username":"learner","status":410}); });
 });
 
 describe("Daily challenge — smart search options + performance rewards", () => {
@@ -6025,7 +5845,7 @@ describe("Real AI provider call path (mocked fetch — OpenAI-compatible)", () =
 
   beforeAll(async () => {
     atk = await token("admin");
-    ltk = await token("learner");
+    ltk = await token("admin");
   });
   afterAll(() => { global.fetch = realFetch; });
 
@@ -6040,10 +5860,10 @@ describe("Real AI provider call path (mocked fetch — OpenAI-compatible)", () =
   it("configures a (fake) free provider and ai-test reports connected:true with an LLM reply", async () => {
     mockProvider({ content: "درد از یک ساعت پیش شروع شده." });
     // configure the SEPARATE vpatient AI config with a fake key + OpenRouter free model
-    const put = await request(app).put("/api/admin/vpatient/ai").set("Authorization", `Bearer ${atk}`)
+    const put = await request(app).put("/api/settings/ai").set("Authorization", `Bearer ${atk}`)
       .send({ provider: "OpenRouter", model: "meta-llama/llama-3.3-70b-instruct:free", apiKey: "sk-test-FAKEKEY", baseUrl: "https://openrouter.ai/api/v1" });
     expect(put.status).toBe(200);
-    const res = await request(app).post("/api/admin/vpatient/ai-test").set("Authorization", `Bearer ${atk}`).send({ lang: "fa" });
+    const res = await request(app).post("/api/exam/ai-test").set("Authorization", `Bearer ${atk}`).send({ lang: "fa" });
     expect(res.status).toBe(200);
     expect(res.body.connected).toBe(true);
     expect(res.body.mode).toBe("llm");
@@ -6061,13 +5881,13 @@ describe("Real AI provider call path (mocked fetch — OpenAI-compatible)", () =
     expect(body.messages.at(-1).role).toBe("user");
   });
 
-  it("a learner's virtual-patient reply now comes from the LLM (source:'llm')", async () => {
+  it("a university staff virtual-patient reply now comes from the LLM (source:'llm')", async () => {
     mockProvider({ content: "بله دکتر، درد به بازوی چپم هم می‌زند." });
     // ensure competitive vpatient is enabled + not premium-only so the learner can play
     await request(app).put("/api/admin/vpatient").set("Authorization", `Bearer ${atk}`)
       .send({ config: { enabled: true, premium_only: false } }).catch(() => {});
     const res = await request(app).post("/api/exam/patient-reply").set("Authorization", `Bearer ${ltk}`)
-      .send({ caseId: 3, userText: "درد به جای دیگری هم می‌زند؟", history: [], lang: "fa" });
+      .send({ caseId: 1, userText: "درد به جای دیگری هم می‌زند؟", history: [], lang: "fa" });
     expect(res.status).toBe(200);
     expect(res.body.source).toBe("llm");
     expect(res.body.text).toContain("بازوی چپ");
@@ -6075,7 +5895,7 @@ describe("Real AI provider call path (mocked fetch — OpenAI-compatible)", () =
 
   it("a provider error is surfaced to the admin test button (not silently mocked)", async () => {
     mockProvider({ ok: false, status: 401 });
-    const res = await request(app).post("/api/admin/vpatient/ai-test").set("Authorization", `Bearer ${atk}`).send({ lang: "fa" });
+    const res = await request(app).post("/api/exam/ai-test").set("Authorization", `Bearer ${atk}`).send({ lang: "fa" });
     expect(res.status).toBe(200);
     expect(res.body.connected).toBe(false);
     expect(String(res.body.message)).toMatch(/401/);
@@ -6084,16 +5904,16 @@ describe("Real AI provider call path (mocked fetch — OpenAI-compatible)", () =
   it("a provider error degrades the STUDENT flow to mock gracefully (no crash)", async () => {
     mockProvider({ ok: false, status: 500 });
     const res = await request(app).post("/api/exam/patient-reply").set("Authorization", `Bearer ${ltk}`)
-      .send({ caseId: 3, userText: "سلام", history: [], lang: "fa" });
+      .send({ caseId: 1, userText: "سلام", history: [], lang: "fa" });
     expect(res.status).toBe(200);
     expect(res.body.text).toBeTruthy();          // learner still gets a reply
     expect(res.body.source).toBe("mock");        // fell back safely
   });
 
   it("clearing the key returns everything to the zero-cost mock engine", async () => {
-    await request(app).put("/api/admin/vpatient/ai").set("Authorization", `Bearer ${atk}`)
+    await request(app).put("/api/settings/ai").set("Authorization", `Bearer ${atk}`)
       .send({ provider: "", model: "", apiKey: "", baseUrl: "", clearApiKey: true });
-    const res = await request(app).post("/api/admin/vpatient/ai-test").set("Authorization", `Bearer ${atk}`).send({ lang: "fa" });
+    const res = await request(app).post("/api/exam/ai-test").set("Authorization", `Bearer ${atk}`).send({ lang: "fa" });
     expect(res.body.connected).toBe(false);
     expect(res.body.mode).toBe("mock");
   });
@@ -9905,3 +9725,16 @@ describe("corrected keys and rebuilt stems stay honest", () => {
     expect(thin).toEqual([]);
   });
 });
+
+// Retirement is a safety contract, not a skipped legacy test. Requests must
+// neither resurrect competitive VP nor modify grades, rewards, bank or settings.
+async function assertRetiredVp({method,path,body,username,status}) {
+ const tk=await token(username);
+ const tables=['cases','flashcards','attempts','learner_profiles','settings','exam_assignments'];
+ const snapshot=()=>Object.fromEntries(tables.map(t=>[t,db.prepare('SELECT * FROM '+t).all()]));
+ const before=snapshot(),original=global.fetch;let calls=0;
+ global.fetch=async()=>{calls++;throw Error('Retired VP must not call an AI provider');};
+ try { const r=await request(app)[method](path).set('Authorization', 'Bearer '+tk).send(body);
+ expect(r.status).toBe(status);expect(r.body.reason||r.body.error).toBe('university_only');expect(r.body).not.toHaveProperty('score');expect(r.body).not.toHaveProperty('xpReward');expect(snapshot()).toEqual(before);expect(calls).toBe(0);
+ } finally {global.fetch=original;}
+}

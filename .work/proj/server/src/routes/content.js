@@ -8,7 +8,7 @@ import { Router } from "express";
 import { hashPassword, hashPasswordSync } from "../lib/password.js";
 import { db, persistNow, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
-import { toCSV, parseCSV } from "../lib/csv.js";
+import { toCSV, parseCSV, splitCSVRecords } from "../lib/csv.js";
 import { checkStudentLimit } from "../lib/orglimits.js";
 import { normalizeRubric } from "../lib/grading-rubric.js";
 import { resolveAiConfig } from "../lib/ai-engine.js";
@@ -636,7 +636,8 @@ function csvImportReview(rows,kind) {
   if(row.track==='learn')errors.push({row:i+2,message:'university_only'});
   if(row.difficulty&&!['easy','medium','hard'].includes(row.difficulty))errors.push({row:i+2,message:'invalid_difficulty'});
   if(kind==='flashcards'){
-   if((row.type&&!['mcq','image'].includes(row.type))||(row.questionType&&!['mcq','image'].includes(row.questionType)))errors.push({row:i+2,message:'csv_basic_mcq_only'});
+   if((row.type&&!['mcq','image'].includes(row.type))||(row.questionType&&!['text','mcq','image'].includes(row.questionType)))errors.push({row:i+2,message:'csv_basic_mcq_only'});
+   if(row.answerMode && row.answerMode !== 'choice') errors.push({row:i+2,message:'csv_choice_answers_only'});
    const fa=(row.options_fa||'').split('|').map(x=>x.trim()),en=(row.options_en||'').split('|').map(x=>x.trim());
    const selected=new Set();
    for(const [key,options] of [[row.correct_fa,fa],[row.correct_en,en]]){
@@ -726,7 +727,7 @@ r.post("/flashcards-import", authRequired, requireRole("teacher", "admin"), (req
   if(!review.valid)return res.status(400).json({error:'csv_validation_failed',...review});
   const ins = db.prepare("INSERT INTO flashcards (version,difficulty,data_json,university_id,created_by,last_editor_id,last_action,created_at,content_updated_at) VALUES (1,?,?,?, ?,?, 'created', datetime('now'), datetime('now'))");
   let count = 0;
-  const tx = db.transaction(() => {
+  durableTransaction(() => {
     for (const row of rows) {
       if (!row.title_en && !row.title_fa) continue;
       const fa = (row.options_fa || "").split("|").map((s) => s.trim());
@@ -754,8 +755,6 @@ r.post("/flashcards-import", authRequired, requireRole("teacher", "admin"), (req
       count++;
     }
   });
-  tx();
-  persistNow();
   res.json({ ok: true, imported: count });
 });
 
@@ -1082,8 +1081,9 @@ r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res
   let rawCsv = String(csv || "").replace(/^\uFEFF/, "");
   if (!rawCsv.trim()) return res.status(400).json({ error: "empty", message_fa: "فایل خالی است" });
   // --- robust CSV split: detect delimiter, respect quotes ---
-  const rawLines = rawCsv.split(/\r?\n/);
-  const nonEmptyLines = rawLines.map(l=>l.trimEnd()).filter(l=>l.trim()!=="");
+  let nonEmptyLines;
+  try { nonEmptyLines = splitCSVRecords(rawCsv); }
+  catch { return res.status(400).json({error:"invalid_csv", message_fa:"نقل‌قول CSV بسته نشده است"}); }
   if (!nonEmptyLines.length) return res.status(400).json({ error: "empty" });
   function detectDelim(sample){
     const cands = [",", ";", "\t", "،"];
@@ -1329,7 +1329,9 @@ r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res
   const warnings = failures.filter(f=>f.warning).map(f=> `${t_line(f.line- (hasHeader?1:0), hasHeader)}: ${f.reason_fa}`);
   const realFailures = failures.filter(f=>!f.warning);
   const errors = realFailures.map(f=> `${t_line(f.line- (hasHeader?1:0), hasHeader)}: ${f.sno||""} — ${f.reason_fa}`);
-  res.json({ created, skipped, total: dataLinesRaw.length, duplicates, enrolled: enrolled.length, failures: realFailures, warnings, errors: errors.slice(0,50), hasHeader, delim });
+  const failedLines = new Set(realFailures.map(f => f.line));
+  const failedCsv = nonEmptyLines.filter((_, i) => (hasHeader && i === 0) || failedLines.has(i + 1)).join("\n");
+  res.json({ created, skipped, failedCsv, total: dataLinesRaw.length, duplicates, enrolled: enrolled.length, failures: realFailures, warnings, errors: errors.slice(0,50), hasHeader, delim });
 });
 function t_line(i, hasHeader) { return `line ${i + 1 + (hasHeader ? 1 : 0)}`; }
 function req_no_sno() { return "missing student number"; }
