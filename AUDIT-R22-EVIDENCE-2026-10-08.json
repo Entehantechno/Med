@@ -607,5 +607,14 @@
     "Browser tab smoke is not exhaustive E2E; mobile not rerun",
     "No external AI, clinical validity, power-loss or concurrent-writer testing",
     "Shared same-version node_modules, not clean OS installation"
-  ]
+  ],
+  "publicationVerification": {
+    "publicationCommit": "9936f75",
+    "independentGitHubDownload": true,
+    "sha256": "1e5782ebe3555f7fa4fbb7ebe3c771b2588c711f4e61580292dc2610d3e2d671",
+    "bytes": 50388190,
+    "entries": 1135,
+    "crc": "PASS",
+    "gitBlob": "1ac848de1f2f6ab1be4f2d2fff0dfec03de794f7"
+  }
 }
