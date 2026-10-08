@@ -945,13 +945,14 @@ function StudentImportModal({ onClose, onDone }) {
                 }}>{fa?"کپی لیست ناموفق":"Copy failed list"}</button>
                 <button type="button" className="btn btn-ghost btn-sm" onClick={()=>{
                   const failedLines = new Set(result.failures.map(f=>f.line));
-                  const allLines = text.split(/\r?\n/);
+                  // Server row numbers refer to non-empty CSV lines.
+                  const allLines = text.split(/\r?\n/).map(l=>l.trimEnd()).filter(l=>l.trim()!=="");
                   const hasHeader = result.hasHeader;
                   const header = hasHeader ? allLines[0] : null;
                   const keep = allLines.filter((_,idx)=>{
                     const lineNo = idx+1;
                     if(hasHeader && idx===0) return true;
-                    return !failedLines.has(lineNo);
+                    return failedLines.has(lineNo);
                   });
                   setText(keep.join("\n"));
                   toast(fa?"فقط ردیف‌های ناموفق نگه داشته شد — اصلاح کنید و دوباره وارد کنید":"Kept only failed rows — fix and retry");

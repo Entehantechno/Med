@@ -2,7 +2,7 @@
    Teachers & students belong to a university (users.university_id). */
 import { Router } from "express";
 import crypto from "crypto";
-import { db, persistNow } from "../db.js";
+import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { audit } from "../lib/audit.js";
 import {
@@ -48,10 +48,11 @@ r.get("/defaults", ...admin, (req, res) => {
 
 r.put("/defaults", ...admin, (req, res) => {
   const b = req.body || {};
+  durableTransaction(() => {
   if (b.flash_no_penalty !== undefined) setSetting("default_flash_no_penalty", b.flash_no_penalty ? "1" : "0");
   if (b.live_board_speed !== undefined) setSetting("default_live_board_speed", b.live_board_speed ? "1" : "0");
+  });
   audit(req, "university.defaults", "universities", { flash_no_penalty: b.flash_no_penalty, live_board_speed: b.live_board_speed });
-  persistNow();
   res.json({ ok: true,
     flash_no_penalty: boolSetting("default_flash_no_penalty", false),
     live_board_speed: boolSetting("default_live_board_speed", false) });
@@ -66,14 +67,16 @@ r.post("/", ...admin, (req, res) => {
   if (lic.error) return res.status(400).json({ error: lic.error });
   let code = (b.code || "").trim() || genCode();
   for (let i = 0; i < 5 && db.prepare("SELECT 1 FROM universities WHERE code=?").get(code); i++) code = genCode();
+  const id = durableTransaction(() => {
   const info = db.prepare("INSERT INTO universities (name_fa,name_en,city_fa,city_en,code) VALUES (?,?,?,?,?)")
     .run(b.name_fa || b.name_en, b.name_en || b.name_fa, b.city_fa || "", b.city_en || "", code);
   const id = info.lastInsertRowid;
   for (const [col, val] of Object.entries(lic.patch)) {
     db.prepare(`UPDATE universities SET ${col}=? WHERE id=?`).run(val, id);
   }
+  return id;
+  });
   audit(req, "university.create", `universities:${id}`, { name: b.name_fa || b.name_en, licensing: Object.keys(lic.patch) });
-  persistNow();
   res.json({ id, code });
 });
 
@@ -93,14 +96,15 @@ r.put("/:id", ...admin, (req, res) => {
     if (nextMax < cur) return res.status(409).json({ error: "cap_below_current_students", current: cur, requested: nextMax });
   }
 
+  durableTransaction(() => {
   db.prepare("UPDATE universities SET name_fa=?, name_en=?, city_fa=?, city_en=?, active=? WHERE id=?")
     .run(b.name_fa ?? u.name_fa, b.name_en ?? u.name_en, b.city_fa ?? u.city_fa, b.city_en ?? u.city_en,
-      b.active === 0 ? 0 : 1, u.id);
+      b.active === undefined ? u.active : (b.active === 0 || b.active === false ? 0 : 1), u.id);
   for (const [col, val] of Object.entries(lic.patch)) {
     db.prepare(`UPDATE universities SET ${col}=? WHERE id=?`).run(val, u.id);
   }
+  });
   audit(req, "university.update", `universities:${u.id}`, { licensing: Object.keys(lic.patch) });
-  persistNow();
   res.json({ ok: true });
 });
 
@@ -142,18 +146,15 @@ r.post("/:id/members", ...admin, (req, res) => {
   }
   let moved = 0;
   const upd = db.prepare("UPDATE users SET university_id=? WHERE id=? AND role IN ('teacher','student')");
-  const tx = db.transaction(() => { for (const id of ids) { const r2 = upd.run(uni.id, id); moved += r2.changes || 0; } });
-  tx();
+  durableTransaction(() => { for (const id of new Set(ids)) { const r2 = upd.run(uni.id, id); moved += r2.changes || 0; } });
   audit(req, "university.add_members", `universities:${uni.id}`, { count: moved });
-  persistNow();
   res.json({ ok: true, moved });
 });
 
 // Remove a member from this university (detach; the user stays but unassigned).
 r.delete("/:id/members/:userId", ...admin, (req, res) => {
-  const r2 = db.prepare("UPDATE users SET university_id=NULL WHERE id=? AND university_id=?").run(req.params.userId, req.params.id);
+  const r2 = durableTransaction(() => db.prepare("UPDATE users SET university_id=NULL WHERE id=? AND university_id=?").run(req.params.userId, req.params.id));
   audit(req, "university.remove_member", `universities:${req.params.id}`, { user: req.params.userId });
-  persistNow();
   res.json({ ok: true, removed: r2.changes || 0 });
 });
 
@@ -174,9 +175,8 @@ r.delete("/:id", ...admin, (req, res) => {
   if (!u) return res.status(404).json({ error: "not found" });
   const members = db.prepare("SELECT COUNT(*) c FROM users WHERE university_id=?").get(u.id).c;
   if (members > 0) return res.status(400).json({ error: "university has members", members });
-  db.prepare("DELETE FROM universities WHERE id=?").run(u.id);
+  durableTransaction(() => db.prepare("DELETE FROM universities WHERE id=?").run(u.id));
   audit(req, "university.delete", `universities:${u.id}`, { name: u.name_fa });
-  persistNow();
   res.json({ ok: true });
 });
 

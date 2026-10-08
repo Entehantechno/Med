@@ -1002,7 +1002,7 @@ r.put("/assignments/:userId", authRequired, requireRole("teacher", "admin"), (re
 });
 // Create a user. For students, the student number is the username.
 // Optionally assign the new student to one or more exams (case IDs) in one step.
-r.post("/users", authRequired, requireRole("teacher", "admin"), async (req, res) => {
+r.post("/users", authRequired, requireRole("teacher", "admin"), async (req, res, next) => {
   const { studentNo, username, password, name_fa, name_en, role = "student", caseIds = [], maxAttempts = 1 } = req.body || {};
   if (req.user.role === "teacher" && role !== "student") return res.status(403).json({ error: "teachers can only add students" });
   if (role === "learner") return res.status(403).json({ error: "role_track_locked", reason: "role_track_locked", stage: "access" });
@@ -1016,8 +1016,13 @@ r.post("/users", authRequired, requireRole("teacher", "admin"), async (req, res)
   if (req.user.role === "teacher") university_id = currentUniversityId(req.user);
   if ((role === "student" || role === "teacher") && !university_id) return res.status(400).json({ error: "university_required", message_fa: "برای استاد و دانشجو انتخاب دانشگاه الزامی است." });
   const pwd = password && String(password).trim() ? password : uname; // default password = student number
+  try {
   const pwdHash = await hashPassword(pwd);
-  const tx = db.transaction(() => {
+  const id = durableTransaction(() => {
+    if (req.user.role === "teacher" && currentUniversityId(req.user) !== university_id) throw Object.assign(new Error("wrong_university"), {status:403});
+    if (university_id && !db.prepare("SELECT id FROM universities WHERE id=?").get(university_id)) throw Object.assign(new Error("university_not_found"), {status:400});
+    const hit = role === "student" ? checkStudentLimit(university_id, 1) : null;
+    if (hit) throw Object.assign(new Error("university_student_limit"), {status:403, hit});
     const info = db.prepare(
       "INSERT INTO users (username,password_hash,name_fa,name_en,student_no,role,status,university_id) VALUES (?,?,?,?,?,?, 'active',?)"
     ).run(uname, pwdHash, name_fa, name_en, role === "student" ? uname : null, role, university_id);
@@ -1030,10 +1035,12 @@ r.post("/users", authRequired, requireRole("teacher", "admin"), async (req, res)
     }
     return uid;
   });
-  try {
-    const id = tx();
     res.json({ id, username: uname, defaultPassword: pwd });
-  } catch (e) { res.status(400).json({ error: "username / student number already exists" }); }
+  } catch (e) {
+    if (e.status) return res.status(e.status).json({error:e.message, ...e.hit});
+    if (/UNIQUE constraint failed/i.test(e.message)) return res.status(400).json({ error: "username / student number already exists" });
+    next(e);
+  }
 });
 
 // ── CSV template for bulk import (downloadable) ──
@@ -1059,14 +1066,15 @@ r.get("/users/import/template.csv", authRequired, requireRole("teacher","admin")
  // header optional and normalized. Columns: نام / name, نام خانوادگی / family, شماره دانشجویی / student_no (الزامی), ایمیل / email, کد دانشگاه / university_code, کد کلاس / class_code.
 // Header row optional and auto-detected by column names. For each student: username=student_no, password=student_no.
 // Optional: university_code per row (admin only; teacher rows forced to teacher's university), class_code per row or class_id query/body to auto-enroll.
-r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res) => {
+r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res, next) => {
   let { csv = "", university_id, class_id, class_code, university_code } = req.body || {};
   if (!class_id && req.query.class_id) class_id = Number(req.query.class_id);
   if (!class_code && req.query.class_code) class_code = String(req.query.class_code);
   if (!university_code && req.query.university_code) university_code = String(req.query.university_code);
   if (req.user.role === "teacher") {
     const me = db.prepare("SELECT university_id FROM users WHERE id=?").get(req.user.id);
-    university_id = me?.university_id || university_id || null;
+    university_id = me?.university_id || null;
+    if (!university_id) return res.status(400).json({error:"university_required"});
   } else if (university_code) {
     const uByCode = db.prepare("SELECT id FROM universities WHERE code=?").get(String(university_code).trim().toUpperCase());
     if (uByCode) university_id = uByCode.id;
@@ -1158,24 +1166,19 @@ r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res
   }
   const dataLinesRaw = hasHeader ? nonEmptyLines.slice(1) : nonEmptyLines;
   // Resolve optional global class to enroll into (admin may choose class before import)
-  let globalClassId = null; let globalClassUni=null;
-  if (class_id) {
-    const c = db.prepare("SELECT id, university_id, code FROM classes WHERE id=?").get(Number(class_id));
-    if (c) {
-      if (req.user.role==="teacher") {
-        const me = db.prepare("SELECT university_id FROM users WHERE id=?").get(req.user.id);
-        if (c.university_id && me?.university_id && c.university_id!==me.university_id) {
-        } else { globalClassId = c.id; globalClassUni=c.university_id; }
-      } else { globalClassId = c.id; globalClassUni=c.university_id; }
-    }
-  } else if (class_code) {
-    const c = db.prepare("SELECT id, university_id FROM classes WHERE code=?").get(String(class_code).trim());
-    if (c) { globalClassId = c.id; globalClassUni=c.university_id; }
+  let globalClassId = null, globalClassUni = null;
+  if (class_id || class_code) {
+    const c = class_id
+      ? db.prepare("SELECT id, university_id FROM classes WHERE id=?").get(Number(class_id))
+      : db.prepare("SELECT id, university_id FROM classes WHERE code=?").get(String(class_code).trim());
+    if (!c) return res.status(404).json({error:"class_not_found"});
+    if (req.user.role === "teacher" && c.university_id !== university_id) return res.status(403).json({error:"wrong_university"});
+    globalClassId = c.id; globalClassUni = c.university_id;
   }
   const insUser = db.prepare(
     "INSERT INTO users (username,password_hash,name_fa,name_en,student_no,email,role,status,university_id) VALUES (?,?,?,?,?,?, 'student','active', ?)"
   );
-  const findByNo = db.prepare("SELECT id, university_id, name_fa FROM users WHERE student_no=? OR username=?");
+  const findByNo = db.prepare("SELECT id, university_id, name_fa, role FROM users WHERE student_no=? OR username=?");
   const insMember = db.prepare("INSERT OR IGNORE INTO class_members (class_id,user_id) VALUES (?,?)");
   const updUni = db.prepare("UPDATE users SET university_id=? WHERE id=? AND (university_id IS NULL OR university_id='')");
   let created = 0, skipped = 0;
@@ -1196,7 +1199,7 @@ r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res
     if(/شماره|دانشجو/i.test(s) && s.length>15) return false;
     return true;
   }
-  const tx = db.transaction(() => {
+  const tx = () => durableTransaction(() => {
     dataLinesRaw.forEach((line, idx) => {
       const lineNo = idx + 1 + (hasHeader ? 1 : 0) + 1; // 1-based, header is line 1 if present? Actually rawLines 1-based
       // For accurate lineNo, use index in nonEmptyLines
@@ -1251,6 +1254,21 @@ r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res
       }
       seenInFile.set(lower, actualLineNo);
       const existing = findByNo.get(sno, sno);
+      if (existing && (existing.role !== "student" || (req.user.role === "teacher" && existing.university_id != null && existing.university_id !== university_id))) {
+        failures.push({line:actualLineNo,sno,reason_en:"account_not_manageable",reason_fa:"این حساب قابل مدیریت در این دانشگاه نیست",raw});
+        skipped++; return;
+      }
+      const fullName = [name, family].filter(Boolean).join(" ").trim() || sno;
+      let targetClassId = globalClassId, targetClassUni = globalClassUni;
+      if (!targetClassId && rowCcode) {
+        const c = db.prepare("SELECT id, university_id FROM classes WHERE code=?").get(rowCcode);
+        if (c) { targetClassId = c.id; targetClassUni = c.university_id; }
+        else failures.push({line:actualLineNo,sno,reason_en:"class_not_found",reason_fa:"کد کلاس یافت نشد؛ عضویت انجام نشد",raw,warning:true});
+      }
+      if (targetClassId && req.user.role === "teacher" && targetClassUni !== university_id) {
+        failures.push({line:actualLineNo,sno,reason_en:"wrong_university",reason_fa:"کلاس متعلق به دانشگاه شما نیست",raw});
+        skipped++; return;
+      }
       let uid = existing?.id || null;
       let rowUniId = university_id || null;
       if (req.user.role!=="teacher" && rowUcode) {
@@ -1261,23 +1279,18 @@ r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res
           // not skipping, just warning
         }
       }
-      // licence cap check before insert
-      if (!existing && rowUniId) {
+      rowUniId = rowUniId || targetClassUni || null;
+      // Count new accounts AND existing unassigned students before either write.
+      if ((!existing || existing.university_id == null || existing.university_id === "") && rowUniId) {
         const hit = checkStudentLimit(rowUniId, 1);
         if (hit) {
           failures.push({ line: actualLineNo, sno, name: [name,family].filter(Boolean).join(" "), reason_fa: `سقف دانشجویان دانشگاه پر است (${hit.current}/${hit.max})`, reason_en: `university student limit reached`, raw });
           skipped++; return;
         }
       }
-      const fullName = [name, family].filter(Boolean).join(" ").trim() || sno;
       if (existing) {
         duplicates.push({ student_no: sno, id: existing.id, line: actualLineNo });
-        // existing user: try to heal missing university and enroll
-        if (existing.university_id==null && rowUniId) {
-          try{ updUni.run(rowUniId, existing.id); }catch{}
-        } else if (existing.university_id==null && globalClassUni) {
-          try{ updUni.run(globalClassUni, existing.id); }catch{}
-        }
+        if ((existing.university_id == null || existing.university_id === "") && rowUniId) updUni.run(rowUniId, existing.id);
       } else {
         // enforce university required for student
         let finalUni = rowUniId;
@@ -1293,44 +1306,30 @@ r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res
             failures.push({ line: actualLineNo, sno, name: fullName, reason_fa: "شماره تکراری در سامانه", reason_en: "duplicate in system", raw });
             duplicates.push({ student_no: sno, line: actualLineNo });
           } else {
-            failures.push({ line: actualLineNo, sno, name: fullName, reason_fa: e.message, reason_en: e.message, raw });
+            throw e;
           }
           skipped++; return;
         }
       }
-      // auto-enroll to class (global or per-row) + heal university if needed
-      let targetClassId = globalClassId; let targetClassUni = globalClassUni;
-      if (!targetClassId && rowCcode) {
-        const c = db.prepare("SELECT id, university_id FROM classes WHERE code=?").get(rowCcode.trim());
-        if (c) { targetClassId = c.id; targetClassUni=c.university_id; }
-        else {
-          failures.push({ line: actualLineNo, sno, name: fullName, reason_fa: `کد کلاس «${rowCcode}» یافت نشد — عضویت انجام نشد`, reason_en: `class_code ${rowCcode} not found`, raw, warning:true });
-        }
-      }
       if (targetClassId && uid) {
-        // heal university if user has none
-        const curUni = db.prepare("SELECT university_id FROM users WHERE id=?").get(uid)?.university_id;
-        if((curUni==null || curUni==="") && targetClassUni){
-          try{ updUni.run(targetClassUni, uid); }catch{}
-        }
         // check same-university before enrol
         const curUni2 = db.prepare("SELECT university_id FROM users WHERE id=?").get(uid)?.university_id;
         const classRow = db.prepare("SELECT university_id FROM classes WHERE id=?").get(targetClassId);
         if(classRow && curUni2!=null && classRow.university_id!=null && curUni2!==classRow.university_id){
           failures.push({ line: actualLineNo, sno, name: fullName, reason_fa: `دانشگاه دانشجو (${curUni2}) با دانشگاه کلاس متفاوت است — افزوده نشد`, reason_en: `wrong university for class`, raw, warning:true });
         } else {
-          try { insMember.run(targetClassId, uid); enrolled.push({ student_no: sno, class_id: targetClassId, line: actualLineNo }); } catch {}
+          insMember.run(targetClassId, uid); enrolled.push({ student_no: sno, class_id: targetClassId, line: actualLineNo });
         }
       }
       if (existing) skipped++;
     });
   });
-  try { tx(); } catch (e) { return res.status(400).json({ error: e.message, message_fa: String(e.message).slice(0,200) }); }
+  try { tx(); } catch (e) { return next(e); }
   // Build warnings vs errors separation
   const warnings = failures.filter(f=>f.warning).map(f=> `${t_line(f.line- (hasHeader?1:0), hasHeader)}: ${f.reason_fa}`);
   const realFailures = failures.filter(f=>!f.warning);
   const errors = realFailures.map(f=> `${t_line(f.line- (hasHeader?1:0), hasHeader)}: ${f.sno||""} — ${f.reason_fa}`);
-  res.json({ created, skipped: realFailures.length + duplicates.filter(d=>d.line).length, total: dataLinesRaw.length, duplicates, enrolled: enrolled.length, failures: realFailures, warnings, errors: errors.slice(0,50), hasHeader, delim });
+  res.json({ created, skipped, total: dataLinesRaw.length, duplicates, enrolled: enrolled.length, failures: realFailures, warnings, errors: errors.slice(0,50), hasHeader, delim });
 });
 function t_line(i, hasHeader) { return `line ${i + 1 + (hasHeader ? 1 : 0)}`; }
 function req_no_sno() { return "missing student number"; }

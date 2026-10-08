@@ -343,7 +343,9 @@ r.put("/:id/participants", authRequired, requireRole("teacher", "admin"), (req, 
       let u = db.prepare("SELECT id, university_id FROM users WHERE id=? AND role='student'").get(uid);
       if (!u) { wrongUniversity.push({ id: uid, reason:"not_found" }); continue; }
       if (u.university_id==null || u.university_id===""){
-        try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, uid); u.university_id=ex.university_id; }catch{}
+        const lim = checkStudentLimit(ex.university_id, 1);
+        if (lim) { studentLimit = lim; limitBlocked.push({ id: uid }); continue; }
+        db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, uid); u.university_id=ex.university_id;
       }
       if (u.university_id === ex.university_id) ids.add(u.id); else wrongUniversity.push({ id: uid, existing: u });
     }
@@ -359,7 +361,9 @@ r.put("/:id/participants", authRequired, requireRole("teacher", "admin"), (req, 
       }
       if (!u) { notFound.push(key); continue; }
       if (u.university_id==null || u.university_id===""){
-        try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, u.id); u.university_id=ex.university_id; }catch{}
+        const lim = checkStudentLimit(ex.university_id, 1);
+        if (lim) { studentLimit = lim; limitBlocked.push({ student_no: key }); continue; }
+        db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, u.id); u.university_id=ex.university_id;
       }
       if (u.university_id !== ex.university_id) { wrongUniversity.push({ student_no: key, existing: u }); continue; }
       ids.add(u.id);
@@ -382,16 +386,19 @@ r.post("/:id/participants/resolve", authRequired, requireRole("teacher", "admin"
   if (!canManageExam(req.user, ex)) return res.status(403).json({ error: "wrong_university" });
   const raw = Array.isArray(req.body?.studentNos) ? req.body.studentNos : splitStudentNos(req.body?.studentNos);
   const result = durableTransaction(() => {
-    const existing = [], missing = [], wrongUniversity = [];
+    const existing = [], missing = [], wrongUniversity = [], limitBlocked = [];
+    let studentLimit = null;
     for (const x of raw.map((v) => String(v).trim()).filter(Boolean)) {
       let u = studentByNo(x);
       if (!u) { missing.push(x); continue; }
       if (u.university_id==null || u.university_id===""){
-        try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, u.id); u.university_id=ex.university_id; }catch{}
+        const lim = checkStudentLimit(ex.university_id, 1);
+        if (lim) { studentLimit = lim; limitBlocked.push({ student_no: x }); continue; }
+        db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, u.id); u.university_id=ex.university_id;
       }
       if (u.university_id !== ex.university_id) wrongUniversity.push({ student_no: x, existing: u }); else existing.push(u);
     }
-    return ({ existing: [...new Map(existing.map((u)=>[u.id,u])).values()], missing, wrongUniversity });
+    return ({ existing: [...new Map(existing.map((u)=>[u.id,u])).values()], missing, wrongUniversity, limitBlocked, studentLimit });
   });
   res.json(result);
 });

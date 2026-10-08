@@ -679,7 +679,8 @@ r.put("/:id/members", authRequired, requireRole("teacher", "admin"), (req, res) 
       if(!u || u.role!=="student"){ blocked.push(uid); continue; }
       if(u.university_id==null || u.university_id===""){
         // heal: bulk-imported student without university → assign to this class's university
-        try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(cl.university_id, uid); healed.push(uid); allowed.push(uid); } catch{}
+        if (checkStudentLimit(cl.university_id, 1)) { blocked.push(uid); continue; }
+        db.prepare("UPDATE users SET university_id=? WHERE id=?").run(cl.university_id, uid); healed.push(uid); allowed.push(uid);
       } else if(u.university_id===cl.university_id){ allowed.push(uid); }
       else { blocked.push(uid); }
     }
@@ -716,7 +717,9 @@ r.post("/:id/members/resolve", authRequired, requireRole("teacher", "admin"), (r
       }
       if (!u) { missing.push(x); continue; }
       if (u.university_id==null || u.university_id===""){
-        try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(cl.university_id, u.id); u.university_id=cl.university_id; healed.push({ student_no: x, id: u.id }); }catch{}
+        const lim = checkStudentLimit(cl.university_id, 1);
+        if (lim) { studentLimit = lim; limitBlocked.push({ student_no: x }); continue; }
+        db.prepare("UPDATE users SET university_id=? WHERE id=?").run(cl.university_id, u.id); u.university_id=cl.university_id; healed.push({ student_no: x, id: u.id });
       }
       if (u.university_id !== cl.university_id) { wrongUniversity.push({ student_no: x, existing: u }); continue; }
       existing.push(u);
