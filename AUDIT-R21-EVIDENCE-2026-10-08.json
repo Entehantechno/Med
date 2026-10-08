@@ -628,5 +628,14 @@
     "No external AI or clinical content validation",
     "Injected synchronous save and SQL failure, not power-loss or concurrent writer certification",
     "Index bootstrap uses same-version shared node_modules rather than a clean host install"
-  ]
+  ],
+  "publicationVerification": {
+    "publicationCommit": "4861778",
+    "independentGitHubDownload": true,
+    "sha256": "069abd155bc73dd214a640dc2ac1c02f86fffd72415cf6dd7f56f8bf9bf31645",
+    "bytes": 50382292,
+    "entries": 1133,
+    "crc": "PASS",
+    "gitBlob": "56fbe3137f3e235d004d6614786130845e1016f3"
+  }
 }
