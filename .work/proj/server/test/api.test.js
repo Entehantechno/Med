@@ -439,6 +439,7 @@ describe("classrooms & class grade", () => {
     // tests may have mutated (shared DB across the suite).
     const mk = async (title) => (await request(app).post("/api/flashcards").set("Authorization", `Bearer ${tk}`)
       .send({ title_en: title, title_fa: title, questionType: "text", answerMode: "search",
+        type: "stepwise", steps: Array.from({ length: 5 }, () => ({ q_en: "Step", answer_en: "A", answer_fa: "الف" })),
         q_en: "Q", q_fa: "پ", correct_en: "A", correct_fa: "الف" })).body.id;
     const gradedId = await mk("clsfc-graded");
     const practiceId = await mk("clsfc-practice");
@@ -459,7 +460,9 @@ describe("classrooms & class grade", () => {
     expect(det.body.flashcards.length).toBe(2);
     expect(det.body.members[0]).toHaveProperty("totalFlash");
     // student takes the graded flashcard → score recorded, best kept
-    const fin = await request(app).post(`/api/classes/${cid}/flashcard/${gradedId}/finish`).set("Authorization", `Bearer ${stk}`).send({ score: 80 });
+    const fin = await request(app).post(`/api/classes/${cid}/flashcard/${gradedId}/finish`).set("Authorization", `Bearer ${stk}`).send({ score: 99, answers: [{ card_id: gradedId, lang: "en",
+      stepResults: Array.from({ length: 5 }, (_, i) => ({ answer: i < 4 ? "A" : "wrong" })) }] });
+    // Four correct steps out of five must produce 80, ignoring claimed 99.
     expect(fin.status).toBe(200);
     expect(fin.body.score).toBe(80);
     // student's class detail reflects the flashcard usage + best

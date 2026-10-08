@@ -6,7 +6,7 @@
 import { Router } from "express";
 import { safeFilename } from "../lib/csv.js";
 import crypto from "crypto";
-import { db, persistNow } from "../db.js";
+import { db, persistNow, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { hashPasswordSync } from "../lib/password.js";
 import { audit } from "../lib/audit.js";
@@ -619,12 +619,11 @@ r.post("/:id/flashcard/:fid/finish", authRequired, requireRole("student"), valid
     if (!row) return null;
     try { return { ...JSON.parse(row.data_json), id: row.id }; } catch { return null; }
   };
-  // Prefer a server-regraded score whenever answer rows are present (anti-cheat:
-  // the client score cannot be trusted for graded sets). When the client sends
-  // NO answer rows (e.g. card types the server cannot regrade here, or older
-  // clients), fall back to its reported score, clamped to 0–100. The attempt
-  // keeps an empty answers_json, so an out-of-band score stays visible in the
-  // teacher gradebook.
+  // Graded work requires answer evidence. Legacy score-only submissions
+  // remain available solely for practice links excluded from the grade.
+  if (info.graded && !answers.length) {
+    return res.status(400).json({ error: "answers_required", stage: "evaluate" });
+  }
   // No-penalty policy for this deck: class override → university → global.
   const clsRow = db.prepare("SELECT * FROM classes WHERE id=?").get(cid);
   const noPenalty = effectiveFlashNoPenalty(clsRow);
@@ -634,23 +633,22 @@ r.post("/:id/flashcard/:fid/finish", authRequired, requireRole("student"), valid
     if (deck.error === "duplicate_card") return res.status(400).json({ error: "duplicate_card", stage: "evaluate" });
     if (deck.error === "answers_out_of_deck") return res.status(400).json({ error: "answers_out_of_deck", stage: "evaluate" });
     score = deck.score == null
-      ? Math.max(0, Math.min(100, Number(req.body?.score) || 0))
+      ? (info.graded ? 0 : Math.max(0, Math.min(100, Number(req.body?.score) || 0)))
       : deck.score;
   } else {
     score = Math.max(0, Math.min(100, Number(req.body?.score) || 0));
   }
   const durationSec = Math.max(0, Math.min(24 * 3600, Number(req.body?.durationSec || 0) || 0));
-  db.prepare("INSERT INTO class_flashcard_attempts (class_id,flashcard_id,user_id,score,answers_json,duration_sec) VALUES (?,?,?,?,?,?)")
-    .run(cid, fid, req.user.id, score, JSON.stringify(answers), durationSec);
-  persistNow();
-  const studyId = studyIdForClass(cid);
-  if (studyId) {
-    recordStudyEvent({
+  durableTransaction(() => {
+    db.prepare("INSERT INTO class_flashcard_attempts (class_id,flashcard_id,user_id,score,answers_json,duration_sec) VALUES (?,?,?,?,?,?)")
+      .run(cid, fid, req.user.id, score, JSON.stringify(answers), durationSec);
+    const studyId = studyIdForClass(cid);
+    if (studyId) recordStudyEvent({
       studyId, userId: req.user.id, eventType: "flashcard_finished",
       contextType: "class", contextId: cid,
-      data: { flashcardId: fid, score, type: "flash" },
+      data: { flashcardId: fid, score, type: "flash" }, persist: false,
     });
-  }
+  });
   res.json({ ok: true, score, noPenalty });
   } catch (e) {
     res.status(500).json({ error: "class_flashcard_finish_failed", stage: "evaluate", message: String(e.message || e).slice(0, 200) });
@@ -1424,15 +1422,19 @@ export function classAttemptInfo(userId, classId, caseId) {
 export function classFlashcardInfo(userId, classId, flashcardId) {
   const cl = db.prepare("SELECT * FROM classes WHERE id=? AND active=1").get(classId);
   if (!cl) return { allowed: false };
-  const flash = db.prepare("SELECT active FROM flashcards WHERE id=?").get(flashcardId);
+  const flash = db.prepare("SELECT active,university_id FROM flashcards WHERE id=?").get(flashcardId);
   if (!flash || !flash.active) return { allowed: false };
+  const student = db.prepare("SELECT role,university_id FROM users WHERE id=?").get(userId);
+  if (!student || student.role !== "student" || !student.university_id ||
+      Number(student.university_id) !== Number(cl.university_id) ||
+      Number(flash.university_id) !== Number(cl.university_id)) return { allowed: false };
   const flashRow = db.prepare("SELECT data_json FROM flashcards WHERE id=?").get(flashcardId);
   if (isLearnContent(flashRow?.data_json)) return { allowed: false };
   const member = db.prepare("SELECT 1 FROM class_members WHERE class_id=? AND user_id=?").get(classId, userId);
-  const has = db.prepare("SELECT 1 FROM class_flashcards WHERE class_id=? AND flashcard_id=?").get(classId, flashcardId);
+  const has = db.prepare("SELECT graded FROM class_flashcards WHERE class_id=? AND flashcard_id=?").get(classId, flashcardId);
   if (!member || !has) return { allowed: false };
   const used = db.prepare(
     "SELECT COUNT(*) n FROM class_flashcard_attempts WHERE user_id=? AND flashcard_id=? AND class_id=?"
   ).get(userId, flashcardId, classId).n;
-  return { allowed: true, remaining: Math.max(0, (cl.max_attempts ?? 1) - used), maxAttempts: cl.max_attempts ?? 1 };
+  return { allowed: true, graded: has.graded !== 0, remaining: Math.max(0, (cl.max_attempts ?? 1) - used), maxAttempts: cl.max_attempts ?? 1 };
 }

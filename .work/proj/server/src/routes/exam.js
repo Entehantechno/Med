@@ -6,6 +6,7 @@ import { acquireCompletion, completionBusy, publicEvaluation } from "../lib/vp-c
    All AI logic lives server-side; prompts pulled from DB.
    ================================================================ */
 import { Router } from "express";
+import { effectiveFlashNoPenalty } from "../lib/orglimits.js";
 import { db, persistNow, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { validateBody, s as vs } from "../lib/validate.js";
@@ -16,7 +17,7 @@ import { caseIsLearn } from "../lib/content-track.js";
 import { DEFAULT_LAB_TESTS, DEFAULT_IMAGING, DEFAULT_PARACLINIC, cleanOrderList, catalogContainsQuery } from "../data/order-catalog-defaults.js";
 import { classAttemptInfo } from "./classes.js";
 import { examAccess } from "./exams.js";
-import { scoreSubmittedAnswers, gradeSubmittedDeck } from "../lib/flashcard-grade.js";
+import { scoreSubmittedAnswers, gradeSubmittedDeck, gradeSubmittedDeckDetailed } from "../lib/flashcard-grade.js";
 import { getVpatientConfig, awardVpatientXp, getVpatientAiEffective, getVpatientPromptsEffective, vpatientAccess } from "../lib/vpatient.js";
 import { isEnabled } from "../lib/flags.js";
 import { audit } from "../lib/audit.js";
@@ -865,6 +866,18 @@ r.post("/flashcard-result", authRequired, validateBody(flashResultSchema), (req,
       return res.status(403).json({ error: msg, reason, stage: "exam" });
     }
     examDeck = acc.exam;
+    const studentUni = db.prepare("SELECT university_id FROM users WHERE id=?").get(req.user.id)?.university_id;
+    if (!studentUni || Number(studentUni) !== Number(examDeck.university_id)) {
+      return res.status(403).json({ error: "wrong_university", stage: "access" });
+    }
+    for (const id of examDeck.flashcard_ids || []) {
+      const card = db.prepare("SELECT university_id,active,data_json FROM flashcards WHERE id=?").get(id);
+      let learn = false;
+      try { learn = JSON.parse(card?.data_json || "{}").track === "learn"; } catch { /* grading handles corrupt content */ }
+      if (!card || !card.active || learn || Number(card.university_id) !== Number(studentUni)) {
+        return res.status(403).json({ error: "exam_card_unavailable", stage: "access" });
+      }
+    }
   }
   let scoreN = Math.max(0, Math.min(100, Number(score) || 0));
   const answerRows = Array.isArray(answers) ? answers : [];
@@ -878,7 +891,9 @@ r.post("/flashcard-result", authRequired, validateBody(flashResultSchema), (req,
       ? (examDeck.flashcard_ids || []).map(Number).filter((n) => Number.isFinite(n) && n > 0)
       : null;
     if (answerRows.length || expectedIds) {
-      const deck = gradeSubmittedDeck(loadFlash, answerRows, expectedIds);
+      const deck = examOwner
+        ? gradeSubmittedDeckDetailed(loadFlash, answerRows, expectedIds, { noPenalty: effectiveFlashNoPenalty(null, examDeck.university_id) })
+        : gradeSubmittedDeck(loadFlash, answerRows, expectedIds);
       if (deck.error === "duplicate_card") return res.status(400).json({ error: "duplicate_card", stage: "evaluate" });
       if (deck.error === "answers_out_of_deck") return res.status(400).json({ error: "answers_out_of_deck", stage: "evaluate" });
       if (deck.score != null) scoreN = deck.score;
@@ -891,23 +906,26 @@ r.post("/flashcard-result", authRequired, validateBody(flashResultSchema), (req,
   const wrongN = Math.max(0, Math.min(totalN || 10000, Number(wrong) || 0));
   const hintsN = Math.max(0, Math.min(100, Number(hints) || 0));
   const durN = clampDuration(durationSec);
-  const info = db.prepare(
-    `INSERT INTO attempts (user_id,type,case_id,exam_id,content_version,score,transcript_json,
-       turns,tests,hints,total_questions,correct_count,wrong_count,duration_sec,lang)
-     VALUES (?,?,?,?,?,?,?,0,0,?,?,?,?,?,?)`
-  ).run(req.user.id, "flash", null, examOwner, 1, scoreN,
-        JSON.stringify({ answers: Array.isArray(answers) ? answers : [] }),
-        hintsN, totalN, correctN, wrongN, durN, lang);
-  if (examOwner) {
-    const studyId = studyForContext({ examId: examOwner })?.id || null;
-    if (studyId) {
-      recordStudyEvent({
-        studyId, userId: req.user.id, eventType: "flashcard_finished",
-        contextType: "exam", contextId: examOwner,
-        data: { attemptId: info.lastInsertRowid, score: scoreN, type: "flash" },
-      });
+  const info = durableTransaction(() => {
+    const info = db.prepare(
+      `INSERT INTO attempts (user_id,type,case_id,exam_id,content_version,score,transcript_json,
+         turns,tests,hints,total_questions,correct_count,wrong_count,duration_sec,lang)
+       VALUES (?,?,?,?,?,?,?,0,0,?,?,?,?,?,?)`
+    ).run(req.user.id, "flash", null, examOwner, 1, scoreN,
+          JSON.stringify({ answers: Array.isArray(answers) ? answers : [] }),
+          hintsN, totalN, correctN, wrongN, durN, lang);
+    if (examOwner) {
+      const studyId = studyForContext({ examId: examOwner })?.id || null;
+      if (studyId) {
+        recordStudyEvent({
+          studyId, userId: req.user.id, eventType: "flashcard_finished",
+          contextType: "exam", contextId: examOwner,
+          data: { attemptId: info.lastInsertRowid, score: scoreN, type: "flash" }, persist: false,
+        });
+      }
     }
-  }
+    return info;
+  });
   res.json({ attemptId: info.lastInsertRowid, score: scoreN });
   } catch (e) {
     res.status(500).json({ error: "flashcard_result_failed", stage: "evaluate", message: String(e.message || e).slice(0, 200) });

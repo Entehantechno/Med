@@ -994,7 +994,8 @@ describe("zip-36 source: exam omit + catalogs + student boot", () => {
 
   it("live-board and classFlashcardInfo ignore inactive content", () => {
     expect(classesJs).toContain("JOIN cases c ON c.id = cc.case_id WHERE cc.class_id=? AND c.active=1");
-    expect(classesJs).toContain("SELECT active FROM flashcards WHERE id=?");
+    expect(classesJs).toContain("SELECT active,university_id FROM flashcards WHERE id=?");
+    expect(classesJs).toContain("if (!flash || !flash.active) return { allowed: false }");
   });
 });
 
