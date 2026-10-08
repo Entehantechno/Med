@@ -75,5 +75,14 @@
     "Synchronous persistence-failure injection, not power-loss or multiprocess certification",
     "createApp restarted in a new process, not deployment/index.js bootstrap",
     "Existing questionnaire ownership and anonymity policy otherwise unchanged; no new versioned tenant model or clinical content assessment"
-  ]
+  ],
+  "publicationVerification": {
+    "publicationCommit": "25a072f",
+    "independentGitHubDownload": true,
+    "sha256": "639be9f8b2784abb7909ecc03a745dc93593fa0bb75d9bceea3a6290a9627c9d",
+    "bytes": 50375353,
+    "entries": 1129,
+    "crc": "PASS",
+    "gitBlob": "4570e0aef6c3109a92c3711028b94a9da9630908"
+  }
 }
