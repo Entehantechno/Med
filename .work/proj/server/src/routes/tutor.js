@@ -1,5 +1,5 @@
 import express from "express";
-import { db, persistNow, durableTransaction } from "../db.js";
+import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 
 const r = express.Router();
@@ -59,12 +59,13 @@ r.get("/settings", ...admin, (req, res) => {
   if (refuseCm(req, res)) return;
   res.json(settings());
 });
-r.put("/settings", ...admin, (req, res) => {
+r.put("/settings", authRequired, requireRole("admin"), (req, res) => {
   if (refuseCm(req, res)) return;
   const b = req.body || {};
-  db.prepare("UPDATE tutor_settings SET enabled=?,ai_enabled=?,default_prompt=?,updated_at=datetime('now') WHERE id=1")
-    .run(b.enabled ? 1 : 0, b.ai_enabled ? 1 : 0, b.default_prompt || "");
-  persistNow();
+  durableTransaction(() => {
+    db.prepare("UPDATE tutor_settings SET enabled=?,ai_enabled=?,default_prompt=?,updated_at=datetime('now') WHERE id=1")
+      .run(b.enabled ? 1 : 0, b.ai_enabled ? 1 : 0, b.default_prompt || "");
+  });
   res.json(settings());
 });
 r.get("/context-settings", ...admin, (req, res) => {
@@ -92,10 +93,13 @@ r.put("/context-settings", ...admin, (req, res) => {
       if (!ex || ex.university_id !== uni) return res.status(403).json({ error: "wrong_university", stage: "access" });
     }
   }
-  if (b.contextType === "class") db.prepare("UPDATE classes SET tutor_enabled=?,tutor_prompt=? WHERE id=?").run(b.enabled ? 1 : 0, b.prompt || "", id);
-  else if (b.contextType === "exam") db.prepare("UPDATE exams SET tutor_enabled=?,tutor_prompt=? WHERE id=?").run(b.enabled ? 1 : 0, b.prompt || "", id);
-  else return res.status(400).json({ error: "bad_context" });
-  persistNow();
+  if (!["class", "exam"].includes(b.contextType)) return res.status(400).json({ error: "bad_context" });
+  const table = b.contextType === "class" ? "classes" : "exams";
+  if (!db.prepare(`SELECT id FROM ${table} WHERE id=?`).get(id)) return res.status(404).json({ error: "context_not_found" });
+  durableTransaction(() => {
+    if (b.contextType === "class") db.prepare("UPDATE classes SET tutor_enabled=?,tutor_prompt=? WHERE id=?").run(b.enabled ? 1 : 0, b.prompt || "", id);
+    else if (b.contextType === "exam") db.prepare("UPDATE exams SET tutor_enabled=?,tutor_prompt=? WHERE id=?").run(b.enabled ? 1 : 0, b.prompt || "", id);
+  });
   res.json({ ok: true });
 });
 r.get("/status", authRequired, (req, res) => {

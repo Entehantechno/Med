@@ -508,7 +508,7 @@ export function UsersManager({ scope = "all" }) {
   }, [showUniTools]);
   useEffect(() => {
     if (!showUniTools && scope!=="all") return;
-    api.get("/admin/universities").then(r=> setUnis(r.universities||[])).catch(()=>{});
+    api.get("/universities").then(r=> setUnis(r.universities||[])).catch(()=>{});
     api.get("/classes").then(r=> setClasses(Array.isArray(r) ? r : Array.isArray(r?.classes) ? r.classes : [])).catch(()=>{});
   }, [showUniTools, scope]);
 
@@ -752,7 +752,7 @@ function StudentImportModal({ onClose, onDone }) {
   const myRole = (()=>{ try{ const tok=getToken(); if(!tok) return ""; const p=JSON.parse(atob(tok.split(".")[1]||"")); return p.role||"";}catch{return ""}})();
 
   useEffect(()=>{
-    api.get("/admin/universities").then(r=>setUnis(r.universities||r||[])).catch(()=>{});
+    api.get("/universities").then(r=>setUnis(r.universities||r||[])).catch(()=>{});
     api.get("/classes").then(r=>setClasses(r.classes||r||[])).catch(()=>{});
     // for teacher, prefill own university
     if (myRole==="teacher") {
