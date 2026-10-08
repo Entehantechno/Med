@@ -1500,10 +1500,12 @@ export function initSchema() {
     const dupStudentNo = db.prepare("SELECT student_no FROM users WHERE student_no IS NOT NULL AND student_no<>'' GROUP BY student_no HAVING COUNT(*)>1 LIMIT 1").get();
     if (!dupStudentNo) db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_student_no_unique ON users(student_no) WHERE student_no IS NOT NULL AND student_no<>''");
   } catch { /* best-effort duplicate hardening */ }
-  // Every university-side teacher/student must belong to a university. For legacy/demo
-  // data, create one default institution and attach unscoped teachers/students.
+  // Backfill only when introducing tenant membership to a legacy database.
+  // NULL in an already upgraded database is authoritative (e.g. revoked membership).
   db.exec("INSERT OR IGNORE INTO universities (id,name_fa,name_en,city_fa,city_en,code,active) VALUES (1,'دانشگاه پیش‌فرض','Default University','','','DEFAULT',1)");
-  db.exec("UPDATE users SET university_id=1 WHERE role IN ('teacher','student') AND university_id IS NULL");
+  if (!ucols.includes("university_id")) {
+    db.exec("UPDATE users SET university_id=1 WHERE role IN ('teacher','student') AND university_id IS NULL");
+  }
   // ── Seed full medical-universities catalog (65+). Code is the stable key; id=1 is preserved.
   // Existing rows (e.g. Arak id=120 from old seed) are kept; new rows use AUTOINCREMENT.
   try {

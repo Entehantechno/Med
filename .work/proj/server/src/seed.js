@@ -90,25 +90,25 @@ db.pragma("foreign_keys = ON");
 // Students log in with their STUDENT NUMBER as the username.
 const hash = bcrypt.hashSync("demo", 8);
 const insUser = db.prepare(
-  `INSERT INTO users (username,password_hash,name_fa,name_en,student_no,role,status) VALUES (?,?,?,?,?,?,?)`
+  `INSERT INTO users (username,password_hash,name_fa,name_en,student_no,role,status,university_id) VALUES (?,?,?,?,?,?,?,?)`
 );
-insUser.run("teacher", hash, "دکتر سارا احمدی", "Dr. Sara Ahmadi", null, "teacher", "active");
-insUser.run("admin", hash, "مدیر سامانه", "System Admin", null, "admin", "active");
+insUser.run("teacher", hash, "دکتر سارا احمدی", "Dr. Sara Ahmadi", null, "teacher", "active", 1);
+insUser.run("admin", hash, "مدیر سامانه", "System Admin", null, "admin", "active", null);
 // students: username == student_no
-insUser.run("40012345", hash, "علی رضایی", "Ali Rezaei", "40012345", "student", "active");
-insUser.run("40067890", hash, "مریم حسینی", "Maryam Hosseini", "40067890", "student", "active");
-insUser.run("40099999", hash, "نیما کریمی", "Nima Karimi", "40099999", "student", "inactive");
+insUser.run("40012345", hash, "علی رضایی", "Ali Rezaei", "40012345", "student", "active", 1);
+insUser.run("40067890", hash, "مریم حسینی", "Maryam Hosseini", "40067890", "student", "active", 1);
+insUser.run("40099999", hash, "نیما کریمی", "Nima Karimi", "40099999", "student", "inactive", 1);
 // A few more demo students so class/exam student pickers show a realistic list
 // (and the search box is genuinely useful). All password: demo.
-insUser.run("40011223", hash, "زهرا موسوی", "Zahra Mousavi", "40011223", "student", "active");
-insUser.run("40022334", hash, "رضا احمدی", "Reza Ahmadi", "40022334", "student", "active");
-insUser.run("40033445", hash, "فاطمه رحیمی", "Fatemeh Rahimi", "40033445", "student", "active");
-insUser.run("40044556", hash, "امیر صادقی", "Amir Sadeghi", "40044556", "student", "active");
-insUser.run("40055667", hash, "سارا نوری", "Sara Nouri", "40055667", "student", "active");
-insUser.run("40066778", hash, "حسین کاظمی", "Hossein Kazemi", "40066778", "student", "active");
+insUser.run("40011223", hash, "زهرا موسوی", "Zahra Mousavi", "40011223", "student", "active", 1);
+insUser.run("40022334", hash, "رضا احمدی", "Reza Ahmadi", "40022334", "student", "active", 1);
+insUser.run("40033445", hash, "فاطمه رحیمی", "Fatemeh Rahimi", "40033445", "student", "active", 1);
+insUser.run("40044556", hash, "امیر صادقی", "Amir Sadeghi", "40044556", "student", "active", 1);
+insUser.run("40055667", hash, "سارا نوری", "Sara Nouri", "40055667", "student", "active", 1);
+insUser.run("40066778", hash, "حسین کاظمی", "Hossein Kazemi", "40066778", "student", "active", 1);
 // mid-level (granular RBAC) demo accounts — added AFTER core users to keep IDs stable
-insUser.run("content", hash, "مدیر محتوا", "Content Manager", null, "content_manager", "active");
-insUser.run("support", hash, "پشتیبان", "Support Agent", null, "support", "active");
+insUser.run("content", hash, "مدیر محتوا", "Content Manager", null, "content_manager", "active", null);
+insUser.run("support", hash, "پشتیبان", "Support Agent", null, "support", "active", null);
 
 // ---- Checklists ----
 const insChecklist = db.prepare(

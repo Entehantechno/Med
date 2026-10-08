@@ -23,7 +23,7 @@ const ALLOWED = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"]);
 const IMAGE_MIME = new Set(["image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp", "image/x-ms-bmp"]);
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  destination: uploadDestination,
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     const safe = "img_" + Date.now() + "_" + Math.round(Math.random() * 1e6) + ext;
@@ -74,7 +74,7 @@ function rejectUploaded(file, res, message) {
 }
 const videoUpload = multer({
   storage: multer.diskStorage({
-    destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+    destination: uploadDestination,
     filename: (req, file, cb) => {
       const ext = path.extname(file.originalname).toLowerCase();
       cb(null, "vid_" + Date.now() + "_" + Math.round(Math.random() * 1e6) + ext);
@@ -152,6 +152,16 @@ const audioUpload = multer({
 
 const r = Router();
 
+// Teacher medical media must have an explicit tenant before accepting bytes.
+// Reference PDFs have a separate, intentionally public library contract.
+function requireMediaUniversity(req, res, next) {
+  const universityId = Number(req.user?.university_id);
+  if (req.user.role !== "admin" && (!Number.isInteger(universityId) || universityId <= 0)) {
+    return res.status(403).json({ error: "university_required" });
+  }
+  next();
+}
+
 /* Optional WebP re-encoding of uploaded images (performance: 30-70% smaller
    raster downloads for the same slide/photo). sharp is a NATIVE, OPTIONAL
    dependency: when it is not installed (restricted build host) the original
@@ -186,7 +196,7 @@ async function optimizeUploadedImage(file) {
 }
 
 // POST /api/upload  (multipart/form-data, field name: "image")
-r.post("/", authRequired, requireRole("teacher", "admin"), (req, res) => {
+r.post("/", authRequired, requireRole("teacher", "admin"), requireMediaUniversity, (req, res) => {
   upload.single("image")(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file || !req.file.size) return rejectUploaded(req.file, res, "Empty upload");
@@ -198,13 +208,13 @@ r.post("/", authRequired, requireRole("teacher", "admin"), (req, res) => {
       if (webp) { filename = webp; optimized = true; }
     } catch { /* keep original */ }
     // Public URL served by express.static below
-    res.json({ url: `/uploads/${filename}`, name: req.file.originalname, webp: optimized });
+    res.json({ url: mediaUrlFor(req, filename), name: req.file.originalname, webp: optimized });
   });
 });
 
 // POST /api/upload/audio  (multipart/form-data, field name: "audio")
 // Lung / heart auscultation recordings for virtual patients.
-r.post("/audio", authRequired, requireRole("teacher", "admin"), (req, res) => {
+r.post("/audio", authRequired, requireRole("teacher", "admin"), requireMediaUniversity, (req, res) => {
   audioUpload.single("audio")(req, res, (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file || !req.file.size) return rejectUploaded(req.file, res, "Empty upload");
@@ -216,13 +226,13 @@ r.post("/audio", authRequired, requireRole("teacher", "admin"), (req, res) => {
 });
 
 // POST /api/upload/video  (multipart/form-data, field name: "video")
-r.post("/video", authRequired, requireRole("teacher", "admin"), (req, res) => {
+r.post("/video", authRequired, requireRole("teacher", "admin"), requireMediaUniversity, (req, res) => {
   videoUpload.single("video")(req, res, (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file || !req.file.size) return rejectUploaded(req.file, res, "Empty upload");
     const ext = path.extname(req.file.filename).toLowerCase();
     if (!hasVideoMagic(req.file.path, ext)) return rejectUploaded(req.file, res, "Invalid video content");
-    res.json({ url: `/uploads/${req.file.filename}`, name: req.file.originalname });
+    res.json({ url: mediaUrlFor(req, req.file.filename), name: req.file.originalname });
   });
 });
 

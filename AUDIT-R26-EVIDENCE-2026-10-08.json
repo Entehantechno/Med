@@ -1,0 +1,504 @@
+{
+  "date": "2026-10-08",
+  "baseline_commit": "d9e2733",
+  "user_bank_decision": "preserve_bank",
+  "server": {
+    "passed": 1862,
+    "failed": 47,
+    "tests": 1909,
+    "files": 76,
+    "skipped": 0,
+    "duration_seconds": 574.8
+  },
+  "client": {
+    "passed": 131,
+    "failed": 0,
+    "tests": 131,
+    "files": 24,
+    "skipped": 0,
+    "duration_seconds": 26.74
+  },
+  "focused_intermediate": {
+    "passed": 56,
+    "failed": 0,
+    "tests": 56,
+    "files": 4,
+    "skipped": 0,
+    "duration_seconds": 26.44
+  },
+  "migration_focused_final": {
+    "passed": 4,
+    "failed": 0,
+    "tests": 4,
+    "files": 1,
+    "skipped": 0,
+    "duration_seconds": 7.84
+  },
+  "extracted_package": {
+    "passed": 82,
+    "failed": 0,
+    "tests": 82,
+    "files": 5,
+    "skipped": 0,
+    "duration_seconds": 39.87
+  },
+  "new_tests": 21,
+  "build": "passed",
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "red_media": {
+    "summary": {
+      "passed": 2,
+      "failed": 7,
+      "tests": 9,
+      "files": 1,
+      "skipped": 0,
+      "duration_seconds": 9.22
+    },
+    "assertions": [
+      {
+        "file": "test/university-media-r26.test.js",
+        "test": "image: uploaded teacher file is private before attachment to a case",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 404 // Object.is equality"
+      },
+      {
+        "file": "test/university-media-r26.test.js",
+        "test": "image: unassigned teacher cannot publish a public fallback",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+      },
+      {
+        "file": "test/university-media-r26.test.js",
+        "test": "image: admin upload remains in the platform library",
+        "status": "failed",
+        "first_error": "AssertionError: expected '/uploads/img_1791489665144_945309.gif' to match /^\\/uploads\\/platform\\//uploads\\"
+      },
+      {
+        "file": "test/university-media-r26.test.js",
+        "test": "video: uploaded teacher file is private before attachment to a case",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 404 // Object.is equality"
+      },
+      {
+        "file": "test/university-media-r26.test.js",
+        "test": "video: unassigned teacher cannot publish a public fallback",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+      },
+      {
+        "file": "test/university-media-r26.test.js",
+        "test": "video: admin upload remains in the platform library",
+        "status": "failed",
+        "first_error": "AssertionError: expected '/uploads/vid_1791489665166_198131.mp4' to match /^\\/uploads\\/platform\\//uploads\\"
+      },
+      {
+        "file": "test/university-media-r26.test.js",
+        "test": "audio: uploaded teacher file is private before attachment to a case",
+        "status": "passed",
+        "first_error": ""
+      },
+      {
+        "file": "test/university-media-r26.test.js",
+        "test": "audio: unassigned teacher cannot publish a public fallback",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+      },
+      {
+        "file": "test/university-media-r26.test.js",
+        "test": "audio: admin upload remains in the platform library",
+        "status": "passed",
+        "first_error": ""
+      }
+    ]
+  },
+  "red_membership": {
+    "summary": {
+      "passed": 0,
+      "failed": 2,
+      "tests": 2,
+      "files": 1,
+      "skipped": 0,
+      "duration_seconds": 8.65
+    },
+    "assertions": [
+      {
+        "file": "test/university-membership-r26.test.js",
+        "test": "teacher: boot does not reassign a deliberately cleared university",
+        "status": "failed",
+        "first_error": "AssertionError: expected 1 to be null"
+      },
+      {
+        "file": "test/university-membership-r26.test.js",
+        "test": "student: boot does not reassign a deliberately cleared university",
+        "status": "failed",
+        "first_error": "AssertionError: expected 1 to be null"
+      }
+    ]
+  },
+  "new_final_assertions": [
+    {
+      "file": "test/university-media-r26.test.js",
+      "test": "image: uploaded teacher file is private before attachment to a case",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-media-r26.test.js",
+      "test": "image: unassigned teacher cannot publish a public fallback",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-media-r26.test.js",
+      "test": "image: admin upload remains in the platform library",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-media-r26.test.js",
+      "test": "video: uploaded teacher file is private before attachment to a case",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-media-r26.test.js",
+      "test": "video: unassigned teacher cannot publish a public fallback",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-media-r26.test.js",
+      "test": "video: admin upload remains in the platform library",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-media-r26.test.js",
+      "test": "audio: uploaded teacher file is private before attachment to a case",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-media-r26.test.js",
+      "test": "audio: unassigned teacher cannot publish a public fallback",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-media-r26.test.js",
+      "test": "audio: admin upload remains in the platform library",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-media-r26.test.js",
+      "test": "image: rejects student writes and removes invalid content",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-media-r26.test.js",
+      "test": "image: private caching and current membership apply to retrieval",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-media-r26.test.js",
+      "test": "video: rejects student writes and removes invalid content",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-media-r26.test.js",
+      "test": "video: private caching and current membership apply to retrieval",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-media-r26.test.js",
+      "test": "audio: rejects student writes and removes invalid content",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-media-r26.test.js",
+      "test": "audio: private caching and current membership apply to retrieval",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-media-r26.test.js",
+      "test": "reference PDFs keep their explicit public platform contract",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-media-r26.test.js",
+      "test": "PNG upload URL points to the retained or optimized tenant file",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-membership-r26.test.js",
+      "test": "teacher: boot does not reassign a deliberately cleared university",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-membership-r26.test.js",
+      "test": "student: boot does not reassign a deliberately cleared university",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-membership-r26.test.js",
+      "test": "legacy database without membership column is backfilled once, not on later boots",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-membership-r26.test.js",
+      "test": "fresh demo assigns the built-in teacher and students explicitly",
+      "status": "passed",
+      "first_error": ""
+    }
+  ],
+  "browser": {
+    "tabs": [
+      "داشبورد",
+      "گزارش‌ها و پژوهش",
+      "کلاس‌های درسی",
+      "گفتگوهای ذخیره‌شده",
+      "نتایج و کارنامه",
+      "بررسی نقاشی‌ها",
+      "نمره‌دهی بیمار مجازی",
+      "آزمون‌ها",
+      "نتایج آزمون‌ها",
+      "پژوهش آموزشی",
+      "کاربران",
+      "دانشگاه‌ها",
+      "بانک بیماران",
+      "فلش‌کارت‌ها",
+      "کاتالوگ‌های Auto complete",
+      "چک‌لیست‌ها",
+      "پرسشنامه‌ها",
+      "تنظیمات هوش مصنوعی"
+    ],
+    "checks": [
+      {
+        "name": "login r26-teacher",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "image upload",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "image tenant prefix",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "image owner retrieval",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "image cache",
+        "actual": "private, no-store",
+        "expected": "private, no-store"
+      },
+      {
+        "name": "image anonymous denial",
+        "actual": 404,
+        "expected": 404
+      },
+      {
+        "name": "video upload",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "video tenant prefix",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "video owner retrieval",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "video cache",
+        "actual": "private, no-store",
+        "expected": "private, no-store"
+      },
+      {
+        "name": "video anonymous denial",
+        "actual": 404,
+        "expected": 404
+      },
+      {
+        "name": "audio upload",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "audio tenant prefix",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "audio owner retrieval",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "audio cache",
+        "actual": "private, no-store",
+        "expected": "private, no-store"
+      },
+      {
+        "name": "audio anonymous denial",
+        "actual": 404,
+        "expected": 404
+      },
+      {
+        "name": "browser image decode",
+        "actual": 1,
+        "expected": 1
+      },
+      {
+        "name": "teacher library img_1791490121874_825382.gif",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "teacher library vid_1791490121994_467220.mp4",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "teacher library snd_1791490122006_751772.wav",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "login r26-outsider",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "cross university denial",
+        "actual": 404,
+        "expected": 404
+      },
+      {
+        "name": "cross university denial",
+        "actual": 404,
+        "expected": 404
+      },
+      {
+        "name": "cross university denial",
+        "actual": 404,
+        "expected": 404
+      },
+      {
+        "name": "login r26-unassigned",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "unassigned image",
+        "actual": 403,
+        "expected": 403
+      },
+      {
+        "name": "unassigned video",
+        "actual": 403,
+        "expected": 403
+      },
+      {
+        "name": "unassigned audio",
+        "actual": 403,
+        "expected": 403
+      }
+    ],
+    "urls": [
+      "/uploads/academic/university-1/img_1791490121874_825382.gif",
+      "/uploads/academic/university-1/vid_1791490121994_467220.mp4",
+      "/uploads/academic/university-1/snd_1791490122006_751772.wav"
+    ],
+    "pageErrors": [],
+    "webSecurityDisabled": false
+  },
+  "restart": {
+    "checks": [
+      {
+        "name": "login r26-teacher",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "login r26-unassigned",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "unassigned denied after restart",
+        "actual": 403,
+        "expected": 403
+      },
+      {
+        "name": "owner after restart /uploads/academic/university-1/img_1791490121874_825382.gif",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "anonymous after restart /uploads/academic/university-1/img_1791490121874_825382.gif",
+        "actual": 404,
+        "expected": 404
+      },
+      {
+        "name": "owner after restart /uploads/academic/university-1/vid_1791490121994_467220.mp4",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "anonymous after restart /uploads/academic/university-1/vid_1791490121994_467220.mp4",
+        "actual": 404,
+        "expected": 404
+      },
+      {
+        "name": "owner after restart /uploads/academic/university-1/snd_1791490122006_751772.wav",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "anonymous after restart /uploads/academic/university-1/snd_1791490122006_751772.wav",
+        "actual": 404,
+        "expected": 404
+      }
+    ]
+  },
+  "intermediate_failures": [
+    "First browser run exposed a real boot-time membership reassignment, fixed with two red regressions before the final browser rerun.",
+    "Earlier full suite was intentionally stopped when the boot-time issue was found; not counted as a completed regression. Final suite rerun from scratch.",
+    "Initial legacy fixture lacked the historical role CHECK and exercised an unrelated role-table rebuild; fixture corrected to isolate introduction of university_id. No production assertion weakened.",
+    "Initial restart harness expected university_id in the login response, which does not expose it; corrected to assert actual denied upload after restart, alongside direct DB membership regressions.",
+    "First packaging check expected no service-worker stamp changes; updated inventory to include three generated SW files."
+  ],
+  "limitations": [
+    "Inventory and tab render smoke are not exhaustive form/endpoint coverage.",
+    "Old flat unreferenced uploads are not reassigned without reliable ownership; some may remain public.",
+    "Audio/video samples test signature and access contracts, not playback or decoder completeness. Browser GIF decode was checked.",
+    "No antivirus/CDR, external model/network test, paid fallback, crash/power-loss, multiwriter or mid-upload authorization race certification.",
+    "No scientific bank corrections authorized."
+  ],
+  "archive_sha256": "e266a3337cecba524ac07658ba5c3c630d33e215aadb6ebe0054b1dcd91e43f7"
+}
