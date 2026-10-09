@@ -601,12 +601,89 @@ const flashFinishSchema = {
   answers: vs.array((x, p) => (x && typeof x === "object" && !Array.isArray(x)
     ? { ok: true, value: x } : { ok: false, error: `${p} must be an object` }), { optional: true, max: 300 }),
 };
+// Only explicit combined mode changes learner behavior. Legacy mode strings remain readable.
+function combinedDeck(userId, cid) {
+  const cl = db.prepare("SELECT * FROM classes WHERE id=? AND active=1").get(cid);
+  const student = db.prepare("SELECT role,university_id FROM users WHERE id=?").get(userId);
+  if (!cl || student?.role !== 'student' || !student.university_id ||
+      Number(student.university_id) !== Number(cl.university_id) ||
+      !db.prepare("SELECT 1 FROM class_members WHERE class_id=? AND user_id=?").get(cid,userId))
+    throw Object.assign(new Error('not_allowed'),{status:403});
+  if (cl.exam_mode !== 'combined') throw Object.assign(new Error('not_combined_mode'),{status:409});
+  const rows = db.prepare(`SELECT f.*, cf.weight, cf.graded FROM class_flashcards cf
+    JOIN flashcards f ON f.id=cf.flashcard_id WHERE cf.class_id=? AND f.active=1
+    AND f.university_id=? ORDER BY f.id`).all(cid,cl.university_id).filter(f=>!isLearnContent(f.data_json));
+  if (!rows.length || rows.length > 300) throw Object.assign(new Error('combined_deck_size'),{status:422});
+  const noPenalty=effectiveFlashNoPenalty(cl);
+  // Hash content and policies, not just IDs: editing a question while it is open cannot silently change its grade.
+  const version=crypto.createHash('sha256').update(JSON.stringify([cl.exam_mode,cl.max_attempts,noPenalty,
+    rows.map(f=>[f.id,f.data_json,f.weight,f.graded])])).digest('hex');
+  return {rows,noPenalty,version};
+}
+function assertCombinedAttempts(userId,cid,rows) {
+  for (const f of rows) {
+    const info=classFlashcardInfo(userId,cid,f.id);
+    if (!info.allowed) throw Object.assign(new Error('not_allowed'),{status:403});
+    if (info.graded && info.remaining<=0) throw Object.assign(new Error('no_attempts_left'),{status:429});
+  }
+}
+r.get('/:id/flashcards/config',authRequired,requireRole('student'),(req,res)=>{
+  try {
+    const cid=Number(req.params.id), deck=combinedDeck(req.user.id,cid);
+    assertCombinedAttempts(req.user.id,cid,deck.rows);
+    res.json({ids:deck.rows.map(f=>f.id),version:deck.version,noPenalty:deck.noPenalty});
+  } catch(e) { res.status(e.status||500).json({error:e.message}); }
+});
+r.post('/:id/flashcards/finish',authRequired,requireRole('student'),validateBody({
+  ...flashFinishSchema, submissionId:vs.str({min:16,max:100,pattern:/^[a-zA-Z0-9-]+$/}),
+  version:vs.str({min:64,max:64,pattern:/^[a-f0-9]+$/})
+}),(req,res)=>{
+  try {
+    const cid=Number(req.params.id),userId=req.user.id;
+    const result=durableTransaction(()=>{
+      // Check current membership/tenant before looking up the idempotency result.
+      const deck=combinedDeck(userId,cid);
+      const previous=db.prepare('SELECT result_json FROM class_flash_submissions WHERE class_id=? AND user_id=? AND submission_id=?').get(cid,userId,req.body.submissionId);
+      if(previous)return JSON.parse(previous.result_json);
+      if(req.body.version!==deck.version)throw Object.assign(new Error('class_questions_changed'),{status:409});
+      assertCombinedAttempts(userId,cid,deck.rows);
+      const answers=req.body.answers||[];
+      const load=id=>{const f=deck.rows.find(x=>x.id===id);return f?{...JSON.parse(f.data_json),id:f.id}:null};
+      // Validate the whole payload first. Omitted cards still count as unanswered (zero).
+      for(const a of answers)if(!Number.isSafeInteger(Number(a.card_id??a.cardId??a.id)))throw Object.assign(new Error('invalid_card_id'),{status:400});
+      const check=gradeSubmittedDeckDetailed(load,answers,deck.rows.map(f=>f.id),{noPenalty:deck.noPenalty});
+      if(check.error)throw Object.assign(new Error(check.error),{status:400});
+      const duration=Math.max(0,Math.min(86400,Number(req.body.durationSec)||0));
+      const ins=db.prepare('INSERT INTO class_flashcard_attempts(class_id,flashcard_id,user_id,score,answers_json,duration_sec) VALUES (?,?,?,?,?,?)');
+      const parts=deck.rows.map((f,i)=>{
+        const evidence=answers.filter(a=>Number(a.card_id??a.cardId??a.id)===f.id);
+        const score=gradeSubmittedDeckDetailed(load,evidence,[f.id],{noPenalty:deck.noPenalty}).score;
+        // Partition total elapsed time instead of multiplying it by the question count.
+        ins.run(cid,f.id,userId,score,JSON.stringify(evidence),Math.floor(duration/deck.rows.length)+(i<duration%deck.rows.length?1:0));
+        return {id:f.id,score,weight:f.weight,graded:f.graded!==0};
+      });
+      const counted=parts.some(p=>p.graded)?parts.filter(p=>p.graded):parts;
+      const weight=p=>Math.max(0,Number(p.weight)||0);
+      const total=counted.reduce((s,p)=>s+weight(p),0);
+      const score=total?Math.round(counted.reduce((s,p)=>s+p.score*weight(p),0)/total):0;
+      const result={ok:true,score,noPenalty:deck.noPenalty,parts};
+      const studyId=studyIdForClass(cid);
+      if(studyId)recordStudyEvent({studyId,userId,eventType:'flashcard_finished',contextType:'class',contextId:cid,data:{type:'combined_flash',score,flashcardIds:parts.map(p=>p.id)},persist:false});
+      db.prepare('INSERT INTO class_flash_submissions(class_id,user_id,submission_id,result_json) VALUES (?,?,?,?)').run(cid,userId,req.body.submissionId,JSON.stringify(result));
+      return result;
+    });
+    res.json(result);
+  } catch(e) {res.status(e.status||500).json({error:e.message,stage:'evaluate'});}
+});
+
 r.post("/:id/flashcard/:fid/finish", authRequired, requireRole("student"), validateBody(flashFinishSchema), (req, res) => {
   try {
   const cid = parseInt(req.params.id, 10), fid = parseInt(req.params.fid, 10);
   const info = classFlashcardInfo(req.user.id, cid, fid);
   if (!info.allowed) return res.status(403).json({ error: "not allowed", stage: "access" });
-  if (info.remaining <= 0) return res.status(429).json({ error: "no attempts left", remaining: 0, stage: "access" });
+  if (info.graded && info.remaining <= 0) return res.status(429).json({ error: "no attempts left", remaining: 0, stage: "access" });
+  if(db.prepare('SELECT exam_mode FROM classes WHERE id=?').get(cid)?.exam_mode==='combined')
+    return res.status(409).json({error:'combined_submission_required'});
   const answers = Array.isArray(req.body?.answers) ? req.body.answers : [];
   const loadFlash = (id) => {
     const row = db.prepare("SELECT * FROM flashcards WHERE id=?").get(id);

@@ -1,27 +1,12 @@
-/* arak-seed.js — Idempotent demo seed for University of Arak (id=120) histology.
-   Ensures the 12-card histology demo exists with correct types:
-   - Q1 stepwise (simple/stratified → pseudostratified → columnar ciliated) with image
-   - Q2-3,6-8,10-11 mcq, Q4 match, Q5/Q9 drawing, Q12 mcq with hints
-   The image at /uploads/academic/university-120/histology_q1_1790882726117.png is
-   expected to already exist in .work/medschool-data/academic/university-120/media/.
-   Called from db.js init; safe to run multiple times. */
+/* Histology demo belongs to the real Arak university, never a separate institution.
+   Existing tenant content, memberships, codes and attempts are never rewritten by this seed. */
 import { db, persistNow } from "../db.js";
 import fs from "fs";
 import path from "path";
 import { DATA_DIR } from "./paths.js";
 
-const ARAK_ID = 120;
-const IMAGE_URL = "/uploads/academic/university-120/histology_q1_1790882726117.png";
-
-function ensureUniversity() {
-  const has = db.prepare("SELECT id FROM universities WHERE id=?").get(ARAK_ID);
-  if (!has) {
-    // Use a distinct code for the histology demo university (120) to avoid unique-code clash with the main Arak university (13, code ARAK)
-    try { db.prepare("INSERT OR IGNORE INTO universities (id,name_fa,name_en,city_fa,city_en,code,active) VALUES (?,?,?,?,?,?,1)").run(ARAK_ID, "دانشگاه علوم پزشکی اراک - بافت‌شناسی", "Arak University of Medical Sciences - Histology", "اراک", "Arak", "ARAK_HIST"); } catch {}
-    // fallback: if code clash still, try with same code but ignore error
-    try { if (!db.prepare("SELECT id FROM universities WHERE id=?").get(ARAK_ID)) db.prepare("INSERT OR IGNORE INTO universities (id,name_fa,name_en,city_fa,city_en,code,active) VALUES (?,?,?,?,?,?,1)").run(ARAK_ID, "دانشگاه علوم پزشکی اراک", "Arak University of Medical Sciences", "اراک", "Arak", "ARAK120"); } catch {}
-  }
-}
+let ARAK_ID = 13;
+let IMAGE_URL = "/uploads/academic/university-13/histology_q1_1790882726117.png";
 
 function ensureUsers() {
   // Use username-based idempotency to avoid colliding with auto-increment student ids (85 Arak students).
@@ -29,7 +14,7 @@ function ensureUsers() {
     { username:"arak_histology", name_fa:"استاد بافت‌شناسی اراک", role:"teacher", univ:ARAK_ID, is_expert:0 },
     { username:"arak_expert", name_fa:"کارشناس آموزش اراک", role:"teacher", univ:ARAK_ID, is_expert:1 },
     { username:"arak_other_teacher", name_fa:"استاد دیگر اراک", role:"teacher", univ:ARAK_ID, is_expert:0 },
-    { username:"arak_teacher", name_fa:"استاد اراک", role:"teacher", univ:13, is_expert:0 },
+    { username:"arak_teacher", name_fa:"استاد اراک", role:"teacher", univ:ARAK_ID, is_expert:0 },
   ];
   for (const u of users) {
     const has = db.prepare("SELECT id, university_id FROM users WHERE username=?").get(u.username);
@@ -37,14 +22,9 @@ function ensureUsers() {
       const hashRow = db.prepare("SELECT password_hash FROM users WHERE role='teacher' LIMIT 1").get();
       const hash = hashRow?.password_hash || "$2a$10$dummyhashdummyhashdummyhashdummyha";
       try { db.prepare("INSERT OR IGNORE INTO users (username,password_hash,name_fa,role,university_id,is_expert,status) VALUES (?,?,?,?,?,?,'active')").run(u.username, hash, u.name_fa, u.role, u.univ, u.is_expert); } catch {}
-    } else {
-      // heal university if misassigned (student collision previously set 120 incorrectly)
-      if (Number(has.university_id) !== Number(u.univ)) {
-        try { db.prepare("UPDATE users SET university_id=?, is_expert=? WHERE username=?").run(u.univ, u.is_expert, u.username); } catch {}
-      }
     }
   }
-  // legacy arak_student (demo) - keep if not exists, under 120
+  // Missing demo users are created under the real university; existing memberships are preserved.
   const s = db.prepare("SELECT id FROM users WHERE username='arak_student'").get();
   if (!s) {
     const hash = db.prepare("SELECT password_hash FROM users WHERE role='teacher' LIMIT 1").get()?.password_hash || "x";
@@ -97,99 +77,29 @@ function cardData() {
 // Full 12-card payload is now embedded — creates missing cards idempotently.
 
 export function ensureArakHistology() {
-  try {
-    // Ensure academic media image exists (copy a placeholder if missing so stepwise card never has broken image)
-    try {
-      const mediaDir = path.join(DATA_DIR, "academic", "university-120", "media");
-      try { fs.mkdirSync(mediaDir, { recursive:true }); } catch {}
-      const dest = path.join(mediaDir, "histology_q1_1790882726117.png");
-      if (!fs.existsSync(dest)) {
-        const srcCandidates = [path.join(process.cwd(), "uploads", "teach-apoptosis-necrosis.svg"), path.join(DATA_DIR, "uploads", "teach-apoptosis-necrosis.svg")];
-        for (const src of srcCandidates) { try { if (fs.existsSync(src)) { fs.copyFileSync(src, dest); break; } } catch {} }
-        if (!fs.existsSync(dest)) {
-          // fallback: create a 1x1 png placeholder
-          try { fs.writeFileSync(dest, Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+ip1sAAAAASUVORK5CYII=", "base64")); } catch {}
-        }
-      }
-    } catch {}
-    ensureUniversity();
-    ensureUsers();
-    // Ensure the 12-card histology demo exists; create any missing ids 172-183
-    const all = cardData();
-    for (const c of all) {
-      const has = db.prepare("SELECT id FROM flashcards WHERE id=?").get(c.id);
-      if (!has) {
-        try {
-          db.prepare("INSERT INTO flashcards (id, data_json, university_id, active, difficulty, version, created_at, updated_at, content_updated_at, revision, created_by, last_editor_id, last_action) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
-            .run(c.id, JSON.stringify(c.data), ARAK_ID, 1, "medium", 1, new Date().toISOString(), new Date().toISOString(), new Date().toISOString(), 1, 27, 27, "created");
-        } catch {}
-      }
-    }
-    // Also ensure histology cards are available for the main Arak university (13) — tenant isolation requires copies under 13 so Arak students see the bank
-    try {
-      const mainArak = db.prepare("SELECT id FROM universities WHERE code='ARAK'").get()?.id || 13;
-      if (mainArak && mainArak !== ARAK_ID) {
-        // Check by title to avoid duplicates
-        const titles13 = new Set(db.prepare("SELECT data_json FROM flashcards WHERE university_id=?").all(mainArak).map(r=>{ try{return JSON.parse(r.data_json).title_fa;}catch{return ""}}));
-        for (const c of all) {
-          let d = c.data;
-          if (titles13.has(d.title_fa)) continue;
-          // clone to main Arak with new id
-          try { db.prepare("INSERT INTO flashcards (data_json, university_id, active, difficulty, version, created_at, updated_at, content_updated_at, revision, created_by, last_editor_id, last_action) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
-            .run(JSON.stringify(d), mainArak, 1, "medium", 1, new Date().toISOString(), new Date().toISOString(), new Date().toISOString(), 1, 27, 27, "created"); } catch {}
-          titles13.add(d.title_fa);
-        }
-        // Case provisioning is explicit; never recreate deleted/edited cases at boot.
-
-      }
-    } catch {}
-
-    const cnt = db.prepare("SELECT COUNT(*) c FROM flashcards WHERE university_id=? AND active=1").get(ARAK_ID).c;
-    const q1 = db.prepare("SELECT id, data_json FROM flashcards WHERE id=172").get();
-    if (q1) {
-      const d = JSON.parse(q1.data_json);
-      if (d.type !== "stepwise" || !Array.isArray(d.steps) || d.steps.length !== 3) {
-        const wanted = cardData().find(c=>c.id===172).data;
-        // preserve imageUrl if missing
-        if (!wanted.imageUrl) wanted.imageUrl = d.imageUrl;
-        if (!wanted.media) wanted.media = d.media;
-        db.prepare("UPDATE flashcards SET data_json=?, updated_at=datetime('now'), content_updated_at=datetime('now'), revision=COALESCE(revision,1)+1, university_id=?, last_editor_id=?, last_action='edited' WHERE id=?").run(JSON.stringify(wanted), ARAK_ID, ARAK_ID, 172);
-      } else {
-        // ensure reference present for future
-        const d2 = JSON.parse(q1.data_json);
-        if (!d2.micro?.reference) {
-          d2.micro = d2.micro || {};
-          d2.micro.reference = { book_fa:"جان‌کوئرا - بافت‌شناسی پایه", book_en:"Junqueira's Basic Histology", chapter_fa:"فصل بافت پوششی", chapter_en:"Chapter: Epithelial Tissue", edition:"15e", url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=2430", page:"۵۵-۷۲", short_fa:"Junqueira 15e", short_en:"Junqueira 15e" };
-          db.prepare("UPDATE flashcards SET data_json=? WHERE id=?").run(JSON.stringify(d2), 172);
-        }
-        if (!d2.media && d2.imageUrl) {
-          d2.media = { url:d2.imageUrl, kind:"image", caption_fa:"اپیتلیوم مطبق کاذب مژکدار - نای", caption_en:"Pseudostratified ciliated columnar - trachea" };
-          db.prepare("UPDATE flashcards SET data_json=? WHERE id=?").run(JSON.stringify(d2), 172);
-        }
-      }
-    }
-    const q12 = db.prepare("SELECT id, data_json FROM flashcards WHERE id=183").get();
-    if (q12) {
-      const d = JSON.parse(q12.data_json);
-      const hints = ["این بافت مخاط نازکی است که سفیدی چشم (صلبیه) و سطح داخلی پلک‌ها را می‌پوشاند و التهاب آن قرمزی چشم می‌دهد","برخلاف اپیدرم که سطح آن سنگ‌فرشی و کراتینه است، سطح این بافت استوانه‌ای بلند با سلول‌های جامی فراوان است؛ لایه‌های عمقی مکعبی‌اند","نام لاتین آن conjunctiva به معنای 'متصل‌کننده' است — پلک را به کره چشم متصل می‌کند"];
-      if (!Array.isArray(d.hints_fa) || d.hints_fa.length < 3) {
-        d.hints_fa = hints;
-        d.hints_en = ["This thin mucosa covers the sclera and inner eyelids; its inflammation causes red eye","Unlike epidermis (flat keratinized top), its surface is tall columnar with many goblet cells; deeper layers are cuboidal","Latin conjunctiva means 'joining' — it joins eyelid to eyeball"];
-        db.prepare("UPDATE flashcards SET data_json=? WHERE id=?").run(JSON.stringify(d), 183);
-      }
-      if (!d.micro?.reference) {
-        const dj = JSON.parse(db.prepare("SELECT data_json FROM flashcards WHERE id=183").get().data_json);
-        dj.micro = dj.micro || {};
-        dj.micro.reference = { book_fa:"جان‌کوئرا - بافت‌شناسی پایه", book_en:"Junqueira's Basic Histology", chapter_fa:"فصل بافت پوششی - ملتحمه", chapter_en:"Chapter: Epithelium - Conjunctiva", edition:"15e", url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=2430", page:"۶۸-۷۰", short_fa:"Junqueira 15e", short_en:"Junqueira 15e" };
-        dj.micro.source_fa = dj.micro.source_fa || "جان‌کوئرا - فصل بافت پوششی";
-        dj.micro.source_en = dj.micro.source_en || "Junqueira - Epithelium";
-        db.prepare("UPDATE flashcards SET data_json=? WHERE id=?").run(JSON.stringify(dj), 183);
-      }
-    }
-    // Ensure all 12 have university_id=120 and active=1 (if they were soft-deleted)
-    db.exec("UPDATE flashcards SET university_id=120, active=1 WHERE id BETWEEN 172 AND 183 AND (university_id IS NULL OR university_id<>120 OR active<>1)");
-    // If cnt==0 (no Arak cards) but we only patched 172/183, we still need the other 10. In that case, the DB is empty for Arak and we cannot reconstruct without the original payload.
-    // As a fallback, if cnt==0 we leave it — the operator should re-run the original setup-arak script. The 2 patched cards already cover the user's explicit correction.
-    try { persistNow(); } catch {}
-  } catch (e) { console.warn("ensureArakHistology:", e.message); }
+  const university=db.prepare("SELECT id FROM universities WHERE code='ARAK' AND retired_at IS NULL").get();
+  if(!university)return;
+  ARAK_ID=university.id;
+  IMAGE_URL=`/uploads/academic/university-${ARAK_ID}/histology_q1_1790882726117.png`;
+  ensureUsers();
+  const mediaDir=path.join(DATA_DIR,'academic',`university-${ARAK_ID}`,'media');
+  fs.mkdirSync(mediaDir,{recursive:true});
+  const dest=path.join(mediaDir,'histology_q1_1790882726117.png');
+  // Preserve only the known seed asset; do not move or expose any other old-tenant media.
+  const source=path.join(DATA_DIR,'academic','university-120','media','histology_q1_1790882726117.png');
+  if(!fs.existsSync(dest)&&fs.existsSync(source))fs.copyFileSync(source,dest);
+  const titles=new Set(db.prepare('SELECT data_json FROM flashcards WHERE university_id=?').all(ARAK_ID).map(r=>{try{return JSON.parse(r.data_json).title_fa}catch{return ''}}));
+  for(const c of cardData()){
+    if(titles.has(c.data.title_fa))continue;
+    // Never restore a deleted card or overwrite a colliding permanent ID.
+    if(db.prepare('SELECT id FROM flashcards WHERE id=?').get(c.id))continue;
+    const data={...c.data};
+    // Do not invent a clinical image or label unrelated artwork as histology.
+    if(!fs.existsSync(dest)&&data.imageUrl===IMAGE_URL){data.imageUrl='';delete data.media;}
+    const teacher=db.prepare("SELECT id FROM users WHERE username='arak_histology' AND university_id=?").get(ARAK_ID);
+    db.prepare(`INSERT INTO flashcards(id,data_json,university_id,active,difficulty,version,created_by,last_editor_id,last_action)
+      VALUES (?,?,?,1,'medium',1,?,?,'created')`).run(c.id,JSON.stringify(data),ARAK_ID,teacher?.id||null,teacher?.id||null);
+    titles.add(data.title_fa);
+  }
+  persistNow();
 }

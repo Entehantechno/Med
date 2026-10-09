@@ -67,7 +67,7 @@ export default function Classes({ go, home }) {
   );
 }
 
-function ClassDetail({ classId, go, back, home }) {
+export function ClassDetail({ classId, go, back, home }) {
   const { t, lang } = useApp();
   const [data, setData] = useState(null);
   const [loadErr, setLoadErr] = useState("");
@@ -155,7 +155,15 @@ function ClassDetail({ classId, go, back, home }) {
         {flashcards.length > 0 && (<>
           <h4 className="mb16 mt16"><Icon name="flask" size={16} /> {t("classFlashcards")}</h4>
           <div className="grid" style={{ gap: 12 }}>
-            {flashcards.map((f) => {
+            {cl.exam_mode === 'combined' ? <div className="card">
+              <h4>{lang==='fa'?'آزمون سؤال‌های کلاس':'Class question exam'}</h4>
+              <p>{lang==='fa'?`${flashcards.length} سؤال؛ یک ثبت نهایی. نمره هر سؤال در کارنامه حفظ می‌شود.`:`${flashcards.length} questions, one final submission. Each question remains in the gradebook.`}</p>
+              <button type="button" className="btn btn-primary" disabled={flashcards.some(f=>f.graded&&(f.attemptsUsed??0)>=(maxAttempts??1))}
+                onClick={()=>go('flashcards',{classId,classCombined:true,flashcardIds:flashcards.map(f=>f.flashcard_id),noPenalty:!!cl.flashNoPenalty})}>
+                {lang==='fa'?'شروع آزمون کلاس':'Start class exam'}
+              </button>
+              {flashcards.some(f=>f.graded&&(f.attemptsUsed??0)>=(maxAttempts??1))&&<p role="status">{lang==='fa'?'فرصت شرکت در یکی از سؤال‌ها تمام شده است.':'One or more questions have no attempts remaining.'}</p>}
+            </div> : flashcards.map((f) => {
               const used = f.attemptsUsed ?? 0;
               const remaining = Math.max(0, (maxAttempts ?? 1) - used);
               const exhausted = f.graded && remaining <= 0;   // practice sets never lock

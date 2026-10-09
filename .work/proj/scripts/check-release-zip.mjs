@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, statSync } from "node:fs";
+import { existsSync, statSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 
@@ -58,6 +58,7 @@ if (!has("package.json")) {
 }
 
 const forbiddenMatchers = [
+  {name:'development tests',test:e=>/^(server\/test|e2e|client\/e2e)\//.test(e)||/\.(test|spec)\.[cm]?[jt]sx?$/.test(e)},
   { name: "extra documentation/report", test: e => /\.(md|docx?)$/i.test(e) || /^(docs|reports)\//.test(e) },
   { name: "node_modules", test: (e) => e === "node_modules/" || e.includes("/node_modules/") || e.startsWith("node_modules/") },
   { name: "runtime data folder medschool-data", test: (e) => e === "medschool-data/" || e.startsWith("medschool-data/") },
@@ -300,6 +301,7 @@ const featureChecks = [
   {
     name: "automated responsive panels audit",
     file: "e2e/tests/responsive-panels-audit.spec.js",
+    sourceOnly: true,
     tests: [/responsive framing audit/, /overflowX/, /adminVisited/, /mobile/, /desktop/],
   },
   {
@@ -310,7 +312,7 @@ const featureChecks = [
   {
     name: "university tenant isolation for classes",
     file: "server/src/routes/classes.js",
-    tests: [/currentUniversityId/, /wrong_university/, /members\/resolve/, /createMissing/, /COALESCE\(university_id,1\)/],
+    tests: [/currentUniversityId/, /wrong_university/, /members\/resolve/, /createMissing/, /Number\(student\.university_id\) !== Number\(cl\.university_id\)/],
   },
   {
     name: "university tenant isolation for exams",
@@ -325,7 +327,7 @@ const featureChecks = [
   {
     name: "bulk enrollment UI with missing-student creation",
     file: "client/src/pages/Admin.jsx",
-    tests: [/MemberManageModal/, /members\/resolve/, /Create missing|ساخت missingها/, /participants.*createMissing|createMissing/],
+    tests: [/MemberManageModal/, /AcademicMembers/, /Create missing|ساخت missingها/, /participants.*createMissing|createMissing/],
   },
   {
     name: "enhanced drawing tools",
@@ -350,7 +352,7 @@ const featureChecks = [
   {
     name: "question taxonomy family and answer interaction",
     file: "client/src/pages/Admin.jsx",
-    tests: [/نوع پاسخ این مرحله|Step answer type/, /answerType/, /accept_fa/, /HotspotEditor/],
+    tests: [/StepwiseEditor/, /answerType/, /accept_fa/, /HotspotEditor/],
   },
   {
     name: "hints available for all non-MCQ question types",
@@ -380,6 +382,7 @@ const featureChecks = [
   {
     name: "tenant and enrollment regression tests",
     file: "server/test/api.test.js",
+    sourceOnly: true,
     tests: [/university tenancy, duplicate student numbers, and live board details/, /blocks duplicate student_no/, /class bulk member resolve/, /exam participant import/, /live board student details endpoint/],
   },
   {
@@ -495,11 +498,16 @@ const featureChecks = [
   {
     name: "VP student session-to-evaluate regression",
     file: "server/test/vp-stages-99.test.js",
+    sourceOnly: true,
     tests: [/opens a session, replies as the patient/, /stores AI score \+ lesson/, /session_id_required/],
   },
 ];
+featureChecks.push({name:'Step-specific author tools',file:'client/src/components/StepwiseEditor.jsx',tests:[/Step answer type/,/SearchAnswer/,/Correct option/,/Accepted alternatives/]});
+// Tests are required in the development checkout, not in the operator's runtime ZIP.
+const sourceRoot=path.resolve(path.dirname(new URL(import.meta.url).pathname),'..');
 for (const check of featureChecks) {
-  const body = readEntry(check.file);
+  const local=path.join(sourceRoot,check.file);
+  const body = check.sourceOnly ? (existsSync(local)?readFileSync(local,'utf8'):'') : readEntry(check.file);
   if (!body) {
     errors.push(`Feature audit failed (${check.name}): missing ${check.file}`);
     continue;

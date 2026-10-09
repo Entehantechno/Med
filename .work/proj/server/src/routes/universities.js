@@ -16,7 +16,7 @@ const genCode = () => "UNI-" + crypto.randomInt(1000, 10000);
 
 // list universities with member counts (admins + teachers see it for assignment)
 r.get("/", authRequired, requireRole("admin", "teacher"), (req, res) => {
-  let rows = db.prepare("SELECT * FROM universities ORDER BY id DESC").all();
+  let rows = db.prepare("SELECT * FROM universities WHERE retired_at IS NULL ORDER BY id DESC").all();
   if (req.user.role === "teacher") {
     const uni = db.prepare("SELECT university_id FROM users WHERE id=?").get(req.user.id)?.university_id;
     rows = rows.filter((u) => u.id === uni);

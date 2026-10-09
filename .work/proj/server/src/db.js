@@ -1546,6 +1546,10 @@ export function initSchema() {
   db.exec(`CREATE TABLE IF NOT EXISTS university_storage_namespaces (
       namespace TEXT PRIMARY KEY, university_id INTEGER NOT NULL, created_at TEXT DEFAULT (datetime('now'))
     )`);
+  // Retire the erroneous demo institution from directories without deleting tenant history.
+  const retirementCols=db.prepare('PRAGMA table_info(universities)').all().map(c=>c.name);
+  if(!retirementCols.includes('retired_at'))db.exec('ALTER TABLE universities ADD COLUMN retired_at TEXT');
+  db.exec("UPDATE universities SET retired_at=COALESCE(retired_at,datetime('now')) WHERE code='ARAK_HIST' OR (id=120 AND code='ARAK120')");
   // Seed Harrison as canonical metadata-only reference (id=1 stable for tests/policies).
   try {
     db.exec("INSERT OR IGNORE INTO reference_catalog (id,code,title_en,short_title,publisher,edition,rights_status,active) VALUES (1,'harrison-22e','Harrison''s Principles of Internal Medicine','Harrison''s 22e','McGraw Hill','22e','metadata_only',1)");
@@ -1841,6 +1845,12 @@ export function initSchema() {
     answers_json TEXT DEFAULT '[]',
     duration_sec INTEGER DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now'))
+  )`);
+  // Successful combined submissions are idempotent, including a retry after a lost response.
+  db.exec(`CREATE TABLE IF NOT EXISTS class_flash_submissions (
+    class_id INTEGER NOT NULL, user_id INTEGER NOT NULL, submission_id TEXT NOT NULL,
+    result_json TEXT NOT NULL, created_at TEXT DEFAULT (datetime('now')),
+    PRIMARY KEY(class_id,user_id,submission_id)
   )`);
   const cfAttemptCols = db.prepare("PRAGMA table_info(class_flashcard_attempts)").all().map((c) => c.name);
   if (!cfAttemptCols.includes("answers_json")) db.exec("ALTER TABLE class_flashcard_attempts ADD COLUMN answers_json TEXT DEFAULT '[]'");

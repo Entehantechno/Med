@@ -1,0 +1,15 @@
+import React from 'react';
+import {render,screen,fireEvent,cleanup} from '@testing-library/react';
+import {it,expect,vi,afterEach} from 'vitest';
+const api=vi.hoisted(()=>({get:vi.fn()}));
+vi.mock('../api.js',()=>({api,loadFailKind:()=>'',loadFailText:()=>''}));
+vi.mock('../context.jsx',()=>({useApp:()=>({lang:'en',t:k=>k,user:{role:'student'}})}));
+vi.mock('../components/UI.jsx',()=>({TopBar:()=>null,Spinner:()=>null,Pill:()=>null,StarRating:()=>null}));
+import {ClassDetail} from './Classes.jsx';
+import {ClassQuestionMode} from '../components/AcademicControls.jsx';
+afterEach(()=>{cleanup();vi.clearAllMocks()});
+const data=mode=>({class:{id:1,exam_mode:mode},cases:[],flashcards:[{flashcard_id:1,q_en:'First',graded:true,attemptsUsed:0},{flashcard_id:2,q_en:'Second',graded:false,attemptsUsed:0}],maxAttempts:1});
+it('combined mode starts one exam with every question and no individual start controls',async()=>{api.get.mockResolvedValue(data('combined'));const go=vi.fn();render(<ClassDetail classId={1} go={go}/>);fireEvent.click(await screen.findByRole('button',{name:'Start class exam'}));expect(go).toHaveBeenCalledWith('flashcards',expect.objectContaining({classId:1,classCombined:true,flashcardIds:[1,2]}));expect(screen.queryByRole('button',{name:'startClassCase'})).toBeNull()});
+it('separate mode keeps per-question routing',async()=>{api.get.mockResolvedValue(data('perQuestion'));const go=vi.fn();render(<ClassDetail classId={1} go={go}/>);const buttons=await screen.findAllByRole('button',{name:'startClassCase'});expect(buttons).toHaveLength(2);fireEvent.click(buttons[1]);expect(go).toHaveBeenCalledWith('flashcards',expect.objectContaining({classFlashcardId:2,flashcardIds:[2]}));expect(screen.queryByText('Start class exam')).toBeNull()});
+it('exhausted graded questions block the combined exam but practice attempts do not',async()=>{const d=data('combined');d.flashcards[0].attemptsUsed=1;api.get.mockResolvedValue(d);render(<ClassDetail classId={1}/>);expect((await screen.findByRole('button',{name:'Start class exam'})).disabled).toBe(true)});
+it('class settings exposes explicit separate/combined controls',()=>{const change=vi.fn();render(<ClassQuestionMode value="perQuestion" onChange={change}/>);expect(screen.getByRole('radio',{name:'Each question separately'}).checked).toBe(true);fireEvent.click(screen.getByRole('radio',{name:'All questions in one exam'}));expect(change).toHaveBeenCalledWith('combined')});

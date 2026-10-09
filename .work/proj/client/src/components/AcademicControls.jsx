@@ -22,3 +22,11 @@ export function ContentSharing({kind,row,onChanged}){
  <button type="button" className="btn btn-sm btn-ghost" onClick={()=>setPreview(true)}>{fa?'مشاهده محتوا':'View content'}</button>{error&&<div role="alert">{error}</div>}
  {preview&&<Modal wide title={(fa?row.title_fa:row.title_en)||row.public_code} onClose={()=>setPreview(false)}><p>{fa?'اشتراک منبع به معنی اجازه ویرایش اصل محتوا نیست. نسخه‌های ساخته‌شده مستقل‌اند و با خاموش‌کردن اشتراک حذف نمی‌شوند.':'Sharing permits reading, not editing the source. Existing independent copies are not deleted when sharing is disabled.'}</p><pre style={{whiteSpace:'pre-wrap'}}>{JSON.stringify(row,null,2)}</pre></Modal>}</div>;
 }
+
+export function ClassQuestionMode({value='perQuestion',onChange}) {
+ const {lang}=useApp(),fa=lang==='fa';
+ return <fieldset className="card mb12"><legend>{fa?'نحوه نمایش سؤال‌های کلاس':'Class question presentation'}</legend>
+  {[['perQuestion',fa?'هر سؤال به صورت جداگانه':'Each question separately'],['combined',fa?'همه سؤال‌ها در یک آزمون':'All questions in one exam']].map(([id,label])=><label key={id} className="toggle-row"><span>{label}</span><input type="radio" name="class-question-mode" value={id} checked={(value==='combined'?'combined':'perQuestion')===id} onChange={()=>onChange(id)}/></label>)}
+  <p className="small muted">{fa?'در حالت یک آزمون، سؤال‌های کلاس با یک شروع و یک ثبت نهایی ارائه می‌شوند؛ نمره هر سؤال و محدودیت دفعات شرکت حفظ می‌شود. بیمارهای مجازی همچنان مصاحبه‌های مستقل هستند.':'One exam uses one start and one final submission for the class questions, retaining per-question grades and attempt limits. Virtual-patient interviews remain separate.'}</p>
+ </fieldset>;
+}

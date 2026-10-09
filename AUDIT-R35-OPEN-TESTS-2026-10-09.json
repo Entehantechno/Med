@@ -1,0 +1,246 @@
+{
+  "full_run_failed": 48,
+  "open_bank_failures": 47,
+  "tests": [
+    {
+      "suite": "master-bank.test.js",
+      "name": "master pre-internship bank keeps part22 reviewed multi-answer items ungraded and the imaging correction explicit",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "master pre-internship bank keeps part22 batch2 educational structure and explicit option reasoning",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "master pre-internship bank gives every card a Persian stem, four options and a usable key",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round47 exact editorial boundaries preserves every non-educational field, all keys and every out-of-scope question",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round47 exact editorial boundaries keeps all six deferred questions entirely identical to round46",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round47 exact editorial boundaries provides 194 case interpretations, four explicit rationales and four clinical points",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round47 exact editorial boundaries preserves other payloads except hash-chained round48/round50 continuations",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round48 exact editorial boundaries changes exactly 182 approved records and only the five Persian teaching fields",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round48 exact editorial boundaries keeps the 18 newly deferred and six earlier deferred records entirely unchanged",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round48 exact editorial boundaries provides 182 distinct case explanations and leads with four rationales and structured points",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round48 exact editorial boundaries preserves other-bank bytes except hash-chained round50 and keeps filename inventory",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round49 exact editorial boundaries changes exactly 183 approved records and only the five Persian teaching fields",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round49 exact editorial boundaries keeps the 17 newly deferred and 24 earlier deferred records entirely unchanged",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round49 exact editorial boundaries provides 183 distinct case explanations and leads with four rationales and structured points",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round49 exact editorial boundaries preserves other-bank bytes except hash-chained round50 and keeps filename inventory",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round50 exact editorial boundaries locks exact 200 scope, 160 edits, all protected fields and every untouched record",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round50 exact editorial boundaries ships individualized explanations, four rationales and four clinical points",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round50 exact editorial boundaries keeps previous 41 queue entries and records 40 new unchanged graded entries",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round50 exact editorial boundaries keeps the other 53 banks byte-identical (part26 chained via round51) including all previous deferred records",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round51 exact editorial boundaries ships individualized explanations, four rationales and four clinical points",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round51 exact editorial boundaries keeps the other 53 banks byte-identical",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round52 exact editorial boundaries locks exact part26 scope, all protected fields and every untouched record",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round52 exact editorial boundaries ships individualized explanations, four rationales and four clinical points for part26",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round52 exact editorial boundaries locks exact part27 scope, all protected fields and every untouched record",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round52 exact editorial boundaries ships individualized explanations, four rationales and four clinical points for part27",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round52 exact editorial boundaries keeps part26 rows 1-45 (round51 work) byte-identical to the fixture baseline",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round52 exact editorial boundaries keeps the other 52 banks byte-identical",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round53 exact editorial boundaries locks exact part27 scope, all protected fields and every untouched record",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round53 exact editorial boundaries ships individualized explanations, four rationales and four clinical points for part27",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round53 exact editorial boundaries locks exact part28 scope, all protected fields and every untouched record",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round53 exact editorial boundaries ships individualized explanations, four rationales and four clinical points for part28",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round53 exact editorial boundaries keeps the previous 82 queue entries and records exactly 52 new unchanged graded entries",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round53 exact editorial boundaries keeps part26 (round51/52 work) and part27 rows 1-25 (round52 work) unchanged",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round53 exact editorial boundaries keeps the other 52 banks byte-identical",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round54 exact editorial boundaries locks exact part28 scope, all protected fields and every untouched record",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round54 exact editorial boundaries ships individualized explanations, four rationales and four clinical points for part28",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round54 exact editorial boundaries keeps the previous 134 queue entries and records exactly 19 new unchanged graded entries",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round54 exact editorial boundaries keeps part27 (round53 work) and part28 rows 1-5 (round53 work) unchanged",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round54 exact editorial boundaries keeps the other 53 banks byte-identical",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round55 exact editorial boundaries ships individualized explanations, four rationales and four clinical points for part29",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round55 exact editorial boundaries keeps the other 53 banks byte-identical",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round57 deferred-queue enrichment boundaries keeps every queued row that was not enriched byte-identical to the round55 release",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round57 deferred-queue enrichment boundaries enriched each of the 55 rows in place, without touching a key or any protected field",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round57 deferred-queue enrichment boundaries ships 55 unique explanations and 55 unique leads for the enriched rows",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round57 deferred-queue enrichment boundaries keeps the other 48 banks byte-identical",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round58 remediation pack (prepared, not applied) keeps every proposed key inside its own row and unapplied unless the trail says otherwise",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "master-bank.test.js",
+      "name": "round58 remediation pack (prepared, not applied) splits the guideline-drift rows into six ready moves and two open questions",
+      "status": "open_preexisting_bank_failure"
+    },
+    {
+      "suite": "university-retirement-r35.test.js",
+      "name": "upgrade removes old institution from directory but preserves users/content and private namespace",
+      "status": "fixture_collision_fixed_and_rechecked"
+    }
+  ]
+}

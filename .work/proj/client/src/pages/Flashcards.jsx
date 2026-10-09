@@ -25,7 +25,7 @@ function flashChrome(embedded, home, inner) {
   return <div className="app"><TopBar onHome={home} />{inner}</div>;
 }
 
-export default function Flashcards({ home, examId, flashcardIds, examDuration, shuffle, antiCheat, competition, classId, classFlashcardId, showCorrect: examShowCorrect, showHints: examShowHints, noPenalty: noPenaltyProp, embedded = false }) {
+export default function Flashcards({ home, examId, flashcardIds, examDuration, shuffle, antiCheat, competition, classId, classFlashcardId, classCombined = false, showCorrect: examShowCorrect, showHints: examShowHints, noPenalty: noPenaltyProp, embedded = false }) {
   // Tell sw-update.js that in-progress work is on screen: a new build must
   // not auto-reload the page until this screen unmounts.
   useEffect(() => { markBusy(true); return () => markBusy(false); }, []);
@@ -35,6 +35,19 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
   const [bootNonce, setBootNonce] = useState(0);
   const [gradeErr, setGradeErr] = useState("");
   const [saveErr, setSaveErr] = useState("");
+  const combinedConfig=useRef(null), combinedPayload=useRef(null), combinedSaving=useRef(false);
+  const [savingCombined,setSavingCombined]=useState(false);
+  const submissionId=useRef(null);
+  if(!submissionId.current)submissionId.current=Array.from(crypto.getRandomValues(new Uint8Array(16)),b=>b.toString(16).padStart(2,'0')).join('');
+  async function retryCombined() {
+    if(combinedSaving.current||!combinedPayload.current)return;
+    combinedSaving.current=true;setSavingCombined(true);setSaveErr('');
+    try {
+      const r=await api.post(`/classes/${classId}/flashcards/finish`,combinedPayload.current);
+      setServerScore(r.score);setNoPenaltyCfg(!!r.noPenalty);
+    } catch(e) {setSaveErr(e?.data?.error==='class_questions_changed'?'changed':loadFailKind(e));}
+    finally {combinedSaving.current=false;setSavingCombined(false);}
+  }
   const [cards, setCards] = useState(null); // filtered deck being practiced
   const [settings, setSettings] = useState({ showHints: true, showCorrect: true });
   const [idx, setIdx] = useState(0);
@@ -78,7 +91,12 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
       setLoadErr("");
       try {
         const skipUniExamSettings = user?.role === "learner";
-        const examIds = Array.isArray(flashcardIds) ? flashcardIds.map(Number).filter((n) => Number.isFinite(n) && n > 0) : [];
+        let requestedIds=flashcardIds;
+        if(classCombined&&classId){
+          const cfg=await api.get(`/classes/${classId}/flashcards/config`,{timeoutMs:15000,stage:'boot'});
+          combinedConfig.current=cfg;requestedIds=cfg.ids;setNoPenaltyCfg(!!cfg.noPenalty);
+        }
+        const examIds = Array.isArray(requestedIds) ? requestedIds.map(Number).filter((n) => Number.isFinite(n) && n > 0) : [];
         const flashPath = inExam
           ? (examIds.length ? `/flashcards?ids=${examIds.slice(0, 400).join(",")}` : "/flashcards?ids=")
           : "/flashcards";
@@ -93,6 +111,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
         if (inExam) {
           filtered = examIds.length ? list.filter((card) => examIds.includes(card.id)) : [];
         }
+        if(classCombined && filtered.length!==examIds.length)throw new Error('class_questions_changed');
         if (inExam && shuffle) filtered = shuffleArray(filtered);
         let next = s && typeof s === "object"
           ? { showHints: s.showHints !== false, showCorrect: s.showCorrect !== false }
@@ -165,7 +184,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
   }
 
   if (finished) return <Summary cards={cards} results={results} totalHints={totalHints} home={home}
-    examId={examId} competition={competition} meUserId={user?.id} saveErr={saveErr} embedded={embedded}
+    examId={examId} classId={classId} onRetry={classCombined?retryCombined:null} saving={savingCombined} competition={competition} meUserId={user?.id} saveErr={saveErr} embedded={embedded}
     noPenalty={noPenaltyCfg} serverScore={serverScore}
     onRestart={() => startDeck(cards)} onPick={() => setCards(null)} />;
 
@@ -308,7 +327,11 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
     const score = Math.round(finalResults.reduce((sum, r) => sum + (r ? r.points : 0), 0));
     setFinished(true); setTimeLeft(null);
     try {
-      if (classId && classFlashcardId) {
+      if (classCombined && classId) {
+        combinedPayload.current={submissionId:submissionId.current,version:combinedConfig.current?.version,
+          durationSec:Math.round((Date.now()-startRef.current)/1000),answers:answerDetails};
+        await retryCombined();
+      } else if (classId && classFlashcardId) {
         // Class flashcard set → record the score against the class gradebook.
         // The server regrades from the answers (anti-cheat); its score is the
         // authoritative one (it also applies the no-penalty policy).
@@ -505,7 +528,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
 
             {done && (
               <button type="button" className="btn btn-accent btn-block mt16" onClick={next}>
-                {idx < cards.length - 1 ? `${t("nextCard")} →` : `${(examId ? t("examDone") : t("flashDone"))} →`}
+                {idx < cards.length - 1 ? `${t("nextCard")} →` : `${((examId || classCombined) ? t("examDone") : t("flashDone"))} →`}
               </button>
             )}
           </div>
@@ -575,7 +598,7 @@ function DeckPicker({ allCards, onStart, home, embedded = false }) {
   ));
 }
 
-function Summary({ cards, results, totalHints, onRestart, onPick, home, examId, competition, meUserId, saveErr, noPenalty = false, serverScore = null, embedded = false }) {
+function Summary({ cards, results, totalHints, onRestart, onPick, home, examId, classId, onRetry, saving, competition, meUserId, saveErr, noPenalty = false, serverScore = null, embedded = false }) {
   const { t, lang } = useApp();
   const [showLb, setShowLb] = useState(false);
   const solved = results.filter((r) => r && r.solved).length;
@@ -591,7 +614,10 @@ function Summary({ cards, results, totalHints, onRestart, onPick, home, examId, 
               ? "نتیجه روی صفحه است، ولی ذخیره روی سرور شکست خورد. دوباره تلاش کنید."
               : "Your summary is on screen, but saving the score failed. Please try again."}</div>
           ) : null}
-          <h2 className="mt8">{examId ? t("examDone") : t("flashDone")}</h2>
+          {saveErr==='changed'&&<p role="alert">{lang==='fa'?'سؤال‌ها یا تنظیمات کلاس تغییر کرده‌اند؛ پاسخی ثبت نشد. به کلاس برگردید و آزمون جدیدی آغاز کنید.':'Class questions or settings changed. Nothing was recorded. Return to the class and start a new exam.'}</p>}
+          {onRetry&&saveErr&&saveErr!=='changed'&&<button type="button" className="btn btn-primary" disabled={saving} onClick={onRetry}>{lang==='fa'?'تلاش مجدد برای ثبت':'Retry saving'}</button>}
+          {saving&&<p role="status">{lang==='fa'?'در حال ثبت نتیجه…':'Saving results…'}</p>}
+          <h2 className="mt8">{(examId || classId) ? t("examDone") : t("flashDone")}</h2>
           <div className="grid grid-3 mt16">
             <div className="stat-card"><div className="num">{solved}/{cards.length}</div><div className="lbl">{t("solved")}</div></div>
             <div className="stat-card"><div className="num">{totalHints}</div><div className="lbl">{t("hintsUsed")}</div></div>
@@ -612,8 +638,8 @@ function Summary({ cards, results, totalHints, onRestart, onPick, home, examId, 
           )}
 
           <div className="mt16" style={{ display: "flex", gap: 10, justifyContent: "center", flexWrap: "wrap" }}>
-            {!examId && <button type="button" className="btn btn-primary" onClick={onRestart}><Icon name="restart" size={16} /> {t("start")}</button>}
-            {!examId && <button type="button" className="btn btn-ghost" onClick={onPick}><Icon name="catalog" size={16} /> {t("pickDeck")}</button>}
+            {!examId && !classId && <button type="button" className="btn btn-primary" onClick={onRestart}><Icon name="restart" size={16} /> {t("start")}</button>}
+            {!examId && !classId && <button type="button" className="btn btn-ghost" onClick={onPick}><Icon name="catalog" size={16} /> {t("pickDeck")}</button>}
             <button type="button" className="btn btn-ghost" onClick={home}>{t("back")}</button>
           </div>
         </div>

@@ -4,7 +4,7 @@ import StepwiseEditor from '../components/StepwiseEditor.jsx';
 import {normalizeStep} from '../lib/step-authoring.js';
 import UniversityMembers from '../components/UniversityMembers.jsx';
 import AcademicMembers from '../components/AcademicMembers.jsx';
-import {UniversityField,GroupUniversity,ContentSharing} from '../components/AcademicControls.jsx';
+import {UniversityField,GroupUniversity,ContentSharing,ClassQuestionMode} from '../components/AcademicControls.jsx';
 import { adminTabMode } from "../lib/admin-navigation.js";
 import {acceptedAnswers,orderingRows,drawingRubrics,percentCoordinate,patientEditorData} from "../lib/authoring-values.js";
 import {validateQuestion,validatePatient} from "../lib/authoring-validation.js";
@@ -2752,6 +2752,7 @@ function ClassModal({ cls, onClose, onSave }) {
     return {
       university_id: cls.university_id || user.university_id || "", name_fa: cls.name_fa || "", name_en: cls.name_en || "",
       desc_fa: cls.desc_fa || "", desc_en: cls.desc_en || "",
+      exam_mode: cls.exam_mode || "perQuestion",
       maxAttempts: cls.maxAttempts || cls.max_attempts || 1,
       gradingRole: cls.grading_role || "both",
       historyForm: cls.history_form || "general",
@@ -2765,6 +2766,7 @@ function ClassModal({ cls, onClose, onSave }) {
   return (
     <Modal title={cls.id ? t("edit") : t("newClass")} onClose={onClose} saveDisabled={user.role === "admin" && !f.university_id} onSave={() => onSave({ ...f, logTranscript: !!f.logTranscript, studyId: f.studyId === "" ? null : +f.studyId, gradingRubric: f.useCustomRubric ? f.gradingRubric : null }, cls.id)}>
       <UniversityField value={f.university_id} onChange={v=>set("university_id",v)}/>
+      <ClassQuestionMode value={f.exam_mode} onChange={v=>set("exam_mode",v)}/>
       <div className="grid grid-2">
         <div className="field"><label>{t("className")} (FA)</label><input value={f.name_fa} onChange={(e) => set("name_fa", e.target.value)} /></div>
         <div className="field"><label>{t("className")} (EN)</label><input value={f.name_en} onChange={(e) => set("name_en", e.target.value)} /></div>
@@ -2958,6 +2960,7 @@ function ClassManage({ classId, back }) {
     api.get(`/classes/${classId}`).then((d) => { setData(d); setInfo({
     name_fa: d.class.name_fa || "", name_en: d.class.name_en || "",
     desc_fa: d.class.desc_fa || "", desc_en: d.class.desc_en || "", maxAttempts: d.class.max_attempts ?? 1,
+    exam_mode: d.class.exam_mode || "perQuestion",
     liveBoardEnabled: d.class.live_board_enabled !== 0, liveBoardAnonymous: !!d.class.live_board_anonymous,
     logTranscript: !!d.class.log_transcript,
     studyId: d.class.study_id || "",
@@ -2992,6 +2995,7 @@ function ClassManage({ classId, back }) {
       </div>
       {bankErr && <div className="err-banner mb8">{bankErr}</div>}
       <GroupUniversity kind="classes" id={classId} value={cl.university_id} onSaved={load}/>
+      <ClassQuestionMode value={info.exam_mode} onChange={v=>setF("exam_mode",v)}/>
 
       {/* Basic info */}
       <div className="card mb16" style={{ background: "var(--panel2)" }}>
