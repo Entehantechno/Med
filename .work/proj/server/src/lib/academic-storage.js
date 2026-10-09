@@ -60,6 +60,18 @@ export function mediaLocation(req, filename) {
   return path.join(UPLOADS_DIR, safe);
 }
 
+// Publication grants teachers access only to the exact assets referenced by an
+// active published resource in the asset's own university, never its directory.
+function sharedTeachingAsset(req,ns,name){
+ if(req.user?.role!=='teacher')return false;
+ const university=Number(/^university-(\d+)$/.exec(ns)?.[1]);if(!university)return false;
+ const url=`/uploads/academic/${ns}/${encodeURIComponent(name)}`;
+ for(const table of ['cases','flashcards']){
+  const rows=db.prepare(`SELECT data_json FROM ${table} WHERE university_id=? AND active=1 AND shared_to_teachers=1 AND instr(data_json,?)>0`).all(university,name);
+  for(const row of rows){try{const urls=JSON.stringify(JSON.parse(row.data_json)).match(/\/uploads\/academic\/university-\d+\/[a-zA-Z0-9_.%~-]+/g)||[];if(urls.some(x=>decodeURIComponent(x)===decodeURIComponent(url)))return true}catch{}}
+ }return false;
+}
+
 // GET /uploads/academic/:namespace/:name
 export function academicMedia(req, res, next) {
   try {
@@ -79,7 +91,7 @@ export function academicMedia(req, res, next) {
           const userNs = req?.user?.university_id ? namespaceForUniversity(req.user.university_id) : null;
           const isAdmin = req?.user?.role === "admin";
           // Tenant isolation: only same-university users or admins may read tenant media
-          if (!isAdmin && userNs !== ns) return res.status(404).json({ error: "not_found" });
+          if (!isAdmin && userNs !== ns && !sharedTeachingAsset(req,ns,name)) return res.status(404).json({ error: "not_found" });
           // Anonymous (no user) also denied
           if (!req.user) return res.status(404).json({ error: "not_found" });
           res.setHeader("X-Content-Type-Options", "nosniff");

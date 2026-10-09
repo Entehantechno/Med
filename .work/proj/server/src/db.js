@@ -1690,6 +1690,11 @@ export function initSchema() {
   if (!flashTenantCols.includes("last_editor_id")) db.exec("ALTER TABLE flashcards ADD COLUMN last_editor_id INTEGER");
   if (!flashTenantCols.includes("last_action")) db.exec("ALTER TABLE flashcards ADD COLUMN last_action TEXT DEFAULT 'created'");
   // Per-teacher isolation: teacher sees only own questions/patients, کارشناس آموزش (is_expert) sees all of university
+  for (const table of ['cases','flashcards']) {
+    if (!db.prepare(`PRAGMA table_info(${table})`).all().some(c=>c.name==='shared_to_teachers')) db.exec(`ALTER TABLE ${table} ADD COLUMN shared_to_teachers INTEGER NOT NULL DEFAULT 0`);
+  }
+  db.exec(`CREATE TABLE IF NOT EXISTS academic_content_copies(kind TEXT NOT NULL,source_id INTEGER NOT NULL,source_version INTEGER NOT NULL,university_id INTEGER NOT NULL,owner_id INTEGER NOT NULL,copy_id INTEGER NOT NULL,PRIMARY KEY(kind,source_id,source_version,university_id,owner_id));
+    CREATE INDEX IF NOT EXISTS idx_users_directory ON users(university_id,role,student_no,id);`);
   try { const fcols2 = db.prepare("PRAGMA table_info(flashcards)").all().map((c) => c.name); if (!fcols2.includes("created_by")) db.exec("ALTER TABLE flashcards ADD COLUMN created_by INTEGER"); } catch { /* */ }
   try { const ccols2 = db.prepare("PRAGMA table_info(cases)").all().map((c) => c.name); if (!ccols2.includes("created_by")) db.exec("ALTER TABLE cases ADD COLUMN created_by INTEGER"); } catch { /* */ }
   try { const ucolsX = db.prepare("PRAGMA table_info(users)").all().map((c) => c.name); if (!ucolsX.includes("is_expert")) db.exec("ALTER TABLE users ADD COLUMN is_expert INTEGER DEFAULT 0"); } catch { /* */ }

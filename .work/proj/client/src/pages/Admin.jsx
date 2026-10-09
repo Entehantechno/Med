@@ -1,3 +1,5 @@
+import AcademicMembers from '../components/AcademicMembers.jsx';
+import {UniversityField,GroupUniversity,ContentSharing} from '../components/AcademicControls.jsx';
 import { adminTabMode } from "../lib/admin-navigation.js";
 import {acceptedAnswers,orderingRows,drawingRubrics,percentCoordinate,patientEditorData} from "../lib/authoring-values.js";
 import {validateQuestion,validatePatient} from "../lib/authoring-validation.js";
@@ -475,6 +477,8 @@ export function UsersManager({ scope = "all" }) {
   const showUniTools = scope === "all" || scope === "uni";
   const faLang = lang === "fa";
   const [users, setUsers] = useState(null);
+  const [page,setPage]=useState(1),[total,setTotal]=useState(0),[prefix,setPrefix]=useState(''),[sort,setSort]=useState('student_no'),[userStatus,setUserStatus]=useState('');
+  const requestId=useRef(0);const [usersLoading,setUsersLoading]=useState(true);
   const [cases, setCases] = useState([]);
   const [role, setRole] = useState("");
   const [uniFilter, setUniFilter] = useState("");
@@ -496,11 +500,11 @@ export function UsersManager({ scope = "all" }) {
   const [classes, setClasses] = useState([]);
 
   const load = () => {
-    setLoadErr("");
-    api.get(`/admin/users?scope=${scope}&roles=${scopeRoles.join(",")}&role=${role}&q=${encodeURIComponent(q)}`)
-      .then((d) => setUsers(d.users || [])).catch((e) => { setUsers([]); setLoadErr(String(e.message || e)); });
+    const generation=++requestId.current;setLoadErr('');setUsersLoading(true);
+    const qs=new URLSearchParams({scope,roles:scopeRoles.join(','),role,q,university_id:uniFilter,page:String(page),pageSize:'100',prefix,sort,status:userStatus});
+    api.get(`/admin/users?${qs}`).then(d=>{if(generation===requestId.current){setUsers(d.users||[]);setTotal(d.total??d.users?.length??0);}}).catch(e=>{if(generation===requestId.current)setLoadErr(e.message)}).finally(()=>{if(generation===requestId.current)setUsersLoading(false)});
   };
-  useEffect(() => { load(); }, [role, scope]);
+  useEffect(()=>{requestId.current++;setUsersLoading(true);const timer=setTimeout(load,200);return()=>{clearTimeout(timer);requestId.current++;};},[role,scope,q,uniFilter,page,prefix,sort,userStatus]);
   useEffect(() => {
     if (!showUniTools) return;
     setCasesErr("");
@@ -528,7 +532,7 @@ export function UsersManager({ scope = "all" }) {
     }
     return faLang ? "— بدون دانشگاه —" : "— no university —";
   };
-  const filteredByUni = uniFilter ? (users||[]).filter(u=> String(u.university_id)===String(uniFilter)) : (users||[]);
+  const filteredByUni = users || [];
   // keep selection valid after filter change
   useEffect(()=>{ setSelectedIds(new Set()); }, [uniFilter, role]);
 
@@ -591,15 +595,22 @@ export function UsersManager({ scope = "all" }) {
       </div>
       <div className="small muted mb8">{heading}</div>
       {casesErr && <div className="err-banner mb8">{casesErr}</div>}
+      <div className="grid grid-2 mb12">
+      <label className="field">{faLang?'جستجو در همه کاربران':'Search all users'}<input aria-label={faLang?'جستجو در همه کاربران':'Search all users'} value={q} onChange={e=>{setQ(e.target.value);setPage(1)}}/></label>
+      <label className="field">{faLang?'پیش‌شماره دانشجویی':'Student number prefix'}<input value={prefix} onChange={e=>{setPrefix(e.target.value);setPage(1)}}/></label>
+      <label className="field">{faLang?'ترتیب همه نتایج':'Sort all results'}<select value={sort} onChange={e=>{setSort(e.target.value);setPage(1)}}><option value="student_no">{t('studentNo')}</option><option value="name">{t('name')}</option><option value="username">{t('username')}</option></select></label>
+      <label className="field">{faLang?'وضعیت':'Status'}<select value={userStatus} onChange={e=>{setUserStatus(e.target.value);setPage(1)}}><option value="">{faLang?'همه':'All'}</option><option value="active">{faLang?'فعال':'Active'}</option><option value="inactive">{faLang?'غیرفعال':'Inactive'}</option><option value="pending">{faLang?'در انتظار':'Pending'}</option></select></label>
+      </div>
+      <div className="inline-form mb12"><button type="button" className="btn btn-sm btn-ghost" disabled={usersLoading||page<=1} onClick={()=>setPage(p=>p-1)}>{faLang?'صفحه قبل':'Previous page'}</button><span role="status">{total} {faLang?'کاربر':'users'} · {page}/{Math.max(1,Math.ceil(total/100))}</span><button type="button" className="btn btn-sm btn-ghost" disabled={usersLoading||page*100>=total} onClick={()=>setPage(p=>p+1)}>{faLang?'صفحه بعد':'Next page'}</button></div>
       <div className="inline-form mb12" style={{ flexWrap: "wrap", gap: 8, alignItems:"center" }}>
         {scopeRoles.length > 1 && (
-          <select value={role} onChange={(e) => setRole(e.target.value)}>
+          <select value={role} onChange={(e) => {setRole(e.target.value);setPage(1)}}>
             <option value="">{t("allRoles")}</option>
             {scopeRoles.map((r) => <option key={r} value={r}>{t(r)}</option>)}
           </select>
         )}
         {(showUniTools || scope==="all") && (
-          <select value={uniFilter} onChange={(e)=> setUniFilter(e.target.value)} style={{ minWidth: 180 }}>
+          <select value={uniFilter} onChange={(e)=> {setUniFilter(e.target.value);setPage(1)}} style={{ minWidth: 180 }}>
             <option value="">{faLang ? "همه دانشگاه‌ها" : "All universities"}</option>
             {unis.map(u=> <option key={u.id} value={u.id}>{faLang ? (u.name_fa||u.code) : (u.name_en||u.code)} — {u.code}</option>)}
             <option value="null">{faLang ? "— بدون دانشگاه —" : "— no university —"}</option>
@@ -636,12 +647,13 @@ export function UsersManager({ scope = "all" }) {
         </div>
       )}
 
-      <DataTable
+      <div aria-busy={usersLoading}>{usersLoading&&<p role="status">{faLang?"در حال بارگذاری کاربران…":"Loading users…"}</p>}<fieldset disabled={usersLoading} style={{border:0,padding:0,minWidth:0}}>
+      <DataTable searchable={false} pageSize={0}
         rows={uniFilter ? filteredByUni : users}
         selectable={true}
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
-        initialSort={{ key: "name", dir: "asc" }}
+        initialSort={{ key: null, dir: "asc" }}
         searchPlaceholder={t("searchByNameOrNo")}
         searchKeys={[(u) => u.name_fa, (u) => u.name_en, (u) => u.username, (u) => u.student_no, (u)=> uniNameOf(u), (u)=> u.uni_name_fa, (u)=> u.uni_name_en]}
         rowKey={(u) => u.id}
@@ -676,7 +688,7 @@ export function UsersManager({ scope = "all" }) {
               <button type="button" className="btn btn-sm btn-danger" onClick={() => del(u)} title={t("deleteUser")}><Icon name="trash" size={13} /></button>
             </span>) },
         ]}
-      />
+      /></fieldset></div>
       {editing && <UserEditModal user={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
       {creating && <UserCreateModal defaultRole={scope === "uni" ? "student" : scope === "competitive" ? "learner" : "learner"} onClose={() => setCreating(false)} onSaved={() => { setCreating(false); load(); }} />}
       {adding && <AddStudentModal cases={cases} onClose={() => setAdding(false)} onDone={() => { setAdding(false); load(); }} />}
@@ -1114,10 +1126,11 @@ function Cases() {
           { key: "specialty", label: t("specialty"), sortValue: (c) => biField(c, "specialty", lang), render: (c) => biField(c, "specialty", lang) },
           { key: "difficulty", label: t("difficulty"), sortValue: (c) => c.difficulty, render: (c) => <Pill kind={c.difficulty}>{t(c.difficulty)}</Pill> },
           { key: "reference", label: lang === 'fa' ? 'مرجع آموزشی' : 'Teaching reference', sortValue: c => c.reference?.ready ? 1 : 0, render: c => c.reference?.ready ? (lang === 'fa' ? 'آماده' : 'Ready') : (lang === 'fa' ? 'نیازمند تأیید' : 'Needs approval') },
+          { key: "sharing", label: lang === "fa" ? "اشتراک و مشاهده" : "Sharing & preview", sortable:false, render:c=><ContentSharing kind="cases" row={c} onChanged={load}/> },
           { key: "actions", label: "", sortable: false, thStyle: { textAlign: "end" }, render: (c) => (
             <span style={{ display: "flex", gap: 4, justifyContent: "flex-end", whiteSpace: "nowrap" }}>
-              <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}>{t("edit")}</button>
-              <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button>
+              <button type="button" className="btn btn-sm btn-ghost" disabled={c.can_manage === false} onClick={() => setEditing(c)}>{t("edit")}</button>
+              <button type="button" className="btn btn-sm btn-danger" disabled={c.can_manage === false} onClick={() => del(c.id)}>{t("delete")}</button>
             </span>) },
         ]}
       />
@@ -1431,10 +1444,11 @@ function Flashcards() {
           { key: "type", label: lang === "fa" ? "نوع" : "Type", sortValue: (c) => flashTypeLabel(c.type, lang), render: (c) => <span className="tag">{flashTypeLabel(c.type, lang)}</span> },
           { key: "options", label: t("options"), sortValue: (c) => (c.options || []).length, render: (c) => (c.options || []).length },
           { key: "hints", label: t("hints"), sortValue: (c) => ((lang === "fa" ? c.hints_fa : c.hints_en) || []).length, render: (c) => ((lang === "fa" ? c.hints_fa : c.hints_en) || []).length },
+          { key: "sharing", label: lang === "fa" ? "اشتراک و مشاهده" : "Sharing & preview", sortable:false, render:c=><ContentSharing kind="flashcards" row={c} onChanged={load}/> },
           { key: "actions", label: "", sortable: false, thStyle: { textAlign: "end" }, render: (c) => (
             <span style={{ display: "flex", gap: 4, justifyContent: "flex-end", whiteSpace: "nowrap" }}>
-              <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}>{t("edit")}</button>
-              <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button>
+              <button type="button" className="btn btn-sm btn-ghost" disabled={c.can_manage === false} onClick={() => setEditing(c)}>{t("edit")}</button>
+              <button type="button" className="btn btn-sm btn-danger" disabled={c.can_manage === false} onClick={() => del(c.id)}>{t("delete")}</button>
             </span>) },
         ]}
       />
@@ -2668,19 +2682,13 @@ function Classes() {
       <div className="section-title"><h4><Icon name="class" size={16} /> {t("classes")}</h4>
         <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newClass")}</button></div>
       {loadErr && <div className="err-banner mb8">{loadErr} <button type="button" className="btn btn-ghost btn-sm" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>}
-      <div className="table-wrap"><table>
-        <thead><tr><th>{t("className")}</th><th>{t("classCode")}</th><th>{t("casesCount")}</th><th>{t("students")}</th><th></th></tr></thead>
-        <tbody>{classes.map((c) => (
-          <tr key={c.id}>
-            <td>{biField(c, "name", lang)}</td>
-            <td><span className="tag">{c.code}</span></td>
-            <td>{c.nCases}</td><td>{c.nStudents}</td>
-            <td style={{ textAlign: "end", whiteSpace: "nowrap" }}>
-              <button type="button" className="btn btn-sm btn-primary" onClick={() => setOpenId(c.id)}>{t("classSettings")}</button>
-              <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button>
-            </td>
-          </tr>
-        ))}</tbody></table></div>
+      <DataTable rows={classes} rowKey={c=>c.id} searchKeys={['name_fa','name_en','code','university_id']} storageKey="admin-classes" columns={[
+        {key:'name',label:t('className'),sortValue:c=>biField(c,'name',lang),render:c=>biField(c,'name',lang)},
+        {key:'university_id',label:lang==='fa'?'شناسه دانشگاه':'University ID'},
+        {key:'code',label:t('classCode')},{key:'nCases',label:t('casesCount')},{key:'nStudents',label:t('students')},
+        {key:'actions',label:'',sortable:false,render:c=><span style={{display:'flex',gap:6}}><button type="button" className="btn btn-sm btn-primary" onClick={()=>setOpenId(c.id)}>{t('classSettings')}</button><button type="button" className="btn btn-sm btn-danger" onClick={()=>del(c.id)}>{t('delete')}</button></span>}
+      ]}/>
+
       {editing && <ClassModal cls={editing} onClose={() => setEditing(null)} onSave={save} />}
     </div>
   );
@@ -2772,12 +2780,12 @@ function ClassStudyField({ value, onChange }) {
 }
 
 function ClassModal({ cls, onClose, onSave }) {
-  const { t, lang } = useApp();
+  const { t, lang, user } = useApp();
   const inherited = cls.gradingRubric || (cls.grading_json ? (() => { try { return JSON.parse(cls.grading_json); } catch { return null; } })() : null);
   const [f, setF] = useState(() => {
     const logDefault = cls.id ? !!cls.log_transcript : true;
     return {
-      name_fa: cls.name_fa || "", name_en: cls.name_en || "",
+      university_id: cls.university_id || user.university_id || "", name_fa: cls.name_fa || "", name_en: cls.name_en || "",
       desc_fa: cls.desc_fa || "", desc_en: cls.desc_en || "",
       maxAttempts: cls.maxAttempts || cls.max_attempts || 1,
       gradingRole: cls.grading_role || "both",
@@ -2790,7 +2798,8 @@ function ClassModal({ cls, onClose, onSave }) {
   });
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
   return (
-    <Modal title={cls.id ? t("edit") : t("newClass")} onClose={onClose} onSave={() => onSave({ ...f, logTranscript: !!f.logTranscript, studyId: f.studyId === "" ? null : +f.studyId, gradingRubric: f.useCustomRubric ? f.gradingRubric : null }, cls.id)}>
+    <Modal title={cls.id ? t("edit") : t("newClass")} onClose={onClose} saveDisabled={user.role === "admin" && !f.university_id} onSave={() => onSave({ ...f, logTranscript: !!f.logTranscript, studyId: f.studyId === "" ? null : +f.studyId, gradingRubric: f.useCustomRubric ? f.gradingRubric : null }, cls.id)}>
+      <UniversityField value={f.university_id} onChange={v=>set("university_id",v)}/>
       <div className="grid grid-2">
         <div className="field"><label>{t("className")} (FA)</label><input value={f.name_fa} onChange={(e) => set("name_fa", e.target.value)} /></div>
         <div className="field"><label>{t("className")} (EN)</label><input value={f.name_en} onChange={(e) => set("name_en", e.target.value)} /></div>
@@ -2979,6 +2988,8 @@ function ClassManage({ classId, back }) {
   const [bankErr, setBankErr] = useState("");
   const load = () => {
     setLoadErr("");
+    api.get('/cases').then(setAllCases).catch(e=>setBankErr(e.message));
+    api.get('/flashcards').then(setAllFlash).catch(e=>setBankErr(e.message));
     api.get(`/classes/${classId}`).then((d) => { setData(d); setInfo({
     name_fa: d.class.name_fa || "", name_en: d.class.name_en || "",
     desc_fa: d.class.desc_fa || "", desc_en: d.class.desc_en || "", maxAttempts: d.class.max_attempts ?? 1,
@@ -2998,9 +3009,9 @@ function ClassManage({ classId, back }) {
   useEffect(() => {
     load();
     setBankErr("");
-    api.get("/cases").then((d) => setAllCases(Array.isArray(d) ? d : [])).catch((e) => { setAllCases([]); setBankErr(String(e.message || e)); });
-    api.get("/flashcards").then((d) => setAllFlash(Array.isArray(d) ? d : [])).catch((e) => { setAllFlash([]); setBankErr(String(e.message || e)); });
-    api.get("/users").then((u) => setAllStudents((Array.isArray(u) ? u : []).filter((x) => x.role === "student"))).catch((e) => { setAllStudents([]); setBankErr(String(e.message || e)); });
+
+
+
   }, [classId]);
   if (loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setData(null); setInfo(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button> <button type="button" className="btn btn-ghost mt16" onClick={back}>{fa ? "بازگشت" : "Back"}</button></div>;
   if (!data || !info) return <Spinner />;
@@ -3015,6 +3026,7 @@ function ClassManage({ classId, back }) {
         <button type="button" className="btn btn-ghost btn-sm" onClick={back}>← {t("back")}</button>
       </div>
       {bankErr && <div className="err-banner mb8">{bankErr}</div>}
+      <GroupUniversity kind="classes" id={classId} value={cl.university_id} onSaved={load}/>
 
       {/* Basic info */}
       <div className="card mb16" style={{ background: "var(--panel2)" }}>
@@ -3113,7 +3125,7 @@ function ClassManage({ classId, back }) {
         </div>
       </div>
 
-      <ClassProgress classId={classId} cases={allCases} />
+      <ClassProgress key={members.map(m=>m.id).join(",")} classId={classId} cases={allCases} />
 
       {/* Content: cases + flashcards + members */}
       <div className="grid grid-3 mb16">
@@ -3145,7 +3157,7 @@ function ClassManage({ classId, back }) {
       <div className="small muted">{t("classSettingsHint")}</div>
 
       {editCases && <PickModal title={t("selectCases")} items={allCases}
-        labelFn={(c) => biField(c, "title", lang)} idFn={(c) => c.id}
+        labelFn={(c) => `${biField(c, "title", lang)} · ${c.public_code || c.id} · ${lang === "fa" ? "دانشگاه" : "University"} ${c.university_id}`} idFn={(c) => c.id}
         selected={cases.map((c) => c.case_id)} withWeight
         initialWeights={Object.fromEntries(cases.map((c) => [c.case_id, c.weight]))}
         onClose={() => setEditCases(false)}
@@ -3184,7 +3196,7 @@ function FlashPickModal({ items, selected, lang, onClose, onSave }) {
           <div key={it.id} className="fp-row">
             <label style={{ cursor: "pointer", flex: 1, display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
               <input type="checkbox" checked={!!r?.on} onChange={() => toggle(it.id)} style={{ width: 18, height: 18 }} />
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{biField(it, "title", lang) || `#${it.id}`}</span>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{biField(it, "title", lang) || `#${it.id}`} · {it.public_code || it.id} · {lang === "fa" ? "دانشگاه" : "University"} {it.university_id}</span>
             </label>
             {r?.on && (
               <div className="fp-opts">
@@ -3845,154 +3857,8 @@ function PickModal({ title, items, labelFn, idFn, selected, withWeight, initialW
 }
 
 
-function MemberManageModal({ classId, items, selected, lang, onClose, onSaved }) {
-  const { t } = useApp();
-  const fa = lang==="fa";
-  const [tab, setTab] = useState("pick"); // pick | bulk | guide
-  const [sel, setSel] = useState(selected || []);
-  const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive
-  const [memberFilter, setMemberFilter] = useState("all"); // all | in | out
-  const [bulk, setBulk] = useState("");
-  const [result, setResult] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const label = (u) => `${lang === "fa" ? u.name_fa : u.name_en} (${u.student_no})`;
-  // robust splitter: comma, semicolon, whitespace, Persian comma/semicolon, slash, pipe, colon, line-break
-  const splitNos = (s) => String(s||"").split(/[\n\r\t ,;،؛\/\|:]+/).map(x=>x.trim().replace(/\u200c/g,"")).filter(Boolean);
-  const bulkCount = splitNos(bulk).length;
-  const bulkUnique = new Set(splitNos(bulk).map(s=>s.toLowerCase())).size;
-  const bulkDup = bulkCount - bulkUnique;
-
-  // filtered pick list
-  const filtered = items.filter(u=>{
-    if(statusFilter!=="all" && (u.status||"active")!==statusFilter) return false;
-    if(memberFilter==="in" && !sel.includes(u.id)) return false;
-    if(memberFilter==="out" && sel.includes(u.id)) return false;
-    if(q.trim()){
-      const needle = q.trim().toLowerCase();
-      const hay = `${u.name_fa||""} ${u.name_en||""} ${u.student_no||""} ${u.username||""}`.toLowerCase();
-      if(!hay.includes(needle)) return false;
-    }
-    return true;
-  });
-
-  const toggle = (id)=> setSel(s=> s.includes(id)? s.filter(x=>x!==id) : [...s, id]);
-  const selectAllFiltered = ()=> setSel(s=> [...new Set([...s, ...filtered.map(u=>u.id)])]);
-  const clearFiltered = ()=> setSel(s=> s.filter(id=> !filtered.some(u=>u.id===id)));
-
-  const saveIds = async () => { setSaving(true); try{ await api.put(`/classes/${classId}/members`, { userIds: sel }); onSaved(); } finally{ setSaving(false);} };
-  const resolve = async (createMissing = false) => {
-    const studentNos = splitNos(bulk);
-    if(!studentNos.length) return;
-    const r = await api.post(`/classes/${classId}/members/resolve`, { studentNos, createMissing, attach: true });
-    setResult(r);
-    const ids = (r.existing || []).map((u) => u.id);
-    const createdIds = (r.created || []).map(u=>u.id);
-    const allNew = [...ids, ...createdIds];
-    if(allNew.length) setSel((s) => [...new Set([...s, ...allNew])]);
-    // also heal: if any healed, they are already in existing
-    if ((r.healed?.length||0)>0 || allNew.length>0 || createMissing) {
-      // auto-save to reflect healed/new in class, then reload
-      // we keep sel updated; parent will reload onSaved
-    }
-  };
-
-  return <Modal title={t("selectStudents")} onClose={onClose} wide>
-    <div style={{ display:"flex", gap:6, marginBottom:12, flexWrap:"wrap" }}>
-      <button type="button" className={`btn btn-sm ${tab==="pick"?"btn-primary":"btn-ghost"}`} onClick={()=>setTab("pick")}>{fa?"انتخاب از فهرست":"Pick from list"}</button>
-      <button type="button" className={`btn btn-sm ${tab==="bulk"?"btn-primary":"btn-ghost"}`} onClick={()=>setTab("bulk")}>{fa?"وارد کردن شماره":"Paste numbers"}</button>
-      <button type="button" className={`btn btn-sm ${tab==="guide"?"btn-primary":"btn-ghost"}`} onClick={()=>setTab("guide")}>{fa?"راهنما":"Guide"}</button>
-      <span className="small muted" style={{ marginInlineStart:"auto", alignSelf:"center" }}>{fa?`${sel.length} انتخاب شد`:`${sel.length} selected`}</span>
-    </div>
-
-    {tab==="pick" && (
-      <>
-        <div className="inline-form mb8" style={{ flexWrap:"wrap", gap:8, alignItems:"center" }}>
-          <div className="dt-search" style={{ flex:1, minWidth:180 }}>
-            <Icon name="search" size={14}/>
-            <input value={q} onChange={e=>setQ(e.target.value)} placeholder={fa?"جستجو نام/شماره…":"Search name/number…"} />
-            {q && <button type="button" className="dt-clear" onClick={()=>setQ("")}><Icon name="close" size={13}/></button>}
-          </div>
-          <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{ minWidth:110 }}>
-            <option value="all">{fa?"همه وضعیت‌ها":"All statuses"}</option>
-            <option value="active">{fa?"فقط فعال":"Active only"}</option>
-            <option value="inactive">{fa?"فقط غیرفعال":"Inactive only"}</option>
-          </select>
-          <select value={memberFilter} onChange={e=>setMemberFilter(e.target.value)} style={{ minWidth:130 }}>
-            <option value="all">{fa?"همه دانشجویان":"All students"}</option>
-            <option value="out">{fa?"فقط غیرعضوها":"Not in class"}</option>
-            <option value="in">{fa?"فقط عضوها":"In class only"}</option>
-          </select>
-        </div>
-        <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:8 }}>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={selectAllFiltered} disabled={!filtered.length}>{fa?`انتخاب همهٔ نتایج (${filtered.length})`:`Select all filtered (${filtered.length})`}</button>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={clearFiltered} disabled={!filtered.length}>{fa?"حذف انتخاب فیلترشده":"Clear filtered"}</button>
-          <span className="small muted" style={{ alignSelf:"center" }}>{fa?`${filtered.length} نفر در فیلتر — ${items.length} کل`:`${filtered.length} filtered — ${items.length} total`}</span>
-        </div>
-        <div style={{ maxHeight: 340, overflow:"auto", border:"1px solid var(--border)", borderRadius:10 }}>
-          {filtered.length===0 ? <div className="small muted center" style={{ padding:20 }}>{fa?"نتیجه‌ای یافت نشد":"No results"}</div> : filtered.map((u) => (
-            <label key={u.id} className="toggle-row" style={{ cursor: "pointer", borderBottom:"1px solid var(--border)", padding:"8px 10px", background: sel.includes(u.id)?"var(--primaryGlow)":"transparent" }}>
-              <span style={{ display:"flex", flexDirection:"column", gap:2 }}>
-                <span style={{ fontWeight:600 }}>{label(u)}</span>
-                <span className="small muted" style={{ fontSize:".75rem" }}>{u.username} {u.status==="inactive" ? (fa?"— غیرفعال":"— inactive") : ""}</span>
-              </span>
-              <input type="checkbox" checked={sel.includes(u.id)} onChange={() => toggle(u.id)} style={{ width: 18, height: 18 }} />
-            </label>
-          ))}
-        </div>
-        <div className="small muted mt8" style={{ lineHeight:1.6 }}>{fa?"نکته: دسته‌بندی با سرچ + فیلتر وضعیت/عضویت — می‌توانید همهٔ «غیرعضوها» را یکجا انتخاب کنید. مرتب‌سازی بر اساس نام است؛ برای مرتب‌سازی دانشگاه از فهرست کاربران استفاده کنید.":"Tip: filter by status/membership and search, then select all."}</div>
-      </>
-    )}
-
-    {tab==="bulk" && (
-      <>
-        <div className="small muted mb8" style={{ lineHeight:1.8 }}>{fa? "شماره‌ها را با هر جداکننده‌ای وارد کنید: کاما، سمی‌کالن، فاصله، خط جدید، اسلش (/), ویرگول فارسی (،)، نقطه‌ویرگول فارسی (؛)، پایپ (|) یا دو‌نقطه (:). هر شماره در یک خط هم کاملاً مجاز است." : "Paste numbers with any separator: comma, semicolon, space, newline, slash (/), Persian comma (،), etc. One per line also works."}</div>
-        <textarea value={bulk} onChange={(e)=>setBulk(e.target.value)} style={{ width: "100%", minHeight: 140, fontFamily:"monospace", direction:"ltr", lineHeight:1.6 }} placeholder={fa?`40012345/40067890
-40011223،40033445
-40055667\n40077889`:`40012345, 40067890 / 40011223; 40033445
-40055667:40077889`} />
-        <div className="small" style={{ marginTop:6, display:"flex", gap:10, flexWrap:"wrap" }}>
-          <span>{fa?"شناسایی شد":"Detected"}: <b>{bulkCount}</b> {bulkDup? <span style={{ color:"var(--flame)"}}>({fa?`${bulkDup} تکراری در ورودی`:`${bulkDup} dup in input`})</span> : null}</span>
-          {bulkCount>0 && <span className="small muted">{fa?"مثال: 40012345/40067890 یا هر شماره در یک خط":"e.g. 40012345/40067890 or one per line"}</span>}
-        </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={()=>resolve(false)} disabled={!bulkCount}>{fa?"بررسی و افزودن موجودها":"Check & add existing"}</button>
-          <button type="button" className="btn btn-accent btn-sm" onClick={()=>resolve(true)} disabled={!bulkCount}>{fa?"ساخت ناموجودها و افزودن":"Create missing & add"}</button>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={()=>{ setBulk(""); setResult(null); }}>{fa?"پاک کردن":"Clear"}</button>
-        </div>
-        {result && <div className="card mt8" style={{ background: "var(--panel2)", padding: 10 }}>
-          <div className="small"><b>{fa?"نتیجه":"Result"}:</b> {fa?"اضافه‌شده":"Attached"}: {result.attached || 0} {result.healed?.length? <>· {fa?"ترمیم دانشگاه":"Healed"}: {result.healed.length}</> : null} {result.created?.length? <>· {fa?"ساخته‌شده":"Created"}: {result.created.length}</> : null}</div>
-          {!!result.missing?.length && <div className="small" style={{ color: "var(--flame)" }}>{fa?"ثبت‌نام‌نشده":"Missing"}: {result.missing.join(", ")}</div>}
-          {!!result.wrongUniversity?.length && <div className="small" style={{ color: "var(--flame)" }}>{fa?"دانشگاه متفاوت (افزوده نشد)":"Different university"}: {result.wrongUniversity.map(x=>x.student_no).join(", ")}</div>}
-          {!!result.limitBlocked?.length && <div className="small" style={{ color:"var(--danger)" }}>{fa?"سقف پر":"Limit blocked"}: {result.limitBlocked.map(x=>x.student_no).join(", ")}</div>}
-          {result.healed?.length>0 && <div className="small" style={{ color:"var(--accent)" }}>{fa?"بدون دانشگاه‌های ترمیم‌شده":"Healed no-university"}: {result.healed.map(x=>x.student_no).join(", ")}</div>}
-        </div>}
-      </>
-    )}
-
-    {tab==="guide" && (
-      <div className="card" style={{ background:"var(--panel2)", padding:12 }}>
-        <div style={{ fontWeight:800, marginBottom:8 }}>{fa?"جداکننده‌های مجاز برای شماره دانشجویی":"Allowed separators for student numbers"}</div>
-        <table className="small" style={{ width:"100%", borderCollapse:"collapse" }}>
-          <thead><tr style={{ borderBottom:"1px solid var(--border)", textAlign:"start" }}><th style={{ padding:"6px 8px" }}>{fa?"جداکننده":"Separator"}</th><th style={{ padding:"6px 8px" }}>{fa?"مثال":"Example"}</th></tr></thead>
-          <tbody>
-            <tr><td style={{ padding:"6px 8px" }}><code>,</code> کاما</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345, 40067890</td></tr>
-            <tr><td style={{ padding:"6px 8px" }}><code>/</code> اسلش</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345/40067890</td></tr>
-            <tr><td style={{ padding:"6px 8px" }}><code>،</code> ویرگول فارسی</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345،40067890</td></tr>
-            <tr><td style={{ padding:"6px 8px" }}><code>؛</code> نقطه‌ویرگول فارسی</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345؛40067890</td></tr>
-            <tr><td style={{ padding:"6px 8px" }}>{fa?"خط جدید (هر شماره در یک خط)":"New line (one per line)"}</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345<br/>40067890</td></tr>
-            <tr><td style={{ padding:"6px 8px" }}><code>;</code> <code>|</code> <code>:</code> {fa?"و فاصله":"and space"}</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345; 40067890 | 40011223</td></tr>
-          </tbody>
-        </table>
-        <div className="small muted mt8" style={{ lineHeight:1.8 }}>{fa?"همهٔ این‌ها هم‌زمان قابل ترکیب است؛ مثلاً «40012345/40067890، 40011223\n40033445» درست کار می‌کند. تکراری‌ها در ورودی خودکار نادیده گرفته و گزارش می‌شوند. اگر «ساخت ناموجودها» بزنید، برای هر شمارهٔ یافت‌نشده یک دانشجو با همان شماره (رمز=شماره) ساخته و به کلاس اضافه می‌شود (دانشگاهِ کلاس خودکار).":"All can be combined, e.g. '40012345/40067890, 40011223'. Duplicates in input are ignored. 'Create missing' will create a student for each not-found number."}</div>
-      </div>
-    )}
-
-    <div style={{ display:"flex", justifyContent:"flex-end", gap:8, marginTop:12, flexWrap:"wrap" }}>
-      <button type="button" className="btn btn-ghost" onClick={onClose}>{t("cancel")}</button>
-      <button type="button" className="btn btn-primary" onClick={saveIds} disabled={saving}>{saving? (fa?"در حال ذخیره…":"Saving…") : t("save")}</button>
-    </div>
-  </Modal>;
+function MemberManageModal({classId,onClose,onSaved}) {
+ return <AcademicMembers kind="classes" id={classId} onClose={onClose} onSaved={onSaved}/>;
 }
 
 /* ================= SCHEDULED EXAMS (admin/teacher) ================= */
@@ -4140,11 +4006,11 @@ function CardPicker({ cards, selected, onToggle, onSelectAll }) {
 
 /* Flashcard picker with search/filter/grouping + per-set graded/practice + weight. */
 function ExamModal({ exam, onClose, onSave }) {
-  const { t, lang } = useApp();
+  const { t, lang, user } = useApp();
   const [cases, setCases] = useState([]);
   const [cards, setCards] = useState([]);
   const [f, setF] = useState({
-    title_fa: "", title_en: "", desc_fa: "", desc_en: "",
+    university_id: user.university_id || "", title_fa: "", title_en: "", desc_fa: "", desc_en: "",
     case_ids: [], flashcard_ids: [], use_flashcards: false,
     duration_min: 30, max_attempts: 1, lang: "both",
     shuffle: false, anti_cheat: true, competition: false, show_correct: true, show_hints: true, show_ai: true, show_micro: true,
@@ -4217,7 +4083,8 @@ function ExamModal({ exam, onClose, onSave }) {
   const typeLabel = type === "vp" ? t("modVirtualPatient") : type === "flash" ? t("modFlashcard") : t("examBoth");
 
   return (
-    <Modal title={`${exam.id ? t("edit") : t("newExam")} — ${typeLabel}`} onClose={onClose} onSave={submit}>
+    <Modal title={`${exam.id ? t("edit") : t("newExam")} — ${typeLabel}`} onClose={onClose} saveDisabled={user.role === "admin" && !f.university_id} onSave={submit}>
+      <UniversityField disabled={!!exam.id} value={f.university_id} onChange={v=>set("university_id",v)}/>
       {bankErr && <div className="err-banner mb8">{bankErr}</div>}
       {!exam.id && <button type="button" className="btn btn-sm btn-ghost mb16" onClick={() => setType(null)}>← {t("changeType")}</button>}
       <div className="grid grid-2">
@@ -4302,7 +4169,7 @@ function ExamModal({ exam, onClose, onSave }) {
 
 /* Search students by name or student number and add them by clicking. */
 function StudentSearchAdd({ onAdd }) {
-  const { t, lang } = useApp();
+  const { t, lang, user } = useApp();
   const [all, setAll] = useState([]);
   const [stuErr, setStuErr] = useState("");
   const [q, setQ] = useState("");
@@ -4339,6 +4206,7 @@ function StudentSearchAdd({ onAdd }) {
 function ExamManage({ examId, back }) {
   const { t, lang } = useApp();
   const [data, setData] = useState(null);
+  const [picking,setPicking]=useState(false);
   const [nos, setNos] = useState("");
   const [msg, setMsg] = useState("");
   const [missingNos, setMissingNos] = useState([]);
@@ -4381,7 +4249,10 @@ function ExamManage({ examId, back }) {
           <button type="button" className="btn btn-ghost btn-sm" onClick={back}>← {t("back")}</button>
         </div></div>
 
-      <div className="card mb16" style={{ background: "var(--panel2)" }}>
+      <GroupUniversity kind="exams" id={examId} value={data.university_id} onSaved={load}/>
+      <button type="button" className="btn btn-primary mb12" onClick={()=>setPicking(true)}>{lang==='fa'?'انتخاب و دسته‌بندی دانشجویان':'Select and filter students'}</button>
+      {picking&&<AcademicMembers kind="exams" id={examId} onClose={()=>setPicking(false)} onSaved={()=>{setPicking(false);load()}}/>}
+      <details className="card mb16" style={{ background: "var(--panel2)" }}><summary>{lang==='fa'?'ورود شماره‌ها (پیشرفته)':'Paste student numbers (advanced)'}</summary>
         <h4 className="mb8"><Icon name="users" size={16} /> {t("assignByStudentNo")}</h4>
         <StudentSearchAdd onAdd={(sn) => setNos((prev) => {
           const list = prev.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
@@ -4397,7 +4268,7 @@ function ExamManage({ examId, back }) {
           <button type="button" className="btn btn-primary mt8" onClick={save}>{t("saveParticipants")}</button>
           {missingNos.length > 0 && <button type="button" className="btn btn-accent mt8" onClick={createMissing}>{lang === "fa" ? "ساخت دانشجویان ثبت‌نشده و افزودن" : "Create missing students & add"}</button>}
         </div>
-      </div>
+      </details>
 
       <TeachingAnalyticsPanel kind="exam" id={examId} />
 
@@ -9375,23 +9246,13 @@ function Universities() {
               {isAdmin && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing(u)}><Icon name="edit" size={13} /> {t("edit")}</button>}
               {isAdmin && <button type="button" className="btn btn-danger btn-sm" onClick={() => del(u)}><Icon name="trash" size={13} /> {t("delete")}</button>}
             </div>
-            {members[u.id] && (
-              <div className="uni-members mt8">
-                <div className="small" style={{ fontWeight: 800, marginBottom: 4 }}>👨‍🏫 {t("teacher")}</div>
-                {members[u.id].teachers.length === 0 && <div className="small muted">—</div>}
-                {members[u.id].teachers.map((m) => (
-                  <div key={m.id} className="uni-member-row" style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ flex: 1 }}>{m.name}</span><span className="small muted">{m.email}</span>
-                    {isAdmin && <button type="button" className="btn btn-ghost btn-sm" title={t("removeFromUni")} onClick={() => removeMember(u.id, m.id)}><Icon name="close" size={12} /></button>}</div>
-                ))}
-                <div className="small" style={{ fontWeight: 800, margin: "8px 0 4px" }}>🎓 {t("student")}</div>
-                {members[u.id].students.length === 0 && <div className="small muted">—</div>}
-                {members[u.id].students.slice(0, 8).map((m) => (
-                  <div key={m.id} className="uni-member-row" style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ flex: 1 }}>{m.name}</span><span className="small muted">{m.student_no || ""}</span>
-                    {isAdmin && <button type="button" className="btn btn-ghost btn-sm" title={t("removeFromUni")} onClick={() => removeMember(u.id, m.id)}><Icon name="close" size={12} /></button>}</div>
-                ))}
-                {members[u.id].students.length > 8 && <div className="small muted">+{members[u.id].students.length - 8}…</div>}
-              </div>
-            )}
+            {members[u.id] && <DataTable pageSize={25} storageKey={`university-members-${u.id}`}
+              rows={[...members[u.id].teachers.map(m=>({...m,role:'teacher'})),...members[u.id].students.map(m=>({...m,role:'student'}))]}
+              rowKey={m=>m.id} searchKeys={['name','student_no','email']} columns={[
+                {key:'name',label:t('name')},{key:'student_no',label:t('studentNo')},{key:'role',label:t('role'),render:m=>t(m.role)},
+                {key:'actions',label:'',sortable:false,render:m=>isAdmin&&<button type="button" className="btn btn-sm btn-danger" onClick={()=>removeMember(u.id,m.id)}>{t('removeFromUni')}</button>}
+              ]}/>}
+
           </div>
         ))}
       </div>
@@ -9404,41 +9265,19 @@ function Universities() {
 
 /* Admin: add EXISTING teachers/students to a university (bulk), with search. */
 function AddUniMembersModal({ uni, onClose, onSaved }) {
-  const { t, lang } = useApp();
-  const [q, setQ] = useState("");
-  const [list, setList] = useState(null);
-  const [sel, setSel] = useState([]);
-  const [busy, setBusy] = useState(false);
-  const search = () => api.get(`/universities/${uni.id}/candidates?lang=${lang}&q=${encodeURIComponent(q)}`).then((d) => setList(d.candidates || [])).catch(() => setList([]));
-  useEffect(() => { search(); }, []);
-  const toggle = (id) => setSel((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
-  const save = async () => {
-    if (!sel.length) return;
-    setBusy(true);
-    try { await api.post(`/universities/${uni.id}/members`, { userIds: sel }); onSaved(); }
-    catch (e) { alert(e.message); } finally { setBusy(false); }
-  };
-  return (
-    <Modal title={`${t("addExistingMembers")} — ${lang === "fa" ? uni.name_fa : uni.name_en}`} onClose={onClose} onSave={save} saveLabel={busy ? "…" : t("save")}>
-      <div className="small muted mb8">{t("addMembersHint")}</div>
-      <div className="dt-search mb8" style={{ maxWidth: "100%" }}>
-        <Icon name="search" size={16} />
-        <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && search()} placeholder={t("searchUsers")} />
-        <button type="button" className="btn btn-ghost btn-sm" onClick={search}>{t("search") || "🔍"}</button>
-      </div>
-      {list == null ? <Spinner /> : list.length === 0 ? <div className="small muted center" style={{ padding: 16 }}>{t("noCandidates")}</div> : (
-        <div style={{ maxHeight: 320, overflowY: "auto" }}>
-          {list.map((u) => (
-            <label key={u.id} className="toggle-row" style={{ cursor: "pointer" }}>
-              <span style={{ flex: 1 }}>{u.name} <span className="tag small">{t(u.role)}</span> {u.student_no ? <span className="small muted">{u.student_no}</span> : ""} {u.hasUni && <span className="small muted">({lang === "fa" ? "دانشگاه دیگر" : "another uni"})</span>}</span>
-              <input type="checkbox" checked={sel.includes(u.id)} onChange={() => toggle(u.id)} />
-            </label>
-          ))}
-        </div>
-      )}
-      {sel.length > 0 && <div className="small muted mt8">{sel.length} {lang === "fa" ? "انتخاب شد" : "selected"}</div>}
-    </Modal>
-  );
+ const {t,lang}=useApp(),fa=lang==='fa';const[q,setQ]=useState(''),[prefix,setPrefix]=useState(''),[role,setRole]=useState(''),[page,setPage]=useState(1),[data,setData]=useState({candidates:[],total:0}),[sel,setSel]=useState(new Set()),[busy,setBusy]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(''),[revision,setRevision]=useState(0);const generation=useRef(0);
+ useEffect(()=>{const n=++generation.current;setLoading(true);setError('');const timer=setTimeout(()=>{const qs=new URLSearchParams({lang,q,prefix,role,page:String(page),pageSize:'50'});api.get(`/universities/${uni.id}/candidates?${qs}`).then(d=>{if(n===generation.current)setData(d)}).catch(e=>{if(n===generation.current)setError(e.message)}).finally(()=>{if(n===generation.current)setLoading(false)});},200);return()=>{clearTimeout(timer);generation.current++;}},[uni.id,lang,q,prefix,role,page,revision]);
+ const select=(ids,on)=>setSel(prev=>{const next=new Set(prev);for(const id of ids)on?next.add(id):next.delete(id);return next});
+ const save=async()=>{if(!sel.size)return;if(!confirm(fa?'دانشگاه افراد انتخاب‌شده تغییر کند؟ سوابق قبلی حذف نمی‌شوند، اما دسترسی به کلاس‌ها و آزمون‌های دانشگاه قبل محدود می‌شود.':'Change the selected users’ university? History is retained but access to their previous university’s classes/exams is restricted.'))return;setBusy(true);setError('');try{await api.post(`/universities/${uni.id}/members`,{userIds:[...sel]});onSaved()}catch(e){setError(e.message)}finally{setBusy(false)}};
+ const filter=set=>(e)=>{set(e.target.value);setPage(1)};
+ return <Modal wide title={`${t('addExistingMembers')} — ${(fa?uni.name_fa:uni.name_en)||uni.code}`} onClose={()=>{if(!busy)onClose()}} onSave={save} saveDisabled={busy||loading||!sel.size||!!error}>
+ {error&&<div role="alert" className="err-banner">{error}<button type="button" onClick={()=>setRevision(n=>n+1)}>{fa?'تلاش دوباره':'Retry'}</button></div>}
+ <div className="grid grid-2"><label className="field">{t('searchUsers')}<input value={q} onChange={filter(setQ)}/></label><label className="field">{fa?'پیش‌شماره دانشجویی':'Student number prefix'}<input value={prefix} onChange={filter(setPrefix)}/></label><label className="field">{fa?'نقش':'Role'}<select value={role} onChange={filter(setRole)}><option value="">{t('allRoles')}</option><option value="student">{t('student')}</option><option value="teacher">{t('teacher')}</option></select></label></div>
+ <p role="status">{loading?(fa?'در حال جستجو…':'Loading…'):`${data.total} ${fa?'نتیجه':'results'}`} · {sel.size} {fa?'انتخاب‌شده':'selected'}</p>
+ <button type="button" className="btn btn-sm btn-ghost" disabled={loading} onClick={()=>select(data.candidates.map(u=>u.id),true)}>{fa?'انتخاب این صفحه':'Select this page'}</button><button type="button" className="btn btn-sm btn-ghost" onClick={()=>setSel(new Set())}>{fa?'پاک کردن انتخاب':'Clear selection'}</button>
+ {data.candidates.map(u=><label className="toggle-row" key={u.id}><span>{u.name} · {u.student_no} · {t(u.role)} · {u.university_name||'—'}</span><input type="checkbox" disabled={loading} checked={sel.has(u.id)} onChange={e=>select([u.id],e.target.checked)}/></label>)}
+ <div className="inline-form mt8"><button type="button" className="btn btn-sm btn-ghost" disabled={loading||page<=1} onClick={()=>setPage(p=>p-1)}>{fa?'صفحه قبل':'Previous page'}</button><span>{page}/{Math.max(1,Math.ceil(data.total/50))}</span><button type="button" className="btn btn-sm btn-ghost" disabled={loading||page*50>=data.total} onClick={()=>setPage(p=>p+1)}>{fa?'صفحه بعد':'Next page'}</button></div>
+ </Modal>;
 }
 
 function UniversityModal({ uni, onClose, onSaved }) {

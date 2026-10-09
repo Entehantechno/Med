@@ -1,3 +1,4 @@
+import {normDigits} from '../lib/textsearch.js';
 /* universities.js — admin management of universities (institutions).
    Teachers & students belong to a university (users.university_id). */
 import { Router } from "express";
@@ -130,13 +131,15 @@ r.get("/:id/members", authRequired, requireRole("admin", "teacher"), (req, res) 
 r.post("/:id/members", ...admin, (req, res) => {
   const uni = db.prepare("SELECT id FROM universities WHERE id=?").get(req.params.id);
   if (!uni) return res.status(404).json({ error: "not found" });
-  const ids = Array.isArray(req.body?.userIds) ? req.body.userIds.map((x) => parseInt(x, 10)).filter(Boolean) : [];
+  const raw=req.body?.userIds;
+  if(!Array.isArray(raw)||raw.length>10000||raw.some(n=>!['string','number'].includes(typeof n)||!Number.isSafeInteger(Number(n))||Number(n)<=0))return res.status(400).json({error:'invalid_user_ids'});
+  const ids=[...new Set(raw.map(Number))];
   if (!ids.length) return res.status(400).json({ error: "no users" });
   // License enforcement: newly arriving students count against the cap.
-  const ph = ids.map(() => "?").join(",");
-  const newcomers = db.prepare(
-    `SELECT COUNT(*) c FROM users WHERE id IN (${ph}) AND role='student' AND (university_id IS NULL OR university_id<>?)`
-  ).get(...ids, uni.id).c;
+  const rows=[];
+  for(let i=0;i<ids.length;i+=400){const part=ids.slice(i,i+400);rows.push(...db.prepare(`SELECT id,role,university_id FROM users WHERE id IN (${part.map(()=>'?').join(',')})`).all(...part));}
+  if(rows.length!==ids.length||rows.some(u=>!['student','teacher'].includes(u.role)))return res.status(422).json({error:'invalid_university_members'});
+  const newcomers=rows.filter(u=>u.role==='student'&&Number(u.university_id)!==Number(uni.id)).length;
   const hit = checkStudentLimit(uni.id, newcomers);
   if (hit) {
     return res.status(403).json({
@@ -161,13 +164,16 @@ r.delete("/:id/members/:userId", ...admin, (req, res) => {
 // Candidate users (teachers/students) not yet in ANY university (or in another),
 // so the admin can pick who to add. Optional ?q= name/username search.
 r.get("/:id/candidates", ...admin, (req, res) => {
-  const lang = req.query.lang === "en" ? "en" : "fa";
-  const q = `%${String(req.query.q || "").trim()}%`;
-  const rows = db.prepare(`SELECT id, name_fa, name_en, username, role, student_no, university_id
-    FROM users WHERE role IN ('teacher','student') AND (university_id IS NULL OR university_id<>?)
-    AND (name_fa LIKE ? OR name_en LIKE ? OR username LIKE ? OR student_no LIKE ?)
-    ORDER BY role, name_fa LIMIT 200`).all(req.params.id, q, q, q, q);
-  res.json({ candidates: rows.map((u) => ({ id: u.id, name: lang === "fa" ? (u.name_fa || u.name_en) : (u.name_en || u.name_fa), role: u.role, student_no: u.student_no, hasUni: !!u.university_id })) });
+  if(!db.prepare('SELECT id FROM universities WHERE id=?').get(req.params.id))return res.status(404).json({error:'not_found'});
+  const lang=req.query.lang==='en'?'en':'fa',q='%'+normDigits(String(req.query.q||'').trim()).slice(0,200)+'%';
+  let where="WHERE u.role IN ('teacher','student') AND (u.university_id IS NULL OR u.university_id<>?) AND (u.name_fa LIKE ? OR u.name_en LIKE ? OR u.username LIKE ? OR u.student_no LIKE ?)";
+  const args=[req.params.id,q,q,q,q];
+  if(['teacher','student'].includes(req.query.role)){where+=' AND u.role=?';args.push(req.query.role);}
+  if(req.query.prefix){where+=' AND u.student_no LIKE ?';args.push(normDigits(String(req.query.prefix)).replace(/[%_]/g,'')+'%');}
+  const total=db.prepare('SELECT COUNT(*) n FROM users u '+where).get(...args).n;
+  const page=Math.max(1,Math.floor(Number(req.query.page)||1)),pageSize=Math.max(1,Math.min(200,Math.floor(Number(req.query.pageSize)||50)));
+  const rows=db.prepare(`SELECT u.id,u.name_fa,u.name_en,u.username,u.role,u.student_no,u.university_id,uni.name_fa uni_fa,uni.name_en uni_en FROM users u LEFT JOIN universities uni ON uni.id=u.university_id ${where} ORDER BY u.student_no COLLATE NOCASE,u.id LIMIT ? OFFSET ?`).all(...args,pageSize,(page-1)*pageSize);
+  res.json({total,page,pageSize,candidates:rows.map(u=>({id:u.id,name:(lang==='fa'?u.name_fa:u.name_en)||u.name_en||u.name_fa||u.username,role:u.role,student_no:u.student_no,hasUni:!!u.university_id,university_name:(lang==='fa'?u.uni_fa:u.uni_en)||u.university_id}))});
 });
 
 r.delete("/:id", ...admin, (req, res) => {

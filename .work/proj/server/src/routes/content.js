@@ -1,3 +1,4 @@
+import {sharedAcademic} from '../lib/academic-sharing.js';
 import { assignmentInput } from '../lib/assignment-input.js';
 import { validateCase, normalizeCaseAge } from "../lib/case-validation.js";
 import { routingSettings } from "../lib/ai-routing.js";
@@ -26,7 +27,7 @@ r.use('/cases', authRequired, (req, res, next) => {
   if (req.body?.track === 'learn') return res.status(400).json({ error: 'university_only' });
   next();
 });
-const parse = (row, extra = {}) => ({ ...JSON.parse(row.data_json), id: row.id, version: row.version, difficulty: row.difficulty, public_code: row.public_code, active: row.active, updated_at: row.updated_at, university_id: row.university_id || null, ...extra });
+const parse = (row, extra = {}) => ({ ...JSON.parse(row.data_json), id: row.id, version: row.version, difficulty: row.difficulty, public_code: row.public_code, active: row.active, updated_at: row.updated_at, university_id: row.university_id || null, created_by: row.created_by, shared_to_teachers: row.shared_to_teachers === 1, ...extra });
 function tenantFilterFor(user) {
   if (user.role === "teacher" || user.role === "student") return currentUniversityId(user) || -1;
   return null;
@@ -125,9 +126,9 @@ export function assignedCaseIds(userId) {
 export function canAccessCase(user, caseId) {
   if (user.role === "admin") return true;
   if (user.role === "teacher") {
-    const row = db.prepare("SELECT university_id, data_json FROM cases WHERE id=?").get(caseId);
+    const row = db.prepare("SELECT university_id, data_json, active, shared_to_teachers FROM cases WHERE id=?").get(caseId);
     if (!row || isLearnContent(row.data_json)) return false;
-    return (row.university_id || 1) === currentUniversityId(user);
+    return sharedAcademic(row) || (row.university_id || 1) === currentUniversityId(user);
   }
   if (user.role === "learner") return false;
   if (user.role === "content_manager" || user.role === "support") return false;
@@ -187,13 +188,13 @@ r.get("/cases", authRequired, (req, res) => {
   const includeInactive = ['admin','teacher'].includes(req.user.role) && req.query.status === 'all';
   let rows = db.prepare(`SELECT * FROM cases ${includeInactive ? '' : 'WHERE active=1'} ORDER BY id`).all();
   const uni = tenantFilterFor(req.user);
-  if (uni) rows = rows.filter((row) => (row.university_id || 1) === uni);
+  if (uni) rows = rows.filter((row) => (row.university_id || 1) === uni || (req.user.role === "teacher" && sharedAcademic(row)));
   if (req.user.role === "teacher" && !isUniversityExpert(req.user)) {
-    rows = rows.filter((row) => isLearnContent(row.data_json) || row.created_by == null || Number(row.created_by) === Number(req.user.id));
+    rows = rows.filter((row) => isLearnContent(row.data_json) || sharedAcademic(row) || row.created_by == null || Number(row.created_by) === Number(req.user.id));
   }
   let list = [];
   for (const row of rows) {
-    try { list.push(parse(row, { checklist_id: row.checklist_id, ...caseReferenceExtra(row) })); }
+    try { list.push(parse(row, { checklist_id: row.checklist_id, ...caseReferenceExtra(row), can_manage: canManageUniResource(req.user,row) })); }
     catch { /* skip a corrupt row so one bad case cannot 500 the whole list */ }
   }
   if (req.user.role === "teacher" || req.user.role === "student") {
@@ -244,7 +245,7 @@ r.get("/cases/:id", authRequired, async (req, res) => {
     if ((req.user.role === "student" || req.user.role === "teacher") && isLearnContent(row.data_json)) {
       return res.status(403).json({ error: "wrong_track", reason: "wrong_track", stage: "access" });
     }
-    if (req.user.role === "teacher" && !canManageUniResource(req.user, row)) {
+    if (req.user.role === "teacher" && !canManageUniResource(req.user, row) && !sharedAcademic(row)) {
       return res.status(403).json({ error: "wrong_university", stage: "access" });
     }
     if ((req.user.role === "learner" || req.user.role === "content_manager" || req.user.role === "support")
@@ -479,15 +480,15 @@ r.get("/flashcards", authRequired, (req, res) => {
     ).all();
   }
   const uniId = tenantFilterFor(req.user);
-  if (uniId) rows = rows.filter((row) => (row.university_id || 1) === uniId);
+  if (uniId) rows = rows.filter((row) => (row.university_id || 1) === uniId || (req.user.role === "teacher" && sharedAcademic(row)));
   if (req.user.role === "teacher" && !isUniversityExpert(req.user)) {
-    rows = rows.filter((row) => isLearnContent(row.data_json) || row.created_by == null || Number(row.created_by) === Number(req.user.id));
+    rows = rows.filter((row) => isLearnContent(row.data_json) || sharedAcademic(row) || row.created_by == null || Number(row.created_by) === Number(req.user.id));
   }
   const list = [];
   if (req.user.role === "learner") {
     for (const row of rows) {
       try {
-        const card = parse(row);
+        const card = parse(row,{can_manage:canManageUniResource(req.user,row)});
         // Path demo cards stay on /learn/*; the competitive Flashcards player
         // only lists curated university-type cards (hotspot, drawing, MCQ, …).
         if (card.content_origin === "demo_seed") continue;
@@ -506,7 +507,7 @@ r.get("/flashcards", authRequired, (req, res) => {
   const access = strip ? studentFlashcardAccess(req.user.id) : null;
   for (const row of rows) {
     try {
-      const card = parse(row);
+      const card = parse(row,{can_manage:canManageUniResource(req.user,row)});
       if (strip) {
         const cid = Number(row.id);
         if (access.reserved.has(cid) && !access.allowedReserved.has(cid)) continue;
@@ -559,7 +560,7 @@ r.post("/flashcards/check", authRequired, (req, res) => {
 r.get("/flashcards/:id", authRequired, requireRole("teacher", "admin", "content_manager"), (req, res) => {
   const row = db.prepare("SELECT * FROM flashcards WHERE id=?").get(req.params.id);
   if (!row) return res.status(404).json({ error: "not_found", stage: "fetch" });
-  if (req.user.role === "teacher" && !canManageUniResource(req.user, row)) return res.status(403).json({error:"wrong_university"});
+  if (req.user.role === "teacher" && !canManageUniResource(req.user, row) && !sharedAcademic(row)) return res.status(403).json({error:"wrong_university"});
   if (req.user.role === "content_manager" && !isLearnContent(row.data_json)) return res.status(403).json({error:"wrong_track"});
   try {
     res.json(parse(row));

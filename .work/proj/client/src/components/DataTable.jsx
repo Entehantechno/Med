@@ -43,7 +43,7 @@ export default function DataTable({
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   selectable = false, selectedIds = null, onSelectionChange = null,
   showRowNumbers = true, columnPicker = true, exportable = false,
-  defaultHiddenColumns = [],
+  defaultHiddenColumns = [], searchable = true,
 }) {
   const { t, lang } = useApp();
   const fa = lang !== "en";
@@ -141,8 +141,8 @@ export default function DataTable({
   return (
     <div>
       <div className="dt-search-wrap">
-        <SearchBox compact value={q} onChange={setQ} onSearch={setQ} placeholder={searchPlaceholder || t("searchPlaceholder")}
-          storageKey={storageKey || "table"} hotkey={hotkey} helpKinds={["table"]} />
+        {searchable && <SearchBox compact value={q} onChange={setQ} onSearch={setQ} placeholder={searchPlaceholder || t("searchPlaceholder")}
+          storageKey={storageKey || "table"} hotkey={hotkey} helpKinds={["table"]} />}
         {dq.trim() && (
           <span className="muted small dt-hits" role="status" aria-live="polite">
             {fa ? `${filtered.length.toLocaleString("fa-IR")} از ${rows.length.toLocaleString("fa-IR")}` : `${filtered.length.toLocaleString()} of ${rows.length.toLocaleString()}`}

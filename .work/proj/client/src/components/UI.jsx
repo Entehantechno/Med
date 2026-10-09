@@ -1,4 +1,4 @@
-import { useEffect, useRef, useId } from "react";
+import { useEffect, useRef, useId, useState } from "react";
 import { createPortal } from "react-dom";
 import { useApp } from "../context.jsx";
 import Icon from "./Icon.jsx";
@@ -66,8 +66,13 @@ export function Pill({ kind, children }) {
   return <span className={`pill pill-${kind}`}>{children}</span>;
 }
 
-export function Modal({ title, children, onClose, onSave, saveLabel, wide, saveDisabled = false }) {
+export function Modal({ title, children, onClose: closeCallback, onSave, saveLabel, wide, saveDisabled = false }) {
   const { t } = useApp();
+  const [saving,setSaving]=useState(false),[saveError,setSaveError]=useState('');
+  const savingRef=useRef(false),errorRef=useRef(null);
+  const onClose=()=>{if(!savingRef.current)closeCallback?.();};
+  const submit=async()=>{if(savingRef.current||saveDisabled)return;savingRef.current=true;setSaving(true);setSaveError('');try{await onSave?.()}catch(e){setSaveError(e.message||String(e))}finally{savingRef.current=false;setSaving(false)}};
+  useEffect(()=>{if(saveError)errorRef.current?.focus()},[saveError]);
   const dialogRef=useRef(null),titleId=useId();
   useEffect(()=>{
     const previous=document.activeElement,dialog=dialogRef.current;
@@ -104,10 +109,10 @@ export function Modal({ title, children, onClose, onSave, saveLabel, wide, saveD
     <div className="modal-back" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={`modal${wide ? " modal-wide" : ""}`} ref={dialogRef} tabIndex={-1} role="dialog" aria-modal="true" aria-labelledby={titleId}>
         <h3 id={titleId}>{title}</h3>
-        <div className="modal-body">{children}</div>
+        <div className="modal-body">{saveError&&<div ref={errorRef} tabIndex={-1} role="alert" className="err-banner">{saveError}</div>}<fieldset disabled={saving} style={{border:0,padding:0,margin:0,minWidth:0}}>{children}</fieldset></div>
         <div className="modal-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>{t("cancel")}</button>
-          {onSave && <button type="button" className="btn btn-primary" disabled={saveDisabled} onClick={onSave}>{saveLabel || t("save")}</button>}
+          <button type="button" className="btn btn-ghost" disabled={saving} onClick={onClose}>{t("cancel")}</button>
+          {onSave && <button type="button" className="btn btn-primary" disabled={saveDisabled||saving} onClick={submit}>{saveLabel || t("save")}</button>}
         </div>
       </div>
     </div>,

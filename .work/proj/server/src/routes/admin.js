@@ -1391,13 +1391,21 @@ r.get("/users", ...P(PU), (req, res) => {
     sql += " AND u.role='learner'";
   }
   if (q) { sql += " AND (u.username LIKE ? OR u.name_fa LIKE ? OR u.name_en LIKE ? OR u.email LIKE ? OR u.student_no LIKE ?)"; args.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`); }
-  sql += " ORDER BY u.id DESC LIMIT 300";
+  if(req.query.university_id==='null')sql+=' AND u.university_id IS NULL';
+  else if(req.query.university_id){sql+=' AND u.university_id=?';args.push(Number(req.query.university_id));}
+  if(req.query.prefix){sql+=' AND u.student_no LIKE ?';args.push(String(req.query.prefix).replace(/[%_]/g,'')+'%');}
+  const total=db.prepare('SELECT COUNT(*) n FROM ('+sql+')').get(...args).n;
+  const page=Math.max(1,Math.floor(Number(req.query.page)||1));
+  const pageSize=Math.max(1,Math.min(300,Math.floor(Number(req.query.pageSize)||300)));
+  const order={student_no:'u.student_no COLLATE NOCASE',name:'u.name_fa COLLATE NOCASE',username:'u.username COLLATE NOCASE'}[req.query.sort]||'u.id';
+  sql+=` ORDER BY ${order}${req.query.sort?'':' DESC'},u.id LIMIT ? OFFSET ?`;args.push(pageSize,(page-1)*pageSize);
   const rows = db.prepare(sql).all(...args);
   // attach exam assignments for students so the unified users panel can show
   // and pre-fill each student's exam access (parity with the legacy uni panel)
-  const asg = db.prepare("SELECT case_id FROM exam_assignments WHERE user_id=? AND active=1");
-  for (const u of rows) if (u.role === "student") u.caseIds = asg.all(u.id).map((a) => a.case_id);
-  res.json({ users: rows });
+  const students=rows.filter(u=>u.role==='student'),byUser=new Map(students.map(u=>[u.id,[]]));
+  if(students.length)for(const a of db.prepare(`SELECT user_id,case_id FROM exam_assignments WHERE active=1 AND user_id IN (${students.map(()=>'?').join(',')})`).all(...students.map(u=>u.id)))byUser.get(a.user_id).push(a.case_id);
+  for(const u of students)u.caseIds=byUser.get(u.id);
+  res.json({ users: rows, total, page, pageSize });
 });
 
 // detailed single-user operational view

@@ -1,3 +1,4 @@
+import {academicCopy,academicError,academicContentTransaction} from '../lib/academic-sharing.js';
 /* ================================================================
    exams.js — Scheduled exams (virtual patient + flashcards),
    assigned to specific students, visible only in a time window.
@@ -225,7 +226,15 @@ r.get("/:id", authRequired, (req, res) => {
 
 /* ---- Create / update / delete (staff) ---- */
 const bit = (v, d = 0) => (v === undefined || v === null ? d : (v ? 1 : 0));
-function filterContentForUniversity(b, universityId) {
+function filterContentForUniversity(b, universityId, actor, owner) {
+  if(actor){
+    const resolve=(key,kind)=>{
+      const list=b[key]??[];
+      if(!Array.isArray(list)||list.length>10000||list.some(n=>!Number.isSafeInteger(n)||n<=0))throw academicError('invalid_content_selection',400);
+      return [...new Set(list)].map(id=>academicCopy(kind,id,universityId,actor,owner||actor.id));
+    };
+    return {caseIds:resolve('case_ids','cases'),flashcardIds:resolve('flashcard_ids','flashcards')};
+  }
   const uni = universityId || 1;
   const caseWant = sqlInList(b.case_ids);
   const flashWant = sqlInList(b.flashcard_ids);
@@ -264,8 +273,10 @@ function teacherMayAttachStudy(user, studyId) {
   if (creator.role === "admin") return false;
   return (creator.university_id || 1) === uni;
 }
-function saveBody(b, universityId = 1, prev = {}) {
-  const filtered = filterContentForUniversity(b || {}, universityId);
+function saveBody(b, universityId = 1, prev = {}, actor) {
+  b={...prev,...b};
+  for(const key of ["case_ids","flashcard_ids"])if(typeof b[key]==="string")b[key]=JSON.parse(b[key]);
+  const filtered = filterContentForUniversity(b || {}, universityId,actor,prev.owner_id);
   const studyRaw = b.studyId !== undefined ? b.studyId : (b.study_id !== undefined ? b.study_id : prev.study_id);
   const study = resolveStudyId(studyRaw);
   const logRaw = b.logTranscript !== undefined ? b.logTranscript : (b.log_transcript !== undefined ? b.log_transcript : prev.log_transcript);
@@ -284,7 +295,8 @@ r.post("/", authRequired, requireRole("teacher", "admin"), (req, res) => {
   // Teachers cannot choose a tenant or retain a revoked membership via a cache.
   const uni = req.user.role === "teacher"
     ? currentUniversityId(req.user)
-    : currentUniversityId(req.user) || Number(req.body?.university_id || 0) || 1;
+    : req.body?.university_id !== undefined ? Number(req.body.university_id) : currentUniversityId(req.user) || 1;
+  if (!Number.isSafeInteger(uni) || !db.prepare("SELECT id FROM universities WHERE id=? AND active=1").get(uni)) return res.status(400).json({error:'university_required'});
   if (req.user.role === "teacher" && !uni) return res.status(400).json({ error: "university_required", message_fa: "برای استاد انتخاب دانشگاه الزامی است." });
   const b = req.body || {};
   if ((b.studyId || b.study_id) && !resolveStudyId(b.studyId ?? b.study_id)) return res.status(400).json({ error: "study_not_found" });
@@ -292,11 +304,11 @@ r.post("/", authRequired, requireRole("teacher", "admin"), (req, res) => {
   if (attachStudy && req.user.role === "teacher" && !teacherMayAttachStudy(req.user, attachStudy)) {
     return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
-  const info = durableTransaction(() => db.prepare(
+  const info = academicContentTransaction(() => db.prepare(
     `INSERT INTO exams (title_fa,title_en,desc_fa,desc_en,case_ids,flashcard_ids,use_flashcards,
        starts_at,ends_at,duration_min,max_attempts,lang,shuffle,anti_cheat,competition,show_correct,show_hints,show_ai,show_micro,log_transcript,study_id,owner_id,university_id)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-  ).run(...saveBody(b, uni), req.user.id, uni));
+  ).run(...saveBody(b, uni, {}, req.user), req.user.id, uni));
   res.json({ id: info.lastInsertRowid });
 });
 r.put("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -309,12 +321,12 @@ r.put("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   if (attachStudy && req.user.role === "teacher" && !teacherMayAttachStudy(req.user, attachStudy)) {
     return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
-  durableTransaction(() => {
+  academicContentTransaction(() => {
     db.prepare(
       `UPDATE exams SET title_fa=?,title_en=?,desc_fa=?,desc_en=?,case_ids=?,flashcard_ids=?,
          use_flashcards=?,starts_at=?,ends_at=?,duration_min=?,max_attempts=?,lang=?,
          shuffle=?,anti_cheat=?,competition=?,show_correct=?,show_hints=?,show_ai=?,show_micro=?,log_transcript=?,study_id=? WHERE id=?`
-    ).run(...saveBody(b, parseExam(row).university_id || 1, row), req.params.id);
+    ).run(...saveBody(b, parseExam(row).university_id || 1, row, req.user), req.params.id);
   });
   res.json({ ok: true });
 });

@@ -1,3 +1,4 @@
+import administration from './academic-administration.js';
 import { Router } from "express";
 import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
@@ -19,6 +20,7 @@ import {
 } from "../lib/reference-governance.js";
 import { createPortableRouter } from "./portable.js";
 const r = Router();
+r.use(administration);
 const manager = [
     authRequired,
     requireRole("admin", "teacher"),

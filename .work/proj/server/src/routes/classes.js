@@ -1,3 +1,4 @@
+import {academicCopy,academicContentTransaction} from '../lib/academic-sharing.js';
 /* ================================================================
    classes.js — Classrooms: teacher creates a class, adds cases,
    enrolls students. Students take the class cases to earn a class
@@ -484,7 +485,8 @@ r.post("/", authRequired, requireRole("teacher", "admin"), (req, res) => {
   // Teachers cannot choose a tenant or retain a revoked membership via a cache.
   const uni = req.user.role === "teacher"
     ? currentUniversityId(req.user)
-    : currentUniversityId(req.user) || Number(req.body?.university_id || 0) || 1;
+    : req.body?.university_id !== undefined ? Number(req.body.university_id) : currentUniversityId(req.user) || 1;
+  if (!Number.isSafeInteger(uni) || !db.prepare("SELECT id FROM universities WHERE id=? AND active=1").get(uni)) return res.status(400).json({error:'university_required'});
   if (req.user.role === "teacher" && !uni) return res.status(400).json({ error: "university_required", message_fa: "برای استاد انتخاب دانشگاه الزامی است." });
   const gradingJson = gradingRubric ? JSON.stringify(normalizeRubric(gradingRubric)) : null;
   // Educational review is ON by default so the teacher can validate the chat.
@@ -558,45 +560,38 @@ r.delete("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
 
 /* ---- Set the class's cases (replace list) ---- */
 r.put("/:id/cases", authRequired, requireRole("teacher", "admin"), (req, res) => {
-  const { cases = [] } = req.body || {}; // [{case_id, weight}]
-  const cid = req.params.id;
-  const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(cid);
-  if (!cl) return res.status(404).json({ error: "not_found" });
-  if (req.user.role === "teacher" && cl.university_id !== currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university" });
-  const allowed = cases.filter((c) => {
-    const row = db.prepare("SELECT data_json, university_id FROM cases WHERE id=? AND active=1").get(c.case_id);
-    if (!row || isLearnContent(row.data_json)) return false;
-    // Same-university only (SQL equivalent: COALESCE(university_id,1)).
-    return (row.university_id || 1) === (cl.university_id || 1);
-  });
-  durableTransaction(() => {
-    db.prepare("DELETE FROM class_cases WHERE class_id=?").run(cid);
-    const ins = db.prepare("INSERT OR IGNORE INTO class_cases (class_id,case_id,weight) VALUES (?,?,?)");
-    for (const c of allowed) ins.run(cid, c.case_id, c.weight || 1);
-  });
-
-  res.json({ ok: true, added: allowed.length, skipped: cases.length - allowed.length });
+ const list=req.body?.cases;
+ if(!Array.isArray(list)||list.length>10000||list.some(x=>!x||!Number.isSafeInteger(x.case_id)||x.case_id<=0|| (x.weight!==undefined&&(!Number.isFinite(x.weight)||x.weight<=0))))return res.status(400).json({error:'invalid_content_selection'});
+ const cl=db.prepare('SELECT * FROM classes WHERE id=?').get(req.params.id);
+ if(!cl)return res.status(404).json({error:'not_found'});
+ if(req.user.role==='teacher'&&cl.university_id!==currentUniversityId(req.user))return res.status(403).json({error:'wrong_university'});
+ try{
+ const mapped=academicContentTransaction(()=>{
+ const mapped=list.map(x=>({...x,case_id:academicCopy('cases',x.case_id,cl.university_id,req.user,cl.owner_id||req.user.id)}));
+ db.prepare('DELETE FROM class_cases WHERE class_id=?').run(cl.id);
+ const put=db.prepare('INSERT OR IGNORE INTO class_cases(class_id,case_id,weight) VALUES (?,?,?)');
+ for(const x of mapped)put.run(cl.id,x.case_id,x.weight??1);
+ return mapped;
+ });res.json({ok:true,added:mapped.length,skipped:0,items:mapped});
+ }catch(e){res.status(e.status||500).json({error:e.message})}
 });
 
 /* ---- Set the class's flashcard sets (replace list) ---- */
 r.put("/:id/flashcards", authRequired, requireRole("teacher", "admin"), (req, res) => {
-  const { flashcards = [] } = req.body || {}; // [{flashcard_id, weight, graded}]
-  const cid = req.params.id;
-  const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(cid);
-  if (!cl) return res.status(404).json({ error: "not_found" });
-  if (req.user.role === "teacher" && cl.university_id !== currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university" });
-  const allowed = flashcards.filter((f) => {
-    const row = db.prepare("SELECT data_json, university_id FROM flashcards WHERE id=? AND active=1").get(f.flashcard_id);
-    if (!row || isLearnContent(row.data_json)) return false;
-    return (row.university_id || 1) === (cl.university_id || 1);
-  });
-  durableTransaction(() => {
-    db.prepare("DELETE FROM class_flashcards WHERE class_id=?").run(cid);
-    const ins = db.prepare("INSERT OR IGNORE INTO class_flashcards (class_id,flashcard_id,weight,graded) VALUES (?,?,?,?)");
-    for (const f of allowed) ins.run(cid, f.flashcard_id, f.weight || 1, f.graded === false ? 0 : 1);
-  });
-
-  res.json({ ok: true, added: allowed.length, skipped: flashcards.length - allowed.length });
+ const list=req.body?.flashcards;
+ if(!Array.isArray(list)||list.length>10000||list.some(x=>!x||!Number.isSafeInteger(x.flashcard_id)||x.flashcard_id<=0|| (x.weight!==undefined&&(!Number.isFinite(x.weight)||x.weight<=0))))return res.status(400).json({error:'invalid_content_selection'});
+ const cl=db.prepare('SELECT * FROM classes WHERE id=?').get(req.params.id);
+ if(!cl)return res.status(404).json({error:'not_found'});
+ if(req.user.role==='teacher'&&cl.university_id!==currentUniversityId(req.user))return res.status(403).json({error:'wrong_university'});
+ try{
+ const mapped=academicContentTransaction(()=>{
+ const mapped=list.map(x=>({...x,flashcard_id:academicCopy('flashcards',x.flashcard_id,cl.university_id,req.user,cl.owner_id||req.user.id)}));
+ db.prepare('DELETE FROM class_flashcards WHERE class_id=?').run(cl.id);
+ const put=db.prepare('INSERT OR IGNORE INTO class_flashcards(class_id,flashcard_id,weight,graded) VALUES (?,?,?,?)');
+ for(const x of mapped)put.run(cl.id,x.flashcard_id,x.weight??1,x.graded===false?0:1);
+ return mapped;
+ });res.json({ok:true,added:mapped.length,skipped:0,items:mapped});
+ }catch(e){res.status(e.status||500).json({error:e.message})}
 });
 
 /* ---- Student submits a class flashcard-set score (0..100). Best is kept. ---- */
