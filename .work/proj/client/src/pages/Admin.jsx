@@ -996,26 +996,56 @@ function StudentImportModal({ onClose, onDone }) {
 function AccessModal({ user, cases, onClose, onDone }) {
   const { t, lang } = useApp();
   const toast = useToast();
+  const fa = lang === "fa";
   const [caseIds, setCaseIds] = useState(user.caseIds || []);
   const [maxAttempts, setMaxAttempts] = useState(3);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const savingRef = useRef(false);
+  const errorRef = useRef(null);
+  useEffect(() => { if (error) errorRef.current?.scrollIntoView?.({ block: "nearest" }); }, [error]);
+  const quotaError = fa ? "تعداد دفعات آزمون باید عدد صحیحِ مثبت و معتبر باشد." : "Attempts must be a valid positive whole number.";
+  const listError = fa ? "حداکثر ۴۰۰ مورد را در یک درخواست انتخاب کنید؛ هیچ تغییری ذخیره نشد." : "Select at most 400 cases per request; no changes were saved.";
   const toggleCase = (id) => setCaseIds((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
+  const close = () => { if (!savingRef.current) onClose(); };
   const save = async () => {
-    await api.put(`/assignments/${user.id}`, { caseIds, maxAttempts });
-    toast(t("saved")); onDone();
+    if (savingRef.current) return;
+    setError("");
+    const attempts = Number(maxAttempts);
+    if (!Number.isSafeInteger(attempts) || attempts < 1) { setError(quotaError); return; }
+    if (caseIds.length > 400) { setError(listError); return; }
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await api.put(`/assignments/${user.id}`, { caseIds, maxAttempts: attempts });
+      toast(t("saved"));
+      onDone();
+    } catch (e) {
+      setError(e?.data?.error === "invalid_max_attempts" ? quotaError
+        : e?.data?.error === "invalid_case_ids" ? listError
+        : String(e?.message || (fa ? "ذخیره نشد؛ دوباره تلاش کنید." : "Could not save; please retry.")));
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
   };
   return (
     <Modal title={`${t("manageAccess")} — ${lang === "fa" ? user.name_fa : user.name_en} (${user.student_no})`}
-      onClose={onClose} onSave={save} saveLabel={t("saveAccess")}>
+      onClose={close} onSave={save} saveDisabled={saving} saveLabel={t("saveAccess")}>
+      {saving && <p role="status">{fa ? "در حال ذخیره…" : "Saving…"}</p>}
+      <div aria-busy={saving}>
       <label className="small muted">{t("assignExams")}</label>
       <div className="small muted mb8">{t("assignExamsHint")}</div>
       {cases.map((c) => (
         <label key={c.id} className="toggle-row" style={{ cursor: "pointer" }}>
           <span>{biField(c, "title", lang)} <span className="badge-ver">v{c.version}</span></span>
-          <input type="checkbox" checked={caseIds.includes(c.id)} onChange={() => toggleCase(c.id)} style={{ width: 18, height: 18 }} />
+          <input type="checkbox" disabled={saving} checked={caseIds.includes(c.id)} onChange={() => toggleCase(c.id)} style={{ width: 18, height: 18 }} />
         </label>
       ))}
-      <div className="field mt16"><label>{t("maxAttemptsField")}</label>
-        <input type="number" min="1" value={maxAttempts} onChange={(e) => setMaxAttempts(+e.target.value || 1)} /></div>
+      <div className="field mt16"><label htmlFor="assignment-attempts">{t("maxAttemptsField")}</label>
+        <input id="assignment-attempts" type="number" min="1" step="1" disabled={saving} value={maxAttempts} onChange={(e) => setMaxAttempts(e.target.value)} /></div>
+      </div>
+      {error && <p role="alert" ref={errorRef}>{error}</p>}
     </Modal>
   );
 }

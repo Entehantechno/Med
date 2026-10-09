@@ -1,3 +1,4 @@
+import { assignmentInput } from '../lib/assignment-input.js';
 import { validateCase, normalizeCaseAge } from "../lib/case-validation.js";
 import { routingSettings } from "../lib/ai-routing.js";
 /* ================================================================
@@ -979,11 +980,13 @@ r.get("/assignments/:userId", authRequired, requireRole("teacher", "admin"), (re
 });
 // Replace the full set of a student's assignments (case IDs)
 r.put("/assignments/:userId", authRequired, requireRole("teacher", "admin"), (req, res) => {
-  const { caseIds = [], maxAttempts = 1 } = req.body || {};
   const uid = req.params.userId;
   const target = db.prepare("SELECT id, role, university_id FROM users WHERE id=?").get(uid);
   if (!target) return res.status(404).json({ error: "not found", stage: "access" });
   if (!canManageStudentAccount(req.user, target)) return res.status(403).json({ error: "wrong_university", stage: "access" });
+  const input = assignmentInput(req.body, { requireCaseIds: true });
+  if (input.error) return res.status(400).json(input);
+  const { caseIds, maxAttempts } = input;
   const allowed = caseIdsForUniversity(caseIds, target.university_id);
   durableTransaction(() => {
     db.prepare("UPDATE exam_assignments SET active=0 WHERE user_id=?").run(uid);
@@ -999,9 +1002,12 @@ r.put("/assignments/:userId", authRequired, requireRole("teacher", "admin"), (re
 // Create a user. For students, the student number is the username.
 // Optionally assign the new student to one or more exams (case IDs) in one step.
 r.post("/users", authRequired, requireRole("teacher", "admin"), async (req, res, next) => {
-  const { studentNo, username, password, name_fa, name_en, role = "student", caseIds = [], maxAttempts = 1 } = req.body || {};
+  const { studentNo, username, password, name_fa, name_en, role = "student" } = req.body || {};
   if (req.user.role === "teacher" && role !== "student") return res.status(403).json({ error: "teachers can only add students" });
   if (role === "learner") return res.status(403).json({ error: "role_track_locked", reason: "role_track_locked", stage: "access" });
+  const input = assignmentInput(req.body || {});
+  if (input.error) return res.status(400).json(input);
+  const { caseIds, maxAttempts } = input;
   const uname = role === "student" ? String(studentNo || username || "").trim() : String(username || "").trim();
   if (!uname) return res.status(400).json({ error: "username/student number required" });
   if (role === "student") {

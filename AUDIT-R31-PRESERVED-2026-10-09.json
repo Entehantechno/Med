@@ -1,0 +1,32 @@
+{
+  "baseline": "R30",
+  "bank_scope": "preserve_bank",
+  "changed_non_build_entries": [
+    "VERSION.txt",
+    "client/src/pages/Admin.jsx",
+    "server/src/routes/content.js"
+  ],
+  "added_non_build_entries": [
+    "client/src/pages/Admin.assignments-r31.test.jsx",
+    "server/src/lib/assignment-input.js",
+    "server/test/university-assignments-r31.test.js"
+  ],
+  "removed_non_build_entries": [],
+  "generated_build": {
+    "changed": 4,
+    "added": 227,
+    "removed": 227
+  },
+  "preserved_sha256": {
+    "server/src/data/vp-emergency-ten.js": "7e9ae7932b4d54ce28c5cd44e4e93b03793064a50ca0b9207784b913e98c2422",
+    "server/src/seed-emergency-ten.js": "d3ad67f2b5332bd9c0a921b4267e914fad4b452ff32895c8ba0f5e8a7e23e018",
+    "server/src/seed.js": "723224026d06b7fee62569990e9dffe09a0f042f96eccc786dd67a9974acb7cb",
+    "server/src/db.js": "3249b4b789443377da89be4e750553eca1090a622121dcc6b3bb311fb4a550f0",
+    "demo-database/medlab.db": "80d84b60d625ffddbda7b863f87b942b1fa4a51d0f2428d78b948114c3bafc81"
+  },
+  "all_tools_and_demo_database_same_bytes": true,
+  "reports_outside_zip": true,
+  "bundled_secrets_blank": true,
+  "exam_mode": "TEXT DEFAULT 'perQuestion'",
+  "sha256": "a71a2c1841822ee95e39ee6f2943baf6b5d9a4afacea63c7e4d96d965f6856aa"
+}

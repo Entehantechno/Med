@@ -1,0 +1,301 @@
+{
+  "date": "2026-10-09",
+  "baseline_commit": "74fab677a5a3acd6dd837e129c256548ebcf8089",
+  "scope": "Assignment request validation and access-modal failure/retry; scientific bank and historical grading unchanged",
+  "server": {
+    "passed": 1971,
+    "failed": 47,
+    "tests": 2018,
+    "files": 82,
+    "skipped": 0,
+    "duration_seconds": 714.4
+  },
+  "client": {
+    "passed": 149,
+    "failed": 0,
+    "tests": 149,
+    "files": 27,
+    "skipped": 0,
+    "duration_seconds": 30.52
+  },
+  "extracted_server": {
+    "passed": 80,
+    "failed": 0,
+    "tests": 80,
+    "files": 4,
+    "skipped": 0,
+    "duration_seconds": 47.84
+  },
+  "red_server": {
+    "passed": 8,
+    "failed": 20,
+    "failures": [
+      {
+        "test": "rejects malformed replacement {} without disabling access",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects malformed replacement {\"caseIds\":null} without disabling access",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects malformed replacement {\"caseIds\":\"1\"} without disabling access",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects malformed replacement {\"caseIds\":{}} without disabling access",
+        "error": "AssertionError: expected 500 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects malformed replacement {\"caseIds\":[1,\"bad\"]} without disabling access",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects malformed replacement {\"caseIds\":[1,0]} without disabling access",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects malformed replacement {\"caseIds\":[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, without disabling access",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects invalid attempt limit 0 without writes",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects invalid attempt limit -1 without writes",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects invalid attempt limit 1.5 without writes",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects invalid attempt limit \"not-a-number\" without writes",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects invalid attempt limit null without writes",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects invalid attempt limit true without writes",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects invalid attempt limit \"\" without writes",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects invalid attempt limit 9007199254740992 without writes",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects invalid initial assignment limit -1 before creating the student",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects invalid initial assignment limit \"not-a-number\" before creating the student",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects invalid initial assignment limit null before creating the student",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "malformed initial IDs reject before creating an account",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "test": "rejects 401 distinct cases instead of silently applying only the first 400",
+        "error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      }
+    ]
+  },
+  "red_client": {
+    "failed": 3,
+    "failures": [
+      {
+        "test": "invalid fractional quota is explained without submitting",
+        "error": "AssertionError: expected \"spy\" to not be called at all, but actually been called 1 times"
+      },
+      {
+        "test": "pending replacement locks controls and suppresses duplicate saves",
+        "error": "AssertionError: expected \"spy\" to be called 1 times, but got 2 times"
+      },
+      {
+        "test": "failed save is visible, keeps selection, and permits a successful retry",
+        "error": "Error: Unable to find role=\"alert\""
+      }
+    ]
+  },
+  "new_tests": {
+    "server": 29,
+    "client": 7
+  },
+  "build": "passed",
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "live_api": {
+    "checks": 9,
+    "studentId": 117,
+    "evidence": [
+      {
+        "scenario": "{}",
+        "status": 400,
+        "unchanged": true
+      },
+      {
+        "scenario": "{\"caseIds\":null}",
+        "status": 400,
+        "unchanged": true
+      },
+      {
+        "scenario": "{\"caseIds\":\"1\"}",
+        "status": 400,
+        "unchanged": true
+      },
+      {
+        "scenario": "{\"caseIds\":[1,0]}",
+        "status": 400,
+        "unchanged": true
+      },
+      {
+        "scenario": "{\"caseIds\":[1],\"maxAttempts\":-1}",
+        "status": 400,
+        "unchanged": true
+      },
+      {
+        "scenario": "{\"caseIds\":[1],\"maxAttempts\":1.5}",
+        "status": 400,
+        "unchanged": true
+      },
+      {
+        "scenario": "{\"caseIds\":[1],\"maxAttempts\":null}",
+        "status": 400,
+        "unchanged": true
+      },
+      {
+        "scenario": "{\"caseIds\":[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,",
+        "status": 400,
+        "unchanged": true
+      },
+      {
+        "scenario": "valid numeric-string retry",
+        "status": 200,
+        "quota": 7
+      }
+    ]
+  },
+  "browser": {
+    "checks": 10,
+    "evidence": [
+      {
+        "width": 1440,
+        "check": "fraction rejected locally",
+        "passed": true
+      },
+      {
+        "width": 1440,
+        "check": "pending lock and Escape guard",
+        "passed": true
+      },
+      {
+        "width": 1440,
+        "check": "failure visible and draft retained",
+        "passed": true
+      },
+      {
+        "width": 1440,
+        "check": "retry persisted through real API",
+        "passed": true
+      },
+      {
+        "width": 1440,
+        "check": "no document horizontal overflow",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "check": "fraction rejected locally",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "check": "pending lock and Escape guard",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "check": "failure visible and draft retained",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "check": "retry persisted through real API",
+        "passed": true
+      },
+      {
+        "width": 390,
+        "check": "no document horizontal overflow",
+        "passed": true
+      }
+    ],
+    "pageErrors": [],
+    "scope": "Real extracted app; injected browser-only 503; retry reaches real API; English UI at two widths"
+  },
+  "restart": {
+    "before": {
+      "users": {
+        "rows": 117,
+        "sha256": "f3518379f3fa446a08f50ff66bfde4537fc9717e452f792571f19795a4c5a9d4"
+      },
+      "cases": {
+        "rows": 23,
+        "sha256": "5c61cc0003e1bd94b185f354b3e935106f3949e812ce3872acfc589567abe259"
+      },
+      "exam_assignments": {
+        "rows": 4,
+        "sha256": "1171382e0746730e0d5f698adc924e73f2b4f09c25a2004ed1f4ba41b6d81c48"
+      }
+    },
+    "after": {
+      "users": {
+        "rows": 117,
+        "sha256": "f3518379f3fa446a08f50ff66bfde4537fc9717e452f792571f19795a4c5a9d4"
+      },
+      "cases": {
+        "rows": 23,
+        "sha256": "5c61cc0003e1bd94b185f354b3e935106f3949e812ce3872acfc589567abe259"
+      },
+      "exam_assignments": {
+        "rows": 4,
+        "sha256": "1171382e0746730e0d5f698adc924e73f2b4f09c25a2004ed1f4ba41b6d81c48"
+      }
+    },
+    "identical": true,
+    "startup": {
+      "inserted": 0,
+      "bound": 0,
+      "catalogAdded": 0
+    }
+  },
+  "package": {
+    "name": "MED-School-FINAL-2026-10-09-R31.zip",
+    "bytes": 50431367,
+    "entries": 1154,
+    "sha256": "a71a2c1841822ee95e39ee6f2943baf6b5d9a4afacea63c7e4d96d965f6856aa"
+  },
+  "limitations": [
+    "20 red server scenarios are not 20 independent root causes",
+    "Browser 503 simulated; real disk rollback covered by existing R25 tests",
+    "Live API origin header and collapsed mobile navigation were corrected in test harness, not application bugs",
+    "Final browser run required restarting the server after replacing its startup-cached built HTML",
+    "English browser smoke at two widths; no comprehensive accessibility certification",
+    "Ten-case scientific mismatches and missing-result-normal contract remain open",
+    "Existing malformed quotas are not migrated or retroactively repaired",
+    "No external AI or paid testing"
+  ]
+}
