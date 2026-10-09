@@ -1,0 +1,14 @@
+{
+  "date": "2026-10-09",
+  "release_commit": "94acbc8f21ca2a81e4364efeec84d09a658135e7",
+  "branch": "arena/57508e9a-med",
+  "pull_request": "https://github.com/Entehantechno/Med/pull/3",
+  "base": "main",
+  "archive": "MED-School-FINAL-2026-10-09-R33.zip",
+  "bytes": 50460571,
+  "sha256": "a85b1e2af026e7baf83363d802ab5de71e47144381d544385a4f7efc5d93de9b",
+  "git_blob": "51eada9d498f3c3324c78879bef37ecfe1921cd5",
+  "verification": "Independent GitHub Contents API raw download; SHA-256 and ZIP CRC verified; remote branch equals release commit.",
+  "predecessor_present_during_verification": true,
+  "retirement": "R32 ZIP and checksum removed only in the following separate commit/push; reports retained."
+}
