@@ -1,0 +1,271 @@
+{
+  "status": "in_progress_not_a_release",
+  "baseline": "R34",
+  "raw_bank_changed": false,
+  "conflicts": [
+    {
+      "file": "import-payload.master-preint.part01.json",
+      "row": 147,
+      "source_id": "QB-00147",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 3
+    },
+    {
+      "file": "import-payload.master-preint.part03.json",
+      "row": 129,
+      "source_id": "QB-00570",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 0
+    },
+    {
+      "file": "import-payload.master-preint.part03.json",
+      "row": 141,
+      "source_id": "QB-00582",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 2
+    },
+    {
+      "file": "import-payload.master-preint.part03.json",
+      "row": 143,
+      "source_id": "QB-00584",
+      "key_source": "low-confidence",
+      "keyless": true,
+      "correct_index": 0
+    },
+    {
+      "file": "import-payload.master-preint.part03.json",
+      "row": 164,
+      "source_id": "QB-00607",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 2
+    },
+    {
+      "file": "import-payload.master-preint.part03.json",
+      "row": 205,
+      "source_id": "QB-00649",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 1
+    },
+    {
+      "file": "import-payload.master-preint.part04.json",
+      "row": 15,
+      "source_id": "QB-00680",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 3
+    },
+    {
+      "file": "import-payload.master-preint.part04.json",
+      "row": 27,
+      "source_id": "QB-00693",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 2
+    },
+    {
+      "file": "import-payload.master-preint.part04.json",
+      "row": 36,
+      "source_id": "QB-00702",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 3
+    },
+    {
+      "file": "import-payload.master-preint.part04.json",
+      "row": 41,
+      "source_id": "QB-00707",
+      "key_source": "low-confidence",
+      "keyless": true,
+      "correct_index": 0
+    },
+    {
+      "file": "import-payload.master-preint.part04.json",
+      "row": 53,
+      "source_id": "QB-00720",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 1
+    },
+    {
+      "file": "import-payload.master-preint.part04.json",
+      "row": 54,
+      "source_id": "QB-00721",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 0
+    },
+    {
+      "file": "import-payload.master-preint.part04.json",
+      "row": 74,
+      "source_id": "QB-00745",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 3
+    },
+    {
+      "file": "import-payload.master-preint.part04.json",
+      "row": 90,
+      "source_id": "QB-00761",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 3
+    },
+    {
+      "file": "import-payload.master-preint.part04.json",
+      "row": 163,
+      "source_id": "QB-00837",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 3
+    },
+    {
+      "file": "import-payload.master-preint.part04.json",
+      "row": 220,
+      "source_id": "QB-00895",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 3
+    },
+    {
+      "file": "import-payload.master-preint.part05.json",
+      "row": 41,
+      "source_id": "QB-00937",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 0
+    },
+    {
+      "file": "import-payload.master-preint.part05.json",
+      "row": 63,
+      "source_id": "QB-00960",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 3
+    },
+    {
+      "file": "import-payload.master-preint.part05.json",
+      "row": 68,
+      "source_id": "QB-00965",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 2
+    },
+    {
+      "file": "import-payload.master-preint.part05.json",
+      "row": 101,
+      "source_id": "QB-01001",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 0
+    },
+    {
+      "file": "import-payload.master-preint.part05.json",
+      "row": 196,
+      "source_id": "QB-01104",
+      "key_source": "low-confidence",
+      "keyless": true,
+      "correct_index": 1
+    },
+    {
+      "file": "import-payload.master-preint.part05.json",
+      "row": 220,
+      "source_id": "QB-01132",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 2
+    },
+    {
+      "file": "import-payload.master-preint.part06.json",
+      "row": 25,
+      "source_id": "QB-01157",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 3
+    },
+    {
+      "file": "import-payload.master-preint.part06.json",
+      "row": 61,
+      "source_id": "QB-01195",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 3
+    },
+    {
+      "file": "import-payload.master-preint.part06.json",
+      "row": 67,
+      "source_id": "QB-01201",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 0
+    },
+    {
+      "file": "import-payload.master-preint.part06.json",
+      "row": 108,
+      "source_id": "QB-01242",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 2
+    },
+    {
+      "file": "import-payload.master-preint.part06.json",
+      "row": 114,
+      "source_id": "QB-01248",
+      "key_source": "low-confidence",
+      "keyless": true,
+      "correct_index": 0
+    },
+    {
+      "file": "import-payload.master-preint.part06.json",
+      "row": 121,
+      "source_id": "QB-01255",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 1
+    },
+    {
+      "file": "import-payload.master-preint.part06.json",
+      "row": 220,
+      "source_id": "QB-01355",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 2
+    },
+    {
+      "file": "import-payload.master-preint.part22.json",
+      "row": 50,
+      "source_id": "QB-04877",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 0
+    },
+    {
+      "file": "import-payload.master-preint.part22.json",
+      "row": 53,
+      "source_id": "QB-04880",
+      "key_source": "multi-answer",
+      "keyless": true,
+      "correct_index": 2
+    }
+  ],
+  "count": 31,
+  "fix_scope": "New imports honor keyless, low-confidence and multi-answer markers over numeric answer indices; no existing row or score migration.",
+  "tests_before": {
+    "passed": 2,
+    "failed": 4
+  },
+  "tests_after": {
+    "passed": 13,
+    "failed": 0
+  },
+  "remaining": "Raw metadata and educational/history failures remain to be resolved; full regression and release packaging not yet verified.",
+  "bank_regression": {
+    "passed": 25,
+    "failed": 47,
+    "same_failed_names_as_r34": true
+  }
+}

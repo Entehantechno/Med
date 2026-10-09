@@ -2990,13 +2990,18 @@ function reviveNodesWithCards() {
   }
   return revived;
 }
+// Explicit uncertainty takes precedence over a stale numeric answer index.
+// Share this policy between normalization and path placement.
+function officialQuestionIsKeyless(q) {
+  return q.keyless === true || q.correct_index === null ||
+    q.key_source === "low-confidence" || q.key_source === "multi-answer";
+}
 function normalizeOfficialQuestion(q, meta = {}) {
   const faOpts = Array.isArray(q.options_fa) ? q.options_fa : [];
   const enOpts = Array.isArray(q.options_en) ? q.options_en : [];
-  const keyless = q.keyless === true || q.correct_index === null ||
-    (q.correct_index === undefined && q.key_source === "low-confidence");
+  const keyless = officialQuestionIsKeyless(q);
   const correctNum = Number(q.correct_index ?? q.correct);
-  const correct = Number.isInteger(correctNum) && correctNum >= 0 && correctNum < faOpts.length ? correctNum : (keyless ? -1 : Math.max(0, correctNum || 0));
+  const correct = keyless ? -1 : (Number.isInteger(correctNum) && correctNum >= 0 && correctNum < faOpts.length ? correctNum : Math.max(0, correctNum || 0));
   const fingerprint = officialFingerprint(q);
   return buildLearnCard({
     track: "learn",
@@ -3158,7 +3163,7 @@ function officialImportPlan(body = {}, dryRun = true) {
         const probe = officialNode(topic, { chapter_fa: q.chapter_fa, chapter_en: q.chapter_en }, part, true);
         if (!probe) nodeBlocked = true;
       }
-      const isKeyless = q.keyless === true || q.correct_index === null || q.key_source === "low-confidence";
+      const isKeyless = officialQuestionIsKeyless(q);
       const bankOnly = q.needs_lesson === true || !hasLesson || topicGone || nodeBlocked || isKeyless;
       const inPath = !duplicate && !bankOnly;
       if (inPath) lessonCounts.set(lessonKey, count + 1);
