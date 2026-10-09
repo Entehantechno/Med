@@ -96,11 +96,11 @@ it('rejects a late provider response after the session closes',async()=>{
  const e=await encounter();setSetting('ai',{provider:'OpenRouter',model:'synthetic/r10',apiKey:'synthetic-test-key'});
  vi.stubGlobal('fetch',vi.fn(async()=>{
   db.prepare("UPDATE vp_sessions SET finished_at=datetime('now') WHERE id=?").run(e.sessionId);
-  return {ok:true,status:200,json:async()=>({choices:[{message:{content:'Synthetic normal report'}}]})};
+  return {ok:true,status:200,json:async()=>({choices:[{message:{content:'I have the original complaint.'}}]})};
  }));
  try {
-  const result=await request(app).post('/api/exam/order').set(auth(student)).send({caseId:e.caseId,sessionId:e.sessionId,kind:'lab',query:'Troponin',lang:'en'});
-  expect(result.status).toBe(409);expect(result.body.error).toBe('session_closed');expect(result.body.text).toBeUndefined();
+  const result=await request(app).post('/api/exam/patient-reply').set(auth(student)).send({caseId:e.caseId,sessionId:e.sessionId,userText:'What is the problem?',lang:'en'});
+  expect(fetch).toHaveBeenCalledTimes(1);expect(result.status).toBe(409);expect(result.body.error).toBe('session_closed');expect(result.body.text).toBeUndefined();
  } finally {setSetting('ai',{apiKey:''});}
 });
 it('pins grading weights, not just the class role name',async()=>{

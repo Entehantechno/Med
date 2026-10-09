@@ -4366,22 +4366,26 @@ describe("Virtual patient: editable prompts + lab/imaging ordering + order revie
     expect(img.body.imageUrl).toBeTruthy();
   });
 
-  it("ordering a test NOT in the chart tells the student it is normal (deterministic fallback)", async () => {
+  it("ordering an unrecorded test explicitly reports unavailability, not normality", async () => {
     await request(app).put("/api/settings/ai").set(A(atk)).send({ provider: "", baseUrl: "", apiKey: "", clearApiKey: true, model: "" });
     const r = await request(app).post("/api/exam/order").set(A(teacher)).send({ caseId: 1, kind: "lab", query: "کراتینین", lang: "fa" });
     expect(r.body.found).toBe(false);
-    expect(r.body.source).toBe("mock");
-    expect(r.body.text).toMatch(/نرمال|طبیعی/);
+    expect(r.body.source).toBe("unavailable");
+    expect(r.body.status).toBe("not-recorded");
+    expect(r.body.text).toMatch(/ثبت نشده/);
+    expect(r.body.text).not.toMatch(/نرمال است|طبیعی است/);
     expect(r.body.text).toContain("کراتینین");
   });
 
-  it("ordering a normal test uses the AI wording when a key is configured", async () => {
+  it("an AI key does not turn missing clinical data into a generated normal result", async () => {
     await request(app).put("/api/settings/ai").set(A(atk))
       .send({ provider: "Custom", baseUrl: `http://localhost:${port}/v1`, apiKey: "sk", model: "x" });
     const r = await request(app).post("/api/exam/order").set(A(teacher)).send({ caseId: 1, kind: "lab", query: "منیزیم", lang: "fa" });
     expect(r.body.found).toBe(false);
-    expect(r.body.source).toBe("llm");
-    expect(r.body.text).toContain("NORMAL-REPORT");
+    expect(r.body.source).toBe("unavailable");
+    expect(r.body.status).toBe("not-recorded");
+    expect(r.body.text).toContain("ثبت نشده");
+    expect(r.body.text).not.toContain("NORMAL-REPORT");
     await request(app).put("/api/settings/ai").set(A(atk)).send({ provider: "", baseUrl: "", apiKey: "", clearApiKey: true, model: "" });
   });
 

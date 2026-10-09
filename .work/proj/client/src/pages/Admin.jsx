@@ -2574,16 +2574,8 @@ function Prompts() {
       <div className="field"><label>{t("promptExamTeacher")} (EN)</label>
         <textarea style={{ minHeight: 70 }} value={p.exam_teacher_en || ""} onChange={(e) => set("exam_teacher_en", e.target.value)} /></div>
 
-      {/* Lab / radiology reporter */}
-      <div className="small muted mb8 mt8"><Icon name="flask" size={16} /> {t("promptInfoLab")}</div>
-      <div className="field"><label>{t("promptLabRules")} (FA)</label>
-        <textarea style={{ minHeight: 60 }} value={p.labresult_rules_fa || ""} onChange={(e) => set("labresult_rules_fa", e.target.value)} /></div>
-      <div className="field"><label>{t("promptLabRules")} (EN)</label>
-        <textarea style={{ minHeight: 60 }} value={p.labresult_rules_en || ""} onChange={(e) => set("labresult_rules_en", e.target.value)} /></div>
-      <div className="field"><label>{t("promptLabNormal")} (FA) <span className="small muted">— {t("promptLabNormalHint")}</span></label>
-        <input value={p.lab_normal_fa || ""} onChange={(e) => set("lab_normal_fa", e.target.value)} /></div>
-      <div className="field"><label>{t("promptLabNormal")} (EN)</label>
-        <input value={p.lab_normal_en || ""} onChange={(e) => set("lab_normal_en", e.target.value)} /></div>
+      {/* Clinical results are chart-only; legacy normal-result prompts are not used. */}
+      <div className="micro-box small mb16" role="note"><Icon name="flask" size={16} /> {t("promptInfoLab")}</div>
 
       <div className="small muted mb8 mt8"><Icon name="brain" size={16} /> {t("promptInfoEval")}</div>
       <div className="field"><label>{t("promptEvaluator")} (FA)</label>

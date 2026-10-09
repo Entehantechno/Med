@@ -472,8 +472,7 @@ r.post("/patient-reply", authRequired, async (req, res) => {
 /* ---- Order a lab test / imaging study / paraclinical study -> report in the chat ----
    `kind` = "lab" | "imaging" | "paraclinic" (ECG, PFT, EEG, ...).
    If the case chart has a recorded result → return it (with an image if any).
-   Otherwise the student is told it's NORMAL (AI-worded when a key is set, else a
-   deterministic template). `kind` = "lab" | "imaging". */
+   Otherwise the result is explicitly unavailable; no normal value is inferred. */
 r.post("/order", authRequired, async (req, res) => {
   try {
     const { kind = "lab", query = "", lang = "fa" } = req.body || {};

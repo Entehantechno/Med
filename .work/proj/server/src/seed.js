@@ -249,6 +249,8 @@ insCase.run(3, 1, "medium", 1, JSON.stringify({
 // ---- Academic emergency cases: stable source keys, never competitive ----
 {
   const { EMERGENCY_TEN } = await import('./data/vp-emergency-ten.js');
+  const { EMERGENCY_RUBRICS } = await import('./data/emergency-rubrics.js');
+  for (const [id, rubric] of Object.entries(EMERGENCY_RUBRICS)) insChecklist.run(Number(id), rubric.name_fa, rubric.name_en, JSON.stringify(rubric.items));
   const universityId = db.prepare("SELECT id FROM universities WHERE code='ARAK'").get()?.id || 1;
   for (const [i,c] of EMERGENCY_TEN.entries()) {
     const key = `medschool:emergency:${i+1}:university:${universityId}`;
@@ -369,19 +371,19 @@ const prompts = {
   patient_en: "You play a realistic virtual patient who has come to see a doctor. Answer ONLY from the PATIENT CHART (JSON). Core rule: Disclose information strictly bit by bit, answering ONLY what the doctor explicitly asked. If asked 'What is your problem?' or 'What brings you here?', answer ONLY with the chief complaint in a brief sentence (e.g. 'My stomach hurts, doctor'). Do NOT volunteer pain radiation, onset, severity, relieving/aggravating factors, associated symptoms, or history unless specifically asked for that exact item. Natural patient tone, brief 1-2 sentences.",
   // Operating rules for the patient (fully editable by the admin — previously
   // these were hard-coded inside the engine and could NOT be changed):
-  patient_rules_fa: "قوانین: ۱) اطلاعات را ذره‌ذره و متناسب با سؤال پزشک ارائه کن و هرگز بدون پرسش پزشک اطلاعاتی مثل انتشار درد، زمان شروع، شدت یا علائم همراه را فاش نکن. ۲) پاسخ‌ها را فقط از روی پروندهٔ بیمار استخراج کن و هیچ حقیقت پزشکیِ جدیدی از خودت نساز. ۳) اگر پزشک چیزی پرسید که در پرونده نیست، پاسخ منفی یا طبیعی بده (مثلاً «نه، سیگار نمی‌کشم»). ۴) هرگز تشخیص نهایی، نتیجهٔ آزمایش/تصویربرداری یا یافته‌های معاینهٔ فیزیکی را لو نده (معاینه را استاد انجام می‌دهد). ۵) اول‌شخص و از زبان بیمار عادی، کوتاه (۱ تا ۲ جمله) و طبیعی پاسخ بده.",
-  patient_rules_en: "Rules: 1) Disclose information strictly bit by bit as asked; never volunteer pain radiation, onset, severity, or associated symptoms unprompted. 2) Draw answers ONLY from the chart and never invent new facts. 3) If asked about something unrecorded, give a plausible negative/normal reply. 4) Never reveal the final diagnosis, lab/imaging results, or physical exam findings (the supervising teacher performs exams). 5) Reply in the first person as an ordinary patient, briefly (1-2 sentences) and naturally.",
+  patient_rules_fa: "قوانین: ۱) اطلاعات را ذره‌ذره و متناسب با سؤال پزشک ارائه کن و هرگز بدون پرسش پزشک اطلاعاتی مثل انتشار درد، زمان شروع، شدت یا علائم همراه را فاش نکن. ۲) پاسخ‌ها را فقط از روی پروندهٔ بیمار استخراج کن و هیچ حقیقت پزشکیِ جدیدی از خودت نساز. ۳) اگر پزشک چیزی پرسید که در پرونده نیست، صریحاً بگو اطلاعات ثبت نشده است؛ پاسخ منفی یا طبیعی حدس نزن. ۴) هرگز تشخیص نهایی، نتیجهٔ آزمایش/تصویربرداری یا یافته‌های معاینهٔ فیزیکی را لو نده (معاینه را استاد انجام می‌دهد). ۵) اول‌شخص و از زبان بیمار عادی، کوتاه (۱ تا ۲ جمله) و طبیعی پاسخ بده.",
+  patient_rules_en: "Rules: 1) Disclose information strictly bit by bit as asked; never volunteer pain radiation, onset, severity, or associated symptoms unprompted. 2) Draw answers ONLY from the chart and never invent new facts. 3) If asked about something unrecorded, explicitly say it is not recorded; never invent negative or normal findings. 4) Never reveal the final diagnosis, lab/imaging results, or physical exam findings (the supervising teacher performs exams). 5) Reply in the first person as an ordinary patient, briefly (1-2 sentences) and naturally.",
   // Role prompt for the SUPERVISING-TEACHER responder (exam findings &
   // auscultation). The engine always appends its hard constraints on top.
   exam_teacher_fa: "تو استادِ نظارت (attending) هستی. دانشجو از تو خواسته معاینهٔ بیمار مجازی را انجام دهی و یافته‌ها را به او بگویی.",
   exam_teacher_en: "You are the supervising attending. The student has asked you to examine the virtual patient and report the findings.",
-  // Rules for how the lab/radiology responder words a result (used when the AI
-  // generates a normal-result report). Also admin-editable:
+  // Legacy lab prompt keys retained for import compatibility; the chart-only
+  // result engine no longer calls AI or these templates for missing results.
   labresult_rules_fa: "تو گزارش‌دهندهٔ آزمایشگاه/رادیولوژی هستی. لحن رسمی و کوتاه. فقط یک جمله بنویس.",
   labresult_rules_en: "You are the lab/radiology reporter. Formal, short tone. Write only one sentence.",
-  // Deterministic fallback template for a NORMAL result (no AI). Use {item}.
-  lab_normal_fa: "طبق گزارش آزمایشگاه، {item} بیمار نرمال است.",
-  lab_normal_en: "Per the lab report, the patient's {item} is normal.",
+  // Deprecated templates; retained keys are never used to invent a result.
+  lab_normal_fa: "نتیجهٔ {item} در پرونده ثبت نشده است.",
+  lab_normal_en: "A result for {item} is not recorded in the chart.",
   evaluator_fa: "تو یک استادِ ارزیابِ بالینی و مصحح سخت‌گیر و عادل OSCE هستی. کل تعامل دانشجو با بیمار مجازی را بررسی کن: متن گفتگو، آزمایش‌ها/تصویربرداری‌ها، پرابلم لیست، تشخیص‌های افتراقی و تشخیص نهایی. قوانین ارزیابی چک‌لیست: ۱) معرفی خود و کسب رضایت: دانشجو باید صراحتاً نام یا عنوان خود را به‌عنوان پزشک بیان کرده باشد و از بیمار اجازه/رضایت گرفته باشد؛ صرف گفتن «سلام» یا پرسیدن «مشکل چیست؟» به هیچ وجه معرفی و کسب رضایت نیست (done: false). ۲) بررسی سیستماتیک شکایت اصلی و مرور سیستم‌ها (ROS): تنها در صورتی تیک می‌خورد که دانشجو ویژگی‌های علامت و ارگان‌های دیگر را صریحاً پرسیده باشد. ۳) برای هر مورد یک دلیل کوتاه بنویس و خروجی را با فرمت معتبر JSON ارائه بده.",
   evaluator_en: "You are a strict, fair clinical OSCE examiner. Review the student encounter: chat transcript, orders, problem list, differentials, and final diagnosis. Rules: 1) Introduction & consent: The student MUST have explicitly stated their name/role as doctor and asked for consent; merely saying 'hello' or 'what is your problem' is NOT introduction or consent (done: false). 2) Systematic exploration & ROS: Only mark done if the student specifically asked about characteristics and organ systems. 3) Provide a brief reason per item and return valid JSON.",
   micro_fa: "بر اساس نقاط ضعف و خطاهای این دانشجو در این سناریو، یک درسنامه میکرو-لرنینگِ کاربردی، ساختاریافته و جامع (شامل پیام کلیدی، رویکرد شرح‌حال، معاینه فیزیکی و مرور سیستم‌ها ROS، نکات دام‌دار، و جمع‌بندی طلایی) در قالب مارک‌داون بنویس تا دانشجو بلافاصله پس از مشاهده نمره، آن را بخواند و یاد بگیرد.",

@@ -461,7 +461,7 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
   };
 
   // When a student orders a test/imaging, fetch the lab/radiology report and
-  // drop it into the chat (recorded result, or "normal" if not in the chart).
+  // drop it into the chat (recorded result, or explicit unavailability if not in the chart).
   const orderResult = (kind, query) => {
     if (finishingRef.current) return Promise.resolve({ ok: false });
     const q = String(query || "").trim();

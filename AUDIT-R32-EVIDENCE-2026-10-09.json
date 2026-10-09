@@ -1,0 +1,585 @@
+{
+  "date": "2026-10-09",
+  "baseline_commit": "12a1eeb5c1e95b864050cef746fa8881ab52176b",
+  "scope": "Chart-only results and examinations; future HF/UGIB rubrics; university deployment/browser audit. All bank failures remain open.",
+  "server": {
+    "passed": 1995,
+    "failed": 47,
+    "tests": 2042,
+    "files": 84,
+    "skipped": 0,
+    "duration_seconds": 755.6
+  },
+  "initial_server_before_client_build_finished": {
+    "passed": 1987,
+    "failed": 55,
+    "tests": 2042,
+    "files": 84,
+    "skipped": 0,
+    "duration_seconds": 750.27
+  },
+  "client": {
+    "passed": 149,
+    "failed": 0,
+    "tests": 149,
+    "files": 27,
+    "skipped": 0,
+    "duration_seconds": 41.3
+  },
+  "extracted_server": {
+    "passed": 210,
+    "failed": 0,
+    "tests": 210,
+    "files": 14,
+    "skipped": 0,
+    "duration_seconds": 164.51
+  },
+  "red": {
+    "r32-red-results": {
+      "passed": 1,
+      "failed": 8,
+      "tests": 9,
+      "files": 1,
+      "skipped": 0,
+      "duration_seconds": 0.46
+    },
+    "r32-red-clinical": {
+      "passed": 1,
+      "failed": 11,
+      "tests": 12,
+      "files": 1,
+      "skipped": 0,
+      "duration_seconds": 0.5
+    },
+    "r32-red-exam-routing": {
+      "passed": 12,
+      "failed": 4,
+      "tests": 16,
+      "files": 1,
+      "skipped": 0,
+      "duration_seconds": 0.32
+    },
+    "r32-red-rubrics": {
+      "passed": 1,
+      "failed": 4,
+      "tests": 5,
+      "files": 1,
+      "skipped": 0,
+      "duration_seconds": 7.82
+    }
+  },
+  "focused_green": {
+    "r32-clinical-green": {
+      "passed": 21,
+      "failed": 0,
+      "tests": 21,
+      "files": 2,
+      "skipped": 0,
+      "duration_seconds": 0.55
+    },
+    "r32-rubric-green": {
+      "passed": 8,
+      "failed": 0,
+      "tests": 8,
+      "files": 1,
+      "skipped": 0,
+      "duration_seconds": 10.83
+    },
+    "r32-rubric-focused": {
+      "passed": 47,
+      "failed": 0,
+      "tests": 47,
+      "files": 5,
+      "skipped": 0,
+      "duration_seconds": 32.63
+    }
+  },
+  "bank_provenance": {
+    "r32-bank-baseline": {
+      "passed": 25,
+      "failed": 47,
+      "tests": 72,
+      "files": 1,
+      "skipped": 0,
+      "duration_seconds": 4.89
+    },
+    "r32-historical-bank": {
+      "passed": 59,
+      "failed": 13,
+      "tests": 72,
+      "files": 1,
+      "skipped": 0,
+      "duration_seconds": 8.7
+    },
+    "r32-reconstructed-bank": {
+      "passed": 59,
+      "failed": 13,
+      "tests": 72,
+      "files": 1,
+      "skipped": 0,
+      "duration_seconds": 8.53
+    }
+  },
+  "build": "passed",
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "live_api": {
+    "checks": 25,
+    "resultsMatched": 102,
+    "evidence": [
+      {
+        "name": "first installation contains all ten ARAK source patients"
+      },
+      {
+        "name": "selected-university provisioning returns ten assigned cases"
+      },
+      {
+        "name": "teacher and student see all ten assigned cases"
+      },
+      {
+        "name": "student list excludes diagnostic field"
+      },
+      {
+        "name": "session opens for supplied case 1"
+      },
+      {
+        "name": "case 1 missing result is explicitly unavailable"
+      },
+      {
+        "name": "session opens for supplied case 2"
+      },
+      {
+        "name": "case 2 missing result is explicitly unavailable"
+      },
+      {
+        "name": "session opens for supplied case 3"
+      },
+      {
+        "name": "case 3 missing result is explicitly unavailable"
+      },
+      {
+        "name": "session opens for supplied case 4"
+      },
+      {
+        "name": "case 4 missing result is explicitly unavailable"
+      },
+      {
+        "name": "session opens for supplied case 5"
+      },
+      {
+        "name": "case 5 missing result is explicitly unavailable"
+      },
+      {
+        "name": "session opens for supplied case 6"
+      },
+      {
+        "name": "case 6 missing result is explicitly unavailable"
+      },
+      {
+        "name": "session opens for supplied case 7"
+      },
+      {
+        "name": "case 7 missing result is explicitly unavailable"
+      },
+      {
+        "name": "session opens for supplied case 8"
+      },
+      {
+        "name": "case 8 missing result is explicitly unavailable"
+      },
+      {
+        "name": "session opens for supplied case 9"
+      },
+      {
+        "name": "case 9 missing result is explicitly unavailable"
+      },
+      {
+        "name": "session opens for supplied case 10"
+      },
+      {
+        "name": "case 10 missing result is explicitly unavailable"
+      },
+      {
+        "name": "repeat provisioning keeps case IDs and original password"
+      }
+    ],
+    "caseIds": [
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33
+    ]
+  },
+  "browser": {
+    "visits": [
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "dashboard",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "reports",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "classes",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "vpConversations",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "classResults",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "drawingReviews",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "vpGrading",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "exams",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "results",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "researchAdmin",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "users",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "universities",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "cases",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "flashcards",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "catalogs",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "checklists",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "questionnairesAdmin",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 1440,
+        "lang": "en",
+        "tab": "aiConfig",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "dashboard",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "reports",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "classes",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "vpConversations",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "classResults",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "drawingReviews",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "vpGrading",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "exams",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "results",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "researchAdmin",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "users",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "universities",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "cases",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "flashcards",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "catalogs",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "checklists",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "questionnairesAdmin",
+        "loadError": false,
+        "overflow": false
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "tab": "aiConfig",
+        "loadError": false,
+        "overflow": false
+      }
+    ],
+    "checks": [
+      {
+        "width": 1440,
+        "lang": "en",
+        "check": "unsafe normal-result editor removed; chart-only policy visible"
+      },
+      {
+        "width": 390,
+        "lang": "fa",
+        "check": "unsafe normal-result editor removed; chart-only policy visible"
+      }
+    ],
+    "pageErrors": [],
+    "httpErrors": [],
+    "scope": "18 university tabs at desktop EN and mobile FA; rendering/nav/policy smoke, not every action or full accessibility certification"
+  },
+  "browser_workflow": {
+    "checks": [
+      "blank form produces a textual focused error and remains open",
+      "browser authoring saves a case; server confirms title and age zero",
+      "original ten emergency cases remain present after authoring",
+      "synthetic browser-created case archived after test"
+    ]
+  },
+  "upgrade": {
+    "checks": [
+      "all ten upgraded clinical charts exactly match R31, excluding documented future rubric ID",
+      "vp_sessions: all 0 pre-existing records preserved"
+    ]
+  },
+  "restart": {
+    "before": {
+      "users": {
+        "rows": 119,
+        "sha256": "9395766edc7db600518435fa78dda1682c19c927fe90eedf51bd1842b61ff7b1"
+      },
+      "cases": {
+        "rows": 34,
+        "sha256": "cad6ef212413b4ef3c6f501577bbbc9733b3067295a3d83102be613ac1437632"
+      },
+      "exam_assignments": {
+        "rows": 13,
+        "sha256": "1463cd24b67ff595ca1d3a1fc9a0e1eb7f06fcc0b215c9ca6f47bdb703b8b0ef"
+      },
+      "vp_sessions": {
+        "rows": 10,
+        "sha256": "b9d7bcf6efa667bb4b37183a2847bf1782b9b43f8f2756c72fa58c47b56d0d7e"
+      },
+      "flashcards": {
+        "rows": 11681,
+        "sha256": "5d8f0a88f8303f6c7ca03faf2b6af6e6bd03f69a408bbeb8609f50c806bedbd1"
+      },
+      "checklists": {
+        "rows": 5,
+        "sha256": "dab48744fbd298efe128678fe2efeb8c47de7cc145083d6d9d3916156a2687a9"
+      }
+    },
+    "after": {
+      "users": {
+        "rows": 119,
+        "sha256": "9395766edc7db600518435fa78dda1682c19c927fe90eedf51bd1842b61ff7b1"
+      },
+      "cases": {
+        "rows": 34,
+        "sha256": "cad6ef212413b4ef3c6f501577bbbc9733b3067295a3d83102be613ac1437632"
+      },
+      "exam_assignments": {
+        "rows": 13,
+        "sha256": "1463cd24b67ff595ca1d3a1fc9a0e1eb7f06fcc0b215c9ca6f47bdb703b8b0ef"
+      },
+      "vp_sessions": {
+        "rows": 10,
+        "sha256": "b9d7bcf6efa667bb4b37183a2847bf1782b9b43f8f2756c72fa58c47b56d0d7e"
+      },
+      "flashcards": {
+        "rows": 11681,
+        "sha256": "5d8f0a88f8303f6c7ca03faf2b6af6e6bd03f69a408bbeb8609f50c806bedbd1"
+      },
+      "checklists": {
+        "rows": 5,
+        "sha256": "dab48744fbd298efe128678fe2efeb8c47de7cc145083d6d9d3916156a2687a9"
+      }
+    },
+    "identical": true,
+    "provision": {
+      "inserted": 0,
+      "bound": 0,
+      "rubricsUpdated": 0,
+      "catalogAdded": 0
+    }
+  },
+  "package": {
+    "name": "MED-School-FINAL-2026-10-09-R32.zip",
+    "bytes": 50438530,
+    "entries": 1157,
+    "sha256": "4b09b130c8e144aac6ccec0037b51ff2112b521174a6f9e0ce3c914b8b1dc4fe"
+  },
+  "limitations": [
+    "47 existing bank failures unresolved; production bank unchanged",
+    "Historical bank reconstruction was diagnostic only, not a deployed repair",
+    "Ten-case scientific review is not comprehensive clinical certification",
+    "New HF/UGIB keyword rubrics are educational, not validated semantic grading",
+    "Reference approval requirements not bypassed",
+    "No external AI or paid tests",
+    "Browser smoke covers all 18 tabs at two viewport/language combinations, not every workflow or WCAG compliance",
+    "Initial server run preceded completed client build; rerun removed all 8 nonbank failures",
+    "Fresh installer copies bundled demo DB; pristine seed, edited-case upgrades, and nonempty historical snapshots covered separately in tests",
+    "Test browser networkidle timeout addressed by DOM readiness, not an application change"
+  ]
+}

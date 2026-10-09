@@ -125,7 +125,7 @@ export const EMERGENCY_TEN = [
   {
     // 3 - ADHF Warm & Wet
     difficulty: "medium",
-    checklist_id: 1,
+    checklist_id: 101,
     data: {
       track: "uni",
       title_fa: "تنگی نفس و ورم پا در مرد ۶۸ ساله — اورژانس (نارسایی حاد قلب)",
@@ -234,7 +234,7 @@ export const EMERGENCY_TEN = [
   {
     // 5 - UGIB
     difficulty: "hard",
-    checklist_id: 2,
+    checklist_id: 102,
     data: {
       track: "uni",
       title_fa: "استفراغ خونی و ملنا در مرد ۵۲ ساله — اورژانس (خونریزی گوارشی فوقانی)",
