@@ -135,6 +135,9 @@ async function main() {
     console.warn("Academic emergency patients NOT provisioned:", e.message);
   }
 
+  try {const {ensureAzarbarzTeacher}=await import('./lib/azarbarz-provision.js');console.log('Requested academic setup:',JSON.stringify(ensureAzarbarzTeacher()));}
+  catch(e){console.warn('Requested academic setup NOT applied:',e.message);}
+
   try { const { ensureDefaultEducationPosts } = await import("./lib/blog.js"); const n = ensureDefaultEducationPosts(); if (n) console.log(`📝 ensured ${n} default education blog post change(s)`); } catch (e) { console.warn("default blog posts skipped", e?.message || e); }
 
   // Load the past-exam question banks that ship with the release. This is

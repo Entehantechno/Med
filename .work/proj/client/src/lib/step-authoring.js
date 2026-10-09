@@ -28,12 +28,12 @@ export function normalizeStep(s){
  return result;
 }
 const gradingText=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
-export function validateSteps(steps,lang='fa'){
+export function validateSteps(steps,lang='fa',question=''){
  const fa=lang==='fa';
  if(!Array.isArray(steps)||!steps.length)return fa?'حداقل یک مرحله لازم است.':'At least one step is required.';
  for(let i=0;i<steps.length;i++){
   const s=normalizeStep(steps[i]),prefix=fa?`مرحله ${i+1}: `:`Step ${i+1}: `;
-  if(![s.prompt_fa,s.prompt_en].some(v=>String(v||'').trim()))return prefix+(fa?'صورت مرحله را وارد کنید.':'Enter a prompt.');
+  if(![question,s.prompt_fa,s.prompt_en].some(v=>String(v||'').trim()))return prefix+(fa?'صورت مرحله را وارد کنید.':'Enter a prompt.');
   if(s.answerType==='truefalse'&&stepBoolean(s)===undefined)return prefix+(fa?'درست یا غلط را تعیین کنید.':'Choose True or False.');
   if(s.answerType==='mcq'){
    const count=Math.max(s.options_fa.length,s.options_en.length);

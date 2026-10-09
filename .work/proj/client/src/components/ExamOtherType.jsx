@@ -1,3 +1,4 @@
+import {flashcardLanguageFallback} from '../../../server/src/lib/flashcard-language.js';
 import SearchAnswer from './SearchAnswer.jsx';
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useApp } from "../context.jsx";
@@ -25,6 +26,7 @@ function LocalHints({ hints, showHints, fa }) {
 }
 
 export default function ExamOtherType({ card, lang, done, showCorrect, showHints = true, hints = [], onGraded }) {
+  card=useMemo(()=>flashcardLanguageFallback(card),[card]);
   const { t } = useApp();
   const [sel, setSel] = useState(card.type === "match" ? { pairs: {}, activeLeft: null } : card.type === "order" ? [] : null);
   const [checked, setChecked] = useState(false);
@@ -101,7 +103,7 @@ export default function ExamOtherType({ card, lang, done, showCorrect, showHints
       )}
       {card.type === "fill" && (
         <div>
-          <input className="fill-input" value={sel || ""} disabled={checked} placeholder={fa ? "پاسخ را تایپ کنید…" : "Type your answer…"} onChange={(e) => setSel(e.target.value)} />
+          {card.answerMode==='search'&&card.options_fa?.length?<><SearchAnswer options={card.options_fa.map((fa,i)=>({fa,en:card.options_en?.[i]||fa}))} lang={lang} disabled={checked} onPick={i=>setSel((fa?card.options_fa:card.options_en)[i])}/>{sel&&<p role="status">{fa?'پاسخ انتخاب‌شده: ':'Selected answer: '}{sel}</p>}</>:<input className="fill-input" value={sel || ""} disabled={checked} placeholder={fa ? "پاسخ را تایپ کنید…" : "Type your answer…"} onChange={(e) => setSel(e.target.value)} />}
           {checked && !right && showCorrect && <div className="small mt8" style={{ color: "var(--danger)" }}>{fa ? "پاسخ درست" : "Answer"}: {fa ? (reveal?.fa || card.blank_fa) : (reveal?.en || card.blank_en)}</div>}
         </div>
       )}

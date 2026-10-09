@@ -1550,6 +1550,8 @@ export function initSchema() {
   const retirementCols=db.prepare('PRAGMA table_info(universities)').all().map(c=>c.name);
   if(!retirementCols.includes('retired_at'))db.exec('ALTER TABLE universities ADD COLUMN retired_at TEXT');
   db.exec("UPDATE universities SET retired_at=COALESCE(retired_at,datetime('now')) WHERE code='ARAK_HIST' OR (id=120 AND code='ARAK120')");
+  const catalogCols=db.prepare('PRAGMA table_info(catalogs)').all().map(c=>c.name);
+  if(!catalogCols.includes('shared_to_teachers'))db.exec('ALTER TABLE catalogs ADD COLUMN shared_to_teachers INTEGER NOT NULL DEFAULT 0');
   // Seed Harrison as canonical metadata-only reference (id=1 stable for tests/policies).
   try {
     db.exec("INSERT OR IGNORE INTO reference_catalog (id,code,title_en,short_title,publisher,edition,rights_status,active) VALUES (1,'harrison-22e','Harrison''s Principles of Internal Medicine','Harrison''s 22e','McGraw Hill','22e','metadata_only',1)");

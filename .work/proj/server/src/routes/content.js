@@ -1,3 +1,4 @@
+import {flashcardLanguageFallback} from '../lib/flashcard-language.js';
 import {sharedAcademic} from '../lib/academic-sharing.js';
 import { assignmentInput } from '../lib/assignment-input.js';
 import { validateCase, normalizeCaseAge } from "../lib/case-validation.js";
@@ -532,7 +533,7 @@ r.post("/flashcards/check", authRequired, (req, res) => {
     const allowLegacy = ["teacher", "admin", "content_manager", "support"].includes(req.user.role);
     if (req.user.role === "learner") {
       if (full.track !== "learn") return res.status(403).json({ error: "university_only", stage: "evaluate" });
-      return res.json(gradeFlashcard(full, req.body || {}, { allowLegacy }));
+      return res.json(flashcardLanguageFallback(gradeFlashcard(full, req.body || {}, { allowLegacy })));
     }
     if (req.user.role === "student") {
       const uni = currentUniversityId(req.user);
@@ -542,7 +543,7 @@ r.post("/flashcards/check", authRequired, (req, res) => {
     }
     if (req.user.role === "content_manager" || req.user.role === "support") {
       if (full.track !== "learn") return res.status(403).json({ error: "university_only", stage: "evaluate" });
-      return res.json(gradeFlashcard(full, req.body || {}, { allowLegacy }));
+      return res.json(flashcardLanguageFallback(gradeFlashcard(full, req.body || {}, { allowLegacy })));
     }
     if (req.user.role === "teacher") {
       if (full.track === "learn") return res.status(403).json({ error: "wrong_track", stage: "evaluate" });
@@ -552,7 +553,7 @@ r.post("/flashcards/check", authRequired, (req, res) => {
         return res.status(403).json({ error: "wrong_owner", stage: "evaluate" });
       }
     }
-    res.json(gradeFlashcard(full, req.body || {}, { allowLegacy }));
+    res.json(flashcardLanguageFallback(gradeFlashcard(full, req.body || {}, { allowLegacy })));
   } catch (e) {
     res.status(500).json({ error: "flashcard_check_failed", stage: "evaluate", message: String(e.message || e).slice(0, 200) });
   }
@@ -770,12 +771,18 @@ function canManageCatalog(user, row) {
 }
 r.get("/catalogs", authRequired, requireRole("teacher", "admin"), (req, res) => {
   let rows = db.prepare("SELECT * FROM catalogs ORDER BY id DESC").all();
-  if (req.user.role === "teacher") rows = rows.filter((c) => c.owner_id === req.user.id);
+  if (req.user.role === "teacher") rows = rows.filter((c) => c.owner_id === req.user.id || c.shared_to_teachers === 1);
   res.json(rows.map((c) => {
     let items = [];
     try { items = JSON.parse(c.items_json || "[]"); } catch { items = []; }
-    return { id: c.id, name_fa: c.name_fa, name_en: c.name_en, items, owner_id: c.owner_id || null };
+    return { id: c.id, name_fa: c.name_fa, name_en: c.name_en, items, owner_id: c.owner_id || null, shared_to_teachers:c.shared_to_teachers===1,can_manage:canManageCatalog(req.user,c) };
   }));
+});
+r.put('/catalogs/:id/sharing',authRequired,requireRole('admin'),(req,res)=>{
+ if(typeof req.body?.enabled!=='boolean')return res.status(422).json({error:'boolean_required'});
+ if(!catalogRow(req.params.id))return res.status(404).json({error:'not_found'});
+ durableTransaction(()=>db.prepare('UPDATE catalogs SET shared_to_teachers=? WHERE id=?').run(req.body.enabled?1:0,req.params.id));
+ res.json({ok:true});
 });
 r.post("/catalogs", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const { name_fa, name_en, items = [] } = req.body || {};

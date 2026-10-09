@@ -1436,7 +1436,7 @@ function Flashcards() {
           { key: "public_code", label: lang === 'fa' ? 'کد ثابت' : 'Permanent code', render: c => <ContentCode code={c.public_code} /> },
           { key: "university_id", label: lang === 'fa' ? 'شناسه دانشگاه' : 'University ID' },
           { key: "updated_at", label: lang === 'fa' ? 'آخرین ویرایش' : 'Last updated', render: c => c.updated_at || '—' },
-          { key: "type", label: lang === "fa" ? "نوع" : "Type", sortValue: (c) => flashTypeLabel(c.type, lang), render: (c) => <span className="tag">{flashTypeLabel(c.type, lang)}</span> },
+          { key: "type", label: lang === "fa" ? "نوع" : "Type", sortValue: (c) => flashTypeLabel(c.type, lang), render: (c) => <span className="tag">{c.type==='fill'&&c.answerMode==='search'?(lang==='fa'?'اتوکامپلیت':'Autocomplete'):flashTypeLabel(c.type, lang)}</span> },
           { key: "options", label: t("options"), sortValue: (c) => (c.options || []).length, render: (c) => (c.options || []).length },
           { key: "hints", label: t("hints"), sortValue: (c) => ((lang === "fa" ? c.hints_fa : c.hints_en) || []).length, render: (c) => ((lang === "fa" ? c.hints_fa : c.hints_en) || []).length },
           { key: "sharing", label: lang === "fa" ? "اشتراک و مشاهده" : "Sharing & preview", sortable:false, render:c=><ContentSharing kind="flashcards" row={c} onChanged={load}/> },
@@ -1808,10 +1808,10 @@ export function CardModal({ card, onClose, onSave }) {
       {f.type === "drawing" && (
         <div className="micro-box mb16" style={{ padding: 12 }}>
           <div className="small muted mb8">{lang === "fa" ? "بوم حرفه‌ای بافت‌شناسی/آناتومی: دانشجو روی تصویر مرجع ردیابی می‌کند، ابزار خط/برچسب دارد، و نمره تا تأیید استاد صفر می‌ماند." : "Pro histology/anatomy canvas: the learner traces on the reference, uses line/label tools, and the score stays 0 until you approve."}</div>
-          <div className="grid grid-2">
-            <div data-content-language="fa" className="field"><label>{lang === "fa" ? "دستور نقاشی (FA)" : "Drawing prompt FA"}</label><textarea aria-label={[lang === "fa" ? "دستور نقاشی (FA)" : "Drawing prompt FA","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.drawing?.prompt_fa || ""} onChange={(e)=>setDrawing("prompt_fa", e.target.value)} placeholder={lang === "fa" ? "مثلاً بافت پوششی سنگفرشی مطبق را بکشید و لایه‌ها را برچسب بزنید" : "Draw stratified squamous epithelium and label the layers"}/></div>
-            <div data-content-language="en" className="field"><label>{lang === "fa" ? "Drawing prompt (EN)" : "Drawing prompt EN"}</label><textarea aria-label={[lang === "fa" ? "Drawing prompt (EN)" : "Drawing prompt EN","(EN)"].join(' ')} dir="ltr" lang="en" value={f.drawing?.prompt_en || ""} onChange={(e)=>setDrawing("prompt_en", e.target.value)}/></div>
-          </div>
+          <details><summary>{lang==='fa'?'دستور تکمیلی رسم (اختیاری)':'Optional drawing instruction'}</summary><div className="grid grid-2">
+            <div data-content-language="fa" className="field"><label>{lang === "fa" ? "دستور نقاشی (FA)" : "Drawing instruction FA"}</label><textarea aria-label={[lang === "fa" ? "دستور نقاشی (FA)" : "Drawing instruction FA","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.drawing?.prompt_fa || ""} onChange={(e)=>setDrawing("prompt_fa", e.target.value)} placeholder={lang === "fa" ? "مثلاً بافت پوششی سنگفرشی مطبق را بکشید و لایه‌ها را برچسب بزنید" : "Draw stratified squamous epithelium and label the layers"}/></div>
+            <div data-content-language="en" className="field"><label>{lang === "fa" ? "Drawing instruction (EN)" : "Drawing instruction EN"}</label><textarea aria-label={[lang === "fa" ? "Drawing instruction (EN)" : "Drawing instruction EN","(EN)"].join(' ')} dir="ltr" lang="en" value={f.drawing?.prompt_en || ""} onChange={(e)=>setDrawing("prompt_en", e.target.value)}/></div>
+          </div></details>
           <ImageUpload value={f.drawing?.referenceImageUrl || ""} onChange={(v)=>setDrawing("referenceImageUrl", v)} label={lang === "fa" ? "تصویر مرجع / اسلاید (ردیابی روی آن)" : "Reference / slide (traced on the canvas)"} />
           <div className="grid grid-2 mt8">
             <div className="field"><label>{lang === "fa" ? "نسبت بوم" : "Canvas ratio"}</label>
@@ -1927,13 +1927,15 @@ export function CardModal({ card, onClose, onSave }) {
         </div>
       )}
 
-      {f.type === "mcq" && (
+      {["mcq","fill"].includes(f.type) && (
         <div className="field"><label>{t("answerMode")}</label>
           <select aria-label={[t("answerMode")].join(' ')} value={f.answerMode} onChange={(e) => set("answerMode", e.target.value)}>
             <option value="choice">{t("modeChoice")}</option>
             <option value="search">{t("modeSearch")}</option>
           </select></div>
       )}
+
+      {f.type==='fill'&&f.answerMode==='search'&&<div className="grid grid-2">{['fa','en'].map(l=><label className="field" data-content-language={l} key={l}>{lang==='fa'?'پیشنهادهای اتوکامپلیت؛ هر خط یک مورد':'Autocomplete suggestions; one per line'} ({l.toUpperCase()})<textarea aria-label={`Autocomplete suggestions ${l.toUpperCase()}`} value={(f['options_'+l]||[]).join('\n')} onChange={e=>set('options_'+l,e.target.value.split('\n'))}/></label>)}</div>}
 
       {/* Image is optional and independent — a teacher can add it to ANY card. Hotspot has its own image field above. */}
       {f.type !== "hotspot" && <ImageUpload value={f.imageUrl} onChange={(v) => set("imageUrl", v)} label={`${t("imageUrl")} (${t("optional")})`} />}
@@ -4686,7 +4688,7 @@ function StudentReportCard({ userId, onClose }) {
 
 /* ================= CUSTOM CATALOGS (teacher/admin) ================= */
 function Catalogs() {
-  const { t, lang } = useApp();
+  const { t, lang, user } = useApp();
   const [list, setList] = useState(null);
   const [editing, setEditing] = useState(null);
   const toast = useToast();
@@ -4714,11 +4716,12 @@ function Catalogs() {
           <thead><tr><th>{t("name")}</th><th>{t("catalogCount")}</th><th></th></tr></thead>
           <tbody>{list.map((c) => (
             <tr key={c.id}>
-              <td>{lang === "fa" ? c.name_fa : c.name_en}</td>
+              <td>{biField(c,"name",lang)}</td>
               <td>{c.items.length}</td>
               <td style={{ textAlign: "end" }}>
-                <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}>{t("edit")}</button>
-                <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button>
+                {user.role==='admin'&&<button type="button" className="btn btn-sm" role="switch" aria-checked={!!c.shared_to_teachers} onClick={async()=>{try{await api.put(`/catalogs/${c.id}/sharing`,{enabled:!c.shared_to_teachers});load()}catch(e){toast(e.message)}}}>{lang==='fa'?(c.shared_to_teachers?'فعال برای اساتید':'فعال‌سازی برای اساتید'):(c.shared_to_teachers?'Enabled for teachers':'Enable for teachers')}</button>}
+                {c.can_manage!==false&&<><button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}>{t("edit")}</button>
+                <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button></>}
               </td>
             </tr>
           ))}</tbody></table></div>

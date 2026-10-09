@@ -1,3 +1,4 @@
+import {flashcardLanguageFallback} from './flashcard-language.js';
 import crypto from "crypto";
 import { pointHitsHotspot } from "./hotspot.js";
 
@@ -76,6 +77,7 @@ function resolveType(full) {
 
 export function studentSafeFlashcard(full) {
   if (!full || typeof full !== "object") return full;
+  full=flashcardLanguageFallback(full);
   const out = { ...full };
   if (Array.isArray(out.options)) {
     out.options = out.options.map(({ correct, why_fa, why_en, why, ...rest }) => rest);
@@ -112,7 +114,7 @@ export function studentSafeFlashcard(full) {
   }
   if (Array.isArray(out.steps)) {
     out.steps = out.steps.map((s) => {
-      const { answer_fa, answer_en, accept_fa, accept_en, explanation_fa, explanation_en, ...rest } = s || {};
+      const { answer, correct_index, correct, answer_fa, answer_en, accept_fa, accept_en, explanation_fa, explanation_en, ...rest } = s || {};
       return rest;
     });
   }
@@ -212,7 +214,7 @@ export function gradeFlashcard(full, body = {}, opts = {}) {
     return { ok, pointsFrac: ok ? 1 : 0 };
   }
   if (type === "order") {
-    const items = lang === "en" ? (full.items_en || full.items_fa || []) : (full.items_fa || full.items_en || []);
+    const items = Array.from({length:Math.max(full.items_en?.length||0,full.items_fa?.length||0)});
     const ids = Array.isArray(body.order) ? body.order : [];
     const allNumeric = ids.length > 0 && ids.every((id) => /^\d+$/.test(String(id)));
     let ok = false;
