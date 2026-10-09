@@ -1388,43 +1388,54 @@ r.get("/prompts", authRequired, requireRole("admin"), (req, res) => {
     res.status(500).json({ error: "prompts_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
 });
-r.put("/prompts", authRequired, requireRole("admin"), (req, res) => {
+r.put("/prompts", authRequired, requireRole("admin"), (req, res, next) => {
   try {
   const body = req.body || {};
   const keys = Object.keys(body).filter((k) => k !== "__err");
   if (!keys.length) return res.status(400).json({ error: "prompts_required", stage: "boot" });
   const up = db.prepare("INSERT INTO prompts (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value");
-  for (const k of keys) up.run(k, String(body[k] ?? ""));
-  persistNow();
+  durableTransaction(() => {
+    for (const k of keys) up.run(k, String(body[k] ?? ""));
+  });
   res.json({ ok: true });
   } catch (e) {
+    if (isPersistenceError(e)) return next(e);
     res.status(500).json({ error: "prompts_save_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
 });
 
 /* ---------------- SETTINGS ---------------- */
+// The database is authoritative: other authorized routes and restore/reload
+// operations can change rows without passing through this module.
 const settingMemo = new Map();
-const SETTING_MISS = Symbol("miss");
 export function getSetting(key, fallback) {
-  if (settingMemo.has(key)) {
-    const v = settingMemo.get(key);
-    return v === SETTING_MISS ? fallback : v;
-  }
   const row = db.prepare("SELECT value FROM settings WHERE key=?").get(key);
-  if (!row) { settingMemo.set(key, SETTING_MISS); return fallback; }
+  if (!row) { settingMemo.delete(key); return fallback; }
+  const cached = settingMemo.get(key);
+  if (cached && cached.raw === row.value) return cached.value;
   try {
     const parsed = JSON.parse(row.value);
-    settingMemo.set(key, parsed);
+    settingMemo.set(key, { raw: row.value, value: parsed });
     return parsed;
-  } catch { settingMemo.set(key, SETTING_MISS); return fallback; }
+  } catch { settingMemo.delete(key); return fallback; }
 }
 export function setSetting(key, obj) {
   db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
     .run(key, JSON.stringify(obj));
-  settingMemo.set(key, obj);
   persistNow();
   return obj;
 }
+function saveSettings(entries) {
+  durableTransaction(() => {
+    const up = db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value");
+    for (const [key, value] of entries) up.run(key, JSON.stringify(value));
+  });
+}
+function isPersistenceError(error) {
+  return ["database_persistence_failed", "database_recovery_failed"].includes(error?.message);
+}
+// Keep existing academic controls; unknown/platform keys deny by default.
+const TEACHER_WRITABLE_SETTINGS = new Set(["exam", "vp_grading"]);
 // keys that hold provider/API-key config → admin-only (never leak the key)
 const ADMIN_ONLY_SETTINGS = new Set(["ai", "blog_image_ai"]);
 function canReadSetting(role, key) {
@@ -1454,15 +1465,11 @@ r.get("/settings/:key", authRequired, (req, res) => {
     res.status(500).json({ error: "settings_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
 });
-r.put("/settings/:key", authRequired, (req, res) => {
+r.put("/settings/:key", authRequired, (req, res, next) => {
   try {
   const key = req.params.key;
-  if (ADMIN_ONLY_SETTINGS.has(key)) {
-    // AI / image-provider configuration: admin only
-    if (req.user.role !== "admin") return res.status(403).json({ error: "admin only" });
-  } else {
-    // other settings (exam, etc.): teacher or admin
-    if (!["teacher", "admin"].includes(req.user.role)) return res.status(403).json({ error: "forbidden" });
+  if (req.user.role !== "admin" && !(req.user.role === "teacher" && TEACHER_WRITABLE_SETTINGS.has(key))) {
+    return res.status(403).json({ error: ADMIN_ONLY_SETTINGS.has(key) ? "admin only" : "forbidden" });
   }
   let body = key === "vp_grading" ? normalizeRubric(req.body || {}) : (req.body || {});
   if (key === "ai") {
@@ -1478,12 +1485,10 @@ r.put("/settings/:key", authRequired, (req, res) => {
       connected: false, // A saved edit is not a successful connection test.
     };
   }
-  db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
-    .run(key, JSON.stringify(body));
-  settingMemo.set(key, body);
-  persistNow();
+  saveSettings([[key, body]]);
   res.json({ ok: true, ...(key === "vp_grading" ? body : {}) });
   } catch (e) {
+    if (isPersistenceError(e)) return next(e);
     res.status(String(e.message).startsWith("AI routing:") ? 400 : 500).json({ error: "settings_save_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
 });
@@ -1506,18 +1511,17 @@ r.get("/order-catalog", authRequired, (req, res) => {
   res.json(readOrderCatalog());
   } catch (e) { res.status(500).json({ error: "order_catalog_failed", stage: "boot", message: String(e.message || e).slice(0, 200) }); }
 });
-r.put("/order-catalog", authRequired, requireRole("teacher", "admin"), (req, res) => {
+r.put("/order-catalog", authRequired, requireRole("teacher", "admin"), (req, res, next) => {
   try {
   const labs = cleanOrderList(req.body?.labs, []);
   const imaging = cleanOrderList(req.body?.imaging, []);
   if (!labs.length) return res.status(400).json({ error: "labs_required" });
   if (!imaging.length) return res.status(400).json({ error: "imaging_required" });
   const paraclinic = cleanOrderList(req.body?.paraclinic, DEFAULT_PARACLINIC);
-  setSetting("order_catalog_lab", labs);
-  setSetting("order_catalog_imaging", imaging);
-  setSetting("order_catalog_paraclinic", paraclinic);
+  saveSettings([["order_catalog_lab", labs], ["order_catalog_imaging", imaging], ["order_catalog_paraclinic", paraclinic]]);
   res.json({ ok: true, labs, imaging, paraclinic });
   } catch (e) {
+    if (isPersistenceError(e)) return next(e);
     res.status(500).json({ error: "order_catalog_save_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
 });

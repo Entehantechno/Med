@@ -1,0 +1,433 @@
+{
+  "date": "2026-10-09",
+  "baseline_commit": "0a2f2e2",
+  "user_bank_decision": "preserve_bank",
+  "server": {
+    "passed": 1883,
+    "failed": 47,
+    "tests": 1930,
+    "files": 77,
+    "skipped": 0,
+    "duration_seconds": 746.35
+  },
+  "client": {
+    "passed": 131,
+    "failed": 0,
+    "tests": 131,
+    "files": 24,
+    "skipped": 0,
+    "duration_seconds": 34.08
+  },
+  "focused": {
+    "passed": 57,
+    "failed": 0,
+    "tests": 57,
+    "files": 3,
+    "skipped": 0,
+    "duration_seconds": 31.4
+  },
+  "extracted_package": {
+    "passed": 78,
+    "failed": 0,
+    "tests": 78,
+    "files": 5,
+    "skipped": 0,
+    "duration_seconds": 55.73
+  },
+  "new_tests": 21,
+  "build": "passed",
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "red": {
+    "summary": {
+      "passed": 0,
+      "failed": 13,
+      "tests": 13,
+      "files": 1,
+      "skipped": 0,
+      "duration_seconds": 10.66
+    },
+    "assertions": [
+      {
+        "file": "test/university-settings-r27.test.js",
+        "test": "teacher cannot overwrite platform setting maintenance",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+      },
+      {
+        "file": "test/university-settings-r27.test.js",
+        "test": "teacher cannot overwrite platform setting plan_prices",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+      },
+      {
+        "file": "test/university-settings-r27.test.js",
+        "test": "teacher cannot overwrite platform setting security",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+      },
+      {
+        "file": "test/university-settings-r27.test.js",
+        "test": "teacher cannot overwrite platform setting flags",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+      },
+      {
+        "file": "test/university-settings-r27.test.js",
+        "test": "teacher cannot overwrite platform setting ai_vpatient",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+      },
+      {
+        "file": "test/university-settings-r27.test.js",
+        "test": "teacher cannot overwrite platform setting r27-unknown",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+      },
+      {
+        "file": "test/university-settings-r27.test.js",
+        "test": "prompts: failed publication rolls back every key and retry survives reload",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 503 // Object.is equality"
+      },
+      {
+        "file": "test/university-settings-r27.test.js",
+        "test": "settings: failed publication rolls back every key and retry survives reload",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 503 // Object.is equality"
+      },
+      {
+        "file": "test/university-settings-r27.test.js",
+        "test": "order catalog: failed publication rolls back every key and retry survives reload",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 503 // Object.is equality"
+      },
+      {
+        "file": "test/university-settings-r27.test.js",
+        "test": "warmed settings observe writes through the separately authorized admin endpoint",
+        "status": "failed",
+        "first_error": "AssertionError: expected { revision: 1 } to deeply equal { revision: 2 }"
+      },
+      {
+        "file": "test/university-settings-r27.test.js",
+        "test": "cached missing key observes a later database insert",
+        "status": "failed",
+        "first_error": "AssertionError: expected null to deeply equal { revision: 1 }"
+      },
+      {
+        "file": "test/university-settings-r27.test.js",
+        "test": "cache cannot resurrect deleted settings",
+        "status": "failed",
+        "first_error": "AssertionError: expected { revision: 1 } to be 'fallback' // Object.is equality"
+      },
+      {
+        "file": "test/university-settings-r27.test.js",
+        "test": "reload replaces a warmed but unpersisted configuration",
+        "status": "failed",
+        "first_error": "AssertionError: expected { revision: 2 } to deeply equal { revision: 1 }"
+      }
+    ]
+  },
+  "new_final_assertions": [
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "teacher cannot overwrite platform setting maintenance",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "teacher cannot overwrite platform setting plan_prices",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "teacher cannot overwrite platform setting security",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "teacher cannot overwrite platform setting flags",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "teacher cannot overwrite platform setting ai_vpatient",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "teacher cannot overwrite platform setting r27-unknown",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "prompts: failed publication rolls back every key and retry survives reload",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "settings: failed publication rolls back every key and retry survives reload",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "order catalog: failed publication rolls back every key and retry survives reload",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "warmed settings observe writes through the separately authorized admin endpoint",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "cached missing key observes a later database insert",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "cache cannot resurrect deleted settings",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "reload replaces a warmed but unpersisted configuration",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "teacher retains the existing exam control",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "teacher retains the existing vp_grading control",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "student cannot write /settings/exam",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "student cannot write /prompts",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "student cannot write /order-catalog",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "admin retains custom settings and JSON null is not a cache miss",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "malformed stored JSON returns the caller fallback rather than a warmed value",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-settings-r27.test.js",
+      "test": "invalid order catalog leaves all three stored lists untouched",
+      "status": "passed",
+      "first_error": ""
+    }
+  ],
+  "browser": {
+    "tabs": [
+      "داشبورد",
+      "گزارش‌ها و پژوهش",
+      "کلاس‌های درسی",
+      "گفتگوهای ذخیره‌شده",
+      "نتایج و کارنامه",
+      "بررسی نقاشی‌ها",
+      "نمره‌دهی بیمار مجازی",
+      "آزمون‌ها",
+      "نتایج آزمون‌ها",
+      "پژوهش آموزشی",
+      "کاربران",
+      "دانشگاه‌ها",
+      "بانک بیماران",
+      "فلش‌کارت‌ها",
+      "کاتالوگ‌های Auto complete",
+      "چک‌لیست‌ها",
+      "پرسشنامه‌ها",
+      "تنظیمات هوش مصنوعی"
+    ],
+    "uiSaves": [
+      "vp_grading",
+      "order-catalog"
+    ],
+    "checks": [
+      {
+        "name": "admin login",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "teacher login",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "teacher denied maintenance",
+        "actual": 403,
+        "expected": 403
+      },
+      {
+        "name": "teacher denied plan_prices",
+        "actual": 403,
+        "expected": 403
+      },
+      {
+        "name": "teacher denied security",
+        "actual": 403,
+        "expected": 403
+      },
+      {
+        "name": "teacher denied flags",
+        "actual": 403,
+        "expected": 403
+      },
+      {
+        "name": "teacher denied ai_vpatient",
+        "actual": 403,
+        "expected": 403
+      },
+      {
+        "name": "teacher denied r27-unknown",
+        "actual": 403,
+        "expected": 403
+      },
+      {
+        "name": "teacher exam save",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "teacher exam read",
+        "actual": "browser",
+        "expected": "browser"
+      },
+      {
+        "name": "catalog UI save visible",
+        "actual": "R27 browser CBC",
+        "expected": "R27 browser CBC"
+      },
+      {
+        "name": "prompt pair save",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "prompt pair read",
+        "actual": "local prompt B",
+        "expected": "local prompt B"
+      },
+      {
+        "name": "custom config create",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "warm custom config",
+        "actual": 1,
+        "expected": 1
+      },
+      {
+        "name": "alternate admin write",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "warmed config refreshed",
+        "actual": 2,
+        "expected": 2
+      }
+    ],
+    "pageErrors": [],
+    "webSecurityDisabled": false
+  },
+  "restart": {
+    "checks": [
+      {
+        "name": "admin login",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "teacher login",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "catalog persisted",
+        "actual": "R27 browser CBC",
+        "expected": "R27 browser CBC"
+      },
+      {
+        "name": "exam settings persisted",
+        "actual": "browser",
+        "expected": "browser"
+      },
+      {
+        "name": "alternate admin setting persisted",
+        "actual": 2,
+        "expected": 2
+      },
+      {
+        "name": "prompt A persisted",
+        "actual": "local prompt A",
+        "expected": "local prompt A"
+      },
+      {
+        "name": "prompt B persisted",
+        "actual": "local prompt B",
+        "expected": "local prompt B"
+      },
+      {
+        "name": "platform write remains denied",
+        "actual": 403,
+        "expected": 403
+      }
+    ]
+  },
+  "fixture_notes": [
+    "Before product edits, order-catalog fixture was corrected from strings to objects with en labels and the raw admin-settings fixture from object value to JSON string. Corrected suite rerun on R26: all 13 red. These setup corrections are not counted as product fixes."
+  ],
+  "limitations": [
+    "Inventory and tab render smoke are not exhaustive form/endpoint coverage.",
+    "The existing shared exam/rubric/order-catalog model is preserved, not redesigned per university.",
+    "Durable boundaries added for three specified endpoints, not all settings writers. Exported setSetting helper persistence contract otherwise unchanged.",
+    "Injected rename failures/reload/restart are not power-loss, fsync or multiwriter certification.",
+    "Cache reads now SELECT current raw data each time; no production-load benchmark.",
+    "R26 legacy unreferenced public-file limitation remains.",
+    "No external AI connectivity, paid model testing or clinical-bank corrections."
+  ],
+  "archive_sha256": "f41294d9f2b37d7a15ff3461c9394ec66393a613a926c66f6ba7e083a3b48e6a"
+}

@@ -1,1 +1,1 @@
-2026.10.08-r26-university-media-membership
+2026.10.09-r27-university-settings-integrity
