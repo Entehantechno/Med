@@ -1,0 +1,14 @@
+{
+  "release_commit": "26b2c461bdf4350342fdffe5b258347578d7e212",
+  "branch": "arena/57508e9a-med",
+  "pr": 3,
+  "base": "main",
+  "download_method": "GitHub contents API, raw media, pinned release commit",
+  "package": "MED-School-FINAL-2026-10-10-R37.zip",
+  "sha256": "c6064d09a8fd31aef75cf44ab51d0b48498399526176b64c586e961f92ae9fc8",
+  "bytes": 44263494,
+  "crc": "PASS",
+  "version": "2026.10.10-r37-academic-authoring",
+  "predecessor_present_at_verification": true,
+  "retirement": "Separate subsequent commit, only after successful pinned remote download verification"
+}
