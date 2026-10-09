@@ -4,7 +4,7 @@
    grade (replacing the traditional logbook).
    ================================================================ */
 import { Router } from "express";
-import { safeFilename } from "../lib/csv.js";
+import { safeFilename, spreadsheetCell } from "../lib/csv.js";
 import crypto from "crypto";
 import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
@@ -1158,9 +1158,9 @@ r.get("/:id/conversation-log.csv", authRequired, requireRole("teacher", "admin")
   ).get(cl.id);
   if (!cl.log_transcript && !hasLogged) return res.status(409).json({ error: "logging_disabled" });
 
-  const esc = (v) => { const x = v == null ? "" : String(v); return /[,\n\r"]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x; };
+  const esc = spreadsheetCell;
   const header = ["session_id","user_id","student_no","case_id","attempt_id","seq","at_ms","kind","text","detail","started_at"];
-  const lines = [header.join(",")];
+  const lines = [header.map(esc).join(",")];
 
   const sessions = db.prepare(
     `SELECT s.*, u.student_no FROM vp_sessions s LEFT JOIN users u ON u.id=s.user_id
@@ -1174,9 +1174,9 @@ r.get("/:id/conversation-log.csv", authRequired, requireRole("teacher", "admin")
       lines.push([
         s.id, s.user_id, s.student_no || "", s.case_id, s.attempt_id || "",
         e.seq, e.at_ms, e.kind,
-        esc(text ?? ""), esc(JSON.stringify({ ...(query ? { query } : {}), ...(tab ? { tab } : {}), ...(note ? { note } : {}), ...(source ? { source } : {}), ...(found != null ? { found } : {}), ...rest })),
-        esc(s.started_at),
-      ].join(","));
+        (text ?? ""), JSON.stringify({ ...(query ? { query } : {}), ...(tab ? { tab } : {}), ...(note ? { note } : {}), ...(source ? { source } : {}), ...(found != null ? { found } : {}), ...rest }),
+        s.started_at,
+      ].map(esc).join(","));
     }
   }
   audit(req, "class.conversation_export", "class", { id: cl.id, sessions: sessions.length });
@@ -1203,7 +1203,7 @@ r.get("/:id/gradebook.csv", authRequired, requireRole("teacher", "admin"), (req,
       WHERE m.class_id=? ORDER BY u.id`
   ).all(cl.id);
 
-  const esc = (v) => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const esc = spreadsheetCell;
   /* The EXTERN column uses the scoped extern score (history + physical exam +
      problem list + differential diagnosis) when present, falling back to the
      legacy history-only score for older attempts. The "final score" column is

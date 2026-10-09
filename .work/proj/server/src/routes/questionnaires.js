@@ -1,5 +1,5 @@
 import express from "express";
-import { safeFilename } from "../lib/csv.js";
+import { safeFilename, spreadsheetCell } from "../lib/csv.js";
 import { scoreOsceChecklist, scoreLikert, aggregateNps, RESEARCH_INSTRUMENTS } from "../data/research-instruments.js";
 import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
@@ -347,17 +347,17 @@ r.get("/admin/forms/:id/responses.csv", ...admin, (req, res) => {
   const rows = db.prepare(`${RESP_JOIN} WHERE qr.form_id=? ORDER BY qr.id`).all(id);
   const anonymize = req.query.anonymize === "1" || !!form.anonymous;
 
-  const esc = (v) => { const x = v == null ? "" : String(v); return /[,\n\r"]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x; };
+  const esc = spreadsheetCell;
   const header = ["response_id", ...(anonymize ? ["pseudonym"] : ["pseudonym", "student_no", "participant"]),
                   ...items.map((it) => it.id), "submitted_at"];
-  const lines = [header.join(",")];
+  const lines = [header.map(esc).join(",")];
   for (const r of rows) {
     const a = parse(r.answers_json, {});
     lines.push([
       r.id, r.pseudonym || "",
       ...(anonymize ? [] : [r.student_no || "", r.user_name || ""]),
       ...items.map((it) => { const v = a[it.id]; return v === true ? 1 : (v === false ? 0 : (v ?? "")); }),
-      esc(r.updated_at || r.created_at || ""),
+      r.updated_at || r.created_at || "",
     ].map(esc).join(","));
   }
   audit(req, "questionnaire.export", "form", { id, rows: rows.length, anonymized: anonymize });

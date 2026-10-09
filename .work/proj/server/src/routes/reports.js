@@ -137,7 +137,7 @@ r.get("/export.csv", authRequired, requireRole("teacher", "admin"), (req, res) =
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
   const suffix = safeFilename(req.query.examId && req.query.examId !== "all" ? `exam_${req.query.examId}` : (req.query.type || "all"), "all");
   res.setHeader("Content-Disposition", `attachment; filename="results_${suffix}.csv"`);
-  res.send(toCSV(flat, cols));
+  res.send(toCSV(flat, cols, { spreadsheetSafe: true }));
   } catch (e) {
     res.status(500).json({ error: "export_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }

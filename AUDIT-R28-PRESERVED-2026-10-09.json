@@ -1,0 +1,22 @@
+{
+  "baseline": "R27",
+  "user_decision": "preserve_bank",
+  "changed_existing_entries": [
+    "VERSION.txt",
+    "client/dist/sw.js",
+    "client/dist/sw.js.br",
+    "client/dist/sw.js.gz",
+    "server/src/lib/csv.js",
+    "server/src/lib/itemanalysis.js",
+    "server/src/routes/classes.js",
+    "server/src/routes/questionnaires.js",
+    "server/src/routes/reports.js"
+  ],
+  "added_entries": [
+    "server/test/university-exports-r28.test.js"
+  ],
+  "identical_previous_entries": 1135,
+  "bank_and_bank_tests_identical": true,
+  "demo_database_identical": true,
+  "schema_and_seed_unchanged": true
+}
