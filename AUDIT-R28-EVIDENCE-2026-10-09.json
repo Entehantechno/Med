@@ -1,0 +1,547 @@
+{
+  "date": "2026-10-09",
+  "baseline_commit": "fde1762",
+  "user_bank_decision": "preserve_bank",
+  "server": {
+    "passed": 1913,
+    "failed": 47,
+    "tests": 1960,
+    "files": 78,
+    "skipped": 0,
+    "duration_seconds": 741.05
+  },
+  "client": {
+    "passed": 131,
+    "failed": 0,
+    "tests": 131,
+    "files": 24,
+    "skipped": 0,
+    "duration_seconds": 31.14
+  },
+  "focused": {
+    "passed": 96,
+    "failed": 0,
+    "tests": 96,
+    "files": 3,
+    "skipped": 0,
+    "duration_seconds": 33.0
+  },
+  "extracted_package": {
+    "passed": 111,
+    "failed": 0,
+    "tests": 111,
+    "files": 4,
+    "skipped": 0,
+    "duration_seconds": 50.37
+  },
+  "new_tests": 30,
+  "build": "passed",
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "red": {
+    "summary": {
+      "passed": 0,
+      "failed": 23,
+      "tests": 23,
+      "files": 1,
+      "skipped": 0,
+      "duration_seconds": 11.62
+    },
+    "assertions": [
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "questionnaire text is neutralized only on export: \"=1+1\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected '=1+1' to be '\\'=1+1' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "questionnaire text is neutralized only on export: \"+1+1\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected '+1+1' to be '\\'+1+1' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "questionnaire text is neutralized only on export: \"-1+1\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected '-1+1' to be '\\'-1+1' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "questionnaire text is neutralized only on export: \"@SUM(1,2)\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected '@SUM(1,2)' to be '\\'@SUM(1,2)' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "questionnaire text is neutralized only on export: \"\\t=1+1\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected '=1+1' to be '\\'\\t=1+1' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "questionnaire text is neutralized only on export: \"\\r=1+1\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected '=1+1' to be '\\'\\r=1+1' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "questionnaire text is neutralized only on export: \"\\n=1+1\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected '=1+1' to be '\\'\\n=1+1' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "questionnaire text is neutralized only on export: \"＝1+1\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected '＝1+1' to be '\\'＝1+1' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "questionnaire text is neutralized only on export: \"＋1+1\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected '＋1+1' to be '\\'＋1+1' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "questionnaire text is neutralized only on export: \"－1+1\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected '－1+1' to be '\\'－1+1' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "questionnaire text is neutralized only on export: \"＠SUM(1,2)\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected '＠SUM(1,2)' to be '\\'＠SUM(1,2)' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "questionnaire text is neutralized only on export: \"  =1+1\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected '=1+1' to be '\\'  =1+1' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "questionnaire dynamic header is one safe field: \"item,one\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected undefined to be 'preserved' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "questionnaire dynamic header is one safe field: \"item\\\"one\"",
+        "status": "failed",
+        "first_error": "TypeError: Cannot read properties of undefined (reading 'item\"one')"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "questionnaire dynamic header is one safe field: \"item\\r\\none\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected undefined to be 'preserved' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "questionnaire dynamic header is one safe field: \"=1+1\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected undefined to be 'preserved' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "questionnaire timestamp is escaped once",
+        "status": "failed",
+        "first_error": "AssertionError: expected '\"legacy, \"\"timestamp\"\"\"' to be 'legacy, \"timestamp\"' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "gradebook preserves one safe name field: \"=1+1\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected '=1+1' to be '\\'=1+1' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "gradebook preserves one safe name field: \"first\\rsecond\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected 'firstsecond' to be 'first\\rsecond' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "conversation export escapes student number and neutralizes event text",
+        "status": "failed",
+        "first_error": "AssertionError: expected '=1+1' to be '\\'=1+1, \"number\"' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "result export treats formula-prefixed student name as text",
+        "status": "failed",
+        "first_error": "AssertionError: expected '=1+1' to be '\\'=1+1' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "item analysis exports one safe item label: \"=1+1\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected '=1+1' to be '\\'=1+1' // Object.is equality"
+      },
+      {
+        "file": "test/university-exports-r28.test.js",
+        "test": "item analysis exports one safe item label: \"first\\rsecond\"",
+        "status": "failed",
+        "first_error": "AssertionError: expected 'firstsecond' to be 'first\\rsecond' // Object.is equality"
+      }
+    ]
+  },
+  "new_final_assertions": [
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "questionnaire text is neutralized only on export: \"=1+1\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "questionnaire text is neutralized only on export: \"+1+1\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "questionnaire text is neutralized only on export: \"-1+1\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "questionnaire text is neutralized only on export: \"@SUM(1,2)\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "questionnaire text is neutralized only on export: \"\\t=1+1\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "questionnaire text is neutralized only on export: \"\\r=1+1\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "questionnaire text is neutralized only on export: \"\\n=1+1\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "questionnaire text is neutralized only on export: \"＝1+1\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "questionnaire text is neutralized only on export: \"＋1+1\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "questionnaire text is neutralized only on export: \"－1+1\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "questionnaire text is neutralized only on export: \"＠SUM(1,2)\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "questionnaire text is neutralized only on export: \"  =1+1\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "questionnaire dynamic header is one safe field: \"item,one\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "questionnaire dynamic header is one safe field: \"item\\\"one\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "questionnaire dynamic header is one safe field: \"item\\r\\none\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "questionnaire dynamic header is one safe field: \"=1+1\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "questionnaire timestamp is escaped once",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "gradebook preserves one safe name field: \"=1+1\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "gradebook preserves one safe name field: \"first\\rsecond\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "conversation export escapes student number and neutralizes event text",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "result export treats formula-prefixed student name as text",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "item analysis exports one safe item label: \"=1+1\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "item analysis exports one safe item label: \"first\\rsecond\"",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "default interchange CSV preserves formula-like text for round-trip consumers",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "spreadsheet export keeps real negative numbers numeric",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "ordinary Persian multiline response and booleans preserve their values",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "anonymous questionnaire export stays de-identified while protecting text",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "foreign teacher cannot export a questionnaire or class gradebook",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "students cannot call staff report exporters",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-exports-r28.test.js",
+      "test": "generic CSV quotes dynamic headers without changing record lookup keys",
+      "status": "passed",
+      "first_error": ""
+    }
+  ],
+  "browser": {
+    "tabs": [
+      "داشبورد",
+      "گزارش‌ها و پژوهش",
+      "کلاس‌های درسی",
+      "گفتگوهای ذخیره‌شده",
+      "نتایج و کارنامه",
+      "بررسی نقاشی‌ها",
+      "نمره‌دهی بیمار مجازی",
+      "آزمون‌ها",
+      "نتایج آزمون‌ها",
+      "پژوهش آموزشی",
+      "کاربران",
+      "دانشگاه‌ها",
+      "بانک بیماران",
+      "فلش‌کارت‌ها",
+      "کاتالوگ‌های Auto complete",
+      "چک‌لیست‌ها",
+      "پرسشنامه‌ها",
+      "تنظیمات هوش مصنوعی"
+    ],
+    "checks": [
+      {
+        "name": "r28-teacher login",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "questionnaire export",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "questionnaire CSV MIME",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "gradebook export",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "gradebook CSV MIME",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "conversation export",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "conversation CSV MIME",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "results export",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "results CSV MIME",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "r28-student login",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "questionnaire student denied",
+        "actual": 403,
+        "expected": 403
+      },
+      {
+        "name": "gradebook student denied",
+        "actual": 403,
+        "expected": 403
+      },
+      {
+        "name": "conversation student denied",
+        "actual": 403,
+        "expected": 403
+      },
+      {
+        "name": "results student denied",
+        "actual": 403,
+        "expected": 403
+      }
+    ],
+    "uiDownloads": 1,
+    "pageErrors": [],
+    "webSecurityDisabled": false
+  },
+  "independent_csv_parser": {
+    "parser": "Python stdlib csv, newline=\"\", utf-8-sig",
+    "checks": [
+      "quoted dynamic header",
+      "formula header text marker",
+      "answer text marker",
+      "CR preserved",
+      "gradebook name protected",
+      "gradebook student number one field",
+      "conversation protected and aligned",
+      "results text protected; numeric negative preserved",
+      "report-download text protected; numeric negative preserved"
+    ],
+    "passed": 9,
+    "failed": 0
+  },
+  "restart": {
+    "checks": [
+      {
+        "name": "teacher login after restart",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "questionnaire status after restart",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "questionnaire bytes unchanged after restart",
+        "actual": "byte-identical CSV",
+        "expected": "byte-identical CSV"
+      },
+      {
+        "name": "gradebook status after restart",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "gradebook bytes unchanged after restart",
+        "actual": "byte-identical CSV",
+        "expected": "byte-identical CSV"
+      },
+      {
+        "name": "conversation status after restart",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "conversation bytes unchanged after restart",
+        "actual": "byte-identical CSV",
+        "expected": "byte-identical CSV"
+      },
+      {
+        "name": "results status after restart",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "results bytes unchanged after restart",
+        "actual": "byte-identical CSV",
+        "expected": "byte-identical CSV"
+      }
+    ]
+  },
+  "limitations": [
+    "Inventory and tab render smoke are not exhaustive endpoint/form coverage.",
+    "No actual Excel/LibreOffice execution or save/reopen test; CSV text-marker protection is not universal across consumers or after re-save.",
+    "Default interchange toCSV remains lossless, not formula-neutralized. Only academic report endpoints opt into spreadsheet-oriented encoding.",
+    "Non-university report exporters not hardened in this patch.",
+    "No clinical bank edits, external AI model tests or paid fallback.",
+    "Prior R26 historical public-file ownership and R27 other-settings-writer durability limitations remain."
+  ],
+  "research_note": "Guessed CSV Cheat Sheet URL returned 404; actual OWASP community CSV Injection page and RFC4180 fetched and used.",
+  "archive_sha256": "2e5f87ecc2352d63039ca266c8df3a91259daac8f5b999c804ea330651bf0271"
+}

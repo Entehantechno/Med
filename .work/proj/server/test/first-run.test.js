@@ -1,0 +1,7 @@
+import {it,expect} from 'vitest';
+import fs from 'node:fs';import os from 'node:os';import path from 'node:path';
+import {installBundledDemo} from '../src/lib/first-run.js';
+function fixture(fn){const root=fs.mkdtempSync(path.join(os.tmpdir(),'med-first-run-'));const bundleDir=path.join(root,'bundle'),dataDir=path.join(root,'data'),dbPath=path.join(dataDir,'medlab.db');fs.mkdirSync(path.join(bundleDir,'uploads'),{recursive:true});fs.mkdirSync(path.join(dataDir,'uploads'),{recursive:true});fs.writeFileSync(path.join(bundleDir,'medlab.db'),'fixture');fs.writeFileSync(path.join(bundleDir,'uploads','a.svg'),'bundled');try{fn({bundleDir,dataDir,dbPath});}finally{fs.rmSync(root,{recursive:true,force:true});}}
+it('does not overwrite retained media even when installing the missing database',()=>fixture(c=>{fs.writeFileSync(path.join(c.dataDir,'uploads','a.svg'),'retained');expect(installBundledDemo(c).installed).toBe(true);expect(fs.readFileSync(path.join(c.dataDir,'uploads','a.svg'),'utf8')).toBe('retained');}));
+it('does not fail if an interrupted boot left a temporary file for a reused PID',()=>fixture(c=>{const stale=c.dbPath+'.bootstrap-'+process.pid;fs.writeFileSync(stale,'incomplete');expect(installBundledDemo(c).installed).toBe(true);expect(fs.readFileSync(c.dbPath,'utf8')).toBe('fixture');}));
+it('missing bundle does not create an empty destination database',()=>fixture(c=>{fs.unlinkSync(path.join(c.bundleDir,'medlab.db'));expect(installBundledDemo(c).reason).toBe('no_bundle');expect(fs.existsSync(c.dbPath)).toBe(false);}));

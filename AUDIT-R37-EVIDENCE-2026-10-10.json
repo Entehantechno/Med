@@ -1,0 +1,55 @@
+{
+  "release": "R37",
+  "date": "2026-10-10",
+  "client": {
+    "passed": 206,
+    "failed": 0
+  },
+  "server_focused_final": {
+    "passed": 81,
+    "failed": 0,
+    "files": 7
+  },
+  "server_regression_overlapping_not_additive": {
+    "passed": 72,
+    "failed": 0,
+    "files": 7
+  },
+  "browser": {
+    "checks": [
+      "Persian main stem + four step tools saves through real UI/API with empty optional instructions; mobile Save/Cancel in viewport",
+      "Admin catalog activation switch toggles persisted sharing off/on",
+      "Requested teacher login: 16 owned cards (one draft), five read-only catalogs, ten shared academic VPs; no edit/delete buttons for shared catalogs",
+      "English-interface student views Persian-only authored stem and autocomplete suggestions in a teacher-assigned class, selects the Persian answer and receives ok=true through the real grading API"
+    ],
+    "pageErrors": []
+  },
+  "packaged_install": {
+    "sharedCatalogs": 5,
+    "userId": 117,
+    "universityId": 13,
+    "inserted": 16,
+    "sharedPatients": 10,
+    "historical_attempts_unchanged": true,
+    "old_cards_unchanged": 11681,
+    "clinical_charts_unchanged": true,
+    "reload_idempotence": true,
+    "source": "extracted R37 source + shipped demo database"
+  },
+  "package": {
+    "package": "MED-School-FINAL-2026-10-10-R37.zip",
+    "bytes": 44263494,
+    "entries": 851,
+    "sha256": "c6064d09a8fd31aef75cf44ab51d0b48498399526176b64c586e961f92ae9fc8",
+    "bank_payloads_unchanged": 54,
+    "source_build_byte_equal": 664,
+    "crc": "PASS",
+    "version": "2026.10.10-r37-academic-authoring"
+  },
+  "limitations": {
+    "full_server_rerun": false,
+    "prior_bank_failures_open": 47,
+    "external_ai_calls": 0,
+    "production_deployment_verified": false
+  }
+}

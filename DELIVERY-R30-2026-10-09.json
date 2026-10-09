@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-09",
+  "release_commit": "e3921d42fc7543c1442facff26da25aae4c0c99c",
+  "branch": "arena/57508e9a-med",
+  "pull_request": "https://github.com/Entehantechno/Med/pull/3",
+  "package": "MED-School-FINAL-2026-10-09-R30.zip",
+  "sha256": "ec52fc1c3f15a81acc4f50f6b8a2dd87bd9039484cb436f7acdfe8bd511217a4",
+  "bytes": 50424976,
+  "files": 1151,
+  "git_blob": "73c304788c7e01f2c1c468d22abea50589fc27b8",
+  "independent_download": "GitHub Contents API raw bytes at release commit",
+  "verification": "Exact bytes, SHA256, size, all-entry CRC, count and git blob match",
+  "predecessor_retirement": "R29 ZIP/SHA removed only in subsequent commit after this verification",
+  "server": {
+    "passed": 1942,
+    "failed": 47,
+    "tests": 1989,
+    "files": 81,
+    "skipped": 0
+  },
+  "client": {
+    "passed": 142,
+    "failed": 0
+  },
+  "extracted_tests": {
+    "passed": 56,
+    "failed": 0
+  },
+  "limitations": "Software-only scope after skipped authorization question. Scientific sources and historical grades unchanged; clinical caveats and 47 bank failures remain open.",
+  "download_url": "https://github.com/Entehantechno/Med/raw/refs/heads/arena/57508e9a-med/MED-School-FINAL-2026-10-09-R30.zip"
+}

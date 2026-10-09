@@ -1,0 +1,244 @@
+{
+  "date": "2026-10-09",
+  "count": 47,
+  "bank_changed": false,
+  "identical_failed_test_names_to_r33": true,
+  "warning": "These are not 47 independently established clinical errors; editorial/history guards also fail. All remain open.",
+  "failures": [
+    {
+      "file": "master-bank.test.js",
+      "test": "master pre-internship bank keeps part22 reviewed multi-answer items ungraded and the imaging correction explicit",
+      "message": "AssertionError: expected +0 to be null"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "master pre-internship bank keeps part22 batch2 educational structure and explicit option reasoning",
+      "message": "AssertionError: expected false to be true // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "master pre-internship bank gives every card a Persian stem, four options and a usable key",
+      "message": "AssertionError: expected false to be true // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round47 exact editorial boundaries preserves every non-educational field, all keys and every out-of-scope question",
+      "message": "AssertionError: 22:1: expected '2cff1c6972ed44160b35e9d3d52e80cc37bdd…' to be '1f29093902c9691e370ba92dd471555904c0d…' // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round47 exact editorial boundaries keeps all six deferred questions entirely identical to round46",
+      "message": "AssertionError: expected 'eac1afb6675456bbed7ac9147713057fd0061…' to be '3900e8e83882caf5f021cf71ca5904f7f79ed…' // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round47 exact editorial boundaries provides 194 case interpretations, four explicit rationales and four clinical points",
+      "message": "AssertionError: expected false to be true // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round47 exact editorial boundaries preserves other payloads except hash-chained round48/round50 continuations",
+      "message": "AssertionError: import-payload.master-preint.part01.json: expected '8183ec4caee08f06af4475afa940a8992e87f…' to be '202b39ca1441913a90dcd13138bdd2c87020d…' // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round48 exact editorial boundaries changes exactly 182 approved records and only the five Persian teaching fields",
+      "message": "AssertionError: 22:1: expected '2cff1c6972ed44160b35e9d3d52e80cc37bdd…' to be '1f29093902c9691e370ba92dd471555904c0d…' // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round48 exact editorial boundaries keeps the 18 newly deferred and six earlier deferred records entirely unchanged",
+      "message": "AssertionError: 22:142: expected 'eac1afb6675456bbed7ac9147713057fd0061…' to be '3900e8e83882caf5f021cf71ca5904f7f79ed…' // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round48 exact editorial boundaries provides 182 distinct case explanations and leads with four rationales and structured points",
+      "message": "AssertionError: 23:41: expected false to be true // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round48 exact editorial boundaries preserves other-bank bytes except hash-chained round50 and keeps filename inventory",
+      "message": "AssertionError: import-payload.master-preint.part01.json: expected '8183ec4caee08f06af4475afa940a8992e87f…' to be '202b39ca1441913a90dcd13138bdd2c87020d…' // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round49 exact editorial boundaries changes exactly 183 approved records and only the five Persian teaching fields",
+      "message": "AssertionError: 22:1: expected '2cff1c6972ed44160b35e9d3d52e80cc37bdd…' to be '1f29093902c9691e370ba92dd471555904c0d…' // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round49 exact editorial boundaries keeps the 17 newly deferred and 24 earlier deferred records entirely unchanged",
+      "message": "AssertionError: 22:142: expected 'eac1afb6675456bbed7ac9147713057fd0061…' to be '3900e8e83882caf5f021cf71ca5904f7f79ed…' // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round49 exact editorial boundaries provides 183 distinct case explanations and leads with four rationales and structured points",
+      "message": "AssertionError: 24:21: expected false to be true // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round49 exact editorial boundaries preserves other-bank bytes except hash-chained round50 and keeps filename inventory",
+      "message": "AssertionError: import-payload.master-preint.part01.json: expected '8183ec4caee08f06af4475afa940a8992e87f…' to be '202b39ca1441913a90dcd13138bdd2c87020d…' // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round50 exact editorial boundaries locks exact 200 scope, 160 edits, all protected fields and every untouched record",
+      "message": "AssertionError: untouched 25:27: expected { program: 'preint', …(28) } to deeply equal { program: 'preint', …(28) }"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round50 exact editorial boundaries ships individualized explanations, four rationales and four clinical points",
+      "message": "AssertionError: expected false to be true // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round50 exact editorial boundaries keeps previous 41 queue entries and records 40 new unchanged graded entries",
+      "message": "AssertionError: expected { program: 'preint', …(28) } to deeply equal { program: 'preint', …(28) }"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round50 exact editorial boundaries keeps the other 53 banks byte-identical (part26 chained via round51) including all previous deferred records",
+      "message": "AssertionError: tools/master-bank/import-payload.master-preint.part01.json: expected '8183ec4caee08f06af4475afa940a8992e87f…' to be '202b39ca1441913a90dcd13138bdd2c87020d…' // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round51 exact editorial boundaries ships individualized explanations, four rationales and four clinical points",
+      "message": "AssertionError: expected false to be true // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round51 exact editorial boundaries keeps the other 53 banks byte-identical",
+      "message": "AssertionError: tools/master-bank/import-payload.master-preint.part01.json: expected '8183ec4caee08f06af4475afa940a8992e87f…' to be '202b39ca1441913a90dcd13138bdd2c87020d…' // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round52 exact editorial boundaries locks exact part26 scope, all protected fields and every untouched record",
+      "message": "AssertionError: untouched 26:1: expected { program: 'preint', …(28) } to deeply equal { program: 'preint', …(28) }"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round52 exact editorial boundaries ships individualized explanations, four rationales and four clinical points for part26",
+      "message": "AssertionError: expected false to be true // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round52 exact editorial boundaries locks exact part27 scope, all protected fields and every untouched record",
+      "message": "AssertionError: untouched 27:114: expected { program: 'preint', …(28) } to deeply equal { program: 'preint', …(28) }"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round52 exact editorial boundaries ships individualized explanations, four rationales and four clinical points for part27",
+      "message": "AssertionError: expected false to be true // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round52 exact editorial boundaries keeps part26 rows 1-45 (round51 work) byte-identical to the fixture baseline",
+      "message": "AssertionError: 26:1: expected { program: 'preint', …(28) } to deeply equal { program: 'preint', …(28) }"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round52 exact editorial boundaries keeps the other 52 banks byte-identical",
+      "message": "AssertionError: tools/master-bank/import-payload.master-preint.part01.json: expected '8183ec4caee08f06af4475afa940a8992e87f…' to be '202b39ca1441913a90dcd13138bdd2c87020d…' // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round53 exact editorial boundaries locks exact part27 scope, all protected fields and every untouched record",
+      "message": "AssertionError: untouched 27:1: expected { program: 'preint', …(28) } to deeply equal { program: 'preint', …(28) }"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round53 exact editorial boundaries ships individualized explanations, four rationales and four clinical points for part27",
+      "message": "AssertionError: expected false to be true // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round53 exact editorial boundaries locks exact part28 scope, all protected fields and every untouched record",
+      "message": "AssertionError: untouched 28:25: expected { program: 'preint', …(28) } to deeply equal { program: 'preint', …(28) }"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round53 exact editorial boundaries ships individualized explanations, four rationales and four clinical points for part28",
+      "message": "AssertionError: expected false to be true // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round53 exact editorial boundaries keeps the previous 82 queue entries and records exactly 52 new unchanged graded entries",
+      "message": "AssertionError: expected { program: 'preint', …(28) } to deeply equal { program: 'preint', …(28) }"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round53 exact editorial boundaries keeps part26 (round51/52 work) and part27 rows 1-25 (round52 work) unchanged",
+      "message": "AssertionError: expected '0329863b8a4f8aa8650dd62a82635737b7bd3…' to be '837619babf87c93198f0ea5708f07ffc305c7…' // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round53 exact editorial boundaries keeps the other 52 banks byte-identical",
+      "message": "AssertionError: tools/master-bank/import-payload.master-preint.part01.json: expected '8183ec4caee08f06af4475afa940a8992e87f…' to be '202b39ca1441913a90dcd13138bdd2c87020d…' // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round54 exact editorial boundaries locks exact part28 scope, all protected fields and every untouched record",
+      "message": "AssertionError: untouched 28:1: expected { program: 'preint', …(28) } to deeply equal { program: 'preint', …(28) }"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round54 exact editorial boundaries ships individualized explanations, four rationales and four clinical points for part28",
+      "message": "AssertionError: expected false to be true // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round54 exact editorial boundaries keeps the previous 134 queue entries and records exactly 19 new unchanged graded entries",
+      "message": "AssertionError: expected { program: 'preint', …(28) } to deeply equal { program: 'preint', …(28) }"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round54 exact editorial boundaries keeps part27 (round53 work) and part28 rows 1-5 (round53 work) unchanged",
+      "message": "AssertionError: earlier 28:1: expected { program: 'preint', …(28) } to deeply equal { program: 'preint', …(28) }"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round54 exact editorial boundaries keeps the other 53 banks byte-identical",
+      "message": "AssertionError: tools/master-bank/import-payload.master-preint.part01.json: expected '8183ec4caee08f06af4475afa940a8992e87f…' to be '202b39ca1441913a90dcd13138bdd2c87020d…' // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round55 exact editorial boundaries ships individualized explanations, four rationales and four clinical points for part29",
+      "message": "AssertionError: expected false to be true // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round55 exact editorial boundaries keeps the other 53 banks byte-identical",
+      "message": "AssertionError: tools/master-bank/import-payload.master-preint.part01.json: expected '8183ec4caee08f06af4475afa940a8992e87f…' to be '202b39ca1441913a90dcd13138bdd2c87020d…' // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round57 deferred-queue enrichment boundaries keeps every queued row that was not enriched byte-identical to the round55 release",
+      "message": "AssertionError: 22:142: expected { program: 'preint', …(28) } to deeply equal { program: 'preint', …(28) }"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round57 deferred-queue enrichment boundaries enriched each of the 55 rows in place, without touching a key or any protected field",
+      "message": "AssertionError: expected false to be true // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round57 deferred-queue enrichment boundaries ships 55 unique explanations and 55 unique leads for the enriched rows",
+      "message": "AssertionError: expected 2 to be 55 // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round57 deferred-queue enrichment boundaries keeps the other 48 banks byte-identical",
+      "message": "AssertionError: tools/master-bank/import-payload.master-preint.part01.json: expected '8183ec4caee08f06af4475afa940a8992e87f…' to be '202b39ca1441913a90dcd13138bdd2c87020d…' // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round58 remediation pack (prepared, not applied) keeps every proposed key inside its own row and unapplied unless the trail says otherwise",
+      "message": "AssertionError: 23:98: expected 1 to be 3 // Object.is equality"
+    },
+    {
+      "file": "master-bank.test.js",
+      "test": "round58 remediation pack (prepared, not applied) splits the guideline-drift rows into six ready moves and two open questions",
+      "message": "AssertionError: 24:102: expected 3 to be 1 // Object.is equality"
+    }
+  ]
+}

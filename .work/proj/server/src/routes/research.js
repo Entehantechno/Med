@@ -1,5 +1,5 @@
 import express from "express";
-import { db, persistNow } from "../db.js";
+import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { audit } from "../lib/audit.js";
 import {
@@ -14,22 +14,23 @@ const currentUniversityId = (user) => db.prepare("SELECT university_id FROM user
 function teacherOwnsStudentRow(user, universityId, role) {
   if (user.role === "admin") return true;
   if (user.role !== "teacher") return false;
-  if (role && role !== "student") return false;
+  if (role !== "student") return false;
   const uni = currentUniversityId(user);
-  return uni != null && (Number(universityId) || 1) === uni;
+  return uni != null && universityId != null && Number(universityId) === uni;
 }
 function canManageStudy(user, study) {
   if (!study) return false;
   if (user.role === "admin") return true;
   if (user.role !== "teacher") return false;
-  const uni = currentUniversityId(user) || -1;
+  const uni = currentUniversityId(user);
+  if (!uni) return false;
   const foreignClass = db.prepare("SELECT 1 FROM classes WHERE study_id=? AND COALESCE(university_id,1)!=?").get(study.id, uni);
   const foreignExam = db.prepare("SELECT 1 FROM exams WHERE study_id=? AND COALESCE(university_id,1)!=?").get(study.id, uni);
   if (foreignClass || foreignExam) return false;
   const creator = db.prepare("SELECT id, university_id, role FROM users WHERE id=?").get(study.created_by);
-  if (!creator) return study.created_by === user.id;
+  if (!creator) return false;
   if (creator.role === "admin") return false;
-  return (creator.university_id || 1) === uni;
+  return creator.university_id != null && Number(creator.university_id) === Number(uni);
 }
 const parse = (x, fb) => { try { return JSON.parse(x || ""); } catch { return fb; } };
 const clip = (v, n) => String(v == null ? "" : v).slice(0, n);
@@ -51,9 +52,10 @@ r.post("/studies", ...admin, (req, res) => {
   if (req.user.role === "content_manager") {
     return res.status(403).json({ error: "university_only", stage: "access" });
   }
+  if (req.user.role === "teacher" && !currentUniversityId(req.user)) return res.status(400).json({ error: "university_required" });
   const b = req.body || {};
   if (b.consent_admin_managed === false && req.user.role !== "admin") return res.status(403).json({error:"admin_only_policy"});
-  const info = db.prepare(`INSERT INTO research_studies
+  const info = durableTransaction(() => db.prepare(`INSERT INTO research_studies
     (title_fa,title_en,description_fa,description_en,domain,active,consent_required,created_by,
      ethics_code,protocol_version,consent_text_fa,consent_text_en,consent_modes,anonymize,consent_admin_managed)
     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
@@ -62,9 +64,8 @@ r.post("/studies", ...admin, (req, res) => {
     clip(b.ethics_code, 80), clip(b.protocol_version, 40),
     clip(b.consent_text_fa, 8000), clip(b.consent_text_en, 8000),
     normaliseModes(b.consent_modes ?? "online,paper,verbal"), b.anonymize ? 1 : 0, b.consent_admin_managed === false ? 0 : 1
-  );
+  ));
   audit(req, "research.study_create", "study", { id: info.lastInsertRowid, consentRequired: b.consent_required !== false });
-  persistNow();
   res.json(cleanStudy(db.prepare("SELECT * FROM research_studies WHERE id=?").get(info.lastInsertRowid)));
 });
 
@@ -76,30 +77,31 @@ r.put("/studies/:id", ...admin, (req, res) => {
   if (!canManageStudy(req.user, old)) return res.status(403).json({ error: "wrong_university", stage: "access" });
   const b = req.body || {};
   if (b.consent_admin_managed !== undefined && !!b.consent_admin_managed !== !!old.consent_admin_managed && req.user.role !== "admin") return res.status(403).json({error:"admin_only_policy"});
-  db.prepare(`UPDATE research_studies SET
-    title_fa=?, title_en=?, description_fa=?, description_en=?, domain=?, active=?, consent_required=?,
-    ethics_code=?, protocol_version=?, consent_text_fa=?, consent_text_en=?, consent_modes=?, anonymize=?,
-    consent_admin_managed=?, updated_at=datetime('now')
-    WHERE id=?`).run(
-    b.title_fa ?? old.title_fa ?? "", b.title_en ?? old.title_en ?? "",
-    b.description_fa ?? old.description_fa ?? "", b.description_en ?? old.description_en ?? "",
-    b.domain ?? old.domain ?? "general",
-    b.active === undefined ? old.active : (b.active ? 1 : 0),
-    b.consent_required === undefined ? old.consent_required : (b.consent_required ? 1 : 0),
-    b.ethics_code === undefined ? (old.ethics_code || "") : clip(b.ethics_code, 80),
-    b.protocol_version === undefined ? (old.protocol_version || "") : clip(b.protocol_version, 40),
-    b.consent_text_fa === undefined ? (old.consent_text_fa || "") : clip(b.consent_text_fa, 8000),
-    b.consent_text_en === undefined ? (old.consent_text_en || "") : clip(b.consent_text_en, 8000),
-    b.consent_modes === undefined ? (old.consent_modes || "online") : normaliseModes(b.consent_modes),
-    b.anonymize === undefined ? (old.anonymize || 0) : (b.anonymize ? 1 : 0),
-    b.consent_admin_managed === undefined ? old.consent_admin_managed : (b.consent_admin_managed ? 1 : 0),
-    id
-  );
+  durableTransaction(() => {
+    db.prepare(`UPDATE research_studies SET
+      title_fa=?, title_en=?, description_fa=?, description_en=?, domain=?, active=?, consent_required=?,
+      ethics_code=?, protocol_version=?, consent_text_fa=?, consent_text_en=?, consent_modes=?, anonymize=?,
+      consent_admin_managed=?, updated_at=datetime('now')
+      WHERE id=?`).run(
+      b.title_fa ?? old.title_fa ?? "", b.title_en ?? old.title_en ?? "",
+      b.description_fa ?? old.description_fa ?? "", b.description_en ?? old.description_en ?? "",
+      b.domain ?? old.domain ?? "general",
+      b.active === undefined ? old.active : (b.active ? 1 : 0),
+      b.consent_required === undefined ? old.consent_required : (b.consent_required ? 1 : 0),
+      b.ethics_code === undefined ? (old.ethics_code || "") : clip(b.ethics_code, 80),
+      b.protocol_version === undefined ? (old.protocol_version || "") : clip(b.protocol_version, 40),
+      b.consent_text_fa === undefined ? (old.consent_text_fa || "") : clip(b.consent_text_fa, 8000),
+      b.consent_text_en === undefined ? (old.consent_text_en || "") : clip(b.consent_text_en, 8000),
+      b.consent_modes === undefined ? (old.consent_modes || "online") : normaliseModes(b.consent_modes),
+      b.anonymize === undefined ? (old.anonymize || 0) : (b.anonymize ? 1 : 0),
+      b.consent_admin_managed === undefined ? old.consent_admin_managed : (b.consent_admin_managed ? 1 : 0),
+      id
+    );
+  });
   audit(req, "research.study_update", "study", {
     id, active: b.active === undefined ? old.active : !!b.active,
     consentRequired: b.consent_required === undefined ? old.consent_required : !!b.consent_required,
   });
-  persistNow();
   res.json(cleanStudy(db.prepare("SELECT * FROM research_studies WHERE id=?").get(id)));
 });
 
@@ -130,8 +132,9 @@ r.delete("/events/:id", ...admin, (req, res) => {
   if (!teacherOwnsStudentRow(req.user, row.university_id, row.role)) {
     return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
-  db.prepare("DELETE FROM research_events WHERE id=?").run(id);
-  persistNow();
+  durableTransaction(() => {
+    db.prepare("DELETE FROM research_events WHERE id=?").run(id);
+  });
   res.json({ ok: true });
 });
 r.delete("/studies/:id", ...admin, (req, res) => {
@@ -139,12 +142,14 @@ r.delete("/studies/:id", ...admin, (req, res) => {
   const old = db.prepare("SELECT * FROM research_studies WHERE id=?").get(id);
   if (!old) return res.status(404).json({ error: "not_found" });
   if (!canManageStudy(req.user, old)) return res.status(403).json({ error: "wrong_university", stage: "access" });
-  db.prepare("DELETE FROM research_events WHERE study_id=?").run(id);
-  db.prepare("DELETE FROM research_consents WHERE study_id=?").run(id);
-  db.prepare("UPDATE classes SET study_id=NULL WHERE study_id=?").run(id);
-  db.prepare("UPDATE exams SET study_id=NULL WHERE study_id=?").run(id);
-  db.prepare("DELETE FROM research_studies WHERE id=?").run(id);
-  persistNow();
+  durableTransaction(() => {
+    db.prepare("DELETE FROM research_events WHERE study_id=?").run(id);
+    db.prepare("DELETE FROM research_consents WHERE study_id=?").run(id);
+    db.prepare("DELETE FROM research_participation_controls WHERE study_id=?").run(id);
+    db.prepare("UPDATE classes SET study_id=NULL WHERE study_id=?").run(id);
+    db.prepare("UPDATE exams SET study_id=NULL WHERE study_id=?").run(id);
+    db.prepare("DELETE FROM research_studies WHERE id=?").run(id);
+  });
   res.json({ ok: true });
 });
 
@@ -231,11 +236,12 @@ r.post("/event", authRequired, (req, res) => {
     if (!status.granted) return res.status(403).json({ error: status.reason === "research_paused" ? "research_paused" : "consent_required" });
   }
 
-  db.prepare(`INSERT INTO research_events
-    (study_id,user_id,event_type,context_type,context_id,data_json) VALUES (?,?,?,?,?,?)`).run(
-    studyId, req.user.id, eventType, rawContext, contextId, dataJson
-  );
-  persistNow();
+  durableTransaction(() => {
+    db.prepare(`INSERT INTO research_events
+      (study_id,user_id,event_type,context_type,context_id,data_json) VALUES (?,?,?,?,?,?)`).run(
+      studyId, req.user.id, eventType, rawContext, contextId, dataJson
+    );
+  });
   res.json({ ok: true });
 });
 
@@ -314,11 +320,14 @@ r.post("/consent", authRequired, (req, res) => {
       return res.status(403).json({ error: "wrong_university", stage: "consent" });
     }
   }
-  const out = grantOnlineConsent(req.user, studyId);
+  const out = durableTransaction(() => {
+    const decision = grantOnlineConsent(req.user, studyId, { persist: false });
+    if (!decision.error) db.prepare("INSERT INTO research_events (study_id,user_id,event_type,context_type,data_json) VALUES (?,?,?,?,?)")
+      .run(studyId, req.user.id, "consent_granted", "study", JSON.stringify({ mode: "online", hash: decision.hash }));
+    return decision;
+  });
   if (out.error === "not_in_study") return res.status(403).json({ error: out.error, stage: "consent" });
   if (out.error) return res.status(409).json({ error: out.error, stage: "consent" });
-  db.prepare("INSERT INTO research_events (study_id,user_id,event_type,context_type,data_json) VALUES (?,?,?,?,?)")
-    .run(studyId, req.user.id, "consent_granted", "study", JSON.stringify({ mode: "online", hash: out.hash }));
   audit(req, "research.consent_granted", "study", { studyId, mode: "online" });
   res.json({ ok: true, status: "granted" });
   } catch (e) {
@@ -334,10 +343,11 @@ r.post("/consent/withdraw", authRequired, (req, res) => {
   const study = db.prepare("SELECT * FROM research_studies WHERE id=?").get(studyId);
   if (!study) return res.status(404).json({error:"study_not_found"});
   if (!studentLinkedToStudy(req.user, studyId)) return res.status(403).json({error:"not_in_study"});
-  db.prepare("INSERT INTO research_events(study_id,user_id,event_type,context_type,data_json) VALUES (?,?, 'withdrawal_requested','study',?)")
-    .run(studyId, req.user.id, JSON.stringify({note:clip(req.body?.note,500)}));
+  durableTransaction(() => {
+    db.prepare("INSERT INTO research_events(study_id,user_id,event_type,context_type,data_json) VALUES (?,?, 'withdrawal_requested','study',?)")
+      .run(studyId, req.user.id, JSON.stringify({note:clip(req.body?.note,500)}));
+  });
   audit(req,"research.withdrawal_requested","study",{studyId});
-  persistNow({throwOnError:true});
   return res.status(202).json({ok:true,status:"pending_admin",collectionPaused:false});
   } catch (e) {
     res.status(500).json({ error: "consent_withdraw_failed", stage: "consent", message: String(e.message || e).slice(0, 200) });
@@ -364,16 +374,19 @@ r.post("/studies/:id/consents/record", ...admin, (req, res) => {
       return res.status(403).json({ error: "wrong_university", stage: "access" });
     }
   }
-  const out = recordOfflineConsent({
-    studyId: sid, userId: b.user_id, pseudonym: b.pseudonym,
-    mode: b.mode, recordedBy: req.user.id, note: b.note,
+  const out = durableTransaction(() => {
+    const decision = recordOfflineConsent({
+      studyId: sid, userId: b.user_id, pseudonym: b.pseudonym,
+      mode: b.mode, recordedBy: req.user.id, note: b.note, persist: false,
+    });
+    if (!decision.error && Number(b.user_id)) {
+      db.prepare("INSERT INTO research_events (study_id,user_id,event_type,context_type,data_json) VALUES (?,?,?,?,?)")
+        .run(sid, Number(b.user_id), "consent_granted", "study",
+             JSON.stringify({ mode: decision.mode, recordedBy: req.user.id }));
+    }
+    return decision;
   });
   if (out.error) return res.status(out.status || 400).json({ error: out.error });
-  if (Number(b.user_id)) {
-    db.prepare("INSERT INTO research_events (study_id,user_id,event_type,context_type,data_json) VALUES (?,?,?,?,?)")
-      .run(sid, Number(b.user_id), "consent_granted", "study",
-           JSON.stringify({ mode: out.mode, recordedBy: req.user.id }));
-  }
   audit(req, "research.consent_recorded", "study", { studyId: sid, mode: out.mode, userId: Number(b.user_id) || null });
   res.json({ ok: true, ...out });
 });
@@ -387,14 +400,13 @@ r.post("/studies/:id/participation", authRequired, requireRole("admin"), (req,re
   const target=db.prepare("SELECT * FROM users WHERE id=?").get(uid);
   if (!target || target.role !== "student" || !studentLinkedToStudy(target,sid)) return res.status(400).json({error:"participant_not_in_study"});
   try {
-    db.transaction(()=>{
+    durableTransaction(()=>{
       db.prepare(`INSERT INTO research_participation_controls(study_id,user_id,blocked,recorded_by,note)
         VALUES (?,?,?,?,?) ON CONFLICT(study_id,user_id) DO UPDATE SET blocked=excluded.blocked,
         recorded_by=excluded.recorded_by,note=excluded.note,updated_at=datetime('now')`).run(sid,uid,blocked?1:0,req.user.id,note);
       db.prepare("INSERT INTO research_events(study_id,user_id,event_type,context_type,data_json) VALUES (?,?,?,'study',?)")
         .run(sid,uid,blocked?"participation_paused":"participation_resumed",JSON.stringify({recordedBy:req.user.id,note}));
-    })();
-    persistNow({throwOnError:true});
+    });
     res.json({ok:true,blocked});
   } catch {res.status(500).json({error:"participation_save_failed"});}
 });
@@ -434,12 +446,16 @@ r.get("/studies/:id/consents.csv", ...admin, (req, res) => {
     : req.user.role === "admin" ? null : -1;
   const out = consentRoster(req.params.id, { anonymize: req.query.anonymize === "1", universityId: uni });
   if (!out) return res.status(404).json({ error: "study_not_found" });
-  const esc = (v) => { const x = v == null ? "" : String(v); return /[,\n\r"]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x; };
+  const esc = (v) => {
+    let x = v == null ? "" : String(v);
+    if (/^[\t\r\n]|^\s*[=+\-@＝＋－＠]/u.test(x)) x = "'" + x;
+    return /[,\n\r"]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x;
+  };
   const header = ["pseudonym", "student_no", "participant", "mode", "status", "protocol_version", "consent_text_hash", "stale", "recorded_by", "note", "granted_at", "withdrawn_at"];
   const lines = [header.join(",")];
   for (const c of out.consents) {
     lines.push([c.pseudonym, c.studentNo, c.participantName, c.mode, c.status, c.protocolVersion,
-                c.consentTextHash, c.stale ? "yes" : "no", c.recorder, esc(c.note), c.grantedAt, c.withdrawnAt || ""].map(esc).join(","));
+                c.consentTextHash, c.stale ? "yes" : "no", c.recorder, c.note, c.grantedAt, c.withdrawnAt || ""].map(esc).join(","));
   }
   audit(req, "research.consent_export", "study", { studyId: out.study.id, rows: out.consents.length, anonymized: out.study.anonymized });
   res.setHeader("Content-Type", "text/csv; charset=utf-8");

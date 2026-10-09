@@ -1,3 +1,4 @@
+import {approveTestReference} from './helpers/reference-fixture.js';
 import {grantOnlineConsent,withdrawConsent} from '../src/lib/consent.js';
 import fs from 'node:fs';
 import {describe,it,expect,beforeAll,beforeEach,afterEach,vi} from 'vitest';
@@ -24,7 +25,7 @@ function provider(delay=0){
  }));
 }
 beforeAll(async()=>{
- execSync('node src/seed.js --force',{stdio:'ignore'});await initDb();app=createApp();
+ execSync('node src/seed.js --force',{stdio:'ignore'});await initDb();app=createApp();await approveTestReference(app);
  const template=db.prepare("SELECT * FROM users WHERE username='40012345'").get();
  for(let i=0;i<10;i++){
   const id=db.prepare("INSERT INTO users(username,password_hash,role,name_en,university_id) VALUES (?,?,'student',?,?)").run(`pilot-${i}`,template.password_hash,`Pilot ${i}`,template.university_id).lastInsertRowid;
@@ -141,9 +142,16 @@ describe('10-student pilot isolation and completion safety',()=>{
   const failed=await submit(0,sid);
   rename.mockRestore();log.mockRestore();
   expect(failed.status).toBe(500);
+  expect(count()).toBe(0);
+  expect(db.prepare('SELECT attempt_id,finished_at FROM vp_sessions WHERE id=?').get(sid)).toEqual({attempt_id:null,finished_at:null});
   const calls=fetch.mock.calls.length;
+  const gradingCalls=()=>fetch.mock.calls.filter(([,init])=>JSON.parse(init.body).messages[0].content.includes('OSCE examiner')).length;
+  const graded=gradingCalls();
   const recovered=await submit(0,sid);expect(recovered.status).toBe(200);expect(count()).toBe(1);
-  expect(fetch.mock.calls.length).toBe(calls);
+  // The rolled-back result must not masquerade as a persisted replay. The
+  // scoring checkpoint survives, while the lesson is regenerated on retry.
+  expect(gradingCalls()).toBe(graded);
+  expect(fetch.mock.calls.length).toBe(calls+1);
  });
 
  it('retries a lost session-start response without opening another session',async()=>{
@@ -300,7 +308,7 @@ describe('10-student pilot isolation and completion safety',()=>{
   expect(JSON.stringify(r.body)).not.toContain('PRIVATE');expect(count()).toBe(0);
  });
 
- for(const changed of ['transcript','rubric','model']) it(`re-grades a retry when ${changed} changed`,async()=>{
+ for(const changed of ['transcript','rubric','model']) it(changed==='rubric'?'keeps the encounter rubric on retry despite a later class edit':`re-grades a retry when ${changed} changed`,async()=>{
   const sid=await start();const original=fetch.getMockImplementation();let failLesson=true;
   fetch.mockImplementation(async(...args)=>{
    const input=JSON.parse(args[1].body).messages.at(-1).content;
@@ -311,7 +319,11 @@ describe('10-student pilot isolation and completion safety',()=>{
   if(changed==='model')setSetting('ai',{provider:'OpenRouter',model:'synthetic/changed',apiKey:'synthetic-only'});
   if(changed==='rubric')db.prepare("UPDATE classes SET grading_role='history' WHERE id=?").run(classId);
   const extra=changed==='transcript'?{session:{...body(0,sid).session,finalDx:'Changed answer'}}:{};
-  expect((await submit(0,sid,extra)).status).toBe(200);expect(fetch).toHaveBeenCalledTimes(4);
+  const retry=await submit(0,sid,extra);expect(retry.status).toBe(200);
+  // The user-approved frozen encounter means a live class edit is no longer a
+  // changed grading input. Actual transcript/model changes must still re-grade.
+  expect(fetch).toHaveBeenCalledTimes(changed==='rubric'?3:4);
+  if(changed==='rubric'){const pinned=JSON.parse(db.prepare('SELECT encounter_snapshot_json FROM vp_sessions WHERE id=?').get(sid).encounter_snapshot_json);expect(retry.body.meta.gradingScope).toBe(pinned.gradingScope);expect(retry.body.meta.gradingScope).not.toBe('extern');}
  });
 
 });

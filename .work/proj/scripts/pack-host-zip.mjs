@@ -15,6 +15,11 @@ process.chdir(root);
 
 const raw = execFileSync("find", [".", "-type", "f", "-print"], { encoding: "utf8", maxBuffer: 80 * 1024 * 1024 });
 const skip = [
+  /^(server\/test|client\/src\/test|client\/e2e|e2e)\//,
+  /\.(test|spec)\.[cm]?[jt]sx?$/,
+  /(^|\/)(vitest|playwright)\.config\./,
+  /^scripts\/(audit-check|capacity-bench|check-release-zip|test_restore_question_bank)\./,
+  /^tools\/(?![^/]+-bank\/import-payload|convert-past-exam-csv-to-import-json\.mjs$|past-exam-csv-template\.csv$)/,
   /(^|\/)node_modules\//,
   /(^|\/)\.git\//,
   /(^|\/)\.arena\//,
@@ -25,7 +30,11 @@ const skip = [
   /(^|\/)__pycache__\//,
   /(^|\/)\.venv\//,
   /\.zip$/i,
-  /\.(db|sqlite|sqlite3)(-|$|\.)/i,
+  /^(?!demo-database\/medlab\.db$).*\.(db|sqlite|sqlite3)(-|$|\.)/i,
+  /\.md$/i,
+  /^(docs|reports)\//,
+  /\.(docx?|pdf)$/i,
+  /\.log$/i,
   /(^|\/)گزارش-/,
   /(^|\/)\.env$/,
   /\/client\/dist\/.*\.map$/,

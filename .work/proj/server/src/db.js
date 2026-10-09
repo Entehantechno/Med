@@ -7,6 +7,7 @@
      db.exec(sql), db.pragma(...), db.transaction(fn)
    ================================================================ */
 import initSqlJs from "sql.js";
+import { ensureContentIdentity, universityOnlyCases } from "./lib/content-identity.js";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -83,7 +84,15 @@ function persistNow({ force = false, throwOnError = false } = {}) {
     let buf = rawDb.export();           // Uint8Array over a fresh copy
     const tmp = `${DB_PATH}.tmp-${process.pid}`;
     const fd = fs.openSync(tmp, "w");
-    try { fs.writeSync(fd, buf, 0, buf.length, 0); fs.fsyncSync(fd); }
+    try {
+      let offset = 0;
+      while (offset < buf.length) {
+        const written = fs.writeSync(fd, buf, offset, buf.length - offset, offset);
+        if (!Number.isInteger(written) || written <= 0 || written > buf.length - offset) throw new Error("database_write_no_progress");
+        offset += written;
+      }
+      fs.fsyncSync(fd);
+    }
     finally { fs.closeSync(fd); }
     buf = null;
     fs.renameSync(tmp, DB_PATH);
@@ -91,8 +100,44 @@ function persistNow({ force = false, throwOnError = false } = {}) {
   } catch (e) {
     // Never crash a request because the flush failed, but do not stay silent:
     // an operator must know the disk is full / read-only before data is lost.
+    try { fs.unlinkSync(`${DB_PATH}.tmp-${process.pid}`); } catch { /* best effort temp cleanup */ }
     console.error("[db] persist failed:", e?.message || e);
     if (throwOnError) throw new Error("database_persistence_failed");
+  }
+}
+
+// Explicit synchronous authoring boundary. The existing transaction API keeps
+// its legacy behavior; callers opt in where a success response promises a saved
+// patient. Flush earlier writes first, then recover the last good disk image if
+// committing the new image fails. No full backup copy is allocated on success.
+export function durableTransaction(fn) {
+  persistNow({ throwOnError: true });
+  let committed = false;
+  rawDb.exec("BEGIN");
+  try {
+    const result = fn();
+    if (result && typeof result.then === "function") throw new Error("durable_transaction_must_be_synchronous");
+    rawDb.exec("COMMIT");
+    committed = true;
+    dirty = true;
+    persistNow({ throwOnError: true });
+    return result;
+  } catch (error) {
+    clearTimeout(saveTimer);
+    if (committed) {
+      const restored = tryOpenDbFile(DB_PATH);
+      if (!restored) {
+        rawDb.close(); rawDb = null; schemaReady = false; dirty = false;
+        throw new Error("database_recovery_failed");
+      }
+      rawDb.close();
+      rawDb = restored;
+      rawDb.exec("PRAGMA foreign_keys = ON;");
+    } else {
+      try { rawDb.exec("ROLLBACK"); } catch { /* preserve original error */ }
+    }
+    dirty = false;
+    throw error;
   }
 }
 
@@ -370,6 +415,9 @@ export function initSchema() {
     code TEXT UNIQUE,
     owner_id INTEGER,
     max_attempts INTEGER DEFAULT 1,
+    exam_mode TEXT DEFAULT 'perQuestion',
+    timer_enabled INTEGER DEFAULT 0,
+    timer_minutes INTEGER DEFAULT 30,
     active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT DEFAULT (datetime('now'))
   );
@@ -1452,10 +1500,12 @@ export function initSchema() {
     const dupStudentNo = db.prepare("SELECT student_no FROM users WHERE student_no IS NOT NULL AND student_no<>'' GROUP BY student_no HAVING COUNT(*)>1 LIMIT 1").get();
     if (!dupStudentNo) db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_student_no_unique ON users(student_no) WHERE student_no IS NOT NULL AND student_no<>''");
   } catch { /* best-effort duplicate hardening */ }
-  // Every university-side teacher/student must belong to a university. For legacy/demo
-  // data, create one default institution and attach unscoped teachers/students.
+  // Backfill only when introducing tenant membership to a legacy database.
+  // NULL in an already upgraded database is authoritative (e.g. revoked membership).
   db.exec("INSERT OR IGNORE INTO universities (id,name_fa,name_en,city_fa,city_en,code,active) VALUES (1,'دانشگاه پیش‌فرض','Default University','','','DEFAULT',1)");
-  db.exec("UPDATE users SET university_id=1 WHERE role IN ('teacher','student') AND university_id IS NULL");
+  if (!ucols.includes("university_id")) {
+    db.exec("UPDATE users SET university_id=1 WHERE role IN ('teacher','student') AND university_id IS NULL");
+  }
   // ── Seed full medical-universities catalog (65+). Code is the stable key; id=1 is preserved.
   // Existing rows (e.g. Arak id=120 from old seed) are kept; new rows use AUTOINCREMENT.
   try {
@@ -1496,6 +1546,12 @@ export function initSchema() {
   db.exec(`CREATE TABLE IF NOT EXISTS university_storage_namespaces (
       namespace TEXT PRIMARY KEY, university_id INTEGER NOT NULL, created_at TEXT DEFAULT (datetime('now'))
     )`);
+  // Retire the erroneous demo institution from directories without deleting tenant history.
+  const retirementCols=db.prepare('PRAGMA table_info(universities)').all().map(c=>c.name);
+  if(!retirementCols.includes('retired_at'))db.exec('ALTER TABLE universities ADD COLUMN retired_at TEXT');
+  db.exec("UPDATE universities SET retired_at=COALESCE(retired_at,datetime('now')) WHERE code='ARAK_HIST' OR (id=120 AND code='ARAK120')");
+  const catalogCols=db.prepare('PRAGMA table_info(catalogs)').all().map(c=>c.name);
+  if(!catalogCols.includes('shared_to_teachers'))db.exec('ALTER TABLE catalogs ADD COLUMN shared_to_teachers INTEGER NOT NULL DEFAULT 0');
   // Seed Harrison as canonical metadata-only reference (id=1 stable for tests/policies).
   try {
     db.exec("INSERT OR IGNORE INTO reference_catalog (id,code,title_en,short_title,publisher,edition,rights_status,active) VALUES (1,'harrison-22e','Harrison''s Principles of Internal Medicine','Harrison''s 22e','McGraw Hill','22e','metadata_only',1)");
@@ -1640,6 +1696,11 @@ export function initSchema() {
   if (!flashTenantCols.includes("last_editor_id")) db.exec("ALTER TABLE flashcards ADD COLUMN last_editor_id INTEGER");
   if (!flashTenantCols.includes("last_action")) db.exec("ALTER TABLE flashcards ADD COLUMN last_action TEXT DEFAULT 'created'");
   // Per-teacher isolation: teacher sees only own questions/patients, کارشناس آموزش (is_expert) sees all of university
+  for (const table of ['cases','flashcards']) {
+    if (!db.prepare(`PRAGMA table_info(${table})`).all().some(c=>c.name==='shared_to_teachers')) db.exec(`ALTER TABLE ${table} ADD COLUMN shared_to_teachers INTEGER NOT NULL DEFAULT 0`);
+  }
+  db.exec(`CREATE TABLE IF NOT EXISTS academic_content_copies(kind TEXT NOT NULL,source_id INTEGER NOT NULL,source_version INTEGER NOT NULL,university_id INTEGER NOT NULL,owner_id INTEGER NOT NULL,copy_id INTEGER NOT NULL,PRIMARY KEY(kind,source_id,source_version,university_id,owner_id));
+    CREATE INDEX IF NOT EXISTS idx_users_directory ON users(university_id,role,student_no,id);`);
   try { const fcols2 = db.prepare("PRAGMA table_info(flashcards)").all().map((c) => c.name); if (!fcols2.includes("created_by")) db.exec("ALTER TABLE flashcards ADD COLUMN created_by INTEGER"); } catch { /* */ }
   try { const ccols2 = db.prepare("PRAGMA table_info(cases)").all().map((c) => c.name); if (!ccols2.includes("created_by")) db.exec("ALTER TABLE cases ADD COLUMN created_by INTEGER"); } catch { /* */ }
   try { const ucolsX = db.prepare("PRAGMA table_info(users)").all().map((c) => c.name); if (!ucolsX.includes("is_expert")) db.exec("ALTER TABLE users ADD COLUMN is_expert INTEGER DEFAULT 0"); } catch { /* */ }
@@ -1786,6 +1847,12 @@ export function initSchema() {
     answers_json TEXT DEFAULT '[]',
     duration_sec INTEGER DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now'))
+  )`);
+  // Successful combined submissions are idempotent, including a retry after a lost response.
+  db.exec(`CREATE TABLE IF NOT EXISTS class_flash_submissions (
+    class_id INTEGER NOT NULL, user_id INTEGER NOT NULL, submission_id TEXT NOT NULL,
+    result_json TEXT NOT NULL, created_at TEXT DEFAULT (datetime('now')),
+    PRIMARY KEY(class_id,user_id,submission_id)
   )`);
   const cfAttemptCols = db.prepare("PRAGMA table_info(class_flashcard_attempts)").all().map((c) => c.name);
   if (!cfAttemptCols.includes("answers_json")) db.exec("ALTER TABLE class_flashcard_attempts ADD COLUMN answers_json TEXT DEFAULT '[]'");
@@ -2050,7 +2117,27 @@ export function initSchema() {
      row at start time so a later change cannot retroactively re-interpret data
      that was already collected. */
   {
-    const ccols = db.prepare("PRAGMA table_info(classes)").all().map((c) => c.name);
+    const classColumns = db.prepare("PRAGMA table_info(classes)").all();
+    const ccols = classColumns.map((c) => c.name);
+    if (ccols.length) {
+      if (!ccols.includes("exam_mode")) db.exec("ALTER TABLE classes ADD COLUMN exam_mode TEXT DEFAULT 'perQuestion'");
+      else if (classColumns.find((c) => c.name === "exam_mode").type.toUpperCase() !== "TEXT") {
+        // The previous demo package used an INTEGER flag. Replace only this
+        // column atomically, retaining class IDs, memberships and other fields.
+        // Legacy 0/1 had no mode semantics; both migrate to perQuestion.
+        db.transaction(() => {
+          db.exec("ALTER TABLE classes RENAME COLUMN exam_mode TO _legacy_exam_mode");
+          db.exec("ALTER TABLE classes ADD COLUMN exam_mode TEXT DEFAULT 'perQuestion'");
+          db.exec(`UPDATE classes SET exam_mode = CASE
+            WHEN typeof(_legacy_exam_mode)='text' AND length(trim(_legacy_exam_mode)) > 0
+              AND _legacy_exam_mode NOT IN ('0','1') THEN _legacy_exam_mode
+            ELSE 'perQuestion' END`);
+          db.exec("ALTER TABLE classes DROP COLUMN _legacy_exam_mode");
+        })();
+      }
+      if (!ccols.includes("timer_enabled")) db.exec("ALTER TABLE classes ADD COLUMN timer_enabled INTEGER DEFAULT 0");
+      if (!ccols.includes("timer_minutes")) db.exec("ALTER TABLE classes ADD COLUMN timer_minutes INTEGER DEFAULT 30");
+    }
     if (ccols.length && !ccols.includes("log_transcript"))
       db.exec("ALTER TABLE classes ADD COLUMN log_transcript INTEGER NOT NULL DEFAULT 0");
     const ecols = db.prepare("PRAGMA table_info(exams)").all().map((c) => c.name);
@@ -2103,6 +2190,10 @@ export function initSchema() {
   }
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_vp_start_request ON vp_sessions(user_id,start_request_id) WHERE start_request_id IS NOT NULL");
   // Reference snapshot columns for source-aware microlearning (added after initial creation)
+  // Nullable for historical sessions. Never invent a past clinical version.
+  if (!db.prepare("PRAGMA table_info(vp_sessions)").all().some(c => c.name === "encounter_snapshot_json")) {
+    db.exec("ALTER TABLE vp_sessions ADD COLUMN encounter_snapshot_json TEXT");
+  }
   if (!db.prepare("PRAGMA table_info(vp_sessions)").all().some(c => c.name === "reference_snapshot_json")) {
     db.exec("ALTER TABLE vp_sessions ADD COLUMN reference_snapshot_json TEXT");
   }
@@ -2281,124 +2372,18 @@ export function initSchema() {
   `);
   try { db.exec("PRAGMA optimize"); } catch { /* best-effort SQLite planner stats */ }
 
-  // Ensure the Arak histology demo (Q1 stepwise + Q12 hints) stays correct after any re-seed (inline, no await needed).
-  try {
-    const q1a = db.prepare("SELECT id, data_json FROM flashcards WHERE id=172").get();
-    if (q1a) {
-      const d = JSON.parse(q1a.data_json);
-      if (d.type !== "stepwise" || !Array.isArray(d.steps) || d.steps.length !== 3) {
-        const wanted = {
-          track:"uni", type:"stepwise", course_fa:"بافت‌شناسی", course_en:"Histology", category_fa:"بافت پوششی", category_en:"Epithelial tissue",
-          title_fa:"تشخیص مرحله‌ای نوع اپیتلیوم از روی تصویر", title_en:"Stepwise identification of epithelium from image",
-          q_fa:"با توجه به تصویر میکروسکوپی زیر، به صورت مرحله‌ای نوع اپیتلیوم را تعیین کنید.", q_en:"Given the microscopic image, determine the epithelium type stepwise.",
-          questionText_fa:"تصویر زیر مربوط به کدام نوع اپیتلیوم است؟ به صورت مرحله‌ای پاسخ دهید", questionText_en:"Which type of epithelium is shown? Answer stepwise",
-          imageUrl:"/uploads/academic/university-120/histology_q1_1790882726117.png", media:{ url:"/uploads/academic/university-120/histology_q1_1790882726117.png", kind:"image", caption_fa:"اپیتلیوم مطبق کاذب مژکدار - نای", caption_en:"Pseudostratified ciliated columnar - trachea" }, color:"#f7c6c7",
-          steps:[
-            { prompt_fa:"مرحله ۱: این اپیتلیوم ساده است یا مطبق (چندلایه به نظر می‌رسد)؟", prompt_en:"Step 1: Is this epithelium simple or stratified (appears multilayered)?", answer_fa:"مطبق", answer_en:"Stratified", accept_fa:["مطبق","چندلایه","stratified"], accept_en:["stratified","multilayered"], explanation_fa:"چون در تصویر چند ردیف هسته در ارتفاع‌های مختلف دیده می‌شود، نما مطبق است (هرچند بعداً مشخص می‌شود کاذب است).", explanation_en:"Multiple nuclear rows at different heights give a stratified appearance." },
-            { prompt_fa:"مرحله ۲: اگر مطبق به نظر می‌رسد، آیا مطبق واقعی یا مطبق کاذب است؟ (آیا همه سلول‌ها روی غشای پایه‌اند؟)", prompt_en:"Step 2: If stratified appearance, is it true stratified or pseudostratified?", answer_fa:"مطبق کاذب", answer_en:"Pseudostratified", accept_fa:["مطبق کاذب","کاذب","سودواستراتیفیه","pseudostratified"], accept_en:["pseudostratified","pseudo"], explanation_fa:"همه سلول‌ها به غشای پایه متصل‌اند ولی چون قد سلول‌ها متفاوت است، هسته‌ها در سطوح مختلف قرار دارند → نمای کاذب مطبق.", explanation_en:"All cells contact basement membrane but vary in height → pseudostratified." },
-            { prompt_fa:"مرحله ۳: شکل سلول‌های سطحی چگونه است؟ سنگ‌فرشی (مسطح) / مکعبی (مربعی) / استوانه‌ای (بلند)؟ آیا مژک دارد؟", prompt_en:"Step 3: What is the shape of surface cells? Squamous / cuboidal / columnar? Ciliated?", answer_fa:"استوانه‌ای مژکدار", answer_en:"Ciliated columnar", accept_fa:["استوانه‌ای","استوانه ای","columnar","مژکدار","استوانه‌ای مژکدار"], accept_en:["columnar","ciliated columnar","ciliated"], explanation_fa:"سلول‌های سطحی بلند و استوانه‌ای با مژک‌های واضح در لبه رأسی + سلول‌های جامی بین آنها → استوانه‌ای مژکدار.", explanation_en:"Tall columnar surface cells with prominent cilia + goblet cells → ciliated columnar." },
-          ],
-          hints_fa:["به هسته‌ها و مژک‌ها دقت کن","همه سلول‌ها به غشای پایه می‌رسند؟","قد سلول سطحی را بسنج"], hints_en:["Look at nuclei and cilia","Do all cells reach basement membrane?","Measure surface cell height"],
-          explanation_fa:"جمع‌بندی: اپیتلیوم **استوانه‌ای مطبق کاذب مژکدار** (نای/برونش). هر سه مرحله را درست پاسخ دادی: مطبق → کاذب → استوانه‌ای مژکدار.",
-          explanation_en:"Summary: Pseudostratified ciliated columnar epithelium (trachea/bronchus).",
-          micro:{ lead_fa:"مطبق کاذب = همه روی غشا ولی نما چندلایه.", lead_en:"Pseudostratified = all on membrane but looks layered.", golden_fa:"نای کلاسیک‌ترین محل مطبق کاذب مژکدار است.", golden_en:"Trachea is classic pseudostratified ciliated columnar.", points_fa:["مژه برای جاروب موکوس","سلول جامی بین استوانه‌ای‌ها","هسته‌های نامتقارن کلید تشخیص"], points_en:["Cilia sweep mucus","Goblet cells among columnar","Heterogeneous nuclei key"], source_fa:"جان‌کوئرا - فصل بافت پوششی", source_en:"Junqueira - Epithelial Tissue", reference:{ book_fa:"جان‌کوئرا - بافت‌شناسی پایه", book_en:"Junqueira's Basic Histology", chapter_fa:"فصل بافت پوششی", chapter_en:"Chapter: Epithelial Tissue", edition:"15e", url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=2430", page:"۵۵-۷۲", short_fa:"Junqueira 15e", short_en:"Junqueira 15e" } }
-        };
-        db.prepare("UPDATE flashcards SET data_json=?, updated_at=datetime('now'), content_updated_at=datetime('now'), revision=COALESCE(revision,1)+1, university_id=120 WHERE id=172").run(JSON.stringify(wanted), 172);
-      }
-    }
-    const q12a = db.prepare("SELECT id, data_json FROM flashcards WHERE id=183").get();
-    if (q12a) {
-      const d = JSON.parse(q12a.data_json);
-      const hints = ["این بافت مخاط نازکی است که سفیدی چشم (صلبیه) و سطح داخلی پلک‌ها را می‌پوشاند و التهاب آن قرمزی چشم می‌دهد","برخلاف اپیدرم که سطح آن سنگ‌فرشی و کراتینه است، سطح این بافت استوانه‌ای بلند با سلول‌های جامی فراوان است؛ لایه‌های عمقی مکعبی‌اند","نام لاتین آن conjunctiva به معنای 'متصل‌کننده' است — پلک را به کره چشم متصل می‌کند"];
-      let patched=false;
-      if (!Array.isArray(d.hints_fa) || d.hints_fa.length < 3) { d.hints_fa = hints; d.hints_en = ["This thin mucosa covers the sclera and inner eyelids; its inflammation causes red eye","Unlike epidermis (flat keratinized top), its surface is tall columnar with many goblet cells; deeper layers are cuboidal","Latin conjunctiva means 'joining' — it joins eyelid to eyeball"]; patched=true; }
-      if (!d.micro?.reference) {
-        d.micro = d.micro || { lead_fa:"ملتحمه نمونه‌ای از اپیتلیوم دو-سه ردیفه با سطح استوانه‌ای است.", lead_en:"Conjunctiva is a 2-3-layered epithelium with columnar surface.", golden_fa:"ملتحمه = دو-سه ردیف + سطح استوانه‌ای + جامی فراوان.", golden_en:"Conjunctiva = 2-3 layers + columnar top + many goblet cells.", points_fa:["سطح استوانه‌ای، عمق مکعبی","سلول جامی فراوان","غشای پایه تک‌ردیفه"], points_en:["Columnar top, cuboidal depth","Many goblet cells","Single basal row"], source_fa:"جان‌کوئرا - فصل بافت پوششی", source_en:"Junqueira - Epithelium" };
-        d.micro.reference = { book_fa:"جان‌کوئرا - بافت‌شناسی پایه", book_en:"Junqueira's Basic Histology", chapter_fa:"فصل بافت پوششی - ملتحمه", chapter_en:"Chapter: Epithelium - Conjunctiva", edition:"15e", url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=2430", page:"۶۸-۷۰", short_fa:"Junqueira 15e", short_en:"Junqueira 15e" };
-        patched=true;
-      }
-      if (patched) db.prepare("UPDATE flashcards SET data_json=?, updated_at=datetime('now'), content_updated_at=datetime('now'), revision=COALESCE(revision,1)+1 WHERE id=183").run(JSON.stringify(d), 183);
-    }
-  } catch {}
+  // Sample content is created only by explicit seed, never rewritten at boot.
 
-  // --- Admin auto-seed (ensure admin exists even when DEFAULT demo was never created) ---
-  try {
-    const adm = db.prepare("SELECT id, password_hash FROM users WHERE username='admin' OR username='Admin'").get();
-    let needAdmin = !adm;
-    let hashOk = false;
-    if (adm && adm.password_hash) {
-      try {
-        if (adm.password_hash.startsWith("$2")) {
-          try { if (bcrypt.compareSync("admin123", adm.password_hash) || bcrypt.compareSync("demo", adm.password_hash)) hashOk = true; } catch { hashOk = !!adm.password_hash; }
-        } else if (adm.password_hash.startsWith("$argon2")) {
-          // argon2 hash: cannot verify sync here, assume ok if hash exists (login will handle)
-          hashOk = true;
-        } else hashOk = !!adm.password_hash;
-      } catch { hashOk = !!adm.password_hash; }
-    }
-    if (needAdmin || !hashOk) {
-      let uniId = 1;
-      try { const u = db.prepare("SELECT id FROM universities ORDER BY id LIMIT 1").get(); if (u) uniId = u.id; } catch {}
-      let hash = "";
-      try { hash = bcrypt.hashSync("admin123", 10); } catch {
-        try { hash = db.prepare("SELECT password_hash FROM users WHERE role='teacher' LIMIT 1").get()?.password_hash || ""; } catch {}
-      }
-      if (hash) {
-        if (needAdmin) {
-          try { db.prepare("INSERT INTO users (username,password_hash,name_fa,name_en,role,status,university_id) VALUES (?,?,?,?,?,?,?)").run("admin", hash, "مدیر سیستم", "Admin", "admin", "active", uniId); console.log("[seed] admin auto-seeded (admin/admin123)"); } catch {}
-        } else {
-          try { db.prepare("UPDATE users SET password_hash=?, status='active' WHERE id=?").run(hash, adm.id); console.log("[seed] admin password reset to admin123"); } catch {}
-        }
-      }
-    }
-  } catch {}
-  // --- Arak 85 students auto-seed (single-name, from Word files) ---
-  try {
-    const arakUni = db.prepare("SELECT id FROM universities WHERE code='ARAK'").get();
-    if (arakUni) {
-      // 2) ورود 85 دانشجوی اراک اگر هنوز وارد نشده‌اند
-      try {
-        const cnt = db.prepare("SELECT COUNT(*) c FROM users WHERE role='student' AND university_id=?").get(arakUni.id).c;
-        if (cnt < 80) { // threshold: if less than 80, we need to seed
-          let list = [];
-          try {
-            const jPath = path.join(__dirname, "data", "arak-students.json");
-            if (fs.existsSync(jPath)) list = JSON.parse(fs.readFileSync(jPath, "utf8"));
-          } catch {}
-          if (list && list.length) {
-            const findByNo = db.prepare("SELECT id FROM users WHERE student_no=? OR username=?");
-            const ins = db.prepare("INSERT OR IGNORE INTO users (username,password_hash,name_fa,name_en,student_no,role,status,university_id) VALUES (?,?,?,?,?,?,?,?)");
-            // use a dummy hash if bcrypt not yet loaded? use existing teacher hash as fallback
-            let fallbackHash = "";
-            try { fallbackHash = db.prepare("SELECT password_hash FROM users WHERE role='teacher' LIMIT 1").get()?.password_hash || ""; } catch {}
-            let added = 0;
-            for (const s of list) {
-              const sno = String(s.student_no||"").trim();
-              if (!sno) continue;
-              if (findByNo.get(sno, sno)) continue;
-              const full = String(s.name_fa||s.name_en||sno).trim() || sno;
-              let hash = fallbackHash;
-              try { if (bcrypt && bcrypt.hashSync) hash = bcrypt.hashSync(sno, 10); } catch { hash = fallbackHash || sno; }
-              // if bcrypt not available, fallbackHash is still a valid bcrypt hash (from teacher), but password will be teacher's password, not sno -- still allow login via fallback? better to ensure hash is sno
-              // if still fallback, keep it (admin can reset)
-              try { ins.run(sno, hash, full, full, sno, "student", "active", arakUni.id); added++; } catch {}
-            }
-            if (added) console.log(`[seed] Arak students auto-seeded: ${added} (total now ${cnt+added})`);
-          }
-        }
-      } catch (e) { console.warn("[seed] arak students:", e.message); }
-    }
-  } catch {}
+  // Account creation belongs to explicit provisioning, never schema migration.
 
-  // Ensure Arak histology demo and tenant copies are present (idempotent, bilingual, no new invention)
-  try {
-    // Use synchronous dynamic import via createRequire for ESM->CJS interop is not needed; we use async import but keep sync by not awaiting - fire and forget with persist handled inside arak-seed
-    import("./lib/arak-seed.js").then(mod=>{
-      if (mod && mod.ensureArakHistology) {
-        try { mod.ensureArakHistology(); } catch (e) { console.warn("[seed] arak histology:", e?.message || e); }
-      }
-    }).catch(e=>{ console.warn("[seed] arak-seed import failed:", e?.message || e); });
-  } catch (e) { console.warn("[seed] arak histology sync failed:", e?.message || e); }
+  ensureContentIdentity(db);
+  universityOnlyCases(db);
+  db.exec(`CREATE TRIGGER IF NOT EXISTS cases_academic_insert BEFORE INSERT ON cases
+    WHEN json_valid(NEW.data_json) AND json_extract(NEW.data_json,'$.track')='learn'
+    BEGIN SELECT RAISE(ABORT, 'virtual_patient_university_only'); END;
+    CREATE TRIGGER IF NOT EXISTS cases_academic_update BEFORE UPDATE OF data_json ON cases
+    WHEN json_valid(NEW.data_json) AND json_extract(NEW.data_json,'$.track')='learn'
+    BEGIN SELECT RAISE(ABORT, 'virtual_patient_university_only'); END;`);
 
   persistNow();
 }

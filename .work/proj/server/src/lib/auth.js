@@ -110,7 +110,8 @@ function attachUser(token) {
     if ((Number.isFinite(live) ? live : 1) !== (Number.isFinite(claimed) ? claimed : 1)) throw new Error("revoked");
     if (payload.jti && isJtiRevoked(payload.jti)) throw new Error("revoked");
     if (row.role) payload.role = row.role;
-    payload.university_id = row.university_id ?? payload.university_id ?? null;
+    // A cleared membership is authoritative; never resurrect it from an old JWT.
+    payload.university_id = row.university_id ?? null;
   } catch (e) {
     const msg = String(e && e.message || e);
     if (msg === "revoked" || msg === "gone" || msg === "inactive") throw e;

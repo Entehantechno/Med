@@ -1,0 +1,633 @@
+{
+  "baseline": {
+    "passed": 1338,
+    "failed": 103,
+    "files": 54
+  },
+  "final": {
+    "passed": 1388,
+    "failed": 103,
+    "files": 55
+  },
+  "new_failure_names": [],
+  "failures": [
+    {
+      "file": "test/ai-routing-settings.test.js",
+      "test": "AI routing configuration API > invalidates old connection success after editing settings at /api/admin/vpatient/ai",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/ai-routing-settings.test.js",
+      "test": "AI routing configuration API > persists order and keys with explicit per-row clear at /api/admin/vpatient/ai",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/ai-routing-settings.test.js",
+      "test": "AI routing configuration API > refuses student read/write at /api/admin/vpatient/ai",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/ai-routing-settings.test.js",
+      "test": "AI routing configuration API > rejects malformed activation without changing saved configuration at /api/admin/vpatient/ai",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "CSV import / export > exports & imports flashcards",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "OSCE checklists (editable rubrics) > a case can pick which checklist scores it, and evaluation uses that rubric",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Real AI provider call path (mocked fetch — OpenAI-compatible) > a learner's virtual-patient reply now comes from the LLM (source:'llm')",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Real AI provider call path (mocked fetch — OpenAI-compatible) > a provider error degrades the STUDENT flow to mock gracefully (no crash)",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Real AI provider call path (mocked fetch — OpenAI-compatible) > a provider error is surfaced to the admin test button (not silently mocked)",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Real AI provider call path (mocked fetch — OpenAI-compatible) > clearing the key returns everything to the zero-cost mock engine",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Real AI provider call path (mocked fetch — OpenAI-compatible) > configures a (fake) free provider and ai-test reports connected:true with an LLM reply",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient (competitive) gating > admin can enable it; premium-only blocks a non-premium learner",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient (competitive) gating > daily reward pays once per day then zero",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient (competitive) gating > is OFF for learners by default",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient (competitive) gating > non-admin cannot change the vpatient config",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient (competitive) gating > premium_only=false grants all learners access + case list + daily case",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient (competitive) gating > the shared /exam engine honors the learner gate (blocks when off)",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient — import from university library > cloning a case creates an INDEPENDENT competitive copy (original untouched)",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient — import from university library > cloning flashcards works",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient — import from university library > lists the university library (cases + cards)",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient — import from university library > non-admin cannot import",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient — ranking XP (auto-evaluator → XP) > admin can list per-case XP caps (case 3 shows 200)",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient — ranking XP (auto-evaluator → XP) > award_xp=false disables XP entirely",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient — ranking XP (auto-evaluator → XP) > awards XP = score% × cap on first completion",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient — ranking XP (auto-evaluator → XP) > non-admin cannot set a case XP cap",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient — ranking XP (auto-evaluator → XP) > replaying WORSE awards zero (no farming) and keeps best",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient — ranking XP (auto-evaluator → XP) > replaying with a HIGHER score only tops up the delta (best-score policy)",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient — separate AI config + prompts > a competitive learner's play uses the engine (mock, no key) and works",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient — separate AI config + prompts > ai-test with no key reports mock mode (zero cost)",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient — separate AI config + prompts > non-admin cannot read or write the separate AI config / prompts",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient — separate AI config + prompts > separate AI config starts empty and is admin-editable",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient — separate AI config + prompts > separate config is INDEPENDENT of the university ai setting",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/api.test.js",
+      "test": "Virtual Patient — separate AI config + prompts > separate prompts save partially and fall back per field",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "master pre-internship bank > gives every card a Persian stem, four options and a usable key",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "master pre-internship bank > keeps part22 batch2 educational structure and explicit option reasoning",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "master pre-internship bank > keeps part22 reviewed multi-answer items ungraded and the imaging correction explicit",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round47 exact editorial boundaries > keeps all six deferred questions entirely identical to round46",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round47 exact editorial boundaries > preserves every non-educational field, all keys and every out-of-scope question",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round47 exact editorial boundaries > preserves other payloads except hash-chained round48/round50 continuations",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round47 exact editorial boundaries > provides 194 case interpretations, four explicit rationales and four clinical points",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round48 exact editorial boundaries > changes exactly 182 approved records and only the five Persian teaching fields",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round48 exact editorial boundaries > keeps the 18 newly deferred and six earlier deferred records entirely unchanged",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round48 exact editorial boundaries > preserves other-bank bytes except hash-chained round50 and keeps filename inventory",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round48 exact editorial boundaries > provides 182 distinct case explanations and leads with four rationales and structured points",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round49 exact editorial boundaries > changes exactly 183 approved records and only the five Persian teaching fields",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round49 exact editorial boundaries > keeps the 17 newly deferred and 24 earlier deferred records entirely unchanged",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round49 exact editorial boundaries > preserves other-bank bytes except hash-chained round50 and keeps filename inventory",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round49 exact editorial boundaries > provides 183 distinct case explanations and leads with four rationales and structured points",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round50 exact editorial boundaries > keeps previous 41 queue entries and records 40 new unchanged graded entries",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round50 exact editorial boundaries > keeps the other 53 banks byte-identical (part26 chained via round51) including all previous deferred records",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round50 exact editorial boundaries > locks exact 200 scope, 160 edits, all protected fields and every untouched record",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round50 exact editorial boundaries > ships individualized explanations, four rationales and four clinical points",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round51 exact editorial boundaries > keeps the other 53 banks byte-identical",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round51 exact editorial boundaries > ships individualized explanations, four rationales and four clinical points",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round52 exact editorial boundaries > keeps part26 rows 1-45 (round51 work) byte-identical to the fixture baseline",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round52 exact editorial boundaries > keeps the other 52 banks byte-identical",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round52 exact editorial boundaries > locks exact part26 scope, all protected fields and every untouched record",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round52 exact editorial boundaries > locks exact part27 scope, all protected fields and every untouched record",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round52 exact editorial boundaries > ships individualized explanations, four rationales and four clinical points for part26",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round52 exact editorial boundaries > ships individualized explanations, four rationales and four clinical points for part27",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round53 exact editorial boundaries > keeps part26 (round51/52 work) and part27 rows 1-25 (round52 work) unchanged",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round53 exact editorial boundaries > keeps the other 52 banks byte-identical",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round53 exact editorial boundaries > keeps the previous 82 queue entries and records exactly 52 new unchanged graded entries",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round53 exact editorial boundaries > locks exact part27 scope, all protected fields and every untouched record",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round53 exact editorial boundaries > locks exact part28 scope, all protected fields and every untouched record",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round53 exact editorial boundaries > ships individualized explanations, four rationales and four clinical points for part27",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round53 exact editorial boundaries > ships individualized explanations, four rationales and four clinical points for part28",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round54 exact editorial boundaries > keeps part27 (round53 work) and part28 rows 1-5 (round53 work) unchanged",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round54 exact editorial boundaries > keeps the other 53 banks byte-identical",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round54 exact editorial boundaries > keeps the previous 134 queue entries and records exactly 19 new unchanged graded entries",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round54 exact editorial boundaries > locks exact part28 scope, all protected fields and every untouched record",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round54 exact editorial boundaries > ships individualized explanations, four rationales and four clinical points for part28",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round55 exact editorial boundaries > keeps the other 53 banks byte-identical",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round55 exact editorial boundaries > ships individualized explanations, four rationales and four clinical points for part29",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round57 deferred-queue enrichment boundaries > enriched each of the 55 rows in place, without touching a key or any protected field",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round57 deferred-queue enrichment boundaries > keeps every queued row that was not enriched byte-identical to the round55 release",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round57 deferred-queue enrichment boundaries > keeps the other 48 banks byte-identical",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round57 deferred-queue enrichment boundaries > ships 55 unique explanations and 55 unique leads for the enriched rows",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round58 remediation pack (prepared, not applied) > keeps every proposed key inside its own row and unapplied unless the trail says otherwise",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "test": "round58 remediation pack (prepared, not applied) > splits the guideline-drift rows into six ready moves and two open questions",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-extern-intern.test.js",
+      "test": "auscultation audio upload > library lists the uploaded audio as kind=audio",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-extern-intern.test.js",
+      "test": "auscultation audio upload > teacher uploads a real MP3 → url under /uploads",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-pilot.test.js",
+      "test": "10-student pilot isolation and completion safety > runs seven synthetic rounds for ten students with isolated results and idempotent retries",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-required-ai.test.js",
+      "test": "AI-required final evaluation > persists only when both model stages return valid responses",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "VP cycle named stages (zip 28) > GET /cases/:id 404 stage case when inactive for a learner; teacher still reads it",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "VP cycle named stages (zip 28) > learner hub GET /learn/vpatient returns JSON with enabled",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "zip-32 teacher results + daily reward + assignments > daily-reward with a non-daily caseId is 400 stage report",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "zip-33 assigned-case home + corrupt banks > GET /admin/vpatient/cases as admin is JSON",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "zip-40 source: export/import tenancy + teacher canAccessCase > student and teacher lists are university-filtered and imports stamp university_id",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "zip-43 all question types + Learn VP exam reserve > learner GET /cases is empty and a live exam case is not playable",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "zip-44 case-of-day reserve + check gates + truefalse/compare > learner cannot GET a university case stem when VP is off",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "zip-44 case-of-day reserve + check gates + truefalse/compare > reserved exam case is not the Learn case of the day",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "zip-45 learner cannot join university exam + inactive evaluate > learner evaluate/flashcard-result with a spoofed examId does not land in the gradebook",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "zip-48 competitive track is separate from university > learner playable hub and GET case only see track=learn",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "zip-48 source: case track + playableCases learn-only > learners are gated to track=learn for VP and flashcards",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "zip-49 flash + university-container isolation > GET /reports/my for a learner has no university exam/class rows",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "zip-49 flash + university-container isolation > assignment and remedial refuse a learn-track case",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "zip-51 isolation: role lock, import track, group pay, learner×uni > import-cases/import-cards stamp track=learn so clones leave the university bank",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "zip-52 phase 9: rubric strip + staff/checklist isolation > content_manager cannot open university cases/flash; learn track still works",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "zip-52 source: rubric strip + staff/checklist isolation > content_manager is learn-only and checklist PUT is university-scoped",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "zip-53 phase 10: teacher×learn VP + research/tutor/questionnaire tenancy > teacher cannot GET/start/evaluate a learn-track VP case",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "zip-53 phase 10: teacher×learn VP + research/tutor/questionnaire tenancy > teacher dashboard case count ignores a new learn-track case",
+      "present_before_R8": true,
+      "status": "unresolved"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "test": "zip-54 phase 11: consent/status, analysis, catalogs, unused checklists, student×learn VP > student cannot start or evaluate a learn-track VP even if class_cases is injected",
+      "present_before_R8": true,
+      "status": "unresolved"
+    }
+  ]
+}

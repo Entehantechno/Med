@@ -141,3 +141,18 @@ describe('completion waits for encounter interactions',()=>{
  });
 
 });
+it('binds chat and orders to the session returned by the server',async()=>{
+ await open();fireEvent.change(screen.getByPlaceholderText('typeMessage'),{target:{value:'When?'}});fireEvent.click(screen.getByRole('button',{name:'send',exact:true}));
+ await waitFor(()=>expect(resolveReply).toBeTypeOf('function'));
+ expect(api.post.mock.calls.find(c=>c[0]==='/exam/patient-reply')[1].sessionId).toBe(100);
+ await act(async()=>resolveReply({text:'Pinned answer'}));
+ fireEvent.click(screen.getByRole('button',{name:'tabTests',exact:true}));fireEvent.click(screen.getByRole('button',{name:'Order CBC'}));
+ await waitFor(()=>expect(api.post.mock.calls.some(c=>c[0]==='/exam/order')).toBe(true));
+ expect(api.post.mock.calls.find(c=>c[0]==='/exam/order')[1].sessionId).toBe(100);
+ await act(async()=>resolveReply({text:'Pinned CBC',found:true}));
+});
+it('uses the safe card returned by session-start instead of an earlier fetched card',async()=>{
+ const original=api.post.getMockImplementation();
+ api.post.mockImplementation((path,...args)=>path==='/exam/session-start'?Promise.resolve({sessionId:100,loggingEnabled:false,caseCard:{id:1,age:42,chief_en:'Pinned session complaint'}}):original(path,...args));
+ await open();expect(screen.getAllByText('Pinned session complaint')).toHaveLength(2);expect(screen.queryByText('/cases/1')).toBeNull();
+});

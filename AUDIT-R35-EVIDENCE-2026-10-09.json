@@ -1,0 +1,152 @@
+{
+  "date": "2026-10-09",
+  "release": "2026.10.09-r35-stepwise-class-exam",
+  "tests": {
+    "client_final": {
+      "numTotalTests": 175,
+      "numPassedTests": 175,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "success": true
+    },
+    "server_focused_final": {
+      "numTotalTests": 110,
+      "numPassedTests": 110,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "success": true
+    },
+    "server_full_before_fixture_collision_fix": {
+      "numTotalTests": 2094,
+      "numPassedTests": 2046,
+      "numFailedTests": 48,
+      "numPendingTests": 0,
+      "success": false
+    },
+    "extracted_zip": {
+      "numTotalTests": 10,
+      "numPassedTests": 10,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "success": true
+    },
+    "retirement_history_and_media": {
+      "numTotalTests": 2,
+      "numPassedTests": 2,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "success": true
+    },
+    "retirement_on_full_suite_database": {
+      "numTotalTests": 2,
+      "numPassedTests": 2,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "success": true
+    }
+  },
+  "browser": {
+    "classId": 7,
+    "cardId": 11798,
+    "secondId": 11799,
+    "checks": [
+      "Only real Arak in searchable university directory",
+      "Overall question before stages",
+      "Four working type-specific authoring tools",
+      "Desktop and mobile Save/Cancel visible after scroll",
+      "Real UI save of four-stage question",
+      "Learner answers all four stage types and server marks 4/4",
+      "Lost response retries successfully: one saved submission, two question grades, score 100",
+      "Admin class settings radio saves through real UI",
+      "Changing class setting changes student display back to individual questions",
+      "Persian class settings visible",
+      "Persian mobile fixed footer"
+    ],
+    "errors": []
+  },
+  "package": {
+    "bank_payloads_identical": true,
+    "application_files_equal": true,
+    "zip_entries": 848,
+    "bytes": 44253212,
+    "sha256": "2c02c1bd750d9d1178a1e5e28a9f5950a1acde8849b4bf3b7f2ce2532bf2ae61"
+  },
+  "upgrade": {
+    "preserved_tables": {
+      "users": {
+        "rows": 116,
+        "old_columns_compared": 20,
+        "sha256": "c01e184517c084f1ed67f516d81b694b27a3e9b330baef817d3e9c6fa6831458"
+      },
+      "classes": {
+        "rows": 1,
+        "old_columns_compared": 25,
+        "sha256": "0797a3215633eee913649e3ae7a6ff32412ffa3d7c2224c94c5547a5c66bd192"
+      },
+      "class_members": {
+        "rows": 2,
+        "old_columns_compared": 4,
+        "sha256": "534cedc2e800702abbef4b878b948d853e205ca5df3ea198cb5739299157a470"
+      },
+      "flashcards": {
+        "rows": 11681,
+        "old_columns_compared": 15,
+        "sha256": "5d8f0a88f8303f6c7ca03faf2b6af6e6bd03f69a408bbeb8609f50c806bedbd1"
+      },
+      "flashcard_versions": {
+        "rows": 0,
+        "old_columns_compared": 5,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "attempts": {
+        "rows": 3,
+        "old_columns_compared": 27,
+        "sha256": "2691981ba473f8793453cd750021038e4639f690b56a7ff74c7eaa869f8864ad"
+      },
+      "card_attempts": {
+        "rows": 519,
+        "old_columns_compared": 13,
+        "sha256": "c1de4e9cd166d3fe859ff1b3801824de02b556bb9a6649982a5fbb7c55618248"
+      },
+      "dx_attempts": {
+        "rows": 0,
+        "old_columns_compared": 10,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "class_flashcard_attempts": {
+        "rows": 0,
+        "old_columns_compared": 8,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "vp_sessions": {
+        "rows": 0,
+        "old_columns_compared": 16,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      },
+      "vp_session_events": {
+        "rows": 0,
+        "old_columns_compared": 7,
+        "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    "comparison": "Every original column and row; additive columns do not alter historical fields",
+    "changed_historical_tables": [],
+    "retired_legacy_university_rows": 1,
+    "exam_mode_column": [
+      [
+        8,
+        "exam_mode",
+        "TEXT",
+        0,
+        "'perQuestion'",
+        0
+      ]
+    ]
+  },
+  "limitations": [
+    "Full server run had 47 pre-existing bank failures and one new test-fixture ID collision; fixture fixed and rerun both fresh and on same full-suite DB. Full suite not rerun afterwards.",
+    "Combined class exam supports up to 300 active flashcards; virtual-patient interviews remain separate.",
+    "Legacy institution retired from directory, not physically deleted or merged across tenants.",
+    "No external AI or production-data testing."
+  ]
+}

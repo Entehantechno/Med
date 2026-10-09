@@ -1,0 +1,120 @@
+{
+  "date": "2026-10-09",
+  "baseline_commit": "b060b7af4ef5fe3326ac8d2ca8a686484615d489",
+  "version": "2026.10.09-r33-academic-administration",
+  "server": {
+    "passed": 2018,
+    "failed": 47,
+    "tests": 2065,
+    "files": 85,
+    "skipped": 0,
+    "duration_seconds": 874.8
+  },
+  "client": {
+    "passed": 154,
+    "failed": 0,
+    "tests": 154,
+    "files": 28,
+    "skipped": 0,
+    "duration_seconds": 37.91
+  },
+  "extracted_server": {
+    "passed": 233,
+    "failed": 0,
+    "tests": 233,
+    "files": 15,
+    "skipped": 0,
+    "duration_seconds": 181.23
+  },
+  "packaging_unit_tests": {
+    "passed": 4,
+    "failed": 0
+  },
+  "production_build": "passed",
+  "browser": {
+    "checks": [
+      {
+        "check": "administrator sees teacher content and publishes with real row switch",
+        "kind": "cases"
+      },
+      {
+        "check": "administrator sees teacher content and publishes with real row switch",
+        "kind": "flashcards"
+      },
+      {
+        "check": "different-university teacher reads published content but cannot edit source",
+        "kind": "cases"
+      },
+      {
+        "check": "different-university teacher reads published content but cannot edit source",
+        "kind": "flashcards"
+      },
+      {
+        "check": "admin attaches foreign teacher case to teacher-created class through UI; independent copy saved"
+      },
+      {
+        "check": "class membership retained across server pages and saved through actual API",
+        "usersInDirectory": 1200
+      },
+      {
+        "check": "admin can search and page through 1200 users, not only first 300"
+      },
+      {
+        "check": "mobile Persian class picker has one cancel and visible fixed save/cancel without scrolling"
+      },
+      {
+        "check": "mobile Persian exam picker saves real participant; footer always visible"
+      }
+    ],
+    "pageErrors": []
+  },
+  "browser_extended": {
+    "checks": [
+      {
+        "check": "admin creates class through UI with explicit university 2",
+        "classId": 3
+      },
+      {
+        "check": "admin adds another university teacher flashcard to new class; private local copy persisted"
+      },
+      {
+        "check": "UI selects and adds all 1200 filtered students across server pages in one save",
+        "selectionMs": 2291,
+        "saveMs": 2235
+      },
+      {
+        "check": "real student starts a class encounter using the admin-assigned independent case",
+        "sessionId": 1
+      },
+      {
+        "check": "university candidates beyond old 200 cap are selectable; admin transfer works and local fixture restored"
+      },
+      {
+        "check": "university members use paginated table rather than only first eight students"
+      }
+    ],
+    "pageErrors": []
+  },
+  "archive_integrity": {
+    "archive": "MED-School-FINAL-2026-10-09-R33.zip",
+    "bytes": 50460571,
+    "entries": 1163,
+    "sha256": "a85b1e2af026e7baf83363d802ab5de71e47144381d544385a4f7efc5d93de9b",
+    "crc": "pass",
+    "source_build_matching_files": 782,
+    "unchanged_predecessor_data_files": 16,
+    "separate_reports": true,
+    "environment_template_only": true,
+    "real_openrouter_key_pattern_found": false,
+    "unchanged_master_bank_files": 54
+  },
+  "bank_failure_names_identical_to_r32": true,
+  "external_ai_provider_tests": false,
+  "paid_ai_tests": false,
+  "limitations": [
+    "47 baseline master-bank failures remain open; no clinical certification.",
+    "1200 synthetic students; timings are one local run, not production SLA.",
+    "University member endpoint still returns all members; table DOM is paginated.",
+    "Filtered select-all uses paged requests, not a server-side selection snapshot; save validates current membership atomically."
+  ]
+}

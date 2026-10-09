@@ -1,3 +1,16 @@
+import UniversitySelect from '../components/UniversitySelect.jsx';
+import {sortUniversities,matchesUniversity} from '../lib/university-order.js';
+import StepwiseEditor from '../components/StepwiseEditor.jsx';
+import {normalizeStep} from '../lib/step-authoring.js';
+import UniversityMembers from '../components/UniversityMembers.jsx';
+import AcademicMembers from '../components/AcademicMembers.jsx';
+import {UniversityField,GroupUniversity,ContentSharing,ClassQuestionMode} from '../components/AcademicControls.jsx';
+import { adminTabMode } from "../lib/admin-navigation.js";
+import {acceptedAnswers,orderingRows,drawingRubrics,percentCoordinate,patientEditorData} from "../lib/authoring-values.js";
+import {validateQuestion,validatePatient} from "../lib/authoring-validation.js";
+import AuthoringModal, {AuthorSection,AuthorField,AuthorSummary} from "../components/AuthoringModal.jsx";
+import DemoSetup from "../components/DemoSetup.jsx";
+import ContentCode from "../components/ContentCode.jsx";
 import "../search.css";
 import CompetitiveReferences from "./admin/CompetitiveReferences.jsx";
 import AiRoutesEditor from "../components/AiRoutesEditor.jsx";
@@ -47,34 +60,28 @@ function LazyAdminChunk({ children }) {
 }
 
 /* Reusable CSV import/export toolbar. `kind` = "cases" | "flashcards" */
-function CsvTools({ kind, onImported }) {
-  const { t } = useApp();
-  const toast = useToast();
-  const fileRef = useRef(null);
-  const download = async () => {
-    const res = await fetch(`/api/${kind}-export.csv`, { credentials: "same-origin", headers: { Authorization: `Bearer ${getToken()}` } });
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a"); a.href = url; a.download = `${kind}.csv`; a.click();
-    URL.revokeObjectURL(url);
-  };
-  const upload = async (e) => {
-    const file = e.target.files?.[0]; if (!file) return;
-    const csv = await file.text();
-    try {
-      const res = await api.post(`/${kind}-import`, { csv });
-      toast(`${t("imported")}: ${res.imported}`);
-      onImported && onImported();
-    } catch { toast(t("importError")); }
-    finally { if (fileRef.current) fileRef.current.value = ""; }
-  };
-  return (
-    <div style={{ display: "flex", gap: 8 }}>
-      <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={upload} style={{ display: "none" }} />
-      <button type="button" className="btn btn-ghost btn-sm" onClick={() => fileRef.current?.click()}><Icon name="upload" size={16} /> {t("importCsv")}</button>
-      <button type="button" className="btn btn-ghost btn-sm" onClick={download}><Icon name="download" size={16} /> {t("exportCsv")}</button>
-    </div>
-  );
+function CsvTools({kind,onImported}) {
+ const {t,lang}=useApp(),fa=lang==='fa',toast=useToast(),fileRef=useRef(null);
+ const [pending,setPending]=useState(null),[review,setReview]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+ const download=async()=>{try{const res=await fetch(`/api/${kind}-export.csv`,{headers:{Authorization:`Bearer ${getToken()}`}});if(!res.ok)throw new Error('Export failed');const url=URL.createObjectURL(await res.blob());const a=document.createElement('a');a.href=url;a.download=kind+'.csv';a.click();URL.revokeObjectURL(url);}catch(e){toast(e.message);}};
+ const upload=async e=>{const file=e.target.files?.[0];e.target.value='';if(!file)return;setError('');setReview(null);setBusy(true);
+ try{if(file.size>4*1024*1024)throw new Error(fa?'حداکثر حجم فایل ۴ مگابایت است.':'Maximum file size is 4 MB.');const csv=await file.text();setPending({name:file.name,csv});setReview(await api.post(`/${kind}-import`,{csv,dryRun:true}));}catch(e){setError(e.message);}finally{setBusy(false);}};
+ const commit=async()=>{if(busy||!review?.valid)return;setBusy(true);setError('');try{const result=await api.post(`/${kind}-import`,{csv:pending.csv});toast(`${t('imported')}: ${result.imported}`);setPending(null);setReview(null);onImported?.();}catch(e){setError(e.message);}finally{setBusy(false);}};
+ return <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+ <input ref={fileRef} type="file" accept=".csv,text/csv" onChange={upload} hidden/>
+ <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={()=>fileRef.current?.click()}>{fa?'ورود CSV با پیش‌نمایش':'Import CSV with preview'}</button>
+ <button type="button" className="btn btn-ghost btn-sm" onClick={download}>{t('exportCsv')}</button>
+ {error&&!pending&&<span role="alert">{error}</span>}
+ {pending&&<Modal title={fa?'بازبینی واردسازی':'Review import'} wide onClose={()=>{if(!busy){setPending(null);setReview(null);}}} onSave={commit} saveDisabled={busy||!review?.valid} saveLabel={fa?'تأیید و واردسازی':'Confirm import'}>
+ <p><b>{pending.name}</b> — {review?.total??'…'} {fa?'ردیف':'rows'}</p>
+ <p className="muted">{fa?'هنوز هیچ رکوردی ایجاد نشده است. ورود مجدد فایل، رکوردهای تازه می‌سازد؛ این ابزار بازیابی پشتیبان نیست.':'No records have been created yet. Reimporting creates new records; this is not a backup restore.'}</p>
+ {kind==='flashcards'&&<p>{fa?'CSV برای سؤال چندگزینه‌ای پایه است. انواع نقاشی، ناحیه‌گذاری و چندمرحله‌ای را با ویرایشگر ساخت سؤال بسازید؛ این قالب ساختار آن‌ها را منتقل نمی‌کند.':'CSV supports basic multiple-choice questions. Use the authoring editor for drawing, hotspot and multistep questions; this format does not carry their structures.'}</p>}
+ {busy&&<p role="status">{fa?'در حال پردازش…':'Processing…'}</p>}
+ {error&&<p role="alert">{error}</p>}
+ {!!review?.errors?.length&&<div role="alert"><strong>{fa?'ابتدا خطاهای فایل را اصلاح کنید:':'Fix these file errors first:'}</strong><ul>{review.errors.slice(0,30).map((e,i)=><li key={i}>{fa?'ردیف':'Row'} {e.row}: {({title_required:fa?'عنوان لازم است':'Title required',exactly_one_correct_option_required:fa?'حداقل دو گزینه و دقیقاً یک پاسخ صحیح لازم است':'At least two options and exactly one explicit correct answer are required',csv_basic_mcq_only:fa?'این نوع سؤال در CSV پشتیبانی نمی‌شود':'This question type is not supported in CSV'})[e.message]||e.message}</li>)}</ul></div>}
+ {review&&<><p>{fa?'پیش‌نمایش حداکثر ۲۰ ردیف':'Preview of up to 20 rows'}</p><table className="table"><thead><tr><th>#</th><th>فارسی</th><th>English</th></tr></thead><tbody>{review.preview.map(r=><tr key={r.row}><td>{r.row}</td><td dir="rtl">{r.title_fa}</td><td dir="ltr">{r.title_en}</td></tr>)}</tbody></table></>}
+ </Modal>}
+ </div>;
 }
 
 /* Admin notification bell — analytics alerts + weekly digests, with an unseen
@@ -140,7 +147,7 @@ export default function Admin({ home }) {
   ];
   const competitiveSections = [
     { title: t("navGroupPeople"), items: [["learnerMgmt", "users", "learn.users"], ["placementReport", "compass", "learn.view"], ["certificatesAdmin", "medal", "learn.users"], ["premiumAccounts", "crown", "learn.users"]] },
-    { title: t("navGroupContent"), items: [["learnCards", "flask", "learn.content"], ["competitiveReferences", "book", "learn.content"], ["contentStats", "chart", "learn.content"], ["mediaLibrary", "image", "learn.content"], ["pathManager", "book", "learn.content"], ["mascotsAdmin", "star", "learn.content"], ["vpatientAdmin", "patient", "learn.settings"], ["dxAdmin", "target", "learn.content"], ["blogAdmin", "book", "learn.content"], ["communityMod", "users", "learn.content"]] },
+    { title: t("navGroupContent"), items: [["learnCards", "flask", "learn.content"], ["competitiveReferences", "book", "learn.content"], ["contentStats", "chart", "learn.content"], ["mediaLibrary", "image", "learn.content"], ["pathManager", "book", "learn.content"], ["mascotsAdmin", "star", "learn.content"], ["dxAdmin", "target", "learn.content"], ["blogAdmin", "book", "learn.content"], ["communityMod", "users", "learn.content"]] },
     { title: t("navGroupMarketing"), items: [["adsMgmt", "image", "learn.ads"], ["storeManager", "store", "store.manage"], ["pricingEditor", "crown", "learn.settings"], ["groupPurchase", "users", "learn.settings"], ["payments", "crown", "learn.settings"]] },
     { title: t("navGroupSupport"), items: [["supportInbox", "chat", "learn.support"], ["helpCenter", "book", "learn.content"]] },
     { title: t("navGroupSystem"), items: [["remindersAdmin", "clock", "learn.settings"], ["pwaAdmin", "download", "learn.view"], ["twaAdmin", "download", "learn.settings"], ["seoAdmin", "settings", "learn.settings"], ["gamification", "bolt", "learn.settings"], ["fsrsOptimizer", "brain", "learn.settings"], ["bugHunt", "bug", "learn.settings"]] },
@@ -201,7 +208,7 @@ export default function Admin({ home }) {
   // pick a tab AND close the mobile dropdown so the content is shown immediately.
   // The picker is cross-universe: overview cards and Ctrl+K can jump from
   // کلیات to دانشگاهی/رقابتی without leaving the user on a hidden tab.
-  const findModeForTab = (id) => generalNav.some(([x]) => x === id) ? "general" : uniNav.some(([x]) => x === id) ? "uni" : competitiveNav.some(([x]) => x === id) ? "learn" : null;
+  const findModeForTab = (id) => adminTabMode(id, mode, { general: generalNav, uni: uniNav, learn: competitiveNav });
   const pickTab = (id) => { const m = findModeForTab(id); if (m) setMode(m); setTab(id); setMobileNavOpen(false); };
   const jumpToCards = (filter) => { setCardsJump(filter); setMode("learn"); setTab("learnCards"); setMobileNavOpen(false); };
   const paletteNav = (() => {
@@ -231,6 +238,8 @@ export default function Admin({ home }) {
             <Pill kind={isAdmin ? "active" : "medium"}>{t(user.role)}</Pill>
           </div>
         </div>
+
+        {isAdmin && <DemoSetup />}
 
         {/* Top-level universe switcher — کلیات / دانشگاهی / رقابتی. */}
         {[hasGeneral, hasUni, hasLearn].filter(Boolean).length > 1 && (
@@ -352,7 +361,6 @@ export default function Admin({ home }) {
             {tab === "communityMod" && <LazyAdminChunk><CommunityModeration /></LazyAdminChunk>}
             {tab === "pathManager" && <LazyAdminChunk><PathManager /></LazyAdminChunk>}
             {tab === "mascotsAdmin" && <MascotsAdmin />}
-            {tab === "vpatientAdmin" && <VpatientAdmin />}
             {tab === "roleEditor" && <LazyAdminChunk><RoleEditor /></LazyAdminChunk>}
             {tab === "storeManager" && <LazyAdminChunk><StoreManager /></LazyAdminChunk>}
             {tab === "pricingEditor" && <LazyAdminChunk><PricingEditor /></LazyAdminChunk>}
@@ -467,13 +475,15 @@ const SCOPE_ROLES = {
   uni: ["student", "teacher", "admin"],
   competitive: ["learner"],
 };
-function UsersManager({ scope = "all" }) {
+export function UsersManager({ scope = "all" }) {
   const { t, lang, impersonate: doImpersonate } = useApp();
   const toast = useToast();
   const scopeRoles = SCOPE_ROLES[scope] || SCOPE_ROLES.all;
   const showUniTools = scope === "all" || scope === "uni";
   const faLang = lang === "fa";
   const [users, setUsers] = useState(null);
+  const [page,setPage]=useState(1),[total,setTotal]=useState(0),[prefix,setPrefix]=useState(''),[sort,setSort]=useState('student_no'),[userStatus,setUserStatus]=useState('');
+  const requestId=useRef(0);const [usersLoading,setUsersLoading]=useState(true);
   const [cases, setCases] = useState([]);
   const [role, setRole] = useState("");
   const [uniFilter, setUniFilter] = useState("");
@@ -495,11 +505,11 @@ function UsersManager({ scope = "all" }) {
   const [classes, setClasses] = useState([]);
 
   const load = () => {
-    setLoadErr("");
-    api.get(`/admin/users?scope=${scope}&roles=${scopeRoles.join(",")}&role=${role}&q=${encodeURIComponent(q)}`)
-      .then((d) => setUsers(d.users || [])).catch((e) => { setUsers([]); setLoadErr(String(e.message || e)); });
+    const generation=++requestId.current;setLoadErr('');setUsersLoading(true);
+    const qs=new URLSearchParams({scope,roles:scopeRoles.join(','),role,q,university_id:uniFilter,page:String(page),pageSize:'100',prefix,sort,status:userStatus});
+    api.get(`/admin/users?${qs}`).then(d=>{if(generation===requestId.current){setUsers(d.users||[]);setTotal(d.total??d.users?.length??0);}}).catch(e=>{if(generation===requestId.current)setLoadErr(e.message)}).finally(()=>{if(generation===requestId.current)setUsersLoading(false)});
   };
-  useEffect(() => { load(); }, [role, scope]);
+  useEffect(()=>{requestId.current++;setUsersLoading(true);const timer=setTimeout(load,200);return()=>{clearTimeout(timer);requestId.current++;};},[role,scope,q,uniFilter,page,prefix,sort,userStatus]);
   useEffect(() => {
     if (!showUniTools) return;
     setCasesErr("");
@@ -507,8 +517,8 @@ function UsersManager({ scope = "all" }) {
   }, [showUniTools]);
   useEffect(() => {
     if (!showUniTools && scope!=="all") return;
-    api.get("/admin/universities").then(r=> setUnis(r.universities||[])).catch(()=>{});
-    api.get("/classes").then(r=> setClasses(r.classes||[])).catch(()=>{});
+    api.get("/universities").then(r=> setUnis(r.universities||[])).catch(()=>{});
+    api.get("/classes").then(r=> setClasses(Array.isArray(r) ? r : Array.isArray(r?.classes) ? r.classes : [])).catch(()=>{});
   }, [showUniTools, scope]);
 
   const setStatus = async (u, status) => { await api.post(`/admin/users/${u.id}/status`, { status }); toast(t("saved")); load(); };
@@ -527,7 +537,7 @@ function UsersManager({ scope = "all" }) {
     }
     return faLang ? "— بدون دانشگاه —" : "— no university —";
   };
-  const filteredByUni = uniFilter ? (users||[]).filter(u=> String(u.university_id)===String(uniFilter)) : (users||[]);
+  const filteredByUni = users || [];
   // keep selection valid after filter change
   useEffect(()=>{ setSelectedIds(new Set()); }, [uniFilter, role]);
 
@@ -590,19 +600,22 @@ function UsersManager({ scope = "all" }) {
       </div>
       <div className="small muted mb8">{heading}</div>
       {casesErr && <div className="err-banner mb8">{casesErr}</div>}
+      <div className="grid grid-2 mb12">
+      <label className="field">{faLang?'جستجو در همه کاربران':'Search all users'}<input aria-label={faLang?'جستجو در همه کاربران':'Search all users'} value={q} onChange={e=>{setQ(e.target.value);setPage(1)}}/></label>
+      <label className="field">{faLang?'پیش‌شماره دانشجویی':'Student number prefix'}<input value={prefix} onChange={e=>{setPrefix(e.target.value);setPage(1)}}/></label>
+      <label className="field">{faLang?'ترتیب همه نتایج':'Sort all results'}<select value={sort} onChange={e=>{setSort(e.target.value);setPage(1)}}><option value="student_no">{t('studentNo')}</option><option value="name">{t('name')}</option><option value="username">{t('username')}</option></select></label>
+      <label className="field">{faLang?'وضعیت':'Status'}<select value={userStatus} onChange={e=>{setUserStatus(e.target.value);setPage(1)}}><option value="">{faLang?'همه':'All'}</option><option value="active">{faLang?'فعال':'Active'}</option><option value="inactive">{faLang?'غیرفعال':'Inactive'}</option><option value="pending">{faLang?'در انتظار':'Pending'}</option></select></label>
+      </div>
+      <div className="inline-form mb12"><button type="button" className="btn btn-sm btn-ghost" disabled={usersLoading||page<=1} onClick={()=>setPage(p=>p-1)}>{faLang?'صفحه قبل':'Previous page'}</button><span role="status">{total} {faLang?'کاربر':'users'} · {page}/{Math.max(1,Math.ceil(total/100))}</span><button type="button" className="btn btn-sm btn-ghost" disabled={usersLoading||page*100>=total} onClick={()=>setPage(p=>p+1)}>{faLang?'صفحه بعد':'Next page'}</button></div>
       <div className="inline-form mb12" style={{ flexWrap: "wrap", gap: 8, alignItems:"center" }}>
         {scopeRoles.length > 1 && (
-          <select value={role} onChange={(e) => setRole(e.target.value)}>
+          <select value={role} onChange={(e) => {setRole(e.target.value);setPage(1)}}>
             <option value="">{t("allRoles")}</option>
             {scopeRoles.map((r) => <option key={r} value={r}>{t(r)}</option>)}
           </select>
         )}
         {(showUniTools || scope==="all") && (
-          <select value={uniFilter} onChange={(e)=> setUniFilter(e.target.value)} style={{ minWidth: 180 }}>
-            <option value="">{faLang ? "همه دانشگاه‌ها" : "All universities"}</option>
-            {unis.map(u=> <option key={u.id} value={u.id}>{faLang ? (u.name_fa||u.code) : (u.name_en||u.code)} — {u.code}</option>)}
-            <option value="null">{faLang ? "— بدون دانشگاه —" : "— no university —"}</option>
-          </select>
+          <UniversitySelect rows={unis} value={uniFilter} onChange={v=>{setUniFilter(v);setPage(1)}} emptyLabel={faLang?"همه دانشگاه‌ها":"All universities"} allowUnassigned/>
         )}
         {uniFilter && <span className="small muted">{faLang ? `${filteredByUni.length} نفر` : `${filteredByUni.length} users`}</span>}
       </div>
@@ -616,10 +629,7 @@ function UsersManager({ scope = "all" }) {
           {showUniTools && <button type="button" className="btn btn-ghost btn-sm" onClick={()=> setBulkAction(bulkAction==="class"?null:"class")}><Icon name="users" size={13}/> {faLang?"افزودن به کلاس":"Add to class"}</button>}
           {bulkAction==="uni" && (
             <span style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap" }}>
-              <select value={bulkUni} onChange={e=> setBulkUni(e.target.value)} style={{ minWidth:180 }}>
-                <option value="">{faLang?"— انتخاب دانشگاه —":"— pick university —"}</option>
-                {unis.map(u=> <option key={u.id} value={u.id}>{faLang?(u.name_fa||u.code):(u.name_en||u.code)} — {u.code}</option>)}
-              </select>
+              <UniversitySelect rows={unis} value={bulkUni} onChange={setBulkUni}/>
               <button type="button" className="btn btn-primary btn-sm" onClick={bulkAssignUni}>{faLang?"تأیید انتساب":"Assign"}</button>
             </span>
           )}
@@ -635,12 +645,13 @@ function UsersManager({ scope = "all" }) {
         </div>
       )}
 
-      <DataTable
+      <div aria-busy={usersLoading}>{usersLoading&&<p role="status">{faLang?"در حال بارگذاری کاربران…":"Loading users…"}</p>}<fieldset disabled={usersLoading} style={{border:0,padding:0,minWidth:0}}>
+      <DataTable searchable={false} pageSize={0}
         rows={uniFilter ? filteredByUni : users}
         selectable={true}
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
-        initialSort={{ key: "name", dir: "asc" }}
+        initialSort={{ key: null, dir: "asc" }}
         searchPlaceholder={t("searchByNameOrNo")}
         searchKeys={[(u) => u.name_fa, (u) => u.name_en, (u) => u.username, (u) => u.student_no, (u)=> uniNameOf(u), (u)=> u.uni_name_fa, (u)=> u.uni_name_en]}
         rowKey={(u) => u.id}
@@ -675,7 +686,7 @@ function UsersManager({ scope = "all" }) {
               <button type="button" className="btn btn-sm btn-danger" onClick={() => del(u)} title={t("deleteUser")}><Icon name="trash" size={13} /></button>
             </span>) },
         ]}
-      />
+      /></fieldset></div>
       {editing && <UserEditModal user={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
       {creating && <UserCreateModal defaultRole={scope === "uni" ? "student" : scope === "competitive" ? "learner" : "learner"} onClose={() => setCreating(false)} onSaved={() => { setCreating(false); load(); }} />}
       {adding && <AddStudentModal cases={cases} onClose={() => setAdding(false)} onDone={() => { setAdding(false); load(); }} />}
@@ -751,7 +762,7 @@ function StudentImportModal({ onClose, onDone }) {
   const myRole = (()=>{ try{ const tok=getToken(); if(!tok) return ""; const p=JSON.parse(atob(tok.split(".")[1]||"")); return p.role||"";}catch{return ""}})();
 
   useEffect(()=>{
-    api.get("/admin/universities").then(r=>setUnis(r.universities||r||[])).catch(()=>{});
+    api.get("/universities").then(r=>setUnis(r.universities||r||[])).catch(()=>{});
     api.get("/classes").then(r=>setClasses(r.classes||r||[])).catch(()=>{});
     // for teacher, prefill own university
     if (myRole==="teacher") {
@@ -851,10 +862,7 @@ function StudentImportModal({ onClose, onDone }) {
           {(myRole==="admin") && (
             <div className="grid grid-2 mb12">
               <label className="field"><span>{fa?"دانشگاه مقصد (اختیاری)":"Target university (optional)"}</span>
-                <select value={uniId} onChange={e=>setUniId(e.target.value)}>
-                  <option value="">{fa?"— دانشگاه فعلی/پیش‌فرض —":"— current / default —"}</option>
-                  {unis.map(u=><option key={u.id} value={u.id}>{fa? (u.name_fa||u.code) : (u.name_en||u.code)} — {u.code} {u.city_fa?`(${u.city_fa})`:""}</option>)}
-                </select>
+                <UniversitySelect rows={unis} value={uniId} onChange={setUniId} emptyLabel={fa?"دانشگاه فعلی / پیش‌فرض":"Current / default university"}/>
                 <span className="small muted">{fa?"اگر خالی باشد، به دانشگاهِ جاری افزوده می‌شود. کد داخل CSV بر این انتخاب اولویت دارد.":"Leave empty for current. Code inside CSV overrides this."}</span>
               </label>
               <label className="field"><span>{fa?"افزودن مستقیم به کلاس (ثبت‌نام خودکار)":"Add directly to class (auto-enroll)"}</span>
@@ -943,14 +951,20 @@ function StudentImportModal({ onClose, onDone }) {
                   toast(fa?"کپی شد — حالا در اکسل/شیت اصلاح کنید":"Copied");
                 }}>{fa?"کپی لیست ناموفق":"Copy failed list"}</button>
                 <button type="button" className="btn btn-ghost btn-sm" onClick={()=>{
+                  if (typeof result.failedCsv === "string") {
+                    setText(result.failedCsv);
+                    toast(fa?"فقط ردیف‌های ناموفق نگه داشته شد — اصلاح کنید و دوباره وارد کنید":"Kept only failed rows — fix and retry");
+                    return;
+                  }
                   const failedLines = new Set(result.failures.map(f=>f.line));
-                  const allLines = text.split(/\r?\n/);
+                  // Server row numbers refer to non-empty CSV lines.
+                  const allLines = text.split(/\r?\n/).map(l=>l.trimEnd()).filter(l=>l.trim()!=="");
                   const hasHeader = result.hasHeader;
                   const header = hasHeader ? allLines[0] : null;
                   const keep = allLines.filter((_,idx)=>{
                     const lineNo = idx+1;
                     if(hasHeader && idx===0) return true;
-                    return !failedLines.has(lineNo);
+                    return failedLines.has(lineNo);
                   });
                   setText(keep.join("\n"));
                   toast(fa?"فقط ردیف‌های ناموفق نگه داشته شد — اصلاح کنید و دوباره وارد کنید":"Kept only failed rows — fix and retry");
@@ -989,26 +1003,56 @@ function StudentImportModal({ onClose, onDone }) {
 function AccessModal({ user, cases, onClose, onDone }) {
   const { t, lang } = useApp();
   const toast = useToast();
+  const fa = lang === "fa";
   const [caseIds, setCaseIds] = useState(user.caseIds || []);
   const [maxAttempts, setMaxAttempts] = useState(3);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const savingRef = useRef(false);
+  const errorRef = useRef(null);
+  useEffect(() => { if (error) errorRef.current?.scrollIntoView?.({ block: "nearest" }); }, [error]);
+  const quotaError = fa ? "تعداد دفعات آزمون باید عدد صحیحِ مثبت و معتبر باشد." : "Attempts must be a valid positive whole number.";
+  const listError = fa ? "حداکثر ۴۰۰ مورد را در یک درخواست انتخاب کنید؛ هیچ تغییری ذخیره نشد." : "Select at most 400 cases per request; no changes were saved.";
   const toggleCase = (id) => setCaseIds((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
+  const close = () => { if (!savingRef.current) onClose(); };
   const save = async () => {
-    await api.put(`/assignments/${user.id}`, { caseIds, maxAttempts });
-    toast(t("saved")); onDone();
+    if (savingRef.current) return;
+    setError("");
+    const attempts = Number(maxAttempts);
+    if (!Number.isSafeInteger(attempts) || attempts < 1) { setError(quotaError); return; }
+    if (caseIds.length > 400) { setError(listError); return; }
+    savingRef.current = true;
+    setSaving(true);
+    try {
+      await api.put(`/assignments/${user.id}`, { caseIds, maxAttempts: attempts });
+      toast(t("saved"));
+      onDone();
+    } catch (e) {
+      setError(e?.data?.error === "invalid_max_attempts" ? quotaError
+        : e?.data?.error === "invalid_case_ids" ? listError
+        : String(e?.message || (fa ? "ذخیره نشد؛ دوباره تلاش کنید." : "Could not save; please retry.")));
+    } finally {
+      savingRef.current = false;
+      setSaving(false);
+    }
   };
   return (
     <Modal title={`${t("manageAccess")} — ${lang === "fa" ? user.name_fa : user.name_en} (${user.student_no})`}
-      onClose={onClose} onSave={save} saveLabel={t("saveAccess")}>
+      onClose={close} onSave={save} saveDisabled={saving} saveLabel={t("saveAccess")}>
+      {saving && <p role="status">{fa ? "در حال ذخیره…" : "Saving…"}</p>}
+      <div aria-busy={saving}>
       <label className="small muted">{t("assignExams")}</label>
       <div className="small muted mb8">{t("assignExamsHint")}</div>
       {cases.map((c) => (
         <label key={c.id} className="toggle-row" style={{ cursor: "pointer" }}>
           <span>{biField(c, "title", lang)} <span className="badge-ver">v{c.version}</span></span>
-          <input type="checkbox" checked={caseIds.includes(c.id)} onChange={() => toggleCase(c.id)} style={{ width: 18, height: 18 }} />
+          <input type="checkbox" disabled={saving} checked={caseIds.includes(c.id)} onChange={() => toggleCase(c.id)} style={{ width: 18, height: 18 }} />
         </label>
       ))}
-      <div className="field mt16"><label>{t("maxAttemptsField")}</label>
-        <input type="number" min="1" value={maxAttempts} onChange={(e) => setMaxAttempts(+e.target.value || 1)} /></div>
+      <div className="field mt16"><label htmlFor="assignment-attempts">{t("maxAttemptsField")}</label>
+        <input id="assignment-attempts" type="number" min="1" step="1" disabled={saving} value={maxAttempts} onChange={(e) => setMaxAttempts(e.target.value)} /></div>
+      </div>
+      {error && <p role="alert" ref={errorRef}>{error}</p>}
     </Modal>
   );
 }
@@ -1035,11 +1079,12 @@ function Cases() {
   const { t, lang } = useApp();
   const [cases, setCases] = useState(null);
   const [editing, setEditing] = useState(null);
+  const [status, setStatus] = useState("active");
   const toast = useToast();
   const [loadErr, setLoadErr] = useState("");
   const load = () => {
     setLoadErr("");
-    api.get("/cases").then((d) => setCases(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setCases({ __err: true }); });
+    api.get("/cases?status=all").then((d) => setCases(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setCases({ __err: true }); });
   };
   useEffect(() => { load(); }, []);
   if (cases?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (lang === "fa" ? "بارگذاری کیس‌ها شکست خورد" : "Could not load cases")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCases(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
@@ -1057,19 +1102,30 @@ function Cases() {
           <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newCase")}</button>
         </div></div>
       <div className="small muted mb16"><Icon name="bookmark" size={16} /> {t("versionNote")}</div>
+      <label className="small">{lang === 'fa' ? 'فیلتر وضعیت' : 'Status filter'} <select value={status} onChange={e=>setStatus(e.target.value)}>
+        <option value="active">{lang === 'fa' ? 'فعال' : 'Active'}</option><option value="inactive">{lang === 'fa' ? 'غیرفعال / بایگانی' : 'Inactive / archived'}</option><option value="all">{lang === 'fa' ? 'همه' : 'All'}</option>
+      </select></label>
       <DataTable
-        rows={cases}
+        rows={cases.filter(c => status === "all" || (status === "active" ? !!c.active : !c.active))} exportable
+        storageKey="admin-cases"
+        defaultHiddenColumns={["university_id", "updated_at"]}
         initialSort={{ key: "title", dir: "asc" }}
-        searchKeys={[(c) => c.title_fa, (c) => c.title_en, (c) => c.specialty_fa, (c) => c.specialty_en]}
+        searchKeys={[(c) => c.public_code, (c) => c.title_fa, (c) => c.title_en, (c) => c.specialty_fa, (c) => c.specialty_en]}
         rowKey={(c) => c.id}
         columns={[
           { key: "title", label: t("caseTitle"), sortValue: (c) => biField(c, "title", lang), render: (c) => <>{biField(c, "title", lang)} <span className="badge-ver">v{c.version}</span></> },
+          { key: "active", label: lang === 'fa' ? 'وضعیت' : 'Status', render: c => c.active ? (lang === 'fa' ? 'فعال' : 'Active') : (lang === 'fa' ? 'بایگانی' : 'Archived') },
+          { key: "public_code", label: lang === 'fa' ? 'کد ثابت' : 'Permanent code', render: c => <ContentCode code={c.public_code} /> },
+          { key: "university_id", label: lang === 'fa' ? 'شناسه دانشگاه' : 'University ID' },
+          { key: "updated_at", label: lang === 'fa' ? 'آخرین ویرایش' : 'Last updated', render: c => c.updated_at || '—' },
           { key: "specialty", label: t("specialty"), sortValue: (c) => biField(c, "specialty", lang), render: (c) => biField(c, "specialty", lang) },
           { key: "difficulty", label: t("difficulty"), sortValue: (c) => c.difficulty, render: (c) => <Pill kind={c.difficulty}>{t(c.difficulty)}</Pill> },
+          { key: "reference", label: lang === 'fa' ? 'مرجع آموزشی' : 'Teaching reference', sortValue: c => c.reference?.ready ? 1 : 0, render: c => c.reference?.ready ? (lang === 'fa' ? 'آماده' : 'Ready') : (lang === 'fa' ? 'نیازمند تأیید' : 'Needs approval') },
+          { key: "sharing", label: lang === "fa" ? "اشتراک و مشاهده" : "Sharing & preview", sortable:false, render:c=><ContentSharing kind="cases" row={c} onChanged={load}/> },
           { key: "actions", label: "", sortable: false, thStyle: { textAlign: "end" }, render: (c) => (
             <span style={{ display: "flex", gap: 4, justifyContent: "flex-end", whiteSpace: "nowrap" }}>
-              <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}>{t("edit")}</button>
-              <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button>
+              <button type="button" className="btn btn-sm btn-ghost" disabled={c.can_manage === false} onClick={() => setEditing(c)}>{t("edit")}</button>
+              <button type="button" className="btn btn-sm btn-danger" disabled={c.can_manage === false} onClick={() => del(c.id)}>{t("delete")}</button>
             </span>) },
         ]}
       />
@@ -1084,18 +1140,18 @@ function ResultEditor({ r, i, ops, t, withImage }) {
   return (
     <div className="card mb8" style={{ background: "var(--panel2)", padding: 12 }}>
       <div className="grid grid-2">
-        <div className="field"><label>{t("resultName")} (FA)</label>
-          <input value={r.name_fa || ""} readOnly={!!(r.name_fa || r.name_en)} onChange={(e) => ops.setField(i, "name_fa", e.target.value)} /></div>
-        <div className="field"><label>{t("resultName")} (EN)</label>
-          <input value={r.name_en || ""} readOnly={!!(r.name_fa || r.name_en)} onChange={(e) => ops.setField(i, "name_en", e.target.value)} /></div>
+        <div data-content-language="fa" className="field"><label>{t("resultName")} (FA)</label>
+          <input aria-label={[t("resultName"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={r.name_fa || ""} readOnly={!!(r.name_fa || r.name_en)} onChange={(e) => ops.setField(i, "name_fa", e.target.value)} /></div>
+        <div data-content-language="en" className="field"><label>{t("resultName")} (EN)</label>
+          <input aria-label={[t("resultName"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={r.name_en || ""} readOnly={!!(r.name_fa || r.name_en)} onChange={(e) => ops.setField(i, "name_en", e.target.value)} /></div>
       </div>
       <div className="field"><label>{t("resultAliases")} <span className="small muted">— {t("resultAliasesHint")}</span></label>
-        <input value={(r.aliases || []).join(", ")} onChange={(e) => ops.setAliases(i, e.target.value)} placeholder="troponin, trop, تروپونین" /></div>
+        <input aria-label={[t("resultAliases")].join(' ')} value={(r.aliases || []).join(", ")} onChange={(e) => ops.setAliases(i, e.target.value)} placeholder="troponin, trop, تروپونین" /></div>
       <div className="grid grid-2">
-        <div className="field"><label>{t("resultValue")} (FA)</label>
-          <input value={r.result_fa || ""} onChange={(e) => ops.setField(i, "result_fa", e.target.value)} /></div>
-        <div className="field"><label>{t("resultValue")} (EN)</label>
-          <input value={r.result_en || ""} onChange={(e) => ops.setField(i, "result_en", e.target.value)} /></div>
+        <div data-content-language="fa" className="field"><label>{t("resultValue")} (FA)</label>
+          <input aria-label={[t("resultValue"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={r.result_fa || ""} onChange={(e) => ops.setField(i, "result_fa", e.target.value)} /></div>
+        <div data-content-language="en" className="field"><label>{t("resultValue")} (EN)</label>
+          <input aria-label={[t("resultValue"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={r.result_en || ""} onChange={(e) => ops.setField(i, "result_en", e.target.value)} /></div>
       </div>
       {withImage && <ImageUpload value={r.imageUrl} onChange={(v) => ops.setField(i, "imageUrl", v)} label={t("resultImage")} />}
       <button type="button" className="btn btn-sm btn-danger" onClick={() => ops.del(i)}><Icon name="trash" size={13} /> {t("delete")}</button>
@@ -1103,8 +1159,9 @@ function ResultEditor({ r, i, ops, t, withImage }) {
   );
 }
 
-function CaseModal({ caseObj, onClose, onSave }) {
-  const { t, lang } = useApp();
+export function CaseModal({ caseObj, onClose, onSave }) {
+  const { t, lang, user } = useApp();
+  const [initial] = useState(() => patientEditorData(caseObj));
   const [f, setF] = useState({
     title_fa: "", title_en: "", age: "", sex: "male", difficulty: "medium", history_form: "internal",
     specialty_fa: "", specialty_en: "", chief_fa: "", chief_en: "", history_fa: "", history_en: "",
@@ -1115,15 +1172,29 @@ function CaseModal({ caseObj, onClose, onSave }) {
     lungSound: "", heartSound: "", problem_list_fa: "", problem_list_en: "", ddx_fa: "", ddx_en: "",
     diagnosis_fa: "", diagnosis_en: "", objectives_fa: "", objectives_en: "",
     vitals: { bp: "120/80", hr: "75", rr: "16", temp: "37", spo2: "98%" },
-    images: [], labResults: [], imagingResults: [], paraclinicResults: [], checklist_id: 1, ...caseObj,
+    images: [], labResults: [], imagingResults: [], paraclinicResults: [], checklist_id: 1, ...initial.data,
   });
   // load the editable OSCE checklists so the author can pick which rubric scores this case
   const [checklists, setChecklists] = useState([]);
   const [chkErr, setChkErr] = useState("");
+  const [policies, setPolicies] = useState([]);
+  const [policyErr, setPolicyErr] = useState("");
+  const universityId = Number(caseObj.university_id || user?.university_id || 1);
+  useEffect(() => {
+    let cancelled = false;
+    api.get(`/academic/policies?university_id=${universityId}`).then(d => {
+      if (!cancelled) setPolicies((Array.isArray(d?.policies) ? d.policies : []).filter(p => Number(p.university_id) === universityId && p.ready));
+    }).catch(e => { if (!cancelled) setPolicyErr(String(e.message || e)); });
+    return () => { cancelled = true; };
+  }, [universityId]);
   const [orderCat, setOrderCat] = useState({ labs: [], imaging: [] });
   const [catErr, setCatErr] = useState("");
   useEffect(() => {
-    api.get("/checklists").then((d) => setChecklists(Array.isArray(d) ? d : [])).catch((e) => { setChkErr(String(e.message || e)); setChecklists([]); });
+    api.get("/checklists").then((d) => {
+      const available = Array.isArray(d) ? d : [];
+      setChecklists(available);
+      if (!caseObj.id && available.length) setF(current => available.some(c => Number(c.id) === Number(current.checklist_id)) ? current : { ...current, checklist_id: available[0].id });
+    }).catch((e) => { setChkErr(String(e.message || e)); setChecklists([]); });
     api.get("/order-catalog").then((d) => setOrderCat(d && (d.labs || d.imaging) ? d : { labs: [], imaging: [] })).catch((e) => { setCatErr(String(e.message || e)); setOrderCat({ __err: true, labs: [], imaging: [] }); });
   }, []);
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
@@ -1148,7 +1219,7 @@ function CaseModal({ caseObj, onClose, onSave }) {
         set(key, [...list, { name_fa, name_en, aliases, result_fa: "", result_en: "", imageUrl: "" }]);
       },
       setField: (i, k, v) => set(key, list.map((r, j) => j === i ? { ...r, [k]: v } : r)),
-      setAliases: (i, v) => set(key, list.map((r, j) => j === i ? { ...r, aliases: v.split(",").map((s) => s.trim()).filter(Boolean) } : r)),
+      setAliases: (i, v) => set(key, list.map((r, j) => j === i ? { ...r, aliases: v.split(/[,،\n]/).map((s) => s.trim()).filter(Boolean) } : r)),
       del: (i) => set(key, list.filter((_, j) => j !== i)),
     };
   };
@@ -1156,26 +1227,24 @@ function CaseModal({ caseObj, onClose, onSave }) {
   const imgResults = mkResultOps("imagingResults");
   const paraResults = mkResultOps("paraclinicResults");
 
-  const F = ({ k, label, area }) => area
-    ? <div className="field"><label>{label}</label><textarea value={f[k] || ""} onChange={(e) => set(k, e.target.value)} /></div>
-    : <div className="field"><label>{label}</label><input value={f[k] ?? ""} onChange={(e) => set(k, e.target.value)} /></div>;
-
   return (
-    <Modal title={caseObj.id ? t("edit") : t("newCase")} onClose={onClose} onSave={() => onSave({ ...f, age: +f.age || 0 }, caseObj.id)}>
+    <AuthoringModal value={f} sections={[{id:"basics",title:lang==="fa"?"مشخصات و شکایت":"Basics & complaint"},{id:"history",title:lang==="fa"?"شرح‌حال و معاینه":"History & examination"},{id:"results",title:lang==="fa"?"ارزیابی و نتایج":"Assessment & results"},{id:"review",title:lang==="fa"?"بازبینی":"Review"}]} validate={()=>validatePatient(f,lang)} title={caseObj.id ? t("edit") : t("newCase")} onClose={onClose} onSave={() => onSave({ ...f, age: f.age == null || f.age === "" ? null : Number(f.age) }, caseObj.id)}>
+      <AuthorSection id="basics" title={lang==="fa"?"مشخصات بیمار":"Patient basics"}>
+      {initial.repaired && <div role="status" className="small muted mb8">{lang === "fa" ? "قالب قدیمی نتایج برای ویرایش اصلاح شد. پیش از ذخیره، بخش نتایج و تصاویر را بازبینی کنید؛ دیتابیس هنوز تغییر نکرده است." : "Legacy result formatting was repaired for editing. Review results and images before saving; the database has not been changed."}</div>}
       <div className="grid grid-2">
-        <F k="title_fa" label={`${t("caseTitle")} (FA)`} />
-        <F k="title_en" label={`${t("caseTitle")} (EN)`} />
-        <F k="age" label={t("age")} />
+        <AuthorField values={f} onChange={set} k="title_fa" label={`${t("caseTitle")} (FA)`} />
+        <AuthorField values={f} onChange={set} k="title_en" label={`${t("caseTitle")} (EN)`} />
+        <AuthorField values={f} onChange={set} k="age" label={t("age")} />
         <div className="field"><label>{t("sex")}</label>
-          <select value={f.sex} onChange={(e) => set("sex", e.target.value)}>
+          <select aria-label={[t("sex")].join(' ')} value={f.sex} onChange={(e) => set("sex", e.target.value)}>
             <option value="male">{t("male")}</option><option value="female">{t("female")}</option></select></div>
-        <F k="specialty_fa" label={`${t("specialty")} (FA)`} />
-        <F k="specialty_en" label={`${t("specialty")} (EN)`} />
+        <AuthorField values={f} onChange={set} k="specialty_fa" label={`${t("specialty")} (FA)`} />
+        <AuthorField values={f} onChange={set} k="specialty_en" label={`${t("specialty")} (EN)`} />
         <div className="field"><label>{t("difficulty")}</label>
-          <select value={f.difficulty} onChange={(e) => set("difficulty", e.target.value)}>
+          <select aria-label={[t("difficulty")].join(' ')} value={f.difficulty} onChange={(e) => set("difficulty", e.target.value)}>
             {["easy", "medium", "hard"].map((d) => <option key={d} value={d}>{t(d)}</option>)}</select></div>
         <div className="field"><label><Icon name="patient" size={14} /> {t("historyForm")}</label>
-          <select value={f.history_form || "internal"} onChange={(e) => set("history_form", e.target.value)}>
+          <select aria-label={[t("historyForm")].join(' ')} value={f.history_form || "internal"} onChange={(e) => set("history_form", e.target.value)}>
             <option value="internal">{t("formInternal")}</option>
             <option value="obgyn">{t("formObgyn")}</option>
             <option value="cardio">{t("formCardio")}</option>
@@ -1184,29 +1253,41 @@ function CaseModal({ caseObj, onClose, onSave }) {
           </select>
           <div className="small muted mt4">{t("historyFormHint")}</div>
         </div>
+        <div className="field">
+          <label htmlFor="case-reference-policy">{lang === "fa" ? "مرجع آموزشی تأییدشده" : "Approved teaching reference"}</label>
+          <select id="case-reference-policy" value={f.reference_policy_id || ""} onChange={e => setF(current => ({ ...current, reference_policy_id: Number(e.target.value) || null, refresh_reference_snapshot: false }))}>
+            <option value="" disabled={!!caseObj.reference_policy_id}>{lang === "fa" ? "بدون مرجع تأییدشده / پیش‌نویس" : "No approved reference / draft"}</option>
+            {f.reference_policy_id && !policies.some(p => Number(p.id) === Number(f.reference_policy_id)) && <option value={f.reference_policy_id}>{lang === "fa" ? "مرجع فعلی — وضعیت آماده تأیید نشده" : "Current reference — readiness not verified"}</option>}
+            {policies.map(p => <option key={p.id} value={p.id}>{(lang === "fa" ? p.course_name_fa || p.course_name_en : p.course_name_en || p.course_name_fa) || p.course_code} — {p.source_anchor}</option>)}
+          </select>
+          {policyErr && <div className="err-banner">{policyErr}</div>}
+          {!policies.some(p => Number(p.id) === Number(f.reference_policy_id)) && !(Number(f.reference_policy_id) === Number(caseObj.reference_policy_id) && caseObj.reference?.ready) && <div className="small muted mt4">{lang === "fa" ? "ذخیرهٔ پرونده ممکن است، اما درسنامهٔ مرجع‌محور تا انتخاب مرجع آماده مسدود می‌ماند. مرجع باید توسط مسئول آموزشی تأیید شود." : "The chart can be saved, but source-aware microlearning remains blocked until a ready reference is selected. Academic staff must approve the reference."}</div>}
+          {caseObj.id && Number(f.reference_policy_id) === Number(caseObj.reference_policy_id) && policies.some(p => Number(p.id) === Number(f.reference_policy_id)) && <label className="small mt4"><input type="checkbox" checked={!!f.refresh_reference_snapshot} onChange={e => set("refresh_reference_snapshot", e.target.checked)} />{lang === "fa" ? "نسخهٔ فعلی مرجع را برای مراجعات جدید ثبت کن" : "Use the current reference version for new encounters"}</label>}
+        </div>
         <div className="field"><label><Icon name="check" size={14} /> {lang === "fa" ? "چک‌لیست ارزیابی (OSCE)" : "Assessment checklist (OSCE)"}</label>
           {chkErr && <div className="err-banner mb8">{chkErr}</div>}
-          <select value={f.checklist_id} onChange={(e) => set("checklist_id", +e.target.value)}>
+          <select aria-label={[lang === "fa" ? "چک‌لیست ارزیابی (OSCE)" : "Assessment checklist (OSCE)"].join(' ')} value={f.checklist_id} onChange={(e) => set("checklist_id", +e.target.value)}>
             {checklists.map((c) => <option key={c.id} value={c.id}>{lang === "fa" ? c.name_fa : c.name_en}</option>)}
           </select>
           <div className="small muted mt4">{lang === "fa" ? "این چک‌لیست معیارِ نمره‌دهیِ این کیس است." : "This checklist is the scoring rubric for this case."}</div>
         </div>
       </div>
-      <F k="chief_fa" label={`${t("chief")} (FA)`} /><F k="chief_en" label={`${t("chief")} (EN)`} />
-      <F k="history_fa" label={`${t("history")} (FA)`} area /><F k="history_en" label={`${t("history")} (EN)`} area />
+      <AuthorField values={f} onChange={set} k="chief_fa" label={`${t("chief")} (FA)`} /><AuthorField values={f} onChange={set} k="chief_en" label={`${t("chief")} (EN)`} />
+      <AuthorField values={f} onChange={set} k="history_fa" label={`${t("history")} (FA)`} area /><AuthorField values={f} onChange={set} k="history_en" label={`${t("history")} (EN)`} area />
 
+      </AuthorSection><AuthorSection id="history" title={lang==="fa"?"شرح‌حال و معاینه":"History & examination"}>
       {/* Full patient history fields (the patient AI answers from these) */}
       <div className="divider" />
       <div className="small muted mb8"><Icon name="patient" size={15} /> {t("caseFullHistory")}</div>
       <div className="grid grid-2">
-        <F k="pmh_fa" label={`${t("pmh")} (FA)`} /><F k="pmh_en" label={`${t("pmh")} (EN)`} />
-        <F k="meds_fa" label={`${t("meds")} (FA)`} /><F k="meds_en" label={`${t("meds")} (EN)`} />
-        <F k="allergies_fa" label={`${t("allergies")} (FA)`} /><F k="allergies_en" label={`${t("allergies")} (EN)`} />
-        <F k="family_fa" label={`${t("familyHx")} (FA)`} /><F k="family_en" label={`${t("familyHx")} (EN)`} />
+        <AuthorField values={f} onChange={set} k="pmh_fa" label={`${t("pmh")} (FA)`} /><AuthorField values={f} onChange={set} k="pmh_en" label={`${t("pmh")} (EN)`} />
+        <AuthorField values={f} onChange={set} k="meds_fa" label={`${t("meds")} (FA)`} /><AuthorField values={f} onChange={set} k="meds_en" label={`${t("meds")} (EN)`} />
+        <AuthorField values={f} onChange={set} k="allergies_fa" label={`${t("allergies")} (FA)`} /><AuthorField values={f} onChange={set} k="allergies_en" label={`${t("allergies")} (EN)`} />
+        <AuthorField values={f} onChange={set} k="family_fa" label={`${t("familyHx")} (FA)`} /><AuthorField values={f} onChange={set} k="family_en" label={`${t("familyHx")} (EN)`} />
       </div>
-      <F k="social_fa" label={`${t("socialHx")} (FA)`} area /><F k="social_en" label={`${t("socialHx")} (EN)`} area />
-      <F k="ros_fa" label={`${t("rosHx")} (FA)`} area /><F k="ros_en" label={`${t("rosHx")} (EN)`} area />
-      <F k="exam_fa" label={`${t("physicalExam")} (FA)`} area /><F k="exam_en" label={`${t("physicalExam")} (EN)`} area />
+      <AuthorField values={f} onChange={set} k="social_fa" label={`${t("socialHx")} (FA)`} area /><AuthorField values={f} onChange={set} k="social_en" label={`${t("socialHx")} (EN)`} area />
+      <AuthorField values={f} onChange={set} k="ros_fa" label={`${t("rosHx")} (FA)`} area /><AuthorField values={f} onChange={set} k="ros_en" label={`${t("rosHx")} (EN)`} area />
+      <AuthorField values={f} onChange={set} k="exam_fa" label={`${t("physicalExam")} (FA)`} area /><AuthorField values={f} onChange={set} k="exam_en" label={`${t("physicalExam")} (EN)`} area />
       <div className="small muted mt4">
         {lang === "fa"
           ? "وقتی دانشجو در چت معاینه بیمار را بخواهد، هوش مصنوعی در نقش استاد بر اساس همین یافته‌ها و علائم حیاتی پاسخ می‌دهد."
@@ -1220,27 +1301,28 @@ function CaseModal({ caseObj, onClose, onSave }) {
       <AudioUpload value={f.lungSound || ""} onChange={(v) => set("lungSound", v)} label={t("lungSound")} />
       <AudioUpload value={f.heartSound || ""} onChange={(v) => set("heartSound", v)} label={t("heartSound")} />
 
-      {/* Expected problem list + expected differentials (used to score the
-          student's problem list & ddx boxes — both are extern-criterion items) */}
-      <div className="divider" />
-      <F k="problem_list_fa" label={`${t("expectedProblemList")} (FA)`} area />
-      <F k="problem_list_en" label={`${t("expectedProblemList")} (EN)`} area />
-      <div className="small muted mb8">{t("expectedProblemListHint")}</div>
-      <F k="ddx_fa" label={`${t("expectedDdx")} (FA)`} area />
-      <F k="ddx_en" label={`${t("expectedDdx")} (EN)`} area />
-      <div className="small muted mb8">{t("expectedDdxHint")}</div>
-
       {/* Vital signs */}
       <div className="small muted mb8 mt8"><Icon name="activity" size={15} /> {t("vitals")}</div>
       <div className="grid grid-2">
         {[["bp", "BP"], ["hr", "HR"], ["rr", "RR"], ["temp", "Temp"], ["spo2", "SpO₂"]].map(([k, lbl]) => (
           <div className="field" key={k}><label>{lbl}</label>
-            <input value={(f.vitals || {})[k] || ""} onChange={(e) => setVital(k, e.target.value)} /></div>
+            <input aria-label={[lbl].join(' ')} value={(f.vitals || {})[k] || ""} onChange={(e) => setVital(k, e.target.value)} /></div>
         ))}
       </div>
 
-      <F k="diagnosis_fa" label={`${t("diagnosis")} (FA)`} /><F k="diagnosis_en" label={`${t("diagnosis")} (EN)`} />
-      <F k="objectives_fa" label={`${t("objectives")} (FA)`} area /><F k="objectives_en" label={`${t("objectives")} (EN)`} area />
+      </AuthorSection><AuthorSection id="results" title={lang==="fa"?"معیار ارزیابی و نتایج قابل سفارش":"Assessment & orderable results"}>
+      {/* Expected problem list + expected differentials (used to score the
+          student's problem list & ddx boxes — both are extern-criterion items) */}
+      <div className="divider" />
+      <AuthorField values={f} onChange={set} k="problem_list_fa" label={`${t("expectedProblemList")} (FA)`} area />
+      <AuthorField values={f} onChange={set} k="problem_list_en" label={`${t("expectedProblemList")} (EN)`} area />
+      <div className="small muted mb8">{t("expectedProblemListHint")}</div>
+      <AuthorField values={f} onChange={set} k="ddx_fa" label={`${t("expectedDdx")} (FA)`} area />
+      <AuthorField values={f} onChange={set} k="ddx_en" label={`${t("expectedDdx")} (EN)`} area />
+      <div className="small muted mb8">{t("expectedDdxHint")}</div>
+
+      <AuthorField values={f} onChange={set} k="diagnosis_fa" label={`${t("diagnosis")} (FA)`} /><AuthorField values={f} onChange={set} k="diagnosis_en" label={`${t("diagnosis")} (EN)`} />
+      <AuthorField values={f} onChange={set} k="objectives_fa" label={`${t("objectives")} (FA)`} area /><AuthorField values={f} onChange={set} k="objectives_en" label={`${t("objectives")} (EN)`} area />
 
       {/* Orderable LAB results — pick from the shared catalog, then fill the result */}
       <div className="divider" />
@@ -1277,16 +1359,17 @@ function CaseModal({ caseObj, onClose, onSave }) {
         <div key={i} className="card mb8" style={{ background: "var(--panel2)", padding: 12 }}>
           <ImageUpload value={im.url} onChange={(v) => setImage(i, "url", v)} />
           <div className="grid grid-2">
-            <div className="field"><label>{t("imgLabel")} (FA)</label>
-              <input value={im.label_fa} onChange={(e) => setImage(i, "label_fa", e.target.value)} /></div>
-            <div className="field"><label>{t("imgLabel")} (EN)</label>
-              <input value={im.label_en} onChange={(e) => setImage(i, "label_en", e.target.value)} /></div>
+            <div data-content-language="fa" className="field"><label>{t("imgLabel")} (FA)</label>
+              <input aria-label={[t("imgLabel"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={im.label_fa} onChange={(e) => setImage(i, "label_fa", e.target.value)} /></div>
+            <div data-content-language="en" className="field"><label>{t("imgLabel")} (EN)</label>
+              <input aria-label={[t("imgLabel"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={im.label_en} onChange={(e) => setImage(i, "label_en", e.target.value)} /></div>
           </div>
           <button type="button" className="btn btn-sm btn-danger" onClick={() => delImage(i)}>{t("removeImage")}</button>
         </div>
       ))}
       {!images.length && <div className="small muted">{t("noImages")}</div>}
-    </Modal>
+      </AuthorSection><AuthorSection id="review" title={lang==="fa"?"بازبینی پیش از ذخیره":"Review before saving"}><AuthorSummary data={f} clinical /></AuthorSection>
+    </AuthoringModal>
   );
 }
 
@@ -1314,11 +1397,12 @@ function Flashcards() {
   const { t, lang } = useApp();
   const [cards, setCards] = useState(null);
   const [editing, setEditing] = useState(null);
+  const [status, setStatus] = useState("active");
   const toast = useToast();
   const [loadErr, setLoadErr] = useState("");
   const load = () => {
     setLoadErr("");
-    api.get("/flashcards").then((d) => setCards(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setCards({ __err: true }); });
+    api.get("/flashcards?status=all").then((d) => setCards(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setCards({ __err: true }); });
   };
   useEffect(() => { load(); }, []);
   if (cards?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (lang === "fa" ? "بارگذاری فلش‌کارت‌ها شکست خورد" : "Could not load flashcards")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCards(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
@@ -1336,20 +1420,30 @@ function Flashcards() {
           <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newFlashcard")}</button>
         </div></div>
       <div className="small muted mb16"><Icon name="bookmark" size={16} /> {t("versionNote")}</div>
+      <label className="small">{lang === 'fa' ? 'فیلتر وضعیت' : 'Status filter'} <select value={status} onChange={e=>setStatus(e.target.value)}>
+        <option value="active">{lang === 'fa' ? 'فعال' : 'Active'}</option><option value="inactive">{lang === 'fa' ? 'غیرفعال / بایگانی' : 'Inactive / archived'}</option><option value="all">{lang === 'fa' ? 'همه' : 'All'}</option>
+      </select></label>
       <DataTable
-        rows={cards}
+        rows={cards.filter(c => status === "all" || (status === "active" ? !!c.active : !c.active))} exportable
+        storageKey="admin-cards"
+        defaultHiddenColumns={["university_id", "updated_at"]}
         initialSort={{ key: "title", dir: "asc" }}
-        searchKeys={[(c) => c.title_fa, (c) => c.title_en]}
+        searchKeys={[(c) => c.public_code, (c) => c.title_fa, (c) => c.title_en]}
         rowKey={(c) => c.id}
         columns={[
           { key: "title", label: t("title"), sortValue: (c) => biField(c, "title", lang), render: (c) => <>{biField(c, "title", lang)} <span className="badge-ver">v{c.version}</span></> },
-          { key: "type", label: lang === "fa" ? "نوع" : "Type", sortValue: (c) => flashTypeLabel(c.type, lang), render: (c) => <span className="tag">{flashTypeLabel(c.type, lang)}</span> },
+          { key: "active", label: lang === 'fa' ? 'وضعیت' : 'Status', render: c => c.active ? (lang === 'fa' ? 'فعال' : 'Active') : (lang === 'fa' ? 'بایگانی' : 'Archived') },
+          { key: "public_code", label: lang === 'fa' ? 'کد ثابت' : 'Permanent code', render: c => <ContentCode code={c.public_code} /> },
+          { key: "university_id", label: lang === 'fa' ? 'شناسه دانشگاه' : 'University ID' },
+          { key: "updated_at", label: lang === 'fa' ? 'آخرین ویرایش' : 'Last updated', render: c => c.updated_at || '—' },
+          { key: "type", label: lang === "fa" ? "نوع" : "Type", sortValue: (c) => flashTypeLabel(c.type, lang), render: (c) => <span className="tag">{c.type==='fill'&&c.answerMode==='search'?(lang==='fa'?'اتوکامپلیت':'Autocomplete'):flashTypeLabel(c.type, lang)}</span> },
           { key: "options", label: t("options"), sortValue: (c) => (c.options || []).length, render: (c) => (c.options || []).length },
           { key: "hints", label: t("hints"), sortValue: (c) => ((lang === "fa" ? c.hints_fa : c.hints_en) || []).length, render: (c) => ((lang === "fa" ? c.hints_fa : c.hints_en) || []).length },
+          { key: "sharing", label: lang === "fa" ? "اشتراک و مشاهده" : "Sharing & preview", sortable:false, render:c=><ContentSharing kind="flashcards" row={c} onChanged={load}/> },
           { key: "actions", label: "", sortable: false, thStyle: { textAlign: "end" }, render: (c) => (
             <span style={{ display: "flex", gap: 4, justifyContent: "flex-end", whiteSpace: "nowrap" }}>
-              <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}>{t("edit")}</button>
-              <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button>
+              <button type="button" className="btn btn-sm btn-ghost" disabled={c.can_manage === false} onClick={() => setEditing(c)}>{t("edit")}</button>
+              <button type="button" className="btn btn-sm btn-danger" disabled={c.can_manage === false} onClick={() => del(c.id)}>{t("delete")}</button>
             </span>) },
         ]}
       />
@@ -1417,7 +1511,7 @@ function DrawingZoneEditor({ drawing, onChange, lang }) {
   </div>;
 }
 
-function CardModal({ card, onClose, onSave }) {
+export function CardModal({ card, onClose, onSave }) {
   const { t, lang } = useApp();
   const [f, setF] = useState({
     title_fa: "", title_en: "", questionText_fa: "", questionText_en: "",
@@ -1448,6 +1542,11 @@ function CardModal({ card, onClose, onSave }) {
     micro_lead_fa: "", micro_lead_en: "", micro_golden_fa: "", micro_golden_en: "",
     micro_source_fa: "", micro_source_en: "",
     ...card,
+    questionText_fa: card.questionText_fa || card.q_fa || "",
+    questionText_en: card.questionText_en || card.q_en || "",
+    ...(card.drawing ? {drawing:{...card.drawing,...drawingRubrics(card.drawing)}} : {}),
+    ...(card.type === 'order' && (card.items_fa?.length || card.items_en?.length)
+      ? orderingRows(card.items_fa || [], card.items_en || []) : {}),
     // pre-fill micro fields from an existing card's stored micro object
     ...(card.micro ? {
       micro_lead_fa: card.micro.lead_fa || "", micro_lead_en: card.micro.lead_en || "",
@@ -1458,7 +1557,7 @@ function CardModal({ card, onClose, onSave }) {
   const [subject, setSubject] = useState(card.subject || "");
   const [customCats, setCustomCats] = useState([]);
   useEffect(() => { api.get("/catalogs").then(setCustomCats).catch(() => setCustomCats([])); }, []);
-  const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
+  const set = (k, v) => setF((s) => ({ ...s, [k]: v, ...(k.startsWith("questionText_") ? {[k.replace("questionText_","q_")]:v} : {}) }));
   const setHotspot = (k, v) => setF((s) => ({ ...s, hotspot: { ...(s.hotspot || { x: 50, y: 50, r: 8 }), [k]: v } }));
   const setDrawing = (k, v) => setF((s) => ({ ...s, drawing: { ...(s.drawing || {}), [k]: v } }));
   const setRubric = (langKey, i, v) => setF((s) => { const d = { ...(s.drawing || {}) }; const a = Array.isArray(d[langKey]) ? [...d[langKey]] : []; a[i] = v; d[langKey] = a; return { ...s, drawing: d }; });
@@ -1550,17 +1649,18 @@ function CardModal({ card, onClose, onSave }) {
       highlights_fa: (Array.isArray(f.highlights_fa) ? f.highlights_fa : String(f.highlights_fa || "").split("\n")).map((x) => x.trim()).filter(Boolean),
       highlights_en: (Array.isArray(f.highlights_en) ? f.highlights_en : String(f.highlights_en || "").split("\n")).map((x) => x.trim()).filter(Boolean),
       micro: {
+        ...(f.micro || {}),
         lead_fa: f.micro_lead_fa, lead_en: f.micro_lead_en,
         golden_fa: f.micro_golden_fa, golden_en: f.micro_golden_en,
-        points_fa: [], points_en: [], options_fa: [], options_en: [],
         source_fa: f.micro_source_fa, source_en: f.micro_source_en,
       },
     };
+    if (f.type === "mcq") base.options = f.options.filter(o => o.fa?.trim() || o.en?.trim() || o.imageUrl?.trim());
     if (f.type === "fill") {
-      base.accept_fa = String(f.accept_fa || "").split(",").map((x) => x.trim()).filter(Boolean);
-      base.accept_en = String(f.accept_en || "").split(",").map((x) => x.trim()).filter(Boolean);
+      base.accept_fa = acceptedAnswers(f.accept_fa);
+      base.accept_en = acceptedAnswers(f.accept_en);
     }
-    if (f.type === "match") base.pairs = f.pairs.filter((p) => p[0] || p[2]);
+    if (f.type === "match") base.pairs = f.pairs.filter((p) => p[0] || p[1] || p[2] || p[3]);
     if (f.type === "compare") {
       const belongsOf = (v) => (v === "B" || v === "both" ? v : "A");
       base.entityA_fa = f.entityA_fa || "";
@@ -1569,18 +1669,16 @@ function CardModal({ card, onClose, onSave }) {
       base.entityB_en = f.entityB_en || "";
       base.features = (Array.isArray(f.features) ? f.features : [])
         .filter((row) => row && (row.fa || row.en))
-        .map((row) => ({ fa: row.fa || row.en || "", en: row.en || row.fa || "", belongs: belongsOf(row.belongs) }));
+        .map((row) => ({ fa: row.fa || "", en: row.en || "", belongs: belongsOf(row.belongs) }));
     }
     if (f.type === "order") {
-      base.items_fa = f.items_fa.filter(Boolean);
-      base.items_en = f.items_en.filter((_, i) => f.items_fa[i]);
+      Object.assign(base, orderingRows(f.items_fa, f.items_en));
     }
     if (f.type === "drawing") {
       const d = f.drawing || {};
       base.drawing = {
         ...d,
-        rubric_fa: (d.rubric_fa || []).map((x) => String(x).trim()).filter(Boolean),
-        rubric_en: (d.rubric_en || []).filter((_, i) => ((d.rubric_fa || [])[i] || (d.rubric_en || [])[i])),
+        ...drawingRubrics(d),
         aspect: ["16:9", "4:3", "1:1", "3:4"].includes(d.aspect) ? d.aspect : "16:9",
         background: ["white", "cream", "dark"].includes(d.background) ? d.background : "white",
         traceReference: d.traceReference !== false,
@@ -1598,15 +1696,7 @@ function CardModal({ card, onClose, onSave }) {
         })).filter((z) => z.w > 1 && z.h > 1) : [],
       };
     }
-    if (f.type === "stepwise") {
-      base.steps = (f.steps || []).filter((st) => st.prompt_fa || st.prompt_en).map((st) => ({
-        ...st,
-        accept_fa: Array.isArray(st.accept_fa) ? st.accept_fa : String(st.accept_fa || st.answer_fa || "").split(",").map((x)=>x.trim()).filter(Boolean),
-        accept_en: Array.isArray(st.accept_en) ? st.accept_en : String(st.accept_en || st.answer_en || "").split(",").map((x)=>x.trim()).filter(Boolean),
-        options_fa: Array.isArray(st.options_fa) ? st.options_fa : String(st.options_fa || "").split(/[\n,]/).map((x)=>x.trim()).filter(Boolean),
-        options_en: Array.isArray(st.options_en) ? st.options_en : String(st.options_en || "").split(/[\n,]/).map((x)=>x.trim()).filter(Boolean),
-      }));
-    }
+    if (f.type === "stepwise") base.steps = (f.steps || []).map(normalizeStep);
     if (f.type === "kf") {
       base.kf = {
         vignette_fa: (f.kf || {}).vignette_fa || "",
@@ -1615,8 +1705,8 @@ function CardModal({ card, onClose, onSave }) {
           kind: it.kind === "mcq" ? "mcq" : "short",
           prompt_fa: it.prompt_fa || "", prompt_en: it.prompt_en || "",
           answer_fa: it.answer_fa || "", answer_en: it.answer_en || "",
-          accept_fa: Array.isArray(it.accept_fa) ? it.accept_fa : String(it.accept_fa || "").split(",").map((x) => x.trim()).filter(Boolean),
-          accept_en: Array.isArray(it.accept_en) ? it.accept_en : String(it.accept_en || "").split(",").map((x) => x.trim()).filter(Boolean),
+          accept_fa: acceptedAnswers(it.accept_fa),
+          accept_en: acceptedAnswers(it.accept_en),
           options_fa: Array.isArray(it.options_fa) ? it.options_fa : [],
           options_en: Array.isArray(it.options_en) ? it.options_en : [],
           correct: Number(it.correct || 0) || 0,
@@ -1626,10 +1716,10 @@ function CardModal({ card, onClose, onSave }) {
     if (f.type === "puzzle") {
       const p = f.puzzle || {};
       const pins = (Array.isArray(p.pins) ? p.pins : []).filter((pin) => pin.label_fa || pin.label_en).map((pin) => ({
-        x: Math.max(0, Math.min(100, Number(pin.x) || 50)),
-        y: Math.max(0, Math.min(100, Number(pin.y) || 50)),
-        label_fa: pin.label_fa || pin.label_en || "",
-        label_en: pin.label_en || pin.label_fa || "",
+        x: percentCoordinate(pin.x),
+        y: percentCoordinate(pin.y),
+        label_fa: pin.label_fa || "",
+        label_en: pin.label_en || "",
       }));
       const splitLines = (v) => (Array.isArray(v) ? v : String(v || "").split(/[\n,]/)).map((s) => String(s).trim()).filter(Boolean);
       base.puzzle = {
@@ -1680,8 +1770,9 @@ function CardModal({ card, onClose, onSave }) {
   const correctIdx = f.options.findIndex((o) => o.correct);
 
   return (
-    <Modal title={card.id ? t("edit") : t("newFlashcard")} onClose={onClose}
+    <AuthoringModal value={f} sections={[{id:"basics",title:lang==="fa"?"نوع و عنوان":"Type & title"},{id:"answer",title:lang==="fa"?"صورت سؤال و پاسخ":"Question & answer"},{id:"teaching",title:lang==="fa"?"راهنما و درسنامه":"Hints & lesson"},{id:"review",title:lang==="fa"?"بازبینی":"Review"}]} validate={()=>validateQuestion(f,lang)} title={card.id ? t("edit") : t("newFlashcard")} onClose={onClose}
       onSave={() => onSave(buildPayload(), card.id)}>
+      <AuthorSection id="basics" title={lang==="fa"?"نوع سؤال و عنوان":"Question type & title"}>
       <div className="field">
         <label><Icon name="puzzle" size={16} /> {t("questionTypeLabel")}</label>
         <div className="qtype-grid">
@@ -1697,8 +1788,15 @@ function CardModal({ card, onClose, onSave }) {
           : "Pick a type with one tap. MCQ defaults to 4 options. Drawings stay unscored until the teacher approves them. Hints and micro-lessons are optional and collapsed below."}</div>
       </div>
 
-      <div className="field"><label>{t("title")} (FA)</label><input value={f.title_fa} onChange={(e) => set("title_fa", e.target.value)} /></div>
-      <div className="field"><label>{t("title")} (EN)</label><input value={f.title_en} onChange={(e) => set("title_en", e.target.value)} /></div>
+      <div data-content-language="fa" className="field"><label>{t("title")} (FA)</label><input aria-label={[t("title"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.title_fa} onChange={(e) => set("title_fa", e.target.value)} /></div>
+      <div data-content-language="en" className="field"><label>{t("title")} (EN)</label><input aria-label={[t("title"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.title_en} onChange={(e) => set("title_en", e.target.value)} /></div>
+
+      </AuthorSection><AuthorSection id="answer" title={lang==="fa"?"صورت سؤال، تعامل و پاسخ صحیح":"Question, interaction & correct answer"}>
+      {/* Question text is also independent of the image */}
+      <div data-content-language="fa" className="field"><label>{t("questionText")} (FA)</label>
+        <textarea aria-label={[t("questionText"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.questionText_fa} onChange={(e) => set("questionText_fa", e.target.value)} placeholder={t("optional")} /></div>
+      <div data-content-language="en" className="field"><label>{t("questionText")} (EN)</label>
+        <textarea aria-label={[t("questionText"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.questionText_en} onChange={(e) => set("questionText_en", e.target.value)} placeholder={t("optional")} /></div>
 
       {f.type === "hotspot" && (
         <div className="micro-box mb16" style={{ padding: 12 }}>
@@ -1710,24 +1808,24 @@ function CardModal({ card, onClose, onSave }) {
       {f.type === "drawing" && (
         <div className="micro-box mb16" style={{ padding: 12 }}>
           <div className="small muted mb8">{lang === "fa" ? "بوم حرفه‌ای بافت‌شناسی/آناتومی: دانشجو روی تصویر مرجع ردیابی می‌کند، ابزار خط/برچسب دارد، و نمره تا تأیید استاد صفر می‌ماند." : "Pro histology/anatomy canvas: the learner traces on the reference, uses line/label tools, and the score stays 0 until you approve."}</div>
-          <div className="grid grid-2">
-            <div className="field"><label>{lang === "fa" ? "دستور نقاشی (FA)" : "Drawing prompt FA"}</label><textarea value={f.drawing?.prompt_fa || ""} onChange={(e)=>setDrawing("prompt_fa", e.target.value)} placeholder={lang === "fa" ? "مثلاً بافت پوششی سنگفرشی مطبق را بکشید و لایه‌ها را برچسب بزنید" : "Draw stratified squamous epithelium and label the layers"}/></div>
-            <div className="field"><label>{lang === "fa" ? "Drawing prompt (EN)" : "Drawing prompt EN"}</label><textarea value={f.drawing?.prompt_en || ""} onChange={(e)=>setDrawing("prompt_en", e.target.value)}/></div>
-          </div>
+          <details><summary>{lang==='fa'?'دستور تکمیلی رسم (اختیاری)':'Optional drawing instruction'}</summary><div className="grid grid-2">
+            <div data-content-language="fa" className="field"><label>{lang === "fa" ? "دستور نقاشی (FA)" : "Drawing instruction FA"}</label><textarea aria-label={[lang === "fa" ? "دستور نقاشی (FA)" : "Drawing instruction FA","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.drawing?.prompt_fa || ""} onChange={(e)=>setDrawing("prompt_fa", e.target.value)} placeholder={lang === "fa" ? "مثلاً بافت پوششی سنگفرشی مطبق را بکشید و لایه‌ها را برچسب بزنید" : "Draw stratified squamous epithelium and label the layers"}/></div>
+            <div data-content-language="en" className="field"><label>{lang === "fa" ? "Drawing instruction (EN)" : "Drawing instruction EN"}</label><textarea aria-label={[lang === "fa" ? "Drawing instruction (EN)" : "Drawing instruction EN","(EN)"].join(' ')} dir="ltr" lang="en" value={f.drawing?.prompt_en || ""} onChange={(e)=>setDrawing("prompt_en", e.target.value)}/></div>
+          </div></details>
           <ImageUpload value={f.drawing?.referenceImageUrl || ""} onChange={(v)=>setDrawing("referenceImageUrl", v)} label={lang === "fa" ? "تصویر مرجع / اسلاید (ردیابی روی آن)" : "Reference / slide (traced on the canvas)"} />
           <div className="grid grid-2 mt8">
             <div className="field"><label>{lang === "fa" ? "نسبت بوم" : "Canvas ratio"}</label>
-              <select value={f.drawing?.aspect || "16:9"} onChange={(e)=>setDrawing("aspect", e.target.value)}>
+              <select aria-label={[lang === "fa" ? "نسبت بوم" : "Canvas ratio"].join(' ')} value={f.drawing?.aspect || "16:9"} onChange={(e)=>setDrawing("aspect", e.target.value)}>
                 <option value="16:9">16:9</option><option value="4:3">4:3</option><option value="1:1">1:1</option><option value="3:4">3:4 {lang === "fa" ? "(پرتره)" : "(portrait)"}</option>
               </select></div>
             <div className="field"><label>{lang === "fa" ? "پس‌زمینه" : "Background"}</label>
-              <select value={f.drawing?.background || "white"} onChange={(e)=>setDrawing("background", e.target.value)}>
+              <select aria-label={[lang === "fa" ? "پس‌زمینه" : "Background"].join(' ')} value={f.drawing?.background || "white"} onChange={(e)=>setDrawing("background", e.target.value)}>
                 <option value="white">{lang === "fa" ? "سفید" : "White"}</option>
                 <option value="cream">{lang === "fa" ? "کرم (اسلاید)" : "Cream (slide)"}</option>
                 <option value="dark">{lang === "fa" ? "تیره (فلورسانس)" : "Dark (fluorescence)"}</option>
               </select></div>
             <div className="field"><label>{lang === "fa" ? "حداقل تعداد خط" : "Min. strokes"}</label>
-              <input type="number" min="1" value={f.drawing?.minStrokes ?? 1} onChange={(e)=>setDrawing("minStrokes", Number(e.target.value) || 1)} /></div>
+              <input aria-label={[lang === "fa" ? "حداقل تعداد خط" : "Min. strokes"].join(' ')} type="number" min="1" value={f.drawing?.minStrokes ?? 1} onChange={(e)=>setDrawing("minStrokes", Number(e.target.value) || 1)} /></div>
           </div>
           <label className="toggle-row"><span>{lang === "fa" ? "ردیابی روی تصویر مرجع (ترسیم روی اسلاید)" : "Trace on the reference image"}</span>
             <input type="checkbox" checked={f.drawing?.traceReference !== false} onChange={(e)=>setDrawing("traceReference", e.target.checked)} /></label>
@@ -1738,8 +1836,8 @@ function CardModal({ card, onClose, onSave }) {
           <div className="section-title" style={{ marginTop: 8 }}><label className="small muted">{lang === "fa" ? "Rubric / معیار ارزیابی استاد" : "Teacher assessment rubric"}</label><button type="button" className="btn btn-sm btn-ghost" onClick={addRubric}>+ {t("add")}</button></div>
           {((f.drawing?.rubric_fa || []).length ? f.drawing.rubric_fa : [""]).map((_, i) => (
             <div className="inline-form mt8" key={i} style={{ alignItems: "center" }}>
-              <input placeholder={lang === "fa" ? "معیار فارسی" : "Criterion FA"} value={(f.drawing?.rubric_fa || [])[i] || ""} onChange={(e)=>setRubric("rubric_fa", i, e.target.value)} />
-              <input placeholder="Criterion EN" value={(f.drawing?.rubric_en || [])[i] || ""} onChange={(e)=>setRubric("rubric_en", i, e.target.value)} />
+              <input dir="rtl" lang="fa" data-content-language="fa" placeholder={lang === "fa" ? "معیار فارسی" : "Criterion FA"} value={(f.drawing?.rubric_fa || [])[i] || ""} onChange={(e)=>setRubric("rubric_fa", i, e.target.value)} />
+              <input aria-label="Criterion EN" dir="ltr" lang="en" data-content-language="en" placeholder="Criterion EN" value={(f.drawing?.rubric_en || [])[i] || ""} onChange={(e)=>setRubric("rubric_en", i, e.target.value)} />
               <button type="button" className="btn btn-sm btn-danger" onClick={()=>delRubric(i)}>✕</button>
             </div>
           ))}
@@ -1747,67 +1845,42 @@ function CardModal({ card, onClose, onSave }) {
         </div>
       )}
 
-      {f.type === "stepwise" && (
-        <div className="micro-box mb16" style={{ padding: 12 }}>
-          <div className="section-title"><label className="small muted">{lang === "fa" ? "مراحل سؤال scaffolded" : "Scaffolded steps"}</label><button type="button" className="btn btn-sm btn-ghost" onClick={addStep}>+ {t("add")}</button></div>
-          <div className="small muted mb8">{lang === "fa" ? "هر مرحله یک prompt و پاسخ مورد انتظار دارد. چند پاسخ قابل قبول را با ویرگول جدا کنید." : "Each step has a prompt and expected answers. Separate acceptable answers with commas."}</div>
-          {(f.steps || []).map((st, i) => (
-            <div className="card mt8" key={i} style={{ padding: 10, background: "var(--panel2)" }}>
-              <div className="section-title"><b>{lang === "fa" ? `مرحله ${i+1}` : `Step ${i+1}`}</b>{(f.steps||[]).length>1&&<button type="button" className="btn btn-sm btn-danger" onClick={()=>delStep(i)}>✕</button>}</div>
-              <div className="field"><label>{lang === "fa" ? "نوع پاسخ این مرحله" : "Step answer type"}</label><select value={st.answerType || "autocomplete"} onChange={(e)=>setStep(i,"answerType",e.target.value)}><option value="autocomplete">{lang==="fa"?"اتوکامپلیت/متنی":"Autocomplete/text"}</option><option value="mcq">{lang==="fa"?"چندگزینه‌ای":"Multiple choice"}</option><option value="truefalse">{lang==="fa"?"درست/غلط":"True/False"}</option><option value="fill">{lang==="fa"?"جای‌خالی":"Fill"}</option></select></div>
-              <div className="grid grid-2">
-                <div className="field"><label>Prompt FA</label><textarea value={st.prompt_fa || ""} onChange={(e)=>setStep(i,"prompt_fa",e.target.value)} /></div>
-                <div className="field"><label>Prompt EN</label><textarea value={st.prompt_en || ""} onChange={(e)=>setStep(i,"prompt_en",e.target.value)} /></div>
-                <div className="field"><label>{lang === "fa" ? "پاسخ/پاسخ‌های قابل قبول FA" : "Accepted answers FA"}</label><input value={Array.isArray(st.accept_fa)?st.accept_fa.join(", "):(st.accept_fa || st.answer_fa || "")} onChange={(e)=>setStep(i,"accept_fa",e.target.value)} /></div>
-                <div className="field"><label>Accepted answers EN</label><input value={Array.isArray(st.accept_en)?st.accept_en.join(", "):(st.accept_en || st.answer_en || "")} onChange={(e)=>setStep(i,"accept_en",e.target.value)} /></div>
-                {st.answerType === "mcq" && <div className="field"><label>{lang === "fa" ? "گزینه‌های FA (هر خط/ویرگول)" : "Options FA"}</label><textarea value={Array.isArray(st.options_fa)?st.options_fa.join("\n"):(st.options_fa||"")} onChange={(e)=>setStep(i,"options_fa",e.target.value)} /></div>}
-                {st.answerType === "mcq" && <div className="field"><label>Options EN</label><textarea value={Array.isArray(st.options_en)?st.options_en.join("\n"):(st.options_en||"")} onChange={(e)=>setStep(i,"options_en",e.target.value)} /></div>}
-                <div className="field"><label>{lang === "fa" ? "هینت FA" : "Hint FA"}</label><input value={st.hint_fa || ""} onChange={(e)=>setStep(i,"hint_fa",e.target.value)} /></div>
-                <div className="field"><label>Hint EN</label><input value={st.hint_en || ""} onChange={(e)=>setStep(i,"hint_en",e.target.value)} /></div>
-              </div>
-              <div className="grid grid-2">
-                <div className="field"><label>{lang === "fa" ? "توضیح بعد از پاسخ FA" : "Explanation FA"}</label><textarea value={st.explanation_fa || ""} onChange={(e)=>setStep(i,"explanation_fa",e.target.value)} /></div>
-                <div className="field"><label>Explanation EN</label><textarea value={st.explanation_en || ""} onChange={(e)=>setStep(i,"explanation_en",e.target.value)} /></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {f.type === "stepwise" && <StepwiseEditor steps={f.steps || []} onChange={v=>set("steps",v)} lang={lang} catalogs={customCats} />}
 
       {f.type === "kf" && (
         <div className="micro-box mb16" style={{ padding: 12 }}>
           <div className="small muted mb8">{lang === "fa" ? "کی‌اف: یک شرح‌حال کوتاه و چند سؤال مستقل (پاسخ کوتاه یا چهارگزینه‌ای). هر مورد جداگانه نمره می‌گیرد." : "Key Feature: a short vignette plus independent items (short answer or 4-option). Each item is scored separately."}</div>
           <div className="grid grid-2">
-            <div className="field"><label>{t("kfVignette")} (FA)</label><textarea value={f.kf?.vignette_fa || ""} onChange={(e) => setKf("vignette_fa", e.target.value)} placeholder={lang === "fa" ? "آقای ۴۵ ساله با درد قفسه سینه از یک ساعت پیش…" : ""} /></div>
-            <div className="field"><label>{t("kfVignette")} (EN)</label><textarea value={f.kf?.vignette_en || ""} onChange={(e) => setKf("vignette_en", e.target.value)} /></div>
+            <div data-content-language="fa" className="field"><label>{t("kfVignette")} (FA)</label><textarea aria-label={[t("kfVignette"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.kf?.vignette_fa || ""} onChange={(e) => setKf("vignette_fa", e.target.value)} placeholder={lang === "fa" ? "آقای ۴۵ ساله با درد قفسه سینه از یک ساعت پیش…" : ""} /></div>
+            <div data-content-language="en" className="field"><label>{t("kfVignette")} (EN)</label><textarea aria-label={[t("kfVignette"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.kf?.vignette_en || ""} onChange={(e) => setKf("vignette_en", e.target.value)} /></div>
           </div>
           <div className="section-title"><label className="small muted">{t("kfItems")}</label><button type="button" className="btn btn-sm btn-ghost" onClick={addKfItem}>+ {t("add")}</button></div>
           {(f.kf?.items || []).map((it, i) => (
             <div className="card mt8" key={i} style={{ padding: 10, background: "var(--panel2)" }}>
               <div className="section-title"><b>{lang === "fa" ? `مورد ${i + 1}` : `Item ${i + 1}`}</b>{(f.kf?.items || []).length > 1 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delKfItem(i)}>✕</button>}</div>
               <div className="field"><label>{lang === "fa" ? "نوع این مورد" : "Item type"}</label>
-                <select value={it.kind || "short"} onChange={(e) => setKfItem(i, "kind", e.target.value)}>
+                <select aria-label={[lang === "fa" ? "نوع این مورد" : "Item type"].join(' ')} value={it.kind || "short"} onChange={(e) => setKfItem(i, "kind", e.target.value)}>
                   <option value="short">{lang === "fa" ? "پاسخ کوتاه" : "Short answer"}</option>
                   <option value="mcq">{t("qtMcq")}</option>
                 </select></div>
               <div className="grid grid-2">
-                <div className="field"><label>{lang === "fa" ? "صورت سؤال FA" : "Prompt FA"}</label><textarea value={it.prompt_fa || ""} onChange={(e) => setKfItem(i, "prompt_fa", e.target.value)} /></div>
-                <div className="field"><label>Prompt EN</label><textarea value={it.prompt_en || ""} onChange={(e) => setKfItem(i, "prompt_en", e.target.value)} /></div>
+                <div data-content-language="fa" className="field"><label>{lang === "fa" ? "صورت سؤال FA" : "Prompt FA"}</label><textarea aria-label={[lang === "fa" ? "صورت سؤال FA" : "Prompt FA","(FA)"].join(' ')} dir="rtl" lang="fa" value={it.prompt_fa || ""} onChange={(e) => setKfItem(i, "prompt_fa", e.target.value)} /></div>
+                <div data-content-language="en" className="field"><label>Prompt EN</label><textarea aria-label={["Prompt EN","(EN)"].join(' ')} dir="ltr" lang="en" value={it.prompt_en || ""} onChange={(e) => setKfItem(i, "prompt_en", e.target.value)} /></div>
               </div>
               {(it.kind || "short") === "short" ? (
                 <div className="grid grid-2">
-                  <div className="field"><label>{t("correctAns")} (FA)</label><input value={it.answer_fa || ""} onChange={(e) => setKfItem(i, "answer_fa", e.target.value)} /></div>
-                  <div className="field"><label>{t("correctAns")} (EN)</label><input value={it.answer_en || ""} onChange={(e) => setKfItem(i, "answer_en", e.target.value)} /></div>
-                  <div className="field"><label>{t("acceptAlt")} (FA)</label><input value={Array.isArray(it.accept_fa) ? it.accept_fa.join(", ") : (it.accept_fa || "")} onChange={(e) => setKfItem(i, "accept_fa", e.target.value)} placeholder={t("commaSep")} /></div>
-                  <div className="field"><label>{t("acceptAlt")} (EN)</label><input value={Array.isArray(it.accept_en) ? it.accept_en.join(", ") : (it.accept_en || "")} onChange={(e) => setKfItem(i, "accept_en", e.target.value)} placeholder={t("commaSep")} /></div>
+                  <div data-content-language="fa" className="field"><label>{t("correctAns")} (FA)</label><input aria-label={[t("correctAns"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={it.answer_fa || ""} onChange={(e) => setKfItem(i, "answer_fa", e.target.value)} /></div>
+                  <div data-content-language="en" className="field"><label>{t("correctAns")} (EN)</label><input aria-label={[t("correctAns"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={it.answer_en || ""} onChange={(e) => setKfItem(i, "answer_en", e.target.value)} /></div>
+                  <div data-content-language="fa" className="field"><label>{t("acceptAlt")} (FA)</label><input aria-label={[t("acceptAlt"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={Array.isArray(it.accept_fa) ? it.accept_fa.join(", ") : (it.accept_fa || "")} onChange={(e) => setKfItem(i, "accept_fa", e.target.value)} placeholder={t("commaSep")} /></div>
+                  <div data-content-language="en" className="field"><label>{t("acceptAlt")} (EN)</label><input aria-label={[t("acceptAlt"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={Array.isArray(it.accept_en) ? it.accept_en.join(", ") : (it.accept_en || "")} onChange={(e) => setKfItem(i, "accept_en", e.target.value)} placeholder={t("commaSep")} /></div>
                 </div>
               ) : (
                 <>
                   {[0, 1, 2, 3].map((j) => (
                     <div className="inline-form mt8" key={j} style={{ alignItems: "center" }}>
-                      <input type="radio" name={`kf-correct-${i}`} checked={Number(it.correct || 0) === j} onChange={() => setKfItem(i, "correct", j)} />
-                      <input placeholder={`FA ${["الف", "ب", "ج", "د"][j]}`} value={(it.options_fa || [])[j] || ""} onChange={(e) => setKfOpt(i, "options_fa", j, e.target.value)} />
-                      <input placeholder={`EN ${["A", "B", "C", "D"][j]}`} value={(it.options_en || [])[j] || ""} onChange={(e) => setKfOpt(i, "options_en", j, e.target.value)} />
+                      <input type="radio" aria-label={`Step ${i+1}, correct option ${j+1}`} name={`kf-correct-${i}`} checked={Number(it.correct || 0) === j} onChange={() => setKfItem(i, "correct", j)} />
+                      <input dir="rtl" lang="fa" data-content-language="fa" placeholder={`FA ${["الف", "ب", "ج", "د"][j]}`} value={(it.options_fa || [])[j] || ""} onChange={(e) => setKfOpt(i, "options_fa", j, e.target.value)} />
+                      <input dir="ltr" lang="en" data-content-language="en" placeholder={`EN ${["A", "B", "C", "D"][j]}`} value={(it.options_en || [])[j] || ""} onChange={(e) => setKfOpt(i, "options_en", j, e.target.value)} />
                     </div>
                   ))}
                 </>
@@ -1840,50 +1913,47 @@ function CardModal({ card, onClose, onSave }) {
               <span className="tag">{i + 1}</span>
               <input type="number" min="0" max="100" step="0.1" value={p.x} onChange={(e) => setPin(i, "x", Number(e.target.value))} style={{ width: 72 }} />
               <input type="number" min="0" max="100" step="0.1" value={p.y} onChange={(e) => setPin(i, "y", Number(e.target.value))} style={{ width: 72 }} />
-              <input placeholder="FA" value={p.label_fa || ""} onChange={(e) => setPin(i, "label_fa", e.target.value)} />
-              <input placeholder="EN" value={p.label_en || ""} onChange={(e) => setPin(i, "label_en", e.target.value)} />
+              <input aria-label="FA" dir="rtl" lang="fa" data-content-language="fa" placeholder="FA" value={p.label_fa || ""} onChange={(e) => setPin(i, "label_fa", e.target.value)} />
+              <input aria-label="EN" dir="ltr" lang="en" data-content-language="en" placeholder="EN" value={p.label_en || ""} onChange={(e) => setPin(i, "label_en", e.target.value)} />
               <button type="button" className="btn btn-sm btn-danger" onClick={() => delPin(i)}>✕</button>
             </div>
           ))}
           <div className="grid grid-2 mt8">
-            <div className="field"><label>{t("puzzleDistractors")} (FA)</label>
-              <textarea value={Array.isArray(f.puzzle?.distractors_fa) ? f.puzzle.distractors_fa.join("\n") : (f.puzzle?.distractors_fa || "")} onChange={(e) => setPuzzle("distractors_fa", e.target.value.split("\n"))} /></div>
-            <div className="field"><label>{t("puzzleDistractors")} (EN)</label>
-              <textarea value={Array.isArray(f.puzzle?.distractors_en) ? f.puzzle.distractors_en.join("\n") : (f.puzzle?.distractors_en || "")} onChange={(e) => setPuzzle("distractors_en", e.target.value.split("\n"))} /></div>
+            <div data-content-language="fa" className="field"><label>{t("puzzleDistractors")} (FA)</label>
+              <textarea aria-label={[t("puzzleDistractors"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={Array.isArray(f.puzzle?.distractors_fa) ? f.puzzle.distractors_fa.join("\n") : (f.puzzle?.distractors_fa || "")} onChange={(e) => setPuzzle("distractors_fa", e.target.value.split("\n"))} /></div>
+            <div data-content-language="en" className="field"><label>{t("puzzleDistractors")} (EN)</label>
+              <textarea aria-label={[t("puzzleDistractors"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={Array.isArray(f.puzzle?.distractors_en) ? f.puzzle.distractors_en.join("\n") : (f.puzzle?.distractors_en || "")} onChange={(e) => setPuzzle("distractors_en", e.target.value.split("\n"))} /></div>
           </div>
         </div>
       )}
 
-      {f.type === "mcq" && (
+      {["mcq","fill"].includes(f.type) && (
         <div className="field"><label>{t("answerMode")}</label>
-          <select value={f.answerMode} onChange={(e) => set("answerMode", e.target.value)}>
+          <select aria-label={[t("answerMode")].join(' ')} value={f.answerMode} onChange={(e) => set("answerMode", e.target.value)}>
             <option value="choice">{t("modeChoice")}</option>
             <option value="search">{t("modeSearch")}</option>
           </select></div>
       )}
 
+      {f.type==='fill'&&f.answerMode==='search'&&<div className="grid grid-2">{['fa','en'].map(l=><label className="field" data-content-language={l} key={l}>{lang==='fa'?'پیشنهادهای اتوکامپلیت؛ هر خط یک مورد':'Autocomplete suggestions; one per line'} ({l.toUpperCase()})<textarea aria-label={`Autocomplete suggestions ${l.toUpperCase()}`} value={(f['options_'+l]||[]).join('\n')} onChange={e=>set('options_'+l,e.target.value.split('\n'))}/></label>)}</div>}
+
       {/* Image is optional and independent — a teacher can add it to ANY card. Hotspot has its own image field above. */}
       {f.type !== "hotspot" && <ImageUpload value={f.imageUrl} onChange={(v) => set("imageUrl", v)} label={`${t("imageUrl")} (${t("optional")})`} />}
 
-      {/* Question text is also independent of the image */}
-      <div className="field"><label>{t("questionText")} (FA)</label>
-        <textarea value={f.questionText_fa} onChange={(e) => set("questionText_fa", e.target.value)} placeholder={t("optional")} /></div>
-      <div className="field"><label>{t("questionText")} (EN)</label>
-        <textarea value={f.questionText_en} onChange={(e) => set("questionText_en", e.target.value)} placeholder={t("optional")} /></div>
 
       <div className="grid grid-2">
-        <div className="field"><label>{t("category")} (FA)</label><input value={f.category_fa} onChange={(e) => set("category_fa", e.target.value)} /></div>
-        <div className="field"><label>{t("category")} (EN)</label><input value={f.category_en} onChange={(e) => set("category_en", e.target.value)} /></div>
+        <div data-content-language="fa" className="field"><label>{t("category")} (FA)</label><input aria-label={[t("category"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.category_fa} onChange={(e) => set("category_fa", e.target.value)} /></div>
+        <div data-content-language="en" className="field"><label>{t("category")} (EN)</label><input aria-label={[t("category"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.category_en} onChange={(e) => set("category_en", e.target.value)} /></div>
       </div>
       <div className="field"><label>{t("difficulty")}</label>
-        <select value={f.difficulty} onChange={(e) => set("difficulty", e.target.value)}>
+        <select aria-label={[t("difficulty")].join(' ')} value={f.difficulty} onChange={(e) => set("difficulty", e.target.value)}>
           {["easy", "medium", "hard"].map((d) => <option key={d} value={d}>{t(d)}</option>)}</select></div>
 
       <div className="divider" />
       {/* ===== TRUE / FALSE ===== */}
       {f.type === "truefalse" && (
         <div className="field"><label><Icon name="check" size={16} /> {t("correctAns")}</label>
-          <select value={f.answer ? "1" : "0"} onChange={(e) => set("answer", e.target.value === "1")}>
+          <select aria-label={[t("correctAns")].join(' ')} value={f.answer ? "1" : "0"} onChange={(e) => set("answer", e.target.value === "1")}>
             <option value="1">{lang === "fa" ? "درست" : "True"}</option>
             <option value="0">{lang === "fa" ? "نادرست" : "False"}</option>
           </select></div>
@@ -1894,12 +1964,12 @@ function CardModal({ card, onClose, onSave }) {
         <>
           <div className="small muted mb8">{t("fillHint")}</div>
           <div className="grid grid-2">
-            <div className="field"><label>{t("correctAns")} (FA)</label><input value={f.blank_fa} onChange={(e) => set("blank_fa", e.target.value)} /></div>
-            <div className="field"><label>{t("correctAns")} (EN)</label><input value={f.blank_en} onChange={(e) => set("blank_en", e.target.value)} /></div>
+            <div data-content-language="fa" className="field"><label>{t("correctAns")} (FA)</label><input aria-label={[t("correctAns"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.blank_fa} onChange={(e) => set("blank_fa", e.target.value)} /></div>
+            <div data-content-language="en" className="field"><label>{t("correctAns")} (EN)</label><input aria-label={[t("correctAns"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.blank_en} onChange={(e) => set("blank_en", e.target.value)} /></div>
           </div>
           <div className="grid grid-2">
-            <div className="field"><label>{t("acceptAlt")} (FA)</label><input value={Array.isArray(f.accept_fa) ? f.accept_fa.join(", ") : f.accept_fa} onChange={(e) => set("accept_fa", e.target.value)} placeholder={t("commaSep")} /></div>
-            <div className="field"><label>{t("acceptAlt")} (EN)</label><input value={Array.isArray(f.accept_en) ? f.accept_en.join(", ") : f.accept_en} onChange={(e) => set("accept_en", e.target.value)} placeholder={t("commaSep")} /></div>
+            <div data-content-language="fa" className="field"><label>{t("acceptAlt")} (FA)</label><input aria-label={[t("acceptAlt"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={Array.isArray(f.accept_fa) ? f.accept_fa.join(", ") : f.accept_fa} onChange={(e) => set("accept_fa", e.target.value)} placeholder={t("commaSep")} /></div>
+            <div data-content-language="en" className="field"><label>{t("acceptAlt")} (EN)</label><input aria-label={[t("acceptAlt"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={Array.isArray(f.accept_en) ? f.accept_en.join(", ") : f.accept_en} onChange={(e) => set("accept_en", e.target.value)} placeholder={t("commaSep")} /></div>
           </div>
         </>
       )}
@@ -1911,11 +1981,11 @@ function CardModal({ card, onClose, onSave }) {
             <button type="button" className="btn btn-sm btn-ghost" onClick={addPair}>+ {t("add")}</button></div>
           {f.pairs.map((p, i) => (
             <div key={i} className="inline-form mt8" style={{ alignItems: "center", flexWrap: "wrap" }}>
-              <input style={{ minWidth: 90 }} placeholder={`چپ FA`} value={p[0]} onChange={(e) => setPair(i, 0, e.target.value)} />
-              <input style={{ minWidth: 90 }} placeholder={`Left EN`} value={p[1]} onChange={(e) => setPair(i, 1, e.target.value)} />
+              <input dir="rtl" lang="fa" data-content-language="fa" style={{ minWidth: 90 }} placeholder={`چپ FA`} value={p[0]} onChange={(e) => setPair(i, 0, e.target.value)} />
+              <input dir="ltr" lang="en" data-content-language="en" style={{ minWidth: 90 }} placeholder={`Left EN`} value={p[1]} onChange={(e) => setPair(i, 1, e.target.value)} />
               <span style={{ fontWeight: 800 }}>↔</span>
-              <input style={{ minWidth: 90 }} placeholder={`راست FA`} value={p[2]} onChange={(e) => setPair(i, 2, e.target.value)} />
-              <input style={{ minWidth: 90 }} placeholder={`Right EN`} value={p[3]} onChange={(e) => setPair(i, 3, e.target.value)} />
+              <input dir="rtl" lang="fa" data-content-language="fa" style={{ minWidth: 90 }} placeholder={`راست FA`} value={p[2]} onChange={(e) => setPair(i, 2, e.target.value)} />
+              <input dir="ltr" lang="en" data-content-language="en" style={{ minWidth: 90 }} placeholder={`Right EN`} value={p[3]} onChange={(e) => setPair(i, 3, e.target.value)} />
               {f.pairs.length > 2 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delPair(i)}>✕</button>}
             </div>
           ))}
@@ -1927,17 +1997,17 @@ function CardModal({ card, onClose, onSave }) {
         <>
           <div className="small muted mb8">{lang === "fa" ? "دو موجودیت و ویژگی‌هایی که به A، B یا هر دو تعلق دارند." : "Two entities and features that belong to A, B, or both."}</div>
           <div className="grid grid-2">
-            <div className="field"><label>A (FA)</label><input value={f.entityA_fa || ""} onChange={(e) => set("entityA_fa", e.target.value)} /></div>
-            <div className="field"><label>A (EN)</label><input value={f.entityA_en || ""} onChange={(e) => set("entityA_en", e.target.value)} /></div>
-            <div className="field"><label>B (FA)</label><input value={f.entityB_fa || ""} onChange={(e) => set("entityB_fa", e.target.value)} /></div>
-            <div className="field"><label>B (EN)</label><input value={f.entityB_en || ""} onChange={(e) => set("entityB_en", e.target.value)} /></div>
+            <div data-content-language="fa" className="field"><label>A (FA)</label><input aria-label={["A (FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.entityA_fa || ""} onChange={(e) => set("entityA_fa", e.target.value)} /></div>
+            <div data-content-language="en" className="field"><label>A (EN)</label><input aria-label={["A (EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.entityA_en || ""} onChange={(e) => set("entityA_en", e.target.value)} /></div>
+            <div data-content-language="fa" className="field"><label>B (FA)</label><input aria-label={["B (FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.entityB_fa || ""} onChange={(e) => set("entityB_fa", e.target.value)} /></div>
+            <div data-content-language="en" className="field"><label>B (EN)</label><input aria-label={["B (EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.entityB_en || ""} onChange={(e) => set("entityB_en", e.target.value)} /></div>
           </div>
           <div className="section-title"><label className="small muted">{lang === "fa" ? "ویژگی‌ها" : "Features"}</label>
             <button type="button" className="btn btn-sm btn-ghost" onClick={addFeature}>+ {t("add")}</button></div>
           {(f.features || []).map((row, i) => (
             <div key={i} className="inline-form mt8" style={{ alignItems: "center", flexWrap: "wrap" }}>
-              <input style={{ minWidth: 90 }} placeholder="FA" value={row.fa || ""} onChange={(e) => setFeature(i, "fa", e.target.value)} />
-              <input style={{ minWidth: 90 }} placeholder="EN" value={row.en || ""} onChange={(e) => setFeature(i, "en", e.target.value)} />
+              <input aria-label="FA" dir="rtl" lang="fa" data-content-language="fa" style={{ minWidth: 90 }} placeholder="FA" value={row.fa || ""} onChange={(e) => setFeature(i, "fa", e.target.value)} />
+              <input aria-label="EN" dir="ltr" lang="en" data-content-language="en" style={{ minWidth: 90 }} placeholder="EN" value={row.en || ""} onChange={(e) => setFeature(i, "en", e.target.value)} />
               <select value={row.belongs || "A"} onChange={(e) => setFeature(i, "belongs", e.target.value)}>
                 <option value="A">A</option>
                 <option value="B">B</option>
@@ -1959,7 +2029,7 @@ function CardModal({ card, onClose, onSave }) {
             <div key={i} className="inline-form mt8" style={{ alignItems: "center" }}>
               <span style={{ fontWeight: 800, width: 22 }}>{i + 1}.</span>
               <input placeholder={`FA #${i + 1}`} value={it} onChange={(e) => setItem(i, "items_fa", e.target.value)} />
-              <input placeholder={`EN #${i + 1}`} value={f.items_en[i] || ""} onChange={(e) => setItem(i, "items_en", e.target.value)} />
+              <input dir="ltr" lang="en" data-content-language="en" placeholder={`EN #${i + 1}`} value={f.items_en[i] || ""} onChange={(e) => setItem(i, "items_en", e.target.value)} />
               {f.items_fa.length > 2 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delItem(i)}>✕</button>}
             </div>
           ))}
@@ -1970,7 +2040,7 @@ function CardModal({ card, onClose, onSave }) {
       {f.type === "mcq" && <>
       {/* Smart subject catalog: pick a subject to auto-fill all options */}
       <div className="field"><label><Icon name="book" size={16} /> {t("subjectCatalog")}</label>
-        <select value={subject} onChange={(e) => pickSubject(e.target.value)}>
+        <select aria-label={[t("subjectCatalog")].join(' ')} value={subject} onChange={(e) => pickSubject(e.target.value)}>
           <option value="">{t("manualOptions")}</option>
           {/* All catalogs (including the built-in Histology/Anatomy/… which are now
               editable rows) come from the Catalogs section — a single source of truth. */}
@@ -2000,16 +2070,16 @@ function CardModal({ card, onClose, onSave }) {
           {f.options.map((o, i) => (
             <div key={i} className="opt-editor mt8" style={{ border: "1px solid var(--border)", borderRadius: 10, padding: 10 }}>
               <div className="inline-form" style={{ alignItems: "center" }}>
-                <input type="radio" name="correct" checked={!!o.correct} onChange={() => setCorrect(i)} style={{ width: 18, flexShrink: 0 }} title={t("markCorrect")} />
-                <input placeholder={`FA #${i + 1}`} value={o.fa} onChange={(e) => setOpt(i, "fa", e.target.value)} />
-                <input placeholder={`EN #${i + 1}`} value={o.en} onChange={(e) => setOpt(i, "en", e.target.value)} />
+                <input type="radio" aria-label={`${t("markCorrect")} ${i+1}`} name="correct" checked={!!o.correct} onChange={() => setCorrect(i)} style={{ width: 18, flexShrink: 0 }} title={t("markCorrect")} />
+                <input dir="rtl" lang="fa" data-content-language="fa" placeholder={`FA #${i + 1}`} value={o.fa} onChange={(e) => setOpt(i, "fa", e.target.value)} />
+                <input dir="ltr" lang="en" data-content-language="en" placeholder={`EN #${i + 1}`} value={o.en} onChange={(e) => setOpt(i, "en", e.target.value)} />
                 {f.options.length > 2 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delOpt(i)}>✕</button>}
               </div>
               {/* per-option rationale — WHY this option is right/wrong (UWorld-style) */}
               <div className="grid grid-2 mt8" style={{ gap: 8 }}>
-                <input className="small" placeholder={lang === "fa" ? `چرا؟ (FA) — ${o.correct ? "چرا درست است" : "چرا غلط است"}` : `Why? (FA)`}
+                <input dir="rtl" lang="fa" data-content-language="fa" className="small" placeholder={lang === "fa" ? `چرا؟ (FA) — ${o.correct ? "چرا درست است" : "چرا غلط است"}` : `Why? (FA)`}
                   value={o.why_fa || ""} onChange={(e) => setOpt(i, "why_fa", e.target.value)} />
-                <input className="small" placeholder={lang === "fa" ? "چرا؟ (EN)" : `Why? (EN) — ${o.correct ? "why correct" : "why wrong"}`}
+                <input dir="ltr" lang="en" data-content-language="en" className="small" placeholder={lang === "fa" ? "چرا؟ (EN)" : `Why? (EN) — ${o.correct ? "why correct" : "why wrong"}`}
                   value={o.why_en || ""} onChange={(e) => setOpt(i, "why_en", e.target.value)} />
               </div>
               <ImageUpload compact value={o.imageUrl || ""} onChange={(v) => setOpt(i, "imageUrl", v)}
@@ -2024,11 +2094,12 @@ function CardModal({ card, onClose, onSave }) {
       <div className="small muted mt8">{t("answerMode")}: {f.answerMode === "search" ? t("modeSearch") : t("modeChoice")}</div>
       </>}
 
+      </AuthorSection><AuthorSection id="teaching" title={lang==="fa"?"ابزارهای آموزشی اختیاری":"Optional teaching aids"}>
       <details className="card-adv">
       <summary><Icon name="bulb" size={14} /> {t("hintQuestion")} — {lang === "fa" ? "اختیاری" : "optional"}</summary>
       <div className="small muted mb8">{t("hintQuestionNote")}</div>
-      <div className="field"><label>{t("hints")} (FA)</label>
-        <textarea placeholder={t("hintsPlaceholder")} value={Array.isArray(f.hints_fa) ? f.hints_fa.join("\n") : f.hints_fa}
+      <div data-content-language="fa" className="field"><label>{t("hints")} (FA)</label>
+        <textarea aria-label={[t("hints"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" placeholder={t("hintsPlaceholder")} value={Array.isArray(f.hints_fa) ? f.hints_fa.join("\n") : f.hints_fa}
           onChange={(e) => set("hints_fa", e.target.value.split("\n"))} />
         <div className="small muted mt8">{lang === "fa" ? "برای هر راهنما می‌توانید یک تصویر اختیاری اضافه کنید." : "Optional image per hint."}</div>
         {(Array.isArray(f.hints_fa) ? f.hints_fa : []).map((h, i) => (
@@ -2039,8 +2110,8 @@ function CardModal({ card, onClose, onSave }) {
         ))}
         <button type="button" className="btn btn-ghost btn-sm mt8" onClick={() => addHintLine("hints_fa", "hint_images_fa")}>+ {t("hint")}</button>
       </div>
-      <div className="field"><label>{t("hints")} (EN)</label>
-        <textarea placeholder={t("hintsPlaceholder")} value={Array.isArray(f.hints_en) ? f.hints_en.join("\n") : f.hints_en}
+      <div data-content-language="en" className="field"><label>{t("hints")} (EN)</label>
+        <textarea aria-label={[t("hints"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" placeholder={t("hintsPlaceholder")} value={Array.isArray(f.hints_en) ? f.hints_en.join("\n") : f.hints_en}
           onChange={(e) => set("hints_en", e.target.value.split("\n"))} />
         {(Array.isArray(f.hints_en) ? f.hints_en : []).map((h, i) => (
           <div className="card mt8" key={`hen-${i}`} style={{ background: "var(--panel2)", padding: 10 }}>
@@ -2059,18 +2130,18 @@ function CardModal({ card, onClose, onSave }) {
         ? "نکتهٔ استاد و سرنخ‌های کلیدیِ صورت‌سؤال."
         : "Attending tip + key clue highlights."}</div>
       <div className="grid grid-2">
-        <div className="field"><label>{t("attendingTipAdmin")} (FA)</label>
-          <textarea value={f.attending_fa || ""} onChange={(e) => set("attending_fa", e.target.value)} /></div>
-        <div className="field"><label>{t("attendingTipAdmin")} (EN)</label>
-          <textarea value={f.attending_en || ""} onChange={(e) => set("attending_en", e.target.value)} /></div>
+        <div data-content-language="fa" className="field"><label>{t("attendingTipAdmin")} (FA)</label>
+          <textarea aria-label={[t("attendingTipAdmin"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.attending_fa || ""} onChange={(e) => set("attending_fa", e.target.value)} /></div>
+        <div data-content-language="en" className="field"><label>{t("attendingTipAdmin")} (EN)</label>
+          <textarea aria-label={[t("attendingTipAdmin"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.attending_en || ""} onChange={(e) => set("attending_en", e.target.value)} /></div>
       </div>
       <div className="grid grid-2">
-        <div className="field"><label>{t("highlightsAdmin")} (FA)</label>
-          <textarea placeholder={lang === "fa" ? "درد فشارنده\nانتشار به بازوی چپ" : ""}
+        <div data-content-language="fa" className="field"><label>{t("highlightsAdmin")} (FA)</label>
+          <textarea aria-label={[t("highlightsAdmin"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" placeholder={lang === "fa" ? "درد فشارنده\nانتشار به بازوی چپ" : ""}
             value={Array.isArray(f.highlights_fa) ? f.highlights_fa.join("\n") : (f.highlights_fa || "")}
             onChange={(e) => set("highlights_fa", e.target.value.split("\n"))} /></div>
-        <div className="field"><label>{t("highlightsAdmin")} (EN)</label>
-          <textarea value={Array.isArray(f.highlights_en) ? f.highlights_en.join("\n") : (f.highlights_en || "")}
+        <div data-content-language="en" className="field"><label>{t("highlightsAdmin")} (EN)</label>
+          <textarea aria-label={[t("highlightsAdmin"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={Array.isArray(f.highlights_en) ? f.highlights_en.join("\n") : (f.highlights_en || "")}
             onChange={(e) => set("highlights_en", e.target.value.split("\n"))} /></div>
       </div>
 
@@ -2080,19 +2151,20 @@ function CardModal({ card, onClose, onSave }) {
       <summary><Icon name="book" size={14} /> {t("microTitle")}</summary>
       <div className="small muted mb8">{t("microLessonNote")}</div>
       <div className="grid grid-2">
-        <div className="field"><label>{t("microLead")} (FA)</label><input value={f.micro_lead_fa} onChange={(e) => set("micro_lead_fa", e.target.value)} /></div>
-        <div className="field"><label>{t("microLead")} (EN)</label><input value={f.micro_lead_en} onChange={(e) => set("micro_lead_en", e.target.value)} /></div>
+        <div data-content-language="fa" className="field"><label>{t("microLead")} (FA)</label><input aria-label={[t("microLead"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.micro_lead_fa} onChange={(e) => set("micro_lead_fa", e.target.value)} /></div>
+        <div data-content-language="en" className="field"><label>{t("microLead")} (EN)</label><input aria-label={[t("microLead"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.micro_lead_en} onChange={(e) => set("micro_lead_en", e.target.value)} /></div>
       </div>
       <div className="grid grid-2">
-        <div className="field"><label>{t("microGolden")} (FA)</label><input value={f.micro_golden_fa} onChange={(e) => set("micro_golden_fa", e.target.value)} /></div>
-        <div className="field"><label>{t("microGolden")} (EN)</label><input value={f.micro_golden_en} onChange={(e) => set("micro_golden_en", e.target.value)} /></div>
+        <div data-content-language="fa" className="field"><label>{t("microGolden")} (FA)</label><input aria-label={[t("microGolden"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.micro_golden_fa} onChange={(e) => set("micro_golden_fa", e.target.value)} /></div>
+        <div data-content-language="en" className="field"><label>{t("microGolden")} (EN)</label><input aria-label={[t("microGolden"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.micro_golden_en} onChange={(e) => set("micro_golden_en", e.target.value)} /></div>
       </div>
       <div className="grid grid-2">
-        <div className="field"><label>{t("microSource")} (FA)</label><input value={f.micro_source_fa} onChange={(e) => set("micro_source_fa", e.target.value)} /></div>
-        <div className="field"><label>{t("microSource")} (EN)</label><input value={f.micro_source_en} onChange={(e) => set("micro_source_en", e.target.value)} /></div>
+        <div data-content-language="fa" className="field"><label>{t("microSource")} (FA)</label><input aria-label={[t("microSource"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.micro_source_fa} onChange={(e) => set("micro_source_fa", e.target.value)} /></div>
+        <div data-content-language="en" className="field"><label>{t("microSource")} (EN)</label><input aria-label={[t("microSource"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.micro_source_en} onChange={(e) => set("micro_source_en", e.target.value)} /></div>
       </div>
       </details>
-    </Modal>
+      </AuthorSection><AuthorSection id="review" title={lang==="fa"?"بازبینی پیش از ذخیره":"Review before saving"}><AuthorSummary data={buildPayload()} /></AuthorSection>
+    </AuthoringModal>
   );
 }
 
@@ -2483,16 +2555,8 @@ function Prompts() {
       <div className="field"><label>{t("promptExamTeacher")} (EN)</label>
         <textarea style={{ minHeight: 70 }} value={p.exam_teacher_en || ""} onChange={(e) => set("exam_teacher_en", e.target.value)} /></div>
 
-      {/* Lab / radiology reporter */}
-      <div className="small muted mb8 mt8"><Icon name="flask" size={16} /> {t("promptInfoLab")}</div>
-      <div className="field"><label>{t("promptLabRules")} (FA)</label>
-        <textarea style={{ minHeight: 60 }} value={p.labresult_rules_fa || ""} onChange={(e) => set("labresult_rules_fa", e.target.value)} /></div>
-      <div className="field"><label>{t("promptLabRules")} (EN)</label>
-        <textarea style={{ minHeight: 60 }} value={p.labresult_rules_en || ""} onChange={(e) => set("labresult_rules_en", e.target.value)} /></div>
-      <div className="field"><label>{t("promptLabNormal")} (FA) <span className="small muted">— {t("promptLabNormalHint")}</span></label>
-        <input value={p.lab_normal_fa || ""} onChange={(e) => set("lab_normal_fa", e.target.value)} /></div>
-      <div className="field"><label>{t("promptLabNormal")} (EN)</label>
-        <input value={p.lab_normal_en || ""} onChange={(e) => set("lab_normal_en", e.target.value)} /></div>
+      {/* Clinical results are chart-only; legacy normal-result prompts are not used. */}
+      <div className="micro-box small mb16" role="note"><Icon name="flask" size={16} /> {t("promptInfoLab")}</div>
 
       <div className="small muted mb8 mt8"><Icon name="brain" size={16} /> {t("promptInfoEval")}</div>
       <div className="field"><label>{t("promptEvaluator")} (FA)</label>
@@ -2585,19 +2649,13 @@ function Classes() {
       <div className="section-title"><h4><Icon name="class" size={16} /> {t("classes")}</h4>
         <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newClass")}</button></div>
       {loadErr && <div className="err-banner mb8">{loadErr} <button type="button" className="btn btn-ghost btn-sm" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>}
-      <div className="table-wrap"><table>
-        <thead><tr><th>{t("className")}</th><th>{t("classCode")}</th><th>{t("casesCount")}</th><th>{t("students")}</th><th></th></tr></thead>
-        <tbody>{classes.map((c) => (
-          <tr key={c.id}>
-            <td>{biField(c, "name", lang)}</td>
-            <td><span className="tag">{c.code}</span></td>
-            <td>{c.nCases}</td><td>{c.nStudents}</td>
-            <td style={{ textAlign: "end", whiteSpace: "nowrap" }}>
-              <button type="button" className="btn btn-sm btn-primary" onClick={() => setOpenId(c.id)}>{t("classSettings")}</button>
-              <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button>
-            </td>
-          </tr>
-        ))}</tbody></table></div>
+      <DataTable rows={classes} rowKey={c=>c.id} searchKeys={['name_fa','name_en','code','university_id']} storageKey="admin-classes" columns={[
+        {key:'name',label:t('className'),sortValue:c=>biField(c,'name',lang),render:c=>biField(c,'name',lang)},
+        {key:'university_id',label:lang==='fa'?'شناسه دانشگاه':'University ID'},
+        {key:'code',label:t('classCode')},{key:'nCases',label:t('casesCount')},{key:'nStudents',label:t('students')},
+        {key:'actions',label:'',sortable:false,render:c=><span style={{display:'flex',gap:6}}><button type="button" className="btn btn-sm btn-primary" onClick={()=>setOpenId(c.id)}>{t('classSettings')}</button><button type="button" className="btn btn-sm btn-danger" onClick={()=>del(c.id)}>{t('delete')}</button></span>}
+      ]}/>
+
       {editing && <ClassModal cls={editing} onClose={() => setEditing(null)} onSave={save} />}
     </div>
   );
@@ -2689,13 +2747,14 @@ function ClassStudyField({ value, onChange }) {
 }
 
 function ClassModal({ cls, onClose, onSave }) {
-  const { t, lang } = useApp();
+  const { t, lang, user } = useApp();
   const inherited = cls.gradingRubric || (cls.grading_json ? (() => { try { return JSON.parse(cls.grading_json); } catch { return null; } })() : null);
   const [f, setF] = useState(() => {
     const logDefault = cls.id ? !!cls.log_transcript : true;
     return {
-      name_fa: cls.name_fa || "", name_en: cls.name_en || "",
+      university_id: cls.university_id || user.university_id || "", name_fa: cls.name_fa || "", name_en: cls.name_en || "",
       desc_fa: cls.desc_fa || "", desc_en: cls.desc_en || "",
+      exam_mode: cls.exam_mode || "perQuestion",
       maxAttempts: cls.maxAttempts || cls.max_attempts || 1,
       gradingRole: cls.grading_role || "both",
       historyForm: cls.history_form || "general",
@@ -2707,7 +2766,9 @@ function ClassModal({ cls, onClose, onSave }) {
   });
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
   return (
-    <Modal title={cls.id ? t("edit") : t("newClass")} onClose={onClose} onSave={() => onSave({ ...f, logTranscript: !!f.logTranscript, studyId: f.studyId === "" ? null : +f.studyId, gradingRubric: f.useCustomRubric ? f.gradingRubric : null }, cls.id)}>
+    <Modal title={cls.id ? t("edit") : t("newClass")} onClose={onClose} saveDisabled={user.role === "admin" && !f.university_id} onSave={() => onSave({ ...f, logTranscript: !!f.logTranscript, studyId: f.studyId === "" ? null : +f.studyId, gradingRubric: f.useCustomRubric ? f.gradingRubric : null }, cls.id)}>
+      <UniversityField value={f.university_id} onChange={v=>set("university_id",v)}/>
+      <ClassQuestionMode value={f.exam_mode} onChange={v=>set("exam_mode",v)}/>
       <div className="grid grid-2">
         <div className="field"><label>{t("className")} (FA)</label><input value={f.name_fa} onChange={(e) => set("name_fa", e.target.value)} /></div>
         <div className="field"><label>{t("className")} (EN)</label><input value={f.name_en} onChange={(e) => set("name_en", e.target.value)} /></div>
@@ -2896,9 +2957,12 @@ function ClassManage({ classId, back }) {
   const [bankErr, setBankErr] = useState("");
   const load = () => {
     setLoadErr("");
+    api.get('/cases').then(setAllCases).catch(e=>setBankErr(e.message));
+    api.get('/flashcards').then(setAllFlash).catch(e=>setBankErr(e.message));
     api.get(`/classes/${classId}`).then((d) => { setData(d); setInfo({
     name_fa: d.class.name_fa || "", name_en: d.class.name_en || "",
     desc_fa: d.class.desc_fa || "", desc_en: d.class.desc_en || "", maxAttempts: d.class.max_attempts ?? 1,
+    exam_mode: d.class.exam_mode || "perQuestion",
     liveBoardEnabled: d.class.live_board_enabled !== 0, liveBoardAnonymous: !!d.class.live_board_anonymous,
     logTranscript: !!d.class.log_transcript,
     studyId: d.class.study_id || "",
@@ -2915,9 +2979,9 @@ function ClassManage({ classId, back }) {
   useEffect(() => {
     load();
     setBankErr("");
-    api.get("/cases").then((d) => setAllCases(Array.isArray(d) ? d : [])).catch((e) => { setAllCases([]); setBankErr(String(e.message || e)); });
-    api.get("/flashcards").then((d) => setAllFlash(Array.isArray(d) ? d : [])).catch((e) => { setAllFlash([]); setBankErr(String(e.message || e)); });
-    api.get("/users").then((u) => setAllStudents((Array.isArray(u) ? u : []).filter((x) => x.role === "student"))).catch((e) => { setAllStudents([]); setBankErr(String(e.message || e)); });
+
+
+
   }, [classId]);
   if (loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setData(null); setInfo(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button> <button type="button" className="btn btn-ghost mt16" onClick={back}>{fa ? "بازگشت" : "Back"}</button></div>;
   if (!data || !info) return <Spinner />;
@@ -2932,6 +2996,8 @@ function ClassManage({ classId, back }) {
         <button type="button" className="btn btn-ghost btn-sm" onClick={back}>← {t("back")}</button>
       </div>
       {bankErr && <div className="err-banner mb8">{bankErr}</div>}
+      <GroupUniversity kind="classes" id={classId} value={cl.university_id} onSaved={load}/>
+      <ClassQuestionMode value={info.exam_mode} onChange={v=>setF("exam_mode",v)}/>
 
       {/* Basic info */}
       <div className="card mb16" style={{ background: "var(--panel2)" }}>
@@ -3030,7 +3096,7 @@ function ClassManage({ classId, back }) {
         </div>
       </div>
 
-      <ClassProgress classId={classId} cases={allCases} />
+      <ClassProgress key={members.map(m=>m.id).join(",")} classId={classId} cases={allCases} />
 
       {/* Content: cases + flashcards + members */}
       <div className="grid grid-3 mb16">
@@ -3062,7 +3128,7 @@ function ClassManage({ classId, back }) {
       <div className="small muted">{t("classSettingsHint")}</div>
 
       {editCases && <PickModal title={t("selectCases")} items={allCases}
-        labelFn={(c) => biField(c, "title", lang)} idFn={(c) => c.id}
+        labelFn={(c) => `${biField(c, "title", lang)} · ${c.public_code || c.id} · ${lang === "fa" ? "دانشگاه" : "University"} ${c.university_id}`} idFn={(c) => c.id}
         selected={cases.map((c) => c.case_id)} withWeight
         initialWeights={Object.fromEntries(cases.map((c) => [c.case_id, c.weight]))}
         onClose={() => setEditCases(false)}
@@ -3101,7 +3167,7 @@ function FlashPickModal({ items, selected, lang, onClose, onSave }) {
           <div key={it.id} className="fp-row">
             <label style={{ cursor: "pointer", flex: 1, display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
               <input type="checkbox" checked={!!r?.on} onChange={() => toggle(it.id)} style={{ width: 18, height: 18 }} />
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{biField(it, "title", lang) || `#${it.id}`}</span>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{biField(it, "title", lang) || `#${it.id}`} · {it.public_code || it.id} · {lang === "fa" ? "دانشگاه" : "University"} {it.university_id}</span>
             </label>
             {r?.on && (
               <div className="fp-opts">
@@ -3762,154 +3828,8 @@ function PickModal({ title, items, labelFn, idFn, selected, withWeight, initialW
 }
 
 
-function MemberManageModal({ classId, items, selected, lang, onClose, onSaved }) {
-  const { t } = useApp();
-  const fa = lang==="fa";
-  const [tab, setTab] = useState("pick"); // pick | bulk | guide
-  const [sel, setSel] = useState(selected || []);
-  const [q, setQ] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all"); // all | active | inactive
-  const [memberFilter, setMemberFilter] = useState("all"); // all | in | out
-  const [bulk, setBulk] = useState("");
-  const [result, setResult] = useState(null);
-  const [saving, setSaving] = useState(false);
-  const label = (u) => `${lang === "fa" ? u.name_fa : u.name_en} (${u.student_no})`;
-  // robust splitter: comma, semicolon, whitespace, Persian comma/semicolon, slash, pipe, colon, line-break
-  const splitNos = (s) => String(s||"").split(/[\n\r\t ,;،؛\/\|:]+/).map(x=>x.trim().replace(/\u200c/g,"")).filter(Boolean);
-  const bulkCount = splitNos(bulk).length;
-  const bulkUnique = new Set(splitNos(bulk).map(s=>s.toLowerCase())).size;
-  const bulkDup = bulkCount - bulkUnique;
-
-  // filtered pick list
-  const filtered = items.filter(u=>{
-    if(statusFilter!=="all" && (u.status||"active")!==statusFilter) return false;
-    if(memberFilter==="in" && !sel.includes(u.id)) return false;
-    if(memberFilter==="out" && sel.includes(u.id)) return false;
-    if(q.trim()){
-      const needle = q.trim().toLowerCase();
-      const hay = `${u.name_fa||""} ${u.name_en||""} ${u.student_no||""} ${u.username||""}`.toLowerCase();
-      if(!hay.includes(needle)) return false;
-    }
-    return true;
-  });
-
-  const toggle = (id)=> setSel(s=> s.includes(id)? s.filter(x=>x!==id) : [...s, id]);
-  const selectAllFiltered = ()=> setSel(s=> [...new Set([...s, ...filtered.map(u=>u.id)])]);
-  const clearFiltered = ()=> setSel(s=> s.filter(id=> !filtered.some(u=>u.id===id)));
-
-  const saveIds = async () => { setSaving(true); try{ await api.put(`/classes/${classId}/members`, { userIds: sel }); onSaved(); } finally{ setSaving(false);} };
-  const resolve = async (createMissing = false) => {
-    const studentNos = splitNos(bulk);
-    if(!studentNos.length) return;
-    const r = await api.post(`/classes/${classId}/members/resolve`, { studentNos, createMissing, attach: true });
-    setResult(r);
-    const ids = (r.existing || []).map((u) => u.id);
-    const createdIds = (r.created || []).map(u=>u.id);
-    const allNew = [...ids, ...createdIds];
-    if(allNew.length) setSel((s) => [...new Set([...s, ...allNew])]);
-    // also heal: if any healed, they are already in existing
-    if ((r.healed?.length||0)>0 || allNew.length>0 || createMissing) {
-      // auto-save to reflect healed/new in class, then reload
-      // we keep sel updated; parent will reload onSaved
-    }
-  };
-
-  return <Modal title={t("selectStudents")} onClose={onClose} wide>
-    <div style={{ display:"flex", gap:6, marginBottom:12, flexWrap:"wrap" }}>
-      <button type="button" className={`btn btn-sm ${tab==="pick"?"btn-primary":"btn-ghost"}`} onClick={()=>setTab("pick")}>{fa?"انتخاب از فهرست":"Pick from list"}</button>
-      <button type="button" className={`btn btn-sm ${tab==="bulk"?"btn-primary":"btn-ghost"}`} onClick={()=>setTab("bulk")}>{fa?"وارد کردن شماره":"Paste numbers"}</button>
-      <button type="button" className={`btn btn-sm ${tab==="guide"?"btn-primary":"btn-ghost"}`} onClick={()=>setTab("guide")}>{fa?"راهنما":"Guide"}</button>
-      <span className="small muted" style={{ marginInlineStart:"auto", alignSelf:"center" }}>{fa?`${sel.length} انتخاب شد`:`${sel.length} selected`}</span>
-    </div>
-
-    {tab==="pick" && (
-      <>
-        <div className="inline-form mb8" style={{ flexWrap:"wrap", gap:8, alignItems:"center" }}>
-          <div className="dt-search" style={{ flex:1, minWidth:180 }}>
-            <Icon name="search" size={14}/>
-            <input value={q} onChange={e=>setQ(e.target.value)} placeholder={fa?"جستجو نام/شماره…":"Search name/number…"} />
-            {q && <button type="button" className="dt-clear" onClick={()=>setQ("")}><Icon name="close" size={13}/></button>}
-          </div>
-          <select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)} style={{ minWidth:110 }}>
-            <option value="all">{fa?"همه وضعیت‌ها":"All statuses"}</option>
-            <option value="active">{fa?"فقط فعال":"Active only"}</option>
-            <option value="inactive">{fa?"فقط غیرفعال":"Inactive only"}</option>
-          </select>
-          <select value={memberFilter} onChange={e=>setMemberFilter(e.target.value)} style={{ minWidth:130 }}>
-            <option value="all">{fa?"همه دانشجویان":"All students"}</option>
-            <option value="out">{fa?"فقط غیرعضوها":"Not in class"}</option>
-            <option value="in">{fa?"فقط عضوها":"In class only"}</option>
-          </select>
-        </div>
-        <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:8 }}>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={selectAllFiltered} disabled={!filtered.length}>{fa?`انتخاب همهٔ نتایج (${filtered.length})`:`Select all filtered (${filtered.length})`}</button>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={clearFiltered} disabled={!filtered.length}>{fa?"حذف انتخاب فیلترشده":"Clear filtered"}</button>
-          <span className="small muted" style={{ alignSelf:"center" }}>{fa?`${filtered.length} نفر در فیلتر — ${items.length} کل`:`${filtered.length} filtered — ${items.length} total`}</span>
-        </div>
-        <div style={{ maxHeight: 340, overflow:"auto", border:"1px solid var(--border)", borderRadius:10 }}>
-          {filtered.length===0 ? <div className="small muted center" style={{ padding:20 }}>{fa?"نتیجه‌ای یافت نشد":"No results"}</div> : filtered.map((u) => (
-            <label key={u.id} className="toggle-row" style={{ cursor: "pointer", borderBottom:"1px solid var(--border)", padding:"8px 10px", background: sel.includes(u.id)?"var(--primaryGlow)":"transparent" }}>
-              <span style={{ display:"flex", flexDirection:"column", gap:2 }}>
-                <span style={{ fontWeight:600 }}>{label(u)}</span>
-                <span className="small muted" style={{ fontSize:".75rem" }}>{u.username} {u.status==="inactive" ? (fa?"— غیرفعال":"— inactive") : ""}</span>
-              </span>
-              <input type="checkbox" checked={sel.includes(u.id)} onChange={() => toggle(u.id)} style={{ width: 18, height: 18 }} />
-            </label>
-          ))}
-        </div>
-        <div className="small muted mt8" style={{ lineHeight:1.6 }}>{fa?"نکته: دسته‌بندی با سرچ + فیلتر وضعیت/عضویت — می‌توانید همهٔ «غیرعضوها» را یکجا انتخاب کنید. مرتب‌سازی بر اساس نام است؛ برای مرتب‌سازی دانشگاه از فهرست کاربران استفاده کنید.":"Tip: filter by status/membership and search, then select all."}</div>
-      </>
-    )}
-
-    {tab==="bulk" && (
-      <>
-        <div className="small muted mb8" style={{ lineHeight:1.8 }}>{fa? "شماره‌ها را با هر جداکننده‌ای وارد کنید: کاما، سمی‌کالن، فاصله، خط جدید، اسلش (/), ویرگول فارسی (،)، نقطه‌ویرگول فارسی (؛)، پایپ (|) یا دو‌نقطه (:). هر شماره در یک خط هم کاملاً مجاز است." : "Paste numbers with any separator: comma, semicolon, space, newline, slash (/), Persian comma (،), etc. One per line also works."}</div>
-        <textarea value={bulk} onChange={(e)=>setBulk(e.target.value)} style={{ width: "100%", minHeight: 140, fontFamily:"monospace", direction:"ltr", lineHeight:1.6 }} placeholder={fa?`40012345/40067890
-40011223،40033445
-40055667\n40077889`:`40012345, 40067890 / 40011223; 40033445
-40055667:40077889`} />
-        <div className="small" style={{ marginTop:6, display:"flex", gap:10, flexWrap:"wrap" }}>
-          <span>{fa?"شناسایی شد":"Detected"}: <b>{bulkCount}</b> {bulkDup? <span style={{ color:"var(--flame)"}}>({fa?`${bulkDup} تکراری در ورودی`:`${bulkDup} dup in input`})</span> : null}</span>
-          {bulkCount>0 && <span className="small muted">{fa?"مثال: 40012345/40067890 یا هر شماره در یک خط":"e.g. 40012345/40067890 or one per line"}</span>}
-        </div>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={()=>resolve(false)} disabled={!bulkCount}>{fa?"بررسی و افزودن موجودها":"Check & add existing"}</button>
-          <button type="button" className="btn btn-accent btn-sm" onClick={()=>resolve(true)} disabled={!bulkCount}>{fa?"ساخت ناموجودها و افزودن":"Create missing & add"}</button>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={()=>{ setBulk(""); setResult(null); }}>{fa?"پاک کردن":"Clear"}</button>
-        </div>
-        {result && <div className="card mt8" style={{ background: "var(--panel2)", padding: 10 }}>
-          <div className="small"><b>{fa?"نتیجه":"Result"}:</b> {fa?"اضافه‌شده":"Attached"}: {result.attached || 0} {result.healed?.length? <>· {fa?"ترمیم دانشگاه":"Healed"}: {result.healed.length}</> : null} {result.created?.length? <>· {fa?"ساخته‌شده":"Created"}: {result.created.length}</> : null}</div>
-          {!!result.missing?.length && <div className="small" style={{ color: "var(--flame)" }}>{fa?"ثبت‌نام‌نشده":"Missing"}: {result.missing.join(", ")}</div>}
-          {!!result.wrongUniversity?.length && <div className="small" style={{ color: "var(--flame)" }}>{fa?"دانشگاه متفاوت (افزوده نشد)":"Different university"}: {result.wrongUniversity.map(x=>x.student_no).join(", ")}</div>}
-          {!!result.limitBlocked?.length && <div className="small" style={{ color:"var(--danger)" }}>{fa?"سقف پر":"Limit blocked"}: {result.limitBlocked.map(x=>x.student_no).join(", ")}</div>}
-          {result.healed?.length>0 && <div className="small" style={{ color:"var(--accent)" }}>{fa?"بدون دانشگاه‌های ترمیم‌شده":"Healed no-university"}: {result.healed.map(x=>x.student_no).join(", ")}</div>}
-        </div>}
-      </>
-    )}
-
-    {tab==="guide" && (
-      <div className="card" style={{ background:"var(--panel2)", padding:12 }}>
-        <div style={{ fontWeight:800, marginBottom:8 }}>{fa?"جداکننده‌های مجاز برای شماره دانشجویی":"Allowed separators for student numbers"}</div>
-        <table className="small" style={{ width:"100%", borderCollapse:"collapse" }}>
-          <thead><tr style={{ borderBottom:"1px solid var(--border)", textAlign:"start" }}><th style={{ padding:"6px 8px" }}>{fa?"جداکننده":"Separator"}</th><th style={{ padding:"6px 8px" }}>{fa?"مثال":"Example"}</th></tr></thead>
-          <tbody>
-            <tr><td style={{ padding:"6px 8px" }}><code>,</code> کاما</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345, 40067890</td></tr>
-            <tr><td style={{ padding:"6px 8px" }}><code>/</code> اسلش</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345/40067890</td></tr>
-            <tr><td style={{ padding:"6px 8px" }}><code>،</code> ویرگول فارسی</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345،40067890</td></tr>
-            <tr><td style={{ padding:"6px 8px" }}><code>؛</code> نقطه‌ویرگول فارسی</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345؛40067890</td></tr>
-            <tr><td style={{ padding:"6px 8px" }}>{fa?"خط جدید (هر شماره در یک خط)":"New line (one per line)"}</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345<br/>40067890</td></tr>
-            <tr><td style={{ padding:"6px 8px" }}><code>;</code> <code>|</code> <code>:</code> {fa?"و فاصله":"and space"}</td><td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>40012345; 40067890 | 40011223</td></tr>
-          </tbody>
-        </table>
-        <div className="small muted mt8" style={{ lineHeight:1.8 }}>{fa?"همهٔ این‌ها هم‌زمان قابل ترکیب است؛ مثلاً «40012345/40067890، 40011223\n40033445» درست کار می‌کند. تکراری‌ها در ورودی خودکار نادیده گرفته و گزارش می‌شوند. اگر «ساخت ناموجودها» بزنید، برای هر شمارهٔ یافت‌نشده یک دانشجو با همان شماره (رمز=شماره) ساخته و به کلاس اضافه می‌شود (دانشگاهِ کلاس خودکار).":"All can be combined, e.g. '40012345/40067890, 40011223'. Duplicates in input are ignored. 'Create missing' will create a student for each not-found number."}</div>
-      </div>
-    )}
-
-    <div style={{ display:"flex", justifyContent:"flex-end", gap:8, marginTop:12, flexWrap:"wrap" }}>
-      <button type="button" className="btn btn-ghost" onClick={onClose}>{t("cancel")}</button>
-      <button type="button" className="btn btn-primary" onClick={saveIds} disabled={saving}>{saving? (fa?"در حال ذخیره…":"Saving…") : t("save")}</button>
-    </div>
-  </Modal>;
+function MemberManageModal({classId,onClose,onSaved}) {
+ return <AcademicMembers kind="classes" id={classId} onClose={onClose} onSaved={onSaved}/>;
 }
 
 /* ================= SCHEDULED EXAMS (admin/teacher) ================= */
@@ -4057,11 +3977,11 @@ function CardPicker({ cards, selected, onToggle, onSelectAll }) {
 
 /* Flashcard picker with search/filter/grouping + per-set graded/practice + weight. */
 function ExamModal({ exam, onClose, onSave }) {
-  const { t, lang } = useApp();
+  const { t, lang, user } = useApp();
   const [cases, setCases] = useState([]);
   const [cards, setCards] = useState([]);
   const [f, setF] = useState({
-    title_fa: "", title_en: "", desc_fa: "", desc_en: "",
+    university_id: user.university_id || "", title_fa: "", title_en: "", desc_fa: "", desc_en: "",
     case_ids: [], flashcard_ids: [], use_flashcards: false,
     duration_min: 30, max_attempts: 1, lang: "both",
     shuffle: false, anti_cheat: true, competition: false, show_correct: true, show_hints: true, show_ai: true, show_micro: true,
@@ -4134,7 +4054,8 @@ function ExamModal({ exam, onClose, onSave }) {
   const typeLabel = type === "vp" ? t("modVirtualPatient") : type === "flash" ? t("modFlashcard") : t("examBoth");
 
   return (
-    <Modal title={`${exam.id ? t("edit") : t("newExam")} — ${typeLabel}`} onClose={onClose} onSave={submit}>
+    <Modal title={`${exam.id ? t("edit") : t("newExam")} — ${typeLabel}`} onClose={onClose} saveDisabled={user.role === "admin" && !f.university_id} onSave={submit}>
+      <UniversityField disabled={!!exam.id} value={f.university_id} onChange={v=>set("university_id",v)}/>
       {bankErr && <div className="err-banner mb8">{bankErr}</div>}
       {!exam.id && <button type="button" className="btn btn-sm btn-ghost mb16" onClick={() => setType(null)}>← {t("changeType")}</button>}
       <div className="grid grid-2">
@@ -4219,7 +4140,7 @@ function ExamModal({ exam, onClose, onSave }) {
 
 /* Search students by name or student number and add them by clicking. */
 function StudentSearchAdd({ onAdd }) {
-  const { t, lang } = useApp();
+  const { t, lang, user } = useApp();
   const [all, setAll] = useState([]);
   const [stuErr, setStuErr] = useState("");
   const [q, setQ] = useState("");
@@ -4256,6 +4177,7 @@ function StudentSearchAdd({ onAdd }) {
 function ExamManage({ examId, back }) {
   const { t, lang } = useApp();
   const [data, setData] = useState(null);
+  const [picking,setPicking]=useState(false);
   const [nos, setNos] = useState("");
   const [msg, setMsg] = useState("");
   const [missingNos, setMissingNos] = useState([]);
@@ -4298,7 +4220,10 @@ function ExamManage({ examId, back }) {
           <button type="button" className="btn btn-ghost btn-sm" onClick={back}>← {t("back")}</button>
         </div></div>
 
-      <div className="card mb16" style={{ background: "var(--panel2)" }}>
+      <GroupUniversity kind="exams" id={examId} value={data.university_id} onSaved={load}/>
+      <button type="button" className="btn btn-primary mb12" onClick={()=>setPicking(true)}>{lang==='fa'?'انتخاب و دسته‌بندی دانشجویان':'Select and filter students'}</button>
+      {picking&&<AcademicMembers kind="exams" id={examId} onClose={()=>setPicking(false)} onSaved={()=>{setPicking(false);load()}}/>}
+      <details className="card mb16" style={{ background: "var(--panel2)" }}><summary>{lang==='fa'?'ورود شماره‌ها (پیشرفته)':'Paste student numbers (advanced)'}</summary>
         <h4 className="mb8"><Icon name="users" size={16} /> {t("assignByStudentNo")}</h4>
         <StudentSearchAdd onAdd={(sn) => setNos((prev) => {
           const list = prev.split(/[\n,]+/).map((s) => s.trim()).filter(Boolean);
@@ -4314,7 +4239,7 @@ function ExamManage({ examId, back }) {
           <button type="button" className="btn btn-primary mt8" onClick={save}>{t("saveParticipants")}</button>
           {missingNos.length > 0 && <button type="button" className="btn btn-accent mt8" onClick={createMissing}>{lang === "fa" ? "ساخت دانشجویان ثبت‌نشده و افزودن" : "Create missing students & add"}</button>}
         </div>
-      </div>
+      </details>
 
       <TeachingAnalyticsPanel kind="exam" id={examId} />
 
@@ -4763,7 +4688,7 @@ function StudentReportCard({ userId, onClose }) {
 
 /* ================= CUSTOM CATALOGS (teacher/admin) ================= */
 function Catalogs() {
-  const { t, lang } = useApp();
+  const { t, lang, user } = useApp();
   const [list, setList] = useState(null);
   const [editing, setEditing] = useState(null);
   const toast = useToast();
@@ -4791,11 +4716,12 @@ function Catalogs() {
           <thead><tr><th>{t("name")}</th><th>{t("catalogCount")}</th><th></th></tr></thead>
           <tbody>{list.map((c) => (
             <tr key={c.id}>
-              <td>{lang === "fa" ? c.name_fa : c.name_en}</td>
+              <td>{biField(c,"name",lang)}</td>
               <td>{c.items.length}</td>
               <td style={{ textAlign: "end" }}>
-                <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}>{t("edit")}</button>
-                <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button>
+                {user.role==='admin'&&<button type="button" className="btn btn-sm" role="switch" aria-checked={!!c.shared_to_teachers} onClick={async()=>{try{await api.put(`/catalogs/${c.id}/sharing`,{enabled:!c.shared_to_teachers});load()}catch(e){toast(e.message)}}}>{lang==='fa'?(c.shared_to_teachers?'فعال برای اساتید':'فعال‌سازی برای اساتید'):(c.shared_to_teachers?'Enabled for teachers':'Enable for teachers')}</button>}
+                {c.can_manage!==false&&<><button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}>{t("edit")}</button>
+                <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)}>{t("delete")}</button></>}
               </td>
             </tr>
           ))}</tbody></table></div>
@@ -7931,7 +7857,7 @@ function SiteAnalytics() {
               <div className="small muted mb8">{t("byUniversity")}</div>
               <div className="table-wrap"><table><thead><tr>
                 <th>{fa ? "دانشگاه" : "University"}</th><th>{t("colTeachers")}</th><th>{t("colStudents")}</th><th>{t("colClasses")}</th><th>{fa ? "آزمون" : "Attempts"}</th><th>{t("colAvgScore")}</th>
-              </tr></thead><tbody>{seg.universities.map((u) => (
+              </tr></thead><tbody>{sortUniversities(seg.universities,lang).map((u) => (
                 <tr key={u.id}><td>{u.name}</td><td>{num(u.teachers)}</td><td>{num(u.students)}</td><td>{num(u.classes)}</td><td>{num(u.attempts)}</td><td><b>{u.avgScore}</b></td></tr>
               ))}</tbody></table></div>
             </div>
@@ -9132,10 +9058,7 @@ function UserEditModal({ user, onClose, onSaved }) {
         </select></div>
       {isUni && (
         <div className="field"><label><Icon name="class" size={14} /> {t("university")}</label>
-          <select value={f.university_id} onChange={(e) => setF({ ...f, university_id: e.target.value })}>
-            <option value="">{t("noUniversity")} *</option>
-            {unis.map((u) => <option key={u.id} value={u.id}>{lang === "fa" ? u.name_fa : u.name_en}</option>)}
-          </select></div>
+          <UniversitySelect rows={unis} value={f.university_id} onChange={v=>setF({...f,university_id:v})} emptyLabel={t("noUniversity")}/></div>
       )}
       <div className="grid grid-2">
         {f.role === "student" && <div className="field"><label>{t("studentNo") || "Student No"}</label><input value={f.student_no} onChange={(e) => setF({ ...f, student_no: e.target.value })} /></div>}
@@ -9172,10 +9095,7 @@ function UserCreateModal({ onClose, onSaved, defaultRole = "learner" }) {
         </select></div>
       {isUni && (
         <div className="field"><label><Icon name="class" size={14} /> {t("university")}</label>
-          <select value={f.university_id} onChange={(e) => setF({ ...f, university_id: e.target.value })}>
-            <option value="">{t("noUniversity")} *</option>
-            {unis.map((u) => <option key={u.id} value={u.id}>{lang === "fa" ? u.name_fa : u.name_en}</option>)}
-          </select></div>
+          <UniversitySelect rows={unis} value={f.university_id} onChange={v=>setF({...f,university_id:v})} emptyLabel={t("noUniversity")}/></div>
       )}
       {f.role === "student" && <div className="field"><label>{t("studentNo") || "Student No"}</label><input value={f.student_no} onChange={(e) => setF({ ...f, student_no: e.target.value })} /></div>}
     </Modal>
@@ -9191,23 +9111,20 @@ function Universities() {
   const [defaults, setDefaults] = useState(null);   // global feature defaults
   const [editing, setEditing] = useState(null);
   const [uniQ, setUniQ] = useState("");
-  const [members, setMembers] = useState({});   // uniId -> {teachers, students} (expanded)
+  const [members, setMembers] = useState({}); // expanded university IDs
+  const [membersRevision, setMembersRevision] = useState(0);
   const [addingTo, setAddingTo] = useState(null);   // university to add existing members to
   const load = () => api.get("/universities").then((d) => { setUnis(d.universities); setDefaults(d.defaults || null); }).catch(() => setUnis([]));
   const saveDefaults = async (patch) => {
     try { const d = await api.put("/universities/defaults", patch); setDefaults(d); toast(t("saved")); }
     catch (e) { toast(e.message); }
   };
-  const refreshMembers = async (uid) => { try { const d = await api.get(`/universities/${uid}/members?lang=${lang}`); setMembers((m) => ({ ...m, [uid]: d })); } catch { /* */ } };
   const removeMember = async (uid, userId) => {
-    if (!confirm(t("removeFromUni") + "؟")) return;
-    try { await api.del(`/universities/${uid}/members/${userId}`); toast(t("saved")); refreshMembers(uid); load(); } catch (e) { toast(e.message); }
+    await api.del(`/universities/${uid}/members/${userId}`);
+    toast(t("saved")); setMembersRevision(v=>v+1); load();
   };
   useEffect(() => { load(); }, []);
-  const toggleMembers = async (uid) => {
-    if (members[uid]) { setMembers((m) => { const n = { ...m }; delete n[uid]; return n; }); return; }
-    try { const d = await api.get(`/universities/${uid}/members?lang=${lang}`); setMembers((m) => ({ ...m, [uid]: d })); } catch { /* */ }
-  };
+  const toggleMembers = (uid) => setMembers(m=>({...m,[uid]:!m[uid]}));
   const del = async (u) => {
     if (!confirm(t("confirmDelete"))) return;
     try { await api.del(`/universities/${u.id}`); toast(t("saved")); load(); }
@@ -9243,15 +9160,15 @@ function Universities() {
       {unis.length > 0 && (
         <div className="dt-search">
           <Icon name="search" size={16} />
-          <input value={uniQ} onChange={(e) => setUniQ(e.target.value)} placeholder={t("searchPlaceholder")} />
+          <input aria-label={lang==="fa"?"جستجوی دانشگاه‌ها":"Search universities"} value={uniQ} onChange={(e) => setUniQ(e.target.value)} placeholder={lang==="fa"?"جستجو با نام دانشگاه، شهر یا کد…":"Search university, city or code…"} />
           {uniQ && <button type="button" className="dt-clear" onClick={() => setUniQ("")}><Icon name="close" size={14} /></button>}
         </div>
       )}
       <div className="grid grid-2">
-        {unis.filter((u) => {
+        {sortUniversities(unis,lang).filter((u) => {
           const n = uniQ.trim().toLowerCase();
           if (!n) return true;
-          return [u.name_fa, u.name_en, u.city_fa, u.city_en, u.code].some((v) => String(v ?? "").toLowerCase().includes(n));
+          return matchesUniversity(u,uniQ);
         }).map((u) => (
           <div key={u.id} className="card">
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
@@ -9292,70 +9209,34 @@ function Universities() {
               {isAdmin && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing(u)}><Icon name="edit" size={13} /> {t("edit")}</button>}
               {isAdmin && <button type="button" className="btn btn-danger btn-sm" onClick={() => del(u)}><Icon name="trash" size={13} /> {t("delete")}</button>}
             </div>
-            {members[u.id] && (
-              <div className="uni-members mt8">
-                <div className="small" style={{ fontWeight: 800, marginBottom: 4 }}>👨‍🏫 {t("teacher")}</div>
-                {members[u.id].teachers.length === 0 && <div className="small muted">—</div>}
-                {members[u.id].teachers.map((m) => (
-                  <div key={m.id} className="uni-member-row" style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ flex: 1 }}>{m.name}</span><span className="small muted">{m.email}</span>
-                    {isAdmin && <button type="button" className="btn btn-ghost btn-sm" title={t("removeFromUni")} onClick={() => removeMember(u.id, m.id)}><Icon name="close" size={12} /></button>}</div>
-                ))}
-                <div className="small" style={{ fontWeight: 800, margin: "8px 0 4px" }}>🎓 {t("student")}</div>
-                {members[u.id].students.length === 0 && <div className="small muted">—</div>}
-                {members[u.id].students.slice(0, 8).map((m) => (
-                  <div key={m.id} className="uni-member-row" style={{ display: "flex", alignItems: "center", gap: 8 }}><span style={{ flex: 1 }}>{m.name}</span><span className="small muted">{m.student_no || ""}</span>
-                    {isAdmin && <button type="button" className="btn btn-ghost btn-sm" title={t("removeFromUni")} onClick={() => removeMember(u.id, m.id)}><Icon name="close" size={12} /></button>}</div>
-                ))}
-                {members[u.id].students.length > 8 && <div className="small muted">+{members[u.id].students.length - 8}…</div>}
-              </div>
-            )}
+            {members[u.id] && <UniversityMembers id={u.id} revision={membersRevision}
+              onRemove={isAdmin ? userId=>removeMember(u.id,userId) : undefined} />}
+
           </div>
         ))}
       </div>
       {editing && <UniversityModal uni={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); toast(t("saved")); load(); }} />}
       {addingTo && <AddUniMembersModal uni={addingTo} onClose={() => setAddingTo(null)}
-        onSaved={() => { const uid = addingTo.id; setAddingTo(null); toast(t("saved")); if (members[uid]) refreshMembers(uid); load(); }} />}
+        onSaved={() => { const uid = addingTo.id; setAddingTo(null); toast(t("saved")); setMembersRevision(v=>v+1); load(); }} />}
     </div>
   );
 }
 
 /* Admin: add EXISTING teachers/students to a university (bulk), with search. */
 function AddUniMembersModal({ uni, onClose, onSaved }) {
-  const { t, lang } = useApp();
-  const [q, setQ] = useState("");
-  const [list, setList] = useState(null);
-  const [sel, setSel] = useState([]);
-  const [busy, setBusy] = useState(false);
-  const search = () => api.get(`/universities/${uni.id}/candidates?lang=${lang}&q=${encodeURIComponent(q)}`).then((d) => setList(d.candidates || [])).catch(() => setList([]));
-  useEffect(() => { search(); }, []);
-  const toggle = (id) => setSel((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
-  const save = async () => {
-    if (!sel.length) return;
-    setBusy(true);
-    try { await api.post(`/universities/${uni.id}/members`, { userIds: sel }); onSaved(); }
-    catch (e) { alert(e.message); } finally { setBusy(false); }
-  };
-  return (
-    <Modal title={`${t("addExistingMembers")} — ${lang === "fa" ? uni.name_fa : uni.name_en}`} onClose={onClose} onSave={save} saveLabel={busy ? "…" : t("save")}>
-      <div className="small muted mb8">{t("addMembersHint")}</div>
-      <div className="dt-search mb8" style={{ maxWidth: "100%" }}>
-        <Icon name="search" size={16} />
-        <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && search()} placeholder={t("searchUsers")} />
-        <button type="button" className="btn btn-ghost btn-sm" onClick={search}>{t("search") || "🔍"}</button>
-      </div>
-      {list == null ? <Spinner /> : list.length === 0 ? <div className="small muted center" style={{ padding: 16 }}>{t("noCandidates")}</div> : (
-        <div style={{ maxHeight: 320, overflowY: "auto" }}>
-          {list.map((u) => (
-            <label key={u.id} className="toggle-row" style={{ cursor: "pointer" }}>
-              <span style={{ flex: 1 }}>{u.name} <span className="tag small">{t(u.role)}</span> {u.student_no ? <span className="small muted">{u.student_no}</span> : ""} {u.hasUni && <span className="small muted">({lang === "fa" ? "دانشگاه دیگر" : "another uni"})</span>}</span>
-              <input type="checkbox" checked={sel.includes(u.id)} onChange={() => toggle(u.id)} />
-            </label>
-          ))}
-        </div>
-      )}
-      {sel.length > 0 && <div className="small muted mt8">{sel.length} {lang === "fa" ? "انتخاب شد" : "selected"}</div>}
-    </Modal>
-  );
+ const {t,lang}=useApp(),fa=lang==='fa';const[q,setQ]=useState(''),[prefix,setPrefix]=useState(''),[role,setRole]=useState(''),[page,setPage]=useState(1),[data,setData]=useState({candidates:[],total:0}),[sel,setSel]=useState(new Set()),[busy,setBusy]=useState(false),[loading,setLoading]=useState(true),[error,setError]=useState(''),[revision,setRevision]=useState(0);const generation=useRef(0);
+ useEffect(()=>{const n=++generation.current;setLoading(true);setError('');const timer=setTimeout(()=>{const qs=new URLSearchParams({lang,q,prefix,role,page:String(page),pageSize:'50'});api.get(`/universities/${uni.id}/candidates?${qs}`).then(d=>{if(n===generation.current)setData(d)}).catch(e=>{if(n===generation.current)setError(e.message)}).finally(()=>{if(n===generation.current)setLoading(false)});},200);return()=>{clearTimeout(timer);generation.current++;}},[uni.id,lang,q,prefix,role,page,revision]);
+ const select=(ids,on)=>setSel(prev=>{const next=new Set(prev);for(const id of ids)on?next.add(id):next.delete(id);return next});
+ const save=async()=>{if(!sel.size)return;if(!confirm(fa?'دانشگاه افراد انتخاب‌شده تغییر کند؟ سوابق قبلی حذف نمی‌شوند، اما دسترسی به کلاس‌ها و آزمون‌های دانشگاه قبل محدود می‌شود.':'Change the selected users’ university? History is retained but access to their previous university’s classes/exams is restricted.'))return;setBusy(true);setError('');try{await api.post(`/universities/${uni.id}/members`,{userIds:[...sel]});onSaved()}catch(e){setError(e.message)}finally{setBusy(false)}};
+ const filter=set=>(e)=>{set(e.target.value);setPage(1)};
+ return <Modal wide title={`${t('addExistingMembers')} — ${(fa?uni.name_fa:uni.name_en)||uni.code}`} onClose={()=>{if(!busy)onClose()}} onSave={save} saveDisabled={busy||loading||!sel.size||!!error}>
+ {error&&<div role="alert" className="err-banner">{error}<button type="button" onClick={()=>setRevision(n=>n+1)}>{fa?'تلاش دوباره':'Retry'}</button></div>}
+ <div className="grid grid-2"><label className="field">{t('searchUsers')}<input value={q} onChange={filter(setQ)}/></label><label className="field">{fa?'پیش‌شماره دانشجویی':'Student number prefix'}<input value={prefix} onChange={filter(setPrefix)}/></label><label className="field">{fa?'نقش':'Role'}<select value={role} onChange={filter(setRole)}><option value="">{t('allRoles')}</option><option value="student">{t('student')}</option><option value="teacher">{t('teacher')}</option></select></label></div>
+ <p role="status">{loading?(fa?'در حال جستجو…':'Loading…'):`${data.total} ${fa?'نتیجه':'results'}`} · {sel.size} {fa?'انتخاب‌شده':'selected'}</p>
+ <button type="button" className="btn btn-sm btn-ghost" disabled={loading} onClick={()=>select(data.candidates.map(u=>u.id),true)}>{fa?'انتخاب این صفحه':'Select this page'}</button><button type="button" className="btn btn-sm btn-ghost" onClick={()=>setSel(new Set())}>{fa?'پاک کردن انتخاب':'Clear selection'}</button>
+ {data.candidates.map(u=><label className="toggle-row" key={u.id}><span>{u.name} · {u.student_no} · {t(u.role)} · {u.university_name||'—'}</span><input type="checkbox" disabled={loading} checked={sel.has(u.id)} onChange={e=>select([u.id],e.target.checked)}/></label>)}
+ <div className="inline-form mt8"><button type="button" className="btn btn-sm btn-ghost" disabled={loading||page<=1} onClick={()=>setPage(p=>p-1)}>{fa?'صفحه قبل':'Previous page'}</button><span>{page}/{Math.max(1,Math.ceil(data.total/50))}</span><button type="button" className="btn btn-sm btn-ghost" disabled={loading||page*50>=data.total} onClick={()=>setPage(p=>p+1)}>{fa?'صفحه بعد':'Next page'}</button></div>
+ </Modal>;
 }
 
 function UniversityModal({ uni, onClose, onSaved }) {
@@ -9589,7 +9470,7 @@ function FeatureFlags() {
   // Grouped so ~70 switches stay scannable. Unknown keys fall into «سایر».
   const GROUPS = [
     [fa ? "یادگیری و مسیر" : "Learning & path", ["placement", "srs_review", "smart_practice", "checkpoint", "mastery", "legendary", "jump_ahead", "calibration", "confidence_assess", "calm_mode", "study_plan", "certificates", "onboarding"]],
-    [fa ? "بانک و ابزارهای مطالعه" : "Bank & study tools", ["bank_browse", "full_bank", "custom_test", "summaries", "summaries_free", "exam_sim", "mindmap", "mnemonics", "virtual_patient", "drawing_assist", "learner_cards", "notes", "flagged_review", "library", "mistakes_hub", "crowd_insights", "progress", "help_center"]],
+    [fa ? "بانک و ابزارهای مطالعه" : "Bank & study tools", ["bank_browse", "full_bank", "custom_test", "summaries", "summaries_free", "exam_sim", "mindmap", "mnemonics", "drawing_assist", "learner_cards", "notes", "flagged_review", "library", "mistakes_hub", "crowd_insights", "progress", "help_center"]],
     [fa ? "مقایسه با همتایان (دور ۹)" : "Peer benchmark (round 9)", ["option_stats", "peer_percentile", "daily_report", "hint", "save_flashcard", "premium_trial"]],
     [fa ? "انگیزش و رقابت" : "Motivation & competition", ["quests", "achievements", "leagues", "ranking", "anon_ranking", "ramp_event", "streak_wager", "monthly_quest", "streak_revival", "challenges", "friends", "community", "dx_challenge", "referral", "social_share", "smart_reminders"]],
     [fa ? "درآمد و تبلیغات" : "Revenue & ads", ["premium", "ads", "store", "group_purchase"]],

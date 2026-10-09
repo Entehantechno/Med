@@ -90,25 +90,25 @@ db.pragma("foreign_keys = ON");
 // Students log in with their STUDENT NUMBER as the username.
 const hash = bcrypt.hashSync("demo", 8);
 const insUser = db.prepare(
-  `INSERT INTO users (username,password_hash,name_fa,name_en,student_no,role,status) VALUES (?,?,?,?,?,?,?)`
+  `INSERT INTO users (username,password_hash,name_fa,name_en,student_no,role,status,university_id) VALUES (?,?,?,?,?,?,?,?)`
 );
-insUser.run("teacher", hash, "دکتر سارا احمدی", "Dr. Sara Ahmadi", null, "teacher", "active");
-insUser.run("admin", hash, "مدیر سامانه", "System Admin", null, "admin", "active");
+insUser.run("teacher", hash, "دکتر سارا احمدی", "Dr. Sara Ahmadi", null, "teacher", "active", 1);
+insUser.run("admin", hash, "مدیر سامانه", "System Admin", null, "admin", "active", null);
 // students: username == student_no
-insUser.run("40012345", hash, "علی رضایی", "Ali Rezaei", "40012345", "student", "active");
-insUser.run("40067890", hash, "مریم حسینی", "Maryam Hosseini", "40067890", "student", "active");
-insUser.run("40099999", hash, "نیما کریمی", "Nima Karimi", "40099999", "student", "inactive");
+insUser.run("40012345", hash, "علی رضایی", "Ali Rezaei", "40012345", "student", "active", 1);
+insUser.run("40067890", hash, "مریم حسینی", "Maryam Hosseini", "40067890", "student", "active", 1);
+insUser.run("40099999", hash, "نیما کریمی", "Nima Karimi", "40099999", "student", "inactive", 1);
 // A few more demo students so class/exam student pickers show a realistic list
 // (and the search box is genuinely useful). All password: demo.
-insUser.run("40011223", hash, "زهرا موسوی", "Zahra Mousavi", "40011223", "student", "active");
-insUser.run("40022334", hash, "رضا احمدی", "Reza Ahmadi", "40022334", "student", "active");
-insUser.run("40033445", hash, "فاطمه رحیمی", "Fatemeh Rahimi", "40033445", "student", "active");
-insUser.run("40044556", hash, "امیر صادقی", "Amir Sadeghi", "40044556", "student", "active");
-insUser.run("40055667", hash, "سارا نوری", "Sara Nouri", "40055667", "student", "active");
-insUser.run("40066778", hash, "حسین کاظمی", "Hossein Kazemi", "40066778", "student", "active");
+insUser.run("40011223", hash, "زهرا موسوی", "Zahra Mousavi", "40011223", "student", "active", 1);
+insUser.run("40022334", hash, "رضا احمدی", "Reza Ahmadi", "40022334", "student", "active", 1);
+insUser.run("40033445", hash, "فاطمه رحیمی", "Fatemeh Rahimi", "40033445", "student", "active", 1);
+insUser.run("40044556", hash, "امیر صادقی", "Amir Sadeghi", "40044556", "student", "active", 1);
+insUser.run("40055667", hash, "سارا نوری", "Sara Nouri", "40055667", "student", "active", 1);
+insUser.run("40066778", hash, "حسین کاظمی", "Hossein Kazemi", "40066778", "student", "active", 1);
 // mid-level (granular RBAC) demo accounts — added AFTER core users to keep IDs stable
-insUser.run("content", hash, "مدیر محتوا", "Content Manager", null, "content_manager", "active");
-insUser.run("support", hash, "پشتیبان", "Support Agent", null, "support", "active");
+insUser.run("content", hash, "مدیر محتوا", "Content Manager", null, "content_manager", "active", null);
+insUser.run("support", hash, "پشتیبان", "Support Agent", null, "support", "active", null);
 
 // ---- Checklists ----
 const insChecklist = db.prepare(
@@ -225,8 +225,8 @@ insCase.run(2, 1, "hard", 2, JSON.stringify({
 
 
 insCase.run(3, 1, "medium", 1, JSON.stringify({
-  track: "learn",
-  title_fa: "تنگی نفس در مرد ۴۵ ساله (مسیر رقابتی)", title_en: "Dyspnea in a 45-year-old man (competitive track)",
+  track: "uni",
+  title_fa: "تنگی نفس در مرد ۴۵ ساله (دانشگاهی)", title_en: "Dyspnea in a 45-year-old man (academic)",
   specialty_fa: "قلب و عروق", specialty_en: "Cardiology", age: 45, sex: "male",
   chief_fa: "تنگی نفس ناگهانی از یک ساعت پیش", chief_en: "Sudden shortness of breath for one hour",
   history_fa: "تنگی نفس ناگهانی در حال نشستن، بدون درد قفسه سینه واضح، سابقه سفر طولانی هفته گذشته.",
@@ -246,14 +246,17 @@ insCase.run(3, 1, "medium", 1, JSON.stringify({
   objectives_en: "Suspect PE and order D-dimer and CTPA",
 }));
 
-// ---- Emergency Ten: high-yield internal-medicine cases (all in Emergency) ----
-// Imported from vp-emergency-ten.js so upgrades and fresh seeds share one source of truth.
+// ---- Academic emergency cases: stable source keys, never competitive ----
 {
-  const { EMERGENCY_TEN } = await import("./data/vp-emergency-ten.js");
-  for (const c of EMERGENCY_TEN) {
-    // Use auto-increment id (do NOT hardcode) so existing custom cases never collide.
-    db.prepare(`INSERT INTO cases (version,difficulty,checklist_id,data_json,active) VALUES (1,?,?,?,1)`)
-      .run(c.difficulty, c.checklist_id, JSON.stringify(c.data));
+  const { EMERGENCY_TEN } = await import('./data/vp-emergency-ten.js');
+  const { EMERGENCY_RUBRICS } = await import('./data/emergency-rubrics.js');
+  for (const [id, rubric] of Object.entries(EMERGENCY_RUBRICS)) insChecklist.run(Number(id), rubric.name_fa, rubric.name_en, JSON.stringify(rubric.items));
+  const universityId = db.prepare("SELECT id FROM universities WHERE code='ARAK'").get()?.id || 1;
+  for (const [i,c] of EMERGENCY_TEN.entries()) {
+    const key = `medschool:emergency:${i+1}:university:${universityId}`;
+    if (db.prepare("SELECT 1 FROM content_identity_registry WHERE kind='cases' AND source_key=?").get(key)) continue;
+    db.prepare('INSERT INTO cases (version,difficulty,checklist_id,data_json,active,university_id,source_key) VALUES (1,?,?,?,1,?,?)')
+      .run(c.difficulty,c.checklist_id,JSON.stringify({...c.data,track:'uni'}),universityId,key);
   }
 }
 
@@ -368,19 +371,19 @@ const prompts = {
   patient_en: "You play a realistic virtual patient who has come to see a doctor. Answer ONLY from the PATIENT CHART (JSON). Core rule: Disclose information strictly bit by bit, answering ONLY what the doctor explicitly asked. If asked 'What is your problem?' or 'What brings you here?', answer ONLY with the chief complaint in a brief sentence (e.g. 'My stomach hurts, doctor'). Do NOT volunteer pain radiation, onset, severity, relieving/aggravating factors, associated symptoms, or history unless specifically asked for that exact item. Natural patient tone, brief 1-2 sentences.",
   // Operating rules for the patient (fully editable by the admin — previously
   // these were hard-coded inside the engine and could NOT be changed):
-  patient_rules_fa: "قوانین: ۱) اطلاعات را ذره‌ذره و متناسب با سؤال پزشک ارائه کن و هرگز بدون پرسش پزشک اطلاعاتی مثل انتشار درد، زمان شروع، شدت یا علائم همراه را فاش نکن. ۲) پاسخ‌ها را فقط از روی پروندهٔ بیمار استخراج کن و هیچ حقیقت پزشکیِ جدیدی از خودت نساز. ۳) اگر پزشک چیزی پرسید که در پرونده نیست، پاسخ منفی یا طبیعی بده (مثلاً «نه، سیگار نمی‌کشم»). ۴) هرگز تشخیص نهایی، نتیجهٔ آزمایش/تصویربرداری یا یافته‌های معاینهٔ فیزیکی را لو نده (معاینه را استاد انجام می‌دهد). ۵) اول‌شخص و از زبان بیمار عادی، کوتاه (۱ تا ۲ جمله) و طبیعی پاسخ بده.",
-  patient_rules_en: "Rules: 1) Disclose information strictly bit by bit as asked; never volunteer pain radiation, onset, severity, or associated symptoms unprompted. 2) Draw answers ONLY from the chart and never invent new facts. 3) If asked about something unrecorded, give a plausible negative/normal reply. 4) Never reveal the final diagnosis, lab/imaging results, or physical exam findings (the supervising teacher performs exams). 5) Reply in the first person as an ordinary patient, briefly (1-2 sentences) and naturally.",
+  patient_rules_fa: "قوانین: ۱) اطلاعات را ذره‌ذره و متناسب با سؤال پزشک ارائه کن و هرگز بدون پرسش پزشک اطلاعاتی مثل انتشار درد، زمان شروع، شدت یا علائم همراه را فاش نکن. ۲) پاسخ‌ها را فقط از روی پروندهٔ بیمار استخراج کن و هیچ حقیقت پزشکیِ جدیدی از خودت نساز. ۳) اگر پزشک چیزی پرسید که در پرونده نیست، صریحاً بگو اطلاعات ثبت نشده است؛ پاسخ منفی یا طبیعی حدس نزن. ۴) هرگز تشخیص نهایی، نتیجهٔ آزمایش/تصویربرداری یا یافته‌های معاینهٔ فیزیکی را لو نده (معاینه را استاد انجام می‌دهد). ۵) اول‌شخص و از زبان بیمار عادی، کوتاه (۱ تا ۲ جمله) و طبیعی پاسخ بده.",
+  patient_rules_en: "Rules: 1) Disclose information strictly bit by bit as asked; never volunteer pain radiation, onset, severity, or associated symptoms unprompted. 2) Draw answers ONLY from the chart and never invent new facts. 3) If asked about something unrecorded, explicitly say it is not recorded; never invent negative or normal findings. 4) Never reveal the final diagnosis, lab/imaging results, or physical exam findings (the supervising teacher performs exams). 5) Reply in the first person as an ordinary patient, briefly (1-2 sentences) and naturally.",
   // Role prompt for the SUPERVISING-TEACHER responder (exam findings &
   // auscultation). The engine always appends its hard constraints on top.
   exam_teacher_fa: "تو استادِ نظارت (attending) هستی. دانشجو از تو خواسته معاینهٔ بیمار مجازی را انجام دهی و یافته‌ها را به او بگویی.",
   exam_teacher_en: "You are the supervising attending. The student has asked you to examine the virtual patient and report the findings.",
-  // Rules for how the lab/radiology responder words a result (used when the AI
-  // generates a normal-result report). Also admin-editable:
+  // Legacy lab prompt keys retained for import compatibility; the chart-only
+  // result engine no longer calls AI or these templates for missing results.
   labresult_rules_fa: "تو گزارش‌دهندهٔ آزمایشگاه/رادیولوژی هستی. لحن رسمی و کوتاه. فقط یک جمله بنویس.",
   labresult_rules_en: "You are the lab/radiology reporter. Formal, short tone. Write only one sentence.",
-  // Deterministic fallback template for a NORMAL result (no AI). Use {item}.
-  lab_normal_fa: "طبق گزارش آزمایشگاه، {item} بیمار نرمال است.",
-  lab_normal_en: "Per the lab report, the patient's {item} is normal.",
+  // Deprecated templates; retained keys are never used to invent a result.
+  lab_normal_fa: "نتیجهٔ {item} در پرونده ثبت نشده است.",
+  lab_normal_en: "A result for {item} is not recorded in the chart.",
   evaluator_fa: "تو یک استادِ ارزیابِ بالینی و مصحح سخت‌گیر و عادل OSCE هستی. کل تعامل دانشجو با بیمار مجازی را بررسی کن: متن گفتگو، آزمایش‌ها/تصویربرداری‌ها، پرابلم لیست، تشخیص‌های افتراقی و تشخیص نهایی. قوانین ارزیابی چک‌لیست: ۱) معرفی خود و کسب رضایت: دانشجو باید صراحتاً نام یا عنوان خود را به‌عنوان پزشک بیان کرده باشد و از بیمار اجازه/رضایت گرفته باشد؛ صرف گفتن «سلام» یا پرسیدن «مشکل چیست؟» به هیچ وجه معرفی و کسب رضایت نیست (done: false). ۲) بررسی سیستماتیک شکایت اصلی و مرور سیستم‌ها (ROS): تنها در صورتی تیک می‌خورد که دانشجو ویژگی‌های علامت و ارگان‌های دیگر را صریحاً پرسیده باشد. ۳) برای هر مورد یک دلیل کوتاه بنویس و خروجی را با فرمت معتبر JSON ارائه بده.",
   evaluator_en: "You are a strict, fair clinical OSCE examiner. Review the student encounter: chat transcript, orders, problem list, differentials, and final diagnosis. Rules: 1) Introduction & consent: The student MUST have explicitly stated their name/role as doctor and asked for consent; merely saying 'hello' or 'what is your problem' is NOT introduction or consent (done: false). 2) Systematic exploration & ROS: Only mark done if the student specifically asked about characteristics and organ systems. 3) Provide a brief reason per item and return valid JSON.",
   micro_fa: "بر اساس نقاط ضعف و خطاهای این دانشجو در این سناریو، یک درسنامه میکرو-لرنینگِ کاربردی، ساختاریافته و جامع (شامل پیام کلیدی، رویکرد شرح‌حال، معاینه فیزیکی و مرور سیستم‌ها ROS، نکات دام‌دار، و جمع‌بندی طلایی) در قالب مارک‌داون بنویس تا دانشجو بلافاصله پس از مشاهده نمره، آن را بخواند و یاد بگیرد.",
@@ -1369,6 +1372,12 @@ if (shareIds[1]) {
   if (restored) console.log(`   Restored ${restored} protocol instrument template(s) to their shipped state.`);
 }
 
+// Explicit demo seeding only. Production upgrade must not recreate deleted samples.
+const { ensureArakHistology } = await import('./lib/arak-seed.js');
+ensureArakHistology();
+const {seedDemoStudents}=await import('./lib/demo-students.js');
+seedDemoStudents();
+db.prepare("UPDATE cases SET university_id=1 WHERE university_id IS NULL").run();
 persistNow();   // flush the seeded database to disk
 
 console.log("✅ Database seeded successfully.");

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, statSync } from "node:fs";
+import { existsSync, statSync, readFileSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 
@@ -58,10 +58,12 @@ if (!has("package.json")) {
 }
 
 const forbiddenMatchers = [
+  {name:'development tests',test:e=>/^(server\/test|e2e|client\/e2e)\//.test(e)||/\.(test|spec)\.[cm]?[jt]sx?$/.test(e)},
+  { name: "extra documentation/report", test: e => /\.(md|docx?)$/i.test(e) || /^(docs|reports)\//.test(e) },
   { name: "node_modules", test: (e) => e === "node_modules/" || e.includes("/node_modules/") || e.startsWith("node_modules/") },
   { name: "runtime data folder medschool-data", test: (e) => e === "medschool-data/" || e.startsWith("medschool-data/") },
   { name: "runtime data folder data", test: (e) => e === "data/" || e.startsWith("data/") },
-  { name: "SQLite/sql.js database file", test: (e) => /(^|\/)[^/]+\.(db|sqlite|sqlite3)(-|$|\.)?/i.test(e) },
+  { name: "SQLite/sql.js database file", test: (e) => e !== "demo-database/medlab.db" && /(^|\/)[^/]+\.(db|sqlite|sqlite3)(-|$|\.)?/i.test(e) },
   { name: "Playwright report/test-results", test: (e) => e.includes("playwright-report/") || e.includes("test-results/") },
   // Lean release: raw question-bank build inputs must never ship (payloads only).
   { name: "raw bank build inputs (sources/scrapers)", test: (e) => /^tools\/[^/]+-bank\/sources\//.test(e) || /^tools\/exam-booklets\//.test(e) },
@@ -89,6 +91,12 @@ const readEntry = (entry) => {
     return "";
   }
 };
+
+// A public ZIP must not carry a machine-generated shared signing secret.
+for (const envFile of ['.env','.env.ready']) {
+  const match=readEntry(envFile).match(/^JWT_SECRET=(.*)$/m);
+  if(match && match[1].trim()) errors.push(`${envFile}: JWT_SECRET must be empty in a public release`);
+}
 
 // Feature-level release audit. This prevents a recurring class of mistakes:
 // a ZIP can have the right cPanel structure but still miss important product
@@ -293,6 +301,7 @@ const featureChecks = [
   {
     name: "automated responsive panels audit",
     file: "e2e/tests/responsive-panels-audit.spec.js",
+    sourceOnly: true,
     tests: [/responsive framing audit/, /overflowX/, /adminVisited/, /mobile/, /desktop/],
   },
   {
@@ -303,7 +312,7 @@ const featureChecks = [
   {
     name: "university tenant isolation for classes",
     file: "server/src/routes/classes.js",
-    tests: [/currentUniversityId/, /wrong_university/, /members\/resolve/, /createMissing/, /COALESCE\(university_id,1\)/],
+    tests: [/currentUniversityId/, /wrong_university/, /members\/resolve/, /createMissing/, /Number\(student\.university_id\) !== Number\(cl\.university_id\)/],
   },
   {
     name: "university tenant isolation for exams",
@@ -318,7 +327,7 @@ const featureChecks = [
   {
     name: "bulk enrollment UI with missing-student creation",
     file: "client/src/pages/Admin.jsx",
-    tests: [/MemberManageModal/, /members\/resolve/, /Create missing|ساخت missingها/, /participants.*createMissing|createMissing/],
+    tests: [/MemberManageModal/, /AcademicMembers/, /Create missing|ساخت missingها/, /participants.*createMissing|createMissing/],
   },
   {
     name: "enhanced drawing tools",
@@ -343,7 +352,7 @@ const featureChecks = [
   {
     name: "question taxonomy family and answer interaction",
     file: "client/src/pages/Admin.jsx",
-    tests: [/نوع پاسخ این مرحله|Step answer type/, /answerType/, /accept_fa/, /HotspotEditor/],
+    tests: [/StepwiseEditor/, /answerType/, /accept_fa/, /HotspotEditor/],
   },
   {
     name: "hints available for all non-MCQ question types",
@@ -373,6 +382,7 @@ const featureChecks = [
   {
     name: "tenant and enrollment regression tests",
     file: "server/test/api.test.js",
+    sourceOnly: true,
     tests: [/university tenancy, duplicate student numbers, and live board details/, /blocks duplicate student_no/, /class bulk member resolve/, /exam participant import/, /live board student details endpoint/],
   },
   {
@@ -488,11 +498,16 @@ const featureChecks = [
   {
     name: "VP student session-to-evaluate regression",
     file: "server/test/vp-stages-99.test.js",
+    sourceOnly: true,
     tests: [/opens a session, replies as the patient/, /stores AI score \+ lesson/, /session_id_required/],
   },
 ];
+featureChecks.push({name:'Step-specific author tools',file:'client/src/components/StepwiseEditor.jsx',tests:[/Step answer type/,/SearchAnswer/,/Correct option/,/Accepted alternatives/]});
+// Tests are required in the development checkout, not in the operator's runtime ZIP.
+const sourceRoot=path.resolve(path.dirname(new URL(import.meta.url).pathname),'..');
 for (const check of featureChecks) {
-  const body = readEntry(check.file);
+  const local=path.join(sourceRoot,check.file);
+  const body = check.sourceOnly ? (existsSync(local)?readFileSync(local,'utf8'):'') : readEntry(check.file);
   if (!body) {
     errors.push(`Feature audit failed (${check.name}): missing ${check.file}`);
     continue;
@@ -512,5 +527,5 @@ if (errors.length) {
 }
 
 console.log(`✅ Release ZIP check passed: ${path.basename(zipPath)} (${sizeMb.toFixed(1)} MB, ${entries.length} files)`);
-console.log("Required root files are present; node_modules and runtime database/data folders are absent.");
+console.log("Required root files are present; node_modules and runtime data are absent (the designated demo database is allowed).");
 console.log(`Feature audit passed: ${featureChecks.length} key product/security/performance markers are present.`);

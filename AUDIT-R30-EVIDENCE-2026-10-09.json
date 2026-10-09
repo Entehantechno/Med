@@ -1,0 +1,1367 @@
+{
+  "date": "2026-10-09",
+  "baseline_commit": "fd53448",
+  "scope": "User said continue after skipping explicit scientific/bank authorization; software-only, historical data and scientific sources preserved",
+  "server": {
+    "passed": 1942,
+    "failed": 47,
+    "tests": 1989,
+    "files": 81,
+    "skipped": 0,
+    "duration_seconds": 746.26
+  },
+  "client": {
+    "passed": 142,
+    "failed": 0,
+    "tests": 142,
+    "files": 26,
+    "skipped": 0,
+    "duration_seconds": 39.54
+  },
+  "focused": {
+    "passed": 56,
+    "failed": 0,
+    "tests": 56,
+    "files": 5,
+    "skipped": 0,
+    "duration_seconds": 50.38
+  },
+  "extracted_package": {
+    "passed": 56,
+    "failed": 0,
+    "tests": 56,
+    "files": 5,
+    "skipped": 0,
+    "duration_seconds": 57.29
+  },
+  "build": "passed",
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "red": {
+    "server": {
+      "summary": {
+        "passed": 0,
+        "failed": 5,
+        "tests": 5,
+        "files": 1,
+        "skipped": 0,
+        "duration_seconds": 11.87
+      },
+      "assertions": [
+        {
+          "file": "test/university-demo-r30.test.js",
+          "test": "new demo patients keep the rubric linkage declared by each source, not the first checklist",
+          "status": "failed",
+          "error": "AssertionError: expected [ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 ] to deeply equal [ 1, 3, 1, 3, 2, 3, 3, 3, 3, 3 ]"
+        },
+        {
+          "file": "test/university-demo-r30.test.js",
+          "test": "an exact archived-only legacy source stays archived without a replacement clone",
+          "status": "failed",
+          "error": "AssertionError: expected [ Array(11) ] to have a length of 10 but got 11"
+        },
+        {
+          "file": "test/university-demo-r30.test.js",
+          "test": "failure publishing the demo returns 503 and restores memory and disk before retry",
+          "status": "failed",
+          "error": "AssertionError: expected 400 to be 503 // Object.is equality"
+        },
+        {
+          "file": "test/university-demo-r30.test.js",
+          "test": "missing source rubric aborts without leaving accounts or partially created patients",
+          "status": "failed",
+          "error": "AssertionError: expected [Function] to throw an error"
+        },
+        {
+          "file": "test/university-demo-r30.test.js",
+          "test": "does not claim a deliberately disabled assignment as connected or reactivate it",
+          "status": "failed",
+          "error": "AssertionError: expected [ Array(10) ] to have a length of 9 but got 10"
+        }
+      ]
+    },
+    "client": {
+      "summary": {
+        "passed": 0,
+        "failed": 4,
+        "tests": 4,
+        "files": 1,
+        "skipped": 0,
+        "duration_seconds": 1.85
+      },
+      "assertions": [
+        {
+          "file": "src/components/DemoSetup.r30.test.jsx",
+          "test": "locks destination, password and consent while the request is pending",
+          "status": "failed",
+          "error": "Error: expect(element).toBeDisabled()"
+        },
+        {
+          "file": "src/components/DemoSetup.r30.test.jsx",
+          "test": "does not display a previous university success after changing the target",
+          "status": "failed",
+          "error": "AssertionError: expected <strong></strong> to be null"
+        },
+        {
+          "file": "src/components/DemoSetup.r30.test.jsx",
+          "test": "refreshes installation counts after a successful prepare",
+          "status": "failed",
+          "error": "AssertionError: expected \"spy\" to be called 2 times, but got 1 times"
+        },
+        {
+          "file": "src/components/DemoSetup.r30.test.jsx",
+          "test": "clears the old request error when reopening successfully",
+          "status": "failed",
+          "error": "AssertionError: expected <p role=\"alert\" class=\"err-banner\"></p> to be null"
+        }
+      ]
+    }
+  },
+  "new_assertions": {
+    "server": [
+      {
+        "file": "test/university-demo-r30.test.js",
+        "test": "new demo patients keep the rubric linkage declared by each source, not the first checklist",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "test/university-demo-r30.test.js",
+        "test": "an exact archived-only legacy source stays archived without a replacement clone",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "test/university-demo-r30.test.js",
+        "test": "failure publishing the demo returns 503 and restores memory and disk before retry",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "test/university-demo-r30.test.js",
+        "test": "missing source rubric aborts without leaving accounts or partially created patients",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "test/university-demo-r30.test.js",
+        "test": "does not claim a deliberately disabled assignment as connected or reactivate it",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "test/university-demo-r30.test.js",
+        "test": "repeat preparation preserves edited charts, credentials, inactive accounts and permanent codes",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "test/university-demo-r30.test.js",
+        "test": "inventory distinguishes active, archived, retired, malformed and modified cases without writing",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "test/university-demo-r30.test.js",
+        "test": "legacy inventory counts exact payloads, not same-title unrelated charts, and never binds them",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "test/university-demo-r30.test.js",
+        "test": "teacher cannot read demo account inventory or provision it",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "test/university-demo-r30.test.js",
+        "test": "student cannot read demo account inventory or provision it",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "test/university-demo-r30.test.js",
+        "test": "learner cannot read demo account inventory or provision it",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "test/university-demo-r30.test.js",
+        "test": "catalog capacity failure rolls back demo accounts, patients and identity claims together",
+        "status": "passed",
+        "error": ""
+      }
+    ],
+    "client": [
+      {
+        "file": "src/components/DemoSetup.r30.test.jsx",
+        "test": "locks destination, password and consent while the request is pending",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "src/components/DemoSetup.r30.test.jsx",
+        "test": "does not display a previous university success after changing the target",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "src/components/DemoSetup.r30.test.jsx",
+        "test": "refreshes installation counts after a successful prepare",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "src/components/DemoSetup.r30.test.jsx",
+        "test": "clears the old request error when reopening successfully",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "src/components/DemoSetup.r30.test.jsx",
+        "test": "shows the confirmed destination and retains success separately from a failed inventory refresh",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "src/components/DemoSetup.r30.test.jsx",
+        "test": "prefers the emergency source university and distinguishes inventory from scientific approval",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "src/components/DemoSetup.r30.test.jsx",
+        "test": "ignores a stale status request after closing and reopening",
+        "status": "passed",
+        "error": ""
+      },
+      {
+        "file": "src/components/DemoSetup.r30.test.jsx",
+        "test": "prevents double submission while preserving the password on failure for retry",
+        "status": "passed",
+        "error": ""
+      }
+    ]
+  },
+  "browser": {
+    "checks": [
+      {
+        "name": "default is source university",
+        "actual": "13",
+        "expected": "13"
+      },
+      {
+        "name": "fresh source inventory ten",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "missing ten shown before provisioning",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "destination locked",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "password locked",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "consent locked",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "password survives failure",
+        "actual": "R30-local-browser-password",
+        "expected": "R30-local-browser-password"
+      },
+      {
+        "name": "only one injected POST",
+        "actual": 1,
+        "expected": 1
+      },
+      {
+        "name": "real retry status",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "real retry assigns ten",
+        "actual": 10,
+        "expected": 10
+      },
+      {
+        "name": "target preserved after refresh",
+        "actual": "2",
+        "expected": "2"
+      },
+      {
+        "name": "password cleared after success",
+        "actual": "",
+        "expected": ""
+      },
+      {
+        "name": "fresh counts ten after success",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "old success cleared for other university",
+        "actual": 0,
+        "expected": 0
+      },
+      {
+        "name": "new target needs new confirmation",
+        "actual": false,
+        "expected": false
+      },
+      {
+        "name": "page errors",
+        "actual": 0,
+        "expected": 0
+      }
+    ],
+    "tabs": [
+      {
+        "name": "داشبورد",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "گزارش‌ها و پژوهش",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "کلاس‌های درسی",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "گفتگوهای ذخیره‌شده",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "نتایج و کارنامه",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "بررسی نقاشی‌ها",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "نمره‌دهی بیمار مجازی",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "آزمون‌ها",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "نتایج آزمون‌ها",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "پژوهش آموزشی",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "کاربران",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "دانشگاه‌ها",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "بانک بیماران",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "فلش‌کارت‌ها",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "کاتالوگ‌های Auto complete",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "چک‌لیست‌ها",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "پرسشنامه‌ها",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "تنظیمات هوش مصنوعی",
+        "width": 1440,
+        "documentWidth": 1440,
+        "errors": []
+      },
+      {
+        "name": "داشبورد",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      },
+      {
+        "name": "گزارش‌ها و پژوهش",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      },
+      {
+        "name": "کلاس‌های درسی",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      },
+      {
+        "name": "گفتگوهای ذخیره‌شده",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      },
+      {
+        "name": "نتایج و کارنامه",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      },
+      {
+        "name": "بررسی نقاشی‌ها",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      },
+      {
+        "name": "نمره‌دهی بیمار مجازی",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      },
+      {
+        "name": "آزمون‌ها",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      },
+      {
+        "name": "نتایج آزمون‌ها",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      },
+      {
+        "name": "پژوهش آموزشی",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      },
+      {
+        "name": "کاربران",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      },
+      {
+        "name": "دانشگاه‌ها",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      },
+      {
+        "name": "بانک بیماران",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      },
+      {
+        "name": "فلش‌کارت‌ها",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      },
+      {
+        "name": "کاتالوگ‌های Auto complete",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      },
+      {
+        "name": "چک‌لیست‌ها",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      },
+      {
+        "name": "پرسشنامه‌ها",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      },
+      {
+        "name": "تنظیمات هوش مصنوعی",
+        "width": 390,
+        "documentWidth": 390,
+        "errors": []
+      }
+    ],
+    "pageErrors": [],
+    "webSecurityDisabled": false,
+    "fault": "One controlled browser response 503, then real API retry",
+    "createdCaseIds": [
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33
+    ],
+    "target": 2
+  },
+  "api": {
+    "checks": [
+      {
+        "name": "admin login",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "ten newly created source patients",
+        "actual": 10,
+        "expected": 10
+      },
+      {
+        "name": "original source rubric linkage",
+        "actual": [
+          1,
+          3,
+          1,
+          3,
+          2,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
+        "expected": [
+          1,
+          3,
+          1,
+          3,
+          2,
+          3,
+          3,
+          3,
+          3,
+          3
+        ]
+      },
+      {
+        "name": "repeat request succeeds",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "repeat creates no accounts",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "repeat returns same cases",
+        "actual": [
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33
+        ],
+        "expected": [
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33
+        ]
+      },
+      {
+        "name": "codes stable",
+        "actual": [
+          "VP-1215810f1ca50894537a96c9be0430f0",
+          "VP-ba82b9f5f525e81e21ecc2cdef90d338",
+          "VP-4dfdcdfafc506f12828df4e1920ddf5b",
+          "VP-2719263eb5f20d47fdf3f26b3709bb3c",
+          "VP-4f3e0c8085d0d83e4796da159628fecb",
+          "VP-04f0f5ccd47bdbcc8e473d459aa0bb45",
+          "VP-0edf8433c22fd209d00fe4f58b8b09f5",
+          "VP-888a02ae8bdd75d8b49b16d33e26d151",
+          "VP-07e4d68ca343ce92d47031b6325fdff7",
+          "VP-9050f68931f64f3889b465b58b5187e4"
+        ],
+        "expected": [
+          "VP-1215810f1ca50894537a96c9be0430f0",
+          "VP-ba82b9f5f525e81e21ecc2cdef90d338",
+          "VP-4dfdcdfafc506f12828df4e1920ddf5b",
+          "VP-2719263eb5f20d47fdf3f26b3709bb3c",
+          "VP-4f3e0c8085d0d83e4796da159628fecb",
+          "VP-04f0f5ccd47bdbcc8e473d459aa0bb45",
+          "VP-0edf8433c22fd209d00fe4f58b8b09f5",
+          "VP-888a02ae8bdd75d8b49b16d33e26d151",
+          "VP-07e4d68ca343ce92d47031b6325fdff7",
+          "VP-9050f68931f64f3889b465b58b5187e4"
+        ]
+      },
+      {
+        "name": "demo_teacher_2 login",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "teacher owns and sees ten",
+        "actual": [
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33
+        ],
+        "expected": [
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33
+        ]
+      },
+      {
+        "name": "teacher cannot read admin demo status",
+        "actual": 403,
+        "expected": 403
+      },
+      {
+        "name": "demo_student_2 login",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "student sees ten assigned cases",
+        "actual": [
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33
+        ],
+        "expected": [
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33
+        ]
+      },
+      {
+        "name": "student cards do not expose diagnosis, internal title or chart",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "session 24",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close session 24",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session 25",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close session 25",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session 26",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close session 26",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session 27",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close session 27",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session 28",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close session 28",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session 29",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close session 29",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session 30",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close session 30",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session 31",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close session 31",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session 32",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close session 32",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session 33",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close session 33",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "new university demo ECG",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "private media cache",
+        "actual": "private, no-store",
+        "expected": "private, no-store"
+      },
+      {
+        "name": "image exact shipped bytes",
+        "actual": true,
+        "expected": true
+      }
+    ],
+    "orders": [
+      {
+        "caseId": 24,
+        "kind": "lab",
+        "query": "Troponin I",
+        "expected": "Positive — elevated 0.9 ng/mL (normal <0.04)",
+        "actual": "📋 Lab report — Troponin I: Positive — elevated 0.9 ng/mL (normal <0.04)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 24,
+        "kind": "lab",
+        "query": "CK-MB",
+        "expected": "Elevated — 28 ng/mL",
+        "actual": "📋 Lab report — CK-MB: Elevated — 28 ng/mL",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 24,
+        "kind": "lab",
+        "query": "Blood glucose",
+        "expected": "185 mg/dL",
+        "actual": "📋 Lab report — Blood glucose: 185 mg/dL",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 24,
+        "kind": "lab",
+        "query": "Creatinine",
+        "expected": "1.0 mg/dL (normal)",
+        "actual": "📋 Lab report — Creatinine: 1.0 mg/dL (normal)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 24,
+        "kind": "imaging",
+        "query": "ECG",
+        "expected": "3-mm ST-segment elevation in V1-V4 with reciprocal ST depression inferiorly — consistent with anterior STEMI",
+        "actual": "📋 Radiology report — ECG: 3-mm ST-segment elevation in V1-V4 with reciprocal ST depression inferiorly — consistent with anterior STEMI",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 24,
+        "kind": "imaging",
+        "query": "Chest X-ray",
+        "expected": "No overt pulmonary congestion, cardiac silhouette within normal limits",
+        "actual": "📋 Radiology report — Chest X-ray: No overt pulmonary congestion, cardiac silhouette within normal limits",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 25,
+        "kind": "lab",
+        "query": "Blood glucose",
+        "expected": "450 mg/dL (markedly high)",
+        "actual": "📋 Lab report — Blood glucose: 450 mg/dL (markedly high)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 25,
+        "kind": "lab",
+        "query": "ABG",
+        "expected": "pH 7.15, HCO3 9, PCO2 22 — high-anion-gap metabolic acidosis",
+        "actual": "📋 Lab report — ABG: pH 7.15, HCO3 9, PCO2 22 — high-anion-gap metabolic acidosis",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 25,
+        "kind": "lab",
+        "query": "Urine ketone",
+        "expected": "+3 strongly positive, urine glucose +4",
+        "actual": "📋 Lab report — Urine ketone: +3 strongly positive, urine glucose +4",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 25,
+        "kind": "lab",
+        "query": "Potassium",
+        "expected": "4.8 mEq/L",
+        "actual": "📋 Lab report — Potassium: 4.8 mEq/L",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 25,
+        "kind": "lab",
+        "query": "Sodium",
+        "expected": "142 mEq/L",
+        "actual": "📋 Lab report — Sodium: 142 mEq/L",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 25,
+        "kind": "imaging",
+        "query": "ECG",
+        "expected": "Sinus tachycardia 118 bpm, no ST-segment changes",
+        "actual": "📋 Radiology report — ECG: Sinus tachycardia 118 bpm, no ST-segment changes",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 25,
+        "kind": "imaging",
+        "query": "Chest X-ray",
+        "expected": "No clear consolidation/pleural effusion",
+        "actual": "📋 Radiology report — Chest X-ray: No clear consolidation/pleural effusion",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 26,
+        "kind": "lab",
+        "query": "BNP",
+        "expected": "1400 pg/mL (elevated)",
+        "actual": "📋 Lab report — BNP: 1400 pg/mL (elevated)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 26,
+        "kind": "lab",
+        "query": "Sodium",
+        "expected": "138 mEq/L",
+        "actual": "📋 Lab report — Sodium: 138 mEq/L",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 26,
+        "kind": "lab",
+        "query": "Potassium",
+        "expected": "4.1 mEq/L",
+        "actual": "📋 Lab report — Potassium: 4.1 mEq/L",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 26,
+        "kind": "lab",
+        "query": "Creatinine",
+        "expected": "1.3 mg/dL (mildly elevated)",
+        "actual": "📋 Lab report — Creatinine: 1.3 mg/dL (mildly elevated)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 26,
+        "kind": "imaging",
+        "query": "Chest X-ray",
+        "expected": "Cardiomegaly, Kerley B lines, pulmonary venous congestion — congestive edema",
+        "actual": "📋 Radiology report — Chest X-ray: Cardiomegaly, Kerley B lines, pulmonary venous congestion — congestive edema",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 26,
+        "kind": "imaging",
+        "query": "ECG",
+        "expected": "Sinus rhythm, tachycardia 102, no new ST changes",
+        "actual": "📋 Radiology report — ECG: Sinus rhythm, tachycardia 102, no new ST changes",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 27,
+        "kind": "lab",
+        "query": "CBC",
+        "expected": "WBC 16,200/µL with 85% neutrophils — neutrophilic leukocytosis",
+        "actual": "📋 Lab report — CBC: WBC 16,200/µL with 85% neutrophils — neutrophilic leukocytosis",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 27,
+        "kind": "lab",
+        "query": "CRP",
+        "expected": "85 mg/L (elevated)",
+        "actual": "📋 Lab report — CRP: 85 mg/L (elevated)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 27,
+        "kind": "imaging",
+        "query": "Chest X-ray",
+        "expected": "Dense consolidation with air bronchograms in right lower lobe",
+        "actual": "📋 Radiology report — Chest X-ray: Dense consolidation with air bronchograms in right lower lobe",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 28,
+        "kind": "lab",
+        "query": "Hemoglobin",
+        "expected": "7.2 g/dL (low)",
+        "actual": "📋 Lab report — Hemoglobin: 7.2 g/dL (low)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 28,
+        "kind": "lab",
+        "query": "BUN/Creatinine",
+        "expected": "BUN 45, Cr 1.0 — ratio >30",
+        "actual": "📋 Lab report — BUN/Creatinine: BUN 45, Cr 1.0 — ratio >30",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 28,
+        "kind": "lab",
+        "query": "Platelets",
+        "expected": "210,000/µL (normal)",
+        "actual": "📋 Lab report — Platelets: 210,000/µL (normal)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 28,
+        "kind": "imaging",
+        "query": "Upper endoscopy (EGD)",
+        "expected": "Active duodenal bulb ulcer with visible vessel, no active bleeding at time of scope (post-resuscitation)",
+        "actual": "📋 Radiology report — Upper endoscopy (EGD): Active duodenal bulb ulcer with visible vessel, no active bleeding at time of scope (post-resuscitation)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 28,
+        "kind": "imaging",
+        "query": "Abdominal X-ray",
+        "expected": "No free air under diaphragm",
+        "actual": "📋 Radiology report — Abdominal X-ray: No free air under diaphragm",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 29,
+        "kind": "lab",
+        "query": "ABG",
+        "expected": "pH 7.31, PCO2 58, PO2 52, HCO3 28 — acute-on-chronic respiratory acidosis + hypoxia",
+        "actual": "📋 Lab report — ABG: pH 7.31, PCO2 58, PO2 52, HCO3 28 — acute-on-chronic respiratory acidosis + hypoxia",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 29,
+        "kind": "lab",
+        "query": "CBC",
+        "expected": "WBC 11,500 with 78% neutrophils (mild leukocytosis)",
+        "actual": "📋 Lab report — CBC: WBC 11,500 with 78% neutrophils (mild leukocytosis)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 29,
+        "kind": "imaging",
+        "query": "Chest X-ray",
+        "expected": "Hyperinflated lungs, flattened diaphragms, prominent markings without infiltrate",
+        "actual": "📋 Radiology report — Chest X-ray: Hyperinflated lungs, flattened diaphragms, prominent markings without infiltrate",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 30,
+        "kind": "lab",
+        "query": "BUN",
+        "expected": "68 mg/dL (high)",
+        "actual": "📋 Lab report — BUN: 68 mg/dL (high)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 30,
+        "kind": "lab",
+        "query": "Creatinine",
+        "expected": "3.4 mg/dL (high; baseline 1.1)",
+        "actual": "📋 Lab report — Creatinine: 3.4 mg/dL (high; baseline 1.1)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 30,
+        "kind": "lab",
+        "query": "Sodium",
+        "expected": "148 mEq/L (mildly high)",
+        "actual": "📋 Lab report — Sodium: 148 mEq/L (mildly high)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 30,
+        "kind": "lab",
+        "query": "Potassium",
+        "expected": "5.2 mEq/L",
+        "actual": "📋 Lab report — Potassium: 5.2 mEq/L",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 30,
+        "kind": "lab",
+        "query": "FENa",
+        "expected": "<1% (favoring pre-renal)",
+        "actual": "📋 Lab report — FENa: <1% (favoring pre-renal)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 30,
+        "kind": "imaging",
+        "query": "Renal ultrasound",
+        "expected": "Normal kidneys, no hydronephrosis or obstructing stone",
+        "actual": "📋 Radiology report — Renal ultrasound: Normal kidneys, no hydronephrosis or obstructing stone",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 31,
+        "kind": "lab",
+        "query": "Blood glucose",
+        "expected": "110 mg/dL (normal)",
+        "actual": "📋 Lab report — Blood glucose: 110 mg/dL (normal)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 31,
+        "kind": "lab",
+        "query": "INR",
+        "expected": "1.2 (low; warfarin held)",
+        "actual": "📋 Lab report — INR: 1.2 (low; warfarin held)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 31,
+        "kind": "lab",
+        "query": "Platelets",
+        "expected": "230,000/µL (normal)",
+        "actual": "📋 Lab report — Platelets: 230,000/µL (normal)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 31,
+        "kind": "imaging",
+        "query": "Non-contrast Brain CT",
+        "expected": "No evidence of acute intracranial hemorrhage; no overt hypodensity (hyperacute infarct may not yet be visible)",
+        "actual": "📋 Radiology report — Non-contrast Brain CT: No evidence of acute intracranial hemorrhage; no overt hypodensity (hyperacute infarct may not yet be visible)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 32,
+        "kind": "lab",
+        "query": "Bilirubin",
+        "expected": "Total 4.8 mg/dL (high)",
+        "actual": "📋 Lab report — Bilirubin: Total 4.8 mg/dL (high)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 32,
+        "kind": "lab",
+        "query": "Albumin",
+        "expected": "2.3 g/dL (low)",
+        "actual": "📋 Lab report — Albumin: 2.3 g/dL (low)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 32,
+        "kind": "lab",
+        "query": "INR",
+        "expected": "1.8 (high)",
+        "actual": "📋 Lab report — INR: 1.8 (high)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 32,
+        "kind": "lab",
+        "query": "Ascitic fluid analysis",
+        "expected": "WBC 450/µL with 65% PMNs — consistent with SBP, SAAG 1.4 g/dL",
+        "actual": "📋 Lab report — Ascitic fluid analysis: WBC 450/µL with 65% PMNs — consistent with SBP, SAAG 1.4 g/dL",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 32,
+        "kind": "imaging",
+        "query": "Abdominal ultrasound",
+        "expected": "Small heterogeneous liver, splenomegaly, moderate-to-large ascites without focal lesion",
+        "actual": "📋 Radiology report — Abdominal ultrasound: Small heterogeneous liver, splenomegaly, moderate-to-large ascites without focal lesion",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 33,
+        "kind": "lab",
+        "query": "CBC",
+        "expected": "WBC 18,500/µL with 88% neutrophils — neutrophilic leukocytosis",
+        "actual": "📋 Lab report — CBC: WBC 18,500/µL with 88% neutrophils — neutrophilic leukocytosis",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 33,
+        "kind": "lab",
+        "query": "Urinalysis",
+        "expected": "WBC >50/hpf, nitrite positive, many bacteria, cloudy foul urine",
+        "actual": "📋 Lab report — Urinalysis: WBC >50/hpf, nitrite positive, many bacteria, cloudy foul urine",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 33,
+        "kind": "lab",
+        "query": "Blood glucose",
+        "expected": "280 mg/dL (high)",
+        "actual": "📋 Lab report — Blood glucose: 280 mg/dL (high)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 33,
+        "kind": "lab",
+        "query": "Creatinine",
+        "expected": "1.6 mg/dL (elevated; septic AKI)",
+        "actual": "📋 Lab report — Creatinine: 1.6 mg/dL (elevated; septic AKI)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 33,
+        "kind": "lab",
+        "query": "Blood & urine culture",
+        "expected": "Samples obtained — pending (empiric therapy ongoing)",
+        "actual": "📋 Lab report — Blood & urine culture: Samples obtained — pending (empiric therapy ongoing)",
+        "status": 200,
+        "source": "chart"
+      },
+      {
+        "caseId": 33,
+        "kind": "imaging",
+        "query": "Renal ultrasound",
+        "expected": "No overt obstructive hydronephrosis; edema/increased echogenicity of left parenchyma suggesting pyelonephritis",
+        "actual": "📋 Radiology report — Renal ultrasound: No overt obstructive hydronephrosis; edema/increased echogenicity of left parenchyma suggesting pyelonephritis",
+        "status": 200,
+        "source": "chart"
+      }
+    ],
+    "mode": "Offline/recorded-chart only, no external AI grading",
+    "patientIds": [
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33
+    ],
+    "codes": [
+      "VP-1215810f1ca50894537a96c9be0430f0",
+      "VP-ba82b9f5f525e81e21ecc2cdef90d338",
+      "VP-4dfdcdfafc506f12828df4e1920ddf5b",
+      "VP-2719263eb5f20d47fdf3f26b3709bb3c",
+      "VP-4f3e0c8085d0d83e4796da159628fecb",
+      "VP-04f0f5ccd47bdbcc8e473d459aa0bb45",
+      "VP-0edf8433c22fd209d00fe4f58b8b09f5",
+      "VP-888a02ae8bdd75d8b49b16d33e26d151",
+      "VP-07e4d68ca343ce92d47031b6325fdff7",
+      "VP-9050f68931f64f3889b465b58b5187e4"
+    ]
+  },
+  "restart": {
+    "real_extracted_index_restart": true,
+    "case_records_equal_before_restart": true,
+    "demo_account_records_equal_before_restart": true,
+    "total_cases": 33,
+    "startup_inserted": 0,
+    "startup_bound": 0,
+    "startup_catalog_added": 0,
+    "new_ten_charts_equal_canonical_source": true,
+    "new_ten_checklists_equal_source_linkage": true,
+    "original_23_case_records_unchanged_except_source_claim": true
+  },
+  "notes": [
+    "The browser 503 was injected; real persistence-failure rollback separately exercised by backend filesystem fault test.",
+    "An initial browser locator timed out because exact wrapping-label text included select options; partial label selector resolved it. The API had succeeded.",
+    "36 tab views are smoke coverage, not exhaustive form/action/assistive-technology testing.",
+    "Canonical rubric linkage was preserved, not clinically redesigned; old mismatched copies are not silently rewritten.",
+    "R29 clinical rubric mismatch, missing reference approval and unknown-result normal assumption remain open.",
+    "No external AI grading, provider calls or paid fallback.",
+    "No power-loss/multiwriter guarantee; source/schema/bank/demo DB unchanged."
+  ]
+}

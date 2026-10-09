@@ -1,0 +1,22 @@
+{
+  "baseline": "R25",
+  "user_decision": "preserve_bank",
+  "changed_existing_entries": [
+    "VERSION.txt",
+    "client/dist/sw.js",
+    "client/dist/sw.js.br",
+    "client/dist/sw.js.gz",
+    "server/src/db.js",
+    "server/src/routes/upload.js",
+    "server/src/seed.js"
+  ],
+  "added_entries": [
+    "server/test/university-media-r26.test.js",
+    "server/test/university-membership-r26.test.js"
+  ],
+  "identical_previous_entries": 1134,
+  "bank_and_bank_tests_identical": true,
+  "demo_database_identical": true,
+  "schema_definition_unchanged": true,
+  "migration_behavior_changed": "Users default membership backfill only when university_id column is introduced. Fresh demo assigns university at creation."
+}

@@ -1,5 +1,6 @@
+import administration from './academic-administration.js';
 import { Router } from "express";
-import { db, persistNow } from "../db.js";
+import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { requirePerm } from "../lib/rbac.js";
 import { audit } from "../lib/audit.js";
@@ -19,6 +20,7 @@ import {
 } from "../lib/reference-governance.js";
 import { createPortableRouter } from "./portable.js";
 const r = Router();
+r.use(administration);
 const manager = [
     authRequired,
     requireRole("admin", "teacher"),
@@ -96,7 +98,7 @@ r.post("/references", ...platform, (req, res) => {
   const q = db.prepare(
     "INSERT INTO reference_catalog (code,title_fa,title_en,short_title,publisher,edition,publication_year,isbn,source_url,cover_url,pdf_url,rights_status,rights_note_fa,rights_note_en,active) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
   );
-  const out = q.run(
+  const out = durableTransaction(() => q.run(
     x.code,
     x.title_fa,
     x.title_en,
@@ -112,8 +114,7 @@ r.post("/references", ...platform, (req, res) => {
     x.rights_note_fa,
     x.rights_note_en,
     x.active,
-  );
-  persistNow();
+  ));
   const row = referenceCatalogRow(out.lastInsertRowid);
   audit(req, "academic.reference.create", `reference:${row.id}`, {
     code: row.code,
@@ -130,31 +131,32 @@ r.put("/references/:id", ...platform, (req, res) => {
     .prepare("SELECT id FROM reference_catalog WHERE code=? AND id<>?")
     .get(x.code, old.id);
   if (dup) return res.status(409).json({ error: "reference_code_exists" });
-  db.prepare(
-    "UPDATE reference_catalog SET code=?,title_fa=?,title_en=?,short_title=?,publisher=?,edition=?,publication_year=?,isbn=?,source_url=?,cover_url=?,pdf_url=?,rights_status=?,rights_note_fa=?,rights_note_en=?,active=?,version=version+1,updated_at=datetime('now') WHERE id=?",
-  ).run(
-    x.code,
-    x.title_fa,
-    x.title_en,
-    x.short_title,
-    x.publisher,
-    x.edition,
-    x.publication_year,
-    x.isbn,
-    x.source_url,
-    x.cover_url,
-    x.pdf_url,
-    x.rights_status,
-    x.rights_note_fa,
-    x.rights_note_en,
-    x.active,
-    old.id,
-  );
-  for (const p of db
-    .prepare("SELECT id FROM course_reference_policies WHERE reference_id=?")
-    .all(old.id))
-    refreshCases(p.id);
-  persistNow();
+  durableTransaction(() => {
+    db.prepare(
+      "UPDATE reference_catalog SET code=?,title_fa=?,title_en=?,short_title=?,publisher=?,edition=?,publication_year=?,isbn=?,source_url=?,cover_url=?,pdf_url=?,rights_status=?,rights_note_fa=?,rights_note_en=?,active=?,version=version+1,updated_at=datetime('now') WHERE id=?",
+    ).run(
+      x.code,
+      x.title_fa,
+      x.title_en,
+      x.short_title,
+      x.publisher,
+      x.edition,
+      x.publication_year,
+      x.isbn,
+      x.source_url,
+      x.cover_url,
+      x.pdf_url,
+      x.rights_status,
+      x.rights_note_fa,
+      x.rights_note_en,
+      x.active,
+      old.id,
+    );
+    for (const p of db
+      .prepare("SELECT id FROM course_reference_policies WHERE reference_id=?")
+      .all(old.id))
+      refreshCases(p.id);
+  });
   audit(req, "academic.reference.update", `reference:${old.id}`, {
     version: old.version + 1,
   });
@@ -207,33 +209,35 @@ r.post("/policies", ...manager, (req, res) => {
   )
     return res.status(409).json({ error: "course_policy_exists" });
   const approved = x.status === "approved" ? req.user.id : null;
-  const out = db
-    .prepare(
-      `INSERT INTO course_reference_policies (university_id,course_code,course_name_fa,course_name_en,specialty_fa,specialty_en,reference_id,source_anchor,citation_label_fa,citation_label_en,teaching_basis_fa,teaching_basis_en,content_mode,status,approval_note,approved_by,approved_at,active,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CASE WHEN ? IS NULL THEN NULL ELSE datetime('now') END,?,?)`,
-    )
-    .run(
-      u.id,
-      x.course_code,
-      x.course_name_fa,
-      x.course_name_en,
-      x.specialty_fa,
-      x.specialty_en,
-      x.reference_id,
-      x.source_anchor,
-      x.citation_label_fa,
-      x.citation_label_en,
-      x.teaching_basis_fa,
-      x.teaching_basis_en,
-      x.content_mode,
-      x.status,
-      x.approval_note,
-      approved,
-      approved,
-      x.active,
-      req.user.id,
-    );
-  refreshCases(out.lastInsertRowid);
-  persistNow();
+  const out = durableTransaction(() => {
+    const inserted = db
+      .prepare(
+        `INSERT INTO course_reference_policies (university_id,course_code,course_name_fa,course_name_en,specialty_fa,specialty_en,reference_id,source_anchor,citation_label_fa,citation_label_en,teaching_basis_fa,teaching_basis_en,content_mode,status,approval_note,approved_by,approved_at,active,created_by) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,CASE WHEN ? IS NULL THEN NULL ELSE datetime('now') END,?,?)`,
+      )
+      .run(
+        u.id,
+        x.course_code,
+        x.course_name_fa,
+        x.course_name_en,
+        x.specialty_fa,
+        x.specialty_en,
+        x.reference_id,
+        x.source_anchor,
+        x.citation_label_fa,
+        x.citation_label_en,
+        x.teaching_basis_fa,
+        x.teaching_basis_en,
+        x.content_mode,
+        x.status,
+        x.approval_note,
+        approved,
+        approved,
+        x.active,
+        req.user.id,
+      );
+    refreshCases(inserted.lastInsertRowid);
+    return inserted;
+  });
   const p = policyRow(out.lastInsertRowid);
   audit(req, "academic.reference_policy.create", `reference-policy:${p.id}`, {
     university_id: u.id,
@@ -265,30 +269,31 @@ r.put("/policies/:id", ...manager, (req, res) => {
     .get(u.id, x.course_code, old.id);
   if (dup) return res.status(409).json({ error: "course_policy_exists" });
   const approved = x.status === "approved" ? req.user.id : null;
-  db.prepare(
-    `UPDATE course_reference_policies SET course_code=?,course_name_fa=?,course_name_en=?,specialty_fa=?,specialty_en=?,reference_id=?,source_anchor=?,citation_label_fa=?,citation_label_en=?,teaching_basis_fa=?,teaching_basis_en=?,content_mode=?,status=?,approval_note=?,approved_by=?,approved_at=CASE WHEN ? IS NULL THEN NULL ELSE datetime('now') END,active=?,version=version+1,updated_at=datetime('now') WHERE id=?`,
-  ).run(
-    x.course_code,
-    x.course_name_fa,
-    x.course_name_en,
-    x.specialty_fa,
-    x.specialty_en,
-    x.reference_id,
-    x.source_anchor,
-    x.citation_label_fa,
-    x.citation_label_en,
-    x.teaching_basis_fa,
-    x.teaching_basis_en,
-    x.content_mode,
-    x.status,
-    x.approval_note,
-    approved,
-    approved,
-    x.active,
-    old.id,
-  );
-  refreshCases(old.id);
-  persistNow();
+  durableTransaction(() => {
+    db.prepare(
+      `UPDATE course_reference_policies SET course_code=?,course_name_fa=?,course_name_en=?,specialty_fa=?,specialty_en=?,reference_id=?,source_anchor=?,citation_label_fa=?,citation_label_en=?,teaching_basis_fa=?,teaching_basis_en=?,content_mode=?,status=?,approval_note=?,approved_by=?,approved_at=CASE WHEN ? IS NULL THEN NULL ELSE datetime('now') END,active=?,version=version+1,updated_at=datetime('now') WHERE id=?`,
+    ).run(
+      x.course_code,
+      x.course_name_fa,
+      x.course_name_en,
+      x.specialty_fa,
+      x.specialty_en,
+      x.reference_id,
+      x.source_anchor,
+      x.citation_label_fa,
+      x.citation_label_en,
+      x.teaching_basis_fa,
+      x.teaching_basis_en,
+      x.content_mode,
+      x.status,
+      x.approval_note,
+      approved,
+      approved,
+      x.active,
+      old.id,
+    );
+    refreshCases(old.id);
+  });
   audit(req, "academic.reference_policy.update", `reference-policy:${old.id}`, {
     university_id: u.id,
     version: old.version + 1,

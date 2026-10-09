@@ -19,16 +19,16 @@ export function studentBelongsToClass(userId, classId) {
   const cid = Number(classId) || 0;
   if (!userId || !cid) return false;
   return !!db.prepare(
-    `SELECT 1 FROM class_members m JOIN classes c ON c.id=m.class_id
-      WHERE m.class_id=? AND m.user_id=? AND c.active=1`
+    `SELECT 1 FROM class_members m JOIN classes c ON c.id=m.class_id JOIN users u ON u.id=m.user_id
+      WHERE m.class_id=? AND m.user_id=? AND c.active=1 AND u.role='student' AND u.university_id=c.university_id`
   ).get(cid, userId);
 }
 export function studentBelongsToExam(userId, examId) {
   const eid = Number(examId) || 0;
   if (!userId || !eid) return false;
   return !!db.prepare(
-    `SELECT 1 FROM exam_participants p JOIN exams e ON e.id=p.exam_id
-      WHERE p.exam_id=? AND p.user_id=? AND e.active=1`
+    `SELECT 1 FROM exam_participants p JOIN exams e ON e.id=p.exam_id JOIN users u ON u.id=p.user_id
+      WHERE p.exam_id=? AND p.user_id=? AND e.active=1 AND u.role='student' AND u.university_id=e.university_id`
   ).get(eid, userId);
 }
 /* A participant may only read/grant consent for a study their class or exam is in. */
@@ -37,13 +37,13 @@ export function studentLinkedToStudy(user, studyId) {
   if (!user?.id || !sid) return false;
   if (isStaffRole(user.role)) return true;
   const viaClass = db.prepare(
-    `SELECT 1 FROM classes c JOIN class_members m ON m.class_id=c.id
-      WHERE c.study_id=? AND m.user_id=? AND c.active=1`
+    `SELECT 1 FROM classes c JOIN class_members m ON m.class_id=c.id JOIN users u ON u.id=m.user_id
+      WHERE c.study_id=? AND m.user_id=? AND c.active=1 AND u.role='student' AND u.university_id=c.university_id`
   ).get(sid, user.id);
   if (viaClass) return true;
   const viaExam = db.prepare(
-    `SELECT 1 FROM exams e JOIN exam_participants p ON p.exam_id=e.id
-      WHERE e.study_id=? AND p.user_id=? AND e.active=1`
+    `SELECT 1 FROM exams e JOIN exam_participants p ON p.exam_id=e.id JOIN users u ON u.id=p.user_id
+      WHERE e.study_id=? AND p.user_id=? AND e.active=1 AND u.role='student' AND u.university_id=e.university_id`
   ).get(sid, user.id);
   return !!viaExam;
 }
@@ -178,7 +178,7 @@ export function assertConsent(user, ctx) {
 /* ---- Granting ------------------------------------------------------------ */
 
 /* Online: the participant clicked "I agree" in the app themselves. */
-export function grantOnlineConsent(user, studyId) {
+export function grantOnlineConsent(user, studyId, { persist = true } = {}) {
   const study = db.prepare("SELECT * FROM research_studies WHERE id=?").get(Number(studyId) || 0);
   if (!study) return { error: "study_not_found" };
   if (!isStaffRole(user?.role) && !studentLinkedToStudy(user, study.id)) {
@@ -196,7 +196,7 @@ export function grantOnlineConsent(user, studyId) {
   }
   const hash = consentTextHash(text, study.protocol_version);
   upsertConsent({
-    studyId: study.id, userId: user.id, pseudonym: pseudonymFor(user.id, `study:${study.id}`),
+    persist, studyId: study.id, userId: user.id, pseudonym: pseudonymFor(user.id, `study:${study.id}`),
     mode: "online", recordedBy: null, note: "",
     protocolVersion: study.protocol_version || "", textHash: hash,
   });
@@ -206,7 +206,7 @@ export function grantOnlineConsent(user, studyId) {
 /* Offline: a researcher took the consent on paper (or verbally) and is
    recording it here. The researcher's identity and a note are mandatory —
    this row is the only evidence the consent exists. */
-export function recordOfflineConsent({ studyId, userId, pseudonym, mode, recordedBy, note }) {
+export function recordOfflineConsent({ studyId, userId, pseudonym, mode, recordedBy, note, persist = true }) {
   const study = db.prepare("SELECT * FROM research_studies WHERE id=?").get(Number(studyId) || 0);
   if (!study) return { error: "study_not_found", status: 404 };
   const m = String(mode || "").toLowerCase();
@@ -221,7 +221,7 @@ export function recordOfflineConsent({ studyId, userId, pseudonym, mode, recorde
 
   const text = study.consent_text_fa || study.consent_text_en || "";
   upsertConsent({
-    studyId: study.id, userId: uid,
+    persist, studyId: study.id, userId: uid,
     pseudonym: uid ? pseudonymFor(uid, `study:${study.id}`) : String(pseudonym).slice(0, 64),
     mode: m, recordedBy: Number(recordedBy) || null, note: String(note).slice(0, 500),
     protocolVersion: study.protocol_version || "", textHash: consentTextHash(text, study.protocol_version),
@@ -243,7 +243,7 @@ export function withdrawConsent(user, studyId, note = "") {
 /* One live decision per identified participant: update in place rather than
    piling up rows. (SQLite needs the explicit SELECT because NULLs are distinct
    in a UNIQUE index.) */
-function upsertConsent({ studyId, userId, pseudonym, mode, recordedBy, note, protocolVersion, textHash }) {
+function upsertConsent({ studyId, userId, pseudonym, mode, recordedBy, note, protocolVersion, textHash, persist = true }) {
   const now = new Date().toISOString().slice(0, 19).replace("T", " ");
   const existing = userId ? consentRow(userId, studyId) : null;
   if (existing) {
@@ -257,7 +257,7 @@ function upsertConsent({ studyId, userId, pseudonym, mode, recordedBy, note, pro
       VALUES (?,?,?,?, 'granted', ?,?,?,?,?)`)
       .run(studyId, userId, pseudonym, mode, textHash, protocolVersion, recordedBy, note, now);
   }
-  persistNow();
+  if (persist) persistNow();
 }
 
 /* ---- Read-back for the researchers --------------------------------------- */
@@ -278,7 +278,7 @@ export function consentRoster(studyId, { anonymize = false, universityId = null 
     WHERE c.study_id=? ORDER BY c.id`).all(Number(studyId) || 0);
   if (universityId != null) {
     const uni = Number(universityId) || 0;
-    rows = rows.filter((x) => x.user_id && (Number(x.university_id) || 1) === uni);
+    rows = rows.filter((x) => x.user_id && x.university_id != null && Number(x.university_id) === uni);
   }
   const text = study.consent_text_fa || study.consent_text_en || "";
   const currentHash = consentTextHash(text, study.protocol_version);

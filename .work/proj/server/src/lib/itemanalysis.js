@@ -1,3 +1,4 @@
+import { spreadsheetCell } from "./csv.js";
 /* ================================================================
    itemanalysis.js — classical psychometric item analysis + learning
    telemetry for the teacher analytics panels.
@@ -201,10 +202,7 @@ export function itemAnalysisCsv(rows, fa = true) {
       r.hard ? (fa ? "دشوار" : "hard") : "",
       r.poorDiscrimination ? (fa ? "تمییز ضعیف" : "poor discrimination") : "",
     ].filter(Boolean).join(" ");
-    const cell = (v) => {
-      const s = String(v ?? "");
-      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    };
+    const cell = spreadsheetCell;
     lines.push([
       cell(fa ? r.label_fa : (r.label_en || r.label_fa)),
       cell(r.topic), r.n, r.facility, r.discrimination ?? "",

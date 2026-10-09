@@ -1,9 +1,10 @@
+import {academicCopy,academicError,academicContentTransaction} from '../lib/academic-sharing.js';
 /* ================================================================
    exams.js — Scheduled exams (virtual patient + flashcards),
    assigned to specific students, visible only in a time window.
    ================================================================ */
 import { Router } from "express";
-import { db, persistNow } from "../db.js";
+import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { isLearnContent, caseIsLearn } from "../lib/content-track.js";
 import { hashPasswordSync } from "../lib/password.js";
@@ -51,12 +52,9 @@ function windowState(exam, now = Date.now()) {
 }
 
 
-const uniIdMemo = new Map();
 const currentUniversityId = (user) => {
   if (!user?.id) return null;
-  if (uniIdMemo.has(user.id)) return uniIdMemo.get(user.id);
   const v = db.prepare("SELECT university_id FROM users WHERE id=?").get(user.id)?.university_id || null;
-  uniIdMemo.set(user.id, v);
   return v;
 };
 const studentByNo = (sno) => {
@@ -89,7 +87,7 @@ r.get("/", authRequired, (req, res) => {
     const rows = db.prepare(
       `SELECT e.* FROM exams e
          JOIN exam_participants p ON p.exam_id = e.id
-       WHERE p.user_id=? AND e.active=1 ORDER BY e.id DESC`
+       WHERE p.user_id=? AND e.active=1 AND e.university_id=(SELECT university_id FROM users WHERE id=p.user_id) ORDER BY e.id DESC`
     ).all(req.user.id);
     const ids = rows.map((row) => row.id);
     const vpUsedBy = new Map(), flashUsedBy = new Map();
@@ -151,6 +149,7 @@ r.get("/:id", authRequired, (req, res) => {
 
   if (req.user.role === "student") {
     if (!ex.active) return res.status(404).json({ error: "not found", stage: "exam" });
+    if (!currentUniversityId(req.user) || ex.university_id !== currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university", stage: "access" });
     const member = db.prepare("SELECT 1 FROM exam_participants WHERE exam_id=? AND user_id=?")
       .get(ex.id, req.user.id);
     if (!member) return res.status(403).json({ error: "not assigned", stage: "access" });
@@ -227,7 +226,15 @@ r.get("/:id", authRequired, (req, res) => {
 
 /* ---- Create / update / delete (staff) ---- */
 const bit = (v, d = 0) => (v === undefined || v === null ? d : (v ? 1 : 0));
-function filterContentForUniversity(b, universityId) {
+function filterContentForUniversity(b, universityId, actor, owner) {
+  if(actor){
+    const resolve=(key,kind)=>{
+      const list=b[key]??[];
+      if(!Array.isArray(list)||list.length>10000||list.some(n=>!Number.isSafeInteger(n)||n<=0))throw academicError('invalid_content_selection',400);
+      return [...new Set(list)].map(id=>academicCopy(kind,id,universityId,actor,owner||actor.id));
+    };
+    return {caseIds:resolve('case_ids','cases'),flashcardIds:resolve('flashcard_ids','flashcards')};
+  }
   const uni = universityId || 1;
   const caseWant = sqlInList(b.case_ids);
   const flashWant = sqlInList(b.flashcard_ids);
@@ -266,8 +273,10 @@ function teacherMayAttachStudy(user, studyId) {
   if (creator.role === "admin") return false;
   return (creator.university_id || 1) === uni;
 }
-function saveBody(b, universityId = 1, prev = {}) {
-  const filtered = filterContentForUniversity(b || {}, universityId);
+function saveBody(b, universityId = 1, prev = {}, actor) {
+  b={...prev,...b};
+  for(const key of ["case_ids","flashcard_ids"])if(typeof b[key]==="string")b[key]=JSON.parse(b[key]);
+  const filtered = filterContentForUniversity(b || {}, universityId,actor,prev.owner_id);
   const studyRaw = b.studyId !== undefined ? b.studyId : (b.study_id !== undefined ? b.study_id : prev.study_id);
   const study = resolveStudyId(studyRaw);
   const logRaw = b.logTranscript !== undefined ? b.logTranscript : (b.log_transcript !== undefined ? b.log_transcript : prev.log_transcript);
@@ -283,7 +292,11 @@ function saveBody(b, universityId = 1, prev = {}) {
   ];
 }
 r.post("/", authRequired, requireRole("teacher", "admin"), (req, res) => {
-  const uni = currentUniversityId(req.user) || Number(req.body?.university_id || 0) || 1;
+  // Teachers cannot choose a tenant or retain a revoked membership via a cache.
+  const uni = req.user.role === "teacher"
+    ? currentUniversityId(req.user)
+    : req.body?.university_id !== undefined ? Number(req.body.university_id) : currentUniversityId(req.user) || 1;
+  if (!Number.isSafeInteger(uni) || !db.prepare("SELECT id FROM universities WHERE id=? AND active=1").get(uni)) return res.status(400).json({error:'university_required'});
   if (req.user.role === "teacher" && !uni) return res.status(400).json({ error: "university_required", message_fa: "برای استاد انتخاب دانشگاه الزامی است." });
   const b = req.body || {};
   if ((b.studyId || b.study_id) && !resolveStudyId(b.studyId ?? b.study_id)) return res.status(400).json({ error: "study_not_found" });
@@ -291,12 +304,11 @@ r.post("/", authRequired, requireRole("teacher", "admin"), (req, res) => {
   if (attachStudy && req.user.role === "teacher" && !teacherMayAttachStudy(req.user, attachStudy)) {
     return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
-  const info = db.prepare(
+  const info = academicContentTransaction(() => db.prepare(
     `INSERT INTO exams (title_fa,title_en,desc_fa,desc_en,case_ids,flashcard_ids,use_flashcards,
        starts_at,ends_at,duration_min,max_attempts,lang,shuffle,anti_cheat,competition,show_correct,show_hints,show_ai,show_micro,log_transcript,study_id,owner_id,university_id)
      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-  ).run(...saveBody(b, uni), req.user.id, uni);
-  persistNow();
+  ).run(...saveBody(b, uni, {}, req.user), req.user.id, uni));
   res.json({ id: info.lastInsertRowid });
 });
 r.put("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -309,20 +321,20 @@ r.put("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   if (attachStudy && req.user.role === "teacher" && !teacherMayAttachStudy(req.user, attachStudy)) {
     return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
-  db.prepare(
-    `UPDATE exams SET title_fa=?,title_en=?,desc_fa=?,desc_en=?,case_ids=?,flashcard_ids=?,
-       use_flashcards=?,starts_at=?,ends_at=?,duration_min=?,max_attempts=?,lang=?,
-       shuffle=?,anti_cheat=?,competition=?,show_correct=?,show_hints=?,show_ai=?,show_micro=?,log_transcript=?,study_id=? WHERE id=?`
-  ).run(...saveBody(b, parseExam(row).university_id || 1, row), req.params.id);
-  persistNow();
+  academicContentTransaction(() => {
+    db.prepare(
+      `UPDATE exams SET title_fa=?,title_en=?,desc_fa=?,desc_en=?,case_ids=?,flashcard_ids=?,
+         use_flashcards=?,starts_at=?,ends_at=?,duration_min=?,max_attempts=?,lang=?,
+         shuffle=?,anti_cheat=?,competition=?,show_correct=?,show_hints=?,show_ai=?,show_micro=?,log_transcript=?,study_id=? WHERE id=?`
+    ).run(...saveBody(b, parseExam(row).university_id || 1, row, req.user), req.params.id);
+  });
   res.json({ ok: true });
 });
 r.delete("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const row = db.prepare("SELECT * FROM exams WHERE id=?").get(req.params.id);
   if (!row) return res.status(404).json({ error: "not_found", stage: "exam" });
   if (!canManageExam(req.user, parseExam(row))) return res.status(403).json({ error: "wrong_university", stage: "access" });
-  db.prepare("UPDATE exams SET active=0 WHERE id=?").run(req.params.id);
-  persistNow();
+  durableTransaction(() => db.prepare("UPDATE exams SET active=0 WHERE id=?").run(req.params.id));
   res.json({ ok: true });
 });
 
@@ -335,41 +347,48 @@ r.put("/:id/participants", authRequired, requireRole("teacher", "admin"), (req, 
   if (!canManageExam(req.user, ex)) return res.status(403).json({ error: "wrong_university" });
   const { studentNos = [], userIds = [], createMissing = false, names = {} } = req.body || {};
   const eid = req.params.id;
-  const ids = new Set();
-  const notFound = [], wrongUniversity = [], created = [], limitBlocked = [];
-  let studentLimit = null;
-  for (const uid of userIds) {
-    let u = db.prepare("SELECT id, university_id FROM users WHERE id=? AND role='student'").get(uid);
-    if (!u) { wrongUniversity.push({ id: uid, reason:"not_found" }); continue; }
-    if (u.university_id==null || u.university_id===""){
-      try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, uid); u.university_id=ex.university_id; }catch{}
+  const result = durableTransaction(() => {
+    const ids = new Set();
+    const notFound = [], wrongUniversity = [], created = [], limitBlocked = [];
+    let studentLimit = null;
+    for (const uid of userIds) {
+      let u = db.prepare("SELECT id, university_id FROM users WHERE id=? AND role='student'").get(uid);
+      if (!u) { wrongUniversity.push({ id: uid, reason:"not_found" }); continue; }
+      if (u.university_id==null || u.university_id===""){
+        const lim = checkStudentLimit(ex.university_id, 1);
+        if (lim) { studentLimit = lim; limitBlocked.push({ id: uid }); continue; }
+        db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, uid); u.university_id=ex.university_id;
+      }
+      if (u.university_id === ex.university_id) ids.add(u.id); else wrongUniversity.push({ id: uid, existing: u });
     }
-    if (u.university_id === ex.university_id) ids.add(u.id); else wrongUniversity.push({ id: uid, existing: u });
-  }
-  for (const sn of studentNos) {
-    const key = String(sn).trim(); if (!key) continue;
-    let u = studentByNo(key);
-    if (!u && createMissing) {
-      // Licence: a full university can't mint more students — report, don't pretend missing.
-      const lim = checkStudentLimit(ex.university_id, 1);
-      if (lim) { studentLimit = lim; limitBlocked.push({ student_no: key }); continue; }
-      u = createStudentForUniversity({ sno: key, name: names[key] || key, universityId: ex.university_id });
-      if (u) created.push(u);
+    for (const sn of studentNos) {
+      const key = String(sn).trim(); if (!key) continue;
+      let u = studentByNo(key);
+      if (!u && createMissing) {
+        // Licence: a full university can't mint more students — report, don't pretend missing.
+        const lim = checkStudentLimit(ex.university_id, 1);
+        if (lim) { studentLimit = lim; limitBlocked.push({ student_no: key }); continue; }
+        u = createStudentForUniversity({ sno: key, name: names[key] || key, universityId: ex.university_id });
+        if (u) created.push(u);
+      }
+      if (!u) { notFound.push(key); continue; }
+      if (u.university_id==null || u.university_id===""){
+        const lim = checkStudentLimit(ex.university_id, 1);
+        if (lim) { studentLimit = lim; limitBlocked.push({ student_no: key }); continue; }
+        db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, u.id); u.university_id=ex.university_id;
+      }
+      if (u.university_id !== ex.university_id) { wrongUniversity.push({ student_no: key, existing: u }); continue; }
+      ids.add(u.id);
     }
-    if (!u) { notFound.push(key); continue; }
-    if (u.university_id==null || u.university_id===""){
-      try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, u.id); u.university_id=ex.university_id; }catch{}
+    {
+      db.prepare("DELETE FROM exam_participants WHERE exam_id=?").run(eid);
+      const ins = db.prepare("INSERT OR IGNORE INTO exam_participants (exam_id,user_id) VALUES (?,?)");
+      for (const uid of ids) ins.run(eid, uid);
     }
-    if (u.university_id !== ex.university_id) { wrongUniversity.push({ student_no: key, existing: u }); continue; }
-    ids.add(u.id);
-  }
-  const tx = db.transaction(() => {
-    db.prepare("DELETE FROM exam_participants WHERE exam_id=?").run(eid);
-    const ins = db.prepare("INSERT OR IGNORE INTO exam_participants (exam_id,user_id) VALUES (?,?)");
-    for (const uid of ids) ins.run(eid, uid);
+
+    return ({ ok: true, added: ids.size, notFound, wrongUniversity, created, limitBlocked, studentLimit });
   });
-  tx(); persistNow();
-  res.json({ ok: true, added: ids.size, notFound, wrongUniversity, created, limitBlocked, studentLimit });
+  res.json(result);
 });
 
 r.post("/:id/participants/resolve", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -378,16 +397,22 @@ r.post("/:id/participants/resolve", authRequired, requireRole("teacher", "admin"
   const ex = parseExam(row);
   if (!canManageExam(req.user, ex)) return res.status(403).json({ error: "wrong_university" });
   const raw = Array.isArray(req.body?.studentNos) ? req.body.studentNos : splitStudentNos(req.body?.studentNos);
-  const existing = [], missing = [], wrongUniversity = [];
-  for (const x of raw.map((v) => String(v).trim()).filter(Boolean)) {
-    let u = studentByNo(x);
-    if (!u) { missing.push(x); continue; }
-    if (u.university_id==null || u.university_id===""){
-      try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, u.id); u.university_id=ex.university_id; }catch{}
+  const result = durableTransaction(() => {
+    const existing = [], missing = [], wrongUniversity = [], limitBlocked = [];
+    let studentLimit = null;
+    for (const x of raw.map((v) => String(v).trim()).filter(Boolean)) {
+      let u = studentByNo(x);
+      if (!u) { missing.push(x); continue; }
+      if (u.university_id==null || u.university_id===""){
+        const lim = checkStudentLimit(ex.university_id, 1);
+        if (lim) { studentLimit = lim; limitBlocked.push({ student_no: x }); continue; }
+        db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, u.id); u.university_id=ex.university_id;
+      }
+      if (u.university_id !== ex.university_id) wrongUniversity.push({ student_no: x, existing: u }); else existing.push(u);
     }
-    if (u.university_id !== ex.university_id) wrongUniversity.push({ student_no: x, existing: u }); else existing.push(u);
-  }
-  res.json({ existing: [...new Map(existing.map((u)=>[u.id,u])).values()], missing, wrongUniversity });
+    return ({ existing: [...new Map(existing.map((u)=>[u.id,u])).values()], missing, wrongUniversity, limitBlocked, studentLimit });
+  });
+  res.json(result);
 });
 
 const parseJson = (s, fb) => { try { return JSON.parse(s || ""); } catch { return fb; } };
@@ -439,8 +464,7 @@ r.post("/:id/drawing-reviews/:attemptId/:answerIndex", authRequired, requireRole
   ans.drawing = { ...(ans.drawing||{}), approval: { status, feedback: req.body?.feedback||"", reviewer_id: req.user.id, reviewed_at: new Date().toISOString(), points: ans.points } };
   answers[idx]=ans; tr.answers=answers;
   const newScore=Math.max(0, Math.min(100, Math.round((Number(at.score)||0) - prev + Number(ans.points||0))));
-  db.prepare("UPDATE attempts SET score=?, transcript_json=? WHERE id=?").run(newScore, JSON.stringify(tr), at.id);
-  persistNow();
+  durableTransaction(() => db.prepare("UPDATE attempts SET score=?, transcript_json=? WHERE id=?").run(newScore, JSON.stringify(tr), at.id));
   res.json({ ok:true, score:newScore, review: ans.drawing.approval });
 });
 
@@ -601,6 +625,7 @@ r.get("/:id/leaderboard", authRequired, (req, res) => {
   }
 
   if (req.user.role === "student") {
+    if (!currentUniversityId(req.user) || ex.university_id !== currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university", stage: "access" });
     const member = db.prepare("SELECT 1 FROM exam_participants WHERE exam_id=? AND user_id=?").get(ex.id, req.user.id);
     if (!member) return res.status(403).json({ error: "not assigned", stage: "access" });
     if (windowState(ex) === "upcoming") {

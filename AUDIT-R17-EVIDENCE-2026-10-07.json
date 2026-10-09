@@ -1,0 +1,512 @@
+{
+  "beforeFix": {
+    "passed": 0,
+    "failed": 12
+  },
+  "newR17Tests": {
+    "passed": 33,
+    "failed": 0
+  },
+  "initialFocused": {
+    "passed": 65,
+    "failed": 0
+  },
+  "extractedPackageTests": {
+    "passed": 33,
+    "failed": 0
+  },
+  "client": {
+    "passed": 119,
+    "failed": 0
+  },
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "server": {
+    "passed": 1533,
+    "failed": 101,
+    "tests": 1634,
+    "files": 66,
+    "duration_seconds": 581.53
+  },
+  "newFailureNamesVsR16": [],
+  "build": "PASS; R17 service-worker stamp verified",
+  "package": {
+    "files": 1126,
+    "bytes": 50367442,
+    "sha256": "87c71fcf0534028a3fd0538769d8965813a65e3d3c7aaeacc6a46d8af9576e02",
+    "changedPredecessorEntries": [
+      "VERSION.txt",
+      "client/dist/sw.js",
+      "client/dist/sw.js.br",
+      "client/dist/sw.js.gz",
+      "server/src/routes/classes.js",
+      "server/src/routes/exams.js",
+      "server/src/routes/questionnaires.js",
+      "server/src/routes/reports.js"
+    ],
+    "allOtherPredecessorBytesUnchanged": true,
+    "crc": "PASS",
+    "demo": {
+      "users": 116,
+      "cases": 23,
+      "flashcards": 11681
+    },
+    "exam_mode": "TEXT DEFAULT 'perQuestion'"
+  },
+  "http": {
+    "universityA": 121,
+    "universityB": 122,
+    "teacherId": 1,
+    "source": {
+      "class": 18,
+      "exam": 14
+    },
+    "destination": {
+      "class": 19,
+      "exam": 15
+    },
+    "externalAI": false,
+    "mediaUrl": "/uploads/academic/university-121/snd_1791393193002_212411.mp3",
+    "sameTokenTransferAndRevocation": true,
+    "forbiddenWritesBlocked": true,
+    "foreignQuestionnaireDenied": true,
+    "validAnonymousResponsePreserved": true,
+    "mediaAccessRevoked": true,
+    "unassignedTeacherDenied": true,
+    "additionalReadRoutes": [
+      "reports",
+      "academic",
+      "research",
+      "tutor",
+      "media"
+    ],
+    "freshApplicationProcessVerified": true
+  },
+  "areaEvidenceGroupsOverlap": true,
+  "areaEvidence": {
+    "newUniversityAccess": {
+      "passed": 33,
+      "failed": 0,
+      "files": [
+        "test/university-access-r17.test.js"
+      ]
+    },
+    "classesAndResearch": {
+      "passed": 78,
+      "failed": 0,
+      "files": [
+        "test/admin-consent-policy.test.js",
+        "test/class-settings-access.test.js",
+        "test/research-consent.test.js",
+        "test/research-instruments.test.js",
+        "test/research-opt-in.test.js",
+        "test/vp-research-hardening.test.js"
+      ]
+    },
+    "portableRestore": {
+      "passed": 59,
+      "failed": 0,
+      "files": [
+        "test/portable-restore.test.js",
+        "test/vp-portable-r12.test.js",
+        "test/vp-portable-r13.test.js",
+        "test/vp-portable-r14.test.js",
+        "test/vp-portable-r15.test.js",
+        "test/vp-portable-r16.test.js"
+      ]
+    },
+    "virtualPatient": {
+      "passed": 433,
+      "failed": 22,
+      "files": [
+        "test/vp-ai-path.test.js",
+        "test/vp-authoring-r9.test.js",
+        "test/vp-benchmark-policy.test.js",
+        "test/vp-conversation-logging.test.js",
+        "test/vp-created-lifecycle-r9.test.js",
+        "test/vp-durable-authoring-r10.test.js",
+        "test/vp-encounter-consistency-r10.test.js",
+        "test/vp-evaluation-retry.test.js",
+        "test/vp-exam-scope.test.js",
+        "test/vp-extern-intern.test.js",
+        "test/vp-fallback-chart.test.js",
+        "test/vp-grading-rubric.test.js",
+        "test/vp-interaction-access.test.js",
+        "test/vp-latency.test.js",
+        "test/vp-local-r11.test.js",
+        "test/vp-model-contract.test.js",
+        "test/vp-patient-role.test.js",
+        "test/vp-pilot.test.js",
+        "test/vp-required-ai.test.js",
+        "test/vp-research-hardening.test.js",
+        "test/vp-seed-security.test.js",
+        "test/vp-stability.test.js",
+        "test/vp-stages-99.test.js"
+      ]
+    },
+    "gradingCardsAndOrganization": {
+      "passed": 204,
+      "failed": 0,
+      "files": [
+        "test/content-identity.test.js",
+        "test/featureflags.test.js",
+        "test/flash-no-penalty.test.js",
+        "test/flashcard-types.test.js",
+        "test/grading-input.test.js",
+        "test/orglimits.test.js",
+        "test/uni-speed-98.test.js",
+        "test/university-flashcard-types.test.js"
+      ]
+    }
+  },
+  "allServerFiles": [
+    {
+      "file": "test/admin-consent-policy.test.js",
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "file": "test/admin-tombstone.test.js",
+      "passed": 5,
+      "failed": 0
+    },
+    {
+      "file": "test/ai-routing-regressions.test.js",
+      "passed": 16,
+      "failed": 0
+    },
+    {
+      "file": "test/ai-routing-settings.test.js",
+      "passed": 8,
+      "failed": 4
+    },
+    {
+      "file": "test/ai-routing.test.js",
+      "passed": 13,
+      "failed": 0
+    },
+    {
+      "file": "test/api.test.js",
+      "passed": 512,
+      "failed": 28
+    },
+    {
+      "file": "test/bootstrap-repair.test.js",
+      "passed": 20,
+      "failed": 0
+    },
+    {
+      "file": "test/class-settings-access.test.js",
+      "passed": 6,
+      "failed": 0
+    },
+    {
+      "file": "test/content-identity.test.js",
+      "passed": 7,
+      "failed": 0
+    },
+    {
+      "file": "test/continuity.test.js",
+      "passed": 14,
+      "failed": 0
+    },
+    {
+      "file": "test/customtest.test.js",
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "file": "test/db-restore.test.js",
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "file": "test/drawingassist.test.js",
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "file": "test/featureflags.test.js",
+      "passed": 97,
+      "failed": 0
+    },
+    {
+      "file": "test/first-run.test.js",
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "file": "test/flash-no-penalty.test.js",
+      "passed": 8,
+      "failed": 0
+    },
+    {
+      "file": "test/flashcard-types.test.js",
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "file": "test/grading-input.test.js",
+      "passed": 47,
+      "failed": 0
+    },
+    {
+      "file": "test/hotspot-geom.test.js",
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "file": "test/itemanalysis.test.js",
+      "passed": 7,
+      "failed": 0
+    },
+    {
+      "file": "test/lesson-ux.test.js",
+      "passed": 15,
+      "failed": 0
+    },
+    {
+      "file": "test/master-bank.test.js",
+      "passed": 25,
+      "failed": 47
+    },
+    {
+      "file": "test/order-catalog.test.js",
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "file": "test/orglimits.test.js",
+      "passed": 13,
+      "failed": 0
+    },
+    {
+      "file": "test/password-hashing.test.js",
+      "passed": 5,
+      "failed": 0
+    },
+    {
+      "file": "test/pathcurator.test.js",
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "file": "test/peerstats.test.js",
+      "passed": 9,
+      "failed": 0
+    },
+    {
+      "file": "test/portable-restore.test.js",
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "file": "test/research-consent.test.js",
+      "passed": 21,
+      "failed": 0
+    },
+    {
+      "file": "test/research-instruments.test.js",
+      "passed": 21,
+      "failed": 0
+    },
+    {
+      "file": "test/research-opt-in.test.js",
+      "passed": 5,
+      "failed": 0
+    },
+    {
+      "file": "test/security-hardening.test.js",
+      "passed": 25,
+      "failed": 0
+    },
+    {
+      "file": "test/textsearch.test.js",
+      "passed": 6,
+      "failed": 0
+    },
+    {
+      "file": "test/uni-speed-98.test.js",
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "file": "test/university-access-r17.test.js",
+      "passed": 33,
+      "failed": 0
+    },
+    {
+      "file": "test/university-flashcard-types.test.js",
+      "passed": 18,
+      "failed": 0
+    },
+    {
+      "file": "test/validate.test.js",
+      "passed": 12,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-ai-path.test.js",
+      "passed": 11,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-authoring-r9.test.js",
+      "passed": 22,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-benchmark-policy.test.js",
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-conversation-logging.test.js",
+      "passed": 15,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-created-lifecycle-r9.test.js",
+      "passed": 1,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-durable-authoring-r10.test.js",
+      "passed": 11,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-encounter-consistency-r10.test.js",
+      "passed": 12,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-evaluation-retry.test.js",
+      "passed": 4,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-exam-scope.test.js",
+      "passed": 5,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-extern-intern.test.js",
+      "passed": 15,
+      "failed": 1
+    },
+    {
+      "file": "test/vp-fallback-chart.test.js",
+      "passed": 12,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-grading-rubric.test.js",
+      "passed": 6,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-interaction-access.test.js",
+      "passed": 20,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-latency.test.js",
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-local-r11.test.js",
+      "passed": 9,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-model-contract.test.js",
+      "passed": 31,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-patient-role.test.js",
+      "passed": 17,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-pilot.test.js",
+      "passed": 35,
+      "failed": 1
+    },
+    {
+      "file": "test/vp-portable-r12.test.js",
+      "passed": 11,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-portable-r13.test.js",
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-portable-r14.test.js",
+      "passed": 9,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-portable-r15.test.js",
+      "passed": 11,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-portable-r16.test.js",
+      "passed": 14,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-required-ai.test.js",
+      "passed": 5,
+      "failed": 1
+    },
+    {
+      "file": "test/vp-research-hardening.test.js",
+      "passed": 15,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-seed-security.test.js",
+      "passed": 3,
+      "failed": 0
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "passed": 176,
+      "failed": 19
+    },
+    {
+      "file": "test/vp-stages-99.test.js",
+      "passed": 2,
+      "failed": 0
+    },
+    {
+      "file": "test/website-qa.test.js",
+      "passed": 6,
+      "failed": 0
+    }
+  ],
+  "limitations": [
+    "No browser or external AI tests in R17",
+    "101 pre-existing server failures remain",
+    "Broad automated regression plus targeted code review/HTTP checks, not exhaustive verification of all university screens and permissions",
+    "Application recreated in a fresh process with createApp, not deployment/index.js bootstrap",
+    "Historical grades, responses and demo data unchanged; valid new anonymous response and replacement tested"
+  ],
+  "githubVerification": {
+    "publicationCommit": "0c7e473",
+    "transport": "GitHub contents API raw download",
+    "sha256": "87c71fcf0534028a3fd0538769d8965813a65e3d3c7aaeacc6a46d8af9576e02",
+    "gitBlob": "b6d0d626dd86a9e05e04b46691a9ca2245ae18fd",
+    "bytes": 50367442,
+    "crc": "PASS",
+    "beforeR16Deletion": true
+  }
+}

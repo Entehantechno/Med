@@ -1,0 +1,25 @@
+{
+  "baseline": "R29",
+  "bank_scope": "preserve_bank",
+  "changed_non_build_entries": [
+    "VERSION.txt",
+    "client/src/components/DemoSetup.jsx",
+    "server/src/lib/demo-repair.js",
+    "server/src/lib/emergency-provision.js",
+    "server/src/routes/admin.js"
+  ],
+  "added_non_build_entries": [
+    "client/src/components/DemoSetup.r30.test.jsx",
+    "server/test/university-demo-r30.test.js"
+  ],
+  "generated_build": {
+    "changed": 4,
+    "added": 227,
+    "removed": 227
+  },
+  "demo_database_same_bytes": true,
+  "ten_clinical_source_same_bytes": true,
+  "seed_and_schema_same_bytes": true,
+  "reports_outside_zip": true,
+  "sha256": "ec52fc1c3f15a81acc4f50f6b8a2dd87bd9039484cb436f7acdfe8bd511217a4"
+}

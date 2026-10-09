@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-09",
+  "release_commit": "df6ddd51664e538ed87e252fe1035741e5cd7b09",
+  "branch": "arena/57508e9a-med",
+  "pull_request": "https://github.com/Entehantechno/Med/pull/3",
+  "package": "MED-School-FINAL-2026-10-09-R29.zip",
+  "sha256": "1323ede7861e0a2abee1e0fb796cfc4fa60933a2e682e58c5b4b1f5dbaf312b1",
+  "bytes": 50417430,
+  "files": 1149,
+  "git_blob": "8e1f3ba301614309922d016c3b9c8324f5f46454",
+  "independent_download": "GitHub Contents API raw bytes at release commit",
+  "verification": "Exact bytes, SHA256, length, all-entry CRC, entry count and git blob match",
+  "predecessor_retirement": "R28 ZIP/SHA removed only in subsequent commit after this verification",
+  "server": {
+    "passed": 1930,
+    "failed": 47,
+    "tests": 1977,
+    "files": 80,
+    "skipped": 0
+  },
+  "client": {
+    "passed": 134,
+    "failed": 0
+  },
+  "extracted_tests": {
+    "passed": 91,
+    "failed": 0
+  },
+  "clinical_limits": "Ten charts preserved, 51 recorded results verified, but clinical rubric mismatches, reference approval and unknown-result contract remain open; no external AI grading sign-off",
+  "bank": "preserve_bank; same 47 failing test identities",
+  "download_url": "https://github.com/Entehantechno/Med/raw/refs/heads/arena/57508e9a-med/MED-School-FINAL-2026-10-09-R29.zip"
+}

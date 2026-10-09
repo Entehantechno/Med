@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-10",
+  "release": "2026.10.10-r36-step-key-safety",
+  "tests": {
+    "client": {
+      "numTotalTests": 180,
+      "numPassedTests": 180,
+      "numFailedTests": 0,
+      "success": true
+    },
+    "server": {
+      "numTotalTests": 10,
+      "numPassedTests": 10,
+      "numFailedTests": 0,
+      "success": true
+    }
+  },
+  "browser": {
+    "checks": [
+      "Reordering suggestions invalidates old key and blocks unsafe save",
+      "Explicit reselection saves B, never silently C",
+      "Distinct Persian labels do not hide duplicate English choices",
+      "Fixed footer still visible on mobile"
+    ],
+    "errors": []
+  },
+  "package": {
+    "entries": 848,
+    "bytes": 44254307,
+    "sha256": "aecc44d78d41bfae8a1829b1b8947ad92a6256ed5bc174cbb004eb13e6a2ab7e",
+    "bank_payloads_identical_to_R35": 54,
+    "server_source_identical_to_R35": true,
+    "packaged_sources_and_build_match_workspace": true,
+    "zip_crc": "passed"
+  },
+  "limitations": [
+    "Full server suite not rerun in R36; 47 known bank failures remain open.",
+    "No production deployment claimed.",
+    "The 11 R35 browser scenarios are historical, not counted as fresh R36 tests."
+  ]
+}

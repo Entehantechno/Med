@@ -1,0 +1,35 @@
+// Keep existing array entries intact; split only the free-text authoring input.
+export function acceptedAnswers(value) {
+ const entries=Array.isArray(value)?value:String(value||'').split(/[،,\n]/);
+ return entries.map(x=>String(x??'').trim()).filter(Boolean);
+}
+// Remove an ordering row only when both translations are empty.
+export function orderingRows(fa=[],en=[]) {
+ const rows=Array.from({length:Math.max(fa.length,en.length)},(_,i)=>[fa[i]??'',en[i]??''])
+  .filter(row=>row.some(x=>String(x).trim()));
+ return {items_fa:rows.map(row=>row[0]),items_en:rows.map(row=>row[1])};
+}
+export function drawingRubrics(drawing={}) {
+ const rows=orderingRows(drawing.rubric_fa||[],drawing.rubric_en||[]);
+ return {rubric_fa:rows.items_fa.map(x=>String(x).trim()),rubric_en:rows.items_en.map(x=>String(x).trim())};
+}
+export function percentCoordinate(value,fallback=50) {
+ const n=value==null||value===''?NaN:Number(value);
+ return Number.isFinite(n)?Math.max(0,Math.min(100,n)):fallback;
+}
+
+// Repair only the editor's working copy. Persisted legacy charts are untouched
+// until the author reviews and saves; retain existing finding text and URLs.
+export function patientEditorData(chart={}) {
+ const data={...chart};
+ for(const key of ['labResults','imagingResults','paraclinicResults','images']) {
+  if(data[key]==null)continue;
+  const rows=Array.isArray(data[key])?data[key]:[data[key]];
+  data[key]=rows.filter(row=>row!=null).map(row=>{
+   const item=typeof row==='object'&&!Array.isArray(row)?{...row}:key==='images'?{url:String(row)}:{result_en:String(row)};
+   if(key!=='images'&&item.aliases!=null)item.aliases=acceptedAnswers(item.aliases);
+   return item;
+  });
+ }
+ return {data,repaired:JSON.stringify(data)!==JSON.stringify(chart)};
+}

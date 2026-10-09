@@ -1,3 +1,4 @@
+import {approveTestReference} from './helpers/reference-fixture.js';
 import {describe,it,expect,beforeAll,beforeEach,afterEach,vi} from 'vitest';
 import {execSync} from 'node:child_process';
 import request from 'supertest';
@@ -18,7 +19,7 @@ function provider({badScore=false,badLesson=false}={}){
   return {ok:true,status:200,json:async()=>({choices:[{message:{content:JSON.stringify(value)}}]})};
  }));
 }
-beforeAll(async()=>{execSync('node src/seed.js --force',{stdio:'ignore'});await initDb();app=createApp();token=(await request(app).post('/api/auth/login').send({username:'admin',password:'demo'})).body.token;});
+beforeAll(async()=>{execSync('node src/seed.js --force',{stdio:'ignore'});await initDb();app=createApp();await approveTestReference(app);token=(await request(app).post('/api/auth/login').send({username:'admin',password:'demo'})).body.token;});
 beforeEach(()=>{vi.stubEnv('VP_REQUIRE_AI_EVALUATION','1');vi.stubEnv('AI_API_KEY','');setSetting('ai',{provider:'OpenRouter',model:'test/free',apiKey:'synthetic-only'});setSetting('ai_vpatient',{});});
 afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();});
 describe('AI-required final evaluation',()=>{
@@ -32,7 +33,7 @@ describe('AI-required final evaluation',()=>{
   provider({badLesson:true});const n=count(),r=await submit();expect(r.status).toBe(503);expect(r.body.aiStage).toBe('lesson');expect(fetch).toHaveBeenCalledTimes(2);expect(count()).toBe(n);
  });
  it('persists only when both model stages return valid responses',async()=>{
-  provider();const n=count(),r=await submit();expect(r.status).toBe(200);expect(count()).toBe(n+1);expect(r.body.source).toBe('llm');expect(r.body.feedbackSource).toBe('llm');expect(r.body.score).toBe(0);expect(r.body.microlearning).toBe(lesson.microlearning);
+  provider();const n=count(),r=await submit();expect(r.status).toBe(200);expect(count()).toBe(n+1);expect(r.body.source).toBe('llm');expect(r.body.feedbackSource).toBe('llm');expect(r.body.score).toBe(0);expect(r.body.microlearning).toContain(lesson.microlearning);expect(r.body.microlearning).toContain("Synthetic section 1");expect(r.body.reference.ready).toBe(true);
  });
  it('does not consume an attempt on quota failure and allows a subsequent successful retry',async()=>{
   vi.stubGlobal('fetch',vi.fn(async()=>({ok:false,status:429,text:async()=> 'sensitive provider detail'})));
@@ -42,4 +43,10 @@ describe('AI-required final evaluation',()=>{
  it('retains an explicit offline diagnostic mode, not the production default',async()=>{
   vi.stubEnv('VP_REQUIRE_AI_EVALUATION','0');setSetting('ai',{});const n=count(),r=await submit();expect(r.status).toBe(200);expect(r.body.source).not.toBe('llm');expect(count()).toBe(n+1);
  });
+});
+it('unapproved source still blocks attributed lesson output rather than trusting model text',async()=>{
+ const saved=db.prepare('SELECT reference_policy_id,reference_snapshot_json FROM cases WHERE id=1').get();
+ db.prepare('UPDATE cases SET reference_policy_id=NULL,reference_snapshot_json=NULL WHERE id=1').run();
+ try{provider();const r=await submit();expect(r.status).toBe(200);expect(r.body.reference.ready).toBe(false);expect(r.body.microlearning).toContain('متوقف شد');expect(r.body.microlearning).not.toContain(lesson.microlearning);}
+ finally{db.prepare('UPDATE cases SET reference_policy_id=?,reference_snapshot_json=? WHERE id=1').run(saved.reference_policy_id,saved.reference_snapshot_json);}
 });

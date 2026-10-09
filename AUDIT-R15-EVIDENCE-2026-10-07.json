@@ -1,0 +1,83 @@
+{
+  "beforeFix": {
+    "passed": 0,
+    "failed": 5
+  },
+  "newR15Tests": {
+    "passed": 11,
+    "failed": 0
+  },
+  "focused": {
+    "passed": 45,
+    "failed": 0
+  },
+  "extractedPackageTests": {
+    "passed": 11,
+    "failed": 0
+  },
+  "client": {
+    "passed": 119,
+    "failed": 0
+  },
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "server": {
+    "passed": 1486,
+    "failed": 101,
+    "tests": 1587,
+    "files": 64,
+    "duration_seconds": 572.58
+  },
+  "newFailureNamesVsR14": [],
+  "build": "PASS; R15 service-worker stamp verified",
+  "package": {
+    "files": 1124,
+    "bytes": 50362343,
+    "sha256": "23882dfb578391e0cb173269d7a882f472b78846d82e50da91028f49a062fbc4",
+    "changedPredecessorEntries": [
+      "VERSION.txt",
+      "client/dist/sw.js",
+      "client/dist/sw.js.br",
+      "client/dist/sw.js.gz",
+      "server/src/routes/portable.js"
+    ],
+    "allOtherPredecessorBytesUnchanged": true,
+    "crc": "PASS",
+    "demo": {
+      "users": 116,
+      "cases": 23,
+      "flashcards": 11681
+    },
+    "exam_mode": "TEXT DEFAULT 'perQuestion'"
+  },
+  "http": {
+    "packageHttpLogin": true,
+    "fullExport": true,
+    "importStatus": 200,
+    "universityId": 126,
+    "classId": 9,
+    "externalAI": false,
+    "runtimeSettingsAndResolvedFlagsPreserved": true,
+    "anonymousDenied": true,
+    "otherUniversityTeacherDenied": true,
+    "freshApplicationProcessPersistence": true
+  },
+  "limitations": [
+    "No browser or external AI tests in R15",
+    "101 pre-existing server failures remain",
+    "Settings persistence and API-resolved flags verified, not a timed real-student examination",
+    "Application recreated in a fresh process with createApp, not deployment/index.js bootstrap",
+    "Null class overrides remain inherited from destination settings; no claim to clone global configuration"
+  ],
+  "githubVerification": {
+    "publicationCommit": "50b10b4",
+    "transport": "GitHub contents API raw download",
+    "sha256": "23882dfb578391e0cb173269d7a882f472b78846d82e50da91028f49a062fbc4",
+    "gitBlob": "a16db3c8a101111df404eee5c9bce12239710870",
+    "bytes": 50362343,
+    "crc": "PASS",
+    "beforeR14Deletion": true
+  }
+}

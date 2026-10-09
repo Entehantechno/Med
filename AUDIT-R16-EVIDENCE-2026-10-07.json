@@ -1,0 +1,86 @@
+{
+  "beforeFix": {
+    "passed": 0,
+    "failed": 6
+  },
+  "newR16Tests": {
+    "passed": 14,
+    "failed": 0
+  },
+  "focused": {
+    "passed": 59,
+    "failed": 0
+  },
+  "extractedPackageTests": {
+    "passed": 14,
+    "failed": 0
+  },
+  "client": {
+    "passed": 119,
+    "failed": 0
+  },
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "server": {
+    "passed": 1500,
+    "failed": 101,
+    "tests": 1601,
+    "files": 65,
+    "duration_seconds": 460.16
+  },
+  "newFailureNamesVsR15": [],
+  "build": "PASS; R16 service-worker stamp verified",
+  "package": {
+    "files": 1125,
+    "bytes": 50364300,
+    "sha256": "a6e71ddda26d1c0ebb3509813818299f64bf45838c3dedc67c85a3b03cc2b104",
+    "changedPredecessorEntries": [
+      "VERSION.txt",
+      "client/dist/sw.js",
+      "client/dist/sw.js.br",
+      "client/dist/sw.js.gz",
+      "server/src/routes/portable.js"
+    ],
+    "allOtherPredecessorBytesUnchanged": true,
+    "crc": "PASS",
+    "demo": {
+      "users": 116,
+      "cases": 23,
+      "flashcards": 11681
+    },
+    "exam_mode": "TEXT DEFAULT 'perQuestion'"
+  },
+  "http": {
+    "packageHttpLogin": true,
+    "fullExport": true,
+    "invalidArchiveStatus": 422,
+    "invalidArchiveError": "exam_case_graph_invalid",
+    "databaseCountsUnchanged": true,
+    "importStatus": 200,
+    "universityId": 125,
+    "examId": 6,
+    "externalAI": false,
+    "runtimeSelectionsMapped": true,
+    "anonymousDenied": true,
+    "otherUniversityTeacherDenied": true,
+    "freshApplicationProcessPersistence": true
+  },
+  "limitations": [
+    "No browser or external AI tests in R16",
+    "101 pre-existing server failures remain",
+    "Invalid archive references proven; no unauthorized content disclosure demonstrated",
+    "Application recreated in a fresh process with createApp, not deployment/index.js bootstrap",
+    "Legacy archives with stale exam content references now fail validation rather than silently retaining source IDs"
+  ],
+  "githubVerification": {
+    "publicationCommit": "0215d9c",
+    "transport": "GitHub contents API raw download",
+    "sha256": "a6e71ddda26d1c0ebb3509813818299f64bf45838c3dedc67c85a3b03cc2b104",
+    "gitBlob": "9bea4518a26aed5301460c183b1fbc36fc229885",
+    "bytes": 50364300,
+    "crc": "PASS",
+    "beforeR15Deletion": true
+  }
+}

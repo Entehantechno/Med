@@ -15,7 +15,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Uploaded media lives in the persistent DATA_DIR (outside the code) so it
 // survives site upgrades. See lib/paths.js.
 import { UPLOADS_DIR, ensureDataDirs, ACADEMIC_DIR } from "../lib/paths.js";
-import { uploadDestination, mediaUrlFor, mediaLocation } from "../lib/academic-storage.js";
+import { uploadDestination, mediaUrlFor, namespaceForUniversity } from "../lib/academic-storage.js";
 ensureDataDirs();
 export const UPLOAD_DIR = UPLOADS_DIR;
 
@@ -23,7 +23,7 @@ const ALLOWED = new Set([".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"]);
 const IMAGE_MIME = new Set(["image/jpeg", "image/png", "image/gif", "image/webp", "image/bmp", "image/x-ms-bmp"]);
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  destination: uploadDestination,
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
     const safe = "img_" + Date.now() + "_" + Math.round(Math.random() * 1e6) + ext;
@@ -74,7 +74,7 @@ function rejectUploaded(file, res, message) {
 }
 const videoUpload = multer({
   storage: multer.diskStorage({
-    destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+    destination: uploadDestination,
     filename: (req, file, cb) => {
       const ext = path.extname(file.originalname).toLowerCase();
       cb(null, "vid_" + Date.now() + "_" + Math.round(Math.random() * 1e6) + ext);
@@ -152,6 +152,16 @@ const audioUpload = multer({
 
 const r = Router();
 
+// Teacher medical media must have an explicit tenant before accepting bytes.
+// Reference PDFs have a separate, intentionally public library contract.
+function requireMediaUniversity(req, res, next) {
+  const universityId = Number(req.user?.university_id);
+  if (req.user.role !== "admin" && (!Number.isInteger(universityId) || universityId <= 0)) {
+    return res.status(403).json({ error: "university_required" });
+  }
+  next();
+}
+
 /* Optional WebP re-encoding of uploaded images (performance: 30-70% smaller
    raster downloads for the same slide/photo). sharp is a NATIVE, OPTIONAL
    dependency: when it is not installed (restricted build host) the original
@@ -186,7 +196,7 @@ async function optimizeUploadedImage(file) {
 }
 
 // POST /api/upload  (multipart/form-data, field name: "image")
-r.post("/", authRequired, requireRole("teacher", "admin"), (req, res) => {
+r.post("/", authRequired, requireRole("teacher", "admin"), requireMediaUniversity, (req, res) => {
   upload.single("image")(req, res, async (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file || !req.file.size) return rejectUploaded(req.file, res, "Empty upload");
@@ -198,13 +208,13 @@ r.post("/", authRequired, requireRole("teacher", "admin"), (req, res) => {
       if (webp) { filename = webp; optimized = true; }
     } catch { /* keep original */ }
     // Public URL served by express.static below
-    res.json({ url: `/uploads/${filename}`, name: req.file.originalname, webp: optimized });
+    res.json({ url: mediaUrlFor(req, filename), name: req.file.originalname, webp: optimized });
   });
 });
 
 // POST /api/upload/audio  (multipart/form-data, field name: "audio")
 // Lung / heart auscultation recordings for virtual patients.
-r.post("/audio", authRequired, requireRole("teacher", "admin"), (req, res) => {
+r.post("/audio", authRequired, requireRole("teacher", "admin"), requireMediaUniversity, (req, res) => {
   audioUpload.single("audio")(req, res, (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file || !req.file.size) return rejectUploaded(req.file, res, "Empty upload");
@@ -216,13 +226,13 @@ r.post("/audio", authRequired, requireRole("teacher", "admin"), (req, res) => {
 });
 
 // POST /api/upload/video  (multipart/form-data, field name: "video")
-r.post("/video", authRequired, requireRole("teacher", "admin"), (req, res) => {
+r.post("/video", authRequired, requireRole("teacher", "admin"), requireMediaUniversity, (req, res) => {
   videoUpload.single("video")(req, res, (err) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file || !req.file.size) return rejectUploaded(req.file, res, "Empty upload");
     const ext = path.extname(req.file.filename).toLowerCase();
     if (!hasVideoMagic(req.file.path, ext)) return rejectUploaded(req.file, res, "Invalid video content");
-    res.json({ url: `/uploads/${req.file.filename}`, name: req.file.originalname });
+    res.json({ url: mediaUrlFor(req, req.file.filename), name: req.file.originalname });
   });
 });
 
@@ -241,6 +251,9 @@ r.post("/pdf", authRequired, requireRole("teacher", "admin"), (req, res) => {
 // Counts how many flashcards AND virtual-patient cases reference each uploaded
 // URL so admins can safely spot (and delete) unused files. Reads every
 // data_json once.
+function mediaData(raw) {
+  try { const value = JSON.parse(raw); return value && typeof value === "object" && !Array.isArray(value) ? value : {}; } catch { return {}; }
+}
 function usageMap() {
   const usage = {};
   const bump = (url, refId) => {
@@ -258,7 +271,7 @@ function usageMap() {
   let rows = [];
   try { rows = db.prepare("SELECT id, data_json FROM flashcards").all(); } catch { rows = []; }
   for (const c of rows) {
-    let d = {}; try { d = JSON.parse(c.data_json); } catch { continue; }
+    const d = mediaData(c.data_json);
     bump(d.image, c.id); bump(d.imageUrl, c.id);
     scanMedia(d.media, c.id);
     scanMedia(d.micro?.media, c.id);
@@ -286,14 +299,20 @@ function usageMap() {
   // lung/heart auscultation recordings (an in-use sound must not be deletable).
   let caseRows = [];
   try { caseRows = db.prepare("SELECT id, data_json FROM cases WHERE active=1").all(); } catch { caseRows = []; }
-  for (const c of caseRows) {
-    let d = {}; try { d = JSON.parse(c.data_json); } catch { continue; }
-    bump(d.lungSound, `case${c.id}`);
-    bump(d.heartSound, `case${c.id}`);
-    scanMedia(d.images, `case${c.id}`);
-    scanMedia((d.labResults || []).map((r) => r?.imageUrl).filter(Boolean), `case${c.id}`);
-    scanMedia((d.imagingResults || []).map((r) => r?.imageUrl).filter(Boolean), `case${c.id}`);
-    scanMedia((d.paraclinicResults || []).map((r) => r?.imageUrl).filter(Boolean), `case${c.id}`);
+  const scanCase = (d, refId) => {
+    if (!d || typeof d !== "object") return;
+    bump(d.lungSound, refId);
+    bump(d.heartSound, refId);
+    scanMedia(d.images, refId);
+    for (const key of ["labResults", "imagingResults", "paraclinicResults"]) {
+      if (Array.isArray(d[key])) scanMedia(d[key].map(r => r?.imageUrl).filter(Boolean), refId);
+    }
+  };
+  for (const c of caseRows) scanCase(mediaData(c.data_json), `case${c.id}`);
+  // Frozen encounters (including completed history) still need their media
+  // after live authoring changes. Counting references does not expose content.
+  for (const session of db.prepare("SELECT id, encounter_snapshot_json FROM vp_sessions WHERE encounter_snapshot_json IS NOT NULL").all()) {
+    scanCase(mediaData(session.encounter_snapshot_json).caseData, `session${session.id}`);
   }
   return usage;
 }
@@ -316,17 +335,12 @@ r.get("/library", authRequired, requireRole("teacher", "admin"), (req, res) => {
     prefixMap.set(flat, "/uploads/");
     prefixMap.set(platform, "/uploads/platform/");
   } else {
-    let dir = UPLOAD_DIR;
-    let prefix = "/uploads/";
-    try {
-      const loc = mediaLocation(req.user);
-      dir = loc.directory;
-      prefix = loc.prefix;
-    } catch {
-      // fallback to flat
-    }
+    const universityId = Number(req.user?.university_id);
+    if (!Number.isInteger(universityId) || universityId <= 0) return res.status(403).json({ error: "university_required" });
+    const namespace = namespaceForUniversity(universityId);
+    const dir = path.join(ACADEMIC_DIR, namespace, "media");
     dirs = [dir];
-    prefixMap.set(dir, prefix);
+    prefixMap.set(dir, `/uploads/academic/${namespace}/`);
   }
   const usage = usageMap();
   const seen = new Set();

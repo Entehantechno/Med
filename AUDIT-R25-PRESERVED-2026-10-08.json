@@ -1,0 +1,16 @@
+{
+  "baseline": "R24",
+  "changed_existing_entries": [
+    "VERSION.txt",
+    "server/src/routes/content.js"
+  ],
+  "added_entries": [
+    "server/test/university-accounts-r25.test.js"
+  ],
+  "all_other_previous_entries_byte_identical": true,
+  "unchanged_previous_entries": 1138,
+  "schema_unchanged": true,
+  "demo_data_unchanged": true,
+  "bank_and_bank_tests_unchanged": true,
+  "user_decision": "preserve_bank"
+}

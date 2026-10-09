@@ -1,0 +1,22 @@
+{
+  "changed_production": [
+    "server/src/lib/assignment-input.js",
+    "server/src/routes/content.js",
+    "client/src/pages/Admin.jsx"
+  ],
+  "routes": [
+    "PUT /api/assignments/:userId",
+    "POST /api/users"
+  ],
+  "new_regressions": [
+    "server/test/university-assignments-r31.test.js",
+    "client/src/pages/Admin.assignments-r31.test.jsx"
+  ],
+  "extracted_regressions": [
+    "university-assignments-r31",
+    "university-import-r24",
+    "university-accounts-r25",
+    "university-demo-r30"
+  ],
+  "coverage": "Focused assignment validation and modal error/retry workflow, plus full automated server/client regression. Not an exhaustive audit of every feature."
+}

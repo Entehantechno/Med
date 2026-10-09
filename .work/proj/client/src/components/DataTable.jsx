@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useDeferredValue } from "react";
+import { useState, useMemo, useEffect, useDeferredValue, useRef } from "react";
 import { useApp } from "../context.jsx";
 import Icon from "./Icon.jsx";
 import SearchBox, { Highlight, highlightLocal, normFa } from "./SearchBox.jsx";
@@ -42,10 +42,15 @@ export default function DataTable({
   pageSize: pageSizeProp = DEFAULT_PAGE_SIZE,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   selectable = false, selectedIds = null, onSelectionChange = null,
+  showRowNumbers = true, columnPicker = true, exportable = false,
+  defaultHiddenColumns = [], searchable = true,
 }) {
   const { t, lang } = useApp();
   const fa = lang !== "en";
   const [q, setQ] = useState("");
+  const [hiddenColumns, setHiddenColumns] = useState(() => new Set(defaultHiddenColumns));
+  const visibleColumns = columns.filter(c => !hiddenColumns.has(c.key) || c.key === 'actions');
+  const allBox = useRef(null);
   const [sort, setSort] = useState(initialSort || { key: null, dir: "asc" });
   const [page, setPage] = useState(0);
   const [perPage, setPerPage] = useState(pageSizeProp || DEFAULT_PAGE_SIZE);
@@ -98,7 +103,7 @@ export default function DataTable({
 
   // Back to the first page whenever the user searches, changes the page size,
   // or the parent supplies a new dataset (reload / new filter values).
-  useEffect(() => { setPage(0); }, [q, perPage, rows]);
+  useEffect(() => { setPage(0); }, [q, perPage, rows, sort]);
 
   // Keep the current page valid when the result set shrinks (delete etc.).
   const pageCount = paginate ? Math.max(1, Math.ceil(sorted.length / perPage)) : 1;
@@ -107,6 +112,22 @@ export default function DataTable({
 
   const start = paginate ? safePage * perPage : 0;
   const pageRows = paginate ? sorted.slice(start, start + perPage) : sorted;
+
+  const pageIds = pageRows.map((row, i) => rowKey ? rowKey(row, start+i) : (row.id ?? start+i));
+  const pageSelected = pageIds.filter(id => selectedIds?.has(id)).length;
+  useEffect(() => { if (allBox.current) allBox.current.indeterminate = pageSelected > 0 && pageSelected < pageIds.length; }, [pageSelected, pageIds.length]);
+  const exportCsv = () => {
+    const cols = visibleColumns.filter(c => c.key !== 'actions' && typeof c.label === 'string');
+    const cell = value => {
+      let text = String(value ?? '');
+      if (/^(?:\s*[=+\-@]|[\t\r])/.test(text)) text = "'" + text; // spreadsheet formula safety
+      return '"' + text.replaceAll('"','""') + '"';
+    };
+    const lines = [cols.map(c => cell(c.label)).join(',')];
+    for (const row of sorted) lines.push(cols.map(c => cell(c.exportValue ? c.exportValue(row) : textOf(row,c))).join(','));
+    const url = URL.createObjectURL(new Blob(['\uFEFF'+lines.join('\r\n')], { type:'text/csv;charset=utf-8' }));
+    const link = document.createElement('a'); link.href=url; link.download='filtered-table.csv'; link.click(); URL.revokeObjectURL(url);
+  };
 
   const toggleSort = (key) =>
     setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
@@ -120,58 +141,71 @@ export default function DataTable({
   return (
     <div>
       <div className="dt-search-wrap">
-        <SearchBox compact value={q} onChange={setQ} onSearch={setQ} placeholder={searchPlaceholder || t("searchPlaceholder")}
-          storageKey={storageKey || "table"} hotkey={hotkey} helpKinds={["table"]} />
+        {searchable && <SearchBox compact value={q} onChange={setQ} onSearch={setQ} placeholder={searchPlaceholder || t("searchPlaceholder")}
+          storageKey={storageKey || "table"} hotkey={hotkey} helpKinds={["table"]} />}
         {dq.trim() && (
           <span className="muted small dt-hits" role="status" aria-live="polite">
             {fa ? `${filtered.length.toLocaleString("fa-IR")} از ${rows.length.toLocaleString("fa-IR")}` : `${filtered.length.toLocaleString()} of ${rows.length.toLocaleString()}`}
           </span>
         )}
       </div>
+      <div className="dt-tools" style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap',marginBlock:8}}>
+        {columnPicker && <details><summary>{fa ? 'ستون‌های جدول' : 'Table columns'}</summary>
+          <div style={{display:'flex',gap:12,flexWrap:'wrap',padding:10}}>{columns.filter(c => c.key !== 'actions' && typeof c.label === 'string').map(c => <label key={c.key}>
+            <input type="checkbox" checked={!hiddenColumns.has(c.key)} onChange={() => setHiddenColumns(prev => { const next = new Set(prev); next.has(c.key) ? next.delete(c.key) : next.add(c.key); return next; })} /> {fa ? 'ستون: ' : 'Column: '}{c.label}
+          </label>)}</div>
+        </details>}
+        <button type="button" className="btn btn-sm btn-ghost" onClick={() => {setQ('');setSort(initialSort || {key:null,dir:'asc'});setHiddenColumns(new Set(defaultHiddenColumns));setPage(0);}}>{fa ? 'بازنشانی نمایش' : 'Reset view'}</button>
+        {exportable && <button type="button" className="btn btn-sm btn-ghost" onClick={exportCsv}>{fa ? `CSV نتایج فیلترشده (${sorted.length})` : `Filtered CSV (${sorted.length})`}</button>}
+        {selectable && <span role="status" className="small">{fa ? `${selectedIds?.size || 0} انتخاب‌شده (شامل صفحات دیگر)` : `${selectedIds?.size || 0} selected (including other pages)`}
+          {!!selectedIds?.size && <button type="button" className="btn btn-sm btn-ghost" onClick={() => onSelectionChange?.(new Set())}>{fa ? 'پاک‌کردن انتخاب' : 'Clear selection'}</button>}
+        </span>}
+      </div>
       <div className="table-wrap">
         <table>
           <thead><tr>
             {selectable && (
               <th style={{ width: 38, textAlign: "center" }}>
-                <input type="checkbox"
-                  checked={pageRows.length>0 && pageRows.every(r=> selectedIds?.has(rowKey?rowKey(r):r.id))}
+                <input type="checkbox" ref={allBox}
+                  checked={pageIds.length > 0 && pageSelected === pageIds.length}
                   onChange={(e)=>{
                     const next=new Set(selectedIds||[]);
-                    if(e.target.checked){ pageRows.forEach(r=> next.add(rowKey?rowKey(r):r.id)); }
-                    else { pageRows.forEach(r=> next.delete(rowKey?rowKey(r):r.id)); }
+                    pageIds.forEach(id => e.target.checked ? next.add(id) : next.delete(id));
                     onSelectionChange?.(next);
                   }}
                   aria-label={fa?"انتخاب همه در این صفحه":"Select all on page"}
                 />
               </th>
             )}
-            {columns.map((c) => {
+            {showRowNumbers && <th scope="col" title={fa ? 'ردیف در نتایج فعلی؛ کد محتوا نیست' : 'Position in current results, not an identity'}>{fa ? 'ردیف' : 'Row'}</th>}
+            {visibleColumns.map((c) => {
               const canSort = c.sortable !== false;
               const active = sort.key === c.key;
               return (
-                <th key={c.key} style={{ ...(c.thStyle || {}), ...(canSort ? { cursor: "pointer", userSelect: "none" } : {}) }}
-                  onClick={canSort ? () => toggleSort(c.key) : undefined}>
-                  {c.label}
-                  {canSort && <span className="dt-sort">{active ? (sort.dir === "asc" ? " ▲" : " ▼") : " ⇅"}</span>}
+                <th key={c.key} scope="col" style={c.thStyle} aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}>
+                  {canSort ? <button type="button" className="dt-sort-button" onClick={() => toggleSort(c.key)} style={{font:'inherit',color:'inherit',background:'none',border:0,padding:6,cursor:'pointer'}}>
+                    {c.label}<span className="dt-sort" aria-hidden="true">{active ? (sort.dir === 'asc' ? ' ▲' : ' ▼') : ' ⇅'}</span>
+                  </button> : c.label}
                 </th>
               );
             })}
           </tr></thead>
           <tbody>
             {sorted.length === 0 ? (
-              <tr><td colSpan={columns.length + (selectable?1:0)} className="small muted center" style={{ padding: 20 }}>
+              <tr><td colSpan={visibleColumns.length + (selectable?1:0) + (showRowNumbers?1:0)} className="small muted center" style={{ padding: 20 }}>
                 {empty || t("noData")}</td></tr>
             ) : pageRows.map((row, i) => {
               const rid = rowKey ? rowKey(row, start + i) : (row.id ?? start + i);
               const checked = selectedIds?.has(rid);
               return (
               <tr key={rid} style={checked?{background:"var(--primaryGlow)"}:undefined}>
-                {selectable && <td style={{ textAlign: "center" }}><input type="checkbox" checked={!!checked} onChange={(e)=>{
+                {selectable && <td style={{ textAlign: "center" }}><input type="checkbox" aria-label={fa ? `انتخاب ردیف ${start+i+1}` : `Select row ${start+i+1}`} checked={!!checked} onChange={(e)=>{
                   const next=new Set(selectedIds||[]);
                   if(e.target.checked) next.add(rid); else next.delete(rid);
                   onSelectionChange?.(next);
                 }} /></td>}
-                {columns.map((c) => {
+                {showRowNumbers && <td className="muted small" data-row-number={start+i+1}>{(start+i+1).toLocaleString(fa ? 'fa-IR' : 'en-US')}</td>}
+                {visibleColumns.map((c) => {
                   const v = c.render ? c.render(row, dq) : row[c.key];
                   const canHl = dq.trim() && (typeof v === "string" || typeof v === "number") && (!highlightKeys || highlightKeys.includes(c.key));
                   return <td key={c.key}>{canHl ? <Highlight text={String(v)} ranges={highlightLocal(String(v), dq)} /> : v}</td>;

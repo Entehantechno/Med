@@ -337,7 +337,7 @@ describe("auscultation audio upload", () => {
     const r = await request(app).post("/api/upload/audio").set(A(ttk))
       .attach("audio", mp3, "lung.mp3");
     expect(r.status).toBe(200);
-    expect(r.body.url).toMatch(/^\/uploads\/snd_.*\.mp3$/);
+    expect(r.body.url).toMatch(/^\/uploads\/academic\/university-1\/snd_[^/]+\.mp3$/);
   });
 
   it("rejects a file with fake content (magic-byte check)", async () => {

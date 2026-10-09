@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
 import { execSync } from 'node:child_process';
 import request from 'supertest';
-import { initDb } from '../src/db.js';
+import { initDb, db } from '../src/db.js';
 import { createApp } from '../src/app.js';
 import { setSetting } from '../src/routes/content.js';
 import { getVpatientAiEffective } from '../src/lib/vpatient.js';
@@ -14,7 +14,7 @@ beforeAll(async()=>{execSync('node src/seed.js --force',{stdio:'ignore'});await 
 beforeEach(()=>{setSetting('ai',{});setSetting('ai_vpatient',{});resetRoutingState();});
 afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();});
 describe('AI routing configuration API',()=>{
- for(const path of ['/api/settings/ai','/api/admin/vpatient/ai']) {
+ for(const path of ['/api/settings/ai']) {
   it(`persists order and keys with explicit per-row clear at ${path}`,async()=>{
    expect((await request(app).put(path).set(auth(admin)).send(config())).status).toBe(200);
    const get=await request(app).get(path).set(auth(admin));const saved=get.body.config||get.body;
@@ -70,4 +70,15 @@ describe('AI routing configuration API',()=>{
   const r=await request(app).post('/api/exam/ai-test').set(auth(admin)).send({lang:'fa'});
   expect(r.body.connected).toBe(false);expect(fetch).not.toHaveBeenCalled();
  });
+});
+
+for (const [name,method,body,who] of [
+ ['configuration persistence','put',config(),'admin'],
+ ['invalid activation','put',{routingEnabled:'false'},'admin'],
+ ['connection state','put',{...config(),connected:true},'admin'],
+ ['student access','get',{},'student'],
+]) it(`retired competitive routing: ${name} cannot read or mutate configuration`,async()=>{
+ const before=db.prepare("SELECT * FROM settings ORDER BY key").all();vi.stubGlobal('fetch',vi.fn());
+ const r=await request(app)[method]('/api/admin/vpatient/ai').set(auth(who==='admin'?admin:student)).send(body);
+ expect(r.status).toBe(410);expect(r.body).toEqual({error:'university_only'});expect(db.prepare("SELECT * FROM settings ORDER BY key").all()).toEqual(before);expect(fetch).not.toHaveBeenCalled();
 });

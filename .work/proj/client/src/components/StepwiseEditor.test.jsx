@@ -1,0 +1,29 @@
+import React,{useState} from 'react';
+import {render,screen,fireEvent,cleanup,waitFor} from '@testing-library/react';
+import {it,expect,vi,afterEach,beforeEach} from 'vitest';
+const api=vi.hoisted(()=>({get:vi.fn()}));
+vi.mock('../api.js',()=>({api,getToken:()=>''}));
+vi.mock('../context.jsx',()=>({useApp:()=>({lang:'en',t:k=>k,user:{role:'admin'},can:()=>true})}));
+import StepwiseEditor from './StepwiseEditor.jsx';
+import {CardModal} from '../pages/Admin.jsx';
+import {normalizeStep,validateSteps} from '../lib/step-authoring.js';
+afterEach(cleanup);beforeEach(()=>api.get.mockResolvedValue([]));
+function Editor(){const [steps,setSteps]=useState([{answerType:'autocomplete',prompt_en:'Prompt'}]);return <StepwiseEditor steps={steps} onChange={setSteps} lang="en" catalogs={[{id:1,name_en:'Catalog',items:[{fa:'الف',en:'Alpha'},{fa:'ب',en:'Beta'}]}]}/>;}
+it('shows only type-appropriate answer tools and retains the prompt when switching',()=>{render(<Editor/>);expect(screen.getByLabelText('Suggestions EN')).toBeInTheDocument();fireEvent.change(screen.getByLabelText('Step answer type'),{target:{value:'truefalse'}});expect(screen.getByLabelText('Correct answer')).toBeInTheDocument();expect(screen.queryByLabelText('Suggestions EN')).toBeNull();fireEvent.change(screen.getByLabelText('Step answer type'),{target:{value:'mcq'}});expect(screen.getByLabelText('Correct option 1')).toBeInTheDocument();expect(screen.getByLabelText('Option 2 EN')).toBeInTheDocument();fireEvent.change(screen.getByLabelText('Step answer type'),{target:{value:'fill'}});expect(screen.getByLabelText('Accepted alternatives EN')).toBeInTheDocument();expect(screen.getByLabelText('Stage instruction EN')).toHaveValue('Prompt');});
+it('fills the autocomplete suggestion list from an existing catalog',()=>{render(<Editor/>);fireEvent.change(screen.getByLabelText('Answer catalog'),{target:{value:'1'}});expect(screen.getByLabelText('Suggestions EN')).toHaveValue('Alpha\nBeta');});
+it('normalizes a false answer rather than silently treating it as true',()=>{const s=normalizeStep({answerType:'truefalse',answer:false,prompt_en:'False proposition'});expect(s.accept_en).toEqual(['false']);expect(validateSteps([s],'en')).toBeNull();});
+it('keeps bilingual choices aligned and derives the answer from the radio selection',()=>{const s=normalizeStep({answerType:'mcq',prompt_en:'Choose',options_fa:['','ب'],options_en:['A','B'],correct_index:1,accept_en:['stale']});expect(s.options_fa).toEqual(['','ب']);expect(s.accept_en).toEqual(['B']);expect(s.accept_fa).toEqual(['ب']);expect(validateSteps([s],'en')).toBeNull();});
+it('rejects blank steps, missing keys, and duplicate options rather than silently dropping rows',()=>{expect(validateSteps([{prompt_en:'',answer_en:'x'}],'en')).toContain('prompt');expect(validateSteps([{answerType:'mcq',prompt_en:'Q',options_en:['A','B']}],'en')).toContain('correct');expect(validateSteps([{answerType:'mcq',prompt_en:'Q',options_en:['A','A'],correct_index:0}],'en')).toContain('duplicate');});
+it('shows the stem before steps and saves edited legacy stems with a working false key',async()=>{const save=vi.fn();render(<CardModal card={{type:'stepwise',title_en:'Title',q_en:'Old stem',steps:[{answerType:'truefalse',prompt_en:'A proposition',answer:false}]}} onClose={()=>{}} onSave={save}/>);fireEvent.click(screen.getByRole('button',{name:'Show all'}));const stem=screen.getByLabelText('questionText (EN) (EN)'),prompt=screen.getByLabelText('Stage instruction EN');expect(stem.compareDocumentPosition(prompt)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();fireEvent.change(stem,{target:{value:'New stem'}});fireEvent.click(screen.getByRole('button',{name:'Save content'}));await waitFor(()=>expect(save).toHaveBeenCalled());expect(save.mock.calls[0][0].q_en).toBe('New stem');expect(save.mock.calls[0][0].steps[0].accept_en).toEqual(['false']);});
+it('invalidates the autocomplete key after reordering suggestions rather than silently moving it',()=>{
+ function Draft(){const [steps,setSteps]=useState([{answerType:'autocomplete',prompt_en:'Pick B',options_en:['A','B','C'],correct_index:1,answer_en:'B',accept_en:['B']}]);return <><StepwiseEditor steps={steps} onChange={setSteps} lang="en"/><output data-testid="draft">{JSON.stringify(steps[0])}</output></>}
+ render(<Draft/>);fireEvent.change(screen.getByLabelText('Suggestions EN'),{target:{value:'B\nC'}});
+ const draft=JSON.parse(screen.getByTestId('draft').textContent);expect(draft.correct_index).toBeNull();expect(draft.answer_en).toBe('');expect(draft.accept_en).toEqual([]);expect(validateSteps([draft],'en')).toContain('suggestions');
+});
+it('rejects duplicate English choices even when Persian choices are distinct',()=>{expect(validateSteps([{answerType:'mcq',prompt_en:'Q',options_fa:['الف','ب'],options_en:[' Alpha ','alpha'],correct_index:0}],'en')).toContain('duplicate')});
+it('rejects cross-language collisions between separate choices but permits identical translations of one choice',()=>{expect(validateSteps([{answerType:'mcq',prompt_en:'Q',options_fa:['Beta','ب'],options_en:['Alpha','Beta'],correct_index:0}],'en')).toContain('duplicate');expect(validateSteps([{answerType:'mcq',prompt_en:'Q',options_fa:['Alpha','Beta'],options_en:['Alpha','Beta'],correct_index:0}],'en')).toBeNull()});
+it('rejects an autocomplete key which cannot be selected, with bilingual fallback preserved',()=>{
+ expect(validateSteps([{answerType:'autocomplete',prompt_en:'Q',options_en:['Alpha','Beta'],answer_en:'Gamma'}],'en')).toContain('suggestions');
+ expect(validateSteps([{answerType:'autocomplete',prompt_en:'Q',options_en:['Alpha','Beta'],answer_en:'Alpha'}],'en')).toBeNull();
+});
+it('keeps free-text autocomplete usable after deleting the whole suggestion list',()=>{expect(validateSteps([{answerType:'autocomplete',prompt_en:'Q',options_en:[''],options_fa:[],answer_en:'Any free answer'}],'en')).toBeNull()});

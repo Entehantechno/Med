@@ -1,0 +1,13 @@
+.authoring{max-width:100%;--editor-accent:var(--primary,#215d9c)}
+.author-toolbar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:16px;background:var(--panel2,#f1f5fa);border-radius:12px;border:1px solid var(--border,#dce4ef);margin-bottom:12px}
+.author-switch{display:flex;gap:4px;margin-top:8px;flex-wrap:wrap}
+.author-switch button,.author-steps button{font:inherit;color:inherit;cursor:pointer;background:var(--panel,#fff);border:1px solid var(--border,#ccd6e2);border-radius:8px;padding:9px 14px;min-height:42px}
+.author-switch button[aria-pressed=true],.author-steps button[aria-current=step]{background:var(--editor-accent);color:#fff;border-color:var(--editor-accent)}
+.author-steps{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.author-steps button{display:flex;align-items:center;gap:8px}.author-steps button span{font-size:.8em;opacity:.8}
+.author-section{border-top:1px solid var(--border,#dce4ef);padding:14px 0}.author-section>h4{font-size:1.08rem;margin:4px 0 20px;color:var(--editor-accent)}
+.author-section[hidden]{display:none!important}.authoring[data-language=fa] [data-content-language=en],.authoring[data-language=en] [data-content-language=fa]{display:none!important}
+.authoring .field>label,.authoring label.field>span{display:block;font-weight:600;margin-bottom:6px}.authoring textarea{min-height:100px;line-height:1.8}.authoring .grid{align-items:start}
+.author-navigation{display:flex;align-items:center;justify-content:space-between;gap:12px;border-top:1px solid var(--border,#ddd);padding-top:18px}
+.author-summary{display:grid;grid-template-columns:1fr 1fr;gap:16px}.author-summary>p{grid-column:1/-1}.author-summary>div{padding:16px;border:1px solid var(--border,#ddd);border-radius:10px;overflow-wrap:anywhere}
+.authoring button:focus-visible,.authoring input:focus-visible,.authoring textarea:focus-visible{outline:3px solid var(--editor-accent);outline-offset:3px}
+@media(max-width:640px){.author-toolbar{align-items:stretch;flex-direction:column}.author-summary{grid-template-columns:1fr}.author-steps button{flex:1 1 40%;font-size:.85rem}.authoring .grid-2,.authoring .grid-3{grid-template-columns:1fr}}

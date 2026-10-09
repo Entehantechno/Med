@@ -1,0 +1,1118 @@
+{
+  "baseline_commit": "3dde8ca",
+  "date": "2026-10-08",
+  "server": {
+    "passed": 1747,
+    "failed": 101,
+    "tests": 1848,
+    "files": 72,
+    "duration_seconds": 676.92
+  },
+  "server_new": {
+    "passed": 51,
+    "failed": 0,
+    "tests": 51,
+    "files": 1,
+    "assertions": [
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class members cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class resolve cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam ids cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam numbers cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam resolve cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV existing user cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV class-only destination cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV row class-code destination cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "create student cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university create: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university edit: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university defaults: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university member add: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university member remove: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university delete: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "student create: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV create and enrol: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV teacher without a university cannot select one in the request",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV student import cannot alter or enrol an administrator account",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV duplicate row is counted once rather than twice",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "editing university licensing preserves omitted inactive state",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university accepts boolean false when deactivating",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV rejects foreign class_id before creating or enrolling students",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV rejects foreign class_code before creating or enrolling students",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV rejects foreign row_code before creating or enrolling students",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class members does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class resolve does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam ids does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam numbers does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam resolve does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV existing user does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV enrolment SQL error rolls back newly created students",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class members accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class resolve accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam ids accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam numbers accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam resolve accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV existing user accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV class-only destination accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV row class-code destination accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "create student accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class members allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class resolve allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam ids allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam numbers allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam resolve allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV existing user allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "concurrent creation rechecks the last remaining seat after password hashing",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV admin may import into another university via a row class code",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV mixed batch counts rejected rows once and never crosses capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "admin legacy unassigned CSV import remains supported",
+        "status": "passed",
+        "first_error": null
+      }
+    ]
+  },
+  "server_baseline_red": {
+    "passed": 0,
+    "failed": 32,
+    "tests": 51,
+    "files": 1,
+    "assertions": [
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class members cannot grow a full university",
+        "status": "failed",
+        "first_error": "AssertionError: expected 2 to be 1 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class resolve cannot grow a full university",
+        "status": "failed",
+        "first_error": "AssertionError: expected 2 to be 1 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam ids cannot grow a full university",
+        "status": "failed",
+        "first_error": "AssertionError: expected 2 to be 1 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam numbers cannot grow a full university",
+        "status": "failed",
+        "first_error": "AssertionError: expected 2 to be 1 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam resolve cannot grow a full university",
+        "status": "failed",
+        "first_error": "AssertionError: expected 2 to be 1 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV existing user cannot grow a full university",
+        "status": "failed",
+        "first_error": "AssertionError: expected 2 to be 1 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV class-only destination cannot grow a full university",
+        "status": "failed",
+        "first_error": "AssertionError: expected 2 to be 1 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV row class-code destination cannot grow a full university",
+        "status": "failed",
+        "first_error": "AssertionError: expected 2 to be 1 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "create student cannot grow a full university",
+        "status": "failed",
+        "first_error": "AssertionError: expected 2 to be 1 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university create: failure rolls back, retry and reload preserve the successful write",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 500 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university edit: failure rolls back, retry and reload preserve the successful write",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 500 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university defaults: failure rolls back, retry and reload preserve the successful write",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 500 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university member add: failure rolls back, retry and reload preserve the successful write",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 500 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university member remove: failure rolls back, retry and reload preserve the successful write",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 500 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university delete: failure rolls back, retry and reload preserve the successful write",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 500 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "student create: failure rolls back, retry and reload preserve the successful write",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 503 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV create and enrol: failure rolls back, retry and reload preserve the successful write",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 503 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV teacher without a university cannot select one in the request",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV student import cannot alter or enrol an administrator account",
+        "status": "failed",
+        "first_error": "AssertionError: expected [ { id: 195, …(19) } ] to deeply equal [ { id: 195, …(19) } ]"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV duplicate row is counted once rather than twice",
+        "status": "failed",
+        "first_error": "AssertionError: expected { created: 1, skipped: 2, …(8) } to match object { created: 1, skipped: 1, total: 2 }"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "editing university licensing preserves omitted inactive state",
+        "status": "failed",
+        "first_error": "AssertionError: expected 1 to be +0 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university accepts boolean false when deactivating",
+        "status": "failed",
+        "first_error": "AssertionError: expected 1 to be +0 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV rejects foreign class_id before creating or enrolling students",
+        "status": "failed",
+        "first_error": "AssertionError: expected [ { id: 217, …(19) } ] to have a length of +0 but got 1"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV rejects foreign class_code before creating or enrolling students",
+        "status": "failed",
+        "first_error": "AssertionError: expected [ { id: 10, class_id: 25, …(2) } ] to have a length of +0 but got 1"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV rejects foreign row_code before creating or enrolling students",
+        "status": "failed",
+        "first_error": "AssertionError: expected [ { id: 11, class_id: 26, …(2) } ] to have a length of +0 but got 1"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class members does not swallow university-healing SQL errors",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 500 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class resolve does not swallow university-healing SQL errors",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 500 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam ids does not swallow university-healing SQL errors",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 500 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam numbers does not swallow university-healing SQL errors",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 500 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam resolve does not swallow university-healing SQL errors",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 500 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV existing user does not swallow university-healing SQL errors",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 500 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV enrolment SQL error rolls back newly created students",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 500 // Object.is equality"
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class members accepts one newcomer when one seat remains and persists it",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class resolve accepts one newcomer when one seat remains and persists it",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam ids accepts one newcomer when one seat remains and persists it",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam numbers accepts one newcomer when one seat remains and persists it",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam resolve accepts one newcomer when one seat remains and persists it",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV existing user accepts one newcomer when one seat remains and persists it",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV class-only destination accepts one newcomer when one seat remains and persists it",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV row class-code destination accepts one newcomer when one seat remains and persists it",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "create student accepts one newcomer when one seat remains and persists it",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class members allows existing same-university students at capacity",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class resolve allows existing same-university students at capacity",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam ids allows existing same-university students at capacity",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam numbers allows existing same-university students at capacity",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam resolve allows existing same-university students at capacity",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV existing user allows existing same-university students at capacity",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "concurrent creation rechecks the last remaining seat after password hashing",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV admin may import into another university via a row class code",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV mixed batch counts rejected rows once and never crosses capacity",
+        "status": "skipped",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "admin legacy unassigned CSV import remains supported",
+        "status": "skipped",
+        "first_error": null
+      }
+    ]
+  },
+  "extracted_final": {
+    "passed": 51,
+    "failed": 0,
+    "tests": 51,
+    "files": 1,
+    "assertions": [
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class members cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class resolve cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam ids cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam numbers cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam resolve cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV existing user cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV class-only destination cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV row class-code destination cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "create student cannot grow a full university",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university create: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university edit: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university defaults: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university member add: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university member remove: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university delete: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "student create: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV create and enrol: failure rolls back, retry and reload preserve the successful write",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV teacher without a university cannot select one in the request",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV student import cannot alter or enrol an administrator account",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV duplicate row is counted once rather than twice",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "editing university licensing preserves omitted inactive state",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "university accepts boolean false when deactivating",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV rejects foreign class_id before creating or enrolling students",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV rejects foreign class_code before creating or enrolling students",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV rejects foreign row_code before creating or enrolling students",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class members does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class resolve does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam ids does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam numbers does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam resolve does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV existing user does not swallow university-healing SQL errors",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV enrolment SQL error rolls back newly created students",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class members accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class resolve accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam ids accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam numbers accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam resolve accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV existing user accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV class-only destination accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV row class-code destination accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "create student accepts one newcomer when one seat remains and persists it",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class members allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "class resolve allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam ids allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam numbers allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "exam resolve allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV existing user allows existing same-university students at capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "concurrent creation rechecks the last remaining seat after password hashing",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV admin may import into another university via a row class code",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "CSV mixed batch counts rejected rows once and never crosses capacity",
+        "status": "passed",
+        "first_error": null
+      },
+      {
+        "file": "university-enrolment-r23.test.js",
+        "name": "admin legacy unassigned CSV import remains supported",
+        "status": "passed",
+        "first_error": null
+      }
+    ]
+  },
+  "client_red": {
+    "passed": 0,
+    "failed": 2,
+    "tests": 2,
+    "files": 1,
+    "assertions": [
+      {
+        "file": "pages/Admin.university-r23.test.jsx",
+        "name": "keep failed only retains rejected rather than accepted CSV records (blank lines=false)",
+        "status": "failed",
+        "first_error": "AssertionError: expected 'name,student_no\\nAccepted,1001' to be 'name,student_no\\nRejected,2002\\nRejec…' // Object.is equality"
+      },
+      {
+        "file": "pages/Admin.university-r23.test.jsx",
+        "name": "keep failed only retains rejected rather than accepted CSV records (blank lines=true)",
+        "status": "failed",
+        "first_error": "AssertionError: expected 'name,student_no\\n\\nRejected,2002\\n\\nR…' to be 'name,student_no\\nRejected,2002\\nRejec…' // Object.is equality"
+      }
+    ]
+  },
+  "client": {
+    "passed": 130,
+    "failed": 0,
+    "tests": 130,
+    "files": 23
+  },
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "build": "passed",
+  "package": {
+    "sha256": "b8f2148e5486c2ab1423d5d165d37e1552a93d1becd1530cb7fe24466053512a",
+    "bytes": 50393089,
+    "files": 1137,
+    "retained_identical": 236,
+    "crc": "passed",
+    "source_equality": "passed"
+  },
+  "http": {
+    "checks": [
+      {
+        "method": "POST",
+        "path": "/auth/login",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/universities",
+        "status": 200
+      },
+      {
+        "method": "PUT",
+        "path": "/universities/121",
+        "status": 200
+      },
+      {
+        "method": "PUT",
+        "path": "/universities/121",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/universities",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/users",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/auth/login",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/classes",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/users/import",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/users",
+        "status": 403
+      },
+      {
+        "method": "POST",
+        "path": "/universities",
+        "status": 200
+      }
+    ]
+  },
+  "restart": {
+    "checks": [
+      {
+        "method": "POST",
+        "path": "/auth/login",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/universities",
+        "status": 200
+      },
+      {
+        "method": "GET",
+        "path": "/classes/2",
+        "status": 200
+      },
+      {
+        "method": "POST",
+        "path": "/auth/login",
+        "status": 200
+      },
+      {
+        "restart": "inactive flag, cap, student account and class membership preserved"
+      }
+    ]
+  },
+  "browser": {
+    "import": {
+      "created": 1,
+      "skipped": 2,
+      "total": 3,
+      "failures": 2,
+      "keepFailedOnly": "passed",
+      "universityId": 123
+    },
+    "visited": [
+      "Dashboard",
+      "Reports & Research",
+      "Classes",
+      "Saved conversations",
+      "Results & gradebook",
+      "Drawing reviews",
+      "Virtual-patient grading",
+      "Exams",
+      "Exam results",
+      "Educational research",
+      "Users",
+      "Universities",
+      "Patient Bank",
+      "Flashcards",
+      "Auto complete catalogs",
+      "Checklists"
+    ],
+    "errors": [],
+    "network": [],
+    "mobile": "390x844 screenshot; no exhaustive responsive certification"
+  },
+  "new_failures_vs_R22": [],
+  "resolved_failures_vs_R22": [],
+  "limits": [
+    "No external AI or paid-service test",
+    "No power-loss/fsync or multiprocess-writer certification",
+    "Browser tabs are smoke, not exhaustive form E2E",
+    "Multiline quoted student-import CSV remains open",
+    "Best-effort audit log outside primary transactions"
+  ]
+}

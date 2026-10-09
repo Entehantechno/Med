@@ -1,0 +1,18 @@
+{
+  "baseline": "R26",
+  "user_decision": "preserve_bank",
+  "changed_existing_entries": [
+    "VERSION.txt",
+    "client/dist/sw.js",
+    "client/dist/sw.js.br",
+    "client/dist/sw.js.gz",
+    "server/src/routes/content.js"
+  ],
+  "added_entries": [
+    "server/test/university-settings-r27.test.js"
+  ],
+  "identical_previous_entries": 1138,
+  "bank_and_bank_tests_identical": true,
+  "demo_database_identical": true,
+  "schema_unchanged": true
+}

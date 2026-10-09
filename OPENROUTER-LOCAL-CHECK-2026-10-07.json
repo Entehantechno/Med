@@ -1,0 +1,21 @@
+{
+  "kind": "MED engine smoke benchmark, not HTTP/UI end-to-end or clinical certification",
+  "startedAt": "2026-10-07T06:10:56.629Z",
+  "paidAllowed": false,
+  "status": "blocked_catalog_connection",
+  "results": [],
+  "requests": [],
+  "limitations": [
+    "Only synthetic bilingual medication interview and checklist scoring are exercised.",
+    "No examination, orders, lesson generation, concurrency, clinical certification or model ranking from this small sample.",
+    "Missing provider usage/cost is unknown, not proof of zero billed usage. Check OpenRouter usage dashboard.",
+    "Free-provider availability and rate limits can change. The fixed token cap may truncate reasoning models."
+  ],
+  "errorCode": "ECONNRESET",
+  "offlineTests": {
+    "passed": 7,
+    "failed": 0,
+    "provider": "synthetic stub, NOT OpenRouter",
+    "realModelInferenceRequests": 0
+  }
+}

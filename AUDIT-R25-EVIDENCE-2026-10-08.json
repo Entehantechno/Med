@@ -1,0 +1,490 @@
+{
+  "date": "2026-10-08",
+  "baseline_commit": "f1005c4",
+  "user_bank_decision": "preserve_bank",
+  "server": {
+    "passed": 1841,
+    "failed": 47,
+    "tests": 1888,
+    "files": 74,
+    "skipped": 0,
+    "duration_seconds": 685.67
+  },
+  "client": {
+    "passed": 131,
+    "failed": 0,
+    "tests": 131,
+    "files": 24,
+    "skipped": 0,
+    "duration_seconds": 32.33
+  },
+  "focused": {
+    "passed": 24,
+    "failed": 0,
+    "tests": 24,
+    "files": 1,
+    "skipped": 0,
+    "duration_seconds": 14.44
+  },
+  "extracted_package": {
+    "passed": 97,
+    "failed": 0,
+    "tests": 97,
+    "files": 4,
+    "skipped": 0,
+    "duration_seconds": 40.45
+  },
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "build": "passed",
+  "new_test_count": 24,
+  "initial_red": {
+    "summary": {
+      "passed": 0,
+      "failed": 20,
+      "tests": 20,
+      "files": 1,
+      "skipped": 0,
+      "duration_seconds": 11.75
+    },
+    "assertions": [
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "catalog create: failed save rolls back and successful retry survives reload",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 503 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "catalog update: failed save rolls back and successful retry survives reload",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 503 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "catalog delete: failed save rolls back and successful retry survives reload",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 503 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "checklist create: failed save rolls back and successful retry survives reload",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 503 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "checklist update: failed save rolls back and successful retry survives reload",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 503 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "checklist delete: failed save rolls back and successful retry survives reload",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 503 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "assignment replace: failed save rolls back and successful retry survives reload",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 503 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "password reset: failed save rolls back and successful retry survives reload",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 503 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "account status: failed save rolls back and successful retry survives reload",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 503 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "password reset invalidates the target old token",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 401 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "deactivation then reactivation cannot resurrect an old session",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 401 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "university one teacher cannot manage an unassigned student: password",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "university one teacher cannot manage an unassigned student: status",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "university one teacher cannot manage an unassigned student: assignment read",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "university one teacher cannot manage an unassigned student: assignment write",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "teacher without a university cannot list unrelated unassigned students",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 400 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "password reset rechecks access after hashing: target transferred",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "password reset rechecks access after hashing: actor transferred",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "password reset rechecks access after hashing: actor demoted",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+      },
+      {
+        "file": "test/university-accounts-r25.test.js",
+        "test": "password reset rechecks access after hashing: actor revoked",
+        "status": "failed",
+        "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+      }
+    ]
+  },
+  "additional_jti_red": [
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "password reset rechecks a per-device logout after hashing",
+      "status": "failed",
+      "first_error": "AssertionError: expected 200 to be 403 // Object.is equality"
+    }
+  ],
+  "final_new_assertions": [
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "catalog create: failed save rolls back and successful retry survives reload",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "catalog update: failed save rolls back and successful retry survives reload",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "catalog delete: failed save rolls back and successful retry survives reload",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "checklist create: failed save rolls back and successful retry survives reload",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "checklist update: failed save rolls back and successful retry survives reload",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "checklist delete: failed save rolls back and successful retry survives reload",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "assignment replace: failed save rolls back and successful retry survives reload",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "password reset: failed save rolls back and successful retry survives reload",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "account status: failed save rolls back and successful retry survives reload",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "password reset invalidates the target old token",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "deactivation then reactivation cannot resurrect an old session",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "university one teacher cannot manage an unassigned student: password",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "university one teacher cannot manage an unassigned student: status",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "university one teacher cannot manage an unassigned student: assignment read",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "university one teacher cannot manage an unassigned student: assignment write",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "teacher without a university cannot list unrelated unassigned students",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "password reset rechecks access after hashing: target transferred",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "password reset rechecks access after hashing: actor transferred",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "password reset rechecks access after hashing: actor demoted",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "password reset rechecks access after hashing: actor revoked",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "password reset rechecks a per-device logout after hashing",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "admin can reset an unassigned student and the new password can log in",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "setting an already active account active keeps its session",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-accounts-r25.test.js",
+      "test": "hashing errors are forwarded and do not change the password",
+      "status": "passed",
+      "first_error": ""
+    }
+  ],
+  "browser": {
+    "tabs": [
+      {
+        "tab": "داشبورد",
+        "rendered": true
+      },
+      {
+        "tab": "گزارش‌ها و پژوهش",
+        "rendered": true
+      },
+      {
+        "tab": "کلاس‌های درسی",
+        "rendered": true
+      },
+      {
+        "tab": "گفتگوهای ذخیره‌شده",
+        "rendered": true
+      },
+      {
+        "tab": "نتایج و کارنامه",
+        "rendered": true
+      },
+      {
+        "tab": "بررسی نقاشی‌ها",
+        "rendered": true
+      },
+      {
+        "tab": "نمره‌دهی بیمار مجازی",
+        "rendered": true
+      },
+      {
+        "tab": "آزمون‌ها",
+        "rendered": true
+      },
+      {
+        "tab": "نتایج آزمون‌ها",
+        "rendered": true
+      },
+      {
+        "tab": "پژوهش آموزشی",
+        "rendered": true
+      },
+      {
+        "tab": "کاربران",
+        "rendered": true
+      },
+      {
+        "tab": "دانشگاه‌ها",
+        "rendered": true
+      },
+      {
+        "tab": "بانک بیماران",
+        "rendered": true
+      },
+      {
+        "tab": "فلش‌کارت‌ها",
+        "rendered": true
+      },
+      {
+        "tab": "کاتالوگ‌های Auto complete",
+        "rendered": true
+      },
+      {
+        "tab": "چک‌لیست‌ها",
+        "rendered": true
+      },
+      {
+        "tab": "پرسشنامه‌ها",
+        "rendered": true
+      },
+      {
+        "tab": "تنظیمات هوش مصنوعی",
+        "rendered": true
+      }
+    ],
+    "api": [
+      [
+        "teacher_login",
+        200,
+        200
+      ],
+      [
+        "student_login",
+        200,
+        200
+      ],
+      [
+        "password_reset",
+        200,
+        200
+      ],
+      [
+        "old_token_denied",
+        401,
+        401
+      ],
+      [
+        "new_password_login",
+        200,
+        200
+      ],
+      [
+        "deactivate",
+        200,
+        200
+      ],
+      [
+        "reactivate",
+        200,
+        200
+      ],
+      [
+        "old_session_not_resurrected",
+        401,
+        401
+      ],
+      [
+        "catalog_create",
+        200,
+        200
+      ],
+      [
+        "catalog_update",
+        200,
+        200
+      ]
+    ],
+    "catalogId": 6,
+    "pageErrors": [],
+    "webSecurityDisabled": false
+  },
+  "restart": {
+    "teacher_login": 200,
+    "new_student_password_login": 200,
+    "catalog_read": 200,
+    "catalog_saved_after_restart": true
+  },
+  "intermediate_run": {
+    "summary": {
+      "passed": 1840,
+      "failed": 48,
+      "tests": 1888,
+      "files": 74,
+      "skipped": 0,
+      "duration_seconds": 760.44
+    },
+    "explanation": "Started before the final per-device logout fix. Had 47 unchanged bank failures and the now-fixed JTI race failure. Superseded by complete final rerun, not combined with it."
+  },
+  "tooling_notes": [
+    "Browser harness selectors were corrected (implicit text input type, duplicate Users buttons); these were harness failures, not product fixes.",
+    "Initial Chromium launch lacked libnspr4. Bundled al2023 libraries supplied through LD_LIBRARY_PATH; web security was not disabled.",
+    "Screenshot timeout resolved with animations disabled and larger timeout.",
+    "Initial standalone restart-login request lacked Origin and correctly received bad_origin; rerun with same-origin header passed."
+  ],
+  "scope_limitations": [
+    "Static 14-module/366-declaration inventory and 18-tab render smoke are not exhaustive operation/form coverage.",
+    "Injected file-rename failure/reload tests are not power-loss, fsync or multiwriter certification.",
+    "No external AI network/model tests or paid fallback.",
+    "No clinical bank corrections authorized."
+  ],
+  "archive_sha256": "d621766c0c62aa7e8a897768c0d41a52b2adaf545b7af5d208581e3ec035baea"
+}

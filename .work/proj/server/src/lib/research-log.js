@@ -9,7 +9,7 @@ const EVENT_TYPES = new Set([
   "note", "custom", "flashcard_finished",
 ]);
 
-export function recordStudyEvent({ studyId, userId, eventType, contextType, contextId, data }) {
+export function recordStudyEvent({ studyId, userId, eventType, contextType, contextId, data, persist = true }) {
   const sid = Number(studyId) || 0;
   if (!sid) return false;
   const st = db.prepare("SELECT id, active FROM research_studies WHERE id=?").get(sid);
@@ -21,7 +21,7 @@ export function recordStudyEvent({ studyId, userId, eventType, contextType, cont
   db.prepare(`INSERT INTO research_events
     (study_id,user_id,event_type,context_type,context_id,data_json) VALUES (?,?,?,?,?,?)`)
     .run(sid, Number(userId) || null, kind, ctx, Number(contextId) || null, dataJson);
-  persistNow();
+  if (persist) persistNow();
   return true;
 }
 

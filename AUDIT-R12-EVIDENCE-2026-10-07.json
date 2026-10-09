@@ -1,0 +1,81 @@
+{
+  "reproduced_before_fix": {
+    "five_restore_defects": {
+      "passed": 0,
+      "failed": 5
+    },
+    "explicit_full_http_export": {
+      "passed": 0,
+      "failed": 1
+    }
+  },
+  "r12_regressions": {
+    "passed": 11,
+    "failed": 0
+  },
+  "focused_before_api_addition": {
+    "passed": 35,
+    "failed": 0
+  },
+  "extracted_package_tests": {
+    "passed": 15,
+    "failed": 0
+  },
+  "client": {
+    "passed": 119,
+    "failed": 0
+  },
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "build": "PASS; R12 service-worker stamp verified",
+  "package": {
+    "files": 1121,
+    "bytes": 50355610,
+    "sha256": "c471d31354a55dcbbd29ceb379bf67b983e0cd2684a2c3b77cff90c38e20ca22",
+    "unchangedEntries": 235,
+    "integrity": "ok",
+    "sourceBuildMatch": true,
+    "users": 116,
+    "cases": 23,
+    "cards": 11681,
+    "examModeType": "TEXT",
+    "examModeDefault": "'perQuestion'"
+  },
+  "http_smoke": {
+    "realHttpExportValidateImport": true,
+    "universityId": 127,
+    "sessionId": 10,
+    "attemptId": 25,
+    "historicalScore": 73,
+    "mediaUrl": "/uploads/academic/university-127/r12-lung.mp3",
+    "destinationMediaServed": true,
+    "externalAI": false,
+    "restartGradeAndMediaSurvived": true
+  },
+  "server": {
+    "passed": 1456,
+    "failed": 101,
+    "tests": 1557,
+    "files": 61,
+    "duration_seconds": 452.29
+  },
+  "new_failure_names_vs_R11": [],
+  "limitations": [
+    "No external AI or clinical quality evaluation",
+    "No R12 browser smoke",
+    "Ordinary synchronous filesystem compensation, not a power-loss or multiprocess guarantee",
+    "Root-relative media string values only; no embedded prose or absolute URL rewriting",
+    "Existing 101 server failures remain"
+  ],
+  "githubVerification": {
+    "publicationCommit": "dde52f4",
+    "transport": "GitHub contents API, raw response; raw.githubusercontent.com TLS unavailable in sandbox",
+    "bytes": 50355610,
+    "sha256": "c471d31354a55dcbbd29ceb379bf67b983e0cd2684a2c3b77cff90c38e20ca22",
+    "gitBlob": "a562064630297e8c49f9fe32dfa6c0ecf3bb66fa",
+    "zipCrc": "PASS",
+    "verifiedBeforeR11Deletion": true
+  }
+}

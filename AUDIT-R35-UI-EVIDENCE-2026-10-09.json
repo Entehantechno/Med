@@ -1,0 +1,49 @@
+{
+  "status": "work-in-progress; not a release",
+  "date": "2026-10-09",
+  "tests": {
+    "client": {
+      "numTotalTests": 171,
+      "numPassedTests": 171,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "success": true
+    },
+    "stepwise_grading": {
+      "numTotalTests": 48,
+      "numPassedTests": 48,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "success": true
+    },
+    "university_regressions": {
+      "numTotalTests": 32,
+      "numPassedTests": 32,
+      "numFailedTests": 0,
+      "numPendingTests": 0,
+      "success": true
+    }
+  },
+  "browser": {
+    "checks": [
+      "Overall question precedes steps",
+      "Autocomplete suggestion editor",
+      "Multiple choice options and key",
+      "Explicit false key",
+      "Fill-in answer and alternatives",
+      "Visible fixed footer desktop",
+      "Visible fixed footer mobile",
+      "University management search by code",
+      "University keyboard selection and Escape preservation",
+      "Visible fixed footer mobile-rtl"
+    ],
+    "scope": "Isolated seeded database, Chromium, real admin UI. No production data, no external AI calls. Does not establish learner end-to-end submission."
+  },
+  "known_pending": [
+    "Combined class exam behavior",
+    "Safe Arak-Histology removal and seed migration",
+    "Broader admin add/delete performance audit",
+    "Identify unwanted header button",
+    "47 existing bank failures and raw31 conflicts; no bank repair claimed"
+  ]
+}

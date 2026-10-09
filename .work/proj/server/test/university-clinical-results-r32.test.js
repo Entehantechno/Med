@@ -1,0 +1,15 @@
+import {it,expect,vi,afterEach} from 'vitest';
+import {labImagingResult} from '../src/lib/ai-engine.js';
+afterEach(()=>vi.restoreAllMocks());
+for(const lang of ['fa','en'])for(const kind of ['lab','imaging','paraclinic'])it(`${kind}/${lang}: unrecorded result is unavailable, never fabricated normal or sent to AI`,async()=>{
+ const network=vi.spyOn(globalThis,'fetch').mockRejectedValue(new Error('No external calls permitted'));
+ const result=await labImagingResult({caseData:{},query:'Magnesium',kind,lang,prompts:{lab_normal_en:'{item} is normal',lab_normal_fa:'{item} طبیعی است'},aiCfg:{apiKey:'test-not-a-real-key',baseUrl:'https://invalid.example/v1',model:'test'}});
+ expect(result).toMatchObject({found:false,source:'unavailable',status:'not-recorded',imageUrl:null});
+ expect(result.text).toMatch(lang==='fa'?/ثبت نشده/:/not recorded/i);expect(result.text).not.toMatch(/is normal|طبیعی است/);expect(network).not.toHaveBeenCalled();
+});
+it('a named but blank recorded row is not presented as a completed result',async()=>{const r=await labImagingResult({caseData:{labResults:[{name_en:'Magnesium',result_en:'  '}]},query:'Magnesium',kind:'lab',lang:'en'});expect(r).toMatchObject({found:false,status:'not-recorded'});expect(r.text).toMatch(/not recorded/i)});
+it('a documented normal value remains a chart result',async()=>{const r=await labImagingResult({caseData:{labResults:[{name_en:'Magnesium',result_en:'0.85 mmol/L (normal)'}]},query:'Magnesium',kind:'lab',lang:'en'});expect(r).toMatchObject({found:true,source:'chart'});expect(r.text).toContain('0.85 mmol/L (normal)')});
+it('a recorded numerical zero remains a genuine chart result',async()=>{const r=await labImagingResult({caseData:{labResults:[{name_en:'Score',result_en:0}]},query:'Score',kind:'lab',lang:'en'});expect(r).toMatchObject({found:true,source:'chart'});expect(r.text).toContain(': 0')});
+for(const lang of ['fa','en'])it(`${lang}: absent physical-examination findings are not called normal`,async()=>{const {teacherExamReply,detectExamScope}=await import('../src/lib/ai-engine.js');const text=teacherExamReply({exam_en:'Clear lungs.',exam_fa:'ریه پاک.'},lang,[],detectExamScope(lang==='fa'?'معاینه عصبی':'neurological exam'));expect(text).toMatch(lang==='fa'?/ثبت نشده/:/not recorded/i);expect(text).not.toMatch(/unremarkable|یافتهٔ غیرطبیعی خاصی ندارد/)});
+it('a documented zero vital sign is not discarded as missing',async()=>{const {teacherExamReply}=await import('../src/lib/ai-engine.js');expect(teacherExamReply({vitals:{hr:0}},'en',[],{systems:['vitals']})).toContain('HR 0')});
+for(const [lang,question]of [['fa','معاینه عصبی'],['en','neurological exam'],['en','skin examination'],['fa','معاینه پوست']])it(`routes the explicit examination command ${question} to the supervisor`,async()=>{const {patientReply}=await import('../src/lib/ai-engine.js');const r=await patientReply({caseData:{},userText:question,lang,prompts:{},aiCfg:{}});expect(r.mode).toBe('exam');expect(r.text).toMatch(lang==='fa'?/ثبت نشده/:/not recorded/i)});

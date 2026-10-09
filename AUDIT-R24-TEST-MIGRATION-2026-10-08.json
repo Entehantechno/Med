@@ -1,0 +1,383 @@
+{
+  "note": "One old failing CSV test is fixed by production behavior. The other 53 are explicit contract/fixture corrections, not 53 newly fixed product bugs. All previous non-bank failure identities map to passing tests below.",
+  "tests": [
+    {
+      "file": "test/ai-routing-settings.test.js",
+      "previous_test": "AI routing configuration API > persists order and keys with explicit per-row clear at /api/admin/vpatient/ai",
+      "current_test": "retired competitive routing: configuration persistence cannot read or mutate configuration",
+      "classification": "retired-routing-no-mutation-contract",
+      "status": "passed"
+    },
+    {
+      "file": "test/ai-routing-settings.test.js",
+      "previous_test": "AI routing configuration API > rejects malformed activation without changing saved configuration at /api/admin/vpatient/ai",
+      "current_test": "retired competitive routing: invalid activation cannot read or mutate configuration",
+      "classification": "retired-routing-no-mutation-contract",
+      "status": "passed"
+    },
+    {
+      "file": "test/ai-routing-settings.test.js",
+      "previous_test": "AI routing configuration API > invalidates old connection success after editing settings at /api/admin/vpatient/ai",
+      "current_test": "retired competitive routing: connection state cannot read or mutate configuration",
+      "classification": "retired-routing-no-mutation-contract",
+      "status": "passed"
+    },
+    {
+      "file": "test/ai-routing-settings.test.js",
+      "previous_test": "AI routing configuration API > refuses student read/write at /api/admin/vpatient/ai",
+      "current_test": "retired competitive routing: student access cannot read or mutate configuration",
+      "classification": "retired-routing-no-mutation-contract",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "CSV import / export > exports & imports flashcards",
+      "current_test": "CSV import / export > exports & imports flashcards",
+      "classification": "product-fix-text-choice-CSV",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient (competitive) gating > is OFF for learners by default",
+      "current_test": "Virtual Patient (competitive) gating > retired contract: is OFF for learners by default",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient (competitive) gating > admin can enable it; premium-only blocks a non-premium learner",
+      "current_test": "Virtual Patient (competitive) gating > retired contract: admin can enable it; premium-only blocks a non-premium learner",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient (competitive) gating > premium_only=false grants all learners access + case list + daily case",
+      "current_test": "Virtual Patient (competitive) gating > retired contract: premium_only=false grants all learners access + case list + daily case",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient (competitive) gating > the shared /exam engine honors the learner gate (blocks when off)",
+      "current_test": "Virtual Patient (competitive) gating > retired contract: the shared /exam engine honors the learner gate (blocks when off)",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient (competitive) gating > daily reward pays once per day then zero",
+      "current_test": "Virtual Patient (competitive) gating > retired contract: daily reward pays once per day then zero",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient (competitive) gating > non-admin cannot change the vpatient config",
+      "current_test": "Virtual Patient (competitive) gating > retired contract: non-admin cannot change the vpatient config",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient — ranking XP (auto-evaluator → XP) > admin can list per-case XP caps (case 3 shows 200)",
+      "current_test": "Virtual Patient — ranking XP (auto-evaluator → XP) > retired contract: admin can list per-case XP caps (case 3 shows 200)",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient — ranking XP (auto-evaluator → XP) > awards XP = score% × cap on first completion",
+      "current_test": "Virtual Patient — ranking XP (auto-evaluator → XP) > retired contract: awards XP = score% × cap on first completion",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient — ranking XP (auto-evaluator → XP) > replaying with a HIGHER score only tops up the delta (best-score policy)",
+      "current_test": "Virtual Patient — ranking XP (auto-evaluator → XP) > retired contract: replaying with a HIGHER score only tops up the delta (best-score policy)",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient — ranking XP (auto-evaluator → XP) > replaying WORSE awards zero (no farming) and keeps best",
+      "current_test": "Virtual Patient — ranking XP (auto-evaluator → XP) > retired contract: replaying WORSE awards zero (no farming) and keeps best",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient — ranking XP (auto-evaluator → XP) > award_xp=false disables XP entirely",
+      "current_test": "Virtual Patient — ranking XP (auto-evaluator → XP) > retired contract: award_xp=false disables XP entirely",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient — ranking XP (auto-evaluator → XP) > non-admin cannot set a case XP cap",
+      "current_test": "Virtual Patient — ranking XP (auto-evaluator → XP) > retired contract: non-admin cannot set a case XP cap",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient — separate AI config + prompts > separate AI config starts empty and is admin-editable",
+      "current_test": "Virtual Patient — separate AI config + prompts > retired contract: separate AI config starts empty and is admin-editable",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient — separate AI config + prompts > separate config is INDEPENDENT of the university ai setting",
+      "current_test": "Virtual Patient — separate AI config + prompts > retired contract: separate config is INDEPENDENT of the university ai setting",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient — separate AI config + prompts > separate prompts save partially and fall back per field",
+      "current_test": "Virtual Patient — separate AI config + prompts > retired contract: separate prompts save partially and fall back per field",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient — separate AI config + prompts > ai-test with no key reports mock mode (zero cost)",
+      "current_test": "Virtual Patient — separate AI config + prompts > retired contract: ai-test with no key reports mock mode (zero cost)",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient — separate AI config + prompts > a competitive learner's play uses the engine (mock, no key) and works",
+      "current_test": "Virtual Patient — separate AI config + prompts > retired contract: a competitive learner's play uses the engine (mock, no key) and works",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient — separate AI config + prompts > non-admin cannot read or write the separate AI config / prompts",
+      "current_test": "Virtual Patient — separate AI config + prompts > retired contract: non-admin cannot read or write the separate AI config / prompts",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient — import from university library > lists the university library (cases + cards)",
+      "current_test": "Virtual Patient — import from university library > retired contract: lists the university library (cases + cards)",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient — import from university library > cloning a case creates an INDEPENDENT competitive copy (original untouched)",
+      "current_test": "Virtual Patient — import from university library > retired contract: cloning a case creates an INDEPENDENT competitive copy (original untouched)",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient — import from university library > cloning flashcards works",
+      "current_test": "Virtual Patient — import from university library > retired contract: cloning flashcards works",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Virtual Patient — import from university library > non-admin cannot import",
+      "current_test": "Virtual Patient — import from university library > retired contract: non-admin cannot import",
+      "classification": "test-contract-or-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Real AI provider call path (mocked fetch — OpenAI-compatible) > configures a (fake) free provider and ai-test reports connected:true with an LLM reply",
+      "current_test": "Real AI provider call path (mocked fetch — OpenAI-compatible) > configures a (fake) free provider and ai-test reports connected:true with an LLM reply",
+      "classification": "synthetic-provider-tests-moved-to-university-API",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Real AI provider call path (mocked fetch — OpenAI-compatible) > a learner's virtual-patient reply now comes from the LLM (source:'llm')",
+      "current_test": "Real AI provider call path (mocked fetch — OpenAI-compatible) > a university staff virtual-patient reply now comes from the LLM (source:'llm')",
+      "classification": "synthetic-provider-tests-moved-to-university-API",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Real AI provider call path (mocked fetch — OpenAI-compatible) > a provider error is surfaced to the admin test button (not silently mocked)",
+      "current_test": "Real AI provider call path (mocked fetch — OpenAI-compatible) > a provider error is surfaced to the admin test button (not silently mocked)",
+      "classification": "synthetic-provider-tests-moved-to-university-API",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Real AI provider call path (mocked fetch — OpenAI-compatible) > a provider error degrades the STUDENT flow to mock gracefully (no crash)",
+      "current_test": "Real AI provider call path (mocked fetch — OpenAI-compatible) > a provider error degrades the STUDENT flow to mock gracefully (no crash)",
+      "classification": "synthetic-provider-tests-moved-to-university-API",
+      "status": "passed"
+    },
+    {
+      "file": "test/api.test.js",
+      "previous_test": "Real AI provider call path (mocked fetch — OpenAI-compatible) > clearing the key returns everything to the zero-cost mock engine",
+      "current_test": "Real AI provider call path (mocked fetch — OpenAI-compatible) > clearing the key returns everything to the zero-cost mock engine",
+      "classification": "synthetic-provider-tests-moved-to-university-API",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-extern-intern.test.js",
+      "previous_test": "auscultation audio upload > teacher uploads a real MP3 → url under /uploads",
+      "current_test": "auscultation audio upload > teacher uploads a real MP3 → url under /uploads",
+      "classification": "tenant-scoped-upload-contract",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-pilot.test.js",
+      "previous_test": "10-student pilot isolation and completion safety > runs seven synthetic rounds for ten students with isolated results and idempotent retries",
+      "current_test": "10-student pilot isolation and completion safety > runs seven synthetic rounds for ten students with isolated results and idempotent retries",
+      "classification": "approved-synthetic-reference-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-required-ai.test.js",
+      "previous_test": "AI-required final evaluation > persists only when both model stages return valid responses",
+      "current_test": "AI-required final evaluation > persists only when both model stages return valid responses",
+      "classification": "approved-synthetic-reference-fixture",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "VP cycle named stages (zip 28) > learner hub GET /learn/vpatient returns JSON with enabled",
+      "current_test": "VP cycle named stages (zip 28) > retired learner hub returns 410 with disabled flag and no cases",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "VP cycle named stages (zip 28) > GET /cases/:id 404 stage case when inactive for a learner; teacher still reads it",
+      "current_test": "VP cycle named stages (zip 28) > learner case reads stay forbidden; inactive session is not found; teacher can review",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "zip-32 teacher results + daily reward + assignments > daily-reward with a non-daily caseId is 400 stage report",
+      "current_test": "zip-32 teacher results + daily reward + assignments > retired daily reward returns 410 regardless of submitted case",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "zip-33 assigned-case home + corrupt banks > GET /admin/vpatient/cases as admin is JSON",
+      "current_test": "zip-33 assigned-case home + corrupt banks > retired admin VP case list returns 410 JSON",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "zip-40 source: export/import tenancy + teacher canAccessCase > student and teacher lists are university-filtered and imports stamp university_id",
+      "current_test": "zip-40 source: export/import tenancy + teacher canAccessCase > student and teacher lists are university-filtered and imports stamp university_id",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "zip-43 all question types + Learn VP exam reserve > learner GET /cases is empty and a live exam case is not playable",
+      "current_test": "zip-43 all question types + Learn VP exam reserve > learner case listing is forbidden and live exam case is not playable",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "zip-44 case-of-day reserve + check gates + truefalse/compare > reserved exam case is not the Learn case of the day",
+      "current_test": "zip-44 case-of-day reserve + check gates + truefalse/compare > reserved exam case is not the Learn case of the day",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "zip-44 case-of-day reserve + check gates + truefalse/compare > learner cannot GET a university case stem when VP is off",
+      "current_test": "zip-44 case-of-day reserve + check gates + truefalse/compare > learner cannot GET a university case stem when VP is off",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "zip-45 learner cannot join university exam + inactive evaluate > learner evaluate/flashcard-result with a spoofed examId does not land in the gradebook",
+      "current_test": "zip-45 learner cannot join university exam + inactive evaluate > learner evaluate/flashcard-result with a spoofed examId does not land in the gradebook",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "zip-48 competitive track is separate from university > learner playable hub and GET case only see track=learn",
+      "current_test": "zip-48 competitive track is separate from university > retained learn VP cases stay inaccessible through both hub and direct reads",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "zip-48 source: case track + playableCases learn-only > learners are gated to track=learn for VP and flashcards",
+      "current_test": "zip-48 source: case track + playableCases learn-only > competitive VP is blocked while learner flashcard and payment isolation remains",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "zip-49 flash + university-container isolation > GET /reports/my for a learner has no university exam/class rows",
+      "current_test": "zip-49 flash + university-container isolation > GET /reports/my for a learner has no university exam/class rows",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "zip-49 flash + university-container isolation > assignment and remedial refuse a learn-track case",
+      "current_test": "zip-49 flash + university-container isolation > assignment and remedial refuse a learn-track case",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "zip-51 isolation: role lock, import track, group pay, learner×uni > import-cases/import-cards stamp track=learn so clones leave the university bank",
+      "current_test": "zip-51 isolation: role lock, import track, group pay, learner×uni > retired VP import endpoints cannot clone university cases or flashcards",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "zip-52 phase 9: rubric strip + staff/checklist isolation > content_manager cannot open university cases/flash; learn track still works",
+      "current_test": "zip-52 phase 9: rubric strip + staff/checklist isolation > content manager cannot open any VP case; competitive flashcards remain separate",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "zip-52 source: rubric strip + staff/checklist isolation > content_manager is learn-only and checklist PUT is university-scoped",
+      "current_test": "zip-52 source: rubric strip + staff/checklist isolation > VP content routes block competitive staff and checklist PUT remains university-scoped",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "zip-53 phase 10: teacher×learn VP + research/tutor/questionnaire tenancy > teacher cannot GET/start/evaluate a learn-track VP case",
+      "current_test": "zip-53 phase 10: teacher×learn VP + research/tutor/questionnaire tenancy > teacher cannot GET/start/evaluate a learn-track VP case",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "zip-53 phase 10: teacher×learn VP + research/tutor/questionnaire tenancy > teacher dashboard case count ignores a new learn-track case",
+      "current_test": "zip-53 phase 10: teacher×learn VP + research/tutor/questionnaire tenancy > teacher dashboard case count ignores a new learn-track case",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    },
+    {
+      "file": "test/vp-stability.test.js",
+      "previous_test": "zip-54 phase 11: consent/status, analysis, catalogs, unused checklists, student×learn VP > student cannot start or evaluate a learn-track VP even if class_cases is injected",
+      "current_test": "zip-54 phase 11: consent/status, analysis, catalogs, unused checklists, student×learn VP > student cannot start or evaluate a learn-track VP even if class_cases is injected",
+      "classification": "retirement-contract-legacy-fixture-or-current-source-shape",
+      "status": "passed"
+    }
+  ]
+}

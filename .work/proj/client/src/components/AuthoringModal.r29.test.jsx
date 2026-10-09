@@ -1,0 +1,7 @@
+import React from 'react';import {render,screen,fireEvent,cleanup,waitFor} from '@testing-library/react';import {it,expect,vi,afterEach} from 'vitest';
+vi.mock('../context.jsx',()=>({useApp:()=>({lang:'en',t:k=>k})}));import AuthoringModal from './AuthoringModal.jsx';afterEach(cleanup);
+for(const mode of ['validation','network'])it(`${mode} errors receive focus so a long editor cannot conceal failed saves`,async()=>{
+ const save=vi.fn(async()=>{throw Error('Connection failed; content retained')});render(<AuthoringModal title="Patient" sections={[{id:'one',title:'Details'}]} onClose={()=>{}} onSave={save} validate={()=>mode==='validation'?'Patient title is required':null}><input aria-label="History" defaultValue="Unsaved clinical history"/></AuthoringModal>);
+ const button=screen.getByText('Save content');button.focus();fireEvent.click(button);const alert=await screen.findByRole('alert');await waitFor(()=>expect(alert).toHaveFocus());expect(screen.getByLabelText('History')).toHaveValue('Unsaved clinical history');if(mode==='validation')expect(save).not.toHaveBeenCalled();
+});
+it('focuses repeated identical validation errors and keeps the dialog open',async()=>{const close=vi.fn();render(<AuthoringModal title="Patient" sections={[{id:'one',title:'Details'}]} onClose={close} validate={()=>'Title is required'}><input aria-label="History"/></AuthoringModal>);for(let n=0;n<2;n++){const b=screen.getByText('Save content');b.focus();fireEvent.click(b);await waitFor(()=>expect(screen.getByRole('alert')).toHaveFocus());}expect(close).not.toHaveBeenCalled();});

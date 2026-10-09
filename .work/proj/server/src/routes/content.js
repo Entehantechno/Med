@@ -1,3 +1,7 @@
+import {flashcardLanguageFallback} from '../lib/flashcard-language.js';
+import {sharedAcademic} from '../lib/academic-sharing.js';
+import { assignmentInput } from '../lib/assignment-input.js';
+import { validateCase, normalizeCaseAge } from "../lib/case-validation.js";
 import { routingSettings } from "../lib/ai-routing.js";
 /* ================================================================
    content.js — Cases, flashcards, checklists, users, prompts,
@@ -5,9 +9,9 @@ import { routingSettings } from "../lib/ai-routing.js";
    ================================================================ */
 import { Router } from "express";
 import { hashPassword, hashPasswordSync } from "../lib/password.js";
-import { db, persistNow } from "../db.js";
-import { authRequired, requireRole } from "../lib/auth.js";
-import { toCSV, parseCSV } from "../lib/csv.js";
+import { db, persistNow, durableTransaction } from "../db.js";
+import { authRequired, requireRole, bumpTokenVer, isJtiRevoked } from "../lib/auth.js";
+import { toCSV, parseCSV, splitCSVRecords } from "../lib/csv.js";
 import { checkStudentLimit } from "../lib/orglimits.js";
 import { normalizeRubric } from "../lib/grading-rubric.js";
 import { resolveAiConfig } from "../lib/ai-engine.js";
@@ -19,7 +23,12 @@ import { isLearnContent, caseIsLearn } from "../lib/content-track.js";
 import { policyRow, policyReadiness, referenceSnapshotForPolicy, publicReferenceSnapshot } from "../lib/reference-governance.js";
 
 const r = Router();
-const parse = (row, extra = {}) => ({ ...JSON.parse(row.data_json), id: row.id, version: row.version, difficulty: row.difficulty, university_id: row.university_id || null, ...extra });
+r.use('/cases', authRequired, (req, res, next) => {
+  if (['learner', 'content_manager', 'support'].includes(req.user.role)) return res.status(403).json({ error: 'university_only' });
+  if (req.body?.track === 'learn') return res.status(400).json({ error: 'university_only' });
+  next();
+});
+const parse = (row, extra = {}) => ({ ...JSON.parse(row.data_json), id: row.id, version: row.version, difficulty: row.difficulty, public_code: row.public_code, active: row.active, updated_at: row.updated_at, university_id: row.university_id || null, created_by: row.created_by, shared_to_teachers: row.shared_to_teachers === 1, ...extra });
 function tenantFilterFor(user) {
   if (user.role === "teacher" || user.role === "student") return currentUniversityId(user) || -1;
   return null;
@@ -50,7 +59,7 @@ function caseReferenceExtra(row) {
    roles we whitelist exactly those. Teachers/admins still get the full record
    (they author the cases). */
 const STUDENT_SAFE_CASE_FIELDS = [
-  "id", "version", "difficulty",
+  "id", "public_code", "version", "difficulty",
   "specialty_fa", "specialty_en", "age", "sex",
   "chief_fa", "chief_en", "history_form",
   // NOTE: `images` and `title_*` are intentionally NOT sent to students:
@@ -58,7 +67,7 @@ const STUDENT_SAFE_CASE_FIELDS = [
   // internal case title (often the diagnosis) is replaced by the chief complaint.
 ];
 const STUDENT_SAFE_EXTRAS = new Set(["maxAttempts", "attemptsUsed", "best", "university_id", "active"]);
-function studentSafeCase(full) {
+export function studentSafeCase(full) {
   const safe = {};
   for (const k of STUDENT_SAFE_CASE_FIELDS) if (full?.[k] !== undefined) safe[k] = full[k];
   // keep any caller-added non-data values (maxAttempts, attemptsUsed, ...)
@@ -90,7 +99,8 @@ function canManageStudentAccount(actor, target) {
   if (actor.role === "admin") return true;
   if (actor.role !== "teacher") return false;
   if (target.role !== "student") return false;
-  return (target.university_id || 1) === currentUniversityId(actor);
+  const uni = currentUniversityId(actor);
+  return uni != null && target.university_id != null && target.university_id === uni;
 }
 function caseIdsForUniversity(ids, universityId) {
   const uni = universityId || 1;
@@ -117,12 +127,12 @@ export function assignedCaseIds(userId) {
 export function canAccessCase(user, caseId) {
   if (user.role === "admin") return true;
   if (user.role === "teacher") {
-    const row = db.prepare("SELECT university_id, data_json FROM cases WHERE id=?").get(caseId);
+    const row = db.prepare("SELECT university_id, data_json, active, shared_to_teachers FROM cases WHERE id=?").get(caseId);
     if (!row || isLearnContent(row.data_json)) return false;
-    return (row.university_id || 1) === currentUniversityId(user);
+    return sharedAcademic(row) || (row.university_id || 1) === currentUniversityId(user);
   }
-  if (user.role === "learner") return caseIsLearn(caseId);
-  if (user.role === "content_manager" || user.role === "support") return caseIsLearn(caseId);
+  if (user.role === "learner") return false;
+  if (user.role === "content_manager" || user.role === "support") return false;
   if (user.role !== "student") return false;
   if (caseIsLearn(caseId)) return false;
   const tenant = currentUniversityId(user);
@@ -161,18 +171,31 @@ export function canAccessCase(user, caseId) {
   return false;
 }
 
+function checkCaseInput(req, res, data, checklistId, difficulty) {
+  const field = validateCase(data);
+  if (field) { res.status(422).json({ error: "invalid_case", field, message: `Invalid patient field: ${field}` }); return false; }
+  if (!["easy", "medium", "hard"].includes(difficulty)) { res.status(422).json({ error: "invalid_case", field: "difficulty" }); return false; }
+  if (!Number.isInteger(Number(checklistId)) || Number(checklistId) <= 0 || !db.prepare("SELECT id FROM checklists WHERE id=?").get(Number(checklistId))) {
+    res.status(422).json({ error: "checklist_not_found", field: "checklist_id" }); return false;
+  }
+  if (!teacherSeesChecklist(req.user, Number(checklistId))) { res.status(403).json({ error: "checklist_not_accessible", field: "checklist_id" }); return false; }
+  normalizeCaseAge(data);
+  return true;
+}
+
 /* ---------------- CASES ---------------- */
 r.get("/cases", authRequired, (req, res) => {
   try {
-  let rows = db.prepare("SELECT * FROM cases WHERE active=1 ORDER BY id").all();
+  const includeInactive = ['admin','teacher'].includes(req.user.role) && req.query.status === 'all';
+  let rows = db.prepare(`SELECT * FROM cases ${includeInactive ? '' : 'WHERE active=1'} ORDER BY id`).all();
   const uni = tenantFilterFor(req.user);
-  if (uni) rows = rows.filter((row) => (row.university_id || 1) === uni);
+  if (uni) rows = rows.filter((row) => (row.university_id || 1) === uni || (req.user.role === "teacher" && sharedAcademic(row)));
   if (req.user.role === "teacher" && !isUniversityExpert(req.user)) {
-    rows = rows.filter((row) => isLearnContent(row.data_json) || row.created_by == null || Number(row.created_by) === Number(req.user.id));
+    rows = rows.filter((row) => isLearnContent(row.data_json) || sharedAcademic(row) || row.created_by == null || Number(row.created_by) === Number(req.user.id));
   }
   let list = [];
   for (const row of rows) {
-    try { list.push(parse(row, { checklist_id: row.checklist_id, ...caseReferenceExtra(row) })); }
+    try { list.push(parse(row, { checklist_id: row.checklist_id, ...caseReferenceExtra(row), can_manage: canManageUniResource(req.user,row) })); }
     catch { /* skip a corrupt row so one bad case cannot 500 the whole list */ }
   }
   if (req.user.role === "teacher" || req.user.role === "student") {
@@ -185,9 +208,8 @@ r.get("/cases", authRequired, (req, res) => {
   if (req.user.role === "student" || req.user.role === "learner") list = list.map(studentSafeCase);
   // Learners use GET /learn/vpatient — do not dump either bank here.
   if (req.user.role === "learner") return res.json([]);
-  // Students only see cases the admin/teacher assigned to them.
+  // Same policy as case detail: direct, class and scheduled-exam access.
   if (req.user.role === "student") {
-    const allowed = assignedCaseIds(req.user.id);
     const maxBy = new Map();
     for (const a of db.prepare(
       "SELECT case_id, max_attempts FROM exam_assignments WHERE user_id=? AND active=1"
@@ -201,7 +223,7 @@ r.get("/cases", authRequired, (req, res) => {
       "SELECT case_id, MAX(score) best FROM attempts WHERE user_id=? GROUP BY case_id"
     ).all(req.user.id)) bestBy.set(r.case_id, r.best);
     list = list
-      .filter((c) => allowed.has(c.id))
+      .filter((c) => canAccessCase(req.user, c.id))
       .map((c) => ({
         ...c,
         maxAttempts: maxBy.get(c.id) ?? 1,
@@ -224,7 +246,7 @@ r.get("/cases/:id", authRequired, async (req, res) => {
     if ((req.user.role === "student" || req.user.role === "teacher") && isLearnContent(row.data_json)) {
       return res.status(403).json({ error: "wrong_track", reason: "wrong_track", stage: "access" });
     }
-    if (req.user.role === "teacher" && !canManageUniResource(req.user, row)) {
+    if (req.user.role === "teacher" && !canManageUniResource(req.user, row) && !sharedAcademic(row)) {
       return res.status(403).json({ error: "wrong_university", stage: "access" });
     }
     if ((req.user.role === "learner" || req.user.role === "content_manager" || req.user.role === "support")
@@ -256,6 +278,7 @@ r.get("/cases/:id", authRequired, async (req, res) => {
 });
 r.post("/cases", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const { difficulty = "medium", checklist_id = 1, reference_policy_id = null, ...data } = req.body || {};
+  if (!checkCaseInput(req, res, data, checklist_id, difficulty)) return;
   const wantLearn = req.user.role === "admin" && data.track === "learn";
   data.track = wantLearn ? "learn" : "university";
   const uni = wantLearn ? null : (req.user.role === "admin" ? (Number(req.body?.university_id) || currentUniversityId(req.user) || 1) : currentUniversityId(req.user));
@@ -272,10 +295,9 @@ r.post("/cases", authRequired, requireRole("teacher", "admin"), (req, res) => {
       snapshot = ref.snapshot;
     } else if (policyId) snapshot = referenceSnapshotForPolicy(policyId);
   }
-  const info = db.prepare(
+  const info = durableTransaction(() => db.prepare(
     "INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id,created_by,reference_policy_id,reference_snapshot_json) VALUES (1,?,?,?, ?,?,?,?)"
-  ).run(difficulty, checklist_id, JSON.stringify(data), uni, req.user.id, policyId, snapshot ? JSON.stringify(snapshot) : null);
-  persistNow();
+  ).run(difficulty, checklist_id, JSON.stringify(data), uni, req.user.id, policyId, snapshot ? JSON.stringify(snapshot) : null));
   res.json({ id: info.lastInsertRowid, version: 1, track: data.track, reference: snapshot ? publicReferenceSnapshot(snapshot) : null,
     warning: !wantLearn && !reference_policy_id ? "reference_policy_required_before_microlearning" : undefined });
 });
@@ -283,7 +305,17 @@ r.put("/cases/:id", authRequired, requireRole("teacher", "admin"), (req, res) =>
   const row = db.prepare("SELECT * FROM cases WHERE id=?").get(req.params.id);
   if (!row) return res.status(404).json({ error: "not found" });
   if (!canManageUniResource(req.user, row)) return res.status(403).json({ error: "wrong_university" });
-  const { difficulty = row.difficulty, checklist_id = row.checklist_id, reference_policy_id, refresh_reference_snapshot = false, ...data } = req.body || {};
+  if (req.body?.version !== undefined && (!Number.isInteger(req.body.version) || req.body.version !== row.version)) {
+    return res.status(409).json({ error: "case_version_conflict", currentVersion: row.version,
+      message_fa: "پرونده پس از بازشدن این فرم تغییر کرده است. متن خود را نگه دارید و نسخهٔ جدید را برای مقایسه باز کنید.",
+      message_en: "This patient was changed after the editor opened. Keep your text and reopen the latest version to compare before saving." });
+  }
+  const { difficulty = row.difficulty, checklist_id = row.checklist_id, reference_policy_id, refresh_reference_snapshot = false, ...submitted } = req.body || {};
+  // Keep independently authored chart sections on partial updates; explicit []/null still clear fields.
+  let previous = {};
+  try { previous = JSON.parse(row.data_json); } catch { /* allow repair with a complete valid chart */ }
+  const data = { ...previous, ...submitted };
+  if (!checkCaseInput(req, res, data, checklist_id, difficulty)) return;
   const prevLearn = isLearnContent(row.data_json);
   if (req.user.role !== "admin") data.track = "university";
   else data.track = (data.track === "learn" || prevLearn) ? "learn" : "university";
@@ -297,18 +329,20 @@ r.put("/cases/:id", authRequired, requireRole("teacher", "admin"), (req, res) =>
   }
   delete data.reference; delete data.reference_snapshot; delete data.reference_snapshot_json;
   delete data.university_id;
+  const newVersion = row.version + 1;
+  durableTransaction(() => {
   db.prepare("INSERT INTO case_versions (case_id,version,data_json) VALUES (?,?,?)")
     .run(row.id, row.version, row.data_json);
-  const newVersion = row.version + 1;
   db.prepare("UPDATE cases SET version=?,difficulty=?,checklist_id=?,data_json=?,reference_policy_id=?,reference_snapshot_json=?,updated_at=datetime('now') WHERE id=?")
     .run(newVersion, difficulty, checklist_id, JSON.stringify(data), policyId, snapshotJson, row.id);
+  });
   res.json({ id: row.id, version: newVersion, reference: snapshotJson ? publicReferenceSnapshot(snapshotJson) : null });
 });
 r.delete("/cases/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const row = db.prepare("SELECT * FROM cases WHERE id=?").get(req.params.id);
   if (!row) return res.status(404).json({ error: "not found" });
   if (!canManageUniResource(req.user, row)) return res.status(403).json({ error: "wrong_university" });
-  db.prepare("UPDATE cases SET active=0 WHERE id=?").run(req.params.id);
+  durableTransaction(() => db.prepare("UPDATE cases SET active=0 WHERE id=?").run(req.params.id));
   res.json({ ok: true });
 });
 r.get("/cases/:id/versions", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -427,6 +461,7 @@ r.get("/flashcards", authRequired, (req, res) => {
      different product, and for admins listing 11 600 full cards (50 MB JSON)
      froze the page. The split is done in SQL so the bank rows are never even
      parsed here. */
+  const activeSql = ["admin","teacher"].includes(req.user.role) && req.query.status === "all" ? "1=1" : "active=1";
   const learnRole = req.user.role === "learner" || req.user.role === "content_manager" || req.user.role === "support";
   // json_valid() guard: json_extract() on a corrupt row would throw and 500
   // the whole list — a corrupt card is treated as a university card and then
@@ -438,23 +473,23 @@ r.get("/flashcards", authRequired, (req, res) => {
   if (wantIds) {
     const ph = wantIds.map(() => "?").join(",");
     rows = db.prepare(
-      `SELECT * FROM flashcards WHERE active=1 AND id IN (${ph}) AND ${learnRole ? "" : "NOT "}COALESCE(${bankSql}, 0) ORDER BY id`
+      `SELECT * FROM flashcards WHERE ${activeSql} AND id IN (${ph}) AND ${learnRole ? "" : "NOT "}COALESCE(${bankSql}, 0) ORDER BY id`
     ).all(...wantIds);
   } else {
     rows = db.prepare(
-      `SELECT * FROM flashcards WHERE active=1 AND ${learnRole ? "" : "NOT "}COALESCE(${bankSql}, 0) ORDER BY id`
+      `SELECT * FROM flashcards WHERE ${activeSql} AND ${learnRole ? "" : "NOT "}COALESCE(${bankSql}, 0) ORDER BY id`
     ).all();
   }
   const uniId = tenantFilterFor(req.user);
-  if (uniId) rows = rows.filter((row) => (row.university_id || 1) === uniId);
+  if (uniId) rows = rows.filter((row) => (row.university_id || 1) === uniId || (req.user.role === "teacher" && sharedAcademic(row)));
   if (req.user.role === "teacher" && !isUniversityExpert(req.user)) {
-    rows = rows.filter((row) => isLearnContent(row.data_json) || row.created_by == null || Number(row.created_by) === Number(req.user.id));
+    rows = rows.filter((row) => isLearnContent(row.data_json) || sharedAcademic(row) || row.created_by == null || Number(row.created_by) === Number(req.user.id));
   }
   const list = [];
   if (req.user.role === "learner") {
     for (const row of rows) {
       try {
-        const card = parse(row);
+        const card = parse(row,{can_manage:canManageUniResource(req.user,row)});
         // Path demo cards stay on /learn/*; the competitive Flashcards player
         // only lists curated university-type cards (hotspot, drawing, MCQ, …).
         if (card.content_origin === "demo_seed") continue;
@@ -473,7 +508,7 @@ r.get("/flashcards", authRequired, (req, res) => {
   const access = strip ? studentFlashcardAccess(req.user.id) : null;
   for (const row of rows) {
     try {
-      const card = parse(row);
+      const card = parse(row,{can_manage:canManageUniResource(req.user,row)});
       if (strip) {
         const cid = Number(row.id);
         if (access.reserved.has(cid) && !access.allowedReserved.has(cid)) continue;
@@ -498,7 +533,7 @@ r.post("/flashcards/check", authRequired, (req, res) => {
     const allowLegacy = ["teacher", "admin", "content_manager", "support"].includes(req.user.role);
     if (req.user.role === "learner") {
       if (full.track !== "learn") return res.status(403).json({ error: "university_only", stage: "evaluate" });
-      return res.json(gradeFlashcard(full, req.body || {}, { allowLegacy }));
+      return res.json(flashcardLanguageFallback(gradeFlashcard(full, req.body || {}, { allowLegacy })));
     }
     if (req.user.role === "student") {
       const uni = currentUniversityId(req.user);
@@ -508,7 +543,7 @@ r.post("/flashcards/check", authRequired, (req, res) => {
     }
     if (req.user.role === "content_manager" || req.user.role === "support") {
       if (full.track !== "learn") return res.status(403).json({ error: "university_only", stage: "evaluate" });
-      return res.json(gradeFlashcard(full, req.body || {}, { allowLegacy }));
+      return res.json(flashcardLanguageFallback(gradeFlashcard(full, req.body || {}, { allowLegacy })));
     }
     if (req.user.role === "teacher") {
       if (full.track === "learn") return res.status(403).json({ error: "wrong_track", stage: "evaluate" });
@@ -518,7 +553,7 @@ r.post("/flashcards/check", authRequired, (req, res) => {
         return res.status(403).json({ error: "wrong_owner", stage: "evaluate" });
       }
     }
-    res.json(gradeFlashcard(full, req.body || {}, { allowLegacy }));
+    res.json(flashcardLanguageFallback(gradeFlashcard(full, req.body || {}, { allowLegacy })));
   } catch (e) {
     res.status(500).json({ error: "flashcard_check_failed", stage: "evaluate", message: String(e.message || e).slice(0, 200) });
   }
@@ -526,7 +561,7 @@ r.post("/flashcards/check", authRequired, (req, res) => {
 r.get("/flashcards/:id", authRequired, requireRole("teacher", "admin", "content_manager"), (req, res) => {
   const row = db.prepare("SELECT * FROM flashcards WHERE id=?").get(req.params.id);
   if (!row) return res.status(404).json({ error: "not_found", stage: "fetch" });
-  if (req.user.role === "teacher" && !canManageUniResource(req.user, row)) return res.status(403).json({error:"wrong_university"});
+  if (req.user.role === "teacher" && !canManageUniResource(req.user, row) && !sharedAcademic(row)) return res.status(403).json({error:"wrong_university"});
   if (req.user.role === "content_manager" && !isLearnContent(row.data_json)) return res.status(403).json({error:"wrong_track"});
   try {
     res.json(parse(row));
@@ -569,10 +604,10 @@ r.delete("/flashcards/:id", authRequired, requireRole("teacher", "admin"), (req,
 });
 
 /* ---------------- CSV IMPORT / EXPORT ---------------- */
-const CASE_COLS = ["title_fa","title_en","specialty_fa","specialty_en","age","sex","difficulty",
+const CASE_COLS = ["public_code","title_fa","title_en","specialty_fa","specialty_en","age","sex","difficulty",
   "chief_fa","chief_en","history_fa","history_en","pmh_fa","pmh_en","meds_fa","meds_en",
   "diagnosis_fa","diagnosis_en","objectives_fa","objectives_en"];
-const CARD_COLS = ["title_fa","title_en","category_fa","category_en","difficulty","questionType",
+const CARD_COLS = ["public_code","title_fa","title_en","category_fa","category_en","difficulty","questionType",
   "answerMode","questionText_fa","questionText_en","correct_fa","correct_en","options_fa","options_en",
   "hints_fa","hints_en"];
 
@@ -584,7 +619,7 @@ r.get("/cases-export.csv", authRequired, requireRole("teacher", "admin"), (req, 
   if (uni) raw = raw.filter((row) => (row.university_id || 1) === uni);
   if (req.user.role === "teacher" && !isUniversityExpert(req.user)) raw = raw.filter((row) => row.created_by == null || Number(row.created_by) === Number(req.user.id));
   const rows = raw
-    .map((row) => { try { const d = JSON.parse(row.data_json); return { ...d, difficulty: row.difficulty }; } catch { return null; } })
+    .map((row) => { try { const d = JSON.parse(row.data_json); return { ...d, public_code: row.public_code, difficulty: row.difficulty }; } catch { return null; } })
     .filter(Boolean)
     .filter((d) => d.track !== "learn");
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
@@ -594,6 +629,31 @@ r.get("/cases-export.csv", authRequired, requireRole("teacher", "admin"), (req, 
     res.status(500).json({ error: "cases_export_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
 });
+
+function csvImportReview(rows,kind) {
+ const errors=[];
+ if(!rows.length)errors.push({row:1,message:'empty_csv'});
+ if(rows.length>1000)errors.push({row:1,message:'maximum_1000_rows'});
+ rows.forEach((row,i)=>{
+  if(![row.title_fa,row.title_en].some(v=>typeof v==='string'&&v.trim()))errors.push({row:i+2,message:'title_required'});
+  if(kind==='cases'){const field=validateCase(row);if(field&&field!=='title')errors.push({row:i+2,message:`invalid_case_${field}`});}
+  if(row.track==='learn')errors.push({row:i+2,message:'university_only'});
+  if(row.difficulty&&!['easy','medium','hard'].includes(row.difficulty))errors.push({row:i+2,message:'invalid_difficulty'});
+  if(kind==='flashcards'){
+   if((row.type&&!['mcq','image'].includes(row.type))||(row.questionType&&!['text','mcq','image'].includes(row.questionType)))errors.push({row:i+2,message:'csv_basic_mcq_only'});
+   if(row.answerMode && row.answerMode !== 'choice') errors.push({row:i+2,message:'csv_choice_answers_only'});
+   const fa=(row.options_fa||'').split('|').map(x=>x.trim()),en=(row.options_en||'').split('|').map(x=>x.trim());
+   const selected=new Set();
+   for(const [key,options] of [[row.correct_fa,fa],[row.correct_en,en]]){
+    if(key?.trim() && options.filter(x=>x===key.trim()).length!==1)errors.push({row:i+2,message:'invalid_or_ambiguous_answer_key'});
+   }
+   fa.forEach((x,j)=>{if(x&&row.correct_fa&&x===row.correct_fa.trim())selected.add(j);});
+   en.forEach((x,j)=>{if(x&&row.correct_en&&x===row.correct_en.trim())selected.add(j);});
+   if(Math.max(fa.filter(Boolean).length,en.filter(Boolean).length)<2||selected.size!==1)errors.push({row:i+2,message:'exactly_one_correct_option_required'});
+  }
+ });
+ return {valid:!errors.length,total:rows.length,errors,preview:rows.slice(0,20).map((r,i)=>({row:i+2,title_fa:r.title_fa||'',title_en:r.title_en||''}))};
+}
 
 // Import cases from CSV (bulk create)
 r.post("/cases-import", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -606,20 +666,25 @@ r.post("/cases-import", authRequired, requireRole("teacher", "admin"), (req, res
   }
   let rows;
   try { rows = parseCSV(csv); } catch { return res.status(400).json({ error: "invalid csv" }); }
+  if (!uni || !db.prepare("SELECT id FROM universities WHERE id=? AND active=1").get(uni)) return res.status(422).json({error:"university_required"});
+  const review=csvImportReview(rows,'cases');
+  if (!db.prepare("SELECT id FROM checklists WHERE id=1").get() || !teacherSeesChecklist(req.user, 1)) {
+    review.valid=false; review.errors.push({row:1,message:'default_checklist_unavailable'});
+  }
+  if(req.body.dryRun===true)return res.json(review);
+  if(!review.valid)return res.status(400).json({error:'csv_validation_failed',...review});
   const ins = db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id,created_by) VALUES (1,?,1,?,?,?)");
   let count = 0;
-  const tx = db.transaction(() => {
+  durableTransaction(() => {
     for (const row of rows) {
       if (!row.title_en && !row.title_fa) continue;
       const { difficulty = "medium", age, ...rest } = row;
-      const data = { ...rest, age: +age || 0,
-        vitals: { bp: "120/80", hr: "75", rr: "16", temp: "37", spo2: "98%" }, images: [] };
+      const data = normalizeCaseAge({ ...rest, track: "university", age: age ?? null,
+        vitals: { bp: "120/80", hr: "75", rr: "16", temp: "37", spo2: "98%" }, images: [] });
       ins.run(difficulty, JSON.stringify(data), uni, req.user.id);
       count++;
     }
   });
-  tx();
-  persistNow();
   res.json({ ok: true, imported: count });
 });
 
@@ -637,7 +702,7 @@ r.get("/flashcards-export.csv", authRequired, requireRole("teacher", "admin"), (
     const correct = (d.options || []).find((o) => o.correct) || {};
     return {
       title_fa: d.title_fa, title_en: d.title_en, category_fa: d.category_fa, category_en: d.category_en,
-      difficulty: row.difficulty, questionType: d.questionType || "image", answerMode: d.answerMode || "choice",
+      public_code: row.public_code, difficulty: row.difficulty, questionType: d.questionType || "image", answerMode: d.answerMode || "choice",
       questionText_fa: d.questionText_fa || "", questionText_en: d.questionText_en || "",
       correct_fa: correct.fa || "", correct_en: correct.en || "",
       options_fa: (d.options || []).map((o) => o.fa).join(" | "),
@@ -661,21 +726,25 @@ r.post("/flashcards-import", authRequired, requireRole("teacher", "admin"), (req
     uni = currentUniversityId(req.user);
     if (!uni) return res.status(400).json({ error: "university_required" });
   }
+  const review=csvImportReview(rows,'flashcards');
+  if(req.body.dryRun===true)return res.json(review);
+  if(!review.valid)return res.status(400).json({error:'csv_validation_failed',...review});
   const ins = db.prepare("INSERT INTO flashcards (version,difficulty,data_json,university_id,created_by,last_editor_id,last_action,created_at,content_updated_at) VALUES (1,?,?,?, ?,?, 'created', datetime('now'), datetime('now'))");
   let count = 0;
-  const tx = db.transaction(() => {
+  durableTransaction(() => {
     for (const row of rows) {
       if (!row.title_en && !row.title_fa) continue;
-      const fa = (row.options_fa || "").split("|").map((s) => s.trim()).filter(Boolean);
-      const en = (row.options_en || "").split("|").map((s) => s.trim()).filter(Boolean);
+      const fa = (row.options_fa || "").split("|").map((s) => s.trim());
+      const en = (row.options_en || "").split("|").map((s) => s.trim());
       const n = Math.max(fa.length, en.length);
       const options = [];
       for (let i = 0; i < n; i++) {
-        const of = fa[i] || en[i] || "", oe = en[i] || fa[i] || "";
+        const of = fa[i] || "", oe = en[i] || "";
+        if (!of && !oe) continue;
         options.push({ fa: of, en: oe,
-          correct: (row.correct_fa && of === row.correct_fa) || (row.correct_en && oe === row.correct_en) });
+          correct: !!((row.correct_fa && fa[i] === row.correct_fa.trim()) || (row.correct_en && en[i] === row.correct_en.trim())) });
       }
-      if (options.length && !options.some((o) => o.correct)) options[0].correct = true;
+      // Validation above requires an explicit, unambiguous answer key.
       const data = {
         track: "uni",
         title_fa: row.title_fa, title_en: row.title_en,
@@ -690,8 +759,6 @@ r.post("/flashcards-import", authRequired, requireRole("teacher", "admin"), (req
       count++;
     }
   });
-  tx();
-  persistNow();
   res.json({ ok: true, imported: count });
 });
 
@@ -704,17 +771,23 @@ function canManageCatalog(user, row) {
 }
 r.get("/catalogs", authRequired, requireRole("teacher", "admin"), (req, res) => {
   let rows = db.prepare("SELECT * FROM catalogs ORDER BY id DESC").all();
-  if (req.user.role === "teacher") rows = rows.filter((c) => c.owner_id === req.user.id);
+  if (req.user.role === "teacher") rows = rows.filter((c) => c.owner_id === req.user.id || c.shared_to_teachers === 1);
   res.json(rows.map((c) => {
     let items = [];
     try { items = JSON.parse(c.items_json || "[]"); } catch { items = []; }
-    return { id: c.id, name_fa: c.name_fa, name_en: c.name_en, items, owner_id: c.owner_id || null };
+    return { id: c.id, name_fa: c.name_fa, name_en: c.name_en, items, owner_id: c.owner_id || null, shared_to_teachers:c.shared_to_teachers===1,can_manage:canManageCatalog(req.user,c) };
   }));
+});
+r.put('/catalogs/:id/sharing',authRequired,requireRole('admin'),(req,res)=>{
+ if(typeof req.body?.enabled!=='boolean')return res.status(422).json({error:'boolean_required'});
+ if(!catalogRow(req.params.id))return res.status(404).json({error:'not_found'});
+ durableTransaction(()=>db.prepare('UPDATE catalogs SET shared_to_teachers=? WHERE id=?').run(req.body.enabled?1:0,req.params.id));
+ res.json({ok:true});
 });
 r.post("/catalogs", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const { name_fa, name_en, items = [] } = req.body || {};
-  const info = db.prepare("INSERT INTO catalogs (name_fa,name_en,items_json,owner_id) VALUES (?,?,?,?)")
-    .run(name_fa, name_en, JSON.stringify(items), req.user.id);
+  const info = durableTransaction(() => db.prepare("INSERT INTO catalogs (name_fa,name_en,items_json,owner_id) VALUES (?,?,?,?)")
+    .run(name_fa, name_en, JSON.stringify(items), req.user.id));
   res.json({ id: info.lastInsertRowid });
 });
 r.put("/catalogs/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -722,15 +795,15 @@ r.put("/catalogs/:id", authRequired, requireRole("teacher", "admin"), (req, res)
   if (!row) return res.status(404).json({ error: "not_found", stage: "access" });
   if (!canManageCatalog(req.user, row)) return res.status(403).json({ error: "forbidden", stage: "access" });
   const { name_fa, name_en, items = [] } = req.body || {};
-  db.prepare("UPDATE catalogs SET name_fa=?,name_en=?,items_json=? WHERE id=?")
-    .run(name_fa, name_en, JSON.stringify(items), req.params.id);
+  durableTransaction(() => db.prepare("UPDATE catalogs SET name_fa=?,name_en=?,items_json=? WHERE id=?")
+    .run(name_fa, name_en, JSON.stringify(items), req.params.id));
   res.json({ ok: true });
 });
 r.delete("/catalogs/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const row = catalogRow(req.params.id);
   if (!row) return res.status(404).json({ error: "not_found", stage: "access" });
   if (!canManageCatalog(req.user, row)) return res.status(403).json({ error: "forbidden", stage: "access" });
-  db.prepare("DELETE FROM catalogs WHERE id=?").run(req.params.id);
+  durableTransaction(() => db.prepare("DELETE FROM catalogs WHERE id=?").run(req.params.id));
   res.json({ ok: true });
 });
 
@@ -754,6 +827,7 @@ function checklistOwnerId(id) {
 function teacherSeesChecklist(user, id) {
   if (user.role === "admin" || user.role === "content_manager") return true;
   if (user.role !== "teacher") return false;
+  if (checklistOwnerId(id) == null) return true; // Shipped templates stay usable across universities.
   const unis = checklistUniversityIds(id);
   if (!unis.size) {
     // NULL owner = a SHIPPED system template (seed); every teacher may use it
@@ -787,6 +861,7 @@ r.get("/checklists", authRequired, requireRole("teacher", "admin", "content_mana
     if (req.user.role === "teacher") {
       const mine = currentUniversityId(req.user);
       rows = rows.filter((row) => {
+        if (row.owner_id == null) return true;
         const unis = uniBy.get(row.id);
         if (!unis || !unis.size) {
           const owner = checklistOwnerId(row.id);
@@ -829,16 +904,14 @@ r.put("/checklists/:id", authRequired, requireRole("teacher", "admin"), (req, re
     return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
   const { name_fa, name_en, items } = req.body || {};
-  db.prepare("UPDATE checklists SET name_fa=?,name_en=?,items_json=? WHERE id=?")
-    .run(name_fa, name_en, JSON.stringify(items || []), req.params.id);
-  persistNow();
+  durableTransaction(() => db.prepare("UPDATE checklists SET name_fa=?,name_en=?,items_json=? WHERE id=?")
+    .run(name_fa, name_en, JSON.stringify(items || []), req.params.id));
   res.json({ ok: true });
 });
 r.post("/checklists", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const { name_fa, name_en, items } = req.body || {};
-  const info = db.prepare("INSERT INTO checklists (name_fa,name_en,items_json,owner_id) VALUES (?,?,?,?)")
-    .run(name_fa || "چک‌لیست جدید", name_en || "New checklist", JSON.stringify(items || []), req.user.id);
-  persistNow();
+  const info = durableTransaction(() => db.prepare("INSERT INTO checklists (name_fa,name_en,items_json,owner_id) VALUES (?,?,?,?)")
+    .run(name_fa || "چک‌لیست جدید", name_en || "New checklist", JSON.stringify(items || []), req.user.id));
   res.json({ id: info.lastInsertRowid });
 });
 r.delete("/checklists/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -849,8 +922,7 @@ r.delete("/checklists/:id", authRequired, requireRole("teacher", "admin"), (req,
   }
   const used = db.prepare("SELECT id FROM cases WHERE checklist_id=? LIMIT 1").get(req.params.id);
   if (used) return res.status(409).json({ error: "checklist_in_use", stage: "access", case_id: used.id });
-  db.prepare("DELETE FROM checklists WHERE id=?").run(req.params.id);
-  persistNow();
+  durableTransaction(() => db.prepare("DELETE FROM checklists WHERE id=?").run(req.params.id));
   res.json({ ok: true });
 });
 
@@ -872,6 +944,7 @@ r.get("/users", authRequired, requireRole("teacher", "admin"), (req, res) => {
   let rows = db.prepare("SELECT id,username,student_no,name_fa,name_en,role,status,university_id FROM users ORDER BY id").all();
   if (req.user.role === "teacher") {
     const uni = currentUniversityId(req.user);
+    if (!uni) return res.status(400).json({ error: "university_required", stage: "access" });
     rows = rows.filter((u) => u.university_id === uni && (u.role === "student" || u.role === "teacher"));
   }
   // Optional ?role= filter (used by the student search box in exams/classes).
@@ -915,13 +988,15 @@ r.get("/assignments/:userId", authRequired, requireRole("teacher", "admin"), (re
 });
 // Replace the full set of a student's assignments (case IDs)
 r.put("/assignments/:userId", authRequired, requireRole("teacher", "admin"), (req, res) => {
-  const { caseIds = [], maxAttempts = 1 } = req.body || {};
   const uid = req.params.userId;
   const target = db.prepare("SELECT id, role, university_id FROM users WHERE id=?").get(uid);
   if (!target) return res.status(404).json({ error: "not found", stage: "access" });
   if (!canManageStudentAccount(req.user, target)) return res.status(403).json({ error: "wrong_university", stage: "access" });
+  const input = assignmentInput(req.body, { requireCaseIds: true });
+  if (input.error) return res.status(400).json(input);
+  const { caseIds, maxAttempts } = input;
   const allowed = caseIdsForUniversity(caseIds, target.university_id);
-  const tx = db.transaction(() => {
+  durableTransaction(() => {
     db.prepare("UPDATE exam_assignments SET active=0 WHERE user_id=?").run(uid);
     const up = db.prepare(
       `INSERT INTO exam_assignments (user_id,case_id,assigned_by,max_attempts,active)
@@ -930,16 +1005,17 @@ r.put("/assignments/:userId", authRequired, requireRole("teacher", "admin"), (re
     );
     for (const cid of allowed) up.run(uid, cid, req.user.id, maxAttempts);
   });
-  tx();
-  persistNow();
   res.json({ ok: true, added: allowed.length, skipped: (Array.isArray(caseIds) ? caseIds.length : 0) - allowed.length });
 });
 // Create a user. For students, the student number is the username.
 // Optionally assign the new student to one or more exams (case IDs) in one step.
-r.post("/users", authRequired, requireRole("teacher", "admin"), async (req, res) => {
-  const { studentNo, username, password, name_fa, name_en, role = "student", caseIds = [], maxAttempts = 1 } = req.body || {};
+r.post("/users", authRequired, requireRole("teacher", "admin"), async (req, res, next) => {
+  const { studentNo, username, password, name_fa, name_en, role = "student" } = req.body || {};
   if (req.user.role === "teacher" && role !== "student") return res.status(403).json({ error: "teachers can only add students" });
   if (role === "learner") return res.status(403).json({ error: "role_track_locked", reason: "role_track_locked", stage: "access" });
+  const input = assignmentInput(req.body || {});
+  if (input.error) return res.status(400).json(input);
+  const { caseIds, maxAttempts } = input;
   const uname = role === "student" ? String(studentNo || username || "").trim() : String(username || "").trim();
   if (!uname) return res.status(400).json({ error: "username/student number required" });
   if (role === "student") {
@@ -950,8 +1026,13 @@ r.post("/users", authRequired, requireRole("teacher", "admin"), async (req, res)
   if (req.user.role === "teacher") university_id = currentUniversityId(req.user);
   if ((role === "student" || role === "teacher") && !university_id) return res.status(400).json({ error: "university_required", message_fa: "برای استاد و دانشجو انتخاب دانشگاه الزامی است." });
   const pwd = password && String(password).trim() ? password : uname; // default password = student number
+  try {
   const pwdHash = await hashPassword(pwd);
-  const tx = db.transaction(() => {
+  const id = durableTransaction(() => {
+    if (req.user.role === "teacher" && currentUniversityId(req.user) !== university_id) throw Object.assign(new Error("wrong_university"), {status:403});
+    if (university_id && !db.prepare("SELECT id FROM universities WHERE id=?").get(university_id)) throw Object.assign(new Error("university_not_found"), {status:400});
+    const hit = role === "student" ? checkStudentLimit(university_id, 1) : null;
+    if (hit) throw Object.assign(new Error("university_student_limit"), {status:403, hit});
     const info = db.prepare(
       "INSERT INTO users (username,password_hash,name_fa,name_en,student_no,role,status,university_id) VALUES (?,?,?,?,?,?, 'active',?)"
     ).run(uname, pwdHash, name_fa, name_en, role === "student" ? uname : null, role, university_id);
@@ -964,10 +1045,12 @@ r.post("/users", authRequired, requireRole("teacher", "admin"), async (req, res)
     }
     return uid;
   });
-  try {
-    const id = tx();
     res.json({ id, username: uname, defaultPassword: pwd });
-  } catch (e) { res.status(400).json({ error: "username / student number already exists" }); }
+  } catch (e) {
+    if (e.status) return res.status(e.status).json({error:e.message, ...e.hit});
+    if (/UNIQUE constraint failed/i.test(e.message)) return res.status(400).json({ error: "username / student number already exists" });
+    next(e);
+  }
 });
 
 // ── CSV template for bulk import (downloadable) ──
@@ -993,14 +1076,15 @@ r.get("/users/import/template.csv", authRequired, requireRole("teacher","admin")
  // header optional and normalized. Columns: نام / name, نام خانوادگی / family, شماره دانشجویی / student_no (الزامی), ایمیل / email, کد دانشگاه / university_code, کد کلاس / class_code.
 // Header row optional and auto-detected by column names. For each student: username=student_no, password=student_no.
 // Optional: university_code per row (admin only; teacher rows forced to teacher's university), class_code per row or class_id query/body to auto-enroll.
-r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res) => {
+r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res, next) => {
   let { csv = "", university_id, class_id, class_code, university_code } = req.body || {};
   if (!class_id && req.query.class_id) class_id = Number(req.query.class_id);
   if (!class_code && req.query.class_code) class_code = String(req.query.class_code);
   if (!university_code && req.query.university_code) university_code = String(req.query.university_code);
   if (req.user.role === "teacher") {
     const me = db.prepare("SELECT university_id FROM users WHERE id=?").get(req.user.id);
-    university_id = me?.university_id || university_id || null;
+    university_id = me?.university_id || null;
+    if (!university_id) return res.status(400).json({error:"university_required"});
   } else if (university_code) {
     const uByCode = db.prepare("SELECT id FROM universities WHERE code=?").get(String(university_code).trim().toUpperCase());
     if (uByCode) university_id = uByCode.id;
@@ -1008,8 +1092,9 @@ r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res
   let rawCsv = String(csv || "").replace(/^\uFEFF/, "");
   if (!rawCsv.trim()) return res.status(400).json({ error: "empty", message_fa: "فایل خالی است" });
   // --- robust CSV split: detect delimiter, respect quotes ---
-  const rawLines = rawCsv.split(/\r?\n/);
-  const nonEmptyLines = rawLines.map(l=>l.trimEnd()).filter(l=>l.trim()!=="");
+  let nonEmptyLines;
+  try { nonEmptyLines = splitCSVRecords(rawCsv); }
+  catch { return res.status(400).json({error:"invalid_csv", message_fa:"نقل‌قول CSV بسته نشده است"}); }
   if (!nonEmptyLines.length) return res.status(400).json({ error: "empty" });
   function detectDelim(sample){
     const cands = [",", ";", "\t", "،"];
@@ -1092,24 +1177,19 @@ r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res
   }
   const dataLinesRaw = hasHeader ? nonEmptyLines.slice(1) : nonEmptyLines;
   // Resolve optional global class to enroll into (admin may choose class before import)
-  let globalClassId = null; let globalClassUni=null;
-  if (class_id) {
-    const c = db.prepare("SELECT id, university_id, code FROM classes WHERE id=?").get(Number(class_id));
-    if (c) {
-      if (req.user.role==="teacher") {
-        const me = db.prepare("SELECT university_id FROM users WHERE id=?").get(req.user.id);
-        if (c.university_id && me?.university_id && c.university_id!==me.university_id) {
-        } else { globalClassId = c.id; globalClassUni=c.university_id; }
-      } else { globalClassId = c.id; globalClassUni=c.university_id; }
-    }
-  } else if (class_code) {
-    const c = db.prepare("SELECT id, university_id FROM classes WHERE code=?").get(String(class_code).trim());
-    if (c) { globalClassId = c.id; globalClassUni=c.university_id; }
+  let globalClassId = null, globalClassUni = null;
+  if (class_id || class_code) {
+    const c = class_id
+      ? db.prepare("SELECT id, university_id FROM classes WHERE id=?").get(Number(class_id))
+      : db.prepare("SELECT id, university_id FROM classes WHERE code=?").get(String(class_code).trim());
+    if (!c) return res.status(404).json({error:"class_not_found"});
+    if (req.user.role === "teacher" && c.university_id !== university_id) return res.status(403).json({error:"wrong_university"});
+    globalClassId = c.id; globalClassUni = c.university_id;
   }
   const insUser = db.prepare(
     "INSERT INTO users (username,password_hash,name_fa,name_en,student_no,email,role,status,university_id) VALUES (?,?,?,?,?,?, 'student','active', ?)"
   );
-  const findByNo = db.prepare("SELECT id, university_id, name_fa FROM users WHERE student_no=? OR username=?");
+  const findByNo = db.prepare("SELECT id, university_id, name_fa, role FROM users WHERE student_no=? OR username=?");
   const insMember = db.prepare("INSERT OR IGNORE INTO class_members (class_id,user_id) VALUES (?,?)");
   const updUni = db.prepare("UPDATE users SET university_id=? WHERE id=? AND (university_id IS NULL OR university_id='')");
   let created = 0, skipped = 0;
@@ -1130,7 +1210,7 @@ r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res
     if(/شماره|دانشجو/i.test(s) && s.length>15) return false;
     return true;
   }
-  const tx = db.transaction(() => {
+  const tx = () => durableTransaction(() => {
     dataLinesRaw.forEach((line, idx) => {
       const lineNo = idx + 1 + (hasHeader ? 1 : 0) + 1; // 1-based, header is line 1 if present? Actually rawLines 1-based
       // For accurate lineNo, use index in nonEmptyLines
@@ -1185,6 +1265,21 @@ r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res
       }
       seenInFile.set(lower, actualLineNo);
       const existing = findByNo.get(sno, sno);
+      if (existing && (existing.role !== "student" || (req.user.role === "teacher" && existing.university_id != null && existing.university_id !== university_id))) {
+        failures.push({line:actualLineNo,sno,reason_en:"account_not_manageable",reason_fa:"این حساب قابل مدیریت در این دانشگاه نیست",raw});
+        skipped++; return;
+      }
+      const fullName = [name, family].filter(Boolean).join(" ").trim() || sno;
+      let targetClassId = globalClassId, targetClassUni = globalClassUni;
+      if (!targetClassId && rowCcode) {
+        const c = db.prepare("SELECT id, university_id FROM classes WHERE code=?").get(rowCcode);
+        if (c) { targetClassId = c.id; targetClassUni = c.university_id; }
+        else failures.push({line:actualLineNo,sno,reason_en:"class_not_found",reason_fa:"کد کلاس یافت نشد؛ عضویت انجام نشد",raw,warning:true});
+      }
+      if (targetClassId && req.user.role === "teacher" && targetClassUni !== university_id) {
+        failures.push({line:actualLineNo,sno,reason_en:"wrong_university",reason_fa:"کلاس متعلق به دانشگاه شما نیست",raw});
+        skipped++; return;
+      }
       let uid = existing?.id || null;
       let rowUniId = university_id || null;
       if (req.user.role!=="teacher" && rowUcode) {
@@ -1195,23 +1290,18 @@ r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res
           // not skipping, just warning
         }
       }
-      // licence cap check before insert
-      if (!existing && rowUniId) {
+      rowUniId = rowUniId || targetClassUni || null;
+      // Count new accounts AND existing unassigned students before either write.
+      if ((!existing || existing.university_id == null || existing.university_id === "") && rowUniId) {
         const hit = checkStudentLimit(rowUniId, 1);
         if (hit) {
           failures.push({ line: actualLineNo, sno, name: [name,family].filter(Boolean).join(" "), reason_fa: `سقف دانشجویان دانشگاه پر است (${hit.current}/${hit.max})`, reason_en: `university student limit reached`, raw });
           skipped++; return;
         }
       }
-      const fullName = [name, family].filter(Boolean).join(" ").trim() || sno;
       if (existing) {
         duplicates.push({ student_no: sno, id: existing.id, line: actualLineNo });
-        // existing user: try to heal missing university and enroll
-        if (existing.university_id==null && rowUniId) {
-          try{ updUni.run(rowUniId, existing.id); }catch{}
-        } else if (existing.university_id==null && globalClassUni) {
-          try{ updUni.run(globalClassUni, existing.id); }catch{}
-        }
+        if ((existing.university_id == null || existing.university_id === "") && rowUniId) updUni.run(rowUniId, existing.id);
       } else {
         // enforce university required for student
         let finalUni = rowUniId;
@@ -1227,61 +1317,67 @@ r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res
             failures.push({ line: actualLineNo, sno, name: fullName, reason_fa: "شماره تکراری در سامانه", reason_en: "duplicate in system", raw });
             duplicates.push({ student_no: sno, line: actualLineNo });
           } else {
-            failures.push({ line: actualLineNo, sno, name: fullName, reason_fa: e.message, reason_en: e.message, raw });
+            throw e;
           }
           skipped++; return;
         }
       }
-      // auto-enroll to class (global or per-row) + heal university if needed
-      let targetClassId = globalClassId; let targetClassUni = globalClassUni;
-      if (!targetClassId && rowCcode) {
-        const c = db.prepare("SELECT id, university_id FROM classes WHERE code=?").get(rowCcode.trim());
-        if (c) { targetClassId = c.id; targetClassUni=c.university_id; }
-        else {
-          failures.push({ line: actualLineNo, sno, name: fullName, reason_fa: `کد کلاس «${rowCcode}» یافت نشد — عضویت انجام نشد`, reason_en: `class_code ${rowCcode} not found`, raw, warning:true });
-        }
-      }
       if (targetClassId && uid) {
-        // heal university if user has none
-        const curUni = db.prepare("SELECT university_id FROM users WHERE id=?").get(uid)?.university_id;
-        if((curUni==null || curUni==="") && targetClassUni){
-          try{ updUni.run(targetClassUni, uid); }catch{}
-        }
         // check same-university before enrol
         const curUni2 = db.prepare("SELECT university_id FROM users WHERE id=?").get(uid)?.university_id;
         const classRow = db.prepare("SELECT university_id FROM classes WHERE id=?").get(targetClassId);
         if(classRow && curUni2!=null && classRow.university_id!=null && curUni2!==classRow.university_id){
           failures.push({ line: actualLineNo, sno, name: fullName, reason_fa: `دانشگاه دانشجو (${curUni2}) با دانشگاه کلاس متفاوت است — افزوده نشد`, reason_en: `wrong university for class`, raw, warning:true });
         } else {
-          try { insMember.run(targetClassId, uid); enrolled.push({ student_no: sno, class_id: targetClassId, line: actualLineNo }); } catch {}
+          insMember.run(targetClassId, uid); enrolled.push({ student_no: sno, class_id: targetClassId, line: actualLineNo });
         }
       }
       if (existing) skipped++;
     });
   });
-  try { tx(); } catch (e) { return res.status(400).json({ error: e.message, message_fa: String(e.message).slice(0,200) }); }
+  try { tx(); } catch (e) { return next(e); }
   // Build warnings vs errors separation
   const warnings = failures.filter(f=>f.warning).map(f=> `${t_line(f.line- (hasHeader?1:0), hasHeader)}: ${f.reason_fa}`);
   const realFailures = failures.filter(f=>!f.warning);
   const errors = realFailures.map(f=> `${t_line(f.line- (hasHeader?1:0), hasHeader)}: ${f.sno||""} — ${f.reason_fa}`);
-  res.json({ created, skipped: realFailures.length + duplicates.filter(d=>d.line).length, total: dataLinesRaw.length, duplicates, enrolled: enrolled.length, failures: realFailures, warnings, errors: errors.slice(0,50), hasHeader, delim });
+  const failedLines = new Set(realFailures.map(f => f.line));
+  const failedCsv = nonEmptyLines.filter((_, i) => (hasHeader && i === 0) || failedLines.has(i + 1)).join("\n");
+  res.json({ created, skipped, failedCsv, total: dataLinesRaw.length, duplicates, enrolled: enrolled.length, failures: realFailures, warnings, errors: errors.slice(0,50), hasHeader, delim });
 });
 function t_line(i, hasHeader) { return `line ${i + 1 + (hasHeader ? 1 : 0)}`; }
 function req_no_sno() { return "missing student number"; }
 
 // Reset a user's password (admin/teacher)
-r.put("/users/:id/password", authRequired, requireRole("teacher", "admin"), async (req, res) => {
+r.put("/users/:id/password", authRequired, requireRole("teacher", "admin"), async (req, res, next) => {
   const { password } = req.body || {};
   if (!password) return res.status(400).json({ error: "password required" });
   const target = db.prepare("SELECT id, role, university_id FROM users WHERE id=?").get(req.params.id);
   if (!target) return res.status(404).json({ error: "not found", stage: "access" });
   if (!canManageStudentAccount(req.user, target)) return res.status(403).json({ error: "wrong_university", stage: "access" });
-  db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(await hashPassword(String(password)), req.params.id);
-  persistNow();
-  res.json({ ok: true });
+  try {
+    const hash = await hashPassword(String(password));
+    durableTransaction(() => {
+      // Hashing yields: both the caller's authorization and target membership
+      // can change before the write. Use current state, not the earlier row.
+      const actor = db.prepare("SELECT id, role, status, token_ver FROM users WHERE id=?").get(req.user.id);
+      const liveTarget = db.prepare("SELECT id, role, university_id FROM users WHERE id=?").get(req.params.id);
+      if (!liveTarget) throw Object.assign(new Error("not found"), {status:404});
+      if (!actor || actor.status !== "active" || !["admin", "teacher"].includes(actor.role) ||
+          (Number(actor.token_ver) || 1) !== (Number(req.user.ver) || 1) ||
+          isJtiRevoked(req.user.jti) || !canManageStudentAccount(actor, liveTarget)) {
+        throw Object.assign(new Error("wrong_university"), {status:403});
+      }
+      db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(hash, liveTarget.id);
+      bumpTokenVer(liveTarget.id);
+    });
+    res.json({ ok: true });
+  } catch (e) {
+    if (e.status) return res.status(e.status).json({error:e.message, stage:"access"});
+    next(e);
+  }
 });
 r.put("/users/:id/status", authRequired, requireRole("teacher", "admin"), (req, res) => {
-  const target = db.prepare("SELECT id, role, university_id FROM users WHERE id=?").get(req.params.id);
+  const target = db.prepare("SELECT id, role, university_id, status FROM users WHERE id=?").get(req.params.id);
   if (!target) return res.status(404).json({ error: "not found", stage: "access" });
   if (!canManageStudentAccount(req.user, target)) return res.status(403).json({ error: "wrong_university", stage: "access" });
   // Only the two account states the login check understands are accepted; an
@@ -1289,8 +1385,10 @@ r.put("/users/:id/status", authRequired, requireRole("teacher", "admin"), (req, 
   const status = req.body?.status === "active" ? "active" : req.body?.status === "inactive" ? "inactive" : null;
   if (!status) return res.status(400).json({ error: "invalid_status", stage: "access" });
   if (target.role === "admin" && target.id === req.user.id) return res.status(400).json({ error: "cannot ban yourself" });
-  db.prepare("UPDATE users SET status=? WHERE id=?").run(status, target.id);
-  persistNow();
+  durableTransaction(() => {
+    db.prepare("UPDATE users SET status=? WHERE id=?").run(status, target.id);
+    if (status !== target.status) bumpTokenVer(target.id);
+  });
   res.json({ ok: true });
 });
 
@@ -1304,43 +1402,54 @@ r.get("/prompts", authRequired, requireRole("admin"), (req, res) => {
     res.status(500).json({ error: "prompts_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
 });
-r.put("/prompts", authRequired, requireRole("admin"), (req, res) => {
+r.put("/prompts", authRequired, requireRole("admin"), (req, res, next) => {
   try {
   const body = req.body || {};
   const keys = Object.keys(body).filter((k) => k !== "__err");
   if (!keys.length) return res.status(400).json({ error: "prompts_required", stage: "boot" });
   const up = db.prepare("INSERT INTO prompts (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value");
-  for (const k of keys) up.run(k, String(body[k] ?? ""));
-  persistNow();
+  durableTransaction(() => {
+    for (const k of keys) up.run(k, String(body[k] ?? ""));
+  });
   res.json({ ok: true });
   } catch (e) {
+    if (isPersistenceError(e)) return next(e);
     res.status(500).json({ error: "prompts_save_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
 });
 
 /* ---------------- SETTINGS ---------------- */
+// The database is authoritative: other authorized routes and restore/reload
+// operations can change rows without passing through this module.
 const settingMemo = new Map();
-const SETTING_MISS = Symbol("miss");
 export function getSetting(key, fallback) {
-  if (settingMemo.has(key)) {
-    const v = settingMemo.get(key);
-    return v === SETTING_MISS ? fallback : v;
-  }
   const row = db.prepare("SELECT value FROM settings WHERE key=?").get(key);
-  if (!row) { settingMemo.set(key, SETTING_MISS); return fallback; }
+  if (!row) { settingMemo.delete(key); return fallback; }
+  const cached = settingMemo.get(key);
+  if (cached && cached.raw === row.value) return cached.value;
   try {
     const parsed = JSON.parse(row.value);
-    settingMemo.set(key, parsed);
+    settingMemo.set(key, { raw: row.value, value: parsed });
     return parsed;
-  } catch { settingMemo.set(key, SETTING_MISS); return fallback; }
+  } catch { settingMemo.delete(key); return fallback; }
 }
 export function setSetting(key, obj) {
   db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
     .run(key, JSON.stringify(obj));
-  settingMemo.set(key, obj);
   persistNow();
   return obj;
 }
+function saveSettings(entries) {
+  durableTransaction(() => {
+    const up = db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value");
+    for (const [key, value] of entries) up.run(key, JSON.stringify(value));
+  });
+}
+function isPersistenceError(error) {
+  return ["database_persistence_failed", "database_recovery_failed"].includes(error?.message);
+}
+// Keep existing academic controls; unknown/platform keys deny by default.
+const TEACHER_WRITABLE_SETTINGS = new Set(["exam", "vp_grading"]);
 // keys that hold provider/API-key config → admin-only (never leak the key)
 const ADMIN_ONLY_SETTINGS = new Set(["ai", "blog_image_ai"]);
 function canReadSetting(role, key) {
@@ -1370,15 +1479,11 @@ r.get("/settings/:key", authRequired, (req, res) => {
     res.status(500).json({ error: "settings_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
 });
-r.put("/settings/:key", authRequired, (req, res) => {
+r.put("/settings/:key", authRequired, (req, res, next) => {
   try {
   const key = req.params.key;
-  if (ADMIN_ONLY_SETTINGS.has(key)) {
-    // AI / image-provider configuration: admin only
-    if (req.user.role !== "admin") return res.status(403).json({ error: "admin only" });
-  } else {
-    // other settings (exam, etc.): teacher or admin
-    if (!["teacher", "admin"].includes(req.user.role)) return res.status(403).json({ error: "forbidden" });
+  if (req.user.role !== "admin" && !(req.user.role === "teacher" && TEACHER_WRITABLE_SETTINGS.has(key))) {
+    return res.status(403).json({ error: ADMIN_ONLY_SETTINGS.has(key) ? "admin only" : "forbidden" });
   }
   let body = key === "vp_grading" ? normalizeRubric(req.body || {}) : (req.body || {});
   if (key === "ai") {
@@ -1394,12 +1499,10 @@ r.put("/settings/:key", authRequired, (req, res) => {
       connected: false, // A saved edit is not a successful connection test.
     };
   }
-  db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
-    .run(key, JSON.stringify(body));
-  settingMemo.set(key, body);
-  persistNow();
+  saveSettings([[key, body]]);
   res.json({ ok: true, ...(key === "vp_grading" ? body : {}) });
   } catch (e) {
+    if (isPersistenceError(e)) return next(e);
     res.status(String(e.message).startsWith("AI routing:") ? 400 : 500).json({ error: "settings_save_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
 });
@@ -1422,20 +1525,28 @@ r.get("/order-catalog", authRequired, (req, res) => {
   res.json(readOrderCatalog());
   } catch (e) { res.status(500).json({ error: "order_catalog_failed", stage: "boot", message: String(e.message || e).slice(0, 200) }); }
 });
-r.put("/order-catalog", authRequired, requireRole("teacher", "admin"), (req, res) => {
+r.put("/order-catalog", authRequired, requireRole("teacher", "admin"), (req, res, next) => {
   try {
   const labs = cleanOrderList(req.body?.labs, []);
   const imaging = cleanOrderList(req.body?.imaging, []);
   if (!labs.length) return res.status(400).json({ error: "labs_required" });
   if (!imaging.length) return res.status(400).json({ error: "imaging_required" });
   const paraclinic = cleanOrderList(req.body?.paraclinic, DEFAULT_PARACLINIC);
-  setSetting("order_catalog_lab", labs);
-  setSetting("order_catalog_imaging", imaging);
-  setSetting("order_catalog_paraclinic", paraclinic);
+  saveSettings([["order_catalog_lab", labs], ["order_catalog_imaging", imaging], ["order_catalog_paraclinic", paraclinic]]);
   res.json({ ok: true, labs, imaging, paraclinic });
   } catch (e) {
+    if (isPersistenceError(e)) return next(e);
     res.status(500).json({ error: "order_catalog_save_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
+});
+
+r.use((err, req, res, next) => {
+  if (["database_persistence_failed", "database_recovery_failed"].includes(err?.message)) {
+    return res.status(503).json({ error: err.message, stage: "save",
+      message_fa: "ذخیره روی دیسک انجام نشد؛ فرم را نگه دارید و پس از رفع مشکل ذخیره‌سازی دوباره تلاش کنید.",
+      message_en: "The disk save failed. Keep this form and retry after the storage problem is resolved." });
+  }
+  next(err);
 });
 
 export default r;

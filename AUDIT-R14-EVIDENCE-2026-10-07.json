@@ -1,0 +1,89 @@
+{
+  "beforeFix": {
+    "passed": 0,
+    "failed": 6
+  },
+  "newR14Tests": {
+    "passed": 9,
+    "failed": 0
+  },
+  "focusedBeforeThreeAdditionalTests": {
+    "passed": 31,
+    "failed": 0
+  },
+  "extractedPackageTests": {
+    "passed": 9,
+    "failed": 0
+  },
+  "client": {
+    "passed": 119,
+    "failed": 0
+  },
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "server": {
+    "passed": 1475,
+    "failed": 101,
+    "tests": 1576,
+    "files": 63,
+    "duration_seconds": 542.7
+  },
+  "newFailureNamesVsR13": [],
+  "build": "PASS; R14 service-worker stamp verified",
+  "package": {
+    "files": 1123,
+    "bytes": 50360592,
+    "sha256": "d0d77d39464a34061a1b4900613781644b2fe0518fe9444a92432fcba32ae494",
+    "changedPredecessorEntries": [
+      "VERSION.txt",
+      "client/dist/sw.js",
+      "client/dist/sw.js.br",
+      "client/dist/sw.js.gz",
+      "server/src/routes/portable.js"
+    ],
+    "allOtherPredecessorBytesUnchanged": true,
+    "crc": "PASS",
+    "demo": {
+      "users": 116,
+      "cases": 23,
+      "flashcards": 11681
+    },
+    "exam_mode": "TEXT DEFAULT 'perQuestion'"
+  },
+  "http": {
+    "packageHttpLogin": true,
+    "fullExport": true,
+    "importStatus": 200,
+    "importedUniversityId": 128,
+    "questionnaireContexts": [
+      "class",
+      "exam"
+    ],
+    "researchContexts": [
+      "class",
+      "exam",
+      "case",
+      "study"
+    ],
+    "anonymousResponsesAndPayloadsPreserved": true,
+    "generalNullPreserved": true,
+    "externalAI": false
+  },
+  "limitations": [
+    "No browser or external AI tests in R14",
+    "101 pre-existing server failures remain",
+    "Only top-level context_id for class/exam/case/study is remapped; historical JSON payload is unchanged",
+    "Database reload tested, not a full server restart in R14"
+  ],
+  "githubVerification": {
+    "publicationCommit": "03f9790",
+    "transport": "GitHub contents API raw download",
+    "sha256": "d0d77d39464a34061a1b4900613781644b2fe0518fe9444a92432fcba32ae494",
+    "gitBlob": "afd044a0658d230b27f298e36282948b70f5b0a7",
+    "bytes": 50360592,
+    "crc": "PASS",
+    "beforeR13Deletion": true
+  }
+}
