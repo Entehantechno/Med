@@ -581,5 +581,13 @@
     "Initial server run preceded completed client build; rerun removed all 8 nonbank failures",
     "Fresh installer copies bundled demo DB; pristine seed, edited-case upgrades, and nonempty historical snapshots covered separately in tests",
     "Test browser networkidle timeout addressed by DOM readiness, not an application change"
-  ]
+  ],
+  "publication": {
+    "release_commit": "3a3bcac5a2f28c1802d2609b51c1ebc9e6b16341",
+    "github_blob": "8100a50d48bdedf8b48a3c7081cf8ccbb22886bc",
+    "independent_download_bytes": 50438530,
+    "independent_download_sha256": "4b09b130c8e144aac6ccec0037b51ff2112b521174a6f9e0ce3c914b8b1dc4fe",
+    "zip_crc_verified": true,
+    "predecessor_removal": "separate commit after successful successor push and independent download"
+  }
 }
