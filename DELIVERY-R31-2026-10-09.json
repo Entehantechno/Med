@@ -1,0 +1,40 @@
+{
+  "date": "2026-10-09",
+  "release_commit": "1be9ea47cc4dc4dbfcf7d190e3ec157fb141a706",
+  "branch": "arena/57508e9a-med",
+  "pull_request": "https://github.com/Entehantechno/Med/pull/3",
+  "package": "MED-School-FINAL-2026-10-09-R31.zip",
+  "sha256": "a71a2c1841822ee95e39ee6f2943baf6b5d9a4afacea63c7e4d96d965f6856aa",
+  "bytes": 50431367,
+  "files": 1154,
+  "git_blob": "bbe67464d993352effffec90a0cd1566c0354965",
+  "independent_download": "GitHub Contents API raw bytes at exact release commit",
+  "verification": "Exact bytes, SHA256, size, all-entry CRC, entry count and git blob match",
+  "predecessor_retirement": "R30 ZIP/SHA removed only in subsequent commit after this verification",
+  "server": {
+    "passed": 1971,
+    "failed": 47,
+    "tests": 2018,
+    "files": 82,
+    "skipped": 0,
+    "duration_seconds": 714.4
+  },
+  "client": {
+    "passed": 149,
+    "failed": 0,
+    "tests": 149,
+    "files": 27,
+    "skipped": 0,
+    "duration_seconds": 30.52
+  },
+  "extracted_tests": {
+    "passed": 80,
+    "failed": 0,
+    "tests": 80,
+    "files": 4,
+    "skipped": 0,
+    "duration_seconds": 47.84
+  },
+  "limitations": "Same 47 bank failures; no scientific bank or historical grading changes; focused English browser checks, no comprehensive clinical sign-off",
+  "download_url": "https://github.com/Entehantechno/Med/raw/refs/heads/arena/57508e9a-med/MED-School-FINAL-2026-10-09-R31.zip"
+}
