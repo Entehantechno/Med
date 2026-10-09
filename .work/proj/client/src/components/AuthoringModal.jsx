@@ -43,13 +43,16 @@ export default function AuthoringModal({title,onClose,onSave,sections,children,v
  const {lang}=useApp(),fa=lang==='fa';
  const [language,setLanguage]=useState(lang==='en'?'en':'fa');
  const [step,setStep]=useState(sections[0].id),[dirty,setDirty]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState('');
- const saving=useRef(false),body=useRef(null);
+ const saving=useRef(false),body=useRef(null),errorRef=useRef(null);
+ const [errorNotice,setErrorNotice]=useState(0);
+ const reportError=message=>{setError(message);setErrorNotice(n=>n+1);};
+ useEffect(()=>{if(error){errorRef.current?.focus();errorRef.current?.scrollIntoView?.({block:'nearest'});}},[error,errorNotice]);
  const snapshot=JSON.stringify(value),initialSnapshot=useRef(snapshot);
  const changed=dirty||(value!==undefined&&snapshot!==initialSnapshot.current);
  const close=()=>{if(saving.current)return;if(!changed||window.confirm(fa?'تغییرات ذخیره نشده کنار گذاشته شود؟':'Discard unsaved changes?'))onClose();};
  useEffect(()=>{const warn=e=>{if(changed){e.preventDefault();e.returnValue='';}};window.addEventListener('beforeunload',warn);return()=>window.removeEventListener('beforeunload',warn);},[changed]);
- const save=async()=>{if(saving.current)return;const issue=validate?.();if(issue){setError(issue);setStep('all');setLanguage('both');return;}
-  saving.current=true;setBusy(true);setError('');try{await onSave();}catch(e){setError(e.message||String(e));}finally{saving.current=false;setBusy(false);}};
+ const save=async()=>{if(saving.current)return;const issue=validate?.();if(issue){reportError(issue);setStep('all');setLanguage('both');return;}
+  saving.current=true;setBusy(true);setError('');try{await onSave();}catch(e){reportError(e.message||String(e));}finally{saving.current=false;setBusy(false);}};
  const navigate=id=>{setStep(id);body.current?.closest('.modal-body')?.scrollTo?.({top:0,behavior:'auto'});};
  const index=sections.findIndex(s=>s.id===step);
  return <Modal title={title} onClose={close} onSave={save} saveDisabled={busy} saveLabel={busy?(fa?'در حال ذخیره…':'Saving…'):(fa?'ذخیره محتوا':'Save content')} wide>
@@ -60,7 +63,7 @@ export default function AuthoringModal({title,onClose,onSave,sections,children,v
     <span className="small muted">{fa?'تغییر زبان، متن زبان دیگر را پاک یا ترجمه نمی‌کند.':'Switching language never clears or translates the other language.'}</span>
    </div>
    <nav className="author-steps" aria-label={fa?'بخش‌های ویرایش':'Editor sections'}>{sections.map((s,i)=><button type="button" key={s.id} aria-current={step===s.id?'step':undefined} onClick={()=>navigate(s.id)}><span>{i+1}</span>{s.title}</button>)}<button type="button" aria-pressed={step==='all'} onClick={()=>navigate('all')}>{fa?'نمایش همه':'Show all'}</button></nav>
-   {error&&<div className="err-banner" role="alert">{error}</div>}
+   {error&&<div ref={errorRef} tabIndex={-1} className="err-banner" role="alert">{error}</div>}
    <p className="small muted" role="status">{changed?(fa?'تغییرات ذخیره نشده':'Unsaved changes'):(fa?'ویرایش محتوا':'Editing content')}</p>
    <fieldset disabled={busy} inert={busy?'':undefined} aria-label={fa?'محتوای فرم':'Content fields'} aria-busy={busy} style={{border:0,padding:0,margin:0,minWidth:0}}>{children}</fieldset>
    {step!=='all'&&<div className="author-navigation"><button type="button" className="btn btn-ghost" disabled={index<=0} onClick={()=>navigate(sections[index-1].id)}>{fa?'بخش قبل':'Previous section'}</button><span>{index+1} / {sections.length}</span><button type="button" className="btn btn-ghost" disabled={index>=sections.length-1} onClick={()=>navigate(sections[index+1].id)}>{fa?'بخش بعد':'Next section'}</button></div>}

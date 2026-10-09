@@ -1,0 +1,27 @@
+{
+  "baseline": "R28",
+  "bank_scope": "preserve_bank",
+  "changed_non_build_entries": [
+    "VERSION.txt",
+    "client/src/components/AuthoringModal.jsx",
+    "server/src/index.js",
+    "server/src/lib/academic-storage.js",
+    "server/src/seed-emergency-ten.js"
+  ],
+  "added_non_build_entries": [
+    "client/src/components/AuthoringModal.r29.test.jsx",
+    "server/src/lib/emergency-provision.js",
+    "server/test/university-demo-media-r29.test.js",
+    "server/test/university-provision-r29.test.js"
+  ],
+  "generated_build": {
+    "changed": 4,
+    "added": 227,
+    "removed": 227
+  },
+  "demo_database_same_bytes": true,
+  "ten_clinical_source_same_bytes": true,
+  "seed_and_schema_same_bytes": true,
+  "reports_outside_zip": true,
+  "sha256": "1323ede7861e0a2abee1e0fb796cfc4fa60933a2e682e58c5b4b1f5dbaf312b1"
+}

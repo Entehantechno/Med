@@ -95,6 +95,22 @@ export function academicMedia(req, res, next) {
   }
 }
 
+// This one shipped teaching illustration is referenced by legacy cases in more
+// than one university. Do NOT generalize this to arbitrary flat-file references:
+// an author could otherwise grant access to a guessed private filename.
+function mayReadSharedDemo(req, requestPath) {
+  if (requestPath !== '/demo-ecg.svg' || !['student','teacher'].includes(req.user?.role) || !req.user.university_id) return false;
+  try {
+    const shipped = fs.readFileSync(new URL('../../uploads/demo-ecg.svg', import.meta.url));
+    const live = fs.readFileSync(path.join(UPLOADS_DIR, 'demo-ecg.svg'));
+    if (!live.equals(shipped)) return false;
+    const references = value => value && typeof value === 'object' && Object.entries(value).some(([key, child]) =>
+      (['url','imageUrl'].includes(key) && child === '/uploads/demo-ecg.svg') || references(child));
+    return db.prepare('SELECT data_json FROM cases WHERE university_id=? AND active=1').all(req.user.university_id)
+      .some(row => { try { return references(JSON.parse(row.data_json)); } catch { return false; } });
+  } catch { return false; }
+}
+
 // legacy flat-file gate for /uploads/*
 export function legacyMediaGate(req, res, next) {
   try {
@@ -112,7 +128,7 @@ export function legacyMediaGate(req, res, next) {
           const userUni = req?.user?.university_id ?? null;
           const isAdmin = req?.user?.role === "admin";
           if (!req.user) return res.status(404).json({ error: "not_found" });
-          if (!isAdmin && Number(userUni) !== Number(row.university_id)) return res.status(404).json({ error: "not_found" });
+          if (!isAdmin && Number(userUni) !== Number(row.university_id) && !mayReadSharedDemo(req, p)) return res.status(404).json({ error: "not_found" });
         }
       } catch {}
     }

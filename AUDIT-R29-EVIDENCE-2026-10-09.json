@@ -1,0 +1,1858 @@
+{
+  "date": "2026-10-09",
+  "baseline_commit": "8ea93b2",
+  "user_case_reference": "emergency_ten explicitly selected",
+  "bank_scope": "preserve_bank",
+  "server": {
+    "passed": 1930,
+    "failed": 47,
+    "tests": 1977,
+    "files": 80,
+    "skipped": 0,
+    "duration_seconds": 651.71
+  },
+  "client": {
+    "passed": 134,
+    "failed": 0,
+    "tests": 134,
+    "files": 25,
+    "skipped": 0,
+    "duration_seconds": 28.67
+  },
+  "extracted_package": {
+    "passed": 91,
+    "failed": 0,
+    "tests": 91,
+    "files": 6,
+    "skipped": 0,
+    "duration_seconds": 63.87
+  },
+  "targeted_media_R29_R26": {
+    "passed": 21,
+    "failed": 0,
+    "tests": 21,
+    "files": 2,
+    "skipped": 0,
+    "duration_seconds": 16.69
+  },
+  "build": "passed",
+  "python": {
+    "passed": 4,
+    "failed": 0
+  },
+  "red": {
+    "red-server": {
+      "summary": {
+        "passed": 0,
+        "failed": 3,
+        "tests": 3,
+        "files": 1,
+        "skipped": 0,
+        "duration_seconds": 8.5
+      },
+      "assertions": [
+        {
+          "file": "test/university-provision-r29.test.js",
+          "test": "binds the active exact legacy patient, not its earlier archived copy",
+          "status": "failed",
+          "first_error": "AssertionError: expected null to be 'medschool:emergency:1:university:121' // Object.is equality"
+        },
+        {
+          "file": "test/university-provision-r29.test.js",
+          "test": "does not mistake a same-title different clinical chart for the supplied source",
+          "status": "failed",
+          "first_error": "AssertionError: expected 'medschool:emergency:1:university:122' to be null"
+        },
+        {
+          "file": "test/university-provision-r29.test.js",
+          "test": "a malformed unrelated legacy row cannot prevent installing the ten patients",
+          "status": "failed",
+          "first_error": "AssertionError: expected '<anonymous_script>:1\\n{bad json\\n ^\\n…' to be undefined"
+        }
+      ]
+    },
+    "red-client": {
+      "summary": {
+        "passed": 0,
+        "failed": 2,
+        "tests": 2,
+        "files": 1,
+        "skipped": 0,
+        "duration_seconds": 2.87
+      },
+      "assertions": [
+        {
+          "file": "src/components/AuthoringModal.r29.test.jsx",
+          "test": "validation errors receive focus so a long editor cannot conceal failed saves",
+          "status": "failed",
+          "first_error": "Error: expect(element).toHaveFocus()"
+        },
+        {
+          "file": "src/components/AuthoringModal.r29.test.jsx",
+          "test": "network errors receive focus so a long editor cannot conceal failed saves",
+          "status": "failed",
+          "first_error": "Error: expect(element).toHaveFocus()"
+        }
+      ]
+    },
+    "order-red-test": {
+      "summary": {
+        "passed": 0,
+        "failed": 1,
+        "tests": 11,
+        "files": 1,
+        "skipped": 0,
+        "duration_seconds": 8.11
+      },
+      "assertions": [
+        {
+          "file": "test/university-provision-r29.test.js",
+          "test": "binds the active exact legacy patient, not its earlier archived copy",
+          "status": "skipped",
+          "first_error": ""
+        },
+        {
+          "file": "test/university-provision-r29.test.js",
+          "test": "does not mistake a same-title different clinical chart for the supplied source",
+          "status": "skipped",
+          "first_error": ""
+        },
+        {
+          "file": "test/university-provision-r29.test.js",
+          "test": "a malformed unrelated legacy row cannot prevent installing the ten patients",
+          "status": "skipped",
+          "first_error": ""
+        },
+        {
+          "file": "test/university-provision-r29.test.js",
+          "test": "repeat installation preserves IDs, public codes and the exact ten source payloads",
+          "status": "skipped",
+          "first_error": ""
+        },
+        {
+          "file": "test/university-provision-r29.test.js",
+          "test": "does not resurrect a deleted source or reactivate an inactive source",
+          "status": "skipped",
+          "first_error": ""
+        },
+        {
+          "file": "test/university-provision-r29.test.js",
+          "test": "keeps an edited provisioned chart and version unchanged",
+          "status": "skipped",
+          "first_error": ""
+        },
+        {
+          "file": "test/university-provision-r29.test.js",
+          "test": "an inactive-only exact legacy case stays inactive and is not duplicated",
+          "status": "skipped",
+          "first_error": ""
+        },
+        {
+          "file": "test/university-provision-r29.test.js",
+          "test": "does not bind another university and competitive patient creation remains prohibited",
+          "status": "skipped",
+          "first_error": ""
+        },
+        {
+          "file": "test/university-provision-r29.test.js",
+          "test": "missing required rubric rolls back all cases and source reservations",
+          "status": "skipped",
+          "first_error": ""
+        },
+        {
+          "file": "test/university-provision-r29.test.js",
+          "test": "rejects an unknown target university without changing existing cases",
+          "status": "skipped",
+          "first_error": ""
+        },
+        {
+          "file": "test/university-provision-r29.test.js",
+          "test": "provisioning makes every supplied recorded study selectable without exposing its result",
+          "status": "failed",
+          "first_error": "AssertionError: labResults: Troponin I: expected undefined to be truthy"
+        }
+      ]
+    },
+    "media-red": {
+      "summary": {
+        "passed": 3,
+        "failed": 1,
+        "tests": 4,
+        "files": 1,
+        "skipped": 0,
+        "duration_seconds": 9.46
+      },
+      "assertions": [
+        {
+          "file": "test/university-demo-media-r29.test.js",
+          "test": "serves the verified bundled ECG to a second university whose active case references it",
+          "status": "failed",
+          "first_error": "AssertionError: expected 404 to be 200 // Object.is equality"
+        },
+        {
+          "file": "test/university-demo-media-r29.test.js",
+          "test": "keeps the shared demo inaccessible to anonymous visitors",
+          "status": "passed",
+          "first_error": ""
+        },
+        {
+          "file": "test/university-demo-media-r29.test.js",
+          "test": "keeps the shared demo inaccessible to a university with no referencing case",
+          "status": "passed",
+          "first_error": ""
+        },
+        {
+          "file": "test/university-demo-media-r29.test.js",
+          "test": "does not extend shared access if the live file was replaced with private content",
+          "status": "passed",
+          "first_error": ""
+        }
+      ]
+    }
+  },
+  "new_server_assertions": [
+    {
+      "file": "test/university-demo-media-r29.test.js",
+      "test": "serves the verified bundled ECG to a second university whose active case references it",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-demo-media-r29.test.js",
+      "test": "keeps the shared demo inaccessible to anonymous visitors",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-demo-media-r29.test.js",
+      "test": "keeps the shared demo inaccessible to a university with no referencing case",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-demo-media-r29.test.js",
+      "test": "does not extend shared access if the live file was replaced with private content",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-provision-r29.test.js",
+      "test": "binds the active exact legacy patient, not its earlier archived copy",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-provision-r29.test.js",
+      "test": "does not mistake a same-title different clinical chart for the supplied source",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-provision-r29.test.js",
+      "test": "a malformed unrelated legacy row cannot prevent installing the ten patients",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-provision-r29.test.js",
+      "test": "repeat installation preserves IDs, public codes and the exact ten source payloads",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-provision-r29.test.js",
+      "test": "does not resurrect a deleted source or reactivate an inactive source",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-provision-r29.test.js",
+      "test": "keeps an edited provisioned chart and version unchanged",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-provision-r29.test.js",
+      "test": "an inactive-only exact legacy case stays inactive and is not duplicated",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-provision-r29.test.js",
+      "test": "does not bind another university and competitive patient creation remains prohibited",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-provision-r29.test.js",
+      "test": "missing required rubric rolls back all cases and source reservations",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-provision-r29.test.js",
+      "test": "rejects an unknown target university without changing existing cases",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-provision-r29.test.js",
+      "test": "provisioning makes every supplied recorded study selectable without exposing its result",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-provision-r29.test.js",
+      "test": "catalog migration preserves custom choices and does not re-add intentional later removals",
+      "status": "passed",
+      "first_error": ""
+    },
+    {
+      "file": "test/university-provision-r29.test.js",
+      "test": "refuses catalog overflow atomically instead of saving invisible truncated required studies",
+      "status": "passed",
+      "first_error": ""
+    }
+  ],
+  "fresh_install": {
+    "real_extracted_index_boot": true,
+    "fresh_install_bound_existing_active": [
+      {
+        "source": 1,
+        "id": 14,
+        "active": 1,
+        "public_code": "VP-9d23d5cdde16fde14b40a76da4d08746",
+        "clinical_chart_and_version_unchanged": true,
+        "title_fa": "درد قفسه سینه در مرد ۵۸ ساله — اورژانس (سندرم حاد کرونری)"
+      },
+      {
+        "source": 2,
+        "id": 15,
+        "active": 1,
+        "public_code": "VP-49bd74f9fde77c107aaacaf31ab47e3c",
+        "clinical_chart_and_version_unchanged": true,
+        "title_fa": "تهوع و استفراغ مداوم در زن ۲۲ ساله دیابتی — اورژانس (DKA)"
+      },
+      {
+        "source": 3,
+        "id": 16,
+        "active": 1,
+        "public_code": "VP-ab3911563771d656f5252ce6975a4607",
+        "clinical_chart_and_version_unchanged": true,
+        "title_fa": "تنگی نفس و ورم پا در مرد ۶۸ ساله — اورژانس (نارسایی حاد قلب)"
+      },
+      {
+        "source": 4,
+        "id": 17,
+        "active": 1,
+        "public_code": "VP-b38c5193fa0b0ff5d9d74ea21523e2ee",
+        "clinical_chart_and_version_unchanged": true,
+        "title_fa": "تب و سرفه خلط‌دار در زن ۶۵ ساله — اورژانس (پنومونی اکتسابی)"
+      },
+      {
+        "source": 5,
+        "id": 18,
+        "active": 1,
+        "public_code": "VP-906d6c4c6f3b208aab940c7f4732156e",
+        "clinical_chart_and_version_unchanged": true,
+        "title_fa": "استفراغ خونی و ملنا در مرد ۵۲ ساله — اورژانس (خونریزی گوارشی فوقانی)"
+      },
+      {
+        "source": 6,
+        "id": 19,
+        "active": 1,
+        "public_code": "VP-210777b0f4bec32e3ccec622f9c4e7a9",
+        "clinical_chart_and_version_unchanged": true,
+        "title_fa": "تشدید تنگی‌نفس در مرد ۷۰ ساله COPD — اورژانس"
+      },
+      {
+        "source": 7,
+        "id": 20,
+        "active": 1,
+        "public_code": "VP-36a050c1196f628316d083b500adbd87",
+        "clinical_chart_and_version_unchanged": true,
+        "title_fa": "کاهش شدید ادرار و گیجی در زن ۷۴ ساله — اورژانس (آسیب حاد کلیه پیش‌کلیوی)"
+      },
+      {
+        "source": 8,
+        "id": 21,
+        "active": 1,
+        "public_code": "VP-d48ea18802467fa4354de2dd7a2eb4a5",
+        "clinical_chart_and_version_unchanged": true,
+        "title_fa": "ضعف ناگهانی سمت راست و اختلال تکلم در زن ۶۶ ساله — اورژانس (سکته ایسکمیک)"
+      },
+      {
+        "source": 9,
+        "id": 22,
+        "active": 1,
+        "public_code": "VP-a742e49a8fcff7150f800f91234a3beb",
+        "clinical_chart_and_version_unchanged": true,
+        "title_fa": "تورم شکم و زردی و گیجی در مرد ۵۶ ساله — اورژانس (سیروز از دست‌رفته)"
+      },
+      {
+        "source": 10,
+        "id": 23,
+        "active": 1,
+        "public_code": "VP-72d12b45b59758f8a9c0f141deff0777",
+        "clinical_chart_and_version_unchanged": true,
+        "title_fa": "تب و لرز و درد پهلو در زن ۴۸ ساله — اورژانس (پیلونفریت و اوروسپسیس)"
+      }
+    ],
+    "archived_ten_unchanged": true,
+    "total_cases": 23
+  },
+  "retained_install_and_restart": {
+    "real_index_boot_on_retained_install": true,
+    "before_patients": 3,
+    "after_patients": 13,
+    "new_emergency_cases": 10,
+    "existing_charts_versions_codes_rubrics_unchanged": true,
+    "prior_migration_metadata_changes": [
+      {
+        "id": 1,
+        "field": "created_by",
+        "before": null,
+        "after": 1,
+        "origin": "pre-existing initSchema ownership backfill; db.js unchanged in R29"
+      },
+      {
+        "id": 2,
+        "field": "created_by",
+        "before": null,
+        "after": 1,
+        "origin": "pre-existing initSchema ownership backfill; db.js unchanged in R29"
+      },
+      {
+        "id": 3,
+        "field": "created_by",
+        "before": null,
+        "after": 1,
+        "origin": "pre-existing initSchema ownership backfill; db.js unchanged in R29"
+      }
+    ],
+    "existing_password_hashes_unchanged": true,
+    "existing_attempts_unchanged": true,
+    "attempts_count": 3,
+    "new_charts_equal_source": true,
+    "codes": [
+      "VP-91d48e26f24ecf732cc5f724a5fcb46c",
+      "VP-56a37fbe359fa4c5416866a32b08128d",
+      "VP-84059e757f96baf34a11f6b2228adba1",
+      "VP-76e595a18b0cb0c292366feb3e6be1ab",
+      "VP-71b858f3ce7342c9197124a018eed776",
+      "VP-b919b120dacf66aad9ca348dc91128b3",
+      "VP-039afda38e695b942fe99c95c54b9363",
+      "VP-7d4505dc425ec76258357a05b92a3dd8",
+      "VP-06e2bb88265b77d2b646a8d4213ca5ea",
+      "VP-5b3c11ff2227a4e75581a29a40fd02c2"
+    ],
+    "catalog_added": 24,
+    "real_restart": {
+      "inserted": 0,
+      "catalogAdded": 0,
+      "same_10_codes": true,
+      "total_cases": 13
+    }
+  },
+  "api": {
+    "checks": [
+      {
+        "name": "admin login",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "case list",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "active canonical patients",
+        "actual": 10,
+        "expected": 10
+      },
+      {
+        "name": "create synthetic student",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "assign ten patients",
+        "actual": 10,
+        "expected": 10
+      },
+      {
+        "name": "student login",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "student assigned ten",
+        "actual": 10,
+        "expected": 10
+      },
+      {
+        "name": "student receives no diagnosis or history",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "start 14",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session has snapshot id 14",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "local patient reply 14",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close 14",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "start 15",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session has snapshot id 15",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "local patient reply 15",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close 15",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "start 16",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session has snapshot id 16",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "local patient reply 16",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close 16",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "start 17",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session has snapshot id 17",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "local patient reply 17",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close 17",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "start 18",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session has snapshot id 18",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "local patient reply 18",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close 18",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "start 19",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session has snapshot id 19",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "local patient reply 19",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close 19",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "start 20",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session has snapshot id 20",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "local patient reply 20",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close 20",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "start 21",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session has snapshot id 21",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "local patient reply 21",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close 21",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "start 22",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session has snapshot id 22",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "local patient reply 22",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close 22",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "start 23",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "session has snapshot id 23",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "local patient reply 23",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "close 23",
+        "actual": 200,
+        "expected": 200
+      }
+    ],
+    "orders": [
+      {
+        "caseId": 14,
+        "kind": "lab",
+        "query": "Troponin I",
+        "status": 200,
+        "expected": "Positive — elevated 0.9 ng/mL (normal <0.04)",
+        "actual": "📋 Lab report — Troponin I: Positive — elevated 0.9 ng/mL (normal <0.04)"
+      },
+      {
+        "caseId": 14,
+        "kind": "lab",
+        "query": "CK-MB",
+        "status": 200,
+        "expected": "Elevated — 28 ng/mL",
+        "actual": "📋 Lab report — CK-MB: Elevated — 28 ng/mL"
+      },
+      {
+        "caseId": 14,
+        "kind": "lab",
+        "query": "Blood glucose",
+        "status": 200,
+        "expected": "185 mg/dL",
+        "actual": "📋 Lab report — Blood glucose: 185 mg/dL"
+      },
+      {
+        "caseId": 14,
+        "kind": "lab",
+        "query": "Creatinine",
+        "status": 200,
+        "expected": "1.0 mg/dL (normal)",
+        "actual": "📋 Lab report — Creatinine: 1.0 mg/dL (normal)"
+      },
+      {
+        "caseId": 14,
+        "kind": "imaging",
+        "query": "ECG",
+        "status": 200,
+        "expected": "3-mm ST-segment elevation in V1-V4 with reciprocal ST depression inferiorly — consistent with anterior STEMI",
+        "actual": "📋 Radiology report — ECG: 3-mm ST-segment elevation in V1-V4 with reciprocal ST depression inferiorly — consistent with anterior STEMI"
+      },
+      {
+        "caseId": 14,
+        "kind": "imaging",
+        "query": "Chest X-ray",
+        "status": 200,
+        "expected": "No overt pulmonary congestion, cardiac silhouette within normal limits",
+        "actual": "📋 Radiology report — Chest X-ray: No overt pulmonary congestion, cardiac silhouette within normal limits"
+      },
+      {
+        "caseId": 15,
+        "kind": "lab",
+        "query": "Blood glucose",
+        "status": 200,
+        "expected": "450 mg/dL (markedly high)",
+        "actual": "📋 Lab report — Blood glucose: 450 mg/dL (markedly high)"
+      },
+      {
+        "caseId": 15,
+        "kind": "lab",
+        "query": "ABG",
+        "status": 200,
+        "expected": "pH 7.15, HCO3 9, PCO2 22 — high-anion-gap metabolic acidosis",
+        "actual": "📋 Lab report — ABG: pH 7.15, HCO3 9, PCO2 22 — high-anion-gap metabolic acidosis"
+      },
+      {
+        "caseId": 15,
+        "kind": "lab",
+        "query": "Urine ketone",
+        "status": 200,
+        "expected": "+3 strongly positive, urine glucose +4",
+        "actual": "📋 Lab report — Urine ketone: +3 strongly positive, urine glucose +4"
+      },
+      {
+        "caseId": 15,
+        "kind": "lab",
+        "query": "Potassium",
+        "status": 200,
+        "expected": "4.8 mEq/L",
+        "actual": "📋 Lab report — Potassium: 4.8 mEq/L"
+      },
+      {
+        "caseId": 15,
+        "kind": "lab",
+        "query": "Sodium",
+        "status": 200,
+        "expected": "142 mEq/L",
+        "actual": "📋 Lab report — Sodium: 142 mEq/L"
+      },
+      {
+        "caseId": 15,
+        "kind": "imaging",
+        "query": "ECG",
+        "status": 200,
+        "expected": "Sinus tachycardia 118 bpm, no ST-segment changes",
+        "actual": "📋 Radiology report — ECG: Sinus tachycardia 118 bpm, no ST-segment changes"
+      },
+      {
+        "caseId": 15,
+        "kind": "imaging",
+        "query": "Chest X-ray",
+        "status": 200,
+        "expected": "No clear consolidation/pleural effusion",
+        "actual": "📋 Radiology report — Chest X-ray: No clear consolidation/pleural effusion"
+      },
+      {
+        "caseId": 16,
+        "kind": "lab",
+        "query": "BNP",
+        "status": 200,
+        "expected": "1400 pg/mL (elevated)",
+        "actual": "📋 Lab report — BNP: 1400 pg/mL (elevated)"
+      },
+      {
+        "caseId": 16,
+        "kind": "lab",
+        "query": "Sodium",
+        "status": 200,
+        "expected": "138 mEq/L",
+        "actual": "📋 Lab report — Sodium: 138 mEq/L"
+      },
+      {
+        "caseId": 16,
+        "kind": "lab",
+        "query": "Potassium",
+        "status": 200,
+        "expected": "4.1 mEq/L",
+        "actual": "📋 Lab report — Potassium: 4.1 mEq/L"
+      },
+      {
+        "caseId": 16,
+        "kind": "lab",
+        "query": "Creatinine",
+        "status": 200,
+        "expected": "1.3 mg/dL (mildly elevated)",
+        "actual": "📋 Lab report — Creatinine: 1.3 mg/dL (mildly elevated)"
+      },
+      {
+        "caseId": 16,
+        "kind": "imaging",
+        "query": "Chest X-ray",
+        "status": 200,
+        "expected": "Cardiomegaly, Kerley B lines, pulmonary venous congestion — congestive edema",
+        "actual": "📋 Radiology report — Chest X-ray: Cardiomegaly, Kerley B lines, pulmonary venous congestion — congestive edema"
+      },
+      {
+        "caseId": 16,
+        "kind": "imaging",
+        "query": "ECG",
+        "status": 200,
+        "expected": "Sinus rhythm, tachycardia 102, no new ST changes",
+        "actual": "📋 Radiology report — ECG: Sinus rhythm, tachycardia 102, no new ST changes"
+      },
+      {
+        "caseId": 17,
+        "kind": "lab",
+        "query": "CBC",
+        "status": 200,
+        "expected": "WBC 16,200/µL with 85% neutrophils — neutrophilic leukocytosis",
+        "actual": "📋 Lab report — CBC: WBC 16,200/µL with 85% neutrophils — neutrophilic leukocytosis"
+      },
+      {
+        "caseId": 17,
+        "kind": "lab",
+        "query": "CRP",
+        "status": 200,
+        "expected": "85 mg/L (elevated)",
+        "actual": "📋 Lab report — CRP: 85 mg/L (elevated)"
+      },
+      {
+        "caseId": 17,
+        "kind": "imaging",
+        "query": "Chest X-ray",
+        "status": 200,
+        "expected": "Dense consolidation with air bronchograms in right lower lobe",
+        "actual": "📋 Radiology report — Chest X-ray: Dense consolidation with air bronchograms in right lower lobe"
+      },
+      {
+        "caseId": 18,
+        "kind": "lab",
+        "query": "Hemoglobin",
+        "status": 200,
+        "expected": "7.2 g/dL (low)",
+        "actual": "📋 Lab report — Hemoglobin: 7.2 g/dL (low)"
+      },
+      {
+        "caseId": 18,
+        "kind": "lab",
+        "query": "BUN/Creatinine",
+        "status": 200,
+        "expected": "BUN 45, Cr 1.0 — ratio >30",
+        "actual": "📋 Lab report — BUN/Creatinine: BUN 45, Cr 1.0 — ratio >30"
+      },
+      {
+        "caseId": 18,
+        "kind": "lab",
+        "query": "Platelets",
+        "status": 200,
+        "expected": "210,000/µL (normal)",
+        "actual": "📋 Lab report — Platelets: 210,000/µL (normal)"
+      },
+      {
+        "caseId": 18,
+        "kind": "imaging",
+        "query": "Upper endoscopy (EGD)",
+        "status": 200,
+        "expected": "Active duodenal bulb ulcer with visible vessel, no active bleeding at time of scope (post-resuscitation)",
+        "actual": "📋 Radiology report — Upper endoscopy (EGD): Active duodenal bulb ulcer with visible vessel, no active bleeding at time of scope (post-resuscitation)"
+      },
+      {
+        "caseId": 18,
+        "kind": "imaging",
+        "query": "Abdominal X-ray",
+        "status": 200,
+        "expected": "No free air under diaphragm",
+        "actual": "📋 Radiology report — Abdominal X-ray: No free air under diaphragm"
+      },
+      {
+        "caseId": 19,
+        "kind": "lab",
+        "query": "ABG",
+        "status": 200,
+        "expected": "pH 7.31, PCO2 58, PO2 52, HCO3 28 — acute-on-chronic respiratory acidosis + hypoxia",
+        "actual": "📋 Lab report — ABG: pH 7.31, PCO2 58, PO2 52, HCO3 28 — acute-on-chronic respiratory acidosis + hypoxia"
+      },
+      {
+        "caseId": 19,
+        "kind": "lab",
+        "query": "CBC",
+        "status": 200,
+        "expected": "WBC 11,500 with 78% neutrophils (mild leukocytosis)",
+        "actual": "📋 Lab report — CBC: WBC 11,500 with 78% neutrophils (mild leukocytosis)"
+      },
+      {
+        "caseId": 19,
+        "kind": "imaging",
+        "query": "Chest X-ray",
+        "status": 200,
+        "expected": "Hyperinflated lungs, flattened diaphragms, prominent markings without infiltrate",
+        "actual": "📋 Radiology report — Chest X-ray: Hyperinflated lungs, flattened diaphragms, prominent markings without infiltrate"
+      },
+      {
+        "caseId": 20,
+        "kind": "lab",
+        "query": "BUN",
+        "status": 200,
+        "expected": "68 mg/dL (high)",
+        "actual": "📋 Lab report — BUN: 68 mg/dL (high)"
+      },
+      {
+        "caseId": 20,
+        "kind": "lab",
+        "query": "Creatinine",
+        "status": 200,
+        "expected": "3.4 mg/dL (high; baseline 1.1)",
+        "actual": "📋 Lab report — Creatinine: 3.4 mg/dL (high; baseline 1.1)"
+      },
+      {
+        "caseId": 20,
+        "kind": "lab",
+        "query": "Sodium",
+        "status": 200,
+        "expected": "148 mEq/L (mildly high)",
+        "actual": "📋 Lab report — Sodium: 148 mEq/L (mildly high)"
+      },
+      {
+        "caseId": 20,
+        "kind": "lab",
+        "query": "Potassium",
+        "status": 200,
+        "expected": "5.2 mEq/L",
+        "actual": "📋 Lab report — Potassium: 5.2 mEq/L"
+      },
+      {
+        "caseId": 20,
+        "kind": "lab",
+        "query": "FENa",
+        "status": 200,
+        "expected": "<1% (favoring pre-renal)",
+        "actual": "📋 Lab report — FENa: <1% (favoring pre-renal)"
+      },
+      {
+        "caseId": 20,
+        "kind": "imaging",
+        "query": "Renal ultrasound",
+        "status": 200,
+        "expected": "Normal kidneys, no hydronephrosis or obstructing stone",
+        "actual": "📋 Radiology report — Renal ultrasound: Normal kidneys, no hydronephrosis or obstructing stone"
+      },
+      {
+        "caseId": 21,
+        "kind": "lab",
+        "query": "Blood glucose",
+        "status": 200,
+        "expected": "110 mg/dL (normal)",
+        "actual": "📋 Lab report — Blood glucose: 110 mg/dL (normal)"
+      },
+      {
+        "caseId": 21,
+        "kind": "lab",
+        "query": "INR",
+        "status": 200,
+        "expected": "1.2 (low; warfarin held)",
+        "actual": "📋 Lab report — INR: 1.2 (low; warfarin held)"
+      },
+      {
+        "caseId": 21,
+        "kind": "lab",
+        "query": "Platelets",
+        "status": 200,
+        "expected": "230,000/µL (normal)",
+        "actual": "📋 Lab report — Platelets: 230,000/µL (normal)"
+      },
+      {
+        "caseId": 21,
+        "kind": "imaging",
+        "query": "Non-contrast Brain CT",
+        "status": 200,
+        "expected": "No evidence of acute intracranial hemorrhage; no overt hypodensity (hyperacute infarct may not yet be visible)",
+        "actual": "📋 Radiology report — Non-contrast Brain CT: No evidence of acute intracranial hemorrhage; no overt hypodensity (hyperacute infarct may not yet be visible)"
+      },
+      {
+        "caseId": 22,
+        "kind": "lab",
+        "query": "Bilirubin",
+        "status": 200,
+        "expected": "Total 4.8 mg/dL (high)",
+        "actual": "📋 Lab report — Bilirubin: Total 4.8 mg/dL (high)"
+      },
+      {
+        "caseId": 22,
+        "kind": "lab",
+        "query": "Albumin",
+        "status": 200,
+        "expected": "2.3 g/dL (low)",
+        "actual": "📋 Lab report — Albumin: 2.3 g/dL (low)"
+      },
+      {
+        "caseId": 22,
+        "kind": "lab",
+        "query": "INR",
+        "status": 200,
+        "expected": "1.8 (high)",
+        "actual": "📋 Lab report — INR: 1.8 (high)"
+      },
+      {
+        "caseId": 22,
+        "kind": "lab",
+        "query": "Ascitic fluid analysis",
+        "status": 200,
+        "expected": "WBC 450/µL with 65% PMNs — consistent with SBP, SAAG 1.4 g/dL",
+        "actual": "📋 Lab report — Ascitic fluid analysis: WBC 450/µL with 65% PMNs — consistent with SBP, SAAG 1.4 g/dL"
+      },
+      {
+        "caseId": 22,
+        "kind": "imaging",
+        "query": "Abdominal ultrasound",
+        "status": 200,
+        "expected": "Small heterogeneous liver, splenomegaly, moderate-to-large ascites without focal lesion",
+        "actual": "📋 Radiology report — Abdominal ultrasound: Small heterogeneous liver, splenomegaly, moderate-to-large ascites without focal lesion"
+      },
+      {
+        "caseId": 23,
+        "kind": "lab",
+        "query": "CBC",
+        "status": 200,
+        "expected": "WBC 18,500/µL with 88% neutrophils — neutrophilic leukocytosis",
+        "actual": "📋 Lab report — CBC: WBC 18,500/µL with 88% neutrophils — neutrophilic leukocytosis"
+      },
+      {
+        "caseId": 23,
+        "kind": "lab",
+        "query": "Urinalysis",
+        "status": 200,
+        "expected": "WBC >50/hpf, nitrite positive, many bacteria, cloudy foul urine",
+        "actual": "📋 Lab report — Urinalysis: WBC >50/hpf, nitrite positive, many bacteria, cloudy foul urine"
+      },
+      {
+        "caseId": 23,
+        "kind": "lab",
+        "query": "Blood glucose",
+        "status": 200,
+        "expected": "280 mg/dL (high)",
+        "actual": "📋 Lab report — Blood glucose: 280 mg/dL (high)"
+      },
+      {
+        "caseId": 23,
+        "kind": "lab",
+        "query": "Creatinine",
+        "status": 200,
+        "expected": "1.6 mg/dL (elevated; septic AKI)",
+        "actual": "📋 Lab report — Creatinine: 1.6 mg/dL (elevated; septic AKI)"
+      },
+      {
+        "caseId": 23,
+        "kind": "lab",
+        "query": "Blood & urine culture",
+        "status": 200,
+        "expected": "Samples obtained — pending (empiric therapy ongoing)",
+        "actual": "📋 Lab report — Blood & urine culture: Samples obtained — pending (empiric therapy ongoing)"
+      },
+      {
+        "caseId": 23,
+        "kind": "imaging",
+        "query": "Renal ultrasound",
+        "status": 200,
+        "expected": "No overt obstructive hydronephrosis; edema/increased echogenicity of left parenchyma suggesting pyelonephritis",
+        "actual": "📋 Radiology report — Renal ultrasound: No overt obstructive hydronephrosis; edema/increased echogenicity of left parenchyma suggesting pyelonephritis"
+      }
+    ],
+    "mode": "Bundled blank AI keys, local offline replies; no real external AI grading"
+  },
+  "orders_red": [
+    {
+      "caseId": 14,
+      "kind": "lab",
+      "query": "Troponin I",
+      "status": 200,
+      "expected": "Positive — elevated 0.9 ng/mL (normal <0.04)",
+      "actual": "📋 Lab report — Troponin I: Positive — elevated 0.9 ng/mL (normal <0.04)"
+    },
+    {
+      "caseId": 14,
+      "kind": "lab",
+      "query": "CK-MB",
+      "status": 200,
+      "expected": "Elevated — 28 ng/mL",
+      "actual": "📋 Lab report — CK-MB: Elevated — 28 ng/mL"
+    },
+    {
+      "caseId": 14,
+      "kind": "lab",
+      "query": "Blood glucose",
+      "status": 200,
+      "expected": "185 mg/dL",
+      "actual": "📋 Lab report — Blood glucose: 185 mg/dL"
+    },
+    {
+      "caseId": 14,
+      "kind": "lab",
+      "query": "Creatinine",
+      "status": 200,
+      "expected": "1.0 mg/dL (normal)",
+      "actual": "📋 Lab report — Creatinine: 1.0 mg/dL (normal)"
+    },
+    {
+      "caseId": 14,
+      "kind": "imaging",
+      "query": "ECG",
+      "status": 200,
+      "expected": "3-mm ST-segment elevation in V1-V4 with reciprocal ST depression inferiorly — consistent with anterior STEMI",
+      "actual": "📋 Radiology report — ECG: 3-mm ST-segment elevation in V1-V4 with reciprocal ST depression inferiorly — consistent with anterior STEMI"
+    },
+    {
+      "caseId": 14,
+      "kind": "imaging",
+      "query": "Chest X-ray",
+      "status": 200,
+      "expected": "No overt pulmonary congestion, cardiac silhouette within normal limits",
+      "actual": "📋 Radiology report — Chest X-ray: No overt pulmonary congestion, cardiac silhouette within normal limits"
+    },
+    {
+      "caseId": 15,
+      "kind": "lab",
+      "query": "Blood glucose",
+      "status": 200,
+      "expected": "450 mg/dL (markedly high)",
+      "actual": "📋 Lab report — Blood glucose: 450 mg/dL (markedly high)"
+    },
+    {
+      "caseId": 15,
+      "kind": "lab",
+      "query": "ABG",
+      "status": 200,
+      "expected": "pH 7.15, HCO3 9, PCO2 22 — high-anion-gap metabolic acidosis",
+      "actual": "📋 Lab report — ABG: pH 7.15, HCO3 9, PCO2 22 — high-anion-gap metabolic acidosis"
+    },
+    {
+      "caseId": 15,
+      "kind": "lab",
+      "query": "Urine ketone",
+      "status": 400,
+      "expected": "+3 strongly positive, urine glucose +4",
+      "error": "not_in_catalog"
+    },
+    {
+      "caseId": 15,
+      "kind": "lab",
+      "query": "Potassium",
+      "status": 400,
+      "expected": "4.8 mEq/L",
+      "error": "not_in_catalog"
+    },
+    {
+      "caseId": 15,
+      "kind": "lab",
+      "query": "Sodium",
+      "status": 400,
+      "expected": "142 mEq/L",
+      "error": "not_in_catalog"
+    },
+    {
+      "caseId": 15,
+      "kind": "imaging",
+      "query": "ECG",
+      "status": 200,
+      "expected": "Sinus tachycardia 118 bpm, no ST-segment changes",
+      "actual": "📋 Radiology report — ECG: Sinus tachycardia 118 bpm, no ST-segment changes"
+    },
+    {
+      "caseId": 15,
+      "kind": "imaging",
+      "query": "Chest X-ray",
+      "status": 200,
+      "expected": "No clear consolidation/pleural effusion",
+      "actual": "📋 Radiology report — Chest X-ray: No clear consolidation/pleural effusion"
+    },
+    {
+      "caseId": 16,
+      "kind": "lab",
+      "query": "BNP",
+      "status": 200,
+      "expected": "1400 pg/mL (elevated)",
+      "actual": "📋 Lab report — BNP: 1400 pg/mL (elevated)"
+    },
+    {
+      "caseId": 16,
+      "kind": "lab",
+      "query": "Sodium",
+      "status": 400,
+      "expected": "138 mEq/L",
+      "error": "not_in_catalog"
+    },
+    {
+      "caseId": 16,
+      "kind": "lab",
+      "query": "Potassium",
+      "status": 400,
+      "expected": "4.1 mEq/L",
+      "error": "not_in_catalog"
+    },
+    {
+      "caseId": 16,
+      "kind": "lab",
+      "query": "Creatinine",
+      "status": 200,
+      "expected": "1.3 mg/dL (mildly elevated)",
+      "actual": "📋 Lab report — Creatinine: 1.3 mg/dL (mildly elevated)"
+    },
+    {
+      "caseId": 16,
+      "kind": "imaging",
+      "query": "Chest X-ray",
+      "status": 200,
+      "expected": "Cardiomegaly, Kerley B lines, pulmonary venous congestion — congestive edema",
+      "actual": "📋 Radiology report — Chest X-ray: Cardiomegaly, Kerley B lines, pulmonary venous congestion — congestive edema"
+    },
+    {
+      "caseId": 16,
+      "kind": "imaging",
+      "query": "ECG",
+      "status": 200,
+      "expected": "Sinus rhythm, tachycardia 102, no new ST changes",
+      "actual": "📋 Radiology report — ECG: Sinus rhythm, tachycardia 102, no new ST changes"
+    },
+    {
+      "caseId": 17,
+      "kind": "lab",
+      "query": "CBC",
+      "status": 200,
+      "expected": "WBC 16,200/µL with 85% neutrophils — neutrophilic leukocytosis",
+      "actual": "📋 Lab report — CBC: WBC 16,200/µL with 85% neutrophils — neutrophilic leukocytosis"
+    },
+    {
+      "caseId": 17,
+      "kind": "lab",
+      "query": "CRP",
+      "status": 200,
+      "expected": "85 mg/L (elevated)",
+      "actual": "📋 Lab report — CRP: 85 mg/L (elevated)"
+    },
+    {
+      "caseId": 17,
+      "kind": "imaging",
+      "query": "Chest X-ray",
+      "status": 200,
+      "expected": "Dense consolidation with air bronchograms in right lower lobe",
+      "actual": "📋 Radiology report — Chest X-ray: Dense consolidation with air bronchograms in right lower lobe"
+    },
+    {
+      "caseId": 18,
+      "kind": "lab",
+      "query": "Hemoglobin",
+      "status": 200,
+      "expected": "7.2 g/dL (low)",
+      "actual": "📋 Lab report — Hemoglobin: 7.2 g/dL (low)"
+    },
+    {
+      "caseId": 18,
+      "kind": "lab",
+      "query": "BUN/Creatinine",
+      "status": 200,
+      "expected": "BUN 45, Cr 1.0 — ratio >30",
+      "actual": "📋 Lab report — BUN/Creatinine: BUN 45, Cr 1.0 — ratio >30"
+    },
+    {
+      "caseId": 18,
+      "kind": "lab",
+      "query": "Platelets",
+      "status": 400,
+      "expected": "210,000/µL (normal)",
+      "error": "not_in_catalog"
+    },
+    {
+      "caseId": 18,
+      "kind": "imaging",
+      "query": "Upper endoscopy (EGD)",
+      "status": 200,
+      "expected": "Active duodenal bulb ulcer with visible vessel, no active bleeding at time of scope (post-resuscitation)",
+      "actual": "📋 Radiology report — Upper endoscopy (EGD): Active duodenal bulb ulcer with visible vessel, no active bleeding at time of scope (post-resuscitation)"
+    },
+    {
+      "caseId": 18,
+      "kind": "imaging",
+      "query": "Abdominal X-ray",
+      "status": 200,
+      "expected": "No free air under diaphragm",
+      "actual": "📋 Radiology report — Abdominal X-ray: No free air under diaphragm"
+    },
+    {
+      "caseId": 19,
+      "kind": "lab",
+      "query": "ABG",
+      "status": 200,
+      "expected": "pH 7.31, PCO2 58, PO2 52, HCO3 28 — acute-on-chronic respiratory acidosis + hypoxia",
+      "actual": "📋 Lab report — ABG: pH 7.31, PCO2 58, PO2 52, HCO3 28 — acute-on-chronic respiratory acidosis + hypoxia"
+    },
+    {
+      "caseId": 19,
+      "kind": "lab",
+      "query": "CBC",
+      "status": 200,
+      "expected": "WBC 11,500 with 78% neutrophils (mild leukocytosis)",
+      "actual": "📋 Lab report — CBC: WBC 11,500 with 78% neutrophils (mild leukocytosis)"
+    },
+    {
+      "caseId": 19,
+      "kind": "imaging",
+      "query": "Chest X-ray",
+      "status": 200,
+      "expected": "Hyperinflated lungs, flattened diaphragms, prominent markings without infiltrate",
+      "actual": "📋 Radiology report — Chest X-ray: Hyperinflated lungs, flattened diaphragms, prominent markings without infiltrate"
+    },
+    {
+      "caseId": 20,
+      "kind": "lab",
+      "query": "BUN",
+      "status": 200,
+      "expected": "68 mg/dL (high)",
+      "actual": "📋 Lab report — BUN: 68 mg/dL (high)"
+    },
+    {
+      "caseId": 20,
+      "kind": "lab",
+      "query": "Creatinine",
+      "status": 200,
+      "expected": "3.4 mg/dL (high; baseline 1.1)",
+      "actual": "📋 Lab report — Creatinine: 3.4 mg/dL (high; baseline 1.1)"
+    },
+    {
+      "caseId": 20,
+      "kind": "lab",
+      "query": "Sodium",
+      "status": 400,
+      "expected": "148 mEq/L (mildly high)",
+      "error": "not_in_catalog"
+    },
+    {
+      "caseId": 20,
+      "kind": "lab",
+      "query": "Potassium",
+      "status": 400,
+      "expected": "5.2 mEq/L",
+      "error": "not_in_catalog"
+    },
+    {
+      "caseId": 20,
+      "kind": "lab",
+      "query": "FENa",
+      "status": 400,
+      "expected": "<1% (favoring pre-renal)",
+      "error": "not_in_catalog"
+    },
+    {
+      "caseId": 20,
+      "kind": "imaging",
+      "query": "Renal ultrasound",
+      "status": 400,
+      "expected": "Normal kidneys, no hydronephrosis or obstructing stone",
+      "error": "not_in_catalog"
+    },
+    {
+      "caseId": 21,
+      "kind": "lab",
+      "query": "Blood glucose",
+      "status": 200,
+      "expected": "110 mg/dL (normal)",
+      "actual": "📋 Lab report — Blood glucose: 110 mg/dL (normal)"
+    },
+    {
+      "caseId": 21,
+      "kind": "lab",
+      "query": "INR",
+      "status": 200,
+      "expected": "1.2 (low; warfarin held)",
+      "actual": "📋 Lab report — INR: 1.2 (low; warfarin held)"
+    },
+    {
+      "caseId": 21,
+      "kind": "lab",
+      "query": "Platelets",
+      "status": 400,
+      "expected": "230,000/µL (normal)",
+      "error": "not_in_catalog"
+    },
+    {
+      "caseId": 21,
+      "kind": "imaging",
+      "query": "Non-contrast Brain CT",
+      "status": 200,
+      "expected": "No evidence of acute intracranial hemorrhage; no overt hypodensity (hyperacute infarct may not yet be visible)",
+      "actual": "📋 Radiology report — Non-contrast Brain CT: No evidence of acute intracranial hemorrhage; no overt hypodensity (hyperacute infarct may not yet be visible)"
+    },
+    {
+      "caseId": 22,
+      "kind": "lab",
+      "query": "Bilirubin",
+      "status": 200,
+      "expected": "Total 4.8 mg/dL (high)",
+      "actual": "📋 Lab report — Bilirubin: Total 4.8 mg/dL (high)"
+    },
+    {
+      "caseId": 22,
+      "kind": "lab",
+      "query": "Albumin",
+      "status": 200,
+      "expected": "2.3 g/dL (low)",
+      "actual": "📋 Lab report — Albumin: 2.3 g/dL (low)"
+    },
+    {
+      "caseId": 22,
+      "kind": "lab",
+      "query": "INR",
+      "status": 200,
+      "expected": "1.8 (high)",
+      "actual": "📋 Lab report — INR: 1.8 (high)"
+    },
+    {
+      "caseId": 22,
+      "kind": "lab",
+      "query": "Ascitic fluid analysis",
+      "status": 400,
+      "expected": "WBC 450/µL with 65% PMNs — consistent with SBP, SAAG 1.4 g/dL",
+      "error": "not_in_catalog"
+    },
+    {
+      "caseId": 22,
+      "kind": "imaging",
+      "query": "Abdominal ultrasound",
+      "status": 200,
+      "expected": "Small heterogeneous liver, splenomegaly, moderate-to-large ascites without focal lesion",
+      "actual": "📋 Radiology report — Abdominal ultrasound: Small heterogeneous liver, splenomegaly, moderate-to-large ascites without focal lesion"
+    },
+    {
+      "caseId": 23,
+      "kind": "lab",
+      "query": "CBC",
+      "status": 200,
+      "expected": "WBC 18,500/µL with 88% neutrophils — neutrophilic leukocytosis",
+      "actual": "📋 Lab report — CBC: WBC 18,500/µL with 88% neutrophils — neutrophilic leukocytosis"
+    },
+    {
+      "caseId": 23,
+      "kind": "lab",
+      "query": "Urinalysis",
+      "status": 200,
+      "expected": "WBC >50/hpf, nitrite positive, many bacteria, cloudy foul urine",
+      "actual": "📋 Lab report — Urinalysis: WBC >50/hpf, nitrite positive, many bacteria, cloudy foul urine"
+    },
+    {
+      "caseId": 23,
+      "kind": "lab",
+      "query": "Blood glucose",
+      "status": 200,
+      "expected": "280 mg/dL (high)",
+      "actual": "📋 Lab report — Blood glucose: 280 mg/dL (high)"
+    },
+    {
+      "caseId": 23,
+      "kind": "lab",
+      "query": "Creatinine",
+      "status": 200,
+      "expected": "1.6 mg/dL (elevated; septic AKI)",
+      "actual": "📋 Lab report — Creatinine: 1.6 mg/dL (elevated; septic AKI)"
+    },
+    {
+      "caseId": 23,
+      "kind": "lab",
+      "query": "Blood & urine culture",
+      "status": 200,
+      "expected": "Samples obtained — pending (empiric therapy ongoing)",
+      "actual": "📋 Lab report — Blood & urine culture: Samples obtained — pending (empiric therapy ongoing)"
+    },
+    {
+      "caseId": 23,
+      "kind": "imaging",
+      "query": "Renal ultrasound",
+      "status": 400,
+      "expected": "No overt obstructive hydronephrosis; edema/increased echogenicity of left parenchyma suggesting pyelonephritis",
+      "error": "not_in_catalog"
+    }
+  ],
+  "ui": {
+    "tabs": [
+      {
+        "name": "داشبورد",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "گزارش‌ها و پژوهش",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "کلاس‌های درسی",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "گفتگوهای ذخیره‌شده",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "نتایج و کارنامه",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "بررسی نقاشی‌ها",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "نمره‌دهی بیمار مجازی",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "آزمون‌ها",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "نتایج آزمون‌ها",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "پژوهش آموزشی",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "کاربران",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "دانشگاه‌ها",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "بانک بیماران",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "فلش‌کارت‌ها",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "کاتالوگ‌های Auto complete",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "چک‌لیست‌ها",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "پرسشنامه‌ها",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "تنظیمات هوش مصنوعی",
+        "width": 1440,
+        "documentWidth": 1440,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "داشبورد",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "گزارش‌ها و پژوهش",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "کلاس‌های درسی",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "گفتگوهای ذخیره‌شده",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "نتایج و کارنامه",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "بررسی نقاشی‌ها",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "نمره‌دهی بیمار مجازی",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "آزمون‌ها",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "نتایج آزمون‌ها",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "پژوهش آموزشی",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "کاربران",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "دانشگاه‌ها",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "بانک بیماران",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "فلش‌کارت‌ها",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "کاتالوگ‌های Auto complete",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "چک‌لیست‌ها",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "پرسشنامه‌ها",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      },
+      {
+        "name": "تنظیمات هوش مصنوعی",
+        "width": 390,
+        "documentWidth": 390,
+        "loadErrorBanners": []
+      }
+    ],
+    "checks": [
+      {
+        "name": "mobile validation error focused",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "mobile validation error within viewport",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "failed save retains title",
+        "actual": "آزمون رابط R29",
+        "expected": "آزمون رابط R29"
+      },
+      {
+        "name": "failed save focus",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "retry create status",
+        "actual": 200,
+        "expected": 200
+      },
+      {
+        "name": "retry closed editor",
+        "actual": 0,
+        "expected": 0
+      },
+      {
+        "name": "Persian roundtrip",
+        "actual": "آزمون رابط R29",
+        "expected": "آزمون رابط R29"
+      },
+      {
+        "name": "English roundtrip",
+        "actual": "R29 usability patient",
+        "expected": "R29 usability patient"
+      },
+      {
+        "name": "stable code created",
+        "actual": true,
+        "expected": true
+      },
+      {
+        "name": "page errors",
+        "actual": 0,
+        "expected": 0
+      }
+    ],
+    "errors": [],
+    "webSecurityDisabled": false,
+    "syntheticFault": "One POST /api/cases 503 response injected in browser; retry then reached real backend",
+    "createdCaseId": 24
+  },
+  "student_ui": {
+    "actualUiOrders": [
+      {
+        "query": "Sodium",
+        "status": 200,
+        "found": true,
+        "source": "chart",
+        "text": "📋 گزارش آزمایشگاه — سدیم: ۱۴۲ میلی‌اکی‌والان/لیتر"
+      },
+      {
+        "query": "Potassium",
+        "status": 200,
+        "found": true,
+        "source": "chart",
+        "text": "📋 گزارش آزمایشگاه — پتاسیم: ۴٫۸ میلی‌اکی‌والان/لیتر"
+      },
+      {
+        "query": "Urine ketone",
+        "status": 200,
+        "found": true,
+        "source": "chart",
+        "text": "📋 گزارش آزمایشگاه — کتون ادرار: +۳ شدید، گلوکز ادرار +۴"
+      }
+    ],
+    "caseId": 15,
+    "diagnosticOfflineOnly": true
+  },
+  "student_ecg_ui": {
+    "actualUiOrders": [
+      {
+        "query": "ECG",
+        "status": 200,
+        "found": true,
+        "source": "chart",
+        "text": "📋 گزارش رادیولوژی — نوار قلب: صعود قطعه ST به میزان ۳ میلی‌متر در لیدهای V1 تا V4 همراه با افت ST رسیپروکال در لیدهای تحتانی — به نفع STEMI قدامی"
+      },
+      {
+        "verifiedImageVisible": true
+      }
+    ],
+    "caseId": 14,
+    "diagnosticOfflineOnly": true
+  },
+  "media_exact_package_bytes_verified": true,
+  "limits": [
+    "No universal bug-free claim; static 14-module/366-route inventory is not exhaustive behavior coverage.",
+    "Two clinical rubric mismatches and ten unapproved teaching references remain; no clinical content/historical score rewrite.",
+    "Existing unrecorded-result normal assumption and optional other-university demo rubric fallback need separate review.",
+    "Only ARAK automatic target; no silent university creation. Missing rubric/catalog overflow causes atomic rollback plus startup warning. Retired/inactive identities are not resurrected.",
+    "No external AI/provider grading test or clinical sign-off; local recorded results/offline replies only.",
+    "No real-teacher usability study, screen reader test, exhaustive contrast test or every form mutation.",
+    "Prior legacy-flat-file ownership limitations and CSV spreadsheet/re-save caveats remain."
+  ],
+  "test_corrections": [
+    "An early fixture tried to insert competitive VP; existing schema correctly rejected it, so the positive fixture now asserts the prohibition rather than bypassing it.",
+    "Media fixture explicitly inserts its source chart because repeated seed --force preserves tombstones; no production assertions weakened.",
+    "Mobile tab test initially forgot the designed collapsed-navigation toggle.",
+    "An optional student screenshot timed out; the UI order assertions were rerun successfully without relying on screenshot output."
+  ],
+  "archive_sha256": "1323ede7861e0a2abee1e0fb796cfc4fa60933a2e682e58c5b4b1f5dbaf312b1"
+}

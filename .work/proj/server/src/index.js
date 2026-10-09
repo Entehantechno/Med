@@ -123,6 +123,18 @@ async function main() {
     console.log(`✓ Existing database detected (${existing} users) — data preserved, no seeding.`);
   }
 
+  // Upload/upgrade provisioning is additive; stable source claims preserve edits,
+  // inactivity and deletion. Never reset the retained database to seed ten cases.
+  try {
+    const { ensureEmergencyCases } = await import("./lib/emergency-provision.js");
+    const patients = ensureEmergencyCases();
+    console.log("Academic emergency patients:", JSON.stringify(patients));
+  } catch (e) {
+    // A missing/renamed institutional rubric must not take an existing site down
+    // or be silently replaced with an unrelated rubric. The transaction rolls back.
+    console.warn("Academic emergency patients NOT provisioned:", e.message);
+  }
+
   try { const { ensureDefaultEducationPosts } = await import("./lib/blog.js"); const n = ensureDefaultEducationPosts(); if (n) console.log(`📝 ensured ${n} default education blog post change(s)`); } catch (e) { console.warn("default blog posts skipped", e?.message || e); }
 
   // Load the past-exam question banks that ship with the release. This is
