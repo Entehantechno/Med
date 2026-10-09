@@ -1,3 +1,4 @@
+import UniversitySelect from './UniversitySelect.jsx';
 import {useEffect,useState,useRef} from 'react';
 import {api} from '../api.js';
 import {useApp} from '../context.jsx';
@@ -6,7 +7,7 @@ export function UniversityField({value,onChange,disabled=false}){
  const {user,lang}=useApp(),fa=lang==='fa';const[rows,setRows]=useState([]),[error,setError]=useState('');
  useEffect(()=>{if(user.role==='admin')api.get('/universities').then(r=>setRows(r.universities||[])).catch(e=>setError(e.message))},[user.role]);
  if(user.role!=='admin')return null;
- return <label className="field">{fa?'دانشگاه کلاس / آزمون':'Class / exam university'}{error&&<span role="alert">{error}</span>}<select aria-label={fa?'دانشگاه کلاس / آزمون':'Class / exam university'} disabled={disabled} value={value||''} onChange={e=>onChange(e.target.value?Number(e.target.value):'')}><option value="">{fa?'دانشگاه را انتخاب کنید':'Select a university'}</option>{rows.map(u=><option key={u.id} value={u.id}>{(fa?u.name_fa:u.name_en)||u.code} — {u.code}</option>)}</select></label>;
+ return <label className="field">{fa?'دانشگاه کلاس / آزمون':'Class / exam university'}{error&&<span role="alert">{error}</span>}<UniversitySelect rows={rows} label={fa?"دانشگاه کلاس / آزمون":"Class / exam university"} value={value||""} disabled={disabled} onChange={v=>onChange(v?Number(v):"")}/></label>;
 }
 export function GroupUniversity({kind,id,value,onSaved}){
  const {user,lang}=useApp(),fa=lang==='fa';const[uni,setUni]=useState(value),[busy,setBusy]=useState(false),[error,setError]=useState('');

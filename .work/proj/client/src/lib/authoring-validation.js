@@ -1,3 +1,4 @@
+import {validateSteps} from './step-authoring.js';
 import {acceptedAnswers} from "./authoring-values.js";
 const text=v=>typeof v==='string'&&v.trim().length>0;
 const lines=v=>Array.isArray(v)?v.filter(text):String(v||'').split('\n').filter(text);
@@ -16,7 +17,7 @@ export function validateQuestion(f,lang='fa'){
  if(f.type==='hotspot'&&!text(f.imageUrl))return fail('تصویر سؤال ناحیه‌گذاری را انتخاب کنید.','Choose the hotspot image.');
  if(f.type==='puzzle'&&(!text(f.puzzle?.imageUrl||f.imageUrl)||!(f.puzzle?.pins||[]).some(p=>text(p.label_fa)||text(p.label_en))))return fail('تصویر و حداقل یک پین نام‌دار برای پازل لازم است.','The puzzle needs an image and at least one named pin.');
  if(f.type==='kf'&&!(f.kf?.items||[]).some(x=>text(x.prompt_fa)||text(x.prompt_en)))return fail('متن حداقل یک پرسش کلیدی را وارد کنید.','Enter at least one key-feature prompt.');
- if(f.type==='stepwise'&&!(f.steps||[]).some(x=>text(x.prompt_fa)||text(x.prompt_en)))return fail('متن حداقل یک مرحله را وارد کنید.','Enter at least one step prompt.');
+ if(f.type==='stepwise')return validateSteps(f.steps,lang);
  return null;
 }
 

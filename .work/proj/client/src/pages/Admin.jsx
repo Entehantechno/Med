@@ -1,3 +1,7 @@
+import UniversitySelect from '../components/UniversitySelect.jsx';
+import {sortUniversities,matchesUniversity} from '../lib/university-order.js';
+import StepwiseEditor from '../components/StepwiseEditor.jsx';
+import {normalizeStep} from '../lib/step-authoring.js';
 import UniversityMembers from '../components/UniversityMembers.jsx';
 import AcademicMembers from '../components/AcademicMembers.jsx';
 import {UniversityField,GroupUniversity,ContentSharing} from '../components/AcademicControls.jsx';
@@ -611,11 +615,7 @@ export function UsersManager({ scope = "all" }) {
           </select>
         )}
         {(showUniTools || scope==="all") && (
-          <select value={uniFilter} onChange={(e)=> {setUniFilter(e.target.value);setPage(1)}} style={{ minWidth: 180 }}>
-            <option value="">{faLang ? "همه دانشگاه‌ها" : "All universities"}</option>
-            {unis.map(u=> <option key={u.id} value={u.id}>{faLang ? (u.name_fa||u.code) : (u.name_en||u.code)} — {u.code}</option>)}
-            <option value="null">{faLang ? "— بدون دانشگاه —" : "— no university —"}</option>
-          </select>
+          <UniversitySelect rows={unis} value={uniFilter} onChange={v=>{setUniFilter(v);setPage(1)}} emptyLabel={faLang?"همه دانشگاه‌ها":"All universities"} allowUnassigned/>
         )}
         {uniFilter && <span className="small muted">{faLang ? `${filteredByUni.length} نفر` : `${filteredByUni.length} users`}</span>}
       </div>
@@ -629,10 +629,7 @@ export function UsersManager({ scope = "all" }) {
           {showUniTools && <button type="button" className="btn btn-ghost btn-sm" onClick={()=> setBulkAction(bulkAction==="class"?null:"class")}><Icon name="users" size={13}/> {faLang?"افزودن به کلاس":"Add to class"}</button>}
           {bulkAction==="uni" && (
             <span style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap" }}>
-              <select value={bulkUni} onChange={e=> setBulkUni(e.target.value)} style={{ minWidth:180 }}>
-                <option value="">{faLang?"— انتخاب دانشگاه —":"— pick university —"}</option>
-                {unis.map(u=> <option key={u.id} value={u.id}>{faLang?(u.name_fa||u.code):(u.name_en||u.code)} — {u.code}</option>)}
-              </select>
+              <UniversitySelect rows={unis} value={bulkUni} onChange={setBulkUni}/>
               <button type="button" className="btn btn-primary btn-sm" onClick={bulkAssignUni}>{faLang?"تأیید انتساب":"Assign"}</button>
             </span>
           )}
@@ -865,10 +862,7 @@ function StudentImportModal({ onClose, onDone }) {
           {(myRole==="admin") && (
             <div className="grid grid-2 mb12">
               <label className="field"><span>{fa?"دانشگاه مقصد (اختیاری)":"Target university (optional)"}</span>
-                <select value={uniId} onChange={e=>setUniId(e.target.value)}>
-                  <option value="">{fa?"— دانشگاه فعلی/پیش‌فرض —":"— current / default —"}</option>
-                  {unis.map(u=><option key={u.id} value={u.id}>{fa? (u.name_fa||u.code) : (u.name_en||u.code)} — {u.code} {u.city_fa?`(${u.city_fa})`:""}</option>)}
-                </select>
+                <UniversitySelect rows={unis} value={uniId} onChange={setUniId} emptyLabel={fa?"دانشگاه فعلی / پیش‌فرض":"Current / default university"}/>
                 <span className="small muted">{fa?"اگر خالی باشد، به دانشگاهِ جاری افزوده می‌شود. کد داخل CSV بر این انتخاب اولویت دارد.":"Leave empty for current. Code inside CSV overrides this."}</span>
               </label>
               <label className="field"><span>{fa?"افزودن مستقیم به کلاس (ثبت‌نام خودکار)":"Add directly to class (auto-enroll)"}</span>
@@ -1548,6 +1542,8 @@ export function CardModal({ card, onClose, onSave }) {
     micro_lead_fa: "", micro_lead_en: "", micro_golden_fa: "", micro_golden_en: "",
     micro_source_fa: "", micro_source_en: "",
     ...card,
+    questionText_fa: card.questionText_fa || card.q_fa || "",
+    questionText_en: card.questionText_en || card.q_en || "",
     ...(card.drawing ? {drawing:{...card.drawing,...drawingRubrics(card.drawing)}} : {}),
     ...(card.type === 'order' && (card.items_fa?.length || card.items_en?.length)
       ? orderingRows(card.items_fa || [], card.items_en || []) : {}),
@@ -1561,7 +1557,7 @@ export function CardModal({ card, onClose, onSave }) {
   const [subject, setSubject] = useState(card.subject || "");
   const [customCats, setCustomCats] = useState([]);
   useEffect(() => { api.get("/catalogs").then(setCustomCats).catch(() => setCustomCats([])); }, []);
-  const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
+  const set = (k, v) => setF((s) => ({ ...s, [k]: v, ...(k.startsWith("questionText_") ? {[k.replace("questionText_","q_")]:v} : {}) }));
   const setHotspot = (k, v) => setF((s) => ({ ...s, hotspot: { ...(s.hotspot || { x: 50, y: 50, r: 8 }), [k]: v } }));
   const setDrawing = (k, v) => setF((s) => ({ ...s, drawing: { ...(s.drawing || {}), [k]: v } }));
   const setRubric = (langKey, i, v) => setF((s) => { const d = { ...(s.drawing || {}) }; const a = Array.isArray(d[langKey]) ? [...d[langKey]] : []; a[i] = v; d[langKey] = a; return { ...s, drawing: d }; });
@@ -1700,15 +1696,7 @@ export function CardModal({ card, onClose, onSave }) {
         })).filter((z) => z.w > 1 && z.h > 1) : [],
       };
     }
-    if (f.type === "stepwise") {
-      base.steps = (f.steps || []).filter((st) => st.prompt_fa || st.prompt_en).map((st) => ({
-        ...st,
-        accept_fa: acceptedAnswers(st.accept_fa || st.answer_fa),
-        accept_en: acceptedAnswers(st.accept_en || st.answer_en),
-        options_fa: Array.isArray(st.options_fa) ? st.options_fa : String(st.options_fa || "").split(/[\n,]/).map((x)=>x.trim()).filter(Boolean),
-        options_en: Array.isArray(st.options_en) ? st.options_en : String(st.options_en || "").split(/[\n,]/).map((x)=>x.trim()).filter(Boolean),
-      }));
-    }
+    if (f.type === "stepwise") base.steps = (f.steps || []).map(normalizeStep);
     if (f.type === "kf") {
       base.kf = {
         vignette_fa: (f.kf || {}).vignette_fa || "",
@@ -1804,6 +1792,12 @@ export function CardModal({ card, onClose, onSave }) {
       <div data-content-language="en" className="field"><label>{t("title")} (EN)</label><input aria-label={[t("title"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.title_en} onChange={(e) => set("title_en", e.target.value)} /></div>
 
       </AuthorSection><AuthorSection id="answer" title={lang==="fa"?"صورت سؤال، تعامل و پاسخ صحیح":"Question, interaction & correct answer"}>
+      {/* Question text is also independent of the image */}
+      <div data-content-language="fa" className="field"><label>{t("questionText")} (FA)</label>
+        <textarea aria-label={[t("questionText"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.questionText_fa} onChange={(e) => set("questionText_fa", e.target.value)} placeholder={t("optional")} /></div>
+      <div data-content-language="en" className="field"><label>{t("questionText")} (EN)</label>
+        <textarea aria-label={[t("questionText"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.questionText_en} onChange={(e) => set("questionText_en", e.target.value)} placeholder={t("optional")} /></div>
+
       {f.type === "hotspot" && (
         <div className="micro-box mb16" style={{ padding: 12 }}>
           <ImageUpload value={f.imageUrl} onChange={(v) => set("imageUrl", v)} label={lang === "fa" ? "تصویر بافت / آناتومی / رادیولوژی" : "Histology / anatomy / radiology image"} />
@@ -1851,32 +1845,7 @@ export function CardModal({ card, onClose, onSave }) {
         </div>
       )}
 
-      {f.type === "stepwise" && (
-        <div className="micro-box mb16" style={{ padding: 12 }}>
-          <div className="section-title"><label className="small muted">{lang === "fa" ? "مراحل سؤال scaffolded" : "Scaffolded steps"}</label><button type="button" className="btn btn-sm btn-ghost" onClick={addStep}>+ {t("add")}</button></div>
-          <div className="small muted mb8">{lang === "fa" ? "هر مرحله یک prompt و پاسخ مورد انتظار دارد. چند پاسخ قابل قبول را با ویرگول جدا کنید." : "Each step has a prompt and expected answers. Separate acceptable answers with commas."}</div>
-          {(f.steps || []).map((st, i) => (
-            <div className="card mt8" key={i} style={{ padding: 10, background: "var(--panel2)" }}>
-              <div className="section-title"><b>{lang === "fa" ? `مرحله ${i+1}` : `Step ${i+1}`}</b>{(f.steps||[]).length>1&&<button type="button" className="btn btn-sm btn-danger" onClick={()=>delStep(i)}>✕</button>}</div>
-              <div className="field"><label>{lang === "fa" ? "نوع پاسخ این مرحله" : "Step answer type"}</label><select aria-label={[lang === "fa" ? "نوع پاسخ این مرحله" : "Step answer type"].join(' ')} value={st.answerType || "autocomplete"} onChange={(e)=>setStep(i,"answerType",e.target.value)}><option value="autocomplete">{lang==="fa"?"اتوکامپلیت/متنی":"Autocomplete/text"}</option><option value="mcq">{lang==="fa"?"چندگزینه‌ای":"Multiple choice"}</option><option value="truefalse">{lang==="fa"?"درست/غلط":"True/False"}</option><option value="fill">{lang==="fa"?"جای‌خالی":"Fill"}</option></select></div>
-              <div className="grid grid-2">
-                <div data-content-language="fa" className="field"><label>Prompt FA</label><textarea aria-label={["Prompt FA","(FA)"].join(' ')} dir="rtl" lang="fa" value={st.prompt_fa || ""} onChange={(e)=>setStep(i,"prompt_fa",e.target.value)} /></div>
-                <div data-content-language="en" className="field"><label>Prompt EN</label><textarea aria-label={["Prompt EN","(EN)"].join(' ')} dir="ltr" lang="en" value={st.prompt_en || ""} onChange={(e)=>setStep(i,"prompt_en",e.target.value)} /></div>
-                <div data-content-language="fa" className="field"><label>{lang === "fa" ? "پاسخ/پاسخ‌های قابل قبول FA" : "Accepted answers FA"}</label><input aria-label={[lang === "fa" ? "پاسخ/پاسخ‌های قابل قبول FA" : "Accepted answers FA","(FA)"].join(' ')} dir="rtl" lang="fa" value={Array.isArray(st.accept_fa)?st.accept_fa.join(", "):(st.accept_fa || st.answer_fa || "")} onChange={(e)=>setStep(i,"accept_fa",e.target.value)} /></div>
-                <div data-content-language="en" className="field"><label>Accepted answers EN</label><input aria-label={["Accepted answers EN","(EN)"].join(' ')} dir="ltr" lang="en" value={Array.isArray(st.accept_en)?st.accept_en.join(", "):(st.accept_en || st.answer_en || "")} onChange={(e)=>setStep(i,"accept_en",e.target.value)} /></div>
-                {st.answerType === "mcq" && <div data-content-language="fa" className="field"><label>{lang === "fa" ? "گزینه‌های FA (هر خط/ویرگول)" : "Options FA"}</label><textarea aria-label={[lang === "fa" ? "گزینه‌های FA (هر خط/ویرگول)" : "Options FA","(FA)"].join(' ')} dir="rtl" lang="fa" value={Array.isArray(st.options_fa)?st.options_fa.join("\n"):(st.options_fa||"")} onChange={(e)=>setStep(i,"options_fa",e.target.value)} /></div>}
-                {st.answerType === "mcq" && <div data-content-language="en" className="field"><label>Options EN</label><textarea aria-label={["Options EN","(EN)"].join(' ')} dir="ltr" lang="en" value={Array.isArray(st.options_en)?st.options_en.join("\n"):(st.options_en||"")} onChange={(e)=>setStep(i,"options_en",e.target.value)} /></div>}
-                <div data-content-language="fa" className="field"><label>{lang === "fa" ? "هینت FA" : "Hint FA"}</label><input aria-label={[lang === "fa" ? "هینت FA" : "Hint FA","(FA)"].join(' ')} dir="rtl" lang="fa" value={st.hint_fa || ""} onChange={(e)=>setStep(i,"hint_fa",e.target.value)} /></div>
-                <div data-content-language="en" className="field"><label>Hint EN</label><input aria-label={["Hint EN","(EN)"].join(' ')} dir="ltr" lang="en" value={st.hint_en || ""} onChange={(e)=>setStep(i,"hint_en",e.target.value)} /></div>
-              </div>
-              <div className="grid grid-2">
-                <div data-content-language="fa" className="field"><label>{lang === "fa" ? "توضیح بعد از پاسخ FA" : "Explanation FA"}</label><textarea aria-label={[lang === "fa" ? "توضیح بعد از پاسخ FA" : "Explanation FA","(FA)"].join(' ')} dir="rtl" lang="fa" value={st.explanation_fa || ""} onChange={(e)=>setStep(i,"explanation_fa",e.target.value)} /></div>
-                <div data-content-language="en" className="field"><label>Explanation EN</label><textarea aria-label={["Explanation EN","(EN)"].join(' ')} dir="ltr" lang="en" value={st.explanation_en || ""} onChange={(e)=>setStep(i,"explanation_en",e.target.value)} /></div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {f.type === "stepwise" && <StepwiseEditor steps={f.steps || []} onChange={v=>set("steps",v)} lang={lang} catalogs={customCats} />}
 
       {f.type === "kf" && (
         <div className="micro-box mb16" style={{ padding: 12 }}>
@@ -1969,11 +1938,6 @@ export function CardModal({ card, onClose, onSave }) {
       {/* Image is optional and independent — a teacher can add it to ANY card. Hotspot has its own image field above. */}
       {f.type !== "hotspot" && <ImageUpload value={f.imageUrl} onChange={(v) => set("imageUrl", v)} label={`${t("imageUrl")} (${t("optional")})`} />}
 
-      {/* Question text is also independent of the image */}
-      <div data-content-language="fa" className="field"><label>{t("questionText")} (FA)</label>
-        <textarea aria-label={[t("questionText"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.questionText_fa} onChange={(e) => set("questionText_fa", e.target.value)} placeholder={t("optional")} /></div>
-      <div data-content-language="en" className="field"><label>{t("questionText")} (EN)</label>
-        <textarea aria-label={[t("questionText"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.questionText_en} onChange={(e) => set("questionText_en", e.target.value)} placeholder={t("optional")} /></div>
 
       <div className="grid grid-2">
         <div data-content-language="fa" className="field"><label>{t("category")} (FA)</label><input aria-label={[t("category"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.category_fa} onChange={(e) => set("category_fa", e.target.value)} /></div>
@@ -7886,7 +7850,7 @@ function SiteAnalytics() {
               <div className="small muted mb8">{t("byUniversity")}</div>
               <div className="table-wrap"><table><thead><tr>
                 <th>{fa ? "دانشگاه" : "University"}</th><th>{t("colTeachers")}</th><th>{t("colStudents")}</th><th>{t("colClasses")}</th><th>{fa ? "آزمون" : "Attempts"}</th><th>{t("colAvgScore")}</th>
-              </tr></thead><tbody>{seg.universities.map((u) => (
+              </tr></thead><tbody>{sortUniversities(seg.universities,lang).map((u) => (
                 <tr key={u.id}><td>{u.name}</td><td>{num(u.teachers)}</td><td>{num(u.students)}</td><td>{num(u.classes)}</td><td>{num(u.attempts)}</td><td><b>{u.avgScore}</b></td></tr>
               ))}</tbody></table></div>
             </div>
@@ -9087,10 +9051,7 @@ function UserEditModal({ user, onClose, onSaved }) {
         </select></div>
       {isUni && (
         <div className="field"><label><Icon name="class" size={14} /> {t("university")}</label>
-          <select value={f.university_id} onChange={(e) => setF({ ...f, university_id: e.target.value })}>
-            <option value="">{t("noUniversity")} *</option>
-            {unis.map((u) => <option key={u.id} value={u.id}>{lang === "fa" ? u.name_fa : u.name_en}</option>)}
-          </select></div>
+          <UniversitySelect rows={unis} value={f.university_id} onChange={v=>setF({...f,university_id:v})} emptyLabel={t("noUniversity")}/></div>
       )}
       <div className="grid grid-2">
         {f.role === "student" && <div className="field"><label>{t("studentNo") || "Student No"}</label><input value={f.student_no} onChange={(e) => setF({ ...f, student_no: e.target.value })} /></div>}
@@ -9127,10 +9088,7 @@ function UserCreateModal({ onClose, onSaved, defaultRole = "learner" }) {
         </select></div>
       {isUni && (
         <div className="field"><label><Icon name="class" size={14} /> {t("university")}</label>
-          <select value={f.university_id} onChange={(e) => setF({ ...f, university_id: e.target.value })}>
-            <option value="">{t("noUniversity")} *</option>
-            {unis.map((u) => <option key={u.id} value={u.id}>{lang === "fa" ? u.name_fa : u.name_en}</option>)}
-          </select></div>
+          <UniversitySelect rows={unis} value={f.university_id} onChange={v=>setF({...f,university_id:v})} emptyLabel={t("noUniversity")}/></div>
       )}
       {f.role === "student" && <div className="field"><label>{t("studentNo") || "Student No"}</label><input value={f.student_no} onChange={(e) => setF({ ...f, student_no: e.target.value })} /></div>}
     </Modal>
@@ -9195,15 +9153,15 @@ function Universities() {
       {unis.length > 0 && (
         <div className="dt-search">
           <Icon name="search" size={16} />
-          <input value={uniQ} onChange={(e) => setUniQ(e.target.value)} placeholder={t("searchPlaceholder")} />
+          <input aria-label={lang==="fa"?"جستجوی دانشگاه‌ها":"Search universities"} value={uniQ} onChange={(e) => setUniQ(e.target.value)} placeholder={lang==="fa"?"جستجو با نام دانشگاه، شهر یا کد…":"Search university, city or code…"} />
           {uniQ && <button type="button" className="dt-clear" onClick={() => setUniQ("")}><Icon name="close" size={14} /></button>}
         </div>
       )}
       <div className="grid grid-2">
-        {unis.filter((u) => {
+        {sortUniversities(unis,lang).filter((u) => {
           const n = uniQ.trim().toLowerCase();
           if (!n) return true;
-          return [u.name_fa, u.name_en, u.city_fa, u.city_en, u.code].some((v) => String(v ?? "").toLowerCase().includes(n));
+          return matchesUniversity(u,uniQ);
         }).map((u) => (
           <div key={u.id} className="card">
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>

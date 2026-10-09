@@ -1,3 +1,4 @@
+import UniversitySelect from './UniversitySelect.jsx';
 import {useState,useRef,useEffect} from 'react';
 import {api} from '../api.js';
 import {useApp} from '../context.jsx';
@@ -38,7 +39,7 @@ export default function DemoSetup(){
     <ul>{status.accounts.map(a=><li key={a.username}><code dir="ltr">{a.username}</code> — {a.role} — {a.status}</li>)}</ul>
     <fieldset disabled={busy||loading} style={{border:0,padding:0,margin:0,minWidth:0}}>
      <div className="grid grid-2">
-      <label className="field"><span>{fa?'دانشگاه مقصد':'Target university'}</span><select value={uni} onChange={e=>{setUni(e.target.value);setResult(null);setError('');setConfirm(false);setPassword('');}}>{status.universities.map(u=><option value={u.id} key={u.id}>{(fa?u.name_fa:u.name_en)||u.name_en||u.name_fa} (#{u.id})</option>)}</select></label>
+      <label className="field"><span>{fa?'دانشگاه مقصد':'Target university'}</span><UniversitySelect rows={status.universities} value={uni} onChange={v=>{setUni(v);setResult(null);setError('');setConfirm(false);setPassword('');}} label={fa?'دانشگاه مقصد':'Target university'}/></label>
       <label className="field"><span>{fa?'رمز حساب‌های جدید (حداقل ۱۲ نویسه)':'New account password (at least 12 characters)'}</span><input type="password" autoComplete="new-password" minLength={12} maxLength={128} value={password} onChange={e=>setPassword(e.target.value)}/></label>
      </div>
      <label><input type="checkbox" checked={confirm} onChange={e=>setConfirm(e.target.checked)}/>{fa?'ایجاد دادهٔ آزمایشی در دانشگاه انتخابی را تأیید می‌کنم؛ حساب‌ها را پیش از استفادهٔ عمومی غیرفعال خواهم کرد.':'I confirm demo provisioning in this university and will disable these accounts before public use.'}</label>

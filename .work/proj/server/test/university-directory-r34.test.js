@@ -22,3 +22,14 @@ it('caps page size, clamps empty/end pages, and rejects unsafe numbers',async()=
 it('sort input is allowlisted and filters are validated',async()=>{for(const sort of ['constructor','__proto__','name DESC; DROP TABLE users'])expect((await get(admin,'?sort='+encodeURIComponent(sort))).status).toBe(200);expect((await get(admin,'?role=admin')).status).toBe(400);expect((await get(admin,'?status=wrong')).status).toBe(400);});
 it('checks tenant/role before returning rows or counts',async()=>{expect((await get(teacher)).status).toBe(200);expect((await get(outsider)).status).toBe(403);expect((await get(student)).status).toBe(403);expect((await get(admin,'',999999)).status).toBe(404);expect((await request(app).get(`/api/universities/${uni}/members`)).status).toBe(401);});
 it('transfer and detach are reflected in filtered totals and final-page clamping',async()=>{const before=(await get(admin,'?status=inactive')).body;expect(before.total).toBe(1);expect((await request(app).post(`/api/universities/${foreign}/members`).auth(admin,{type:'bearer'}).send({userIds:[last.id]})).status).toBe(200);expect((await get(admin,'?status=inactive&page=99')).body).toMatchObject({total:0,page:1,items:[]});expect((await get(admin,'?q=Member',foreign)).body.total).toBe(1);expect((await request(app).delete(`/api/universities/${foreign}/members/${last.id}`).auth(admin,{type:'bearer'})).status).toBe(200);expect((await get(admin,'?q=Member',foreign)).body.total).toBe(0);});
+it('university list sorts localized names and preserves exact membership counts and tenant scope',async()=>{
+ for(const lang of ['fa','en']){
+  const r=await request(app).get('/api/universities?lang='+lang).auth(admin,{type:'bearer'});expect(r.status).toBe(200);
+  const rows=r.body.universities,collator=new Intl.Collator(lang,{sensitivity:'base',numeric:true});
+  const label=u=>(lang==='fa'?u.name_fa:u.name_en)||u.name_fa||u.name_en||u.code||'';
+  expect(rows.map(x=>x.id)).toEqual([...rows].sort((a,b)=>collator.compare(label(a),label(b))||a.id-b.id).map(x=>x.id));
+  for(const u of rows)for(const role of ['teacher','student'])expect(u[role==='teacher'?'teachers':'students']).toBe(db.prepare('SELECT COUNT(*) n FROM users WHERE university_id=? AND role=?').get(u.id,role).n);
+ }
+ const scoped=await request(app).get('/api/universities').auth(teacher,{type:'bearer'});expect(scoped.status).toBe(200);expect(scoped.body.universities.map(u=>u.id)).toEqual([uni]);
+ expect((await request(app).get('/api/universities').auth(student,{type:'bearer'})).status).toBe(403);
+});

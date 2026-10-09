@@ -21,11 +21,23 @@ r.get("/", authRequired, requireRole("admin", "teacher"), (req, res) => {
     const uni = db.prepare("SELECT university_id FROM users WHERE id=?").get(req.user.id)?.university_id;
     rows = rows.filter((u) => u.id === uni);
   }
+  const lang = req.query.lang === 'en' ? 'en' : 'fa';
+  const collator = new Intl.Collator(lang, {sensitivity:'base',numeric:true});
+  const label = u => (lang === 'fa' ? u.name_fa : u.name_en) || u.name_fa || u.name_en || u.code || '';
+  rows.sort((a,b)=>collator.compare(label(a),label(b)) || a.id-b.id);
+  // Aggregate membership once instead of two extra queries per university.
+  const counts = new Map();
+  if (rows.length) {
+    const allowed = new Set(rows.map(u=>u.id));
+    for (const row of db.prepare("SELECT university_id, role, COUNT(*) n FROM users WHERE role IN ('teacher','student') GROUP BY university_id,role").all()) {
+      if (allowed.has(row.university_id)) counts.set(`${row.university_id}:${row.role}`,row.n);
+    }
+  }
   res.json({
     universities: rows.map((u) => ({
       ...u,
-      teachers: db.prepare("SELECT COUNT(*) c FROM users WHERE role='teacher' AND university_id=?").get(u.id).c,
-      students: db.prepare("SELECT COUNT(*) c FROM users WHERE role='student' AND university_id=?").get(u.id).c,
+      teachers: counts.get(`${u.id}:teacher`) || 0,
+      students: counts.get(`${u.id}:student`) || 0,
       // Live monthly consumption + the global defaults each university may
       // override — drives the admin meters/toggles without extra requests.
       usage: vpUsage(u.id),

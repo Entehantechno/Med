@@ -1,0 +1,13 @@
+import React from 'react';
+import {render,screen,fireEvent,cleanup} from '@testing-library/react';
+import {it,expect,vi,afterEach} from 'vitest';
+vi.mock('../context.jsx',()=>({useApp:()=>({lang:'fa'})}));
+import UniversitySelect from './UniversitySelect.jsx';
+import {sortUniversities} from '../lib/university-order.js';
+afterEach(cleanup);
+const rows=[{id:3,name_fa:'تهران',name_en:'Tehran',code:'THR'},{id:1,name_fa:'اراک',name_en:'Arak',code:'ARAK'},{id:2,name_fa:'اصفهان',name_en:'Isfahan',code:'ISF'}];
+it('sorts independently of source IDs without mutating the list',()=>{expect(sortUniversities(rows,'fa').map(u=>u.id)).toEqual([1,2,3]);expect(rows[0].id).toBe(3);});
+it('searches names and codes and commits only a chosen option',()=>{const change=vi.fn();render(<UniversitySelect rows={rows} value={1} onChange={change}/>);const input=screen.getByRole('combobox');fireEvent.change(input,{target:{value:'THR'}});expect(change).not.toHaveBeenCalled();fireEvent.keyDown(input,{key:'Enter'});expect(change).toHaveBeenCalledWith('3');});
+it('Escape preserves the selected university and does not close the containing dialog',()=>{const change=vi.fn(),key=vi.fn();render(<div onKeyDown={key}><UniversitySelect rows={rows} value={1} onChange={change}/></div>);const input=screen.getByRole('combobox');fireEvent.change(input,{target:{value:'تهران'}});fireEvent.keyDown(input,{key:'Escape'});expect(input).toHaveValue('اراک');expect(change).not.toHaveBeenCalled();expect(key).not.toHaveBeenCalled();});
+it('does not accept an unknown typed name or clear selection on Enter',()=>{const change=vi.fn();render(<UniversitySelect rows={rows} value={1} onChange={change}/>);const input=screen.getByRole('combobox');fireEvent.change(input,{target:{value:'unknown'}});fireEvent.keyDown(input,{key:'Enter'});expect(change).not.toHaveBeenCalled();expect(screen.getByText('دانشگاهی پیدا نشد')).toBeInTheDocument();});
+it('offers an explicit empty choice and keyboard navigation',()=>{const change=vi.fn();render(<UniversitySelect rows={rows} value={3} onChange={change}/>);const input=screen.getByRole('combobox');fireEvent.keyDown(input,{key:'ArrowDown'});fireEvent.keyDown(input,{key:'ArrowDown'});fireEvent.keyDown(input,{key:'Enter'});expect(change).toHaveBeenCalledWith('1');});
