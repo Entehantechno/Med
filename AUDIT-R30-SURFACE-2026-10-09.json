@@ -1,0 +1,1541 @@
+{
+  "note": "Fresh static inventory, not full endpoint/form-action coverage. R30 depth: demo provisioning and installation inventory UX. General full regression and 18-section/two-width browser smoke also performed.",
+  "modules": {
+    "auth": {
+      "routeDeclarations": [
+        {
+          "method": "POST",
+          "path": "/login"
+        },
+        {
+          "method": "POST",
+          "path": "/register"
+        },
+        {
+          "method": "GET",
+          "path": "/verify"
+        },
+        {
+          "method": "POST",
+          "path": "/google"
+        },
+        {
+          "method": "POST",
+          "path": "/logout"
+        },
+        {
+          "method": "POST",
+          "path": "/logout-all"
+        },
+        {
+          "method": "GET",
+          "path": "/methods"
+        },
+        {
+          "method": "GET",
+          "path": "/me"
+        },
+        {
+          "method": "PUT",
+          "path": "/me"
+        },
+        {
+          "method": "PUT",
+          "path": "/password"
+        }
+      ],
+      "sha256": "d5852784746c11f8372c1e36dd5cc09d27d035aad686402a86b9f2f0e0400119"
+    },
+    "admin": {
+      "routeDeclarations": [
+        {
+          "method": "GET",
+          "path": "/demo/status"
+        },
+        {
+          "method": "POST",
+          "path": "/demo/prepare"
+        },
+        {
+          "method": "GET",
+          "path": "/overview"
+        },
+        {
+          "method": "GET",
+          "path": "/analytics"
+        },
+        {
+          "method": "GET",
+          "path": "/analytics/segments"
+        },
+        {
+          "method": "GET",
+          "path": "/analytics.csv"
+        },
+        {
+          "method": "GET",
+          "path": "/analytics.pdf"
+        },
+        {
+          "method": "GET",
+          "path": "/analytics/alerts"
+        },
+        {
+          "method": "PUT",
+          "path": "/analytics/alerts"
+        },
+        {
+          "method": "GET",
+          "path": "/notifications"
+        },
+        {
+          "method": "POST",
+          "path": "/notifications/seen"
+        },
+        {
+          "method": "POST",
+          "path": "/analytics/run-alerts"
+        },
+        {
+          "method": "GET",
+          "path": "/analytics/weekly-digest"
+        },
+        {
+          "method": "POST",
+          "path": "/analytics/weekly-digest"
+        },
+        {
+          "method": "GET",
+          "path": "/audit"
+        },
+        {
+          "method": "GET",
+          "path": "/flags"
+        },
+        {
+          "method": "PUT",
+          "path": "/flags/:key"
+        },
+        {
+          "method": "GET",
+          "path": "/roles"
+        },
+        {
+          "method": "PUT",
+          "path": "/roles/:role"
+        },
+        {
+          "method": "GET",
+          "path": "/pricing"
+        },
+        {
+          "method": "PUT",
+          "path": "/pricing"
+        },
+        {
+          "method": "GET",
+          "path": "/settings"
+        },
+        {
+          "method": "PUT",
+          "path": "/settings/:key"
+        },
+        {
+          "method": "GET",
+          "path": "/maintenance"
+        },
+        {
+          "method": "PUT",
+          "path": "/maintenance"
+        },
+        {
+          "method": "GET",
+          "path": "/backup/status"
+        },
+        {
+          "method": "POST",
+          "path": "/backup/create"
+        },
+        {
+          "method": "GET",
+          "path": "/backup/download"
+        },
+        {
+          "method": "GET",
+          "path": "/banner"
+        },
+        {
+          "method": "PUT",
+          "path": "/banner"
+        },
+        {
+          "method": "GET",
+          "path": "/game-config"
+        },
+        {
+          "method": "PUT",
+          "path": "/game-config"
+        },
+        {
+          "method": "GET",
+          "path": "/bug-hunt/stats"
+        },
+        {
+          "method": "GET",
+          "path": "/bug-hunt/reports"
+        },
+        {
+          "method": "GET",
+          "path": "/bug-hunt/scans"
+        },
+        {
+          "method": "POST",
+          "path": "/bug-hunt/scan"
+        },
+        {
+          "method": "POST",
+          "path": "/bug-hunt/report"
+        },
+        {
+          "method": "PUT",
+          "path": "/bug-hunt/report/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/support"
+        },
+        {
+          "method": "GET",
+          "path": "/support/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/support/:id/reply"
+        },
+        {
+          "method": "PUT",
+          "path": "/support/:id/status"
+        },
+        {
+          "method": "PUT",
+          "path": "/support/:id/category"
+        },
+        {
+          "method": "GET",
+          "path": "/help"
+        },
+        {
+          "method": "POST",
+          "path": "/help"
+        },
+        {
+          "method": "PUT",
+          "path": "/help/:id"
+        },
+        {
+          "method": "DELETE",
+          "path": "/help/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/landing"
+        },
+        {
+          "method": "PUT",
+          "path": "/landing/floor"
+        },
+        {
+          "method": "POST",
+          "path": "/landing/testimonials"
+        },
+        {
+          "method": "PUT",
+          "path": "/landing/testimonials/:id"
+        },
+        {
+          "method": "DELETE",
+          "path": "/landing/testimonials/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/landing/faqs"
+        },
+        {
+          "method": "PUT",
+          "path": "/landing/faqs/:id"
+        },
+        {
+          "method": "DELETE",
+          "path": "/landing/faqs/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/landing/badges"
+        },
+        {
+          "method": "PUT",
+          "path": "/landing/badges/:id"
+        },
+        {
+          "method": "DELETE",
+          "path": "/landing/badges/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/product-health"
+        },
+        {
+          "method": "GET",
+          "path": "/fsrs/analyze"
+        },
+        {
+          "method": "POST",
+          "path": "/fsrs/optimize"
+        },
+        {
+          "method": "POST",
+          "path": "/fsrs/apply"
+        },
+        {
+          "method": "GET",
+          "path": "/group"
+        },
+        {
+          "method": "POST",
+          "path": "/group/packs"
+        },
+        {
+          "method": "PUT",
+          "path": "/group/packs/:id"
+        },
+        {
+          "method": "DELETE",
+          "path": "/group/packs/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/premium"
+        },
+        {
+          "method": "GET",
+          "path": "/premium/find"
+        },
+        {
+          "method": "POST",
+          "path": "/premium/grant"
+        },
+        {
+          "method": "POST",
+          "path": "/premium/revoke"
+        },
+        {
+          "method": "GET",
+          "path": "/dx"
+        },
+        {
+          "method": "POST",
+          "path": "/dx"
+        },
+        {
+          "method": "PUT",
+          "path": "/dx/:id"
+        },
+        {
+          "method": "DELETE",
+          "path": "/dx/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/dx/import"
+        },
+        {
+          "method": "GET",
+          "path": "/dx/import/template.csv"
+        },
+        {
+          "method": "GET",
+          "path": "/growth"
+        },
+        {
+          "method": "GET",
+          "path": "/reminders/preview"
+        },
+        {
+          "method": "POST",
+          "path": "/reminders/run"
+        },
+        {
+          "method": "GET",
+          "path": "/pwa"
+        },
+        {
+          "method": "GET",
+          "path": "/security"
+        },
+        {
+          "method": "PUT",
+          "path": "/security/google"
+        },
+        {
+          "method": "GET",
+          "path": "/rum/summary"
+        },
+        {
+          "method": "GET",
+          "path": "/blog"
+        },
+        {
+          "method": "GET",
+          "path": "/blog/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/blog"
+        },
+        {
+          "method": "PUT",
+          "path": "/blog/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/blog/:id/revisions"
+        },
+        {
+          "method": "GET",
+          "path": "/blog/:id/revisions/:rev"
+        },
+        {
+          "method": "POST",
+          "path": "/blog/:id/revisions/:rev/restore"
+        },
+        {
+          "method": "DELETE",
+          "path": "/blog/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/blog/preview"
+        },
+        {
+          "method": "POST",
+          "path": "/blog/ai-draft"
+        },
+        {
+          "method": "POST",
+          "path": "/blog/ai-rewrite"
+        },
+        {
+          "method": "POST",
+          "path": "/blog/ai-cover"
+        },
+        {
+          "method": "GET",
+          "path": "/analytics/daily-users"
+        },
+        {
+          "method": "GET",
+          "path": "/analytics/daily-users.csv"
+        },
+        {
+          "method": "GET",
+          "path": "/certificates"
+        },
+        {
+          "method": "POST",
+          "path": "/certificates/issue"
+        },
+        {
+          "method": "POST",
+          "path": "/certificates/:id/revoke"
+        },
+        {
+          "method": "GET",
+          "path": "/seo"
+        },
+        {
+          "method": "PUT",
+          "path": "/seo"
+        },
+        {
+          "method": "GET",
+          "path": "/seo/preview"
+        },
+        {
+          "method": "GET",
+          "path": "/twa"
+        },
+        {
+          "method": "PUT",
+          "path": "/twa"
+        },
+        {
+          "method": "GET",
+          "path": "/vpatient"
+        },
+        {
+          "method": "PUT",
+          "path": "/vpatient"
+        },
+        {
+          "method": "GET",
+          "path": "/vpatient/cases"
+        },
+        {
+          "method": "PUT",
+          "path": "/vpatient/cases/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/vpatient/ai"
+        },
+        {
+          "method": "PUT",
+          "path": "/vpatient/ai"
+        },
+        {
+          "method": "POST",
+          "path": "/vpatient/ai-test"
+        },
+        {
+          "method": "GET",
+          "path": "/vpatient/prompts"
+        },
+        {
+          "method": "PUT",
+          "path": "/vpatient/prompts"
+        },
+        {
+          "method": "GET",
+          "path": "/vpatient/library"
+        },
+        {
+          "method": "POST",
+          "path": "/vpatient/import-cases"
+        },
+        {
+          "method": "POST",
+          "path": "/vpatient/import-cards"
+        },
+        {
+          "method": "GET",
+          "path": "/case-promotions"
+        },
+        {
+          "method": "POST",
+          "path": "/case-promotions/:id/approve"
+        },
+        {
+          "method": "POST",
+          "path": "/case-promotions/:id/reject"
+        },
+        {
+          "method": "POST",
+          "path": "/cases/:id/publish-global"
+        },
+        {
+          "method": "GET",
+          "path": "/users"
+        },
+        {
+          "method": "GET",
+          "path": "/users/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/users"
+        },
+        {
+          "method": "PUT",
+          "path": "/users/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/users/:id/status"
+        },
+        {
+          "method": "POST",
+          "path": "/users/:id/password"
+        },
+        {
+          "method": "POST",
+          "path": "/users/:id/learner"
+        },
+        {
+          "method": "POST",
+          "path": "/users/:id/reset-placement"
+        },
+        {
+          "method": "GET",
+          "path": "/placement/analytics"
+        },
+        {
+          "method": "GET",
+          "path": "/placement/analytics.csv"
+        },
+        {
+          "method": "POST",
+          "path": "/users/:id/impersonate"
+        },
+        {
+          "method": "DELETE",
+          "path": "/users/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/users/bulk-delete"
+        },
+        {
+          "method": "POST",
+          "path": "/users/bulk-assign-university"
+        },
+        {
+          "method": "POST",
+          "path": "/users/bulk-assign-class"
+        },
+        {
+          "method": "POST",
+          "path": "/users/bulk-assign-exam"
+        },
+        {
+          "method": "GET",
+          "path": "/content/cards"
+        },
+        {
+          "method": "PUT",
+          "path": "/content/cards/:id/micro"
+        },
+        {
+          "method": "POST",
+          "path": "/content/cards/:id/active"
+        },
+        {
+          "method": "GET",
+          "path": "/community/queue"
+        },
+        {
+          "method": "POST",
+          "path": "/community/:id/moderate"
+        },
+        {
+          "method": "GET",
+          "path": "/path"
+        },
+        {
+          "method": "GET",
+          "path": "/programs"
+        },
+        {
+          "method": "PUT",
+          "path": "/programs"
+        },
+        {
+          "method": "POST",
+          "path": "/path/topics"
+        },
+        {
+          "method": "PUT",
+          "path": "/path/topics/:id"
+        },
+        {
+          "method": "DELETE",
+          "path": "/path/topics/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/path/nodes"
+        },
+        {
+          "method": "PUT",
+          "path": "/path/nodes/:id"
+        },
+        {
+          "method": "DELETE",
+          "path": "/path/nodes/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/path/cards"
+        },
+        {
+          "method": "POST",
+          "path": "/path/questions"
+        },
+        {
+          "method": "PUT",
+          "path": "/path/topics/:id/reorder"
+        },
+        {
+          "method": "PUT",
+          "path": "/path/reorder"
+        },
+        {
+          "method": "GET",
+          "path": "/content-stats"
+        },
+        {
+          "method": "GET",
+          "path": "/learn-cards"
+        },
+        {
+          "method": "POST",
+          "path": "/learn-cards"
+        },
+        {
+          "method": "POST",
+          "path": "/learn-cards/bulk"
+        },
+        {
+          "method": "POST",
+          "path": "/learn-cards/bulk-action"
+        },
+        {
+          "method": "GET",
+          "path": "/learn-cards/export"
+        },
+        {
+          "method": "POST",
+          "path": "/learn-cards/import-bundle/preview"
+        },
+        {
+          "method": "POST",
+          "path": "/learn-cards/import-bundle"
+        },
+        {
+          "method": "POST",
+          "path": "/official-question-import/preview"
+        },
+        {
+          "method": "POST",
+          "path": "/official-question-import/commit"
+        },
+        {
+          "method": "POST",
+          "path": "/learn-path/curate"
+        },
+        {
+          "method": "PUT",
+          "path": "/learn-cards/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/card-revisions"
+        },
+        {
+          "method": "GET",
+          "path": "/learn-cards/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/learn-cards/:id/mindmaps"
+        },
+        {
+          "method": "GET",
+          "path": "/learn-cards/:id/history"
+        },
+        {
+          "method": "GET",
+          "path": "/card-revisions/summary"
+        },
+        {
+          "method": "GET",
+          "path": "/demo-cards"
+        },
+        {
+          "method": "POST",
+          "path": "/demo-cards/purge"
+        },
+        {
+          "method": "POST",
+          "path": "/demo-cards/purge-unsigned"
+        },
+        {
+          "method": "DELETE",
+          "path": "/learn-cards/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/content/import/preview"
+        },
+        {
+          "method": "POST",
+          "path": "/content/import"
+        },
+        {
+          "method": "GET",
+          "path": "/content/import/simple.csv"
+        },
+        {
+          "method": "GET",
+          "path": "/content/import/template.csv"
+        },
+        {
+          "method": "GET",
+          "path": "/export/:table"
+        },
+        {
+          "method": "GET",
+          "path": "/mindmap-bank"
+        },
+        {
+          "method": "GET",
+          "path": "/mindmap-bank/export/csv"
+        },
+        {
+          "method": "GET",
+          "path": "/mindmap-bank/export/json"
+        },
+        {
+          "method": "POST",
+          "path": "/mindmap-bank/import/csv"
+        },
+        {
+          "method": "POST",
+          "path": "/mindmap-bank/import/json"
+        },
+        {
+          "method": "GET",
+          "path": "/mindmap-bank/history/:slug"
+        },
+        {
+          "method": "POST",
+          "path": "/mindmap-bank/bulk/delete"
+        },
+        {
+          "method": "POST",
+          "path": "/mindmap-bank/bulk/status"
+        },
+        {
+          "method": "POST",
+          "path": "/mindmap-bank/bulk/premium"
+        },
+        {
+          "method": "POST",
+          "path": "/mindmap-bank/duplicate/:slug"
+        },
+        {
+          "method": "GET",
+          "path": "/mindmap-bank/:slug"
+        },
+        {
+          "method": "GET",
+          "path": "/mindmap-bank/:slug/links"
+        },
+        {
+          "method": "POST",
+          "path": "/mindmap-bank"
+        },
+        {
+          "method": "DELETE",
+          "path": "/mindmap-bank/:slug"
+        },
+        {
+          "method": "POST",
+          "path": "/mindmap-bank/link"
+        },
+        {
+          "method": "POST",
+          "path": "/mindmap-bank/unlink"
+        },
+        {
+          "method": "POST",
+          "path": "/mindmap-bank/seed"
+        }
+      ],
+      "sha256": "1c61bb13fa5a7a3c5242a237338ebdbbc86b49e7160bb765dc531456dc84a061"
+    },
+    "universities": {
+      "routeDeclarations": [
+        {
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "method": "GET",
+          "path": "/defaults"
+        },
+        {
+          "method": "PUT",
+          "path": "/defaults"
+        },
+        {
+          "method": "POST",
+          "path": "/"
+        },
+        {
+          "method": "PUT",
+          "path": "/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/members"
+        },
+        {
+          "method": "POST",
+          "path": "/:id/members"
+        },
+        {
+          "method": "DELETE",
+          "path": "/:id/members/:userId"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/candidates"
+        },
+        {
+          "method": "DELETE",
+          "path": "/:id"
+        }
+      ],
+      "sha256": "9947b1af83a61cb29300884669466c35f067ad2cf2192ac8964ca936e9751ae9"
+    },
+    "academic": {
+      "routeDeclarations": [
+        {
+          "method": "GET",
+          "path": "/references"
+        },
+        {
+          "method": "POST",
+          "path": "/references"
+        },
+        {
+          "method": "PUT",
+          "path": "/references/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/policies"
+        },
+        {
+          "method": "POST",
+          "path": "/policies"
+        },
+        {
+          "method": "PUT",
+          "path": "/policies/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/status"
+        }
+      ],
+      "sha256": "1d557e5ff5657b7978da59627673ec75830f386b298baa24b4db39e686b1d213"
+    },
+    "classes": {
+      "routeDeclarations": [
+        {
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "method": "GET",
+          "path": "/conversations"
+        },
+        {
+          "method": "GET",
+          "path": "/drawing-inbox"
+        },
+        {
+          "method": "GET",
+          "path": "/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/"
+        },
+        {
+          "method": "PUT",
+          "path": "/:id"
+        },
+        {
+          "method": "DELETE",
+          "path": "/:id"
+        },
+        {
+          "method": "PUT",
+          "path": "/:id/cases"
+        },
+        {
+          "method": "PUT",
+          "path": "/:id/flashcards"
+        },
+        {
+          "method": "POST",
+          "path": "/:id/flashcard/:fid/finish"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/flashcard/:fid/config"
+        },
+        {
+          "method": "PUT",
+          "path": "/:id/members"
+        },
+        {
+          "method": "POST",
+          "path": "/:id/members/resolve"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/drawing-reviews"
+        },
+        {
+          "method": "POST",
+          "path": "/:id/drawing-reviews/:attemptId/:answerIndex"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/analytics"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/analytics.csv"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/live-board"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/live-board/:userId/details"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/members/:userId/attempts"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/attempts/:attemptId"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/attempts/:attemptId/session-log"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/conversation-log.csv"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/gradebook.csv"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/progress"
+        },
+        {
+          "method": "POST",
+          "path": "/:id/remedial"
+        }
+      ],
+      "sha256": "5116db9ed9982dfd5cb2fbea36949bad530639f9c0be625b4e6b9c5e9cd671ef"
+    },
+    "exams": {
+      "routeDeclarations": [
+        {
+          "method": "GET",
+          "path": "/"
+        },
+        {
+          "method": "GET",
+          "path": "/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/"
+        },
+        {
+          "method": "PUT",
+          "path": "/:id"
+        },
+        {
+          "method": "DELETE",
+          "path": "/:id"
+        },
+        {
+          "method": "PUT",
+          "path": "/:id/participants"
+        },
+        {
+          "method": "POST",
+          "path": "/:id/participants/resolve"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/drawing-reviews"
+        },
+        {
+          "method": "POST",
+          "path": "/:id/drawing-reviews/:attemptId/:answerIndex"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/analytics"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/analytics.csv"
+        },
+        {
+          "method": "GET",
+          "path": "/:id/leaderboard"
+        }
+      ],
+      "sha256": "69f880edb81e0b038e9d5528f4c38598a97841a1a25c674956f1e7310be07b39"
+    },
+    "exam": {
+      "routeDeclarations": [
+        {
+          "method": "POST",
+          "path": "/session-start"
+        },
+        {
+          "method": "POST",
+          "path": "/session-abandon"
+        },
+        {
+          "method": "POST",
+          "path": "/patient-reply"
+        },
+        {
+          "method": "POST",
+          "path": "/order"
+        },
+        {
+          "method": "POST",
+          "path": "/evaluate"
+        },
+        {
+          "method": "POST",
+          "path": "/flashcard-result"
+        },
+        {
+          "method": "GET",
+          "path": "/ai-providers"
+        },
+        {
+          "method": "POST",
+          "path": "/ai-test"
+        }
+      ],
+      "sha256": "6f0fd2114936f3fece229d5c8aa4f88a31a20f6f45c16fe62f164afbb1736482"
+    },
+    "content": {
+      "routeDeclarations": [
+        {
+          "method": "GET",
+          "path": "/cases"
+        },
+        {
+          "method": "GET",
+          "path": "/cases/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/cases"
+        },
+        {
+          "method": "PUT",
+          "path": "/cases/:id"
+        },
+        {
+          "method": "DELETE",
+          "path": "/cases/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/cases/:id/versions"
+        },
+        {
+          "method": "GET",
+          "path": "/site-bank/cases"
+        },
+        {
+          "method": "GET",
+          "path": "/site-bank/cases/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/site-bank/cases/:id/clone"
+        },
+        {
+          "method": "POST",
+          "path": "/cases/:id/request-promotion"
+        },
+        {
+          "method": "GET",
+          "path": "/site-bank/promotion-requests"
+        },
+        {
+          "method": "GET",
+          "path": "/flashcards"
+        },
+        {
+          "method": "POST",
+          "path": "/flashcards/check"
+        },
+        {
+          "method": "GET",
+          "path": "/flashcards/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/flashcards"
+        },
+        {
+          "method": "PUT",
+          "path": "/flashcards/:id"
+        },
+        {
+          "method": "DELETE",
+          "path": "/flashcards/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/cases-export.csv"
+        },
+        {
+          "method": "POST",
+          "path": "/cases-import"
+        },
+        {
+          "method": "GET",
+          "path": "/flashcards-export.csv"
+        },
+        {
+          "method": "POST",
+          "path": "/flashcards-import"
+        },
+        {
+          "method": "GET",
+          "path": "/catalogs"
+        },
+        {
+          "method": "POST",
+          "path": "/catalogs"
+        },
+        {
+          "method": "PUT",
+          "path": "/catalogs/:id"
+        },
+        {
+          "method": "DELETE",
+          "path": "/catalogs/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/checklists"
+        },
+        {
+          "method": "GET",
+          "path": "/checklists-meta"
+        },
+        {
+          "method": "PUT",
+          "path": "/checklists/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/checklists"
+        },
+        {
+          "method": "DELETE",
+          "path": "/checklists/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/users"
+        },
+        {
+          "method": "GET",
+          "path": "/assignments/:userId"
+        },
+        {
+          "method": "PUT",
+          "path": "/assignments/:userId"
+        },
+        {
+          "method": "POST",
+          "path": "/users"
+        },
+        {
+          "method": "GET",
+          "path": "/users/import/template.csv"
+        },
+        {
+          "method": "POST",
+          "path": "/users/import"
+        },
+        {
+          "method": "PUT",
+          "path": "/users/:id/password"
+        },
+        {
+          "method": "PUT",
+          "path": "/users/:id/status"
+        },
+        {
+          "method": "GET",
+          "path": "/prompts"
+        },
+        {
+          "method": "PUT",
+          "path": "/prompts"
+        },
+        {
+          "method": "GET",
+          "path": "/settings/:key"
+        },
+        {
+          "method": "PUT",
+          "path": "/settings/:key"
+        },
+        {
+          "method": "GET",
+          "path": "/order-catalog"
+        },
+        {
+          "method": "PUT",
+          "path": "/order-catalog"
+        }
+      ],
+      "sha256": "bc0ef3cc98ac5178ec77452d9c6dddf1343aa6563e06c0df2b6551be16823910"
+    },
+    "questionnaires": {
+      "routeDeclarations": [
+        {
+          "method": "GET",
+          "path": "/admin/forms"
+        },
+        {
+          "method": "POST",
+          "path": "/admin/forms"
+        },
+        {
+          "method": "PUT",
+          "path": "/admin/forms/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/prompts"
+        },
+        {
+          "method": "POST",
+          "path": "/:id/responses"
+        },
+        {
+          "method": "GET",
+          "path": "/admin/responses"
+        },
+        {
+          "method": "GET",
+          "path": "/admin/forms/:id/analysis"
+        },
+        {
+          "method": "GET",
+          "path": "/admin/forms/:id/responses.csv"
+        },
+        {
+          "method": "GET",
+          "path": "/admin/templates"
+        }
+      ],
+      "sha256": "888c0dacbf2fa07e6509b3bd0ff39a436aeff5e56da93416ba8bcc580af6e26f"
+    },
+    "reports": {
+      "routeDeclarations": [
+        {
+          "method": "GET",
+          "path": "/summary"
+        },
+        {
+          "method": "GET",
+          "path": "/attempts"
+        },
+        {
+          "method": "GET",
+          "path": "/export.csv"
+        },
+        {
+          "method": "GET",
+          "path": "/my"
+        },
+        {
+          "method": "GET",
+          "path": "/attempts/:id"
+        },
+        {
+          "method": "DELETE",
+          "path": "/attempts/:id"
+        },
+        {
+          "method": "PUT",
+          "path": "/attempts/:id/review"
+        },
+        {
+          "method": "GET",
+          "path": "/progress/:userId"
+        },
+        {
+          "method": "GET",
+          "path": "/student/:userId"
+        }
+      ],
+      "sha256": "8712d758f18cb61d3868d0b23e00af2e237b190c8754e8d514bef243bdd389c8"
+    },
+    "research": {
+      "routeDeclarations": [
+        {
+          "method": "GET",
+          "path": "/studies"
+        },
+        {
+          "method": "POST",
+          "path": "/studies"
+        },
+        {
+          "method": "PUT",
+          "path": "/studies/:id"
+        },
+        {
+          "method": "GET",
+          "path": "/events"
+        },
+        {
+          "method": "DELETE",
+          "path": "/events/:id"
+        },
+        {
+          "method": "DELETE",
+          "path": "/studies/:id"
+        },
+        {
+          "method": "POST",
+          "path": "/event"
+        },
+        {
+          "method": "GET",
+          "path": "/consent/status"
+        },
+        {
+          "method": "POST",
+          "path": "/consent"
+        },
+        {
+          "method": "POST",
+          "path": "/consent/withdraw"
+        },
+        {
+          "method": "POST",
+          "path": "/studies/:id/consents/record"
+        },
+        {
+          "method": "POST",
+          "path": "/studies/:id/participation"
+        },
+        {
+          "method": "GET",
+          "path": "/studies/:id/consents"
+        },
+        {
+          "method": "GET",
+          "path": "/studies/:id/consents.csv"
+        }
+      ],
+      "sha256": "dd39664fa854974aee9de751db28e947a5cabd2ee8bb69f527eb72220fe37e96"
+    },
+    "tutor": {
+      "routeDeclarations": [
+        {
+          "method": "GET",
+          "path": "/settings"
+        },
+        {
+          "method": "PUT",
+          "path": "/settings"
+        },
+        {
+          "method": "GET",
+          "path": "/context-settings"
+        },
+        {
+          "method": "PUT",
+          "path": "/context-settings"
+        },
+        {
+          "method": "GET",
+          "path": "/status"
+        },
+        {
+          "method": "GET",
+          "path": "/history"
+        },
+        {
+          "method": "POST",
+          "path": "/message"
+        }
+      ],
+      "sha256": "826d0ad0355878a65465ad3759ec6344406a4b075fa9ca25bad66c6c9d65b797"
+    },
+    "portable": {
+      "routeDeclarations": [
+        {
+          "method": "GET",
+          "path": "/validate"
+        },
+        {
+          "method": "POST",
+          "path": "/export"
+        },
+        {
+          "method": "POST",
+          "path": "/validate"
+        },
+        {
+          "method": "POST",
+          "path": "/import"
+        },
+        {
+          "method": "POST",
+          "path": "/learning/export"
+        },
+        {
+          "method": "POST",
+          "path": "/learning/import"
+        }
+      ],
+      "sha256": "5e373656ad28ccf0902478034289e2f97ec9ce3722b4f60955e4f84147665a9d"
+    },
+    "upload": {
+      "routeDeclarations": [
+        {
+          "method": "POST",
+          "path": "/"
+        },
+        {
+          "method": "POST",
+          "path": "/audio"
+        },
+        {
+          "method": "POST",
+          "path": "/video"
+        },
+        {
+          "method": "POST",
+          "path": "/pdf"
+        },
+        {
+          "method": "GET",
+          "path": "/library"
+        },
+        {
+          "method": "DELETE",
+          "path": "/library/:name"
+        }
+      ],
+      "sha256": "9fb38598187aa487d3d981553b0abe0c649c1be7c19bb9819a472baf30e797f9"
+    }
+  },
+  "modules_count": 14,
+  "declarations": 366
+}

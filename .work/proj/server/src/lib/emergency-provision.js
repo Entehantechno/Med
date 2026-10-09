@@ -29,12 +29,16 @@ function ensureEmergencyCatalog(){
  }
  up.run(marker,JSON.stringify({version:1}));return added;
 }
-export function ensureEmergencyCases({universityId}={}){
+export function ensureEmergencyCases(options={}){
+ return durableTransaction(()=>provisionEmergencyCases(options));
+}
+// Internal composition point: caller MUST supply the durable transaction.
+// Demo accounts, cases, catalog and assignments must share one commit boundary.
+export function provisionEmergencyCases({universityId,createdBy=null}={}){
  const uni=universityId===undefined?db.prepare("SELECT id FROM universities WHERE code='ARAK'").get()?.id:Number(universityId);
  if(universityId===undefined&&!uni)return {universityId:null,inserted:0,bound:0,entries:[],reason:'university_missing'};
  if(!Number.isInteger(uni)||!db.prepare('SELECT id FROM universities WHERE id=?').get(uni))throw new Error('invalid_university');
- return durableTransaction(()=>{
-  const result={universityId:uni,inserted:0,bound:0,entries:[]};
+ const result={universityId:uni,inserted:0,bound:0,entries:[]};
   const legacy=db.prepare('SELECT id,data_json,active FROM cases WHERE university_id=? AND source_key IS NULL ORDER BY active DESC,id').all(uni).flatMap(row=>{
    try{const data=JSON.parse(row.data_json);if(!data||typeof data!=='object'||Array.isArray(data)||data.track==='learn')return [];const {track,...chart}=data;return [{...row,chart}];}catch{return []}
   });
@@ -45,10 +49,9 @@ export function ensureEmergencyCases({universityId}={}){
    const {track,...chart}=c.data;const match=legacy.find(row=>isDeepStrictEqual(row.chart,chart));
    let id;
    if(match){id=match.id;db.prepare('UPDATE cases SET source_key=? WHERE id=? AND source_key IS NULL').run(key,id);result.bound++;}
-   else {const checklistId=emergencyChecklist(c.checklist_id);id=Number(db.prepare('INSERT INTO cases(difficulty,checklist_id,data_json,university_id,source_key) VALUES (?,?,?,?,?)').run(c.difficulty,checklistId,JSON.stringify({...c.data,track:'uni'}),uni,key).lastInsertRowid);result.inserted++;}
+   else {const checklistId=emergencyChecklist(c.checklist_id);id=Number(db.prepare('INSERT INTO cases(difficulty,checklist_id,data_json,university_id,source_key,created_by) VALUES (?,?,?,?,?,?)').run(c.difficulty,checklistId,JSON.stringify({...c.data,track:'uni'}),uni,key,createdBy).lastInsertRowid);result.inserted++;}
    result.entries.push({source:i+1,id,state:match&&!match.active?'inactive':match?'bound':'inserted'});
   }
   result.catalogAdded=ensureEmergencyCatalog();
   return result;
- });
 }

@@ -68,7 +68,7 @@ r.post('/demo/prepare',...admin,(req,res)=>{
  if(req.body?.confirm!==true)return res.status(400).json({error:'confirmation_required'});
  try{const result=repairDemo({universityId:req.body.universityId,password:req.body.password,actorId:req.user.id});
  audit(req,'demo_prepare','university:'+result.universityId,{accounts:result.accounts,caseIds:result.caseIds});res.json(result);
- }catch(e){res.status(400).json({error:e.message});}
+ }catch(e){const storage=['database_persistence_failed','database_recovery_failed'].includes(e.message);res.status(storage?503:400).json({error:e.message,...(storage?{stage:'save',retryable:true}:{})});}
 });
 // user-management routes are shared by the competitive admin (learn.users) and
 // the university teacher/admin (uni.users) — either perm grants access.
