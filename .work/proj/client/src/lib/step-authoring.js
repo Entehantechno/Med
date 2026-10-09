@@ -27,6 +27,7 @@ export function normalizeStep(s){
  }
  return result;
 }
+const gradingText=v=>String(v??'').trim().toLowerCase().replace(/\s+/g,' ');
 export function validateSteps(steps,lang='fa'){
  const fa=lang==='fa';
  if(!Array.isArray(steps)||!steps.length)return fa?'حداقل یک مرحله لازم است.':'At least one step is required.';
@@ -38,7 +39,23 @@ export function validateSteps(steps,lang='fa'){
    const count=Math.max(s.options_fa.length,s.options_en.length);
    const filled=Array.from({length:count},(_,j)=>String(s.options_fa[j]||s.options_en[j]||'').trim());
    if(count<2||filled.some(v=>!v)||s.correct_index<0||s.correct_index>=count)return prefix+(fa?'حداقل دو گزینه و پاسخ صحیح را مشخص کنید.':'Enter at least two complete options and mark the correct answer.');
-   if(new Set(filled).size!==filled.length)return prefix+(fa?'گزینه‌های تکراری را اصلاح کنید.':'Remove duplicate options.');
+   // The grader accepts either translation. Labels from DIFFERENT options must
+   // not collapse to the same answer, even across languages or case/spacing.
+   const labels=new Map();
+   for(let j=0;j<count;j++)for(const label of [s.options_fa[j],s.options_en[j]]){
+    const key=gradingText(label);if(!key)continue;
+    if(labels.has(key)&&labels.get(key)!==j)return prefix+(fa?'گزینه‌های تکراری را در هر دو زبان اصلاح کنید.':'Remove duplicate options in either language.');
+    labels.set(key,j);
+   }
+  }
+  if(s.answerType==='autocomplete'&&[...s.options_fa,...s.options_en].some(v=>gradingText(v))){
+   const keys=[s.answer_fa,s.answer_en,...s.accept_fa,...s.accept_en].map(gradingText).filter(Boolean);
+   const count=Math.max(s.options_fa.length,s.options_en.length);
+   for(const language of ['fa','en']){
+    const other=language==='fa'?'en':'fa';
+    const reachable=Array.from({length:count},(_,j)=>gradingText(s['options_'+language][j]||s['options_'+other][j]));
+    if(!reachable.some(x=>x&&keys.includes(x)))return prefix+(fa?'پاسخ صحیح باید از پیشنهادهای قابل انتخاب در هر دو زبان باشد.':'Choose an accepted answer available in the suggestions for both languages.');
+   }
   }
   if(![s.answer_fa,s.answer_en,...s.accept_fa,...s.accept_en].some(v=>String(v||'').trim()))return prefix+(fa?'پاسخ صحیح را وارد کنید.':'Enter an accepted answer.');
  }
