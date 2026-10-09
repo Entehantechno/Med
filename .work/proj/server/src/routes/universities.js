@@ -116,14 +116,30 @@ r.get("/:id/members", authRequired, requireRole("admin", "teacher"), (req, res) 
     const uni = db.prepare("SELECT university_id FROM users WHERE id=?").get(req.user.id)?.university_id;
     if (Number(req.params.id) !== Number(uni)) return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
-  const lang = req.query.lang === "en" ? "en" : "fa";
-  const rows = db.prepare(`SELECT id, name_fa, name_en, username, email, role, status, student_no
-    FROM users WHERE university_id=? AND role IN ('teacher','student')
-    ORDER BY CASE role WHEN 'teacher' THEN 0 ELSE 1 END, name_fa`).all(req.params.id);
-  res.json({
-    teachers: rows.filter((u) => u.role === "teacher").map((u) => ({ id: u.id, name: lang === "fa" ? (u.name_fa || u.name_en) : (u.name_en || u.name_fa), email: u.email, status: u.status })),
-    students: rows.filter((u) => u.role === "student").map((u) => ({ id: u.id, name: lang === "fa" ? (u.name_fa || u.name_en) : (u.name_en || u.name_fa), student_no: u.student_no, status: u.status })),
-  });
+  if (!db.prepare('SELECT id FROM universities WHERE id=?').get(req.params.id)) return res.status(404).json({error:'not_found'});
+  const lang = req.query.lang === 'en' ? 'en' : 'fa';
+  const pageInput = Number(req.query.page ?? 1), sizeInput = Number(req.query.pageSize ?? 50);
+  if (!Number.isSafeInteger(pageInput) || pageInput < 1 || !Number.isSafeInteger(sizeInput) || sizeInput < 1) return res.status(400).json({error:'invalid_pagination'});
+  const pageSize = Math.min(100, sizeInput);
+  const role = String(req.query.role || ''), status = String(req.query.status || '');
+  if ((role && !['teacher','student'].includes(role)) || (status && !['active','inactive','pending'].includes(status))) return res.status(400).json({error:'invalid_filter'});
+  let where = "WHERE university_id=? AND role IN ('teacher','student')";
+  const args = [req.params.id];
+  const q = normDigits(String(req.query.q || '').trim()).slice(0,200).toLowerCase();
+  if (q) { where += " AND (instr(lower(COALESCE(name_fa,'')),?)>0 OR instr(lower(COALESCE(name_en,'')),?)>0 OR instr(lower(username),?)>0 OR instr(lower(COALESCE(student_no,'')),?)>0 OR instr(lower(COALESCE(email,'')),?)>0)"; args.push(q,q,q,q,q); }
+  const prefix = normDigits(String(req.query.prefix || '').trim()).slice(0,200);
+  if (prefix) { where += " AND instr(COALESCE(student_no,''),?)=1"; args.push(prefix); }
+  if (role) { where += ' AND role=?'; args.push(role); }
+  if (status) { where += ' AND status=?'; args.push(status); }
+  const total = db.prepare('SELECT COUNT(*) n FROM users '+where).get(...args).n;
+  const page = Math.min(pageInput, Math.max(1,Math.ceil(total/pageSize)));
+  const nameExpr = lang === 'en' ? "COALESCE(NULLIF(name_en,''),NULLIF(name_fa,''),username)" : "COALESCE(NULLIF(name_fa,''),NULLIF(name_en,''),username)";
+  const sorts = { name: nameExpr+' COLLATE NOCASE', student_no: "COALESCE(student_no,'') COLLATE NOCASE", role: "CASE role WHEN 'teacher' THEN 0 ELSE 1 END", id: 'id' };
+  const sort = Object.hasOwn(sorts, req.query.sort) ? sorts[req.query.sort] : sorts.role;
+  const rows = db.prepare(`SELECT id, ${nameExpr} name, username, email, role, status, student_no FROM users ${where} ORDER BY ${sort},id LIMIT ? OFFSET ?`).all(...args,pageSize,(page-1)*pageSize);
+  // Legacy field names remain, but contain only this page. Never fetch all users.
+  res.json({ items: rows, total, page, pageSize,
+    teachers: rows.filter(u=>u.role==='teacher'), students: rows.filter(u=>u.role==='student') });
 });
 
 /* Add EXISTING teachers/students to this university (bulk). Admin assigns

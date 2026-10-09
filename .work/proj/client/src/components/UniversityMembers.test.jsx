@@ -1,0 +1,22 @@
+import React from 'react';
+import {render,screen,fireEvent,waitFor,cleanup} from '@testing-library/react';
+import {beforeEach,afterEach,it,expect,vi} from 'vitest';
+const api=vi.hoisted(()=>({get:vi.fn()}));
+vi.mock('../api.js',()=>({api}));
+vi.mock('../context.jsx',()=>({useApp:()=>({lang:'en',t:k=>k})}));
+import UniversityMembers from './UniversityMembers.jsx';
+const result=(name='First',page=1,total=51)=>({items:[{id:page,name,student_no:'900'+page,role:'student',status:'active'}],page,total,pageSize:25});
+beforeEach(()=>{vi.clearAllMocks();api.get.mockImplementation(async url=>{const p=Number(new URL('http://test'+url).searchParams.get('page'));return result(p===1?'First':'Second',p);});});
+afterEach(()=>{cleanup();vi.restoreAllMocks();});
+it('requests one server page and filters/sorts reset the page',async()=>{render(<UniversityMembers id={8}/>);await screen.findByText('First');fireEvent.click(screen.getByRole('button',{name:'Next page'}));await screen.findByText('Second');expect(api.get.mock.lastCall[0]).toContain('page=2');fireEvent.change(screen.getByLabelText('Student number prefix'),{target:{value:'9033'}});await screen.findByText('First');expect(api.get.mock.lastCall[0]).toContain('prefix=9033');expect(api.get.mock.lastCall[0]).toContain('page=1');fireEvent.change(screen.getByLabelText('Sort all results'),{target:{value:'student_no'}});await waitFor(()=>expect(api.get.mock.lastCall[0]).toContain('sort=student_no'));});
+it('ignores stale responses after a new search',async()=>{let resolveOld;api.get.mockImplementationOnce(()=>new Promise(resolve=>{resolveOld=resolve})).mockResolvedValue(result('New'));render(<UniversityMembers id={8}/>);await waitFor(()=>expect(api.get).toHaveBeenCalledOnce());fireEvent.change(screen.getByLabelText('Search members'),{target:{value:'New'}});await screen.findByText('New');resolveOld(result('Old'));await waitFor(()=>expect(screen.queryByText('Old')).toBeNull());expect(screen.getByText('New')).toBeInTheDocument();});
+it('shows errors and retries instead of presenting stale actionable members',async()=>{api.get.mockRejectedValueOnce(new Error('offline'));render(<UniversityMembers id={8}/>);await screen.findByRole('alert');expect(screen.queryByRole('table')).toBeNull();expect(screen.getByRole('button',{name:'Next page'})).toBeDisabled();fireEvent.click(screen.getByRole('button',{name:'Retry'}));await screen.findByText('First');});
+it('serializes confirmed removal and reloads the current server page',async()=>{vi.spyOn(window,'confirm').mockReturnValue(true);let done;const remove=vi.fn(()=>new Promise(r=>{done=r}));render(<UniversityMembers id={8} onRemove={remove}/>);await screen.findByText('First');const button=screen.getByRole('button',{name:'removeFromUni'});fireEvent.click(button);fireEvent.click(button);expect(remove).toHaveBeenCalledTimes(1);expect(button).toBeDisabled();done();await waitFor(()=>expect(api.get).toHaveBeenCalledTimes(2));});
+it('does not offer remove for read-only faculty and clamps a deleted final page',async()=>{api.get.mockResolvedValue(result('Only',1,1));render(<UniversityMembers id={8}/>);await screen.findByText('Only');expect(screen.queryByRole('button',{name:'removeFromUni'})).toBeNull();expect(screen.getByRole('button',{name:'Next page'})).toBeDisabled();});
+it('returns from a removed final page to the server-clamped page',async()=>{
+ vi.spyOn(window,'confirm').mockReturnValue(true);
+ api.get.mockResolvedValueOnce(result('First',1,26)).mockResolvedValueOnce(result('Last',2,26)).mockResolvedValue(result('Remaining',1,25));
+ render(<UniversityMembers id={8} onRemove={vi.fn().mockResolvedValue(undefined)}/>);
+ await screen.findByText('First');fireEvent.click(screen.getByRole('button',{name:'Next page'}));await screen.findByText('Last');fireEvent.click(screen.getByRole('button',{name:'removeFromUni'}));
+ await screen.findByText('Remaining');await waitFor(()=>expect(api.get).toHaveBeenCalledTimes(4));expect(api.get.mock.calls[2][0]).toContain('page=2');expect(api.get.mock.calls[3][0]).toContain('page=1');await waitFor(()=>expect(screen.getByRole('button',{name:'Next page'})).toBeDisabled());
+});

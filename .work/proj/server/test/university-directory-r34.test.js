@@ -1,0 +1,24 @@
+import {beforeAll,it,expect} from 'vitest';
+import {execFileSync} from 'node:child_process';
+import request from 'supertest';
+import {db,initDb,durableTransaction} from '../src/db.js';
+import {createApp} from '../src/app.js';
+import {signToken} from '../src/lib/auth.js';
+let app,uni,foreign,admin,teacher,outsider,student,last;
+const get=(token,query='',id=uni)=>request(app).get(`/api/universities/${id}/members${query}`).auth(token,{type:'bearer'});
+beforeAll(async()=>{
+ execFileSync(process.execPath,['src/seed.js','--force'],{stdio:'ignore'});await initDb();app=createApp();
+ uni=Number(db.prepare("INSERT INTO universities(code,name_en) VALUES ('R34-A','Directory A')").run().lastInsertRowid);
+ foreign=Number(db.prepare("INSERT INTO universities(code,name_en) VALUES ('R34-B','Directory B')").run().lastInsertRowid);
+ const user=(name,role,u,no=name,status='active')=>{const id=Number(db.prepare("INSERT INTO users(username,password_hash,name_en,role,status,university_id,student_no) VALUES (?,'fixture',?,?,?,?,?)").run(name,name,role,status,u,no).lastInsertRowid);return db.prepare('SELECT * FROM users WHERE id=?').get(id)};
+ admin=signToken(user('r34-admin','admin',null));teacher=signToken(user('r34-teacher','teacher',uni));outsider=signToken(user('r34-outsider','teacher',foreign));student=signToken(user('r34-learner','student',foreign));
+ durableTransaction(()=>{for(let i=0;i<1200;i++)last=user('Member '+String(i).padStart(4,'0'),'student',uni,'9033'+String(i).padStart(4,'0'),i===1199?'inactive':'active');user('Literal prefix','student',uni,'A_1%');});
+},60000);
+it('default response is bounded, includes total, and retains legacy arrays for this page',async()=>{const r=await get(admin);expect(r.status).toBe(200);expect(r.body.total).toBe(1202);expect(r.body.items).toHaveLength(50);expect(r.body.teachers.length+r.body.students.length).toBe(50);expect(r.body.items[0].role).toBe('teacher');expect(r.body.items[0]).not.toHaveProperty('password_hash');});
+it('server pages are disjoint and reach members past the old limits',async()=>{const a=await get(admin,'?role=student&prefix=9033&pageSize=100&page=1&sort=student_no');const b=await get(admin,'?role=student&prefix=9033&pageSize=100&page=12&sort=student_no');expect(b.status).toBe(200);expect(b.body.total).toBe(1200);expect(b.body.items).toHaveLength(100);expect(b.body.items.at(-1).student_no).toBe('90331199');expect(new Set([...a.body.items,...b.body.items].map(x=>x.id)).size).toBe(200);});
+it('normalizes Persian digits and applies role/status filters before counting',async()=>{const r=await get(admin,'?prefix='+encodeURIComponent('۹۰۳۳')+'&status=inactive&role=student');expect(r.body.total).toBe(1);expect(r.body.items[0].id).toBe(last.id);});
+it('search and prefix treat SQL wildcard characters literally',async()=>{for(const qs of ['q=','prefix=']){const r=await get(admin,'?'+qs+encodeURIComponent('A_1%'));expect(r.body.total).toBe(1);expect(r.body.items[0].student_no).toBe('A_1%');}});
+it('caps page size, clamps empty/end pages, and rejects unsafe numbers',async()=>{expect((await get(admin,'?pageSize=999')).body.items).toHaveLength(100);const end=await get(admin,'?page=999&q=nonexistent');expect(end.body).toMatchObject({total:0,page:1,items:[]});for(const q of ['page=Infinity','page=-1','page=1.5','pageSize=NaN','pageSize=0'])expect((await get(admin,'?'+q)).status).toBe(400);});
+it('sort input is allowlisted and filters are validated',async()=>{for(const sort of ['constructor','__proto__','name DESC; DROP TABLE users'])expect((await get(admin,'?sort='+encodeURIComponent(sort))).status).toBe(200);expect((await get(admin,'?role=admin')).status).toBe(400);expect((await get(admin,'?status=wrong')).status).toBe(400);});
+it('checks tenant/role before returning rows or counts',async()=>{expect((await get(teacher)).status).toBe(200);expect((await get(outsider)).status).toBe(403);expect((await get(student)).status).toBe(403);expect((await get(admin,'',999999)).status).toBe(404);expect((await request(app).get(`/api/universities/${uni}/members`)).status).toBe(401);});
+it('transfer and detach are reflected in filtered totals and final-page clamping',async()=>{const before=(await get(admin,'?status=inactive')).body;expect(before.total).toBe(1);expect((await request(app).post(`/api/universities/${foreign}/members`).auth(admin,{type:'bearer'}).send({userIds:[last.id]})).status).toBe(200);expect((await get(admin,'?status=inactive&page=99')).body).toMatchObject({total:0,page:1,items:[]});expect((await get(admin,'?q=Member',foreign)).body.total).toBe(1);expect((await request(app).delete(`/api/universities/${foreign}/members/${last.id}`).auth(admin,{type:'bearer'})).status).toBe(200);expect((await get(admin,'?q=Member',foreign)).body.total).toBe(0);});

@@ -1,0 +1,148 @@
+{
+  "date": "2026-10-09",
+  "baseline_commit": "606e875cfe47abbd4b2a91234ead8d021a25ece3",
+  "version": "2026.10.09-r34-university-directory",
+  "server": {
+    "passed": 2030,
+    "failed": 47,
+    "tests": 2077,
+    "files": 87,
+    "skipped": 0,
+    "duration_seconds": 921.61
+  },
+  "client": {
+    "passed": 160,
+    "failed": 0,
+    "tests": 160,
+    "files": 29,
+    "skipped": 0,
+    "duration_seconds": 53.2
+  },
+  "extracted_server": {
+    "passed": 245,
+    "failed": 0,
+    "tests": 245,
+    "files": 17,
+    "skipped": 0,
+    "duration_seconds": 253.06
+  },
+  "admin_security_before": {
+    "passed": 0,
+    "failed": 4,
+    "tests": 4,
+    "files": 1,
+    "skipped": 0,
+    "duration_seconds": 18.22
+  },
+  "admin_security_after": {
+    "passed": 4,
+    "failed": 0,
+    "tests": 4,
+    "files": 1,
+    "skipped": 0,
+    "duration_seconds": 18.01
+  },
+  "security_control_note": "The same four new credential assertions fail against the R33 login handler in an isolated baseline copy and pass against the fixed handler. No production database or account was used.",
+  "packaging_tests": {
+    "passed": 4,
+    "failed": 0
+  },
+  "production_build": "passed",
+  "browser": {
+    "checks": [
+      "Real API returns 25 rows for the initial 1200-member directory",
+      "Next page retrieves a distinct server page",
+      "Persian prefix plus search reaches the last student, beyond the old display limits",
+      "Confirmed detach updates the filtered count and empty state",
+      "Adding the detached member refreshes the already expanded directory",
+      "Injected network failure hides stale actions; Retry recovers through real API",
+      "Mobile Persian filters and real member row render with bounded table",
+      "On the extracted live server, changing the real admin password rejects both historical defaults while the new credential works"
+    ],
+    "pageErrors": [],
+    "responses": [
+      {
+        "page": 1,
+        "total": 1200,
+        "rows": 25,
+        "pageSize": 25
+      },
+      {
+        "page": 2,
+        "total": 1200,
+        "rows": 25,
+        "pageSize": 25
+      },
+      {
+        "page": 1,
+        "total": 1200,
+        "rows": 25,
+        "pageSize": 25
+      },
+      {
+        "page": 1,
+        "total": 1,
+        "rows": 1,
+        "pageSize": 25
+      },
+      {
+        "page": 1,
+        "total": 1,
+        "rows": 1,
+        "pageSize": 25
+      },
+      {
+        "page": 1,
+        "total": 0,
+        "rows": 0,
+        "pageSize": 25
+      },
+      {
+        "page": 1,
+        "total": 1,
+        "rows": 1,
+        "pageSize": 25
+      },
+      {
+        "page": 1,
+        "total": 1200,
+        "rows": 25,
+        "pageSize": 25
+      },
+      {
+        "page": 1,
+        "total": 1200,
+        "rows": 25,
+        "pageSize": 25
+      },
+      {
+        "page": 1,
+        "total": 1,
+        "rows": 1,
+        "pageSize": 25
+      }
+    ]
+  },
+  "package": {
+    "archive": "MED-School-FINAL-2026-10-09-R34.zip",
+    "bytes": 50470031,
+    "entries": 1168,
+    "sha256": "7a0038b94a0a768b44950bfd9543ce15d4b9d13044f1575213278f27aadfe5cb",
+    "crc": "passed",
+    "source_build_and_extracted_matching_files": 787,
+    "unchanged_bank_runtime_demo_files": 70,
+    "reports_outside_zip": true,
+    "environment_template_only": true,
+    "real_openrouter_key_pattern_found": false
+  },
+  "same_failed_bank_test_names_as_r33": true,
+  "external_ai_provider_tests": false,
+  "paid_ai_tests": false,
+  "limitations": [
+    "47 baseline bank failures remain open.",
+    "Bounded responses do not imply unlimited scalability; OFFSET and substring searches still have costs.",
+    "Legacy teachers/students response arrays now contain only the current page.",
+    "Existing sessions are not globally revoked by deployment; changing a password uses the existing token-version invalidation.",
+    "No investigation of production access history or claim that past compromise did not occur."
+  ]
+}

@@ -1,3 +1,4 @@
+import UniversityMembers from '../components/UniversityMembers.jsx';
 import AcademicMembers from '../components/AcademicMembers.jsx';
 import {UniversityField,GroupUniversity,ContentSharing} from '../components/AcademicControls.jsx';
 import { adminTabMode } from "../lib/admin-navigation.js";
@@ -9145,23 +9146,20 @@ function Universities() {
   const [defaults, setDefaults] = useState(null);   // global feature defaults
   const [editing, setEditing] = useState(null);
   const [uniQ, setUniQ] = useState("");
-  const [members, setMembers] = useState({});   // uniId -> {teachers, students} (expanded)
+  const [members, setMembers] = useState({}); // expanded university IDs
+  const [membersRevision, setMembersRevision] = useState(0);
   const [addingTo, setAddingTo] = useState(null);   // university to add existing members to
   const load = () => api.get("/universities").then((d) => { setUnis(d.universities); setDefaults(d.defaults || null); }).catch(() => setUnis([]));
   const saveDefaults = async (patch) => {
     try { const d = await api.put("/universities/defaults", patch); setDefaults(d); toast(t("saved")); }
     catch (e) { toast(e.message); }
   };
-  const refreshMembers = async (uid) => { try { const d = await api.get(`/universities/${uid}/members?lang=${lang}`); setMembers((m) => ({ ...m, [uid]: d })); } catch { /* */ } };
   const removeMember = async (uid, userId) => {
-    if (!confirm(t("removeFromUni") + "؟")) return;
-    try { await api.del(`/universities/${uid}/members/${userId}`); toast(t("saved")); refreshMembers(uid); load(); } catch (e) { toast(e.message); }
+    await api.del(`/universities/${uid}/members/${userId}`);
+    toast(t("saved")); setMembersRevision(v=>v+1); load();
   };
   useEffect(() => { load(); }, []);
-  const toggleMembers = async (uid) => {
-    if (members[uid]) { setMembers((m) => { const n = { ...m }; delete n[uid]; return n; }); return; }
-    try { const d = await api.get(`/universities/${uid}/members?lang=${lang}`); setMembers((m) => ({ ...m, [uid]: d })); } catch { /* */ }
-  };
+  const toggleMembers = (uid) => setMembers(m=>({...m,[uid]:!m[uid]}));
   const del = async (u) => {
     if (!confirm(t("confirmDelete"))) return;
     try { await api.del(`/universities/${u.id}`); toast(t("saved")); load(); }
@@ -9246,19 +9244,15 @@ function Universities() {
               {isAdmin && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing(u)}><Icon name="edit" size={13} /> {t("edit")}</button>}
               {isAdmin && <button type="button" className="btn btn-danger btn-sm" onClick={() => del(u)}><Icon name="trash" size={13} /> {t("delete")}</button>}
             </div>
-            {members[u.id] && <DataTable pageSize={25} storageKey={`university-members-${u.id}`}
-              rows={[...members[u.id].teachers.map(m=>({...m,role:'teacher'})),...members[u.id].students.map(m=>({...m,role:'student'}))]}
-              rowKey={m=>m.id} searchKeys={['name','student_no','email']} columns={[
-                {key:'name',label:t('name')},{key:'student_no',label:t('studentNo')},{key:'role',label:t('role'),render:m=>t(m.role)},
-                {key:'actions',label:'',sortable:false,render:m=>isAdmin&&<button type="button" className="btn btn-sm btn-danger" onClick={()=>removeMember(u.id,m.id)}>{t('removeFromUni')}</button>}
-              ]}/>}
+            {members[u.id] && <UniversityMembers id={u.id} revision={membersRevision}
+              onRemove={isAdmin ? userId=>removeMember(u.id,userId) : undefined} />}
 
           </div>
         ))}
       </div>
       {editing && <UniversityModal uni={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); toast(t("saved")); load(); }} />}
       {addingTo && <AddUniMembersModal uni={addingTo} onClose={() => setAddingTo(null)}
-        onSaved={() => { const uid = addingTo.id; setAddingTo(null); toast(t("saved")); if (members[uid]) refreshMembers(uid); load(); }} />}
+        onSaved={() => { const uid = addingTo.id; setAddingTo(null); toast(t("saved")); setMembersRevision(v=>v+1); load(); }} />}
     </div>
   );
 }
