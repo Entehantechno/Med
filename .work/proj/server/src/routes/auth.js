@@ -32,7 +32,9 @@ const COMMON_PASSWORDS = new Set([
   "medschool", "medschool1", "medlab123", "med-school",
 ]);
 export function passwordRejected(pw) {
-  const s = String(pw || "");
+  // Persian / Arabic-Indic digits are the same digits: judge the ASCII spelling so
+  // "۱۲۳۴۵۶۷۸" is rejected exactly like "12345678" (same length, same digits).
+  const s = toAsciiDigits(String(pw || ""));
   if (s.length < minPasswordLen()) return "too_short";
   if (s.length > MAX_PASSWORD) return "too_long";
   const low = s.toLowerCase();
@@ -157,7 +159,7 @@ r.post("/register", signupGate, validateBody(registerSchema), async (req, res) =
   if (!emailValid(mail)) return res.status(400).json({ error: "invalid email" });
   const badPw = passwordRejected(password);
   if (badPw) return res.status(400).json({ error: "weak password" });
-  if (await passwordPwned(password)) return res.status(400).json({ error: "weak password" });
+  if (await passwordPwned(toAsciiDigits(String(password)))) return res.status(400).json({ error: "weak password" });
   const exists = db.prepare("SELECT id FROM users WHERE lower(email)=? OR username=?").get(mail, mail);
   if (exists) return res.status(409).json({ error: "email taken" });
 
