@@ -12,6 +12,7 @@ import { hashPassword } from "../lib/password.js";
 import { db, persistNow, durableTransaction } from "../db.js";
 import { authRequired, requireRole, signToken, bumpTokenVer } from "../lib/auth.js";
 import { passwordRejected, passwordErrorBody } from "./auth.js";
+import { passwordPwned } from "../lib/security.js";
 import { toAsciiDigits } from "../lib/digits.js";
 import { audit, listAudit } from "../lib/audit.js";
 import { allFlags, setFlag, ensureFlags } from "../lib/flags.js";
@@ -1539,6 +1540,7 @@ r.post("/users/:id/password", ...P(PU), async (req, res, next) => {
     // Same rules as self-service change (min length, common passwords).
     const rejected = passwordRejected(pw);
     if (rejected) return res.status(400).json(passwordErrorBody(rejected));
+    if (await passwordPwned(pw)) return res.status(400).json({ error: "weak password" });
     // Hash first so a hashing failure cannot bump token_ver without changing the password.
     const hash = await hashPassword(pw);
     const nextVer = bumpTokenVer(u.id);

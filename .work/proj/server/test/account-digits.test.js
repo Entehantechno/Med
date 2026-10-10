@@ -67,4 +67,21 @@ describe("account digits: Persian, Arabic-Indic and ASCII are interchangeable at
     expect(passwordRejected("١٢٣٤٥٦٧٨")).toBe("common");
     expect(passwordRejected("۸۷۶۵۴۳۲۱")).toBe(null);     // not a common password, still accepted
   });
+
+  it("self-service password change rejects a common password typed with Persian digits", async () => {
+    const ltk = (await login("learner", "demo")).body.token;
+    const common = await request(app).put("/api/auth/password").set(A(ltk))
+      .send({ currentPassword: "demo", newPassword: "۱۲۳۴۵۶۷۸" });
+    expect(common.status).toBe(400);
+    expect(common.body.error).toBe("password_too_common");
+  });
+
+  it("breached-password check runs on the ASCII spelling in sign-up, self-service change and admin reset", async () => {
+    const { readFileSync } = await import("node:fs");
+    const authSrc = readFileSync(new URL("../src/routes/auth.js", import.meta.url), "utf8");
+    const adminSrc = readFileSync(new URL("../src/routes/admin.js", import.meta.url), "utf8");
+    expect(authSrc).toContain("passwordPwned(toAsciiDigits(String(password)))");
+    expect(authSrc).toContain("passwordPwned(toAsciiDigits(String(newPassword)))");
+    expect(adminSrc).toContain("passwordPwned(pw)");
+  });
 });

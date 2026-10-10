@@ -320,6 +320,8 @@ r.put("/password", authRequired, validateBody(changePwSchema), async (req, res, 
     const { currentPassword, newPassword } = req.body || {};
     const rejected = passwordRejected(newPassword);
     if (rejected) return res.status(400).json(passwordErrorBody(rejected));
+    // same breached-password check as sign-up (judged on the ASCII spelling)
+    if (await passwordPwned(toAsciiDigits(String(newPassword)))) return res.status(400).json({ error: "weak password" });
     const u = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
     let currentOk = false;
     if (u && u.password_hash) {
