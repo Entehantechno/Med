@@ -1,3 +1,5 @@
+import {flashcardLanguageFallback} from '../../../server/src/lib/flashcard-language.js';
+import SearchAnswer from './SearchAnswer.jsx';
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useApp } from "../context.jsx";
 import { api } from "../api.js";
@@ -24,6 +26,7 @@ function LocalHints({ hints, showHints, fa }) {
 }
 
 export default function ExamOtherType({ card, lang, done, showCorrect, showHints = true, hints = [], onGraded }) {
+  card=useMemo(()=>flashcardLanguageFallback(card),[card]);
   const { t } = useApp();
   const [sel, setSel] = useState(card.type === "match" ? { pairs: {}, activeLeft: null } : card.type === "order" ? [] : null);
   const [checked, setChecked] = useState(false);
@@ -100,7 +103,7 @@ export default function ExamOtherType({ card, lang, done, showCorrect, showHints
       )}
       {card.type === "fill" && (
         <div>
-          <input className="fill-input" value={sel || ""} disabled={checked} placeholder={fa ? "پاسخ را تایپ کنید…" : "Type your answer…"} onChange={(e) => setSel(e.target.value)} />
+          {card.answerMode==='search'&&card.options_fa?.length?<><SearchAnswer options={card.options_fa.map((fa,i)=>({fa,en:card.options_en?.[i]||fa}))} lang={lang} disabled={checked} onPick={i=>setSel((fa?card.options_fa:card.options_en)[i])}/>{sel&&<p role="status">{fa?'پاسخ انتخاب‌شده: ':'Selected answer: '}{sel}</p>}</>:<input className="fill-input" value={sel || ""} disabled={checked} placeholder={fa ? "پاسخ را تایپ کنید…" : "Type your answer…"} onChange={(e) => setSel(e.target.value)} />}
           {checked && !right && showCorrect && <div className="small mt8" style={{ color: "var(--danger)" }}>{fa ? "پاسخ درست" : "Answer"}: {fa ? (reveal?.fa || card.blank_fa) : (reveal?.en || card.blank_en)}</div>}
         </div>
       )}
@@ -331,8 +334,7 @@ function StepwiseQuestion({ card, lang, showCorrect, checked, setChecked, onGrad
   const renderInput = (s, i) => {
     const type = s.answerType || s.type || "autocomplete";
     if (type === "truefalse") return <div className="mc-options compact"><button type="button" className={`mc-opt ${answers[i] === "true" ? "sel" : ""}`} disabled={checked} onClick={() => setAnswers((a)=>({...a,[i]:"true"}))}>{fa ? "درست" : "True"}</button><button type="button" className={`mc-opt ${answers[i] === "false" ? "sel" : ""}`} disabled={checked} onClick={() => setAnswers((a)=>({...a,[i]:"false"}))}>{fa ? "نادرست" : "False"}</button></div>;
-    const opts = fa ? (s.options_fa || []) : (s.options_en || []);
-    if (type === "mcq" && opts.length) return <div className="mc-options compact">{opts.map((o, j) => <button type="button" key={j} className={`mc-opt ${answers[i] === o ? "sel" : ""}`} disabled={checked} onClick={() => setAnswers((a)=>({...a,[i]:o}))}>{o}</button>)}</div>;
+    if (type === "mcq" || type === "autocomplete") return <StepChoiceInput step={s} lang={lang} value={answers[i] || ""} disabled={checked} onChange={value=>setAnswers(a=>({...a,[i]:value}))} />;
     return <textarea rows="2" value={answers[i] || ""} disabled={checked} onChange={(e)=>setAnswers((a)=>({...a,[i]:e.target.value}))} placeholder={fa ? "پاسخ این مرحله…" : "Answer this step…"}/>;
   };
   const canCheck = steps.length && steps.every((_, i) => String(answers[i] || "").trim());
@@ -610,4 +612,12 @@ function HotspotExam({ card, lang, showCorrect, checked, setChecked, onGraded, h
       )}
     </div>
   );
+}
+
+function StepChoiceInput({step,lang,value,disabled,onChange}) {
+ const options=useMemo(()=>Array.from({length:Math.max(step.options_fa?.length||0,step.options_en?.length||0)},(_,i)=>({fa:step.options_fa?.[i]||step.options_en?.[i]||'',en:step.options_en?.[i]||step.options_fa?.[i]||''})).filter(o=>o.fa||o.en),[step]);
+ const fa=lang==='fa';
+ if((step.answerType||step.type)==='mcq'&&options.length)return <div className="mc-options compact">{options.map((o,i)=><button type="button" key={i} className={`mc-opt ${value===o[lang]?'sel':''}`} disabled={disabled} onClick={()=>onChange(o[lang])}>{o[lang]}</button>)}</div>;
+ if(options.length)return <div><SearchAnswer options={options} lang={lang} disabled={disabled} onPick={i=>onChange(options[i][lang])} placeholder={fa?'جستجوی پاسخ…':'Search for an answer…'}/>{value&&<p role="status">{fa?'پاسخ انتخاب‌شده: ':'Selected answer: '}{value}</p>}</div>;
+ return <textarea aria-label={fa?'پاسخ مرحله':'Step answer'} rows="2" value={value} disabled={disabled} onChange={e=>onChange(e.target.value)} placeholder={fa?'پاسخ این مرحله…':'Answer this step…'}/>;
 }

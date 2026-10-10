@@ -1,3 +1,5 @@
+import {demoStatus,repairDemo} from '../lib/demo-repair.js';
+import { masterSourceKey } from "../lib/content-identity.js";
 /* admin.js — Super-admin control panel API (role = 'admin' only).
    Full platform control: system overview, audit log, feature flags, learner
    management (ban/activate/XP/premium/reset/delete), impersonation, global
@@ -7,8 +9,10 @@ import { Router } from "express";
 import { searchPool, normalizeText, highlightRanges, normDigits } from "../lib/textsearch.js";
 import path from "path";
 import { hashPassword } from "../lib/password.js";
-import { db, persistNow } from "../db.js";
+import { db, persistNow, durableTransaction } from "../db.js";
 import { authRequired, requireRole, signToken, bumpTokenVer } from "../lib/auth.js";
+import { passwordRejected, passwordErrorBody } from "./auth.js";
+import { toAsciiDigits } from "../lib/digits.js";
 import { audit, listAudit } from "../lib/audit.js";
 import { allFlags, setFlag, ensureFlags } from "../lib/flags.js";
 import { requirePerm, permsFor, PERMISSIONS, EDITABLE_ROLES, currentRolePerms, setRolePermOverrides } from "../lib/rbac.js";
@@ -56,8 +60,18 @@ import {
 import { isLearnContent } from "../lib/content-track.js";
 
 const r = Router();
+// Retired competitive feature. Do not allow old clients to re-enable/import it.
+r.use('/vpatient', authRequired, (req, res) => res.status(410).json({ error: 'university_only' }));
 const admin = [authRequired, requireRole("admin")];      // full-admin-only
 const P = (...perms) => [authRequired, requirePerm(...perms)];   // permission-gated (ANY of the perms)
+
+r.get('/demo/status',...admin,(req,res)=>res.json(demoStatus()));
+r.post('/demo/prepare',...admin,(req,res)=>{
+ if(req.body?.confirm!==true)return res.status(400).json({error:'confirmation_required'});
+ try{const result=repairDemo({universityId:req.body.universityId,password:req.body.password,actorId:req.user.id});
+ audit(req,'demo_prepare','university:'+result.universityId,{accounts:result.accounts,caseIds:result.caseIds});res.json(result);
+ }catch(e){const storage=['database_persistence_failed','database_recovery_failed'].includes(e.message);res.status(storage?503:400).json({error:e.message,...(storage?{stage:'save',retryable:true}:{})});}
+});
 // user-management routes are shared by the competitive admin (learn.users) and
 // the university teacher/admin (uni.users) — either perm grants access.
 const PU = ["learn.users", "uni.users"];
@@ -1379,13 +1393,21 @@ r.get("/users", ...P(PU), (req, res) => {
     sql += " AND u.role='learner'";
   }
   if (q) { sql += " AND (u.username LIKE ? OR u.name_fa LIKE ? OR u.name_en LIKE ? OR u.email LIKE ? OR u.student_no LIKE ?)"; args.push(`%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`, `%${q}%`); }
-  sql += " ORDER BY u.id DESC LIMIT 300";
+  if(req.query.university_id==='null')sql+=' AND u.university_id IS NULL';
+  else if(req.query.university_id){sql+=' AND u.university_id=?';args.push(Number(req.query.university_id));}
+  if(req.query.prefix){sql+=' AND u.student_no LIKE ?';args.push(String(req.query.prefix).replace(/[%_]/g,'')+'%');}
+  const total=db.prepare('SELECT COUNT(*) n FROM ('+sql+')').get(...args).n;
+  const page=Math.max(1,Math.floor(Number(req.query.page)||1));
+  const pageSize=Math.max(1,Math.min(300,Math.floor(Number(req.query.pageSize)||300)));
+  const order={student_no:'u.student_no COLLATE NOCASE',name:'u.name_fa COLLATE NOCASE',username:'u.username COLLATE NOCASE'}[req.query.sort]||'u.id';
+  sql+=` ORDER BY ${order}${req.query.sort?'':' DESC'},u.id LIMIT ? OFFSET ?`;args.push(pageSize,(page-1)*pageSize);
   const rows = db.prepare(sql).all(...args);
   // attach exam assignments for students so the unified users panel can show
   // and pre-fill each student's exam access (parity with the legacy uni panel)
-  const asg = db.prepare("SELECT case_id FROM exam_assignments WHERE user_id=? AND active=1");
-  for (const u of rows) if (u.role === "student") u.caseIds = asg.all(u.id).map((a) => a.case_id);
-  res.json({ users: rows });
+  const students=rows.filter(u=>u.role==='student'),byUser=new Map(students.map(u=>[u.id,[]]));
+  if(students.length)for(const a of db.prepare(`SELECT user_id,case_id FROM exam_assignments WHERE active=1 AND user_id IN (${students.map(()=>'?').join(',')})`).all(...students.map(u=>u.id)))byUser.get(a.user_id).push(a.case_id);
+  for(const u of students)u.caseIds=byUser.get(u.id);
+  res.json({ users: rows, total, page, pageSize });
 });
 
 // detailed single-user operational view
@@ -1405,7 +1427,18 @@ r.get("/users/:id", ...P(PU), (req, res) => {
 // create a user of ANY role (admin can add teachers/admins/students/learners)
 r.post("/users", ...P(PU), async (req, res) => {
   const b = req.body || {};
-  const uname = String(b.username || "").trim();
+  if (b.role === "student") {
+    // A student needs only a name and a student number. The number becomes the
+    // username AND the initial password (Persian/ASCII digits are the same).
+    const no = toAsciiDigits(String(b.student_no || b.username || "")).replace(/\u200c/g, "").trim();
+    if (!/^\d{4,16}$/.test(no)) return res.status(400).json({ error: "student_no_required", message_fa: "شماره دانشجویی (فقط ارقام) الزامی است." });
+    if (!String(b.name_fa || b.name_en || "").trim()) return res.status(400).json({ error: "name_required", message_fa: "نام دانشجو الزامی است." });
+    b.student_no = no; b.username = no; b.password = no;
+    b.name_fa = String(b.name_fa || b.name_en).trim();
+    b.name_en = b.name_fa;
+  }
+  const uname = toAsciiDigits(String(b.username || "")).trim();
+  if (b.password !== undefined && b.role !== "student") b.password = toAsciiDigits(String(b.password));
   if (!uname || !b.password) return res.status(400).json({ error: "username & password required" });
   const ALL_ROLES = ["student", "teacher", "admin", "learner", "content_manager", "support"];
   const PRIVILEGED = ["admin", "content_manager", "support", "teacher"];
@@ -1497,17 +1530,25 @@ r.post("/users/:id/status", ...P(PU), (req, res) => {
 });
 
 // reset password
-r.post("/users/:id/password", ...P(PU), async (req, res) => {
-  const u = db.prepare("SELECT * FROM users WHERE id=?").get(req.params.id);
-  if (!u) return res.status(404).json({ error: "not found" });
-  if (!staffMayWriteUser(req.user, u)) return res.status(403).json({ error: "university_only", stage: "access" });
-  const pw = String(req.body?.password || "");
-  if (pw.length < 3) return res.status(400).json({ error: "password too short" });
-  const nextVer = bumpTokenVer(u.id);
-  db.prepare("UPDATE users SET password_hash=?, token_ver=? WHERE id=?").run(await hashPassword(pw), nextVer, u.id);
-  audit(req, "user.password_reset", `users:${u.id}`, {});
-  persistNow();
-  res.json({ ok: true });
+r.post("/users/:id/password", ...P(PU), async (req, res, next) => {
+  try {
+    const u = db.prepare("SELECT * FROM users WHERE id=?").get(req.params.id);
+    if (!u) return res.status(404).json({ error: "not found" });
+    if (!staffMayWriteUser(req.user, u)) return res.status(403).json({ error: "university_only", stage: "access" });
+    const pw = toAsciiDigits(String(req.body?.password || ""));
+    // Same rules as self-service change (min length, common passwords).
+    const rejected = passwordRejected(pw);
+    if (rejected) return res.status(400).json(passwordErrorBody(rejected));
+    // Hash first so a hashing failure cannot bump token_ver without changing the password.
+    const hash = await hashPassword(pw);
+    const nextVer = bumpTokenVer(u.id);
+    db.prepare("UPDATE users SET password_hash=?, token_ver=? WHERE id=?").run(hash, nextVer, u.id);
+    audit(req, "user.password_reset", `users:${u.id}`, {});
+    persistNow();
+    res.json({ ok: true });
+  } catch (e) {
+    next(e);
+  }
 });
 
 // adjust learner XP / gems / premium / streak (support & moderation)
@@ -1637,18 +1678,19 @@ r.post("/users/bulk-delete", ...P("learn.users.delete"), (req, res) => {
   res.json({ deleted, blocked, count: deleted.length });
 });
 // bulk assign to university (for students/teachers without university or move)
-r.post("/users/bulk-assign-university", ...P(PU), (req, res) => {
+r.post("/users/bulk-assign-university", ...P(PU), requireRole("admin", "teacher"), (req, res) => {
   const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(n=>parseInt(n,10)).filter(n=>n) : [];
   const uniId = parseInt(req.body?.university_id,10) || null;
   if(!ids.length) return res.status(400).json({ error: "no ids" });
   if(!uniId) return res.status(400).json({ error: "university_required" });
   const uni=db.prepare("SELECT * FROM universities WHERE id=?").get(uniId);
   if(!uni) return res.status(404).json({ error: "university not found" });
+  if(req.user.role === "teacher" && (!currentUniversityId(req.user) || uniId !== currentUniversityId(req.user))) return res.status(403).json({ error: "wrong_university" });
   const assigned=[], blocked=[], limitBlocked=[];
   let hit=null;
   const need = ids.length;
   hit = checkStudentLimit(uniId, need);
-  const tx=db.transaction(()=>{
+  durableTransaction(()=>{
     for(const id of ids){
       const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
       if(!u){ blocked.push({id, reason:"not_found"}); continue; }
@@ -1663,11 +1705,10 @@ r.post("/users/bulk-assign-university", ...P(PU), (req, res) => {
       assigned.push(id);
     }
   });
-  tx();
-  if(assigned.length){ audit(req, "user.bulk_assign_uni", `universities:${uniId}`, { count: assigned.length }); persistNow(); }
+  if(assigned.length){ audit(req, "user.bulk_assign_uni", `universities:${uniId}`, { count: assigned.length }); }
   res.json({ assigned, blocked, limitBlocked, count: assigned.length, studentLimit: hit });
 });
-r.post("/users/bulk-assign-class", ...P(PU), (req, res) => {
+r.post("/users/bulk-assign-class", ...P(PU), requireRole("admin", "teacher"), (req, res) => {
   const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(n=>parseInt(n,10)).filter(n=>n) : [];
   const classId = parseInt(req.body?.class_id,10) || null;
   if(!ids.length) return res.status(400).json({ error: "no ids" });
@@ -1676,21 +1717,23 @@ r.post("/users/bulk-assign-class", ...P(PU), (req, res) => {
   if(!cl) return res.status(404).json({ error: "class not found" });
   if(req.user.role==="teacher" && cl.university_id!==currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university" });
   const added=[], wrongUniversity=[], healed=[], blocked=[];
-  const tx=db.transaction(()=>{
+  durableTransaction(()=>{
     for(const id of ids){
       const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
       if(!u || u.role!=="student"){ blocked.push({id, reason:"not student"}); continue; }
       if(u.university_id==null || u.university_id===""){
-        try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(cl.university_id, id); healed.push(id); u.university_id=cl.university_id; }catch{}
+        const limit = checkStudentLimit(cl.university_id, 1);
+        if (limit) { blocked.push({ id, reason: "student_limit", studentLimit: limit }); continue; }
+        db.prepare("UPDATE users SET university_id=? WHERE id=?").run(cl.university_id, id); healed.push(id); u.university_id=cl.university_id;
       }
       if(u.university_id!==cl.university_id){ wrongUniversity.push({ id, student_no: u.student_no, university_id: u.university_id }); continue; }
-      try{ db.prepare("INSERT OR IGNORE INTO class_members (class_id,user_id) VALUES (?,?)").run(classId, id); added.push(id); }catch{}
+      db.prepare("INSERT OR IGNORE INTO class_members (class_id,user_id) VALUES (?,?)").run(classId, id); added.push(id);
     }
   });
-  tx(); if(added.length) persistNow();
+
   res.json({ added, wrongUniversity, healed, blocked, count: added.length });
 });
-r.post("/users/bulk-assign-exam", ...P(PU), (req, res) => {
+r.post("/users/bulk-assign-exam", ...P(PU), requireRole("admin", "teacher"), (req, res) => {
   const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(n=>parseInt(n,10)).filter(n=>n) : [];
   const examId = parseInt(req.body?.exam_id,10) || null;
   if(!ids.length) return res.status(400).json({ error: "no ids" });
@@ -1699,18 +1742,20 @@ r.post("/users/bulk-assign-exam", ...P(PU), (req, res) => {
   if(!ex) return res.status(404).json({ error: "exam not found" });
   if(req.user.role==="teacher" && ex.university_id!==currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university" });
   const added=[], wrongUniversity=[], healed=[], blocked=[];
-  const tx=db.transaction(()=>{
+  durableTransaction(()=>{
     for(const id of ids){
       const u=db.prepare("SELECT * FROM users WHERE id=?").get(id);
       if(!u || u.role!=="student"){ blocked.push({id, reason:"not student"}); continue; }
       if(u.university_id==null || u.university_id===""){
-        try{ db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, id); healed.push(id); u.university_id=ex.university_id; }catch{}
+        const limit = checkStudentLimit(ex.university_id, 1);
+        if (limit) { blocked.push({ id, reason: "student_limit", studentLimit: limit }); continue; }
+        db.prepare("UPDATE users SET university_id=? WHERE id=?").run(ex.university_id, id); healed.push(id); u.university_id=ex.university_id;
       }
       if(u.university_id!==ex.university_id){ wrongUniversity.push({ id, student_no: u.student_no }); continue; }
-      try{ db.prepare("INSERT OR IGNORE INTO exam_participants (exam_id,user_id) VALUES (?,?)").run(examId, id); added.push(id); }catch{}
+      db.prepare("INSERT OR IGNORE INTO exam_participants (exam_id,user_id) VALUES (?,?)").run(examId, id); added.push(id);
     }
   });
-  tx(); if(added.length) persistNow();
+
   res.json({ added, wrongUniversity, healed, blocked, count: added.length });
 });
 
@@ -1725,7 +1770,7 @@ r.get("/content/cards", ...P("learn.content"), (req, res) => {
     let d = {}; try { d = JSON.parse(c.data_json); } catch { d = {}; }
     const hasMicro = !!(d.micro && (d.micro.lead_fa || d.micro.golden_fa || d.micro.lead_en));
     cards.push({
-      id: c.id, active: c.active, type: d.type || "mcq", difficulty: c.difficulty,
+      id: c.id, public_code: c.public_code, active: c.active, type: d.type || "mcq", difficulty: c.difficulty,
       q: lang === "fa" ? (d.q_fa || d.title_fa) : (d.q_en || d.title_en),
       topic: d.topic || "", hasMicro,
     });
@@ -2300,7 +2345,7 @@ r.get("/learn-cards", ...P("learn.content"), (req, res) => {
   }
 
   const rows = db.prepare(
-    `SELECT f.id, f.data_json, f.difficulty, f.active, f.updated_at,
+    `SELECT f.id, f.public_code, f.data_json, f.difficulty, f.active, f.updated_at,
             f.created_at, f.content_updated_at, f.revision, f.last_action,
             COALESCE(u.name_fa, u.name_en, u.username) AS last_editor_name
        FROM flashcards f
@@ -2347,7 +2392,7 @@ r.get("/learn-cards", ...P("learn.content"), (req, res) => {
     const slug = d.topic || [...(nodeTopic[c.id] || [])][0] || "";
     const tp = topicBySlug[slug];
     return {
-      id: c.id, active: c.active, type: d.type || "mcq", difficulty: c.difficulty || "medium",
+      id: c.id, public_code: c.public_code, active: c.active, type: d.type || "mcq", difficulty: c.difficulty || "medium",
       track: d.track || "uni", premium: !!d.premium, category: d.category || "",
       q: (lang === "fa" ? (d.q_fa || d.title_fa) : (d.q_en || d.title_en)) || `#${c.id}`,
       usedIn: nodeUse[c.id] || [],
@@ -2369,7 +2414,7 @@ r.get("/learn-cards", ...P("learn.content"), (req, res) => {
       facets: cardFacets(d, { ...c, created_at: c.created_at, updated_at: c.content_updated_at || c.updated_at }),
       // normalised search text (stem fa+en, options, chapter, category, editor)
       // for the server-side `?q=` — built once per cache generation.
-      hay: normalizeText(`${d.q_fa || ""} ${d.q_en || ""} ${d.title_fa || ""} ${d.title_en || ""} #${c.id}`),
+      hay: normalizeText(`${c.public_code || ""} ${d.q_fa || ""} ${d.q_en || ""} ${d.title_fa || ""} ${d.title_en || ""} #${c.id}`),
       extra: normalizeText(`${(d.options || []).map((o) => `${o?.fa || ""} ${o?.en || ""} ${o?.why || ""}`).join(" ")} ${d.category || ""} ${d.source_meta?.chapter_fa || ""} ${d.source_meta?.chapter_en || ""} ${d.source_meta?.concept_fa || ""} ${d.source_meta?.subject_fa || ""} ${d.source_meta?.label_fa || ""} ${d.source_meta?.exam_type || ""} ${(d.hints_fa||[]).join(" ")} ${d.micro?.lead_fa || ""} ${d.micro?.golden_fa || ""} ${(d.micro?.points_fa||[]).join(" ")} ${d.micro?.source_fa || ""} ${d.explain?.text_fa || ""} ${d.explain?.text_en || ""} ${d.mnemonic?.scene_fa || ""} ${(d.mnemonic?.hooks_fa||[]).join(" ")} ${c.last_editor_name || ""} ${d.type || ""}`),
       // NOTE: the full card body (`data`) is NOT sent in the list by default.
       // With 11 600 cards it made this response 87 MB (4.3 MB brotli) and froze
@@ -2440,8 +2485,8 @@ function buildLearnCard(b) {
   const data = {
     type: b.type || "mcq", track: "learn",
     premium: !!b.premium, category: b.category || "",
-    q_fa: b.q_fa || "", q_en: b.q_en || b.q_fa || "",
-    title_fa: b.q_fa || "", title_en: b.q_en || b.q_fa || "",
+    q_fa: b.q_fa || "", q_en: b.q_en ?? b.q_fa ?? "",
+    title_fa: b.q_fa || "", title_en: b.q_en ?? b.q_fa ?? "",
     hints_fa: Array.isArray(b.hints_fa) ? b.hints_fa : [],
     hints_en: Array.isArray(b.hints_en) ? b.hints_en : [],
   };
@@ -2451,7 +2496,7 @@ function buildLearnCard(b) {
     // and sent by the past-exam importer; cardserialize already exposes it to
     // the learner as the UWorld-style "why this option is right/wrong" note.
     data.options = (b.options || []).map((o) => ({
-      fa: o.fa || "", en: o.en || o.fa || "", correct: !!o.correct,
+      fa: o.fa || "", en: o.en ?? o.fa ?? "", correct: !!o.correct,
       ...(o.why_fa ? { why_fa: o.why_fa } : {}),
       ...(o.why_en ? { why_en: o.why_en } : {}),
     }));
@@ -2471,9 +2516,9 @@ function buildLearnCard(b) {
     data.items_en = Array.isArray(b.items_en) ? b.items_en : [];
   } else if (type === "compare") {
     // clinical compare & contrast: preserve entities + belongs-tagged features
-    data.entityA_fa = b.entityA_fa || ""; data.entityA_en = b.entityA_en || b.entityA_fa || "";
-    data.entityB_fa = b.entityB_fa || ""; data.entityB_en = b.entityB_en || b.entityB_fa || "";
-    data.features = Array.isArray(b.features) ? b.features.map((f) => ({ fa: f.fa || "", en: f.en || f.fa || "", belongs: ["A", "B", "both"].includes(f.belongs) ? f.belongs : "A" })) : [];
+    data.entityA_fa = b.entityA_fa || ""; data.entityA_en = b.entityA_en ?? b.entityA_fa ?? "";
+    data.entityB_fa = b.entityB_fa || ""; data.entityB_en = b.entityB_en ?? b.entityB_fa ?? "";
+    data.features = Array.isArray(b.features) ? b.features.map((f) => ({ fa: f.fa || "", en: f.en ?? f.fa ?? "", belongs: ["A", "B", "both"].includes(f.belongs) ? f.belongs : "A" })) : [];
   }
   // preserve the subject/topic slug across an import round-trip
   if (b.topic) data.topic = b.topic;
@@ -2966,13 +3011,18 @@ function reviveNodesWithCards() {
   }
   return revived;
 }
+// Explicit uncertainty takes precedence over a stale numeric answer index.
+// Share this policy between normalization and path placement.
+function officialQuestionIsKeyless(q) {
+  return q.keyless === true || q.correct_index === null ||
+    q.key_source === "low-confidence" || q.key_source === "multi-answer";
+}
 function normalizeOfficialQuestion(q, meta = {}) {
   const faOpts = Array.isArray(q.options_fa) ? q.options_fa : [];
   const enOpts = Array.isArray(q.options_en) ? q.options_en : [];
-  const keyless = q.keyless === true || q.correct_index === null ||
-    (q.correct_index === undefined && q.key_source === "low-confidence");
+  const keyless = officialQuestionIsKeyless(q);
   const correctNum = Number(q.correct_index ?? q.correct);
-  const correct = Number.isInteger(correctNum) && correctNum >= 0 && correctNum < faOpts.length ? correctNum : (keyless ? -1 : Math.max(0, correctNum || 0));
+  const correct = keyless ? -1 : (Number.isInteger(correctNum) && correctNum >= 0 && correctNum < faOpts.length ? correctNum : Math.max(0, correctNum || 0));
   const fingerprint = officialFingerprint(q);
   return buildLearnCard({
     track: "learn",
@@ -3080,6 +3130,7 @@ function officialImportPlan(body = {}, dryRun = true) {
   const existing = existingFingerprintSet();
   const tombstones = cardTombstoneSet();
   const seen = new Set();
+  const sourceKeys = new Set(db.prepare("SELECT source_key FROM content_identity_registry WHERE kind='flashcards' AND source_key IS NOT NULL").all().map(r => r.source_key));
   const lessonCounts = new Map();
   const plan = [];
   const counters = { total: questions.length, path: 0, premium: 0, duplicate: 0, overflow: 0, bankOnly: 0, errors: 0 };
@@ -3087,15 +3138,17 @@ function officialImportPlan(body = {}, dryRun = true) {
     try {
       const fp = officialFingerprint(q);
       const deleted = tombstones.has(String(fp));
-      const inDb = existing.has(fp);
-      const duplicate = inDb || seen.has(fp) || deleted;
-      seen.add(fp);
+      const sourceKey = masterSourceKey(q);
+      const inDb = sourceKey ? sourceKeys.has(sourceKey) : existing.has(fp);
+      const identity = sourceKey || fp;
+      const duplicate = inDb || seen.has(identity) || deleted;
+      seen.add(identity);
       // Fast path for a fingerprint already present in THIS database: the
       // commit step skips it outright (idempotent bootstrap re-runs), so do
       // none of the topic/node resolution or card normalisation — with
       // 11k+ questions that keeps a warm-boot import pass to a few seconds.
       if (inDb || deleted) {
-        plan.push({ fingerprint: fp, question_no: q.question_no || plan.length + 1,
+        plan.push({ sourceKey, fingerprint: fp, question_no: q.question_no || plan.length + 1,
           duplicate: true, overflow: false, route: "premium_duplicate",
           subject_fa: q.subject_fa, chapter_fa: q.chapter_fa, part: 0,
           topic: { slug: "", parent: "", name_fa: "" }, data: null });
@@ -3131,7 +3184,7 @@ function officialImportPlan(body = {}, dryRun = true) {
         const probe = officialNode(topic, { chapter_fa: q.chapter_fa, chapter_en: q.chapter_en }, part, true);
         if (!probe) nodeBlocked = true;
       }
-      const isKeyless = q.keyless === true || q.correct_index === null || q.key_source === "low-confidence";
+      const isKeyless = officialQuestionIsKeyless(q);
       const bankOnly = q.needs_lesson === true || !hasLesson || topicGone || nodeBlocked || isKeyless;
       const inPath = !duplicate && !bankOnly;
       if (inPath) lessonCounts.set(lessonKey, count + 1);
@@ -3143,7 +3196,7 @@ function officialImportPlan(body = {}, dryRun = true) {
         : bankOnly ? "bank_only"
           : overflow ? "premium_overflow" : "competitive_path";
       if (bankOnly) data.source_meta.needs_lesson = true;
-      plan.push({ fingerprint: fp, question_no: q.question_no || plan.length + 1, duplicate, overflow, route: data.source_meta.route, subject_fa: q.subject_fa, chapter_fa: q.chapter_fa, part,
+      plan.push({ sourceKey, fingerprint: fp, question_no: q.question_no || plan.length + 1, duplicate, overflow, route: data.source_meta.route, subject_fa: q.subject_fa, chapter_fa: q.chapter_fa, part,
       // surface the resolved topic so a reviewer can see which exam track the
       // subject lands in (major vs minor) before committing the import
       topic: { slug: topic.slug, parent: topic.parent, name_fa: topic.name_fa }, data });
@@ -3170,7 +3223,7 @@ export function commitOfficialImport(body = {}, actor = null) {
   const preview = officialImportPlan(body, true);
   const program = body.program || "preint";
   const maxPerLesson = Math.max(1, Math.min(25, Number(body.maxPerLesson || 15) || 15));
-  const ins = db.prepare("INSERT INTO flashcards (version,difficulty,data_json,active) VALUES (1,?,?,1)");
+  const ins = db.prepare("INSERT INTO flashcards (version,difficulty,data_json,active,source_key) VALUES (1,?,?,1,?)");
   let inserted = 0, attached = 0;
   const insertedIds = [];
   // Re-running the same import (a retry, or a second pass over the same bank)
@@ -3185,7 +3238,7 @@ export function commitOfficialImport(body = {}, actor = null) {
     for (const item of preview.plan) {
       if (item.error) continue;
       if (item.fingerprint && tombstones.has(String(item.fingerprint))) { skipped++; continue; }
-      if (item.duplicate && dupMode === "skip") { skipped++; continue; }
+      if ((item.sourceKey && item.duplicate) || (item.duplicate && dupMode === "skip")) { skipped++; continue; }
       const d = item.data;
       const topic = officialTopic({ program, subject_fa: d.source_meta.subject_fa, subject_en: d.source_meta.subject_en, subject_track: d.source_meta.subject_track, chapter_fa: d.source_meta.chapter_fa, chapter_en: d.source_meta.chapter_en }, false);
       d.topic = topic?.slug || d.topic;
@@ -3208,7 +3261,7 @@ export function commitOfficialImport(body = {}, actor = null) {
           node = null;
         }
       }
-      const info = ins.run(d.difficulty || "medium", JSON.stringify(d));
+      const info = ins.run(d.difficulty || "medium", JSON.stringify(d), item.sourceKey || null);
       insertedIds.push(info.lastInsertRowid);
       inserted++;
       if (node) {
@@ -3334,7 +3387,7 @@ r.get("/learn-cards/:id", ...P("learn.content"), (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id <= 0) return res.status(400).json({ error: "bad id" });
   const c = db.prepare(
-    `SELECT f.id, f.data_json, f.difficulty, f.active, f.updated_at, f.created_at,
+    `SELECT f.id, f.public_code, f.data_json, f.difficulty, f.active, f.updated_at, f.created_at,
             f.content_updated_at, f.revision, f.last_action,
             COALESCE(u.name_fa, u.name_en, u.username) AS last_editor_name
        FROM flashcards f LEFT JOIN users u ON u.id = f.last_editor_id WHERE f.id=?`
@@ -3355,7 +3408,7 @@ r.get("/learn-cards/:id", ...P("learn.content"), (req, res) => {
   } catch {}
   res.json({
     card: {
-      id: c.id, active: c.active, type: d.type || "mcq", difficulty: c.difficulty || "medium",
+      id: c.id, public_code: c.public_code, active: c.active, type: d.type || "mcq", difficulty: c.difficulty || "medium",
       track: d.track || "uni", premium: !!d.premium, category: d.category || "",
       revision: c.revision || 1, lastAction: c.last_action || "created", lastEditor: c.last_editor_name || "",
       createdAt: c.created_at || "", updatedAt: c.updated_at || "", contentUpdatedAt: c.content_updated_at || c.updated_at || "",

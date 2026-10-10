@@ -8,6 +8,9 @@ import { runStreakReminders } from "./lib/notify.js";
 import { execFile } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
+// Safety net: Express 4 does not catch async errors. Log them instead of exiting,
+// so one failing request cannot take the whole site down.
+process.on("unhandledRejection", (err) => { console.error("[unhandledRejection]", err?.stack || err); });
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 4000;
@@ -28,6 +31,10 @@ const PORT = process.env.PORT || 4000;
    Warm boots (database already prepared) go through the same path but
    finish in ~1-2 s, so visitors never notice. */
 import http from "http";
+import fs from "node:fs";
+import {DB_PATH,DATA_DIR} from './lib/paths.js';
+import {installBundledDemo} from './lib/first-run.js';
+import {warnIfDefaultAdminPassword} from './lib/demo-credentials.js';
 
 let realApp = null;                      // set once the full app is ready
 let bootState = { phase: "starting", startedAt: Date.now(), error: null };
@@ -74,14 +81,35 @@ server.listen(PORT, () => console.log(`🎓 MED School listening on http://local
 
 async function main() {
   bootState.phase = "database";
+  const freshInstallation = !fs.existsSync(DB_PATH);
+  // Location guard: if the configured database is missing but a real database exists
+  // in another folder the launcher or an earlier install used, do NOT silently create a
+  // new demo database (public demo passwords, empty classes). Stop with a clear message.
+  if (!fs.existsSync(DB_PATH) && process.env.ALLOW_NEW_DATABASE !== "1") {
+    const ROOT_DIR = path.resolve(__dirname, "..", "..");
+    const candidates = [
+      path.join(ROOT_DIR, "data", "medlab.db"),
+      path.join(ROOT_DIR, "..", "medschool-data", "medlab.db"),
+      path.join(ROOT_DIR, "medschool-data", "medlab.db"),
+    ].map((f) => path.resolve(f)).filter((f) => f !== path.resolve(DB_PATH));
+    const found = candidates.filter((f) => { try { return fs.statSync(f).size > 0; } catch { return false; } });
+    if (found.length) {
+      console.error(`[database] ❌ No database at ${DB_PATH}, but existing database(s) were found at:\n   ${found.join("\n   ")}\n   Startup stopped so that no new empty/demo database is created. Set DATA_DIR in .env to the folder that holds your medlab.db (or ALLOW_NEW_DATABASE=1 to create a new one on purpose).`);
+      throw new Error("database_location_mismatch");
+    }
+  }
+  const provisioning = installBundledDemo({dbPath:DB_PATH,dataDir:DATA_DIR,bundleDir:path.resolve(__dirname,'../../demo-database')});
+  if(provisioning.installed) console.warn('Demo database installed in the persistent DATA_DIR. Demo accounts use the shipped demo password — change it right after first login.');
+  console.log('[database]',DB_PATH);
   await initDb();                 // load the WASM SQLite engine first
   initSchema();                   // ensure all tables exist before we query them
+  setTimeout(() => { warnIfDefaultAdminPassword().catch(() => {}); }, 5000);
 
   // FIRST-RUN ONLY seeding: if the database has no users, load the demo/content
   // seed once. On every later start (even after code changes) the existing data
   // is preserved — user accounts, exams, flashcards, attempts, everything stays.
   const existing = db.prepare("SELECT COUNT(*) n FROM users").get()?.n ?? 0;
-  if (existing === 0) {
+  if (existing === 0 && freshInstallation) {
     bootState.phase = "seed";
     console.log("🌱 First run — seeding initial content (this happens only once)…");
     // Flush and quiesce this process's writer before the child seed runs:
@@ -91,7 +119,7 @@ async function main() {
     try {
       // async child so the placeholder page keeps being served meanwhile
       await new Promise((resolve, reject) => {
-        const child = execFile(process.execPath, [path.join(__dirname, "seed.js")], { env: process.env, maxBuffer: 64 * 1024 * 1024 }, (err, stdout, stderr) => {
+        const child = execFile(process.execPath, [path.join(__dirname, "seed.js"), "--force"], { env: process.env, maxBuffer: 64 * 1024 * 1024 }, (err, stdout, stderr) => {
           if (stdout) process.stdout.write(stdout);
           if (stderr) process.stderr.write(stderr);
           err ? reject(err) : resolve();
@@ -110,16 +138,43 @@ async function main() {
         console.log("💾 post-seed backup snapshot saved to backups/");
       } catch (e) { console.warn("post-seed snapshot skipped:", e?.message || e); }
     } catch (e) {
-      console.error("Seed failed:", e.message);
+      throw new Error("Initial provisioning failed: " + e.message);
     }
   } else {
     console.log(`✓ Existing database detected (${existing} users) — data preserved, no seeding.`);
   }
 
+  // Upload/upgrade provisioning is additive; stable source claims preserve edits,
+  // inactivity and deletion. Never reset the retained database to seed ten cases.
+  try {
+    const { ensureEmergencyCases } = await import("./lib/emergency-provision.js");
+    const patients = ensureEmergencyCases();
+    console.log("Academic emergency patients:", JSON.stringify(patients));
+  } catch (e) {
+    // A missing/renamed institutional rubric must not take an existing site down
+    // or be silently replaced with an unrelated rubric. The transaction rolls back.
+    console.warn("Academic emergency patients NOT provisioned:", e.message);
+  }
+
+  try {const {ensureAzarbarzTeacher}=await import('./lib/azarbarz-provision.js');console.log('Requested academic setup:',JSON.stringify(ensureAzarbarzTeacher()));}
+  catch(e){console.warn('Requested academic setup NOT applied:',e.message);}
+
+  // Accounts saved with Persian/Arabic digits -> ASCII (idempotent, never merges).
+  try { const { normalizeAccountDigits } = await import("./lib/digits.js"); const { db: dbh } = await import("./db.js"); console.log("Account digits:", JSON.stringify(normalizeAccountDigits(dbh))); }
+  catch (e) { console.warn("Account digit normalisation NOT applied:", e?.message || e); }
+
+  // Arak student roster: insert-only, idempotent.
+  try { const { ensureArakStudents } = await import("./lib/arak-students-provision.js"); console.log("Arak students:", JSON.stringify(ensureArakStudents())); }
+  catch (e) { console.warn("Arak students NOT provisioned:", e?.message || e); }
+
+  // Password runtime check: warns when argon2id hashes exist but cannot be verified here.
+  try { const { passwordRuntimeReport } = await import("./lib/password.js"); const { db: pdb } = await import("./db.js"); console.log("Password runtime:", JSON.stringify(await passwordRuntimeReport(pdb))); }
+  catch (e) { console.warn("Password runtime check failed:", e?.message || e); }
+
   try { const { ensureDefaultEducationPosts } = await import("./lib/blog.js"); const n = ensureDefaultEducationPosts(); if (n) console.log(`📝 ensured ${n} default education blog post change(s)`); } catch (e) { console.warn("default blog posts skipped", e?.message || e); }
 
   // Load the past-exam question banks that ship with the release. This is
-  // idempotent — questions already present are skipped by fingerprint — so it
+  // idempotent — questions already present are skipped by permanent source identity (legacy: fingerprint) — so it
   // is safe on every restart, and it means a fresh deployment comes up with a
   // populated learning path instead of an empty one.
   bootState.phase = "question-bank";

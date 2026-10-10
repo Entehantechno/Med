@@ -9,7 +9,8 @@
     "dev": "node --watch src/index.js",
     "seed": "node src/seed.js",
     "seed:reset": "node src/seed.js --force",
-    "test": "vitest run"
+    "test": "vitest run",
+    "reset-admin-password": "node src/reset-admin-password.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -18,6 +19,7 @@
     "dotenv": "^16.4.5",
     "express": "^4.22.2",
     "express-rate-limit": "^7.5.1",
+    "hash-wasm": "^4.12.0",
     "helmet": "^7.2.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.4.0",
@@ -31,7 +33,6 @@
     "vitest": "^2.1.1"
   },
   "optionalDependencies": {
-    "hash-wasm": "^4.12.0",
     "sharp": "^0.35.4"
   }
 }

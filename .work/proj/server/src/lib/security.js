@@ -153,15 +153,30 @@ export function apiLimiter() {
    the right password aren't penalized. */
 export function authLimiter() {
   const c = cfg();
-  return rateLimit({
+  const message = { error: "too_many_attempts", message_fa: "تلاش‌های ورود بیش از حد. کمی بعد دوباره تلاش کنید.", message_en: "Too many login attempts, please try again later." };
+  const common = {
     windowMs: c.auth_window_min * 60 * 1000,
-    limit: c.auth_max,
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: true,
     skip: () => !cfg().enabled,
-    message: { error: "too_many_attempts", message_fa: "تلاش‌های ورود بیش از حد. کمی بعد دوباره تلاش کنید.", message_en: "Too many login attempts, please try again later." },
+    message,
+  };
+  // Per account (IP + username): a few wrong passwords lock only THAT account.
+  // Previously the limit was per IP only, so students behind one campus/NAT address
+  // locked each other out after a handful of mistyped passwords.
+  const perAccount = rateLimit({
+    ...common,
+    limit: c.auth_max,
+    keyGenerator: (req) => `acct|${req.ip}|${String(req.body?.username ?? "").trim().toLowerCase().slice(0, 100)}`,
   });
+  // Per IP ceiling against password spraying across many accounts (generous for shared networks).
+  const perIp = rateLimit({
+    ...common,
+    limit: c.auth_max * 12,
+    keyGenerator: (req) => `ip|${req.ip}`,
+  });
+  return (req, res, next) => perAccount(req, res, (err) => (err ? next(err) : perIp(req, res, next)));
 }
 
 /* Central error handler — logs full detail server-side, returns a generic

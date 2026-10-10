@@ -3,6 +3,7 @@ import { I18N_LITE } from "./i18n-lite.js";
 import { api, getToken, setToken } from "./api.js";
 import { isSoundOn, setSoundOn } from "./lib/feedback.js";
 import { safeLocal, safeSession } from "./lib/storage.js";
+import { clearLessonCache } from "./lib/lesson-cache.js";
 
 const AppCtx = createContext(null);
 export const useApp = () => useContext(AppCtx);
@@ -154,6 +155,7 @@ export function AppProvider({ children }) {
   // signing out (they would otherwise still be served offline on this device).
   const forgetCachedApi = () => {
     try { navigator.serviceWorker?.controller?.postMessage({ type: "CLEAR_API_CACHE" }); } catch { /* no SW */ }
+    clearLessonCache().catch(() => {});
   };
 
   const logout = useCallback(() => {

@@ -247,7 +247,7 @@ r.get("/lesson/:nodeId", ...learner, (req, res) => {
       return false;
     }
   });
-  let cards = ids.map((id) => db.prepare("SELECT id, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(id))
+  let cards = ids.map((id) => db.prepare("SELECT id, public_code, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(id))
     .filter(Boolean)
     .map((c) => ({ ...serializeCard(c, lang), crowd: crowdForCard(c.id), hasHint: peerCfg().hint !== false && hasHint(c) }))
     .filter((c) => String(c.q || "").trim());
@@ -311,7 +311,7 @@ r.get("/lesson/:nodeId", ...learner, (req, res) => {
         const cid = r.card_id;
         if (ownSet.has(cid) || !programCardIds.has(cid)) continue;
         if (reviewCards.length >= maxReview) break;
-        const c = db.prepare("SELECT id, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(cid);
+        const c = db.prepare("SELECT id, public_code, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(cid);
         if (!c) continue;
         reviewCards.push({ ...serializeCard(c, lang), crowd: crowdForCard(c.id), review: true });
         ownSet.add(cid);
@@ -849,7 +849,7 @@ r.post("/event/start", ...learner, flagGate("ramp_event"), (req, res) => {
   const started = startEvent(req.user.id, ids);
   // serialize the cards for the client (same shape lessons use)
   const cards = ids.map((cid) => {
-    const c = db.prepare("SELECT id, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(cid);
+    const c = db.prepare("SELECT id, public_code, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(cid);
     return c ? serializeCard(c, L(req)) : null;
   }).filter(Boolean);
   res.json({ runId: started.runId, duration_s: started.duration_s, cards });
@@ -931,7 +931,7 @@ r.post("/legendary/:nodeId/start", ...learner, flagGate("legendary"), (req, res)
   if (!r2.ok) return res.status(400).json({ error: r2.error });
   const lang = L(req);
   let ids = []; try { ids = JSON.parse(node.card_ids || "[]"); } catch { ids = []; }
-  let cards = ids.map((id) => db.prepare("SELECT id, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(id))
+  let cards = ids.map((id) => db.prepare("SELECT id, public_code, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(id))
     .filter(Boolean).map((c) => serializeCard(c, lang));
   for (let i = cards.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [cards[i], cards[j]] = [cards[j], cards[i]]; }
   res.json({ ok: true, cards, node: { id: node.id, title: lang === "fa" ? node.title_fa : node.title_en } });
@@ -964,7 +964,7 @@ r.post("/practice/start", ...learner, flagGate("smart_practice"), (req, res) => 
   const { cardIds, sources } = buildSession(req.user.id);
   if (!cardIds.length) return res.status(400).json({ error: "no data" });
   const cards = cardIds.map((id) => {
-    const c = db.prepare("SELECT id, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(id);
+    const c = db.prepare("SELECT id, public_code, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(id);
     if (!c) return null;
     return { ...serializeCard(c, lang), source: sources[id] || "weak", crowd: crowdForCard(c.id) };
   }).filter(Boolean);
@@ -1068,7 +1068,7 @@ function browsePool() {
   // of V8 heap that the runtime never handed back to the OS: the process sat
   // at ~400 MB RSS on a 1 GB cPanel plan. Now the pool costs ~15 MB.
   const rows = db.prepare(
-    `SELECT id, difficulty, created_at, content_updated_at, updated_at, revision,
+    `SELECT id, public_code, difficulty, created_at, content_updated_at, updated_at, revision,
             json_extract(data_json, '$.q_fa') AS q_fa,
             json_extract(data_json, '$.q_en') AS q_en,
             json_extract(data_json, '$.title_fa') AS title_fa,
@@ -1093,10 +1093,10 @@ function browsePool() {
     // lowercasing it for every card on every keystroke.
     // Normalised once (ی/ک/ه, digits, ZWNJ, diacritics) so every keystroke is
     // a plain indexOf over pre-cleaned text; `extra` = weaker fields.
-    const hay = normalizeText(`${c.q_fa || ""} ${c.q_en || ""} ${c.title_fa || ""} ${c.title_en || ""}`);
+    const hay = normalizeText(`${c.public_code || ""} ${c.q_fa || ""} ${c.q_en || ""} ${c.title_fa || ""} ${c.title_en || ""}`);
     const extra = normalizeText(`${sm.chapter_fa || ""} ${sm.chapter_en || ""} ${sm.concept_fa || ""} ${sm.concept_en || ""} ${c.opts_text || ""}`);
     const data = { q_fa: c.q_fa || "", q_en: c.q_en || "", title_fa: c.title_fa || "", title_en: c.title_en || "", topic: c.topic || "" };
-    all.push({ id: c.id, facets, premium: c.premium === 1 || c.premium === true || c.premium === "true", data, hay, extra });
+    all.push({ id: c.id, public_code: c.public_code, facets, premium: c.premium === 1 || c.premium === true || c.premium === "true", data, hay, extra });
   }
   browsePoolCache = { sig, all };
   return all;
@@ -1204,7 +1204,7 @@ r.get("/browse", ...learner, flagGate("bank_browse"), (req, res) => {
     sort: sortKey,
     query: pq && !pq.empty ? { terms: pq.terms, phrases: pq.phrases, excludes: pq.excludes, fields: pq.fields, id: pq.id } : null,
     cards: slice.map((c) => ({
-      id: c.id,
+      id: c.id, public_code: c.public_code,
       q: lang === "fa" ? (c.data.q_fa || c.data.title_fa || "") : (c.data.q_en || c.data.title_en || ""),
       // highlight ranges (UTF-16 offsets into `q`) so the UI can <mark> hits
       hl: pq && !pq.empty ? highlightRanges(lang === "fa" ? (c.data.q_fa || c.data.title_fa || "") : (c.data.q_en || c.data.title_en || ""), pq) : undefined,
@@ -1269,7 +1269,7 @@ r.get("/browse/:cardId", ...learner, flagGate("bank_browse"), (req, res) => {
       return res.status(402).json({ error: "premium only", premium: false });
     }
   }
-  const c = db.prepare("SELECT id, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(req.params.cardId);
+  const c = db.prepare("SELECT id, public_code, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(req.params.cardId);
   if (!c) return res.status(404).json({ error: "not found" });
   let d = {}; try { d = JSON.parse(c.data_json); } catch { /* */ }
   if (d.track !== "learn") return res.status(404).json({ error: "not found" });
@@ -1291,7 +1291,7 @@ r.get("/library", ...learner, flagGate("library"), (req, res) => {
   const lang = L(req);
   const p = getProfile(req.user.id);
   if (!p.premium_effective) return res.status(402).json({ error: "premium only", premium: false });
-  const rows = db.prepare("SELECT id, data_json, difficulty FROM flashcards WHERE active=1").all();
+  const rows = db.prepare("SELECT id, public_code, data_json, difficulty FROM flashcards WHERE active=1").all();
   const groups = new Map();   // group name -> [{ card, year }]
   const addTo = (name, entry) => {
     if (!groups.has(name)) groups.set(name, []);
@@ -1346,7 +1346,7 @@ r.get("/mistakes", ...learner, flagGate("mistakes_hub"), (req, res) => {
   const lang = L(req);
   const ids = mistakeCardIds(req.user.id, 20);
   const cards = ids.map((id) => {
-    const c = db.prepare("SELECT id, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(id);
+    const c = db.prepare("SELECT id, public_code, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(id);
     return c ? serializeCard(c, lang) : null;
   }).filter(Boolean);
   res.json({ cards, count: cards.length });
@@ -1369,7 +1369,7 @@ r.get("/flagged", ...learner, flagGate("flagged_review"), (req, res) => {
   const lang = L(req);
   const ids = flaggedCardIds(req.user.id, 30);
   const cards = ids.map((id) => {
-    const c = db.prepare("SELECT id, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(id);
+    const c = db.prepare("SELECT id, public_code, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(id);
     return c ? serializeCard(c, lang) : null;
   }).filter(Boolean);
   res.json({ cards, count: cards.length });
@@ -1401,7 +1401,7 @@ r.post("/exam-sim/start", ...learner, flagGate("exam_sim"), (req, res) => {
     premium: !!profile0.premium_effective,
   });
   const cards = sim.cardIds
-    .map((id) => db.prepare("SELECT id, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(id))
+    .map((id) => db.prepare("SELECT id, public_code, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(id))
     .filter(Boolean)
     .map((c) => { const s = serializeCard(c, lang); delete s.micro; return s; }); // hide درسنامه during the exam
   res.json({ id: sim.id, durationS: sim.durationS, n: cards.length, cards });
@@ -1500,7 +1500,7 @@ r.post("/custom-test/options", ...learner, customGate, (req, res) => {
   res.json({ config: cfg, ...builderOptions(req.user.id, customPool(), cfg, L(req)) });
 });
 function serveCustom(t, lang, res) {
-  const cards = t.ids.map((id) => db.prepare("SELECT id, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(id))
+  const cards = t.ids.map((id) => db.prepare("SELECT id, public_code, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(id))
     .filter(Boolean).map((c) => serializeCard(c, lang));
   // timed mode = exam-like: hide درسنامه/پاسخنامه until finished
   if (t.cfg.mode === "timed" && t.row.status === "active") for (const c of cards) { delete c.micro; delete c.explain; delete c.attending; }
@@ -1527,7 +1527,7 @@ r.post("/custom-test/:id/answer", ...learner, customGate, (req, res) => {
   const t = getCustomTest(req.user.id, parseInt(req.params.id, 10));
   if (!t) return res.status(404).json({ error: "not found" });
   // grade server-side from the stored key so a client cannot self-award
-  const row = db.prepare("SELECT id, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(cardId);
+  const row = db.prepare("SELECT id, public_code, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(cardId);
   if (!row) return res.status(404).json({ error: "card not found" });
   let d = {}; try { d = JSON.parse(row.data_json || "{}"); } catch { d = {}; }
   const card = serializeCard(row, L(req));
@@ -1549,7 +1549,7 @@ r.post("/custom-test/:id/finish", ...learner, customGate, (req, res) => {
   const t = getCustomTest(req.user.id, parseInt(req.params.id, 10));
   const lang = L(req);
   const placeholders = (t.ids || []).map(() => "?").join(",");
-  const cardRows = placeholders ? db.prepare(`SELECT id, data_json, difficulty FROM flashcards WHERE id IN (${placeholders}) AND active=1`).all(...t.ids) : [];
+  const cardRows = placeholders ? db.prepare(`SELECT id, public_code, data_json, difficulty FROM flashcards WHERE id IN (${placeholders}) AND active=1`).all(...t.ids) : [];
   const cardRowMap = new Map(cardRows.map((r) => [r.id, r]));
   const cards = withOptionStats((t.ids || []).map((id) => cardRowMap.get(id)).filter(Boolean).map((c) => serializeCard(c, lang)));
   const peer = peerBlock(req.user.id, "custom", out.profile, out.correct, out.total, parseInt(req.body?.timeMs, 10) || 0);
@@ -1735,7 +1735,7 @@ r.get("/mnemonics", ...learner, flagGate("mnemonics"), (req, res) => {
   for (const n of nodes) { try { JSON.parse(n.card_ids || "[]").forEach((id) => programCardIds.add(id)); } catch { /* */ } }
   const items = [];
   for (const cid of programCardIds) {
-    const r0 = db.prepare("SELECT id, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(cid);
+    const r0 = db.prepare("SELECT id, public_code, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(cid);
     if (!r0) continue;
     let d = {}; try { d = JSON.parse(r0.data_json); } catch { continue; }
     if (!d.mnemonic) continue;
@@ -1841,7 +1841,7 @@ r.get("/review", ...learner, flagGate("srs_review"), (req, res) => {
   const due = dueCards(req.user.id, sessionLimit * 4);
   const cards = [];
   for (const d of due) {
-    const c = db.prepare("SELECT id, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(d.card_id);
+    const c = db.prepare("SELECT id, public_code, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(d.card_id);
     if (!c) continue;
     let data = null;
     try { data = JSON.parse(c.data_json); } catch { data = null; }
@@ -1968,7 +1968,7 @@ r.get("/review/suspended", ...learner, (req, res) => {
   const rows = db.prepare("SELECT card_id FROM srs_state WHERE user_id=? AND suspended=1 LIMIT 100").all(req.user.id);
   const lang = L(req);
   const cards = rows.map((r) => {
-    const c = db.prepare("SELECT id, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(r.card_id);
+    const c = db.prepare("SELECT id, public_code, data_json, difficulty FROM flashcards WHERE id=? AND active=1").get(r.card_id);
     return c ? serializeCard(c, lang) : null;
   }).filter(Boolean);
   res.json({ cards, count: cards.length });
@@ -2125,68 +2125,8 @@ r.post("/premium/cancel", ...learner, (req, res) => {
    The actual play (chat, orders, evaluation) reuses the shared /exam engine.
    Here we expose: access status, the playable case list, and the case of the
    day for the daily challenge + a reward hook on completion. */
-r.get("/vpatient", ...learner, async (req, res) => {
-  try {
-    const { getVpatientConfig, vpatientAccess, playableCases, caseOfTheDay } = await import("../lib/vpatient.js");
-    const lang = req.query.lang === "en" ? "en" : "fa";
-    const p = getProfile(req.user.id);
-    const access = vpatientAccess(p, req.user.role);
-    const cfg = getVpatientConfig();
-    const out = {
-      enabled: access.reason !== "off",
-      access: access.ok,
-      reason: access.reason,           // "off" | "premium" | null
-      premium_only: cfg.premium_only,
-      in_path: cfg.in_path,
-      in_daily: cfg.in_daily,
-      daily_gems: cfg.daily_gems,
-    };
-    // only reveal the case list to learners who actually have access
-    if (access.ok) {
-      out.cases = playableCases(lang, req.user.id);
-      if (cfg.in_daily) out.daily_case_id = caseOfTheDay();
-    }
-    res.json(out);
-  } catch (e) {
-    res.status(500).json({ error: "vpatient_boot_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
-  }
-});
-
-// Reward hook — called once per day after finishing the "case of the day".
-// Deterministic, server-authoritative (client can't fake the reward amount).
-r.post("/vpatient/daily-reward", ...learner, async (req, res) => {
-  try {
-    const { vpatientAccess, getVpatientConfig, caseOfTheDay } = await import("../lib/vpatient.js");
-    const p = getProfile(req.user.id);
-    const access = vpatientAccess(p, req.user.role);
-    if (!access.ok) return res.status(403).json({ error: access.reason || "unavailable", stage: "boot" });
-    const cfg = getVpatientConfig();
-    if (!cfg.in_daily) return res.status(400).json({ error: "daily disabled", stage: "boot" });
-    const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tehran" });
-    const claimedKey = `vp_daily_${req.user.id}`;
-    const row = db.prepare("SELECT value FROM settings WHERE key=?").get(claimedKey);
-    let claimed = null; try { claimed = row ? JSON.parse(row.value) : null; } catch { claimed = null; }
-    if (claimed?.day === today) {
-      return res.json({ ok: true, alreadyClaimed: true, gems: 0, profile: getProfile(req.user.id) });
-    }
-    const dailyId = caseOfTheDay();
-    if (!dailyId) return res.status(400).json({ error: "no_daily_case", stage: "report" });
-    const requested = Number(req.body?.caseId || 0);
-    // Client always sends the case just finished. A mismatch means they did
-    // not complete today's case — do not pay. Empty body (legacy) still pays.
-    if (requested && requested !== Number(dailyId)) {
-      return res.status(400).json({ error: "not_daily_case", stage: "report" });
-    }
-    const gems = Math.max(0, cfg.daily_gems | 0);
-    if (gems > 0) db.prepare("UPDATE learner_profiles SET gems=gems+? WHERE user_id=?").run(gems, req.user.id);
-    db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
-      .run(claimedKey, JSON.stringify({ day: today, caseId: dailyId }));
-    persistNow();
-    res.json({ ok: true, alreadyClaimed: false, gems, profile: getProfile(req.user.id) });
-  } catch (e) {
-    res.status(500).json({ error: "vpatient_boot_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
-  }
-});
+r.all('/vpatient', ...learner, (req,res) => res.status(410).json({ error: 'university_only', enabled: false, cases: [] }));
+r.all('/vpatient/daily-reward', ...learner, (req,res) => res.status(410).json({ error: 'university_only' }));
 
 /* Learner bug report (manual) — respects bug_hunt.enabled */
 r.post("/bug-report", ...learner, (req, res) => {

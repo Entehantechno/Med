@@ -1,3 +1,6 @@
+import {validateQuestion} from "../../lib/authoring-validation.js";
+import AuthoringModal, {AuthorSection,AuthorSummary} from "../../components/AuthoringModal.jsx";
+import ContentCode from "../../components/ContentCode.jsx";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useApp } from "../../context.jsx";
 import { api, getToken } from "../../api.js";
@@ -37,6 +40,7 @@ const actionLabel = (v, t) => ({ created: t("actCreated"), imported: t("actImpor
 
 export default function LearnCards({ jump, onJumpConsumed } = {}) {
   const { t, lang } = useApp();
+  const fa = lang === "fa";
   const toast = useToast();
   const [cards, setCards] = useState(null);
   const [subjects, setSubjects] = useState([]);
@@ -450,19 +454,13 @@ export default function LearnCards({ jump, onJumpConsumed } = {}) {
 
       <DataTable
         rows={sorted}
-        initialSort={{ key: "id", dir: "desc" }}
-        searchKeys={[(c) => `#${c.id}`, (c) => c.q, (c) => c.category, (c) => c.subject, (c) => c.facets?.chapter, (c) => c.facets?.concept, (c) => c.facets?.examLabel, (c) => c.type]}
+        selectable selectedIds={sel} onSelectionChange={setSel} exportable
+        defaultHiddenColumns={['media','usedIn']}
+        searchKeys={[(c) => c.public_code, (c) => `#${c.id}`, (c) => c.q, (c) => c.category, (c) => c.subject, (c) => c.facets?.chapter, (c) => c.facets?.concept, (c) => c.facets?.examLabel, (c) => c.type]}
         storageKey="admin-bank"
         hotkey
         rowKey={(c) => c.id}
         columns={[
-          { key: "_sel", label: (
-              <input type="checkbox" checked={allInViewSelected} onChange={selectAllInView}
-                title={t("bulkSelectAll")} aria-label={t("bulkSelectAll")} />
-            ), sortable: false, thStyle: { width: 34 }, render: (c) => (
-              <input type="checkbox" checked={sel.has(c.id)} onChange={() => toggleSel(c.id)}
-                onClick={(e) => e.stopPropagation()} aria-label={`select ${c.id}`} />
-            ) },
           { key: "q", label: t("questionText"), sortValue: (c) => c.q, render: (c, q) => (
             <div className="lc-qcell" style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap", opacity: c.active ? 1 : .5 }}>
               <span>{q ? <Highlight text={c.q} ranges={highlightLocal(c.q, q)} /> : c.q}</span>
@@ -472,6 +470,9 @@ export default function LearnCards({ jump, onJumpConsumed } = {}) {
               {c.hasExplain ? <span className="lc-badge cat" title={t("hasExplainF")}>🗝️</span> : null}
               {c.category ? <span className="lc-badge cat">{c.category}</span> : null}
             </div>) },
+          { key: "public_code", label: fa ? 'کد ثابت' : 'Permanent code', render: c => <ContentCode code={c.public_code} /> },
+          { key: "active", label: fa ? 'وضعیت' : 'Status', render: c => c.active ? (fa ? 'فعال' : 'Active') : (fa ? 'غیرفعال' : 'Inactive') },
+          { key: "difficulty", label: t('difficulty'), render: c => t(c.difficulty) },
           { key: "subject", label: t("subjectCol"), sortValue: (c) => c.subject, render: (c) => c.subject || <span className="muted small">—</span> },
           // Chapter + exam sitting make the provenance readable at a glance:
           // an admin scanning the table can see WHICH exam a question is from
@@ -648,7 +649,7 @@ function MindmapLinkPanel({ cardId, isNew, lang }) {
   );
 }
 
-function CardModalInner({ card, onClose, onSaved }) {
+export function CardModalInner({ card, onClose, onSaved }) {
   const { t, lang } = useApp();
   const isNew = !card.id;
   const d = card.data || {};
@@ -659,10 +660,12 @@ function CardModalInner({ card, onClose, onSaved }) {
     q_fa: d.q_fa || d.title_fa || "", q_en: d.q_en || d.title_en || "",
     difficulty: card.difficulty || "medium", premium: !!d.premium, category: d.category || "",
     answerMode: d.answerMode || "choice", subject: d.subject || "",
-    options: (d.options && d.options.length ? d.options.map((o) => ({ fa: o.fa || "", en: o.en || "", correct: !!o.correct })) : BLANK_OPTS()),
+    options: (d.options && d.options.length ? d.options.map((o) => ({ ...o, fa: o.fa || "", en: o.en || "", correct: !!o.correct })) : BLANK_OPTS()),
     answer: d.answer !== undefined ? !!d.answer : true,
+    blank_en: d.blank_en || "", accept_en: (d.accept_en || []).join("، "),
+    items_en: (d.items_en||[]).join("\n"), hints_en:(d.hints_en||[]).join("\n"),
     blank_fa: d.blank_fa || "", accept_fa: (d.accept_fa || []).join("، "),
-    pairs: (d.pairs && d.pairs.length ? d.pairs.map((p) => ({ l: p[0] || "", r: p[2] || "" })) : [{ l: "", r: "" }, { l: "", r: "" }]),
+    pairs: (d.pairs && d.pairs.length ? d.pairs.map((p) => ({ l: p[0] || "", le:p[1]||"", r: p[2] || "", re:p[3]||"" })) : [{ l: "", r: "" }, { l: "", r: "" }]),
     entityA_fa: d.entityA_fa || "", entityA_en: d.entityA_en || "",
     entityB_fa: d.entityB_fa || "", entityB_en: d.entityB_en || "",
     features: (d.features && d.features.length ? d.features.map((x) => ({ fa: x.fa || "", en: x.en || "", belongs: x.belongs || "A" })) : [{ fa: "", en: "", belongs: "A" }, { fa: "", en: "", belongs: "B" }]),
@@ -671,6 +674,10 @@ function CardModalInner({ card, onClose, onSaved }) {
     // rich media on the QUESTION itself (image / uploaded video / Aparat|YouTube)
     media: mediaState(d.media || (d.image ? { url: d.image, kind: "image" } : null)),
     micro: {
+      lead_en: d.micro?.lead_en || "",
+      golden_en: d.micro?.golden_en || "",
+      points_en: (d.micro?.points_en || []).join("\n"),
+      source_en: d.micro?.source_en || "",
       lead_fa: d.micro?.lead_fa || "", golden_fa: d.micro?.golden_fa || "",
       points_fa: (d.micro?.points_fa || []).join("\n"), source_fa: d.micro?.source_fa || "",
       media: mediaState(d.micro?.media),         // درسنامه media
@@ -684,10 +691,14 @@ function CardModalInner({ card, onClose, onSaved }) {
     },
     // پاسخنامه — dedicated answer explanation (text + media)
     explain: {
+      text_en: d.explain?.text_en || "",
       text_fa: d.explain?.text_fa || "",
       media: mediaState(d.explain?.media),
     },
     mnemonic: {
+      title_en: d.mnemonic?.title_en || "",
+      scene_en: d.mnemonic?.scene_en || "",
+      hooks_en: (d.mnemonic?.hooks_en || []).join("\n"),
       title_fa: d.mnemonic?.title_fa || "", scene_fa: d.mnemonic?.scene_fa || "",
       hooks_fa: (d.mnemonic?.hooks_fa || []).join("\n"), image: d.mnemonic?.image || "",
       media: mediaState(d.mnemonic?.media),      // mnemonic can be a short clip
@@ -728,6 +739,8 @@ function CardModalInner({ card, onClose, onSaved }) {
     const effectiveFa = microRefFa || microRef;
     const effectiveEn = microRefEn;
     const payload = {
+      ...d,
+      hints_en:f.hints_en.split("\n").filter(Boolean),
       type: f.type, q_fa: f.q_fa, q_en: f.q_en, difficulty: f.difficulty, premium: f.premium, category: f.category,
       hints_fa: f.hints_fa ? f.hints_fa.split("\n").filter(Boolean) : [],
       // question media (image / video / embed). Also mirror into legacy `image`
@@ -735,10 +748,10 @@ function CardModalInner({ card, onClose, onSaved }) {
       media: qMedia,
       // keep the legacy `image` in sync only when the question media is a plain image
       image: (qMedia && (qMedia.kind === "image" || !qMedia.kind)) ? qMedia.url : "",
-      micro: (f.micro.lead_fa || f.micro.golden_fa || f.micro.points_fa || microMedia || effectiveFa || effectiveEn) ? {
-        lead_fa: f.micro.lead_fa, lead_en: f.micro.lead_fa, golden_fa: f.micro.golden_fa, golden_en: f.micro.golden_fa,
-        points_fa: f.micro.points_fa.split("\n").filter(Boolean), points_en: f.micro.points_fa.split("\n").filter(Boolean),
-        source_fa: f.micro.source_fa || (effectiveFa ? `${effectiveFa.book_fa} - ${effectiveFa.chapter_fa}` : ""), source_en: f.micro.source_fa || (effectiveEn ? `${effectiveEn.book_en} - ${effectiveEn.chapter_en}` : (effectiveFa ? `${effectiveFa.book_en} - ${effectiveFa.chapter_en}` : "")), options_fa: [], options_en: [],
+      micro: (f.micro.lead_en || f.micro.golden_en || f.micro.points_en || f.micro.lead_fa || f.micro.golden_fa || f.micro.points_fa || microMedia || effectiveFa || effectiveEn) ? {
+        ...d.micro, lead_fa: f.micro.lead_fa, lead_en: f.micro.lead_en, golden_fa: f.micro.golden_fa, golden_en: f.micro.golden_en,
+        points_fa: f.micro.points_fa.split("\n").filter(Boolean), points_en: f.micro.points_en.split("\n").filter(Boolean),
+        source_fa: f.micro.source_fa || (effectiveFa ? `${effectiveFa.book_fa} - ${effectiveFa.chapter_fa}` : ""), source_en: f.micro.source_en || (effectiveEn ? `${effectiveEn.book_en} - ${effectiveEn.chapter_en}` : (effectiveFa ? `${effectiveFa.book_en} - ${effectiveFa.chapter_en}` : "")),
         media: microMedia,
         reference: effectiveFa,
         reference_en: effectiveEn,
@@ -746,24 +759,25 @@ function CardModalInner({ card, onClose, onSaved }) {
         references: [effectiveFa, effectiveEn].filter(Boolean),
       } : undefined,
       // پاسخنامه (answer explanation)
-      explain: (f.explain.text_fa || explainMedia) ? {
-        text_fa: f.explain.text_fa, text_en: f.explain.text_fa, media: explainMedia,
+      explain: (f.explain.text_fa || f.explain.text_en || explainMedia) ? {
+        ...d.explain, text_fa: f.explain.text_fa, text_en: f.explain.text_en, media: explainMedia,
       } : undefined,
-      mnemonic: (f.mnemonic.scene_fa || f.mnemonic.hooks_fa || f.mnemonic.image || mnemMedia) ? {
-        title_fa: f.mnemonic.title_fa, title_en: f.mnemonic.title_fa,
-        scene_fa: f.mnemonic.scene_fa, scene_en: f.mnemonic.scene_fa,
-        hooks_fa: f.mnemonic.hooks_fa.split("\n").filter(Boolean), hooks_en: f.mnemonic.hooks_fa.split("\n").filter(Boolean),
+      mnemonic: (f.mnemonic.scene_en || f.mnemonic.hooks_en || f.mnemonic.scene_fa || f.mnemonic.hooks_fa || f.mnemonic.image || mnemMedia) ? {
+        ...d.mnemonic, title_fa: f.mnemonic.title_fa, title_en: f.mnemonic.title_en,
+        scene_fa: f.mnemonic.scene_fa, scene_en: f.mnemonic.scene_en,
+        hooks_fa: f.mnemonic.hooks_fa.split("\n").filter(Boolean), hooks_en: f.mnemonic.hooks_en.split("\n").filter(Boolean),
         image: f.mnemonic.image || "",
         media: mnemMedia,
       } : undefined,
     };
+    if(f.type==='compare'){Object.assign(payload,{entityA_fa:f.entityA_fa,entityA_en:f.entityA_en,entityB_fa:f.entityB_fa,entityB_en:f.entityB_en,features:f.features});}
     if (f.type === "mcq") {
-      payload.options = f.options.filter((o) => o.fa.trim());
+      payload.options = f.options.filter((o) => o.fa.trim() || o.en.trim());
       if (f.answerMode === "search") { payload.answerMode = "search"; payload.subject = f.subject || undefined; }
     } else if (f.type === "truefalse") payload.answer = f.answer;
-    else if (f.type === "fill") { payload.blank_fa = f.blank_fa; payload.accept_fa = f.accept_fa.split(/[،,\n]/).map((x) => x.trim()).filter(Boolean); }
-    else if (f.type === "match") payload.pairs = f.pairs.filter((p) => p.l && p.r).map((p) => [p.l, p.l, p.r, p.r]);
-    else if (f.type === "order") payload.items_fa = f.items_fa.split("\n").filter(Boolean);
+    else if (f.type === "fill") { payload.blank_en=f.blank_en; payload.accept_en=f.accept_en.split(/[،,\n]/).map(x=>x.trim()).filter(Boolean); payload.blank_fa = f.blank_fa; payload.accept_fa = f.accept_fa.split(/[،,\n]/).map((x) => x.trim()).filter(Boolean); }
+    else if (f.type === "match") payload.pairs = f.pairs.filter((p) => (p.l||p.le) && (p.r||p.re)).map((p) => [p.l, p.le||"", p.r, p.re||""]);
+    else if (f.type === "order") { payload.items_fa = f.items_fa.split("\n").filter(Boolean); payload.items_en=f.items_en.split("\n").filter(Boolean); }
     if (isNew) await api.post("/admin/learn-cards", payload);
     else await api.put(`/admin/learn-cards/${card.id}`, payload);
     onSaved();
@@ -776,23 +790,24 @@ function CardModalInner({ card, onClose, onSaved }) {
   };
 
   return (
-    <Modal title={isNew ? t("newCard") : t("edit")} onClose={onClose} onSave={save} wide>
+    <AuthoringModal value={f} sections={[{id:"question",title:lang==="fa"?"سؤال و پاسخ":"Question & answer"},{id:"lesson",title:lang==="fa"?"درسنامه و مرجع":"Lesson & references"},{id:"review",title:lang==="fa"?"بازبینی و تنظیمات":"Review & settings"}]} validate={()=>validateQuestion(f,lang)} title={isNew ? t("newCard") : t("edit")} onClose={onClose} onSave={save} wide>
+      <AuthorSection id="question" title={lang==="fa"?"صورت سؤال و پاسخ":"Question & answer"}>
       <div className="grid grid-2">
         <div className="field"><label>{t("questionTypeLabel")}</label>
-          <select value={f.type} onChange={(e) => set("type", e.target.value)}>
+          <select aria-label={[t("questionTypeLabel")].join(' ')} value={f.type} onChange={(e) => set("type", e.target.value)}>
             <option value="mcq">{t("qtMcq")}</option>
             <option value="truefalse">{t("qtTruefalse")}</option>
             <option value="fill">{t("qtFill")}</option>
             <option value="match">{t("qtMatch")}</option>
             <option value="order">{t("qtOrder")}</option>
-            <option value="compare">{typeLabel("compare")}</option>
+            <option value="compare">{lang === "fa" ? "مقایسه دو موجودیت" : "Compare two entities"}</option>
           </select></div>
         <div className="field"><label>{t("difficulty")}</label>
-          <select value={f.difficulty} onChange={(e) => set("difficulty", e.target.value)}>
+          <select aria-label={[t("difficulty")].join(' ')} value={f.difficulty} onChange={(e) => set("difficulty", e.target.value)}>
             <option value="easy">{t("easy")}</option><option value="medium">{t("medium")}</option><option value="hard">{t("hard")}</option></select></div>
       </div>
-      <div className="field"><label>{t("questionText")} (FA)</label><textarea value={f.q_fa} onChange={(e) => set("q_fa", e.target.value)} /></div>
-      <div className="field"><label>{t("questionText")} (EN)</label><textarea value={f.q_en} onChange={(e) => set("q_en", e.target.value)} /></div>
+      <div data-content-language="fa" className="field"><label>{t("questionText")} (FA)</label><textarea aria-label={[t("questionText"),"(FA)","(FA)"].join(' ')} dir="rtl" lang="fa" value={f.q_fa} onChange={(e) => set("q_fa", e.target.value)} /></div>
+      <div data-content-language="en" className="field"><label>{t("questionText")} (EN)</label><textarea aria-label={[t("questionText"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.q_en} onChange={(e) => set("q_en", e.target.value)} /></div>
 
       {/* rich media on the question (image / uploaded video / Aparat|YouTube) */}
       <MediaUpload value={f.media} onChange={(v) => set("media", v)} label={`${t("lessonMedia")} (${t("optional")})`} />
@@ -800,11 +815,11 @@ function CardModalInner({ card, onClose, onSaved }) {
       {f.type === "mcq" && (<>
         <div className="grid grid-2">
           <div className="field"><label>{t("answerMode")}</label>
-            <select value={f.answerMode} onChange={(e) => set("answerMode", e.target.value)}>
+            <select aria-label={[t("answerMode")].join(' ')} value={f.answerMode} onChange={(e) => set("answerMode", e.target.value)}>
               <option value="choice">{t("modeChoice")}</option><option value="search">{t("modeSearch")}</option></select></div>
           {f.answerMode === "search" && (
             <div className="field"><label>{t("autocompleteSubject")}</label>
-              <select value={f.subject} onChange={(e) => onSubject(e.target.value)}>
+              <select aria-label={[t("autocompleteSubject")].join(' ')} value={f.subject} onChange={(e) => onSubject(e.target.value)}>
                 <option value="">{t("customList")}</option>
                 {Object.entries(SUBJECTS).map(([k, v]) => <option key={k} value={k}>{lang === "fa" ? v.fa : v.en}</option>)}
               </select></div>
@@ -813,9 +828,9 @@ function CardModalInner({ card, onClose, onSaved }) {
         <div className="field"><label>{t("options")} ({t("tapCorrect")})</label>
           {f.options.map((o, i) => (
             <div key={i} style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
-              <input type="radio" checked={o.correct} onChange={() => setCorrect(i)} style={{ width: 18, height: 18 }} />
-              <input value={o.fa} onChange={(e) => setOpt(i, "fa", e.target.value)} placeholder={`${t("option")} ${i + 1} (FA)`} style={{ flex: 1 }} />
-              <input value={o.en} onChange={(e) => setOpt(i, "en", e.target.value)} placeholder="EN" style={{ flex: 1 }} />
+              <input type="radio" aria-label={`${t("markCorrect")} ${i+1}`} checked={o.correct} onChange={() => setCorrect(i)} style={{ width: 18, height: 18 }} />
+              <input aria-label={[t("options"),"(",t("tapCorrect"),")","(FA)"].join(' ')} dir="rtl" lang="fa" data-content-language="fa" value={o.fa} onChange={(e) => setOpt(i, "fa", e.target.value)} placeholder={`${t("option")} ${i + 1} (FA)`} style={{ flex: 1 }} />
+              <input aria-label={[t("options"),"(",t("tapCorrect"),")","(EN)"].join(' ')} dir="ltr" lang="en" data-content-language="en" value={o.en} onChange={(e) => setOpt(i, "en", e.target.value)} placeholder="EN" style={{ flex: 1 }} />
             </div>
           ))}
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => set("options", [...f.options, { fa: "", en: "", correct: false }])}>+ {t("option")}</button>
@@ -824,43 +839,48 @@ function CardModalInner({ card, onClose, onSaved }) {
 
       {f.type === "truefalse" && (
         <div className="field"><label>{t("correctAnswer")}</label>
-          <select value={f.answer ? "t" : "f"} onChange={(e) => set("answer", e.target.value === "t")}>
+          <select aria-label={[t("correctAnswer")].join(' ')} value={f.answer ? "t" : "f"} onChange={(e) => set("answer", e.target.value === "t")}>
             <option value="t">{t("true")}</option><option value="f">{t("false")}</option></select></div>
       )}
       {f.type === "fill" && (<>
-        <div className="field"><label>{t("fillAnswer")}</label><input value={f.blank_fa} onChange={(e) => set("blank_fa", e.target.value)} /></div>
-        <div className="field"><label>{t("fillAccepted")}</label><input value={f.accept_fa} onChange={(e) => set("accept_fa", e.target.value)} placeholder={t("commaSeparated")} /></div>
+        <div data-content-language="fa" className="field"><label>{t("fillAnswer")}</label><input aria-label={[t("fillAnswer"),"(FA)"].join(' ')} dir="rtl" lang="fa" value={f.blank_fa} onChange={(e) => set("blank_fa", e.target.value)} /></div>
+        <div data-content-language="en" className="field"><label>{t("fillAnswer")} (EN)</label><input aria-label={[t("fillAnswer"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.blank_en} onChange={(e) => set("blank_en", e.target.value)} /></div>
+        <div data-content-language="fa" className="field"><label>{t("fillAccepted")}</label><input aria-label={[t("fillAccepted"),"(FA)"].join(' ')} dir="rtl" lang="fa" value={f.accept_fa} onChange={(e) => set("accept_fa", e.target.value)} placeholder={t("commaSeparated")} /></div>
+        <div data-content-language="en" className="field"><label>{t("fillAccepted")} (EN)</label><input aria-label={[t("fillAccepted"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.accept_en} onChange={(e) => set("accept_en", e.target.value)} placeholder={t("commaSeparated")} /></div>
       </>)}
       {f.type === "match" && (
-        <div className="field"><label>{t("matchPairs")}</label>
+        <div data-content-language="fa" className="field"><label>{t("matchPairs")}</label>
           {f.pairs.map((p, i) => (
             <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6 }}>
-              <input value={p.l} onChange={(e) => setPair(i, "l", e.target.value)} placeholder={t("left")} style={{ flex: 1 }} />
+              <input aria-label={[t("matchPairs"),"(FA)"].join(' ')} dir="rtl" lang="fa" value={p.l} onChange={(e) => setPair(i, "l", e.target.value)} placeholder={t("left")} style={{ flex: 1 }} />
               <span style={{ alignSelf: "center" }}>↔</span>
-              <input value={p.r} onChange={(e) => setPair(i, "r", e.target.value)} placeholder={t("right")} style={{ flex: 1 }} />
+              <input dir="ltr" lang="en" aria-label={`Left EN ${i+1}`} value={p.le||""} onChange={e=>setPair(i,"le",e.target.value)} placeholder="Left EN"/>
+              <input dir="ltr" lang="en" aria-label={`Right EN ${i+1}`} value={p.re||""} onChange={e=>setPair(i,"re",e.target.value)} placeholder="Right EN"/>
+              <input aria-label={[t("matchPairs"),"(FA)"].join(' ')} dir="rtl" lang="fa" value={p.r} onChange={(e) => setPair(i, "r", e.target.value)} placeholder={t("right")} style={{ flex: 1 }} />
             </div>
           ))}
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => set("pairs", [...f.pairs, { l: "", r: "" }])}>+ {t("pair")}</button>
         </div>
       )}
       {f.type === "order" && (
-        <div className="field"><label>{t("orderItems")}</label>
-          <textarea value={f.items_fa} onChange={(e) => set("items_fa", e.target.value)} placeholder={t("orderHint")} /></div>
+        <div data-content-language="fa" className="field"><label>{t("orderItems")}</label>
+          <textarea aria-label={[t("orderItems"),"(FA)"].join(' ')} dir="rtl" lang="fa" value={f.items_fa} onChange={(e) => set("items_fa", e.target.value)} placeholder={t("orderHint")} /></div>
       )}
+      {f.type === "order" && <label className="field" data-content-language="en"><span>Ordered items (EN)</span><textarea dir="ltr" lang="en" value={f.items_en} onChange={e=>set("items_en",e.target.value)} /></label>}
       {f.type === "compare" && (
         <div className="field">
           <label>تمایز بالینی</label>
           <div className="grid grid-2" style={{ marginBottom: 8 }}>
-            <input value={f.entityA_fa} onChange={(e) => set("entityA_fa", e.target.value)} placeholder="A (FA)" />
-            <input value={f.entityB_fa} onChange={(e) => set("entityB_fa", e.target.value)} placeholder="B (FA)" />
-            <input value={f.entityA_en} onChange={(e) => set("entityA_en", e.target.value)} placeholder="A (EN)" />
-            <input value={f.entityB_en} onChange={(e) => set("entityB_en", e.target.value)} placeholder="B (EN)" />
+            <input aria-label={["تمایز بالینی","(FA)"].join(' ')} dir="rtl" lang="fa" data-content-language="fa" value={f.entityA_fa} onChange={(e) => set("entityA_fa", e.target.value)} placeholder="A (FA)" />
+            <input aria-label={["تمایز بالینی","(FA)"].join(' ')} dir="rtl" lang="fa" data-content-language="fa" value={f.entityB_fa} onChange={(e) => set("entityB_fa", e.target.value)} placeholder="B (FA)" />
+            <input aria-label={["تمایز بالینی","(EN)"].join(' ')} dir="ltr" lang="en" data-content-language="en" value={f.entityA_en} onChange={(e) => set("entityA_en", e.target.value)} placeholder="A (EN)" />
+            <input aria-label={["تمایز بالینی","(EN)"].join(' ')} dir="ltr" lang="en" data-content-language="en" value={f.entityB_en} onChange={(e) => set("entityB_en", e.target.value)} placeholder="B (EN)" />
           </div>
           {(f.features || []).map((row, i) => (
             <div key={i} style={{ display: "flex", gap: 8, marginBottom: 6, alignItems: "center" }}>
-              <input value={row.fa} onChange={(e) => set("features", f.features.map((x, j) => j === i ? { ...x, fa: e.target.value } : x))} placeholder="ویژگی FA" style={{ flex: 1 }} />
-              <input value={row.en} onChange={(e) => set("features", f.features.map((x, j) => j === i ? { ...x, en: e.target.value } : x))} placeholder="EN" style={{ flex: 1 }} />
-              <select value={row.belongs || "A"} onChange={(e) => set("features", f.features.map((x, j) => j === i ? { ...x, belongs: e.target.value } : x))}>
+              <input aria-label={["تمایز بالینی","(FA)"].join(' ')} dir="rtl" lang="fa" data-content-language="fa" value={row.fa} onChange={(e) => set("features", f.features.map((x, j) => j === i ? { ...x, fa: e.target.value } : x))} placeholder="ویژگی FA" style={{ flex: 1 }} />
+              <input aria-label={["تمایز بالینی","(EN)"].join(' ')} dir="ltr" lang="en" data-content-language="en" value={row.en} onChange={(e) => set("features", f.features.map((x, j) => j === i ? { ...x, en: e.target.value } : x))} placeholder="EN" style={{ flex: 1 }} />
+              <select aria-label={["تمایز بالینی"].join(' ')} value={row.belongs || "A"} onChange={(e) => set("features", f.features.map((x, j) => j === i ? { ...x, belongs: e.target.value } : x))}>
                 <option value="A">A</option>
                 <option value="B">B</option>
                 <option value="both">هر دو</option>
@@ -872,29 +892,35 @@ function CardModalInner({ card, onClose, onSaved }) {
       )}
 
       <div className="divider" />
+      </AuthorSection><AuthorSection id="lesson" title={lang==="fa"?"راهنما، درسنامه و مرجع":"Hints, lesson & references"}>
       <div className="small muted mb8"><Icon name="bulb" size={15} /> <b>{t("hintQuestion")}</b> — {t("hintQuestionNote")}</div>
-      <div className="field"><textarea value={f.hints_fa} onChange={(e) => set("hints_fa", e.target.value)} placeholder={t("hintsPlaceholder")} /></div>
+      <div data-content-language="fa" className="field"><label>{t("hints")} (FA)</label><textarea aria-label={`${t("hints")} (FA)`} dir="rtl" lang="fa" value={f.hints_fa} onChange={(e) => set("hints_fa", e.target.value)} placeholder={t("hintsPlaceholder")} /></div>
+      <div data-content-language="en" className="field"><label>{t("hints")} (EN)</label><textarea aria-label={`${t("hints")} (EN)`} dir="ltr" lang="en" value={f.hints_en} onChange={(e) => set("hints_en", e.target.value)} placeholder={t("hintsPlaceholder")} /></div>
 
       <div className="divider" />
       <div className="small muted mb8"><Icon name="book" size={15} /> <b>{t("microLesson")}</b> — {t("microLessonNote")}</div>
-      <div className="field"><label>{t("microLead")}</label><textarea value={f.micro.lead_fa} onChange={(e) => set("micro", { ...f.micro, lead_fa: e.target.value })} /></div>
-      <div className="field"><label>{t("microGolden")}</label><input value={f.micro.golden_fa} onChange={(e) => set("micro", { ...f.micro, golden_fa: e.target.value })} /></div>
-      <div className="field"><label>{t("microPoints")}</label><textarea value={f.micro.points_fa} onChange={(e) => set("micro", { ...f.micro, points_fa: e.target.value })} placeholder={t("onePerLine")} /></div>
-      <div className="field"><label>{t("microSource")}</label><input value={f.micro.source_fa} onChange={(e) => set("micro", { ...f.micro, source_fa: e.target.value })} /></div>
+      <div data-content-language="fa" className="field"><label>{t("microLead")}</label><textarea aria-label={[t("microLead"),"(FA)"].join(' ')} dir="rtl" lang="fa" value={f.micro.lead_fa} onChange={(e) => set("micro", { ...f.micro, lead_fa: e.target.value })} /></div>
+      <div data-content-language="en" className="field"><label>{t("microLead")} (EN)</label><textarea aria-label={[t("microLead"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.micro.lead_en} onChange={(e) => set("micro", { ...f.micro, lead_en: e.target.value })} /></div>
+      <div data-content-language="fa" className="field"><label>{t("microGolden")}</label><input aria-label={[t("microGolden"),"(FA)"].join(' ')} dir="rtl" lang="fa" value={f.micro.golden_fa} onChange={(e) => set("micro", { ...f.micro, golden_fa: e.target.value })} /></div>
+      <div data-content-language="en" className="field"><label>{t("microGolden")} (EN)</label><input aria-label={[t("microGolden"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.micro.golden_en} onChange={(e) => set("micro", { ...f.micro, golden_en: e.target.value })} /></div>
+      <div data-content-language="fa" className="field"><label>{t("microPoints")}</label><textarea aria-label={[t("microPoints"),"(FA)"].join(' ')} dir="rtl" lang="fa" value={f.micro.points_fa} onChange={(e) => set("micro", { ...f.micro, points_fa: e.target.value })} placeholder={t("onePerLine")} /></div>
+      <div data-content-language="en" className="field"><label>{t("microPoints")} (EN)</label><textarea aria-label={[t("microPoints"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.micro.points_en} onChange={(e) => set("micro", { ...f.micro, points_en: e.target.value })} placeholder={t("onePerLine")} /></div>
+      <div data-content-language="fa" className="field"><label>{t("microSource")}</label><input aria-label={[t("microSource"),"(FA)"].join(' ')} dir="rtl" lang="fa" value={f.micro.source_fa} onChange={(e) => set("micro", { ...f.micro, source_fa: e.target.value })} /></div>
+      <div data-content-language="en" className="field"><label>{t("microSource")} (EN)</label><input aria-label={[t("microSource"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.micro.source_en} onChange={(e) => set("micro", { ...f.micro, source_en: e.target.value })} /></div>
       {/* رقابتی: دو رفرنس اختصاصی — فارسی + انگلیسی — هر سوال دو رفرنس */}
       <div className="small muted mb4" style={{fontWeight:700}}><Icon name="book" size={13}/> {lang==="fa" ? "ارجاع رقابتی — فارسی / انگلیسی (هر سوال دو رفرنس)" : "Competitive citations — Persian / English (two per question)"}</div>
       <div className="card" style={{padding:12, background:"#f8fafc", border:"1px solid #e2e8f0"}}>
         <div className="small muted mb6" style={{fontWeight:700}}>{lang==="fa" ? "رفرنس فارسی" : "Persian reference"}</div>
         <div className="grid grid-3">
           <div className="field"><label>{lang==="fa"?"کتاب (FA)":"Book (FA)"}</label>
-            <select value={f.micro.refCodeFa||""} onChange={e=>set("micro",{...f.micro, refCodeFa:e.target.value})}>
+            <select aria-label={[lang==="fa"?"کتاب (FA)":"Book (FA)"].join(' ')} value={f.micro.refCodeFa||""} onChange={e=>set("micro",{...f.micro, refCodeFa:e.target.value})}>
               <option value="">{lang==="fa"?"— بدون رفرنس —":"— No reference —"}</option>
               {refs.map(r=><option key={r.code} value={r.code}>{r.title_fa} — {r.short_title}{r.edition?` (${r.edition})`:""}</option>)}
             </select>
             {(()=>{ const sel=refs.find(r=>r.code===f.micro.refCodeFa); return sel ? <div className="small muted" style={{display:"flex",gap:8,alignItems:"center",marginTop:6}}><img src={sel.cover_url || `/covers/${sel.code}.jpg`} alt="" style={{width:36,height:50,objectFit:"cover",borderRadius:4,border:"1px solid #e8e8e8"}}/><span>{[sel.publisher, sel.pdf_url ? (lang==="fa"?"PDF دارد":"has PDF") : ""].filter(Boolean).join(" • ")}</span></div>:null; })()}
           </div>
-          <div className="field"><label>{lang==="fa"?"فصل (FA)":"Chapter (FA)"}</label><input value={f.micro.refChapterFa||""} onChange={e=>set("micro",{...f.micro, refChapterFa:e.target.value})} placeholder="فصل ۳۱۵ — شوک" /></div>
-          <div className="field"><label>{lang==="fa"?"صفحه (FA)":"Page (FA)"}</label><input value={f.micro.refPageFa||""} onChange={e=>set("micro",{...f.micro, refPageFa:e.target.value})} placeholder="2150" /></div>
+          <div className="field"><label>{lang==="fa"?"فصل (FA)":"Chapter (FA)"}</label><input aria-label={[lang==="fa"?"فصل (FA)":"Chapter (FA)"].join(' ')} value={f.micro.refChapterFa||""} onChange={e=>set("micro",{...f.micro, refChapterFa:e.target.value})} placeholder="فصل ۳۱۵ — شوک" /></div>
+          <div className="field"><label>{lang==="fa"?"صفحه (FA)":"Page (FA)"}</label><input aria-label={[lang==="fa"?"صفحه (FA)":"Page (FA)"].join(' ')} value={f.micro.refPageFa||""} onChange={e=>set("micro",{...f.micro, refPageFa:e.target.value})} placeholder="2150" /></div>
         </div>
         {f.micro.refCodeFa && <div className="small muted" style={{marginTop:4}}>{(()=>{ const sel=refs.find(r=>r.code===f.micro.refCodeFa); if(!sel) return null; return <span style={{display:"flex",gap:10, flexWrap:"wrap"}}>{sel.source_url && <a href={sel.source_url} target="_blank" rel="noreferrer">{lang==="fa"?"ناشر":"Publisher"} ↗</a>}{sel.pdf_url && <a href={sel.pdf_url} target="_blank" rel="noreferrer">{lang==="fa"?"PDF":"PDF"} ↗</a>}</span>; })()}</div>}
       </div>
@@ -902,14 +928,14 @@ function CardModalInner({ card, onClose, onSaved }) {
         <div className="small muted mb6" style={{fontWeight:700}}>{lang==="fa" ? "رفرنس انگلیسی" : "English reference"}</div>
         <div className="grid grid-3">
           <div className="field"><label>{lang==="fa"?"کتاب (EN)":"Book (EN)"}</label>
-            <select value={f.micro.refCodeEn||""} onChange={e=>set("micro",{...f.micro, refCodeEn:e.target.value})}>
+            <select aria-label={[lang==="fa"?"کتاب (EN)":"Book (EN)"].join(' ')} value={f.micro.refCodeEn||""} onChange={e=>set("micro",{...f.micro, refCodeEn:e.target.value})}>
               <option value="">{lang==="fa"?"— بدون رفرنس —":"— No reference —"}</option>
               {refs.map(r=><option key={r.code} value={r.code}>{r.title_en} — {r.short_title}{r.edition?` (${r.edition})`:""}</option>)}
             </select>
             {(()=>{ const sel=refs.find(r=>r.code===f.micro.refCodeEn); return sel ? <div className="small muted" style={{display:"flex",gap:8,alignItems:"center",marginTop:6}}><img src={sel.cover_url || `/covers/${sel.code}.jpg`} alt="" style={{width:36,height:50,objectFit:"cover",borderRadius:4,border:"1px solid #e8e8e8"}}/><span>{[sel.publisher, sel.pdf_url ? "has PDF" : ""].filter(Boolean).join(" • ")}</span></div>:null; })()}
           </div>
-          <div className="field"><label>{lang==="fa"?"فصل (EN)":"Chapter (EN)"}</label><input value={f.micro.refChapterEn||""} onChange={e=>set("micro",{...f.micro, refChapterEn:e.target.value})} placeholder="Ch. 315 — Shock" /></div>
-          <div className="field"><label>{lang==="fa"?"صفحه (EN)":"Page (EN)"}</label><input value={f.micro.refPageEn||""} onChange={e=>set("micro",{...f.micro, refPageEn:e.target.value})} placeholder="2150" /></div>
+          <div className="field"><label>{lang==="fa"?"فصل (EN)":"Chapter (EN)"}</label><input aria-label={[lang==="fa"?"فصل (EN)":"Chapter (EN)"].join(' ')} value={f.micro.refChapterEn||""} onChange={e=>set("micro",{...f.micro, refChapterEn:e.target.value})} placeholder="Ch. 315 — Shock" /></div>
+          <div className="field"><label>{lang==="fa"?"صفحه (EN)":"Page (EN)"}</label><input aria-label={[lang==="fa"?"صفحه (EN)":"Page (EN)"].join(' ')} value={f.micro.refPageEn||""} onChange={e=>set("micro",{...f.micro, refPageEn:e.target.value})} placeholder="2150" /></div>
         </div>
         {f.micro.refCodeEn && <div className="small muted" style={{marginTop:4}}>{(()=>{ const sel=refs.find(r=>r.code===f.micro.refCodeEn); if(!sel) return null; return <span style={{display:"flex",gap:10, flexWrap:"wrap"}}>{sel.source_url && <a href={sel.source_url} target="_blank" rel="noreferrer">Publisher ↗</a>}{sel.pdf_url && <a href={sel.pdf_url} target="_blank" rel="noreferrer">PDF ↗</a>}</span>; })()}</div>}
       </div>
@@ -917,18 +943,23 @@ function CardModalInner({ card, onClose, onSaved }) {
 
       <div className="divider" />
       <div className="small muted mb8"><Icon name="check" size={15} /> <b>{t("answerKey")}</b> — {t("answerKeyNote")}</div>
-      <div className="field"><label>{t("answerKey")}</label><textarea value={f.explain.text_fa} onChange={(e) => set("explain", { ...f.explain, text_fa: e.target.value })} placeholder={t("answerKeyPlaceholder")} /></div>
+      <div data-content-language="fa" className="field"><label>{t("answerKey")}</label><textarea aria-label={[t("answerKey"),"(FA)"].join(' ')} dir="rtl" lang="fa" value={f.explain.text_fa} onChange={(e) => set("explain", { ...f.explain, text_fa: e.target.value })} placeholder={t("answerKeyPlaceholder")} /></div>
+      <div data-content-language="en" className="field"><label>{t("answerKey")} (EN)</label><textarea aria-label={[t("answerKey"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.explain.text_en} onChange={(e) => set("explain", { ...f.explain, text_en: e.target.value })} placeholder={t("answerKeyPlaceholder")} /></div>
       <MediaUpload value={f.explain.media} onChange={(v) => set("explain", { ...f.explain, media: v })} label={`${t("explainMedia")} (${t("optional")})`} />
 
       <div className="divider" />
       <div className="small muted mb8">🧠 <b>{t("mnemonicEditor")}</b> — {t("mnemonicEditorNote")}</div>
-      <div className="field"><label>{t("mnemonicTitle")}</label><input value={f.mnemonic.title_fa} onChange={(e) => set("mnemonic", { ...f.mnemonic, title_fa: e.target.value })} /></div>
-      <div className="field"><label>{t("mnemonicScene")}</label><textarea value={f.mnemonic.scene_fa} onChange={(e) => set("mnemonic", { ...f.mnemonic, scene_fa: e.target.value })} placeholder={t("mnemonicScenePlaceholder")} /></div>
-      <div className="field"><label>{t("mnemonicHooks")}</label><textarea value={f.mnemonic.hooks_fa} onChange={(e) => set("mnemonic", { ...f.mnemonic, hooks_fa: e.target.value })} placeholder={t("onePerLine")} /></div>
+      <div data-content-language="fa" className="field"><label>{t("mnemonicTitle")}</label><input aria-label={[t("mnemonicTitle"),"(FA)"].join(' ')} dir="rtl" lang="fa" value={f.mnemonic.title_fa} onChange={(e) => set("mnemonic", { ...f.mnemonic, title_fa: e.target.value })} /></div>
+      <div data-content-language="en" className="field"><label>{t("mnemonicTitle")} (EN)</label><input aria-label={[t("mnemonicTitle"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.mnemonic.title_en} onChange={(e) => set("mnemonic", { ...f.mnemonic, title_en: e.target.value })} /></div>
+      <div data-content-language="fa" className="field"><label>{t("mnemonicScene")}</label><textarea aria-label={[t("mnemonicScene"),"(FA)"].join(' ')} dir="rtl" lang="fa" value={f.mnemonic.scene_fa} onChange={(e) => set("mnemonic", { ...f.mnemonic, scene_fa: e.target.value })} placeholder={t("mnemonicScenePlaceholder")} /></div>
+      <div data-content-language="en" className="field"><label>{t("mnemonicScene")} (EN)</label><textarea aria-label={[t("mnemonicScene"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.mnemonic.scene_en} onChange={(e) => set("mnemonic", { ...f.mnemonic, scene_en: e.target.value })} placeholder={t("mnemonicScenePlaceholder")} /></div>
+      <div data-content-language="fa" className="field"><label>{t("mnemonicHooks")}</label><textarea aria-label={[t("mnemonicHooks"),"(FA)"].join(' ')} dir="rtl" lang="fa" value={f.mnemonic.hooks_fa} onChange={(e) => set("mnemonic", { ...f.mnemonic, hooks_fa: e.target.value })} placeholder={t("onePerLine")} /></div>
+      <div data-content-language="en" className="field"><label>{t("mnemonicHooks")} (EN)</label><textarea aria-label={[t("mnemonicHooks"),"(EN)","(EN)"].join(' ')} dir="ltr" lang="en" value={f.mnemonic.hooks_en} onChange={(e) => set("mnemonic", { ...f.mnemonic, hooks_en: e.target.value })} placeholder={t("onePerLine")} /></div>
       <MediaUpload value={f.mnemonic.media?.url ? f.mnemonic.media : mediaState(f.mnemonic.image)}
         onChange={(v) => set("mnemonic", { ...f.mnemonic, media: v, image: v.kind === "image" ? v.url : "" })}
         label={`${t("mnemonicImage")} / ${lang === "fa" ? "ویدیو" : "video"} (${t("optional")})`} />
 
+      </AuthorSection><AuthorSection id="review" title={lang==="fa"?"بازبینی و تنظیمات":"Review & settings"}><AuthorSummary data={f} />
       {/* BIDIRECTIONAL MINDMAP LINKS — دوسویه، خودکار */}
       <div className="divider" />
       <MindmapLinkPanel cardId={card.id} isNew={isNew} lang={lang} />
@@ -944,11 +975,12 @@ function CardModalInner({ card, onClose, onSaved }) {
 
       <div className="divider" />
       <div className="grid grid-2">
-        <div className="field"><label>{t("category")}</label><input value={f.category} onChange={(e) => set("category", e.target.value)} placeholder={t("categoryPlaceholder")} /></div>
+        <div className="field"><label>{t("category")}</label><input aria-label={[t("category")].join(' ')} value={f.category} onChange={(e) => set("category", e.target.value)} placeholder={t("categoryPlaceholder")} /></div>
         <label className="toggle-row" style={{ marginTop: 22 }}><span><Icon name="crown" size={15} /> {t("premiumCard")}</span>
           <input type="checkbox" checked={f.premium} onChange={(e) => set("premium", e.target.checked)} /></label>
       </div>
-    </Modal>
+      </AuthorSection>
+    </AuthoringModal>
   );
 }
 

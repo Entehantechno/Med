@@ -3,5 +3,6 @@
    by context.jsx after first paint). */
 export function biField(obj, base, lang) {
   if (!obj) return "";
-  return obj[`${base}_${lang}`] ?? obj[`${base}_en`] ?? obj[base] ?? "";
+  const present=v=>typeof v==='string'?v.trim().length>0:Array.isArray(v)?v.some(present):v!=null;
+  return [obj[`${base}_${lang}`],obj[`${base}_${lang==='fa'?'en':'fa'}`],obj[base]].find(present)??"";
 }

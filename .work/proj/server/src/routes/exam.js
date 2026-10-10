@@ -1,3 +1,4 @@
+import { sealEncounter, readEncounter } from "../lib/vp-encounter.js";
 import { evaluationFingerprint, retryScoreGet, retryScorePut, retryScoreDrop } from "../lib/vp-evaluation-retry.js";
 import { acquireCompletion, completionBusy, publicEvaluation } from "../lib/vp-completion.js";
 /* ================================================================
@@ -5,23 +6,25 @@ import { acquireCompletion, completionBusy, publicEvaluation } from "../lib/vp-c
    All AI logic lives server-side; prompts pulled from DB.
    ================================================================ */
 import { Router } from "express";
-import { db, persistNow } from "../db.js";
+import { effectiveFlashNoPenalty } from "../lib/orglimits.js";
+import { db, persistNow, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { validateBody, s as vs } from "../lib/validate.js";
 import { patientReply, evaluate, scoreChecklistWithLLM, enrichEvaluationWithLLM, labImagingResult, listAiProviders, asMessages, resolveAiConfig } from "../lib/ai-engine.js";
-import { getSetting, setSetting, canAccessCase } from "./content.js";
+import { extractReportBundle, takeTranslationBudget } from "../lib/report-translate.js";
+import { getSetting, setSetting, canAccessCase, studentSafeCase } from "./content.js";
 import { caseInLiveExam } from "../lib/live-exam-content.js";
 import { caseIsLearn } from "../lib/content-track.js";
 import { DEFAULT_LAB_TESTS, DEFAULT_IMAGING, DEFAULT_PARACLINIC, cleanOrderList, catalogContainsQuery } from "../data/order-catalog-defaults.js";
 import { classAttemptInfo } from "./classes.js";
 import { examAccess } from "./exams.js";
-import { scoreSubmittedAnswers, gradeSubmittedDeck } from "../lib/flashcard-grade.js";
+import { scoreSubmittedAnswers, gradeSubmittedDeck, gradeSubmittedDeckDetailed } from "../lib/flashcard-grade.js";
 import { getVpatientConfig, awardVpatientXp, getVpatientAiEffective, getVpatientPromptsEffective, vpatientAccess } from "../lib/vpatient.js";
 import { isEnabled } from "../lib/flags.js";
 import { audit } from "../lib/audit.js";
 import { startSession, getSession, finishSession, loggingEnabledFor, serverElapsedSec } from "../lib/vplogging.js";
 import { normalizeRubric, parseClassRubric } from "../lib/grading-rubric.js";
-import { parseReferenceSnapshot, referenceSnapshotForPolicy, referencePromptContract, decorateMicrolearning, publicReferenceSnapshot } from "../lib/reference-governance.js";
+import { parseReferenceSnapshot, referenceSnapshotForPolicy, referencePromptContract, decorateMicrolearning, publicReferenceSnapshot, selectedReferenceSnapshot } from "../lib/reference-governance.js";
 
 function resolveClassRubric(classId) {
   const global = normalizeRubric(getSetting("vp_grading", null));
@@ -44,20 +47,8 @@ import { getProfile } from "../lib/gamify.js";
 // times, which pollutes the class gradebook and (for a research study) destroys
 // the one-attempt-per-student guarantee the analysis relies on.
 function hasAccess(user, caseId, classId, examId, acceptedAt = Date.now()) {
-  // Competitive learners reach virtual patients through the gated learner
-  // feature, NOT class/exam assignments — so check the vpatient access config.
-  // Learners are deliberately unlimited (best-score XP policy handles farming).
-  if (user.role === "learner") {
-    try {
-      if (!caseIsLearn(caseId)) return { allowed: false, reason: "university_only" };
-      const p = getProfile(user.id);
-      const vp = vpatientAccess(p, user.role);
-      if (!vp.ok) return { allowed: false, reason: vp.reason || "off" };
-      return { allowed: true };
-    } catch {
-      return { allowed: false, reason: "off" };
-    }
-  }
+  // Virtual patients are academic-only, including requests from old clients.
+  if (['learner', 'content_manager', 'support'].includes(user.role)) return { allowed: false, reason: 'university_only' };
   if (user.role === "admin") return { allowed: true };
   if (user.role === "teacher") {
     if (caseIsLearn(caseId)) return { allowed: false, reason: "wrong_track" };
@@ -288,10 +279,12 @@ function loadCase(id) {
     // A legacy row receives its first sealed snapshot here; current cases have
     // one persisted by the authoring/migration flow. Never derive a session
     // snapshot from a later policy edit when an existing case snapshot exists.
-    const referenceSnapshot = row.reference_snapshot_json
+    // Admin-selected references (reference_ids) take precedence over a course policy.
+    const referenceSnapshot = selectedReferenceSnapshot(JSON.parse(row.data_json)) || (row.reference_snapshot_json
       ? parseReferenceSnapshot(row.reference_snapshot_json)
-      : referenceSnapshotForPolicy(row.reference_policy_id);
+      : referenceSnapshotForPolicy(row.reference_policy_id));
     return { ...JSON.parse(row.data_json), id: row.id, version: row.version, checklist_id: row.checklist_id,
+      public_code: row.public_code, difficulty: row.difficulty, university_id: row.university_id, active: row.active,
       reference_policy_id: row.reference_policy_id || null, reference_snapshot: referenceSnapshot };
   } catch {
     return null;
@@ -310,8 +303,8 @@ function loadChecklist(id) {
    resolves the privacy decision ONCE (snapshot of the class/exam logging
    switch) so a later toggle cannot reinterpret data already collected.
    The row exists even if the student never finishes — an abandoned session is
-   itself meaningful for a study (dropout), and it holds no content when
-   logging is off. */
+   itself meaningful for a study (dropout). Faculty-authored content is pinned;
+   learner conversation remains unrecorded when logging is off. */
 r.post("/session-start", authRequired, (req, res) => {
   try {
   const { caseId, classId, examId, lang = "fa", requestId = null } = req.body || {};
@@ -325,12 +318,6 @@ r.post("/session-start", authRequired, (req, res) => {
   if (!acc.allowed) return denyAccess(res, acc, "session");
   const { ownerClassId, ownerExamId } = containersFor(req.user, classId, examId, acc);
   const studyId = studyForContext({ classId: ownerClassId, examId: ownerExamId })?.id || null;
-  const s = startSession({
-    userId: req.user.id, caseId: caseData.id,
-    classId: ownerClassId, examId: ownerExamId, lang,
-    studyId, requestId, referenceSnapshotJson: JSON.stringify(caseData.reference_snapshot),
-  });
-  if (s.error) return res.status(s.status).json({ error: s.error, stage: "session" });
   // Tell the UI which criterion this class grades on, so the student sees it
   // before finishing (extern = up to the differential dx, intern = all sections).
   let gradingScope = "overall";
@@ -339,7 +326,16 @@ r.post("/session-start", authRequired, (req, res) => {
     if (role === "history") gradingScope = "extern";
     else if (role === "overall") gradingScope = "intern";
   }
-  const gradingRubric = resolveClassRubric(ownerClassId);
+  let gradingRubric = resolveClassRubric(ownerClassId);
+  const s = startSession({
+    userId: req.user.id, caseId: caseData.id,
+    classId: ownerClassId, examId: ownerExamId, lang,
+    studyId, requestId, encounterSnapshotJson: sealEncounter({ caseData, checklist: loadChecklist(caseData.checklist_id), gradingScope, gradingRubric }), referenceSnapshotJson: JSON.stringify(caseData.reference_snapshot),
+  });
+  if (s.error) return res.status(s.status).json({ error: s.error, stage: "session" });
+  const pinned = encounterOrDeny(res, getSession(s.sessionId), "session");
+  if (!pinned) return;
+
   if (studyId && !s.replayed) {
     recordStudyEvent({
       studyId, userId: req.user.id, eventType: "session_started",
@@ -347,7 +343,8 @@ r.post("/session-start", authRequired, (req, res) => {
       data: { caseId: caseData.id, sessionId: s.sessionId },
     });
   }
-  const payload = { ...s, gradingScope };
+  gradingRubric = pinned.gradingRubric;
+  const payload = { ...s, gradingScope: pinned.gradingScope, caseCard: studentSafeCase(pinned.caseData) };
   if (req.user.role !== "student" && req.user.role !== "learner") payload.gradingRubric = gradingRubric;
   res.json(payload);
   } catch (e) {
@@ -375,8 +372,7 @@ r.post("/session-abandon", authRequired, (req, res) => {
     const consent = assertConsent(req.user, { classId: owned.class_id, examId: owned.exam_id });
     if (!consent.ok) return denyAccess(res, { ...consent, allowed: false }, "session");
   }
-  const out = db.transaction(() => finishSession({ sessionId, userId: req.user.id, events, durationSec: 0, attemptId: null, persist: false }))();
-  persistNow({ throwOnError: true });
+  const out = durableTransaction(() => finishSession({ sessionId, userId: req.user.id, events, durationSec: 0, attemptId: null, persist: false }));
   if (out.error) return res.status(out.error === "session_not_found" ? 404 : 403).json({ error: out.error, stage: "session" });
   res.json({ ok: true, stored: out.stored, loggingEnabled: out.loggingEnabled });
   } catch (e) {
@@ -394,6 +390,10 @@ function interactionAccessGuard(req, res, caseId, classId, examId, acc, stage) {
   const ctx = { classId: ownerClassId, examId: ownerExamId };
   const studyId = studyForContext(ctx)?.id || null;
   return () => {
+    if (req.body?.sessionId) {
+      const session = getSession(req.body.sessionId);
+      if (!session || session.finished_at) { res.status(409).json({ error: "session_closed", stage }); return false; }
+    }
     const live = db.prepare("SELECT status,role,token_ver FROM users WHERE id=?").get(req.user.id);
     if (!live || live.status !== "active" || live.role !== req.user.role || Number(live.token_ver || 1) !== Number(req.user.ver || 1)) {
       res.status(401).json({ error: "authorization_changed", stage }); return false;
@@ -412,15 +412,50 @@ function interactionAccessGuard(req, res, caseId, classId, examId, acc, stage) {
   };
 }
 
+function encounterOrDeny(res, session, stage) {
+  try { return readEncounter(session); }
+  catch (error) {
+    res.status(409).json({ error: error.message, stage, attemptStored: false,
+      message_fa: "نسخهٔ ثابت این برخورد موجود یا معتبر نیست. بدون مصرف فرصت، یک برخورد جدید شروع کنید.",
+      message_en: "This encounter has no valid saved clinical version. Start a new encounter; no attempt was consumed." });
+    return null;
+  }
+}
+function interactionContext(req, res, stage) {
+  const { caseId, classId, examId, sessionId } = req.body || {};
+  if (!sessionId) {
+    if (process.env.VP_REQUIRE_AI_EVALUATION !== "0" && ["student", "learner"].includes(req.user.role)) {
+      res.status(400).json({ error: "session_id_required", stage }); return null;
+    }
+    return { caseId, classId, examId, session: null, snapshot: null };
+  }
+  const session = getSession(sessionId);
+  if (!session) { res.status(404).json({ error: "session_not_found", stage }); return null; }
+  if (Number(session.user_id) !== Number(req.user.id)) { res.status(403).json({ error: "not_your_session", stage }); return null; }
+  if (Number(session.case_id) !== Number(caseId) || (classId != null && Number(classId) !== Number(session.class_id)) || (examId != null && Number(examId) !== Number(session.exam_id))) {
+    res.status(409).json({ error: "session_context_mismatch", stage }); return null;
+  }
+  if (session.finished_at) { res.status(409).json({ error: "session_closed", stage }); return null; }
+  const context = { classId: session.class_id, examId: session.exam_id };
+  if (Number(session.study_id || 0) !== Number(studyForContext(context)?.id || 0)) {
+    res.status(409).json({ error: "study_context_changed", stage }); return null;
+  }
+  const snapshot = encounterOrDeny(res, session, stage);
+  return snapshot ? { caseId, ...context, session, snapshot } : null;
+}
+
 /* ---- Patient chat turn ---- */
 r.post("/patient-reply", authRequired, async (req, res) => {
   try {
-    const { caseId, userText, history = [], lang = "fa", classId, examId } = req.body || {};
+    const { userText, history = [], lang = "fa" } = req.body || {};
+    const context = interactionContext(req, res, "chat");
+    if (!context) return;
+    const { caseId, classId, examId } = context;
     const acc = hasAccess(req.user, caseId, classId, examId);
     if (!acc.allowed) return denyAccess(res, acc, "chat");
     const text = String(userText || "").trim();
     if (!text) return res.status(400).json({ error: "text_required", stage: "chat" });
-    const caseData = loadCase(caseId);
+    const caseData = context.snapshot?.caseData || loadCase(caseId);
     if (!caseData) return res.status(404).json({ error: "case not found", stage: "case" });
     if (refuseInactiveCase(res, req.user, caseId)) return;
     const { aiCfg, prompts } = engineContext(req, req.body);
@@ -439,12 +474,14 @@ r.post("/patient-reply", authRequired, async (req, res) => {
 /* ---- Order a lab test / imaging study / paraclinical study -> report in the chat ----
    `kind` = "lab" | "imaging" | "paraclinic" (ECG, PFT, EEG, ...).
    If the case chart has a recorded result → return it (with an image if any).
-   Otherwise the student is told it's NORMAL (AI-worded when a key is set, else a
-   deterministic template). `kind` = "lab" | "imaging". */
+   Otherwise the result is explicitly unavailable; no normal value is inferred. */
 r.post("/order", authRequired, async (req, res) => {
   try {
-    const { caseId, kind = "lab", query = "", lang = "fa", classId, examId } = req.body || {};
-    const caseData = loadCase(caseId);
+    const { kind = "lab", query = "", lang = "fa" } = req.body || {};
+    const context = interactionContext(req, res, "order");
+    if (!context) return;
+    const { caseId, classId, examId } = context;
+    const caseData = context.snapshot?.caseData || loadCase(caseId);
     if (!caseData) return res.status(404).json({ error: "case not found", stage: "case" });
     if (refuseInactiveCase(res, req.user, caseId)) return;
     // Access / attempt budget FIRST so an exhausted student still gets 403
@@ -514,6 +551,7 @@ r.post("/evaluate", authRequired, async (req, res) => {
       const showMicro = (stored.meta?.showMicro ?? true) && !!(ex ? ex.show_micro : settings.showMicro);
       const response = publicEvaluation(stored, req.user.role, showAi, showMicro);
       response.logging = { enabled: !!vpSession.logging_enabled, eventsStored: vpSession.event_count || 0, eventsDropped: 0 };
+      response.reportLang = attempt.lang || stored.meta?.lang || "fa";
       persistNow({ throwOnError: true });
       return res.json({ attemptId: attempt.id, ...response, replayed: true });
     }
@@ -528,7 +566,9 @@ r.post("/evaluate", authRequired, async (req, res) => {
     message_en: "This encounter is still being evaluated. Wait briefly, then retry to retrieve the result."
   });
   const session = (req.body?.session && typeof req.body.session === "object") ? req.body.session : {};
-  const caseData = loadCase(caseId);
+  const pinned = vpSession ? encounterOrDeny(res, vpSession, "evaluate") : null;
+  if (vpSession && !pinned) return;
+  const caseData = pinned?.caseData || loadCase(caseId);
   if (!caseData) return res.status(404).json({ error: "case not found", stage: "case" });
   if (refuseInactiveCase(res, req.user, caseId)) return;
   const acc = hasAccess(req.user, caseId, classId, examId);
@@ -549,7 +589,7 @@ r.post("/evaluate", authRequired, async (req, res) => {
     }
     return true;
   };
-  const checklist = loadChecklist(caseData.checklist_id);
+  const checklist = pinned?.checklist || loadChecklist(caseData.checklist_id);
   // Pin educational provenance to the session start. A later policy/catalog edit
   // must never rewrite what this learner was taught or what is audited here.
   const referenceSnapshot = parseReferenceSnapshot(vpSession?.reference_snapshot_json || caseData.reference_snapshot);
@@ -578,7 +618,8 @@ r.post("/evaluate", authRequired, async (req, res) => {
     if (role === "history") gradingScope = "extern";
     else if (role === "overall") gradingScope = "intern";
   }
-  const gradingRubric = resolveClassRubric(ownerClassId);
+  if (pinned) gradingScope = pinned.gradingScope;
+  const gradingRubric = pinned?.gradingRubric || resolveClassRubric(ownerClassId);
 
   // A final graded attempt must be AI-scored AND AI-taught by default.
   // Explicit offline mode is for diagnostics, never an implicit provider fallback.
@@ -684,6 +725,7 @@ r.post("/evaluate", authRequired, async (req, res) => {
   const out = { ...evalResult };
   out.showAi = !!showAi;
   out.showMicro = !!showMicro;
+  out.reportLang = lang;
   if (!showAi) {
     out.strengths = out.weaknesses = out.missed = out.commonMistakes = [];
     out.suggestion = "";
@@ -711,7 +753,7 @@ r.post("/evaluate", authRequired, async (req, res) => {
   } : null;
 
   let logResult = { stored: 0, loggingEnabled: logging, dropped: 0 };
-  const info = db.transaction(() => {
+  const info = durableTransaction(() => {
   const inserted = db.prepare(
     `INSERT INTO attempts (user_id,type,case_id,class_id,exam_id,content_version,score,transcript_json,eval_json,
        turns,tests,imaging_count,ddx_count,hints,duration_sec,lang,reference_snapshot_json)
@@ -743,18 +785,19 @@ r.post("/evaluate", authRequired, async (req, res) => {
     evalResult.meta.durationSecRecorded = finalDuration;
   }
   db.prepare("UPDATE attempts SET eval_json=? WHERE id=?").run(JSON.stringify(evalResult), inserted.lastInsertRowid);
-  return inserted;
-  })();
-  out.meta = evalResult.meta;
-  out.logging = { enabled: logResult.loggingEnabled, eventsStored: logResult.stored, eventsDropped: logResult.dropped };
   const studyId = studyForContext({ classId: ownerClassId, examId: ownerExamId })?.id || null;
   if (studyId) {
     recordStudyEvent({
       studyId, userId: req.user.id, eventType: "session_finished",
       contextType: ownerExamId ? "exam" : "class", contextId: ownerExamId || ownerClassId,
-      data: { attemptId: info.lastInsertRowid, caseId: caseData.id, score: evalResult.score, type: "vp" },
+      data: { attemptId: inserted.lastInsertRowid, caseId: caseData.id, score: evalResult.score, type: "vp" },
+      persist: false,
     });
   }
+  return inserted;
+  });
+  out.meta = evalResult.meta;
+  out.logging = { enabled: logResult.loggingEnabled, eventsStored: logResult.stored, eventsDropped: logResult.dropped };
 
   // ---- Competitive ranking XP (learners only) ----
   // The auto-evaluator's score% is converted to ranking XP via the admin-set
@@ -826,6 +869,18 @@ r.post("/flashcard-result", authRequired, validateBody(flashResultSchema), (req,
       return res.status(403).json({ error: msg, reason, stage: "exam" });
     }
     examDeck = acc.exam;
+    const studentUni = db.prepare("SELECT university_id FROM users WHERE id=?").get(req.user.id)?.university_id;
+    if (!studentUni || Number(studentUni) !== Number(examDeck.university_id)) {
+      return res.status(403).json({ error: "wrong_university", stage: "access" });
+    }
+    for (const id of examDeck.flashcard_ids || []) {
+      const card = db.prepare("SELECT university_id,active,data_json FROM flashcards WHERE id=?").get(id);
+      let learn = false;
+      try { learn = JSON.parse(card?.data_json || "{}").track === "learn"; } catch { /* grading handles corrupt content */ }
+      if (!card || !card.active || learn || Number(card.university_id) !== Number(studentUni)) {
+        return res.status(403).json({ error: "exam_card_unavailable", stage: "access" });
+      }
+    }
   }
   let scoreN = Math.max(0, Math.min(100, Number(score) || 0));
   const answerRows = Array.isArray(answers) ? answers : [];
@@ -839,7 +894,9 @@ r.post("/flashcard-result", authRequired, validateBody(flashResultSchema), (req,
       ? (examDeck.flashcard_ids || []).map(Number).filter((n) => Number.isFinite(n) && n > 0)
       : null;
     if (answerRows.length || expectedIds) {
-      const deck = gradeSubmittedDeck(loadFlash, answerRows, expectedIds);
+      const deck = examOwner
+        ? gradeSubmittedDeckDetailed(loadFlash, answerRows, expectedIds, { noPenalty: effectiveFlashNoPenalty(null, examDeck.university_id) })
+        : gradeSubmittedDeck(loadFlash, answerRows, expectedIds);
       if (deck.error === "duplicate_card") return res.status(400).json({ error: "duplicate_card", stage: "evaluate" });
       if (deck.error === "answers_out_of_deck") return res.status(400).json({ error: "answers_out_of_deck", stage: "evaluate" });
       if (deck.score != null) scoreN = deck.score;
@@ -852,23 +909,26 @@ r.post("/flashcard-result", authRequired, validateBody(flashResultSchema), (req,
   const wrongN = Math.max(0, Math.min(totalN || 10000, Number(wrong) || 0));
   const hintsN = Math.max(0, Math.min(100, Number(hints) || 0));
   const durN = clampDuration(durationSec);
-  const info = db.prepare(
-    `INSERT INTO attempts (user_id,type,case_id,exam_id,content_version,score,transcript_json,
-       turns,tests,hints,total_questions,correct_count,wrong_count,duration_sec,lang)
-     VALUES (?,?,?,?,?,?,?,0,0,?,?,?,?,?,?)`
-  ).run(req.user.id, "flash", null, examOwner, 1, scoreN,
-        JSON.stringify({ answers: Array.isArray(answers) ? answers : [] }),
-        hintsN, totalN, correctN, wrongN, durN, lang);
-  if (examOwner) {
-    const studyId = studyForContext({ examId: examOwner })?.id || null;
-    if (studyId) {
-      recordStudyEvent({
-        studyId, userId: req.user.id, eventType: "flashcard_finished",
-        contextType: "exam", contextId: examOwner,
-        data: { attemptId: info.lastInsertRowid, score: scoreN, type: "flash" },
-      });
+  const info = durableTransaction(() => {
+    const info = db.prepare(
+      `INSERT INTO attempts (user_id,type,case_id,exam_id,content_version,score,transcript_json,
+         turns,tests,hints,total_questions,correct_count,wrong_count,duration_sec,lang)
+       VALUES (?,?,?,?,?,?,?,0,0,?,?,?,?,?,?)`
+    ).run(req.user.id, "flash", null, examOwner, 1, scoreN,
+          JSON.stringify({ answers: Array.isArray(answers) ? answers : [] }),
+          hintsN, totalN, correctN, wrongN, durN, lang);
+    if (examOwner) {
+      const studyId = studyForContext({ examId: examOwner })?.id || null;
+      if (studyId) {
+        recordStudyEvent({
+          studyId, userId: req.user.id, eventType: "flashcard_finished",
+          contextType: "exam", contextId: examOwner,
+          data: { attemptId: info.lastInsertRowid, score: scoreN, type: "flash" }, persist: false,
+        });
+      }
     }
-  }
+    return info;
+  });
   res.json({ attemptId: info.lastInsertRowid, score: scoreN });
   } catch (e) {
     res.status(500).json({ error: "flashcard_result_failed", stage: "evaluate", message: String(e.message || e).slice(0, 200) });
@@ -908,6 +968,41 @@ r.post("/ai-test", authRequired, requireRole("admin", "teacher"), async (req, re
     });
   } catch (e) {
     res.json({ connected: false, mode: "mock", message: String(e.message) });
+  }
+});
+
+/* ---- Translate a stored VP report into the other site language ----
+   Owner-only. Translates exactly what the learner is allowed to see (same
+   showAi/showMicro filter as the report). Browser caches the result, so this
+   endpoint is only hit once per attempt, language pair and report text. */
+r.post("/attempts/:id/translate", authRequired, async (req, res) => {
+  try {
+    const to = req.body?.to === "en" ? "en" : req.body?.to === "fa" ? "fa" : null;
+    if (!to) return res.status(400).json({ error: "bad_language", stage: "translate" });
+    const attempt = db.prepare("SELECT id, user_id, exam_id, eval_json, lang FROM attempts WHERE id=? AND user_id=? AND type='vp'")
+      .get(Number(req.params.id) || 0, req.user.id);
+    if (!attempt) return res.status(404).json({ error: "not_found", stage: "translate" });
+    const from = attempt.lang === "en" ? "en" : "fa";
+    if (from === to) return res.json({ attemptId: attempt.id, from, to, same: true, bundle: {} });
+    let stored = null;
+    try { stored = JSON.parse(attempt.eval_json || "null"); } catch { stored = null; }
+    if (!stored) return res.status(409).json({ error: "report_missing", stage: "translate" });
+    const settings = getSetting("exam", {});
+    const ex = attempt.exam_id ? db.prepare("SELECT show_ai, show_micro FROM exams WHERE id=?").get(attempt.exam_id) : null;
+    const showAi = (stored.meta?.showAi ?? true) && !!(ex ? ex.show_ai : settings.showAiAnalysis);
+    const showMicro = (stored.meta?.showMicro ?? true) && !!(ex ? ex.show_micro : settings.showMicro);
+    const visible = publicEvaluation(stored, req.user.role, showAi, showMicro);
+    const bundle = extractReportBundle(visible);
+    if (!Object.keys(bundle).length) return res.json({ attemptId: attempt.id, from, to, same: false, bundle: {} });
+    const { aiCfg } = engineContext(req, {});
+    if (!aiCfg?.apiKey) return res.status(503).json({ error: "translation_unavailable", stage: "translate", message_fa: "ترجمه در حال حاضر در دسترس نیست.", message_en: "Translation is unavailable right now." });
+    if (!takeTranslationBudget(req.user.id)) return res.status(429).json({ error: "translation_rate_limited", stage: "translate", message_fa: "تعداد ترجمه‌های این ساعت به حد مجاز رسیده است.", message_en: "Too many translations this hour." });
+    const { translateReportBundle } = await import("../lib/ai-engine.js");
+    const out = await translateReportBundle({ bundle, from, to, aiCfg });
+    if (!out.ok) return res.status(502).json({ error: "translation_failed", reason: out.reason, stage: "translate", message_fa: "ترجمه انجام نشد؛ متن اصلی نمایش داده می‌شود.", message_en: "Translation failed; the original text is shown." });
+    res.json({ attemptId: attempt.id, from, to, same: false, bundle: out.bundle, model: out.model || "" });
+  } catch (e) {
+    res.status(500).json({ error: "translate_failed", stage: "translate", message: String(e?.message || e).slice(0, 200) });
   }
 });
 

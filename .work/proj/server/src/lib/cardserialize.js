@@ -1,3 +1,4 @@
+import {flashcardLanguageFallback} from './flashcard-language.js';
 /* cardserialize.js — turn a stored flashcard's data_json into a
    client-ready, language-localized payload supporting all exercise types:
    mcq | truefalse | fill | match | order | compare.
@@ -120,10 +121,11 @@ export function serializeMnemonic(d, lang) {
 
 export function serializeCard(c, lang) {
   let d = {}; try { d = JSON.parse(c.data_json); } catch { d = {}; }
+  d=flashcardLanguageFallback(d);
   const rawType = String(d.type || "mcq").toLowerCase();
   const type = rawType === "image" ? "mcq" : (rawType || "mcq");
   const base = {
-    id: c.id, difficulty: c.difficulty, type,
+    id: c.id, public_code: c.public_code, difficulty: c.difficulty, type,
     micro: serializeMicro(d, lang),
     explain: serializeExplain(d, lang),          // پاسخنامه (shown after answering)
     mnemonic: serializeMnemonic(d, lang),

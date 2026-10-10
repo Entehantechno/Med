@@ -10,6 +10,7 @@ import { verifyGoogleToken, googleConfigured, googleClientId } from "../lib/goog
 import { passwordPwned } from "../lib/security.js";
 import { hashPassword, verifyPassword, needsRehash } from "../lib/password.js";
 import { validateBody, s } from "../lib/validate.js";
+import { passwordVariants, toAsciiDigits } from "../lib/digits.js";
 import { normDigits } from "../lib/textsearch.js";
 
 const r = Router();
@@ -38,6 +39,14 @@ export function passwordRejected(pw) {
   if (COMMON_PASSWORDS.has(low) || /medschool|medlab/.test(low)) return "common";
   return null;
 }
+// Stable error codes for password-rule failures (the client maps these to text).
+export function passwordErrorBody(reason) {
+  const error = reason === "too_short" ? "password_too_short"
+    : reason === "too_long" ? "password_too_long"
+    : "password_too_common";
+  return { error, min: minPasswordLen(), max: MAX_PASSWORD };
+}
+export { minPasswordLen };
 
 // Temporary per-account backoff (ASVS 6.1.1: do NOT permanently lock — that is a DoS).
 const fails = new Map();
@@ -64,7 +73,7 @@ function createLearnerProfile(id, province = "", program = "preint") {
 }
 
 const loginSchema = { username: s.str({ min: 1, max: 200 }), password: s.str({ min: 1, max: 128, trim: false }) };
-r.post("/login", validateBody(loginSchema), async (req, res) => {
+async function loginRoute(req, res) {
   const { username, password } = req.body || {};
   const id = String(username || "").trim();
   const idNorm = normDigits(id);
@@ -72,24 +81,24 @@ r.post("/login", validateBody(loginSchema), async (req, res) => {
     return res.status(429).json({ error: "too_many_attempts", message_fa: "تلاش‌های ورود بیش از حد. کمی بعد دوباره تلاش کنید.", message_en: "Too many login attempts, please try again later." });
   }
   // allow login with either username, student_no, OR email (supporting Persian & English digits)
-  const user = db.prepare("SELECT * FROM users WHERE username = ? OR username = ? OR student_no = ? OR student_no = ? OR lower(email) = lower(?)").get(id, idNorm, id, idNorm, id);
+  // Exact username wins over a student number / email that happens to equal it.
+  let user;
+  try {
+    user = db.prepare("SELECT * FROM users WHERE username = ? OR username = ? OR student_no = ? OR student_no = ? OR lower(email) = lower(?) ORDER BY (username = ?) DESC, (username = ?) DESC, (student_no = ?) DESC, id ASC LIMIT 1").get(id, idNorm, id, idNorm, id, id, idNorm, id);
+  } catch (e) {
+    console.error("[auth] login lookup failed:", e?.message || e);
+    return res.status(500).json({ error: "server_error", stage: "login_lookup" });
+  }
   const hash = (user && user.password_hash) ? user.password_hash : DUMMY_HASH;
-  let match = await verifyPassword(password || "", hash);
-  // Admin recovery: allow both 'admin123' and 'demo' as valid admin passwords
-  // regardless of which one the seed used, so a stale DB never locks the admin out.
-  // This is a controlled fallback for the single built-in admin account only.
-  if (!match && user && String(user.username || "").toLowerCase() === "admin" && user.role === "admin" && (password === "admin123" || password === "demo")) {
-    // if the stored hash matches the *other* default, treat it as success and upgrade
-    const other = password === "admin123" ? "demo" : "admin123";
-    try { if (await verifyPassword(other, hash)) match = true; } catch {}
-    // last-resort: if DB was corrupted and hash is neither, still allow the known defaults
-    // so the platform is never bricked; the hash will be upgraded to the typed password below.
-    if (!match) {
-      // only allow when no valid admin hash exists (e.g., empty/corrupted) — but for safety
-      // we also allow when the user explicitly typed a known default, to guarantee recovery.
-      // This branch is intentionally narrow: only admin + known defaults.
-      match = true;
+  let match = false;
+  try {
+    // Persian and ASCII digits are the same digits: accept either spelling.
+    for (const candidate of passwordVariants(password || "")) {
+      if (await verifyPassword(candidate, hash)) { match = true; break; }
     }
+  } catch (e) {
+    console.error("[auth] password verification unavailable:", e?.message || e);
+    return res.status(503).json({ error: "auth_unavailable" });
   }
   if (!user || !user.password_hash || !match) {
     noteLoginFail(id);
@@ -100,22 +109,10 @@ r.post("/login", validateBody(loginSchema), async (req, res) => {
     return res.status(403).json({ error: "account inactive" });
   noteLoginOk(id);
   if (idNorm && idNorm !== id) noteLoginOk(idNorm);
-  // Lazy bcrypt → argon2id migration: transparently upgrade this user's hash
-  // after a successful login (one UPDATE per legacy user, then never again).
-  // Also heal admin when the fallback path was used (stored hash mismatched typed default).
-  let shouldHealAdmin = false;
-  if (String(user.username || "").toLowerCase() === "admin" && user.role === "admin" && (password === "admin123" || password === "demo")) {
-    try {
-      const direct = await verifyPassword(password || "", user.password_hash);
-      if (!direct) shouldHealAdmin = true;
-    } catch { shouldHealAdmin = true; }
-  }
+  // Upgrade the hash only after validating the actual stored credential.
+  // Public login must never double as an administrator recovery backdoor.
   try {
-    if (shouldHealAdmin) {
-      const healed = await hashPassword(password || "");
-      db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(healed, user.id);
-      persistNow();
-    } else if (await needsRehash(user.password_hash)) {
+    if (await needsRehash(user.password_hash)) {
       const upgraded = await hashPassword(password || "");
       db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(upgraded, user.id);
       persistNow();
@@ -124,6 +121,14 @@ r.post("/login", validateBody(loginSchema), async (req, res) => {
   const token = signToken(user);
   setAuthCookie(res, token);
   res.json({ token, user: publicUser(user) });
+}
+// Express 4 does not catch promise rejections: an uncaught error here used to
+// crash the whole server process. Answer 500 instead and keep serving everyone.
+r.post("/login", validateBody(loginSchema), (req, res) => {
+  loginRoute(req, res).catch((e) => {
+    console.error("[auth] login failed:", e?.stack || e);
+    if (!res.headersSent) res.status(500).json({ error: "server_error", stage: "login" });
+  });
 });
 
 // Public self sign-up for competitive learners (pre-internship track), by EMAIL.
@@ -160,7 +165,7 @@ r.post("/register", signupGate, validateBody(registerSchema), async (req, res) =
   const willVerifyByEmail = mailConfigured();
   const info = db.prepare(
     "INSERT INTO users (username, email, password_hash, name_fa, name_en, role, status, email_verified) VALUES (?,?,?,?,?,'learner','active',?)"
-  ).run(mail, mail, await hashPassword(password), name, name_en || name, willVerifyByEmail ? 0 : 1);
+  ).run(mail, mail, await hashPassword(toAsciiDigits(String(password))), name, name_en || name, willVerifyByEmail ? 0 : 1);
   const id = info.lastInsertRowid;
   createLearnerProfile(id, province, program);
 
@@ -308,21 +313,33 @@ const changePwSchema = {
   currentPassword: s.str({ min: 1, max: 128, trim: false }),
   newPassword: s.str({ min: 1, max: 128, trim: false }),
 };
-r.put("/password", authRequired, validateBody(changePwSchema), async (req, res) => {
-  const { currentPassword, newPassword } = req.body || {};
-  if (passwordRejected(newPassword))
-    return res.status(400).json({ error: "password too short" });
-  const u = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
-  if (!u || !u.password_hash || !(await verifyPassword(currentPassword || "", u.password_hash)))
-    return res.status(400).json({ error: "wrong current password" });
-  const nextVer = bumpTokenVer(u.id);
-  db.prepare("UPDATE users SET password_hash=?, token_ver=? WHERE id=?")
-    .run(await hashPassword(String(newPassword).slice(0, MAX_PASSWORD)), nextVer, req.user.id);
-  persistNow();
-  const fresh = db.prepare("SELECT * FROM users WHERE id=?").get(u.id);
-  const token = signToken(fresh);
-  setAuthCookie(res, token);
-  res.json({ ok: true, token });
+r.put("/password", authRequired, validateBody(changePwSchema), async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body || {};
+    const rejected = passwordRejected(newPassword);
+    if (rejected) return res.status(400).json(passwordErrorBody(rejected));
+    const u = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
+    let currentOk = false;
+    if (u && u.password_hash) {
+      for (const candidate of passwordVariants(currentPassword || "")) {
+        if (await verifyPassword(candidate, u.password_hash)) { currentOk = true; break; }
+      }
+    }
+    if (!currentOk) return res.status(400).json({ error: "wrong_current_password" });
+    // Hash BEFORE bumping token_ver: if hashing fails, the session stays valid
+    // and the password stays unchanged (no half-applied change).
+    const newHash = await hashPassword(toAsciiDigits(String(newPassword)).slice(0, MAX_PASSWORD));
+    const nextVer = bumpTokenVer(u.id);
+    db.prepare("UPDATE users SET password_hash=?, token_ver=? WHERE id=?")
+      .run(newHash, nextVer, req.user.id);
+    persistNow();
+    const fresh = db.prepare("SELECT * FROM users WHERE id=?").get(u.id);
+    const token = signToken(fresh);
+    setAuthCookie(res, token);
+    res.json({ ok: true, token });
+  } catch (e) {
+    next(e);
+  }
 });
 
 export default r;

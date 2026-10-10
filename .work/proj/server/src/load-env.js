@@ -40,9 +40,18 @@ export const KNOWN_WEAK_SECRETS = [
   "529a1c5a1a1bc2f60cb6e1cdb8eca545ff12f6bbd41fc4c46f967821c3f5e6b4e0d8fd52a0e98f14679432bf08bc9762",
 ];
 
+/* SHA-256 of secrets that were published inside the R41 and R42 zips (.env was
+   packed by mistake). Stored as hashes so the values never appear in source.
+   A host whose .env still carries one of them gets a fresh secret on start. */
+export const KNOWN_LEAKED_SECRET_SHA256 = [
+  "439c6339804d02181ea6d4051d52befe378618268547db2f989bb8d14e2abf85",
+];
+
 function secretIsUsable(s) {
   const v = String(s || "").trim();
-  return v.length >= 32 && !KNOWN_WEAK_SECRETS.includes(v);
+  if (v.length < 32 || KNOWN_WEAK_SECRETS.includes(v)) return false;
+  const digest = crypto.createHash("sha256").update(v).digest("hex");
+  return !KNOWN_LEAKED_SECRET_SHA256.includes(digest);
 }
 
 function writeSecretToEnvFile(file, secret) {

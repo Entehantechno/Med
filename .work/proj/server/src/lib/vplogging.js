@@ -1,6 +1,6 @@
 /* vplogging.js — Virtual-patient conversation logging for the research study.
 
-   PRIVACY BY DEFAULT. Nothing about an encounter is written unless the teacher
+   PRIVACY BY DEFAULT. Learner conversation is written only when the teacher
    explicitly turned logging on for that class (or exam). The proposal's ethics
    section (code 10-2) requires that participants are told what is recorded, so
    the switch is per-class, visible in the admin UI, and snapshotted onto the
@@ -13,13 +13,14 @@
    student scored 70%" into analysable process data (where they hesitated, what
    they ordered first, how long the encounter actually took).
 
-   What is logged when OFF: only timing metadata on the session row. No message
+   What is logged when OFF: timing metadata and a faculty-authored case/rubric
+   snapshot on the session row. No learner message
    text, no orders. The attempt still gets its score, because grading must keep
    working — but attempts.transcript_json stays NULL.
 
    All client-supplied event data is validated before it touches the database:
    a research dataset that can be polluted by a crafted request is worthless. */
-import { db, persistNow } from "../db.js";
+import { db, persistNow, durableTransaction } from "../db.js";
 import { parseReferenceSnapshot, snapshotForCaseRow } from "./reference-governance.js";
 
 /* Event vocabulary. Anything outside this list is dropped. */
@@ -51,13 +52,14 @@ export function loggingEnabledFor(classId, examId) {
 
 /* Open a session. Called when the student enters the encounter, so the row
    exists (and the clock is server-side) even if they never finish. */
-export function startSession({ userId, caseId, classId, examId, studyId, lang, requestId = null, referenceSnapshotJson = null }) {
+export function startSession({ userId, caseId, classId, examId, studyId, lang, requestId = null, referenceSnapshotJson = null, encounterSnapshotJson = null }) {
   if (requestId != null && (typeof requestId !== "string" || !/^[A-Za-z0-9_-]{8,100}$/.test(requestId))) {
     return { error: "invalid_start_request_id", status: 400 };
   }
   if (requestId) {
     const existing = db.prepare("SELECT * FROM vp_sessions WHERE user_id=? AND start_request_id=?").get(Number(userId), requestId);
     if (existing) {
+      if (existing.finished_at) return { error: "session_closed", status: 409 };
       if (Number(existing.case_id) !== Number(caseId) || Number(existing.class_id) !== Number(classId || 0) ||
           Number(existing.exam_id) !== Number(examId || 0) || Number(existing.study_id) !== Number(studyId || 0) || existing.lang !== (lang === "en" ? "en" : "fa")) {
         return { error: "start_request_context_mismatch", status: 409 };
@@ -68,15 +70,14 @@ export function startSession({ userId, caseId, classId, examId, studyId, lang, r
   }
   const logging = loggingEnabledFor(classId, examId) ? 1 : 0;
   const serverNow = Date.now();
-  const info = db.prepare(
-    `INSERT INTO vp_sessions (user_id,case_id,class_id,exam_id,study_id,logging_enabled,lang,started_ms,start_request_id,reference_snapshot_json)
-     VALUES (?,?,?,?,?,?,?,?,?,?)`
+  const info = durableTransaction(() => db.prepare(
+    `INSERT INTO vp_sessions (user_id,case_id,class_id,exam_id,study_id,logging_enabled,lang,started_ms,start_request_id,reference_snapshot_json,encounter_snapshot_json)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?)`
   ).run(Number(userId), Number(caseId), classId ? Number(classId) : null,
         examId ? Number(examId) : null, studyId ? Number(studyId) : null, logging,
         lang === "en" ? "en" : "fa", serverNow, requestId, JSON.stringify(referenceSnapshotJson
           ? parseReferenceSnapshot(referenceSnapshotJson)
-          : snapshotForCaseRow(db.prepare("SELECT * FROM cases WHERE id=?").get(Number(caseId)))));
-  persistNow({ throwOnError: true });
+          : snapshotForCaseRow(db.prepare("SELECT * FROM cases WHERE id=?").get(Number(caseId)))), encounterSnapshotJson));
   return { sessionId: info.lastInsertRowid, loggingEnabled: !!logging, serverNow };
 }
 

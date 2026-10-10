@@ -40,6 +40,9 @@ export default function Login({ initialMode = "login", onBackHome, asModal = fal
     if (m === "email exists unverified") return fa ? "این ایمیل با رمز ثبت شده و هنوز تأیید نشده. اول ایمیل را تأیید کنید، بعد گوگل را وصل کنید." : "This email is already registered and unverified — confirm the mailbox before linking Google.";
     if (m === "google not configured") return fa ? "ورود با گوگل روی این سرور تنظیم نشده است." : "Google sign-in is not configured on this server.";
     if (m === "too_many_attempts") return fa ? "تلاش‌های ورود بیش از حد. کمی بعد دوباره تلاش کنید." : "Too many login attempts. Try again later.";
+    // Server/network failures are NOT a wrong password: say so instead of "invalid username or password".
+    if (m === "auth_unavailable" || m === "server_error" || m === "network" || m === "timeout" || m === "bad_response" || /^HTTP 5\d\d$/.test(String(m)))
+      return fa ? "سرویس ورود موقتاً در دسترس نیست. کمی بعد دوباره تلاش کنید." : "Sign-in is temporarily unavailable. Please try again shortly.";
     return "";
   };
 

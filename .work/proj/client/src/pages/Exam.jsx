@@ -9,6 +9,7 @@ import OrderSearch from "../components/OrderSearch.jsx";
 import { useAntiCheat } from "../utils/antiCheat.js";
 import Icon from "../components/Icon.jsx";
 import ClinicalLesson, { EvaluationProvenance } from "../components/ClinicalLesson.jsx";
+import { translateReport, applyReportBundle } from "../lib/report-translate.js";
 
 /* Named steps of the virtual-patient path so a failure is never a silent
    reset: the student sees WHERE it stopped (case / consent / session / chat /
@@ -118,7 +119,7 @@ function mergeOrderCatalog(a, b) {
 
 
 
-export default function Exam({ caseId, classId, examId, examDuration, antiCheat, go, home, embedded = false }) {
+export default function Exam({ caseId, classId, examId, examDuration, untimed = false, antiCheat, go, home, embedded = false }) {
   // Tell sw-update.js that in-progress work is on screen: a new build must
   // not auto-reload the page until this screen unmounts.
   useEffect(() => { markBusy(true); return () => markBusy(false); }, []);
@@ -193,11 +194,12 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
       throw Object.assign(new Error("session_failed"), { status: 502, data: { error: "session_failed", stage: "session" } });
     }
     sessionIdRef.current = sess.sessionId;
+    if (sess.caseCard) setCaseData(sess.caseCard);
     loggingRef.current = !!sess.loggingEnabled;
     setLoggingOn(!!sess.loggingEnabled);
     if (sess.gradingScope) setGradingScope(sess.gradingScope);
     startRef.current = Date.now();
-    setTimeLeft(mins * 60);
+    setTimeLeft(mins > 0 ? mins * 60 : null);
     autoFinishTried.current = false;
     finishingRef.current = false;
     setBoot({ status: "ready", stage: "exam" });
@@ -282,7 +284,8 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
           imaging: Array.isArray(oc?.imaging) ? oc.imaging : [],
           paraclinic: Array.isArray(oc?.paraclinic) ? oc.paraclinic : [],
         });
-        const mins = examDuration || s.duration || 15;
+        // untimed: a class with its timer switched off. No countdown, no auto-submit.
+        const mins = untimed ? 0 : (examDuration || s.duration || 15);
         setCaseData(c); setSettings(s);
         setBoot({ status: "loading", stage: "consent" });
         if (cancelled) return;
@@ -322,7 +325,7 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
       }
     })();
     return () => { cancelled = true; };
-  }, [caseId, classId, examId, bootKey]);
+  }, [caseId, classId, examId, bootKey, untimed]);
 
   const agreeConsent = async () => {
     setConsentBusy(true);
@@ -331,7 +334,7 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
       await api.post("/research/consent", { study_id: consent.studyId }, { timeoutMs: 15_000, stage: "consent" });
       const fresh = await api.get(`/research/consent/status?classId=${classId || ""}&examId=${examId || ""}`, { timeoutMs: 15_000, stage: "consent" });
       setConsent(fresh);
-      const mins = examDuration || settings.duration || 15;
+      const mins = untimed ? 0 : (examDuration || settings.duration || 15);
       setBoot({ status: "loading", stage: "session" });
       const sess = await requestSession();
       applySession(sess, mins);
@@ -427,7 +430,7 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
     setInput(""); setTypingKind("chat"); setTyping(true);
     try {
       const reply = await api.post("/exam/patient-reply",
-        { caseId, userText: text, history: priorHistory, lang, classId, examId },
+        { caseId, sessionId: sessionIdRef.current, userText: text, history: priorHistory, lang, classId, examId },
         { timeoutMs: 60_000, stage: "chat" });
       if (generation !== encounterGeneration.current) return;
       const replyText = String(reply?.text || "").trim();
@@ -460,7 +463,7 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
   };
 
   // When a student orders a test/imaging, fetch the lab/radiology report and
-  // drop it into the chat (recorded result, or "normal" if not in the chart).
+  // drop it into the chat (recorded result, or explicit unavailability if not in the chart).
   const orderResult = (kind, query) => {
     if (finishingRef.current) return Promise.resolve({ ok: false });
     const q = String(query || "").trim();
@@ -471,7 +474,7 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
       setTypingKind("order");
       setTyping(true);
       try {
-        const r = await api.post("/exam/order", { caseId, kind, query: q, lang, classId, examId },
+        const r = await api.post("/exam/order", { caseId, sessionId: sessionIdRef.current, kind, query: q, lang, classId, examId },
           { timeoutMs: 60_000, stage: "order" });
         if (generation !== encounterGeneration.current) return { ok: false };
         const text = String(r?.text || "").trim();
@@ -707,7 +710,7 @@ export default function Exam({ caseId, classId, examId, examDuration, antiCheat,
           </div>
           <div style={{ textAlign: "end" }}>
             <div className="small muted">{t("examTimer")}</div>
-            <div className="timer">{fmt(timeLeft ?? 0)}</div>
+            <div className="timer">{untimed ? t("noTimeLimit") : fmt(timeLeft ?? 0)}</div>
           </div>
         </div>
         {!!examId && antiCheat && leaves > 0 && (
@@ -947,6 +950,26 @@ function Report({ caseData, evalRes, settings, onBack, home, embedded = false })
   const { t, lang, user } = useApp();
   const isStaff = user?.role === "teacher" || user?.role === "admin";
   const e = evalRes || {};
+  // The report was written in the language of the attempt (reportLang). When the
+  // site language differs, translate the AI-written text once and cache it in
+  // the browser; switching back and forth reuses the cache (no AI tokens).
+  const reportLang = e.reportLang || lang;
+  const needTr = !!e.attemptId && reportLang !== lang;
+  const trKey = needTr ? `${e.attemptId}:${reportLang}>${lang}` : "";
+  const [tr, setTr] = useState({ key: "", status: "idle", bundle: null });
+  useEffect(() => {
+    if (!needTr) return undefined;
+    let alive = true;
+    setTr({ key: trKey, status: "loading", bundle: null });
+    translateReport({ attemptId: e.attemptId, from: reportLang, to: lang, source: evalRes })
+      .then((r) => { if (alive) setTr({ key: trKey, status: "ready", bundle: r.bundle }); })
+      .catch(() => { if (alive) setTr({ key: trKey, status: "failed", bundle: null }); });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trKey]);
+  const trCurrent = needTr && tr.key === trKey;
+  const trStatus = !needTr ? "idle" : trCurrent ? tr.status : "loading";
+  const v = trCurrent && tr.status === "ready" ? applyReportBundle(e, tr.bundle) : e;
   const score = Number(e.score) || 0;
   const showAi = e.showAi != null ? !!e.showAi : settings.showAiAnalysis !== false;
   const showMicro = e.showMicro != null ? !!e.showMicro : settings.showMicro !== false;
@@ -993,8 +1016,8 @@ function Report({ caseData, evalRes, settings, onBack, home, embedded = false })
           </div>
 
           {/* Section scores breakdown (Extern vs Intern criteria) */}
-          {showAi && e.sectionScores && (() => {
-            const ss = e.sectionScores;
+          {showAi && v.sectionScores && (() => {
+            const ss = v.sectionScores;
             const scope = e.meta?.gradingScope || "overall";
             const externVal = ss.extern ?? ss.history;
             const isExtern = scope === "extern", isIntern = scope === "intern";
@@ -1033,13 +1056,19 @@ function Report({ caseData, evalRes, settings, onBack, home, embedded = false })
         </div>
 
         {/* PROMINENT MICROLEARNING: Positioned immediately below score and BEFORE checklist */}
-        {showMicro && e.microlearning && (
+        {trStatus === "loading" && (
+          <div className="small muted mt16" role="status">{lang === "fa" ? "در حال ترجمهٔ گزارش به فارسی…" : "Translating the report to English…"}</div>
+        )}
+        {trStatus === "failed" && (
+          <div className="small mt16" role="alert" style={{ color: "var(--warn)" }}>{lang === "fa" ? "ترجمه انجام نشد؛ گزارش به زبان اصلی نمایش داده می‌شود." : "Translation failed; showing the report in its original language."}</div>
+        )}
+        {showMicro && v.microlearning && (
           <div className="card mt16" style={{ borderInlineStart: "5px solid var(--primary, #0284c7)", background: "var(--panel, #ffffff)" }}>
             <h3 style={{ marginBottom: 12, display: "flex", alignItems: "center", gap: 8, color: "var(--primary, #0284c7)" }}>
               <Icon name="book" size={20} /> {t("microlearning")}
             </h3>
             <div className="micro-box" style={{ whiteSpace: "pre-line", padding: "16px 20px", lineHeight: 1.85, fontSize: "0.95rem" }}>
-              <ClinicalLesson text={e.microlearning} />
+              <ClinicalLesson text={v.microlearning} />
             </div>
             <div className="small muted mt8">{t("microNote")}</div>
           </div>
@@ -1048,7 +1077,7 @@ function Report({ caseData, evalRes, settings, onBack, home, embedded = false })
         {/* CHECKLIST: Displayed after Microlearning */}
         <div className="card mt16">
           <h4 className="mb8"><Icon name="check" size={16} /> {t("checklist")}</h4>
-          {showAi ? (e.results || []).map((r, i) => (
+          {showAi ? (v.results || []).map((r, i) => (
             <div className="check-item" key={r.id || i}>
               <div className={`status ${r.done ? "st-done" : "st-miss"}`}>{r.done ? "✓" : "✕"}</div>
               <div style={{ flex: 1 }}>
@@ -1069,14 +1098,14 @@ function Report({ caseData, evalRes, settings, onBack, home, embedded = false })
         {showAi && (
           <>
             <div className="grid grid-2 mt16">
-              <div className="card"><h4 style={{ color: "var(--ok)" }}><Icon name="strength" size={16} /> {t("strengths")}</h4><List arr={e.strengths} /></div>
-              <div className="card"><h4 style={{ color: "var(--danger)" }}><Icon name="warn" size={16} /> {t("weaknesses")}</h4><List arr={e.weaknesses} /></div>
+              <div className="card"><h4 style={{ color: "var(--ok)" }}><Icon name="strength" size={16} /> {t("strengths")}</h4><List arr={v.strengths} /></div>
+              <div className="card"><h4 style={{ color: "var(--danger)" }}><Icon name="warn" size={16} /> {t("weaknesses")}</h4><List arr={v.weaknesses} /></div>
             </div>
             <div className="grid grid-2 mt16">
-              <div className="card"><h4 style={{ color: "var(--warn)" }}><Icon name="pin" size={16} /> {t("missed")}</h4><List arr={e.missed} fallback="✓" /></div>
-              <div className="card"><h4 style={{ color: "var(--warn)" }}><Icon name="repeat" size={16} /> {t("commonMistakes")}</h4><List arr={e.commonMistakes} /></div>
+              <div className="card"><h4 style={{ color: "var(--warn)" }}><Icon name="pin" size={16} /> {t("missed")}</h4><List arr={v.missed} fallback="✓" /></div>
+              <div className="card"><h4 style={{ color: "var(--warn)" }}><Icon name="repeat" size={16} /> {t("commonMistakes")}</h4><List arr={v.commonMistakes} /></div>
             </div>
-            {e.suggestion && <div className="card mt16"><h4><Icon name="bulb" size={16} /> {t("suggestion")}</h4><div className="small mt8">{e.suggestion}</div></div>}
+            {v.suggestion && <div className="card mt16"><h4><Icon name="bulb" size={16} /> {t("suggestion")}</h4><div className="small mt8">{v.suggestion}</div></div>}
           </>
         )}
       </div>

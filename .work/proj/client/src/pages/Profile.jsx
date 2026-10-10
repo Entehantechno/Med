@@ -4,6 +4,7 @@ import { api } from "../api.js";
 import { TopBar, Spinner } from "../components/UI.jsx";
 import { LineChart } from "../components/Charts.jsx";
 import Icon from "../components/Icon.jsx";
+import { passwordErrorText } from "../lib/password-errors.js";
 
 export default function Profile({ home }) {
   const { t, user, lang, logoutAll } = useApp();
@@ -24,7 +25,7 @@ export default function Profile({ home }) {
     try {
       await api.put("/auth/password", { currentPassword: cur, newPassword: np });
       setMsg(t("passwordChanged")); setCur(""); setNp(""); setNp2("");
-    } catch { setErr(t("wrongCurrentPassword")); }
+    } catch (e) { setErr(passwordErrorText(e, t)); }
   };
 
   const avg = stats && stats.length ? Math.round(stats.reduce((a, b) => a + (b.score || 0), 0) / stats.length) : 0;

@@ -41,7 +41,6 @@ const Mastery = lazy(() => import("./Mastery.jsx"));
 const Notes = lazy(() => import("./Notes.jsx"));
 const ExamSim = lazy(() => import("./ExamSim.jsx"));
 const CustomTest = lazy(() => import("./CustomTest.jsx"));
-const VirtualPatient = lazy(() => import("./VirtualPatient.jsx"));
 const Flashcards = lazy(() => import("../Flashcards.jsx"));
 const Mindmap = lazy(() => import("./Mindmap.jsx"));
 const StudyPlan = lazy(() => import("./StudyPlan.jsx"));
@@ -86,7 +85,6 @@ export default function LearnApp() {
   const [calm, setCalm] = useState(null);   // Calm Mode flags (hide streak, etc.)
   const [programs, setPrograms] = useState([]);        // Duolingo-style courses
   const [activeProgram, setActiveProgram] = useState("preint");
-  const [vpatientOn, setVpatientOn] = useState(false); // admin-enabled virtual patient (competitive)
 
   // navigate while remembering where we came from (capped to avoid unbounded growth)
   const setTab = (next) => {
@@ -172,13 +170,6 @@ export default function LearnApp() {
   }, [lang]);
   useEffect(() => { loadPrograms(); }, [loadPrograms]);
 
-  // is the competitive virtual patient turned on (feature flag + admin switch)?
-  useEffect(() => {
-    api.get("/learn/vpatient", { timeoutMs: 20_000, stage: "boot" })
-      .then((d) => setVpatientOn(!!d.enabled))
-      .catch(() => setVpatientOn(true));
-  }, []);
-
   const switchProgram = async (slug) => {
     if (slug === activeProgram) return;
     try {
@@ -257,7 +248,6 @@ export default function LearnApp() {
       ["customTest", "exam", lang === "fa" ? "آزمون‌ساز 👑" : "Create test 👑", flag("custom_test")],
       ["summaries", "book", t("summariesTitle"), flag("summaries")],
       ["examSim", "exam", t("examSim"), flag("exam_sim")],
-      ["vpatient", "patient", t("vpTitle"), flag("virtual_patient") && vpatientOn],
       ["flashcards", "flask", t("learnFlashNav"), true],
       ["checkpoint", "medal", t("checkpointNav"), flag("checkpoint")],
       ["studyPlan", "book", t("studyPlan"), flag("study_plan")],
@@ -298,7 +288,7 @@ export default function LearnApp() {
   // Admin kill-switch: a tab whose feature flag is OFF (filtered out of the nav
   // above) never renders its page — deep links get a friendly notice instead.
   const allTabIds = new Set(["home", "path", "lesson", "legendary", "settings", ...(flag("premium") ? ["premium"] : []), ...nav.map((n) => n[0])]);
-  const knownTab = ["premium","dxChallenge","review","quests","placement","practice","browse","customTest","summaries","examSim","vpatient","flashcards","checkpoint","studyPlan","mindmap","mnemonics","crowd","friends","invite","league","ranking","rampEvent","challenge","community","achievements","progress","mastery","flagged","certificates","notes","mycards","library","store"].includes(tab);
+  const knownTab = ["premium","dxChallenge","review","quests","placement","practice","browse","customTest","summaries","examSim","flashcards","checkpoint","studyPlan","mindmap","mnemonics","crowd","friends","invite","league","ranking","rampEvent","challenge","community","achievements","progress","mastery","flagged","certificates","notes","mycards","library","store"].includes(tab);
   const tabDisabled = knownTab && !allTabIds.has(tab);
   const isRefTab = typeof tab === "string" && tab.startsWith("reference:");
   let page;
@@ -338,7 +328,6 @@ export default function LearnApp() {
   else if (tab === "mastery") page = <Mastery onBack={goBack} />;
   else if (tab === "examSim") page = <ExamSim onProfile={setProfile} onBack={goBack} onPremium={() => setTab("premium")} />;
   else if (tab === "customTest") page = <CustomTest onProfile={setProfile} onBack={goBack} onPremium={() => setTab("premium")} />;
-  else if (tab === "vpatient") page = <VirtualPatient onProfile={setProfile} onBack={goBack} />;
     else if (tab === "flashcards") page = <Flashcards home={goBack} embedded />;
   else if (tab === "checkpoint") page = <Checkpoint onProfile={setProfile} />;
   else if (tab === "studyPlan") page = <StudyPlan onBack={goBack} openMindmap={() => setTab("mindmap")} />;
