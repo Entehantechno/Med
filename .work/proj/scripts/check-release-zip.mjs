@@ -343,7 +343,7 @@ const featureChecks = [
   {
     name: "question taxonomy family and answer interaction",
     file: "client/src/pages/Admin.jsx",
-    tests: [/نوع پاسخ این مرحله|Step answer type/, /answerType/, /accept_fa/, /HotspotEditor/],
+    tests: [/StepwiseEditor/, /answerType/, /accept_fa/, /HotspotEditor/], // Admin.jsx renders StepwiseEditor (which holds the "Step answer type" label)
   },
   {
     name: "hints available for all non-MCQ question types",
