@@ -9,7 +9,7 @@ import OrderSearch from "../components/OrderSearch.jsx";
 import { useAntiCheat } from "../utils/antiCheat.js";
 import Icon from "../components/Icon.jsx";
 import ClinicalLesson, { EvaluationProvenance } from "../components/ClinicalLesson.jsx";
-import { translateReport, applyReportBundle } from "../lib/report-translate.js";
+import { translateReport, applyReportBundle, cacheGeneratedReport } from "../lib/report-translate.js";
 
 /* Named steps of the virtual-patient path so a failure is never a silent
    reset: the student sees WHERE it stopped (case / consent / session / chat /
@@ -569,6 +569,8 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
       if (generation !== encounterGeneration.current) return;
       eventsRef.current = [];   // uploaded; don't resend if the view re-mounts
       setEvalRes(res); setPhase("report");
+      // Keep the generated report in the browser cache (generation language).
+      cacheGeneratedReport({ attemptId: res?.attemptId, lang: res?.reportLang || lang, evaluation: res }).catch(() => {});
       if (user?.role === "learner" && !classId && !examId) {
         api.post("/learn/vpatient/daily-reward", { caseId }, { timeoutMs: 15_000, stage: "report" }).catch(() => {});
       }

@@ -1,4 +1,5 @@
 import {flashcardLanguageFallback} from './flashcard-language.js';
+import { microMissing, microValue, microSourceHash } from "./lesson-translate.js";
 /* cardserialize.js — turn a stored flashcard's data_json into a
    client-ready, language-localized payload supporting all exercise types:
    mcq | truefalse | fill | match | order | compare.
@@ -14,25 +15,34 @@ function pick(d, base, lang) {
   return lang === "fa" ? (d[`${base}_fa`] ?? d[`${base}_en`] ?? "") : (d[`${base}_en`] ?? d[`${base}_fa`] ?? "");
 }
 
-export function serializeMicro(d, lang) {
+export function serializeMicro(d, lang, cardId = null) {
   const m = d.micro;
   if (!m) {
     // fall back to legacy explain/hints so old cards still show a mini lesson
     const ex = pick(d, "ex", lang) || (Array.isArray(d.hints_fa) ? (lang === "fa" ? d.hints_fa : d.hints_en)?.join(" ") : "");
     if (!ex) return null;
-    return { lead: ex, golden: "", points: [], options: [], source: "", media: null, references: [], reference: null };
+    return { lead: ex, golden: "", points: [], options: [], source: "", media: null, references: [], reference: null, pending: null };
   }
-  const rawLead = lang === "fa" ? m.lead_fa : m.lead_en;
-  const rawGolden = lang === "fa" ? m.golden_fa : m.golden_en;
+  // The درسنامه is never shown in the other language as if it were the site
+  // language. Fields missing in `lang` are shown in their authored language
+  // and marked pending, so the client can request an AI translation.
+  const miss = microMissing(m, lang);
+  const pending = miss.fields.length
+    ? { cardId, from: miss.from, to: lang, fields: miss.fields, hash: microSourceHash(m, miss, lang) }
+    : null;
+  const valueOf = (k) => (miss.fields.includes(k) ? microValue(m, k, miss.from) : microValue(m, k, lang));
+  const rawLead = valueOf("lead");
+  const rawGolden = valueOf("golden");
   const { lead, golden } = dedupeGolden(stripCrossRefs(rawLead), stripCrossRefs(rawGolden));
   const normalizeRef = (r) => {
     if (!r || typeof r !== "object") return null;
     const code = r.code || r.short_en || r.short_fa || "";
     if (!code && !r.book_fa && !r.book_en) return null;
+    // Book and guideline titles are proper names: a missing language uses the other one.
     return {
       code: String(code || ""),
-      book_fa: r.book_fa || r.title_fa || r.book || "",
-      book_en: r.book_en || r.title_en || r.book || "",
+      book_fa: r.book_fa || r.title_fa || r.book || r.book_en || r.title_en || "",
+      book_en: r.book_en || r.title_en || r.book || r.book_fa || r.title_fa || "",
       chapter_fa: r.chapter_fa || r.chapter || "",
       chapter_en: r.chapter_en || r.chapter || "",
       page: r.page ? String(r.page) : "",
@@ -73,9 +83,10 @@ export function serializeMicro(d, lang) {
   return {
     lead,
     golden,
-    points: ((lang === "fa" ? m.points_fa : m.points_en) || []).map((p) => stripCrossRefs(p)).filter(Boolean),
-    options: ((lang === "fa" ? m.options_fa : m.options_en) || []).map((p) => stripCrossRefs(p)).filter(Boolean),
-    source: lang === "fa" ? (m.source_fa || m.source || "") : (m.source_en || m.source || ""),
+    points: valueOf("points").map((p) => stripCrossRefs(p)).filter(Boolean),
+    options: valueOf("options").map((p) => stripCrossRefs(p)).filter(Boolean),
+    source: valueOf("source"),
+    pending,
     source_fa: m.source_fa || m.source || "",
     source_en: m.source_en || m.source || "",
     // competitive per-question citation — deep-linkable (code+chapter+page)
@@ -120,13 +131,16 @@ export function serializeMnemonic(d, lang) {
 }
 
 export function serializeCard(c, lang) {
-  let d = {}; try { d = JSON.parse(c.data_json); } catch { d = {}; }
-  d=flashcardLanguageFallback(d);
+  let raw = {}; try { raw = JSON.parse(c.data_json) || {}; } catch { raw = {}; }
+  // Flashcard question/options follow the flashcard language rule. The درسنامه
+  // (micro) is kept raw: it must match the site language (see lesson-translate.js).
+  const { micro: rawMicro, ...rest } = raw;
+  const d = { ...flashcardLanguageFallback(rest), micro: rawMicro };
   const rawType = String(d.type || "mcq").toLowerCase();
   const type = rawType === "image" ? "mcq" : (rawType || "mcq");
   const base = {
     id: c.id, public_code: c.public_code, difficulty: c.difficulty, type,
-    micro: serializeMicro(d, lang),
+    micro: serializeMicro(d, lang, c.id),
     explain: serializeExplain(d, lang),          // پاسخنامه (shown after answering)
     mnemonic: serializeMnemonic(d, lang),
   };
@@ -204,9 +218,8 @@ export function serializeCard(c, lang) {
   // default mcq
   base.options = (d.options || []).map((o, i) => {
     let why = lang === "fa" ? (o.why_fa || "") : (o.why_en || "");
-    if (!why && d.micro?.options_fa?.[i]) {
-      why = lang === "fa" ? d.micro.options_fa[i] : (d.micro.options_en?.[i] || d.micro.options_fa[i]);
-    }
+    // Native-language analysis only; a missing language is translated (pending micro options).
+    if (!why && d.micro) why = microValue(d.micro, "options", lang)[i] || "";
     return {
       text: lang === "fa" ? (o.fa || o.en) : (o.en || o.fa),
       correct: !!o.correct,
@@ -217,6 +230,15 @@ export function serializeCard(c, lang) {
   });
   // Per-option "why" already appears under each choice — don't reprint it
   // as a second "بررسی گزینه‌ها" block in the micro-lesson.
-  if (base.micro && base.options.some((o) => o.why)) base.micro.options = [];
+  if (base.micro && base.options.some((o) => o.why)) {
+    base.micro.options = [];
+    // the option analysis is shown per choice, so it no longer needs translating
+    if (base.micro.pending) {
+      const fields = base.micro.pending.fields.filter((k) => k !== "options");
+      base.micro.pending = fields.length
+        ? { ...base.micro.pending, fields, hash: microSourceHash(rawMicro, { from: base.micro.pending.from, fields }, lang) }
+        : null;
+    }
+  }
   return base;
 }

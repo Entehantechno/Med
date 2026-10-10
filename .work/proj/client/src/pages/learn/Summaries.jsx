@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
-import Emphasis from "../../components/Emphasis.jsx";
+import ResolvedBullets from "../../components/ResolvedBullets.jsx";
 
 export default function Summaries() {
   const { t, lang } = useApp();
@@ -62,9 +62,7 @@ export default function Summaries() {
           {open[tp.topicId] && (tp.chapters || []).map((ch) => (
             <div key={ch.nodeId} className="chapter-summary" style={{ marginTop: 10 }}>
               <div className="cs-title">{ch.title}</div>
-              <ul className="cs-list">
-                {(ch.bullets || []).map((b, i) => <li key={i}><Emphasis text={b} /></li>)}
-              </ul>
+              <ResolvedBullets summary={ch} enabled={!!open[tp.topicId]} fa={fa} />
             </div>
           ))}
         </div>

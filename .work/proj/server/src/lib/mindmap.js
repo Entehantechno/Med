@@ -16,10 +16,8 @@
 */
 import { db } from "../db.js";
 import { emojiForTopic } from "./topicemoji.js";
-
-function tx(d, fa, en, lang) {
-  return lang === "fa" ? (d[fa] ?? d[en] ?? "") : (d[en] ?? d[fa] ?? "");
-}
+import { serializeCard } from "./cardserialize.js";
+import { microValue } from "./lesson-translate.js";
 
 export function buildMindmap(topicSlug, lang = "fa") {
   const topic = db.prepare("SELECT * FROM topics WHERE slug=?").get(topicSlug);
@@ -33,19 +31,31 @@ export function buildMindmap(topicSlug, lang = "fa") {
     let ids = []; try { ids = JSON.parse(n.card_ids || "[]"); } catch { /* */ }
     const children = [];
     for (const cid of ids) {
-      const card = db.prepare("SELECT data_json FROM flashcards WHERE id=? AND active=1").get(cid);
+      const card = db.prepare("SELECT id, public_code, difficulty, data_json FROM flashcards WHERE id=? AND active=1").get(cid);
       if (!card) continue;
-      let d = {}; try { d = JSON.parse(card.data_json); } catch { continue; }
-      const m = d.micro;
-      if (!m) continue;
-      const golden = tx(m, "golden_fa", "golden_en", lang);
-      if (golden) children.push({ label: golden, kind: "golden" });
-      const points = (lang === "fa" ? m.points_fa : m.points_en) || [];
-      for (const p of points) if (p) children.push({ label: p, kind: "point" });
+      // Same serializer as the lesson page: only the site language is shown.
+      // A golden tip or point missing in this language is `pending` (the client
+      // fills it from the translation of this card), never the other language.
+      const micro = serializeCard(card, lang)?.micro;
+      if (!micro) continue;
+      const pend = micro.pending;
+      const pf = pend ? pend.fields : [];
+      if (pf.includes("golden")) children.push({ label: null, kind: "golden", pending: true, cardId: cid, field: "golden", to: pend.to, hash: pend.hash });
+      else if (micro.golden) children.push({ label: micro.golden, kind: "golden" });
+      if (pf.includes("points")) {
+        let d = {}; try { d = JSON.parse(card.data_json); } catch { d = {}; }
+        const srcCount = microValue(d.micro || {}, "points", pend.from).length;
+        for (let i = 0; i < srcCount; i++) children.push({ label: null, kind: "point", pending: true, cardId: cid, field: "points", index: i, to: pend.to, hash: pend.hash });
+      } else {
+        for (const p of micro.points || []) if (p) children.push({ label: p, kind: "point" });
+      }
     }
     // de-duplicate identical labels within a lesson to keep the map clean
     const seen = new Set();
-    const uniq = children.filter((c) => { const k = c.kind + "|" + c.label; if (seen.has(k)) return false; seen.add(k); return true; });
+    const uniq = children.filter((c) => {
+      const k = c.pending ? `pending|${c.cardId}|${c.field}|${c.index ?? ""}` : c.kind + "|" + c.label;
+      if (seen.has(k)) return false; seen.add(k); return true;
+    });
     if (uniq.length) {
       branches.push({
         lesson: lang === "fa" ? (n.title_fa || n.title_en) : (n.title_en || n.title_fa),

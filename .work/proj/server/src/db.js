@@ -525,6 +525,18 @@ export function initSchema() {
     created_at TEXT DEFAULT (datetime('now'))
   );
 
+  -- AI-generated learner texts (study-plan note). Kept per user so a later
+  -- language switch can translate the real text; never shared between users.
+  CREATE TABLE IF NOT EXISTS ai_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    kind TEXT NOT NULL,
+    lang TEXT NOT NULL,
+    text TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_ai_notes_user ON ai_notes(user_id, kind, id);
+
   CREATE TABLE IF NOT EXISTS attempts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,

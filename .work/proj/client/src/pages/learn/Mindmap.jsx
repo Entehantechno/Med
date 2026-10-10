@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { useMindmapView } from "../../lib/lesson-translate.js";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
@@ -81,6 +82,7 @@ export default function Mindmap({ onBack }) {
   const [topics, setTopics] = useState(null);
   const [active, setActive] = useState(null);
   const [map, setMap] = useState(null);
+  const viewMap = useMindmapView(map);
 
   // bank advanced
   const [bank, setBank] = useState(null);
@@ -790,14 +792,14 @@ export default function Mindmap({ onBack }) {
                     </div>
                   </div>
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
-                    {map.branches.map((br, i) => (
+                    {viewMap.branches.map((br, i) => (
                       <div key={i} className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4">
                         <div className="text-sm font-black text-slate-900">{br.emoji ? <span>{br.emoji} </span> : null}{br.lesson}</div>
                         <ul className="mt-3 space-y-2">
                           {br.children.map((c, j) => (
                             <li key={j} className={`flex gap-2 rounded-xl px-3 py-2 text-sm ${c.kind === "golden" ? "bg-amber-50 font-bold text-amber-900 border border-amber-200" : "bg-white text-slate-700 border border-slate-200"}`}>
                               <span className="shrink-0">{c.kind === "golden" ? "⭐" : "•"}</span>
-                              <span className="leading-relaxed">{c.label}</span>
+                              <span className="leading-relaxed">{c.label ?? (c.failed ? "—" : "⏳")}</span>
                             </li>
                           ))}
                         </ul>

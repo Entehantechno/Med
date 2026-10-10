@@ -99,3 +99,16 @@ export async function translateReport({ attemptId, from, to, source }) {
   inflight.set(key, p);
   return p;
 }
+
+/* Write-through copy of a freshly generated report (AI text in the language it
+   was written in). Stored under its own language key, so the browser holds the
+   generated text as soon as it exists, and the translation cache (from > to)
+   is keyed by that same source hash. Failures are ignored: the server keeps the
+   report, this copy is only a cache. */
+export async function cacheGeneratedReport({ attemptId, lang, evaluation }) {
+  if (!attemptId || !lang) return;
+  const bundle = reportBundleOf(evaluation);
+  if (!Object.keys(bundle).length) return;
+  const key = reportCacheKey(attemptId, lang, lang, await sha256Hex(JSON.stringify(bundle)));
+  await putCachedLesson(key, bundle);
+}

@@ -13,7 +13,7 @@
 
 const DB_NAME = "medschool-lesson-cache";
 const STORE = "translations";
-const MAX_ENTRIES = 300;
+const MAX_ENTRIES = 600; // translations of cards, reports and notes share this bound
 
 const mem = new Map();
 let dbPromise = null;
@@ -63,8 +63,10 @@ export async function putCachedLesson(key, value) {
   try {
     const db = await openDb();
     await run(db, "readwrite", (s) => s.put({ key, value, savedAt: Date.now() }));
-    const rows = await run(db, "readonly", (s) => s.getAll());
-    if (Array.isArray(rows) && rows.length > MAX_ENTRIES) {
+    // Count first: reading every row on each save would be wasteful once the cache is full.
+    const n = await run(db, "readonly", (s) => s.count());
+    if (Number(n) > MAX_ENTRIES) {
+      const rows = await run(db, "readonly", (s) => s.getAll());
       const stale = rows.sort((a, b) => a.savedAt - b.savedAt).slice(0, rows.length - MAX_ENTRIES);
       await run(db, "readwrite", (s) => { for (const r of stale) s.delete(r.key); });
     }

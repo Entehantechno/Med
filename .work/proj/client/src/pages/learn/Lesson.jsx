@@ -14,6 +14,7 @@ import { MotionAd } from "./MotionAd.jsx";
 import { PremiumCard, PremiumInline } from "./PremiumBanner.jsx";
 import { RewardedAd } from "./RewardedAd.jsx";
 import { TYPE_MAP, MicroLesson } from "./QuestionTypes.jsx";
+import { useSummaryBullets } from "../../components/ResolvedBullets.jsx";
 import MediaEmbed from "../../components/MediaEmbed.jsx";
 import BugReportButton from "../../components/BugReportButton.jsx";
 import HighlightableStem from "../../components/HighlightableStem.jsx";
@@ -743,14 +744,7 @@ function Celebrate({ result, betweenAd, onDone, onReplay, onContinueLesson }) {
           </div>
         )}
       </div>
-      {result.summary?.bullets?.length > 0 && (
-        <div className="chapter-summary card">
-          <div className="cs-title">📌 {fa ? "خلاصهٔ این درس" : "This lesson in brief"}</div>
-          <ul className="cs-list">
-            {result.summary.bullets.map((b, i) => <li key={i}><Emphasis text={b} /></li>)}
-          </ul>
-        </div>
-      )}
+      <LessonSummaryBox summary={result.summary} fa={fa} />
       <LessonInsights report={result.errorReport} srsAdded={result.srsAdded} confidence={result.confidence} newMastery={result.newMastery} />
       {!perfect && (
         <div className="card mt16" style={{ display: "flex", alignItems: "center", gap: 12, borderInlineStart: "4px solid var(--xp)" }}>
@@ -771,6 +765,21 @@ function Celebrate({ result, betweenAd, onDone, onReplay, onContinueLesson }) {
         if (result.nextNode?.id && onContinueLesson) onContinueLesson(result.nextNode.id);
         else onDone();
       }}><Icon name="check" size={18} /> {result.nextNode?.id ? (fa ? "درس بعدی" : "Next lesson") : t("continueLearning")}</button>
+    </div>
+  );
+}
+
+/* Lesson summary: one bullet per card in lesson order (see ResolvedBullets). */
+function LessonSummaryBox({ summary, fa }) {
+  const { bullets, loading } = useSummaryBullets(summary, true);
+  if (!bullets.length && !loading) return null;
+  return (
+    <div className="chapter-summary card">
+      <div className="cs-title">📌 {fa ? "خلاصهٔ این درس" : "This lesson in brief"}</div>
+      <ul className="cs-list">
+        {bullets.map((b, i) => <li key={i}><Emphasis text={b} /></li>)}
+      </ul>
+      {loading && <div className="small muted">{fa ? "⏳ ترجمهٔ بخشی از خلاصه در حال انجام است…" : "⏳ Translating part of the summary…"}</div>}
     </div>
   );
 }

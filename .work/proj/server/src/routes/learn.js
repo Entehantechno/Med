@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 /* learn.js — Gamified pre-internship learner track API (role = 'learner').
    Path map, lessons, XP/streak/hearts, weekly leagues, country ranking,
    achievements, ads, and premium (simulated). */
@@ -36,7 +37,8 @@ import { buildMindmap, mindmapTopics } from "../lib/mindmap.js";
 import { searchMindmaps, getMindmap, mindmapFacets, questionsByConcept, seedMindmapBank, mindmapDailyInfo, canViewMindmap, recordMindmapView } from "../lib/mindmapBank.js";
 import { buildStudyPlan, getStudyPlan } from "../lib/studyplan.js";
 import { getSetting } from "./content.js";
-import { studyNote, resolveAiConfig } from "../lib/ai-engine.js";
+import { studyNote, resolveAiConfig, translateLessonBatch, translateNoteText } from "../lib/ai-engine.js";
+import { microSourceBundle, takeLessonBudget, refundLessonBudget, MAX_BATCH } from "../lib/lesson-translate.js";
 import { shareCard, browseCommunity, voteCommunity, importCommunity } from "../lib/community.js";
 import { hardestQuestions, crowdSummary, crowdForCard } from "../lib/crowd.js";
 import { activePrograms, activeProgramFor, setActiveProgram, programLabel } from "../lib/programs.js";
@@ -1675,7 +1677,7 @@ r.get("/ai-status", ...learner, (req, res) => {
 /* ---------------- SMART STUDY PLAN (deterministic; AI only for a short note) ---------------- */
 r.get("/study-plan", ...learner, flagGate("study_plan"), (req, res) => {
   const plan = getStudyPlan(req.user.id, L(req));
-  res.json(plan || { plan: null });
+  res.json(withAiNoteMeta(req.user.id, plan || { plan: null }));
 });
 r.post("/study-plan", ...learner, flagGate("study_plan"), async (req, res) => {
   const lang = L(req);
@@ -1692,13 +1694,123 @@ r.post("/study-plan", ...learner, flagGate("study_plan"), async (req, res) => {
     const aiCfg = resolveAiConfig(getSetting("ai", {}));
     aiNote = await studyNote({ daysLeft, weakest, minutesPerDay, lang, aiCfg });
   }
+  // The AI note belongs to the current plan only. Keep its text on the server so a
+  // later language switch translates the real note (POST /study-plan/translate)
+  // instead of asking the model to invent a new one.
+  if (aiNote) saveAiNote(req.user.id, "study_note", lang, aiNote);
+  else clearAiNotes(req.user.id, "study_note");
   const built = buildStudyPlan(req.user.id, {
     examDate, minutesPerDay, lang, program,
     aiNoteFa: lang === "fa" ? (aiNote || "") : "",
     aiNoteEn: lang === "en" ? (aiNote || "") : "",
   });
-  res.json(built);
+  res.json(withAiNoteMeta(req.user.id, built));
 });
+
+/* ---------------- AI TRANSLATION OF LESSON TEXT (درسنامه) ----------------
+   The client asks for the missing-language fields of up to MAX_BATCH cards at
+   once. The server rebuilds the source text from the database (never from the
+   request body), checks that the card is visible to this learner (same rule as
+   /lesson/:nodeId: active node, premium gate), and makes ONE AI call per
+   request, counted against the learner's hourly lesson budget. The translation
+   is returned to the browser, which caches it; the server keeps nothing. */
+const LESSON_NO_AI = { error: "ai_unavailable", stage: "translate",
+  message_fa: "ترجمهٔ هوش مصنوعی در دسترس نیست؛ متن اصلی نمایش داده می‌شود.",
+  message_en: "AI translation is unavailable; the original text is shown." };
+const LESSON_LIMIT = { error: "translation_rate_limited", stage: "translate",
+  message_fa: "تعداد ترجمه‌های این ساعت به حد مجاز رسیده است.",
+  message_en: "Too many translations this hour." };
+
+function learnerVisibleCardIds(profile) {
+  const ids = new Set();
+  for (const n of db.prepare("SELECT card_ids, premium FROM path_nodes WHERE active=1").all()) {
+    if (n.premium && !profile.premium_effective) continue;
+    for (const id of parseCardIds(n.card_ids)) ids.add(id);
+  }
+  return ids;
+}
+
+r.post("/lessons/translate", ...learner, async (req, res) => {
+  const to = req.body?.to === "en" ? "en" : req.body?.to === "fa" ? "fa" : null;
+  if (!to) return res.status(400).json({ error: "bad_language" });
+  const requested = [...new Set((Array.isArray(req.body?.cardIds) ? req.body.cardIds : [])
+    .map((x) => parseInt(x, 10)).filter(Boolean))];
+  if (!requested.length) return res.status(400).json({ error: "no_cards" });
+  const visible = learnerVisibleCardIds(getProfile(req.user.id));
+  const pending = [];
+  for (const id of requested) {
+    if (pending.length >= MAX_BATCH) break;
+    const row = db.prepare("SELECT id, public_code, difficulty, data_json FROM flashcards WHERE id=? AND active=1").get(id);
+    if (!row) continue;
+    let track = null;
+    try { track = JSON.parse(row.data_json || "{}").track || null; } catch { track = null; }
+    if (!visible.has(id) && track !== "learn") continue;
+    // The same serializer the lesson page uses decides what is pending, so the
+    // fields and the hash match what the browser asked for.
+    const s = serializeCard(row, to);
+    const pend = s?.micro?.pending;
+    if (!pend) continue;
+    let raw = {};
+    try { raw = JSON.parse(row.data_json || "{}"); } catch { raw = {}; }
+    pending.push({ id, from: pend.from, fields: pend.fields, hash: pend.hash, bundle: microSourceBundle(raw.micro || {}, pend) });
+  }
+  if (!pending.length) return res.json({ ok: true, to, same: true, translations: {}, hashes: {}, failed: [] });
+  const aiCfg = resolveAiConfig(getSetting("ai", {}));
+  if (!aiCfg?.apiKey) return res.status(503).json(LESSON_NO_AI);
+  if (!takeLessonBudget(req.user.id)) return res.status(429).json(LESSON_LIMIT);
+  const items = {};
+  for (const p of pending) items[p.id] = p.bundle;
+  const from = pending[0].from;
+  const out = await translateLessonBatch({ items, from, to, aiCfg });
+  if (!out.ok || !Object.keys(out.results).length) {
+    refundLessonBudget(req.user.id);
+  }
+  if (!out.ok) return res.status(502).json({ error: "translation_failed", stage: "translate", reason: out.reason, message_fa: "ترجمه انجام نشد؛ دوباره تلاش کنید.", message_en: "Translation failed; try again." });
+  const translations = {}, hashes = {}, fields = {};
+  for (const p of pending) {
+    if (!out.results[p.id]) continue;
+    translations[p.id] = out.results[p.id];
+    hashes[p.id] = p.hash;
+    fields[p.id] = p.fields;
+  }
+  const failed = pending.map((p) => p.id).filter((id) => !translations[id]);
+  res.json({ ok: true, to, from, translations, hashes, fields, failed, model: out.model || "" });
+});
+
+/* The learner's latest AI study note, translated on demand. */
+r.post("/study-plan/translate", ...learner, flagGate("study_plan"), async (req, res) => {
+  const to = req.body?.to === "en" ? "en" : req.body?.to === "fa" ? "fa" : null;
+  if (!to) return res.status(400).json({ error: "bad_language" });
+  const note = latestAiNote(req.user.id, "study_note");
+  if (!note) return res.status(404).json({ error: "no_note" });
+  if (note.lang === to) return res.json({ ok: true, same: true, text: note.text, from: note.lang, to });
+  const aiCfg = resolveAiConfig(getSetting("ai", {}));
+  if (!aiCfg?.apiKey) return res.status(503).json(LESSON_NO_AI);
+  if (!takeLessonBudget(req.user.id)) return res.status(429).json(LESSON_LIMIT);
+  const out = await translateNoteText({ text: note.text, from: note.lang, to, aiCfg });
+  if (!out.ok) refundLessonBudget(req.user.id);
+  if (!out.ok) return res.status(502).json({ error: "translation_failed", stage: "translate", reason: out.reason, message_fa: "ترجمه انجام نشد؛ دوباره تلاش کنید.", message_en: "Translation failed; try again." });
+  res.json({ ok: true, text: out.text, from: note.lang, to, model: out.model || "" });
+});
+
+function saveAiNote(userId, kind, lang, text) {
+  clearAiNotes(userId, kind);
+  db.prepare("INSERT INTO ai_notes (user_id, kind, lang, text) VALUES (?,?,?,?)").run(userId, kind, lang, String(text).slice(0, 2000));
+}
+function clearAiNotes(userId, kind) {
+  db.prepare("DELETE FROM ai_notes WHERE user_id=? AND kind=?").run(userId, kind);
+}
+function latestAiNote(userId, kind) {
+  return db.prepare("SELECT lang, text FROM ai_notes WHERE user_id=? AND kind=? ORDER BY id DESC LIMIT 1").get(userId, kind) || null;
+}
+/* Tells the client which language the AI-written note is in, so it can
+   translate it (and cache the result) instead of showing a template. */
+function withAiNoteMeta(userId, data) {
+  if (!data || !data.plan) return data;
+  const n = latestAiNote(userId, "study_note");
+  if (!n) return { ...data, aiNoteLang: null, aiNoteText: null, aiNoteHash: null };
+  return { ...data, aiNoteLang: n.lang, aiNoteText: n.text, aiNoteHash: createHash("sha256").update(n.text).digest("hex").slice(0, 32) };
+}
 
 /* ---------------- COMMUNITY DECKS (shared, moderated, votable) ---------------- */
 r.get("/community", ...learner, flagGate("community"), (req, res) => {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getCachedLesson, putCachedLesson } from "../../lib/lesson-cache.js";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
@@ -18,6 +19,8 @@ export default function StudyPlan({ onBack, openMindmap }) {
   const [useAi, setUseAi] = useState(false);
   const [busy, setBusy] = useState(false);
   const [aiAvailable, setAiAvailable] = useState(false);
+  // AI note translated into the site language: { key, status, text }
+  const [noteTr, setNoteTr] = useState({ key: "", status: "idle", text: "" });
 
   useEffect(() => {
     api.get(`/learn/study-plan?lang=${lang}`).then((d) => {
@@ -27,11 +30,38 @@ export default function StudyPlan({ onBack, openMindmap }) {
     api.get("/learn/ai-status").then((d) => setAiAvailable(!!d.available)).catch(() => setAiAvailable(false));
   }, [lang]);
 
+  // The AI note is stored in the browser cache when generated, and translated
+  // (once, then cached) when the site language differs from the note's language.
+  const noteNeedsTr = !!plan?.aiNoteHash && !!plan?.aiNoteLang && plan.aiNoteLang !== lang;
+  const noteKey = plan?.aiNoteHash ? `studynote:v1:${plan.aiNoteHash}:${lang}` : "";
+  useEffect(() => {
+    if (!noteNeedsTr || !noteKey) return undefined;
+    let alive = true;
+    setNoteTr({ key: noteKey, status: "loading", text: "" });
+    getCachedLesson(noteKey).then((hit) => {
+      if (!alive) return null;
+      if (typeof hit === "string" && hit) { setNoteTr({ key: noteKey, status: "ready", text: hit }); return null; }
+      return api.post("/learn/study-plan/translate", { to: lang }, { timeoutMs: 45_000, stage: "translate" }).then(async (r) => {
+        if (!alive) return;
+        if (r?.text) { await putCachedLesson(noteKey, r.text); setNoteTr({ key: noteKey, status: "ready", text: r.text }); }
+        else setNoteTr({ key: noteKey, status: "failed", text: "" });
+      });
+    }).catch(() => { if (alive) setNoteTr({ key: noteKey, status: "failed", text: "" }); });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [noteKey]);
+  const noteCur = noteNeedsTr && noteTr.key === noteKey ? noteTr : null;
+  const noteText = !noteNeedsTr ? plan?.note : (noteCur?.status === "ready" ? noteCur.text : (noteCur?.status === "failed" ? plan?.note : ""));
+  const noteBusy = noteNeedsTr && (!noteCur || noteCur.status === "loading");
+
   const generate = async () => {
     setBusy(true);
     try {
       const d = await api.post("/learn/study-plan", { examDate: examDate || null, minutesPerDay: minutes, useAi: useAi && aiAvailable, lang });
       setPlan(d);
+      if (d?.aiNoteHash && d.aiNoteLang === lang && d.note) {
+        await putCachedLesson(`studynote:v1:${d.aiNoteHash}:${lang}`, d.note);
+      }
     } catch (e) { alert(e.message); } finally { setBusy(false); }
   };
 
@@ -68,11 +98,11 @@ export default function StudyPlan({ onBack, openMindmap }) {
 
       {plan?.plan && (
         <>
-          {plan.note && (
+          {(noteText || noteBusy) && (
             <div className="card mb16" style={{ background: "var(--accentGlow)", borderColor: "var(--accent)" }}>
               <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
                 <span style={{ fontSize: "1.3rem" }}>💬</span>
-                <div style={{ fontWeight: 600 }}>{plan.note}</div>
+                <div style={{ fontWeight: 600 }}>{noteBusy ? (fa ? "⏳ در حال ترجمهٔ یادداشت…" : "⏳ Translating your note…") : noteText}</div>
               </div>
             </div>
           )}
