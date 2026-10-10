@@ -209,7 +209,7 @@ function buildCompletePayload(uni, namespace, finalPreview = true) {
     : [];
 
   const classes = rows(
-    "SELECT * FROM classes WHERE university_id=? ORDER BY id",
+    "SELECT * FROM classes WHERE COALESCE(university_id,1)=? ORDER BY id",
     uni.id,
   );
   const classIds = classes.map((x) => x.id);

@@ -14,7 +14,8 @@ beforeAll(async()=>{execSync('node src/seed.js --force',{stdio:'ignore'});await 
 beforeEach(()=>{setSetting('ai',{});setSetting('ai_vpatient',{});resetRoutingState();});
 afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();});
 describe('AI routing configuration API',()=>{
- for(const path of ['/api/settings/ai','/api/admin/vpatient/ai']) {
+ // /api/admin/vpatient/ai is retired (R49, answers 410), so only the live university route is exercised.
+ for(const path of ['/api/settings/ai']) {
   it(`persists order and keys with explicit per-row clear at ${path}`,async()=>{
    expect((await request(app).put(path).set(auth(admin)).send(config())).status).toBe(200);
    const get=await request(app).get(path).set(auth(admin));const saved=get.body.config||get.body;

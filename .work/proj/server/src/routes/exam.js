@@ -660,10 +660,21 @@ r.post("/evaluate", authRequired, async (req, res) => {
   const checklistMs = Math.max(0, Date.now() - scoringStartedAt);
   const lessonStartedAt = Date.now();
   // 3) Enrich the qualitative feedback + personalized micro-lesson with the LLM.
-  evalResult = await enrichEvaluationWithLLM({
-    base: evalResult, caseData, session, lang, prompts, aiCfg, scope: gradingScope,
-    referenceSnapshot, referenceContract,
-  });
+  //    A retry after a failed write reuses the enriched result (no second paid call).
+  const checklistResult = evalResult;
+  if (cached?.enriched) {
+    evalResult = cached.enriched;
+  } else {
+    evalResult = await enrichEvaluationWithLLM({
+      base: evalResult, caseData, session, lang, prompts, aiCfg, scope: gradingScope,
+      referenceSnapshot, referenceContract,
+    });
+    if (requireAi && (evalResult.feedbackSource !== "llm" || evalResult.feedbackFallback)) return aiUnavailable("lesson", evalResult.feedbackFallback);
+    if (vpSession && evalResult.feedbackSource === "llm" && !evalResult.feedbackFallback) {
+      // Stored before any mutation below; retryScorePut clones the value.
+      retryScorePut(sessionId, req.user.id, fingerprint, { result: cached?.result || checklistResult, scoringRoute, enriched: evalResult });
+    }
+  }
   if (requireAi && (evalResult.feedbackSource !== "llm" || evalResult.feedbackFallback)) return aiUnavailable("lesson", evalResult.feedbackFallback);
   if (!recheckEvaluationAccess()) { retryScoreDrop(sessionId, req.user.id); return; }
   evalResult.microlearning = decorateMicrolearning(evalResult.microlearning, referenceSnapshot, lang);

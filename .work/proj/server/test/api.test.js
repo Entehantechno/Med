@@ -88,8 +88,12 @@ describe("RBAC & access control", () => {
     const tk = await token("40012345");
     const res = await request(app).get("/api/cases").set("Authorization", `Bearer ${tk}`);
     expect(res.status).toBe(200);
-    // Ali is assigned case 1 only
-    expect(res.body.map((c) => c.id)).toEqual([1]);
+    // Ali has case 1 assigned directly, and his active class grants the cases attached to it.
+    const classCases = db.prepare(
+      `SELECT cc.case_id FROM class_cases cc JOIN classes c ON c.id=cc.class_id
+         JOIN class_members m ON m.class_id=cc.class_id
+        WHERE m.user_id=(SELECT id FROM users WHERE username='40012345') AND c.active=1`).all().map((r) => r.case_id);
+    expect(res.body.map((c) => c.id).sort((a, b) => a - b)).toEqual([...new Set([1, ...classCases])].sort((a, b) => a - b));
   });
 
   it("student cannot open a case that is neither assigned to them nor in any of their classes/exams", async () => {
@@ -205,7 +209,7 @@ describe("virtual patient & evaluation (mock engine)", () => {
     const list = await request(app).get("/api/admin/users").set("Authorization", `Bearer ${tk}`);
     expect(list.status).toBe(200);
     // teacher creates a NEW student
-    const uname = "stu_" + Date.now();
+    const uname = "9" + String(Date.now());   // student numbers are digits-only; username = student number
     const created = await request(app).post("/api/admin/users").set("Authorization", `Bearer ${tk}`)
       .send({ username: uname, password: "pw123456", name_fa: "دانشجوی تست", role: "student", student_no: uname });
     expect(created.status).toBe(200);
@@ -437,9 +441,10 @@ describe("classrooms & class grade", () => {
     const tk = await token("teacher");
     // create two dedicated flashcards so the test never depends on ids other
     // tests may have mutated (shared DB across the suite).
+    // MCQ card (the current schema): graded answers are evaluated server-side from evidence.
     const mk = async (title) => (await request(app).post("/api/flashcards").set("Authorization", `Bearer ${tk}`)
-      .send({ title_en: title, title_fa: title, questionType: "text", answerMode: "search",
-        q_en: "Q", q_fa: "پ", correct_en: "A", correct_fa: "الف" })).body.id;
+      .send({ title_en: title, title_fa: title, type: "mcq", questionText_en: "Q", questionText_fa: "پ",
+        options: [{ en: "A", fa: "الف", correct: true }, { en: "B", fa: "ب", correct: false }] })).body.id;
     const gradedId = await mk("clsfc-graded");
     const practiceId = await mk("clsfc-practice");
     // use the demo STUDENT (the class flashcard-finish endpoint requires role=student)
@@ -459,14 +464,18 @@ describe("classrooms & class grade", () => {
     expect(det.body.flashcards.length).toBe(2);
     expect(det.body.members[0]).toHaveProperty("totalFlash");
     // student takes the graded flashcard → score recorded, best kept
-    const fin = await request(app).post(`/api/classes/${cid}/flashcard/${gradedId}/finish`).set("Authorization", `Bearer ${stk}`).send({ score: 80 });
+    // a client-claimed score without answer evidence is refused for graded work (no spoofed grades)
+    const spoof = await request(app).post(`/api/classes/${cid}/flashcard/${gradedId}/finish`).set("Authorization", `Bearer ${stk}`).send({ score: 100 });
+    expect(spoof.status).toBe(400);
+    expect(spoof.body.error).toBe("answers_required");
+    const fin = await request(app).post(`/api/classes/${cid}/flashcard/${gradedId}/finish`).set("Authorization", `Bearer ${stk}`).send({ answers: [{ card_id: gradedId, selectedIdx: 0 }] });
     expect(fin.status).toBe(200);
-    expect(fin.body.score).toBe(80);
+    expect(fin.body.score).toBe(100);
     // student's class detail reflects the flashcard usage + best
     const sdet = await request(app).get(`/api/classes/${cid}`).set("Authorization", `Bearer ${stk}`);
     const gf = sdet.body.flashcards.find((f) => f.flashcard_id === gradedId);
     expect(gf.attemptsUsed).toBe(1);
-    expect(gf.best).toBe(80);
+    expect(gf.best).toBe(100);
     // the class detail must expose the QUESTION (q_*) separately from the
     // teacher-facing title, so the student UI never leaks the internal label.
     expect(gf.q_fa).toBe("پ");
@@ -475,7 +484,7 @@ describe("classrooms & class grade", () => {
     const gb = await request(app).get(`/api/classes/${cid}`).set("Authorization", `Bearer ${tk}`);
     const me = gb.body.members.find((m) => m.id === stuId);
     expect(me.flashDone).toBeGreaterThanOrEqual(1);
-    expect(me.grade).toBe(80);   // only one graded item → grade equals its best
+    expect(me.grade).toBe(100);  // only one graded item → grade equals its best
     // progressive-hint level + per-question response time telemetry feeds the
     // teacher analytics panel (hints count, deepest level, seconds, weekly trend)
     await request(app).post(`/api/classes/${cid}/flashcard/${practiceId}/finish`)
@@ -1542,7 +1551,7 @@ describe("email login, Google auth & universities", () => {
       .send({ username: tName, password: "demo", name_fa: "استاد", role: "teacher", university_id: uid });
     expect(teach.status).toBe(200);
     const stud = await request(app).post("/api/admin/users").set("Authorization", `Bearer ${atk}`)
-      .send({ username: "40e2e" + Date.now(), password: "demo", name_fa: "دانشجو", role: "student", university_id: uid });
+      .send({ username: "40e2e" + Date.now(), password: "demo", name_fa: "دانشجو", role: "student", student_no: "40" + Date.now(), university_id: uid });
     expect(stud.status).toBe(200);
     const list = await request(app).get("/api/universities").set("Authorization", `Bearer ${atk}`);
     const found = list.body.universities.find((u) => u.id === uid);
@@ -1694,7 +1703,9 @@ describe("TWA / Android app (assetlinks)", () => {
   });
 });
 
-describe("Virtual Patient (competitive) gating", () => {
+// Competitive virtual patient is RETIRED (R49): /api/admin/vpatient answers 410 and the
+// academic-track triggers block competitive cases. These blocks are kept for history, not run.
+describe.skip("Virtual Patient (competitive) gating", () => {
   it("is OFF for learners by default", async () => {
     const ltk = await token("learner");
     const res = await request(app).get("/api/learn/vpatient").set("Authorization", `Bearer ${ltk}`);
@@ -1766,7 +1777,9 @@ describe("Virtual Patient (competitive) gating", () => {
   });
 });
 
-describe("Virtual Patient — ranking XP (auto-evaluator → XP)", () => {
+// Competitive virtual patient is RETIRED (R49): /api/admin/vpatient answers 410 and the
+// academic-track triggers block competitive cases. These blocks are kept for history, not run.
+describe.skip("Virtual Patient — ranking XP (auto-evaluator → XP)", () => {
   let atk, ltk, uid;
   beforeAll(async () => {
     atk = await token("admin");
@@ -1853,7 +1866,9 @@ describe("Virtual Patient — ranking XP (auto-evaluator → XP)", () => {
   });
 });
 
-describe("Virtual Patient — separate AI config + prompts", () => {
+// Competitive virtual patient is RETIRED (R49): /api/admin/vpatient answers 410 and the
+// academic-track triggers block competitive cases. These blocks are kept for history, not run.
+describe.skip("Virtual Patient — separate AI config + prompts", () => {
   let atk, ltk;
   beforeAll(async () => {
     atk = await token("admin");
@@ -1916,7 +1931,9 @@ describe("Virtual Patient — separate AI config + prompts", () => {
   });
 });
 
-describe("Virtual Patient — import from university library", () => {
+// Competitive virtual patient is RETIRED (R49): /api/admin/vpatient answers 410 and the
+// academic-track triggers block competitive cases. These blocks are kept for history, not run.
+describe.skip("Virtual Patient — import from university library", () => {
   let atk;
   beforeAll(async () => { atk = await token("admin"); });
 
@@ -4543,22 +4560,22 @@ describe("Virtual patient: editable prompts + lab/imaging ordering + order revie
     expect(img.body.imageUrl).toBeTruthy();
   });
 
-  it("ordering a test NOT in the chart tells the student it is normal (deterministic fallback)", async () => {
+  it("ordering a test NOT in the chart returns an in-range normal value (R49 policy, deterministic)", async () => {
     await request(app).put("/api/settings/ai").set(A(atk)).send({ provider: "", baseUrl: "", apiKey: "", clearApiKey: true, model: "" });
     const r = await request(app).post("/api/exam/order").set(A(teacher)).send({ caseId: 1, kind: "lab", query: "کراتینین", lang: "fa" });
-    expect(r.body.found).toBe(false);
-    expect(r.body.source).toBe("mock");
+    expect(r.body.found).toBe(true);
+    expect(r.body.source).toBe("normal-default");
     expect(r.body.text).toMatch(/نرمال|طبیعی/);
     expect(r.body.text).toContain("کراتینین");
   });
 
-  it("ordering a normal test uses the AI wording when a key is configured", async () => {
+  it("an unrecorded normal result stays deterministic even when a key is configured (zero cost)", async () => {
     await request(app).put("/api/settings/ai").set(A(atk))
       .send({ provider: "Custom", baseUrl: `http://localhost:${port}/v1`, apiKey: "sk", model: "x" });
     const r = await request(app).post("/api/exam/order").set(A(teacher)).send({ caseId: 1, kind: "lab", query: "منیزیم", lang: "fa" });
-    expect(r.body.found).toBe(false);
-    expect(r.body.source).toBe("llm");
-    expect(r.body.text).toContain("NORMAL-REPORT");
+    expect(r.body.found).toBe(true);
+    expect(r.body.source).toBe("normal-default");
+    expect(r.body.text).not.toContain("NORMAL-REPORT");
     await request(app).put("/api/settings/ai").set(A(atk)).send({ provider: "", baseUrl: "", apiKey: "", clearApiKey: true, model: "" });
   });
 
@@ -6015,7 +6032,9 @@ describe("Catalogs, profile fields, nickname & anonymous identity", () => {
    provider-specific headers, response parsing, and error surfacing —
    WITHOUT needing a paid key. (The mock/no-key path is tested elsewhere.)
    ================================================================ */
-describe("Real AI provider call path (mocked fetch — OpenAI-compatible)", () => {
+// Competitive virtual patient is RETIRED (R49): /api/admin/vpatient answers 410 and the
+// academic-track triggers block competitive cases. These blocks are kept for history, not run.
+describe.skip("Real AI provider call path (mocked fetch — OpenAI-compatible)", () => {
   let atk, ltk;
   const realFetch = global.fetch;
   let captured = null;
@@ -6101,6 +6120,18 @@ describe("university tenancy, duplicate student numbers, and live board details"
     const atk = await token("admin");
     const res = await request(app).post("/api/admin/users").set("Authorization", `Bearer ${atk}`)
       .send({ username: "dup_40012345", password: "demo", role: "student", name_fa: "تکراری", student_no: "40012345", university_id: 1 });
+    expect(res.status).toBe(409);
+    expect(res.body.error).toBe("student_no_exists");
+    expect(res.body.existing.student_no).toBe("40012345");
+  });
+
+  it("reports student_no_exists before username_taken when both collide on the same student", async () => {
+    const atk = await token("admin");
+    const list = await request(app).get("/api/admin/users?roles=student").set("Authorization", `Bearer ${atk}`);
+    const existing = (list.body.users || list.body || []).find((u) => String(u.student_no) === "40012345");
+    expect(existing).toBeTruthy();
+    const res = await request(app).post("/api/admin/users").set("Authorization", `Bearer ${atk}`)
+      .send({ username: existing.username, password: "demo", role: "student", name_fa: "تکراری دوم", student_no: "40012345", university_id: 1 });
     expect(res.status).toBe(409);
     expect(res.body.error).toBe("student_no_exists");
     expect(res.body.existing.student_no).toBe("40012345");
@@ -9900,5 +9931,16 @@ describe("corrected keys and rebuilt stems stay honest", () => {
       if ((q.explanation_en || "").length < 200) thin.push(q.question_no);
     }
     expect(thin).toEqual([]);
+  });
+});
+
+describe("competitive virtual patient stays retired (R49)", () => {
+  it("admin config and AI endpoints answer 410 university_only", async () => {
+    const atk = await token("admin");
+    const get = await request(app).get("/api/admin/vpatient").set("Authorization", `Bearer ${atk}`);
+    expect(get.status).toBe(410);
+    expect(get.body.error).toBe("university_only");
+    const put = await request(app).put("/api/admin/vpatient").set("Authorization", `Bearer ${atk}`).send({ premium_only: false });
+    expect(put.status).toBe(410);
   });
 });

@@ -72,7 +72,7 @@ r.get("/context-settings", ...admin, (req, res) => {
   if (refuseCm(req, res)) return;
   const uni = req.user.role === "teacher" ? (currentUniversityId(req.user) || -1) : null;
   const classes = uni
-    ? db.prepare("SELECT id,name_fa,name_en,tutor_enabled,tutor_prompt FROM classes WHERE university_id=? ORDER BY id DESC LIMIT 200").all(uni)
+    ? db.prepare("SELECT id,name_fa,name_en,tutor_enabled,tutor_prompt FROM classes WHERE COALESCE(university_id,1)=? ORDER BY id DESC LIMIT 200").all(uni)
     : db.prepare("SELECT id,name_fa,name_en,tutor_enabled,tutor_prompt FROM classes ORDER BY id DESC LIMIT 200").all();
   const exams = uni
     ? db.prepare("SELECT id,title_fa,title_en,tutor_enabled,tutor_prompt FROM exams WHERE university_id=? ORDER BY id DESC LIMIT 200").all(uni)

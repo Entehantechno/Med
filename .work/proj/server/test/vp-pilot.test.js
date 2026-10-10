@@ -311,7 +311,10 @@ describe('10-student pilot isolation and completion safety',()=>{
   if(changed==='model')setSetting('ai',{provider:'OpenRouter',model:'synthetic/changed',apiKey:'synthetic-only'});
   if(changed==='rubric')db.prepare("UPDATE classes SET grading_role='history' WHERE id=?").run(classId);
   const extra=changed==='transcript'?{session:{...body(0,sid).session,finalDx:'Changed answer'}}:{};
-  expect((await submit(0,sid,extra)).status).toBe(200);expect(fetch).toHaveBeenCalledTimes(4);
+  expect((await submit(0,sid,extra)).status).toBe(200);
+  // A session is pinned at start (case, rubric, grading scope). A class rubric change mid-attempt
+  // does not alter it, so the checklist checkpoint is reused and only the failed lesson call reruns.
+  expect(fetch).toHaveBeenCalledTimes(changed==='rubric'?3:4);
  });
 
 });

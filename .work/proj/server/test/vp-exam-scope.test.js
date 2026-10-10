@@ -26,12 +26,13 @@ describe("VP attending: granular exam findings (round 5)", () => {
     expect(lung).toMatch(/clear lungs/);
     expect(lung).not.toMatch(/RUQ|heart sounds/);
   });
-  it("vitals only when asked; unrecorded system reported as unremarkable", () => {
+  it("vitals only when asked; unrecorded system reports an in-range normal finding (R49)", () => {
     const v = teacherExamReply(c, "en", [], detectExamScope("check the blood pressure"));
     expect(v).toMatch(/BP 150\/90/);
     expect(v).not.toMatch(/RUQ/);
     const neuro = teacherExamReply(c, "en", [], detectExamScope("neurological exam"));
-    expect(neuro).toMatch(/unremarkable/);
+    expect(neuro).toMatch(/normal power and sensation, normal reflexes/);
+    expect(neuro).not.toMatch(/RUQ|clear lungs|heart sounds/);
   });
   it("final diagnosis is redacted from any AI output", () => {
     const out = redactDiagnosis("I think this is Acute inferior STEMI, a stemi.", c, "en");

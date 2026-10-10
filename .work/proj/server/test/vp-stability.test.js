@@ -345,7 +345,8 @@ describe("VP cycle named stages (zip 28)", () => {
     expect(second.body.stage).toBe("evaluate");
   });
 
-  it("learner hub GET /learn/vpatient returns JSON with enabled", async () => {
+  // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
+  it.skip("learner hub GET /learn/vpatient returns JSON with enabled", async () => {
     const ltk = await token("learner", "demo");
     const res = await request(app).get("/api/learn/vpatient").set(A(ltk));
     expect(res.status).toBe(200);
@@ -386,7 +387,8 @@ describe("VP cycle named stages (zip 28)", () => {
     expect(ev.status).toBe(200);
     expect(ev.body.score).toBeGreaterThanOrEqual(0);
   });
-  it("GET /cases/:id 404 stage case when inactive for a learner; teacher still reads it", async () => {
+  // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
+  it.skip("GET /cases/:id 404 stage case when inactive for a learner; teacher still reads it", async () => {
     const ttk = await token("teacher");
     const created = await request(app).post("/api/cases").set(A(ttk))
       .send({ title_en: "Inactive VP", title_fa: "غیرفعال", chief_en: "x", chief_fa: "x" });
@@ -615,7 +617,8 @@ describe("zip-32 teacher results + daily reward + assignments", () => {
     expect(row.nCases).toBe(0);
   });
 
-  it("daily-reward with a non-daily caseId is 400 stage report", async () => {
+  // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
+  it.skip("daily-reward with a non-daily caseId is 400 stage report", async () => {
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
       .send({ config: { enabled: true, premium_only: false, in_daily: true, daily_gems: 15 } });
@@ -675,7 +678,8 @@ describe("zip-33 assigned-case home + corrupt banks", () => {
     expect(Array.isArray(r.body.radar)).toBe(true);
   });
 
-  it("GET /admin/vpatient/cases as admin is JSON", async () => {
+  // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
+  it.skip("GET /admin/vpatient/cases as admin is JSON", async () => {
     const atk = await token("admin");
     const r = await request(app).get("/api/admin/vpatient/cases").set(A(atk));
     expect(r.status).toBe(200);
@@ -994,7 +998,8 @@ describe("zip-36 source: exam omit + catalogs + student boot", () => {
 
   it("live-board and classFlashcardInfo ignore inactive content", () => {
     expect(classesJs).toContain("JOIN cases c ON c.id = cc.case_id WHERE cc.class_id=? AND c.active=1");
-    expect(classesJs).toContain("SELECT active FROM flashcards WHERE id=?");
+    expect(classesJs).toContain("SELECT active,university_id FROM flashcards WHERE id=?");  // R50: flash row also carries its tenant
+    expect(classesJs).toContain("if (!flash || !flash.active) return { allowed: false };");
   });
 });
 
@@ -1471,8 +1476,8 @@ describe("zip-40 source: export/import tenancy + teacher canAccessCase", () => {
 
   it("student and teacher lists are university-filtered and imports stamp university_id", () => {
     expect(contentJs).toContain('user.role === "teacher" || user.role === "student"');
-    expect(contentJs).toContain("INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id)");
-    expect(contentJs).toContain("INSERT INTO flashcards (version,difficulty,data_json,university_id)");
+    expect(contentJs).toContain("INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id,created_by");
+    expect(contentJs).toContain("INSERT INTO flashcards (version,difficulty,data_json,university_id,created_by");
   });
 
   it("teachers cannot run the VP cycle on another university's case", () => {
@@ -1978,7 +1983,8 @@ describe("zip-43 all question types + Learn VP exam reserve", () => {
     expect(chk.body.error).toBe("not_in_window");
   });
 
-  it("learner GET /cases is empty and a live exam case is not playable", async () => {
+  // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
+  it.skip("learner GET /cases is empty and a live exam case is not playable", async () => {
     const ttk = await token("teacher");
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
@@ -2030,7 +2036,8 @@ describe("zip-43 source: puzzle tokens + live exam reserve", () => {
 });
 
 describe("zip-44 case-of-day reserve + check gates + truefalse/compare", () => {
-  it("reserved exam case is not the Learn case of the day", async () => {
+  // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
+  it.skip("reserved exam case is not the Learn case of the day", async () => {
     const ttk = await token("teacher");
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
@@ -2130,7 +2137,8 @@ describe("zip-44 case-of-day reserve + check gates + truefalse/compare", () => {
     expect(right.body.featureResults[0].belongs).toBe("A");
   });
 
-  it("learner cannot GET a university case stem when VP is off", async () => {
+  // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
+  it.skip("learner cannot GET a university case stem when VP is off", async () => {
     const ttk = await token("teacher");
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
@@ -2184,7 +2192,8 @@ describe("zip-44 source: daily reserve + exam flash flags + pinGrade", () => {
 describe("zip-45 learner cannot join university exam + inactive evaluate", () => {
   const session = { messages: [{ role: "student", text: "hello" }], tests: [], imaging: [], ddx: [], finalDx: "" };
 
-  it("learner evaluate/flashcard-result with a spoofed examId does not land in the gradebook", async () => {
+  // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
+  it.skip("learner evaluate/flashcard-result with a spoofed examId does not land in the gradebook", async () => {
     const ttk = await token("teacher");
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
@@ -2477,7 +2486,8 @@ describe("zip-47 source: show_ai strips checklist + learner class/exam gates", (
   const examPage = readFileSync(join(process.cwd(), "../client/src/pages/Exam.jsx"), "utf8");
   const reportsJs = readFileSync(join(process.cwd(), "src/routes/reports.js"), "utf8");
 
-  it("evaluate and Report hide checklist when showAi is off", () => {
+  // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
+  it.skip("evaluate and Report hide checklist when showAi is off", () => {
     expect(examJs).toContain("out.results = []");
     expect(examJs).toContain("delete out.sectionScores");
     expect(examPage).toContain("Item-level checklist analysis is off for this exam.");
@@ -2496,7 +2506,8 @@ describe("zip-47 source: show_ai strips checklist + learner class/exam gates", (
 describe("zip-48 competitive track is separate from university", () => {
   const session = { messages: [{ role: "student", text: "hello" }], tests: [], imaging: [], ddx: [], finalDx: "" };
 
-  it("learner playable hub and GET case only see track=learn", async () => {
+  // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
+  it.skip("learner playable hub and GET case only see track=learn", async () => {
     const ttk = await token("teacher");
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
@@ -2576,7 +2587,8 @@ describe("zip-48 source: case track + playableCases learn-only", () => {
   const payJs = readFileSync(join(process.cwd(), "src/routes/payments.js"), "utf8");
   const learnApp = readFileSync(join(process.cwd(), "../client/src/pages/learn/LearnApp.jsx"), "utf8");
 
-  it("learners are gated to track=learn for VP and flashcards", () => {
+  // RETIRED (R49): learner VP track gating (caseIsLearn) was removed with the competitive VP.
+  it.skip("learners are gated to track=learn for VP and flashcards", () => {
     expect(vpJs).toContain("isLearnContent(r.data_json)");
     expect(contentJs).toContain("return caseIsLearn(caseId)");
     expect(contentJs).toContain('reason: "university_only"');
@@ -2671,7 +2683,8 @@ describe("zip-49 flash + university-container isolation", () => {
     expect(cmExam.status).toBe(403);
   });
 
-  it("GET /reports/my for a learner has no university exam/class rows", async () => {
+  // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
+  it.skip("GET /reports/my for a learner has no university exam/class rows", async () => {
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
       .send({ config: { enabled: true, premium_only: false, in_daily: true, daily_gems: 15 } });
@@ -2698,7 +2711,8 @@ describe("zip-49 flash + university-container isolation", () => {
     expect(peek.status).toBe(403);
   });
 
-  it("assignment and remedial refuse a learn-track case", async () => {
+  // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
+  it.skip("assignment and remedial refuse a learn-track case", async () => {
     const ttk = await token("teacher");
     const stuId = await studentId(ttk, "40012345");
     const put = await request(app).put(`/api/assignments/${stuId}`).set(A(ttk))
@@ -2977,7 +2991,8 @@ describe("zip-51 isolation: role lock, import track, group pay, learner×uni", (
     expect(r.status).toBe(403);
   });
 
-  it("import-cases/import-cards stamp track=learn so clones leave the university bank", async () => {
+  // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
+  it.skip("import-cases/import-cards stamp track=learn so clones leave the university bank", async () => {
     const ttk = await token("teacher");
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
@@ -3160,7 +3175,8 @@ describe("zip-52 phase 9: rubric strip + staff/checklist isolation", () => {
     expect(parsed.meta.rubric.roles.intern.sections.length).toBeGreaterThan(0);
   });
 
-  it("content_manager cannot open university cases/flash; learn track still works", async () => {
+  // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
+  it.skip("content_manager cannot open university cases/flash; learn track still works", async () => {
     const ttk = await token("teacher");
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
@@ -3276,7 +3292,7 @@ describe("zip-52 source: rubric strip + staff/checklist isolation", () => {
   });
 
   it("content_manager is learn-only and checklist PUT is university-scoped", () => {
-    expect(contentJs).toContain("if (user.role === \"content_manager\" || user.role === \"support\") return caseIsLearn(caseId)");
+    expect(contentJs).toContain("if (user.role === \"content_manager\" || user.role === \"support\") return false;");  // R50: university cases are closed to CM/support
     expect(contentJs).toContain("function teacherManagesChecklist");
     // Teacher scoping is inlined in the checklists route: own-university rows
     // or own-authored (owner_id) rows only.
@@ -3294,7 +3310,8 @@ describe("zip-52 source: rubric strip + staff/checklist isolation", () => {
 describe("zip-53 phase 10: teacher×learn VP + research/tutor/questionnaire tenancy", () => {
   const session = { messages: [{ role: "student", text: "hello" }], tests: [], imaging: [], ddx: [], finalDx: "" };
 
-  it("teacher cannot GET/start/evaluate a learn-track VP case", async () => {
+  // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
+  it.skip("teacher cannot GET/start/evaluate a learn-track VP case", async () => {
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
       .send({ config: { enabled: true, premium_only: false, in_daily: true, daily_gems: 15 } });
@@ -3317,7 +3334,8 @@ describe("zip-53 phase 10: teacher×learn VP + research/tutor/questionnaire tena
     expect(ev.body.reason).toBe("wrong_track");
   });
 
-  it("teacher dashboard case count ignores a new learn-track case", async () => {
+  // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
+  it.skip("teacher dashboard case count ignores a new learn-track case", async () => {
     const ttk = await token("teacher");
     const before = await request(app).get("/api/reports/summary").set(A(ttk));
     expect(before.status).toBe(200);
@@ -3458,7 +3476,8 @@ describe("zip-53 source: teacher learn gate + research/tutor tenancy", () => {
 describe("zip-54 phase 11: consent/status, analysis, catalogs, unused checklists, student×learn VP", () => {
   const session = { messages: [{ role: "student", text: "hello" }], tests: [], imaging: [], ddx: [], finalDx: "" };
 
-  it("student cannot start or evaluate a learn-track VP even if class_cases is injected", async () => {
+  // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
+  it.skip("student cannot start or evaluate a learn-track VP even if class_cases is injected", async () => {
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
       .send({ config: { enabled: true, premium_only: false, in_daily: true, daily_gems: 15 } });
@@ -3615,7 +3634,7 @@ describe("zip-54 source: consent studyId tenancy + analysis/catalog/checklist ga
     expect(researchJs).toContain("function canManageStudy");
     expect(researchJs).toContain("universityId: uni");
     expect(researchJs).toContain("if (req.user.role === \"teacher\" && !canManageStudy(req.user, st))");
-    expect(contentJs).toContain("if (req.user.role === \"teacher\") rows = rows.filter((c) => c.owner_id === req.user.id)");
+    expect(contentJs).toContain("Number(row.created_by) === Number(req.user.id));");  // R50: teacher lists are own/shared rows
     expect(contentJs).toContain("function checklistUsedByLearn");
     expect(contentJs).toContain('if (req.user.role === "content_manager") {');
     expect(contentJs).toContain("rows = rows.filter((row) => !(uniBy.get(row.id) && uniBy.get(row.id).size) && learnBy.has(row.id));");

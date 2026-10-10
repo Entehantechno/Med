@@ -3,7 +3,7 @@ import request from "supertest";
 import { isSafeOutboundUrl, extractIpv4, jsonReviver, parseHibpRange, sha1Upper } from "../src/lib/security.js";
 import { renderMarkdown } from "../src/lib/blog.js";
 import { passwordRejected } from "../src/routes/auth.js";
-import { initDb } from "../src/db.js";
+import { initDb, db } from "../src/db.js";
 import { createApp } from "../src/app.js";
 
 let app;
@@ -149,7 +149,6 @@ describe("password policy + JWT revocation (OWASP ASVS 6.2 / 2026 session rules)
     const reg = await request(app).post("/api/auth/register").send({ email, password: "firstPass9x", name_fa: "لغو" });
     expect(reg.status).toBe(200);
     const oldTok = reg.body.token;
-    const { db } = await import("../src/db.js");
     const uid = reg.body.user.id;
     const before = db.prepare("SELECT token_ver FROM users WHERE id=?").get(uid);
     const okOld = await request(app).get("/api/auth/me").set("Authorization", `Bearer ${oldTok}`);
@@ -225,13 +224,18 @@ describe("security headers & input validation (v65 hardening)", () => {
 });
 
 describe("v69 — reflected path in JSON-LD cannot break out of <script>", () => {
-  it("escapes </script> inside the ld+json block and keeps the JSON valid", async () => {
+  it("never reflects a raw </script> from the path; real post JSON-LD stays valid", async () => {
+    // JSON-LD is emitted only for existing posts, so use a real slug for the block check.
+    const { db } = await import("../src/db.js");
+    db.prepare("INSERT OR IGNORE INTO blog_posts (slug,category,title_fa,title_en,excerpt_en,body_en,published,published_at) VALUES ('jsonld-safe-post','general','عنوان','JSON-LD safe post','Excerpt','Body text',1,datetime('now'))").run();
+    const post = { slug: "jsonld-safe-post" };
     const evil = "/blog/" + encodeURIComponent("</script><script>alert(1)</script>");
-    const res = await request(app).get(evil).set("Accept", "text/html");
+    const bad = await request(app).get(evil).set("Accept", "text/html");
+    expect(bad.status).toBe(200);
+    expect(bad.text).not.toContain("</script><script>alert(1)");
+    const res = await request(app).get("/blog/" + encodeURIComponent(post.slug)).set("Accept", "text/html");
     expect(res.status).toBe(200);
-    const html = res.text;
-    expect(html).not.toContain("</script><script>alert(1)");
-    const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
+    const blocks = [...res.text.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)];
     expect(blocks.length).toBeGreaterThan(0);
     for (const b of blocks) expect(() => JSON.parse(b[1])).not.toThrow();
   });

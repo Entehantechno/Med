@@ -32,7 +32,7 @@ describe('AI-required final evaluation',()=>{
   provider({badLesson:true});const n=count(),r=await submit();expect(r.status).toBe(503);expect(r.body.aiStage).toBe('lesson');expect(fetch).toHaveBeenCalledTimes(2);expect(count()).toBe(n);
  });
  it('persists only when both model stages return valid responses',async()=>{
-  provider();const n=count(),r=await submit();expect(r.status).toBe(200);expect(count()).toBe(n+1);expect(r.body.source).toBe('llm');expect(r.body.feedbackSource).toBe('llm');expect(r.body.score).toBe(0);expect(r.body.microlearning).toBe(lesson.microlearning);
+  provider();const n=count(),r=await submit();expect(r.status).toBe(200);expect(count()).toBe(n+1);expect(r.body.source).toBe('llm');expect(r.body.feedbackSource).toBe('llm');expect(r.body.score).toBe(0);expect(r.body.microlearning).toContain(lesson.microlearning);  // personalized AI body kept; reference header is prepended (R49)
  });
  it('does not consume an attempt on quota failure and allows a subsequent successful retry',async()=>{
   vi.stubGlobal('fetch',vi.fn(async()=>({ok:false,status:429,text:async()=> 'sensitive provider detail'})));

@@ -134,7 +134,7 @@ r.get("/", authRequired, (req, res) => {
     ).all(req.user.id);
   } else if (req.user.role === "teacher") {
     const uni = currentUniversityId(req.user);
-    classes = db.prepare("SELECT * FROM classes WHERE active=1 AND university_id=? ORDER BY id DESC").all(uni || -1);
+    classes = db.prepare("SELECT * FROM classes WHERE active=1 AND COALESCE(university_id,1)=? ORDER BY id DESC").all(uni || -1);
   } else if (req.user.role === "admin") {
     classes = db.prepare("SELECT * FROM classes WHERE active=1 ORDER BY id DESC").all();
   } else if (req.user.role === "learner") {
@@ -261,7 +261,7 @@ function zonesFor(ans) {
 r.get("/drawing-inbox", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const uni = req.user.role === "teacher" ? (currentUniversityId(req.user) || -1) : null;
   const classes = uni
-    ? db.prepare("SELECT id, name_fa, name_en, code FROM classes WHERE university_id=? AND active=1").all(uni)
+    ? db.prepare("SELECT id, name_fa, name_en, code FROM classes WHERE COALESCE(university_id,1)=? AND active=1").all(uni)
     : db.prepare("SELECT id, name_fa, name_en, code FROM classes WHERE active=1").all();
   const parseLocal = (s, fb) => { try { return JSON.parse(s || ""); } catch { return fb; } };
   const statusOf = (ans) => ans?.drawing?.approval?.status || (ans?.pendingApproval ? "pending" : "none");

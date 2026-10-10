@@ -1450,11 +1450,11 @@ r.post("/users", ...P(PU), async (req, res) => {
   if (req.user.role !== "admin" && req.user.role !== "teacher" && b.role !== "learner") {
     return res.status(403).json({ error: "university_only", stage: "access" });
   }
-  if (db.prepare("SELECT id FROM users WHERE username=?").get(uname)) return res.status(409).json({ error: "username_taken", message_fa: "نام کاربری قبلاً ثبت شده است." });
   if (b.role === "student") {
     const conflict = studentNoConflict(b.student_no || uname);
     if (conflict) return res.status(409).json({ error: "student_no_exists", message_fa: "این شماره دانشجویی قبلاً در سامانه وجود دارد.", existing: duplicateStudentPayload(conflict) });
   }
+  if (db.prepare("SELECT id FROM users WHERE username=?").get(uname)) return res.status(409).json({ error: "username_taken", message_fa: "نام کاربری قبلاً ثبت شده است." });
   // a teacher's students are pinned to the teacher's own university.
   let uni = (b.role === "teacher" || b.role === "student") ? (parseInt(b.university_id, 10) || null) : null;
   if (req.user.role === "teacher") uni = currentUniversityId(req.user);

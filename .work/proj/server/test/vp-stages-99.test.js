@@ -62,7 +62,7 @@ describe("student virtual-patient stages", () => {
     expect(started.body.sessionId).toBeTruthy();
 
     const chat = await request(app).post("/api/exam/patient-reply").set(A(stk)).send({
-      caseId: 1, lang: "fa", userText: "سلام من پزشک هستم، اجازه می‌دهید بپرسم درد از کی شروع شده؟",
+      caseId: 1, sessionId: started.body.sessionId, lang: "fa", userText: "سلام من پزشک هستم، اجازه می‌دهید بپرسم درد از کی شروع شده؟",
       history: [],
     });
     expect(chat.status).toBe(200);
@@ -70,7 +70,7 @@ describe("student virtual-patient stages", () => {
     expect(["patient", "exam"]).toContain(chat.body.mode || "patient");
 
     const vitals = await request(app).post("/api/exam/patient-reply").set(A(stk)).send({
-      caseId: 1, lang: "fa", userText: "فشار خون را بگیرید",
+      caseId: 1, sessionId: started.body.sessionId, lang: "fa", userText: "فشار خون را بگیرید",
       history: [
         { role: "student", text: "سلام من پزشک هستم، اجازه می‌دهید بپرسم درد از کی شروع شده؟" },
         { role: "patient", text: chat.body.text },
@@ -81,14 +81,14 @@ describe("student virtual-patient stages", () => {
     expect(String(vitals.body.text || "").trim().length).toBeGreaterThan(0);
 
     const order = await request(app).post("/api/exam/order").set(A(stk)).send({
-      caseId: 1, kind: "imaging", query: "ECG", lang: "fa",
+      caseId: 1, sessionId: started.body.sessionId, kind: "imaging", query: "ECG", lang: "fa",
     });
     expect(order.status).toBe(200);
     expect(order.body.found).toBe(true);
     expect(String(order.body.text || "")).toMatch(/ST|صعود|نوار|ECG/i);
 
     const para = await request(app).post("/api/exam/order").set(A(stk)).send({
-      caseId: 1, kind: "paraclinic", query: "نوار قلب", lang: "fa",
+      caseId: 1, sessionId: started.body.sessionId, kind: "paraclinic", query: "نوار قلب", lang: "fa",
     });
     expect(para.status).toBe(200);
     expect(para.body.found).toBe(true);

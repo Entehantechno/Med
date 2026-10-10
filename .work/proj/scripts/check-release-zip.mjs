@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { existsSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 
@@ -491,8 +492,21 @@ const featureChecks = [
     tests: [/opens a session, replies as the patient/, /stores AI score \+ lesson/, /session_id_required/],
   },
 ];
+// pack-host-zip.mjs deliberately leaves these three test files out of the ZIP (approved
+// R50). Only this exact allow-list falls back to the source tree the ZIP was built from
+// (this script lives in <root>/scripts). Any other missing file is still an error.
+const sourceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const PACKER_EXCLUDED_TESTS = new Set([
+  "e2e/tests/responsive-panels-audit.spec.js",
+  "server/test/api.test.js",
+  "server/test/vp-stages-99.test.js",
+]);
 for (const check of featureChecks) {
-  const body = readEntry(check.file);
+  let body = readEntry(check.file);
+  if (!body && PACKER_EXCLUDED_TESTS.has(check.file)) {
+    const src = path.join(sourceRoot, check.file);
+    if (existsSync(src)) body = readFileSync(src, "utf8");
+  }
   if (!body) {
     errors.push(`Feature audit failed (${check.name}): missing ${check.file}`);
     continue;
