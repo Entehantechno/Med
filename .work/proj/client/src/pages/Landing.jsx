@@ -96,7 +96,7 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
         <a className="lp-banner" href={banner.url || "#"} style={{ background: banner.bg || "#2f7fd1" }}
           onClick={(e) => { if (!banner.url) { e.preventDefault(); onGetStarted(); } }}>
           <span className="lp-banner-text">📣 {bannerText}</span>
-          {bannerCta && <span className="lp-banner-cta">{bannerCta} →</span>}
+          {bannerCta && <span className="lp-banner-cta">{bannerCta} {fa ? "←" : "→"}</span>}
         </a>
       )}
       {/* ---- Top nav (the ONLY header; sticky, compact on phones) ---- */}
@@ -211,13 +211,13 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
             <div className="lp-aud-ico" style={{ background: "var(--grad-green)" }}><Icon name="medal" size={26} /></div>
             <h3>{tc("landLearnerTitle")}</h3>
             <p>{tc("landLearnerDesc")}</p>
-            <button type="button" className="lp-btn-primary" {...warmAuth} onClick={onGetStarted}>{tc("landCtaPrimary")} →</button>
+            <button type="button" className="lp-btn-primary" {...warmAuth} onClick={onGetStarted}>{tc("landCtaPrimary")} {fa ? "←" : "→"}</button>
           </div>
           <div className="lp-aud-card lp-aud-uni">
             <div className="lp-aud-ico" style={{ background: "var(--grad-primary)" }}><Icon name="class" size={26} /></div>
             <h3>{tc("landUniTitle")}</h3>
             <p>{tc("landUniDesc")}</p>
-            <button type="button" className="lp-btn-outline" {...warmAuth} onClick={onSignIn}>{tc("landCtaSecondary")} →</button>
+            <button type="button" className="lp-btn-outline" {...warmAuth} onClick={onSignIn}>{tc("landCtaSecondary")} {fa ? "←" : "→"}</button>
           </div>
         </div>
       </section>

@@ -2705,7 +2705,9 @@ mark.stem-hl{ background:linear-gradient(transparent 55%, rgba(246,195,67,.6) 55
 }
 
 /* -- 7) Landing: hero glow + stats glass + CTA shine -- */
-.lp-hero{ position:relative; overflow:hidden }
+/* overflow must stay visible: clipping the hero box cut the glow into a hard-edged rectangle.
+   Horizontal overflow is contained by .landing{overflow-x:clip} (scroll-unlock.css). */
+.lp-hero{ position:relative; overflow:visible }
 .lp-hero-glow{
   background:
     radial-gradient(720px 420px at 20% 8%, rgba(37,105,176,.14), transparent 60%),

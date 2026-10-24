@@ -1,1 +1,1 @@
-2026.10.24-r52-owner-tutor-portable-admin
+2026.10.24-r53-keyboard-auth-landing-ux

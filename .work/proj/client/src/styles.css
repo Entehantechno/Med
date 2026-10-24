@@ -19,6 +19,7 @@
   --grad-primary:linear-gradient(135deg,#3a8ede,#2569b0);
   --grad-green:linear-gradient(135deg,#2fbd5c,#22913c);
   --grad-warm:linear-gradient(135deg,#e0a52e,#e0544f);
+  --grad-gold:linear-gradient(135deg,#f0bf3a,#d9961a);
   --grad-purple:linear-gradient(135deg,#7d6be0,#3a8ede);
   --grad-pink:linear-gradient(135deg,#e0568a,#7d6be0);
   --shadow:0 16px 40px -14px rgba(38,82,122,.28);

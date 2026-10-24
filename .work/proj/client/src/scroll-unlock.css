@@ -93,6 +93,24 @@ html.overlay-open body{
   margin-block:auto;
   flex:0 0 auto;
 }
+/* On-screen keyboard open (see lib/keyboard-viewport.js): size the overlay to the
+   visible band above the keyboard, so the focused field and the submit button stay
+   visible. --kb-top / --kb-h are set inline by the modal shell. */
+.login-modal-overlay.kb-covered{
+  inset:auto !important;
+  top:var(--kb-top, 0px) !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:auto !important;
+  height:var(--kb-h, 100dvh) !important;
+  padding-top:max(10px, env(safe-area-inset-top)) !important;
+  padding-bottom:10px !important;
+}
+.login-modal-overlay.kb-covered .login-modal-shell{ margin-block:0; }
+.login-modal-overlay.kb-covered .login-card{
+  min-height:0 !important;
+  justify-content:flex-start !important;
+}
 .login-modal-shell .login-card{
   max-height:none !important;
   overflow:visible !important;

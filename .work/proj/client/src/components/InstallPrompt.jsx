@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useApp } from "../context.jsx";
 import { getToken } from "../api.js";
 import { safeLocal } from "../lib/storage.js";
+import { useKeyboardInset } from "../lib/keyboard-viewport.js";
 
 /* Fire-and-forget PWA funnel event (works logged-out too). */
 function track(event) {
@@ -70,8 +71,13 @@ function snooze() {
   try { localStorage.setItem(SNOOZE_KEY, String(Date.now() + SNOOZE_DAYS * 864e5)); } catch {}
 }
 
-export default function InstallPrompt() {
+/* `suppressed`: the parent wants the card out of the way (e.g. the sign-in modal is open).
+   The card also hides itself while the on-screen keyboard covers the page, so it never
+   sits on top of a form the visitor is typing in. State is kept, so it appears again later. */
+export default function InstallPrompt({ suppressed = false }) {
   const { t, lang, flag } = useApp();
+  const kb = useKeyboardInset();
+  const hideCard = suppressed || kb.covered;
   const [deferred, setDeferred] = useState(null); // Android beforeinstallprompt event
   const [show, setShow] = useState(false);        // show the install card
   const [iosOpen, setIosOpen] = useState(false);  // iOS instructions modal
@@ -141,7 +147,7 @@ export default function InstallPrompt() {
   return (
     <>
       {/* Install card (bottom sheet) */}
-      {show && (
+      {show && !hideCard && (
         <div className="pwa-install" role="dialog" aria-label={t("installTitle")}>
           <div className="pwa-install-icon" aria-hidden="true">
             <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">

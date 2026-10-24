@@ -6,11 +6,28 @@ import Icon from "../components/Icon.jsx";
 import GoogleButton from "../components/GoogleButton.jsx";
 import { PROVINCES } from "../data/provinces.js";
 import { warm } from "../lib/routes-prefetch.js";
+import { useKeyboardInset } from "../lib/keyboard-viewport.js";
 
 function LoginModalShell({ onBackHome, children }) {
   useScrollLock(true);
+  // When the on-screen keyboard covers the bottom of the screen, pin the overlay
+  // to the visible band (visualViewport) so the focused field and the submit
+  // button stay above the keyboard instead of sliding underneath it.
+  const kb = useKeyboardInset();
+  const style = kb.covered ? { "--kb-top": `${kb.top}px`, "--kb-h": `${kb.height}px` } : undefined;
+  const onFocusCapture = (e) => {
+    const el = e.target;
+    if (!kb.covered || !el?.matches?.("input, select, textarea")) return;
+    // Give the keyboard its animation time, then centre the field in the visible band.
+    window.setTimeout(() => el.scrollIntoView?.({ block: "center", behavior: "smooth" }), 320);
+  };
   return (
-    <div className="login-modal-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && onBackHome) onBackHome(); }}>
+    <div
+      className={`login-modal-overlay${kb.covered ? " kb-covered" : ""}`}
+      style={style}
+      onFocusCapture={onFocusCapture}
+      onMouseDown={(e) => { if (e.target === e.currentTarget && onBackHome) onBackHome(); }}
+    >
       {children}
     </div>
   );
