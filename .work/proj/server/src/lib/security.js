@@ -14,6 +14,7 @@ import crypto from "crypto";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import { getGameConfig } from "./gameconfig.js";
+import { verifiedUserIdFromRequest } from "./auth.js";
 
 /* Google Identity Services (button + One Tap / FedCM). Without these hosts
    Helmet blocks https://accounts.google.com/gsi/client and the GIS XHR. */
@@ -46,6 +47,9 @@ export function buildHelmet() {
         manifestSrc: ["'self'"],
         workerSrc: ["'self'", "blob:"],
         objectSrc: ["'none'"],
+        // R56: violations of the ENFORCED policy are reported (the separate Report-Only
+        // header used to be the only reporter and drifted from this policy).
+        reportUri: ["/api/security/csp-report"],
         // media: self-hosted uploaded video/audio (mp4/webm) + blob:
         mediaSrc: ["'self'", "blob:", "https:"],
         // embedded lesson videos: only the vetted providers (Aparat / YouTube).
@@ -116,6 +120,7 @@ function cfg() {
     enabled: !disabled && s.enabled !== false,
     api_window_min: Number(s.api_window_min) > 0 ? Number(s.api_window_min) : 15,
     api_max: Number(s.api_max) > 0 ? Number(s.api_max) : 300,
+    api_user_max: Number(s.api_user_max) > 0 ? Number(s.api_user_max) : 1200,
     auth_window_min: Number(s.auth_window_min) > 0 ? Number(s.auth_window_min) : 15,
     auth_max: Number(s.auth_max) > 0 ? Number(s.auth_max) : 8,
   };
@@ -131,21 +136,27 @@ function cfg() {
    request, so the on/off master switch (and DISABLE_RATE_LIMIT) is live. */
 export function apiLimiter() {
   const c = cfg();
-  return rateLimit({
-    windowMs: c.api_window_min * 60 * 1000,
-    limit: c.api_max,
-    standardHeaders: true,
-    legacyHeaders: false,
-    skip: (req) => {
-      if (!cfg().enabled) return true;
-      const p = req.path || "";
-      // Gateway callbacks must never 429 — a dropped Zarinpal return is lost revenue.
-      if (p === "/health" || p === "/pay/callback" || p === "/store/callback") return true;
-      if (p.endsWith("/pay/callback") || p.endsWith("/store/callback")) return true;
-      return false;
-    },
-    message: { error: "too_many_requests", message_fa: "درخواست‌های زیاد. کمی بعد دوباره تلاش کنید.", message_en: "Too many requests, please try again later." },
+  const windowMs = c.api_window_min * 60 * 1000;
+  const message = { error: "too_many_requests", message_fa: "درخواست‌های زیاد. کمی بعد دوباره تلاش کنید.", message_en: "Too many requests, please try again later." };
+  // Gateway callbacks must never 429 — a dropped Zarinpal return is lost revenue.
+  const skipPath = (req) => {
+    const p = req.path || "";
+    return p === "/health" || p === "/pay/callback" || p === "/store/callback" || p.endsWith("/pay/callback") || p.endsWith("/store/callback");
+  };
+  // R56: a per-IP bucket alone locks a whole campus NAT out after ~30 active students
+  // (see R55 report). Signed-in traffic is therefore counted per VERIFIED account; the
+  // user id comes from a signature-checked token, so a forged id cannot evade or fill
+  // someone else's bucket. Anonymous traffic keeps the conservative per-IP limit.
+  const anon = rateLimit({
+    windowMs, limit: c.api_max, standardHeaders: true, legacyHeaders: false, message,
+    skip: (req) => !cfg().enabled || skipPath(req) || verifiedUserIdFromRequest(req) != null,
   });
+  const perAccount = rateLimit({
+    windowMs, limit: c.api_user_max, standardHeaders: true, legacyHeaders: false, message,
+    keyGenerator: (req) => `u:${verifiedUserIdFromRequest(req)}`,
+    skip: (req) => !cfg().enabled || skipPath(req) || verifiedUserIdFromRequest(req) == null,
+  });
+  return (req, res, next) => anon(req, res, (err) => (err ? next(err) : perAccount(req, res, next)));
 }
 
 /* Strict limiter for authentication (login/register/password) — the classic

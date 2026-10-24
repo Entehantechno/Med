@@ -48,6 +48,7 @@ import { safeLocal } from "../lib/storage.js";
 // faster after login. The visible UI of each section is unchanged; only when a
 // user opens that section do we download its code.
 const PathManager = lazy(() => import("./admin/PathManager.jsx"));
+const MindmapBankAdmin = lazy(() => import("./admin/MindmapBankAdmin.jsx"));
 const RoleEditor = lazy(() => import("./admin/RoleEditor.jsx"));
 const StoreManager = lazy(() => import("./admin/StoreManager.jsx"));
 const PricingEditor = lazy(() => import("./admin/PricingEditor.jsx"));
@@ -149,7 +150,7 @@ export default function Admin({ home }) {
   ];
   const competitiveSections = [
     { title: t("navGroupPeople"), items: [["learnerMgmt", "users", "learn.users"], ["placementReport", "compass", "learn.view"], ["certificatesAdmin", "medal", "learn.users"], ["premiumAccounts", "crown", "learn.users"]] },
-    { title: t("navGroupContent"), items: [["learnCards", "flask", "learn.content"], ["competitiveReferences", "book", "learn.content"], ["contentStats", "chart", "learn.content"], ["mediaLibrary", "image", "learn.content"], ["pathManager", "book", "learn.content"], ["mascotsAdmin", "star", "learn.content"], ["dxAdmin", "target", "learn.content"], ["blogAdmin", "book", "learn.content"], ["communityMod", "users", "learn.content"]] },
+    { title: t("navGroupContent"), items: [["learnCards", "flask", "learn.content"], ["competitiveReferences", "book", "learn.content"], ["contentStats", "chart", "learn.content"], ["mediaLibrary", "image", "learn.content"], ["pathManager", "book", "learn.content"], ["mindmapBank", "book", "learn.content"], ["mascotsAdmin", "star", "learn.content"], ["dxAdmin", "target", "learn.content"], ["blogAdmin", "book", "learn.content"], ["communityMod", "users", "learn.content"]] },
     { title: t("navGroupMarketing"), items: [["adsMgmt", "image", "learn.ads"], ["storeManager", "store", "store.manage"], ["pricingEditor", "crown", "learn.settings"], ["groupPurchase", "users", "learn.settings"], ["payments", "crown", "learn.settings"]] },
     { title: t("navGroupSupport"), items: [["supportInbox", "chat", "learn.support"], ["helpCenter", "book", "learn.content"]] },
     { title: t("navGroupSystem"), items: [["remindersAdmin", "clock", "learn.settings"], ["pwaAdmin", "download", "learn.view"], ["twaAdmin", "download", "learn.settings"], ["seoAdmin", "settings", "learn.settings"], ["gamification", "bolt", "learn.settings"], ["fsrsOptimizer", "brain", "learn.settings"], ["bugHunt", "bug", "learn.settings"]] },
@@ -362,6 +363,7 @@ export default function Admin({ home }) {
             {tab === "certificatesAdmin" && <CertificatesAdmin />}
             {tab === "communityMod" && <LazyAdminChunk><CommunityModeration /></LazyAdminChunk>}
             {tab === "pathManager" && <LazyAdminChunk><PathManager /></LazyAdminChunk>}
+            {tab === "mindmapBank" && <LazyAdminChunk><MindmapBankAdmin /></LazyAdminChunk>}
             {tab === "mascotsAdmin" && <MascotsAdmin />}
             {tab === "roleEditor" && <LazyAdminChunk><RoleEditor /></LazyAdminChunk>}
             {tab === "storeManager" && <LazyAdminChunk><StoreManager /></LazyAdminChunk>}
@@ -5196,7 +5198,7 @@ function AdsManager() {
             const gold = variantPreview==="between" || (isCustom && /f|e.*b|c.*8/i.test(bg.toLowerCase()));
             return (
               <div className={`motion-ad${!isCustom && variantPreview==="between" ? " motion-ad--gold" : !isCustom && variantPreview==="intro" ? " motion-ad--teal" : ""}${variantPreview==="intro"?" motion-ad--intro":" motion-ad--compact"}`} dir={lang==="fa"?"rtl":"ltr"} style={{ marginBottom: 12 }}>
-                {fmtBadge && <span className="motion-ad__format-badge">{fmtBadge}{edit.format==="rewarded" && edit.reward_gems ? ` · +${edit.reward_gems} 💎` : ""}</span>}
+                {fmtBadge && <span className="motion-ad__format-badge">{fmtBadge}{edit.format==="rewarded" && edit.reward_gems ? ` · +${edit.reward_gems} 💉` : ""}</span>}
                 <span className="motion-ad__tag">{lang==="fa"?"تبلیغ":"Ad"}</span>
                 <div className="motion-ad__bg" aria-hidden="true" style={isCustom ? { background: `radial-gradient(680px 420px at 16% 14%, ${hexR(bg,0.24)}, transparent 60%), radial-gradient(600px 360px at 90% 86%, ${hexR(bg,0.14)}, transparent 64%), linear-gradient(135deg, ${bg} 0%, ${hexR(bg,0.9)} 30%, ${drk(bg,0.22)} 58%, ${drk(bg,0.45)} 100%)`, backgroundSize:"auto,auto,200% 200%" } : undefined} />
                 <div className="motion-ad__grid" aria-hidden="true" />

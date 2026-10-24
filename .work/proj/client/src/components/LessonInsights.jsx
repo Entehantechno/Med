@@ -1,5 +1,6 @@
 import { useApp } from "../context.jsx";
 import Icon from "./Icon.jsx";
+import { GemIcon } from "./StatIcons.jsx";
 
 /* Post-quiz coaching card (AI-free, deterministic).
    Two research-backed mechanisms shown after a lesson/checkpoint:
@@ -68,7 +69,7 @@ export default function LessonInsights({ report, srsAdded = 0, confidence = null
           {newMastery.map((b) => (
             <div key={b.topicId} className="mastery-earned">
               🏅 {t("masteryEarned").replace("{topic}", b.name_fa || b.name_en).replace("{a}", b.accuracy)}
-              <span className="me-reward"> +{b.reward_xp} XP · +{b.reward_gems} 💎</span>
+              <span className="me-reward"> +{b.reward_xp} XP · +{b.reward_gems} <GemIcon size={14} /></span>
             </div>
           ))}
         </div>

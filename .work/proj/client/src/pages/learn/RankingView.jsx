@@ -4,6 +4,7 @@ import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
 import Avatar from "../../components/Avatar.jsx";
 import Podium from "./Podium.jsx";
+import AnonRankingCard from "../../components/AnonRankingCard.jsx";
 
 export default function RankingView() {
   const { t, lang } = useApp();
@@ -29,6 +30,9 @@ export default function RankingView() {
           <Icon name="medal" size={15} /> {t("provinceRank")}
         </button>
       </div>
+
+      {/* R56: opt-in pseudonym mode — was built (API + gamify) but never mounted */}
+      <AnonRankingCard />
 
       {!data ? <div className="card"><div className="skeleton" style={{ height: 200 }} /></div> : (<>
         {scope === "province" && data.province && (

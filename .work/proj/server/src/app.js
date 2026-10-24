@@ -216,14 +216,14 @@ export function createApp() {
 
   // Lightweight security hardening: reject legacy/debug HTTP methods that can be
   // abused for cross-site tracing or proxy tunneling, and add defensive headers
-  // not covered by every proxy/CDN. These are static headers, so they have no
+  // not covered by every proxy/CDN. (Permissions-Policy is set by permissionsPolicy()
+  // in lib/security.js, which runs after Helmet — single source of truth.) These are static headers, so they have no
   // measurable runtime cost.
   app.use((req, res, next) => {
     if (["TRACE", "TRACK", "CONNECT"].includes(req.method)) {
       res.setHeader("Allow", "GET, HEAD, POST, PUT, PATCH, DELETE, OPTIONS");
       return res.status(405).json({ error: "method_not_allowed" });
     }
-    res.setHeader("Permissions-Policy", "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=(), browsing-topics=(), display-capture=(), fullscreen=(self)");
     res.setHeader("X-Permitted-Cross-Domain-Policies", "none");
     res.setHeader("X-Download-Options", "noopen");
     res.setHeader("Origin-Agent-Cluster", "?1");
@@ -269,14 +269,8 @@ export function createApp() {
   app.use(buildHelmet());
   app.use(permissionsPolicy());
 
-  // CSP report-only gives us visibility into blocked resources without breaking
-  // production. The enforced CSP remains in Helmet; reports are stored as
-  // security_events for admin review.
-  app.use((req, res, next) => {
-    res.setHeader("Content-Security-Policy-Report-Only",
-      "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' https://accounts.google.com; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com; frame-src 'self' https://accounts.google.com https://www.aparat.com https://aparat.com https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; report-uri /api/security/csp-report");
-    next();
-  });
+  // CSP violations are reported via report-uri on the enforced Helmet policy
+  // (lib/security.js); the old duplicate Report-Only header was removed in R56.
 
   // CORS: same-origin by default (the API serves its own client). If you host
   // the client on a different domain, set CORS_ORIGIN to a comma-separated

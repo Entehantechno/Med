@@ -351,6 +351,7 @@ export const DEFAULT_GAME_CONFIG = {
     enabled: true,             // master switch for rate limiting (headers always on)
     api_window_min: 15,        // general API rate-limit window (minutes)
     api_max: 300,              // max API requests per window per IP
+    api_user_max: 1200,        // max API requests per window per SIGNED-IN account (NAT-safe)
     auth_window_min: 15,       // login/register rate-limit window (minutes)
     auth_max: 8,               // max auth attempts per window per IP (brute-force guard)
   },

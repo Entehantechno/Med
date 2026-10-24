@@ -114,9 +114,9 @@ function CertificateView({ cert, onBack }) {
     ? `من گواهی «${cert.title}» را از MED School گرفتم! استعلام: ${url}`
     : `I earned the "${cert.title}" certificate from MED School! Verify: ${url}`;
   const copyLink = () => { navigator.clipboard?.writeText(url); toast(fa ? "لینک کپی شد" : "Link copied"); };
-  const linkedin = () => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, "_blank");
-  const telegram = () => window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText)}`, "_blank");
-  const whatsapp = () => window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank");
+  const linkedin = () => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, "_blank", "noopener,noreferrer");
+  const telegram = () => window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(shareText)}`, "_blank", "noopener,noreferrer");
+  const whatsapp = () => window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, "_blank", "noopener,noreferrer");
   const print = () => window.print();
   const d = fmtDateLong(cert.issued_at, fa ? "fa" : "en");
 

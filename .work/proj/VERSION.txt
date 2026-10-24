@@ -1,1 +1,1 @@
-2026.10.24-r55-keyboard-submit-dock-bugfix
+2026.10.24-r56-wiring-security-cleanup

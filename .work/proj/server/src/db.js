@@ -57,15 +57,31 @@ let schemaReady = false;  // initSchema() is expensive; run it once per loaded D
 let dirty = false;
 export function markDirty() { dirty = true; }
 
+/* R56 — write-behind flush. A full export costs O(database size) and blocks the
+   event loop; on the production-size DB (~125 MB) one export can take hundreds of
+   ms, and the legacy path ran one per write request. Plain persistNow() therefore
+   only schedules a flush: one export per FLUSH_DELAY_MS at most, coalescing bursts.
+   The timer is NOT pushed back on each write (that starved the disk under steady
+   load), so a dirty write is never older than FLUSH_DELAY_MS. Synchronous, durable
+   writes stay explicit: persistNow({force|throwOnError}) and durableTransaction()
+   (patient/exam records), plus the process-exit flush. DB_FLUSH_DELAY_MS tunes it. */
+const FLUSH_DELAY_MS = Math.max(0, Math.min(60000, Number(process.env.DB_FLUSH_DELAY_MS) || 1500));
+function scheduleFlush() {
+  if (saveTimer) return;                // already scheduled — do not postpone it
+  saveTimer = setTimeout(() => { saveTimer = null; flushNow({}); }, FLUSH_DELAY_MS);
+  if (saveTimer.unref) saveTimer.unref();
+}
 function persist() {
-  // debounce writes so bursts of inserts don't thrash the disk
   dirty = true;
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => { persistNow(); }, 1500);
+  scheduleFlush();
 }
 function persistNow({ force = false, throwOnError = false } = {}) {
+  if (!force && !throwOnError) { if (dirty) scheduleFlush(); return; }
+  flushNow({ force, throwOnError });
+}
+function flushNow({ force = false, throwOnError = false } = {}) {
   try {
-    clearTimeout(saveTimer);            // cancel any pending debounced write
+    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }   // this flush covers it
     if (!rawDb) return;
     if (!dirty && !force && fs.existsSync(DB_PATH)) return;   // nothing new to write
     // Atomic save: write the whole image to a sibling temp file, fsync it, then
@@ -124,7 +140,7 @@ export function durableTransaction(fn) {
     persistNow({ throwOnError: true });
     return result;
   } catch (error) {
-    clearTimeout(saveTimer);
+    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
     if (committed) {
       const restored = tryOpenDbFileSafe(DB_PATH);
       if (!restored) {
@@ -147,7 +163,7 @@ export function durableTransaction(fn) {
 let flushed = false;
 function flushOnExit() {
   if (flushed) return; flushed = true;
-  persistNow();
+  flushNow({});
 }
 process.on("exit", flushOnExit);
 process.on("SIGINT", () => { flushOnExit(); process.exit(0); });

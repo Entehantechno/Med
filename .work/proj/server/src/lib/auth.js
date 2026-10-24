@@ -84,6 +84,19 @@ function tokenFromRequest(req) {
   return cookieValue(req, "medlab_token");
 }
 
+/* R56: the account a request is signed in as, for rate-limit keying only (no DB
+   read). Only a token that verifies against SECRET counts — a forged or expired
+   token returns null, so the caller falls back to the per-IP bucket. */
+export function verifiedUserIdFromRequest(req) {
+  const token = tokenFromRequest(req);
+  if (!token) return null;
+  try {
+    const p = jwt.verify(token, SECRET, { algorithms: ["HS256"], issuer: JWT_ISS, audience: JWT_AUD });
+    const id = Number(p && p.id);
+    return Number.isFinite(id) && id > 0 ? id : null;
+  } catch { return null; }
+}
+
 export function setAuthCookie(res, token) {
   const secure = process.env.NODE_ENV === "production";
   res.cookie("medlab_token", token, {
