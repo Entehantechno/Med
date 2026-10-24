@@ -736,8 +736,10 @@ describe("detailed attempt stats & results", () => {
     const r = await request(app).post("/api/exam/flashcard-result").set("Authorization", `Bearer ${stk}`)
       .send({ score: 75, total: 4, correct: 3, wrong: 1, hints: 2, lang: "fa" });
     expect(r.status).toBe(200);
-    const ttk = await token("teacher");
-    const list = await request(app).get("/api/reports/attempts?type=flash").set("Authorization", `Bearer ${ttk}`);
+    // Practice attempts belong to no class or exam, so under the owner-only
+    // report scope only admin sees them (teachers see only their own classes/exams).
+    const atk = await token("admin");
+    const list = await request(app).get("/api/reports/attempts?type=flash").set("Authorization", `Bearer ${atk}`);
     const rec = list.body.find((a) => a.total_questions === 4 && a.correct_count === 3);
     expect(rec).toBeTruthy();
     expect(rec.wrong_count).toBe(1);

@@ -273,6 +273,8 @@ function teacherMayAttachStudy(user, studyId) {
   if (user.role !== "teacher") return false;
   const st = db.prepare("SELECT created_by FROM research_studies WHERE id=?").get(studyId);
   if (!st) return false;
+  // Owner-only: a teacher can attach only research studies they created.
+  if (Number(st.created_by) !== Number(user.id)) return false;
   const uni = currentUniversityId(user) || -1;
   const creator = db.prepare("SELECT university_id, role FROM users WHERE id=?").get(st.created_by);
   if (!creator) return false;

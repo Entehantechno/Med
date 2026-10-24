@@ -1259,7 +1259,8 @@ describe("zip-38 source: window leak + report tenancy", () => {
   });
 
   it("teacher report list/detail/review are university-scoped", () => {
-    expect(reportsJs).toContain("function teacherOwnsStudent");
+    expect(reportsJs).toContain("function teacherSeesStudent");
+    expect(reportsJs).toContain("function teacherOwnsAttempt");
     expect(reportsJs).toContain("scopedAttemptRows");
     expect(reportsJs).toContain('return res.status(403).json({ error: "wrong_university", stage: "access" })');
   });
@@ -1608,7 +1609,7 @@ describe("zip-40 source: research tenancy + consent membership", () => {
 
   it("teacher research events/consents/studies are university-scoped", () => {
     expect(researchJs).toContain("function canManageStudy");
-    expect(researchJs).toContain("AND u.university_id=?");
+    expect(researchJs).toContain("AND s.created_by=?");
     expect(researchJs).toContain("universityId: uni");
   });
 });
@@ -3803,7 +3804,7 @@ describe("zip-55 source: classId consent + unused owner + study attach", () => {
   it("consent/status classId and grant are tenant-scoped", () => {
     expect(researchJs).toContain("function canManageStudy");
     expect(researchJs).toContain("universityId: uni");
-    expect(researchJs).toContain("cl.university_id !== currentUniversityId(req.user)");
+    expect(researchJs).toContain("cl.owner_id !== req.user.id");
     expect(researchJs).toContain("if (req.user.role === \"teacher\" && !canManageStudy(req.user, st))");
     expect(qJs).toContain("not enrolled");
     // Form-level tenancy (incl. anonymous responses whose user_id is NULL):

@@ -22,6 +22,8 @@ function canManageStudy(user, study) {
   if (!study) return false;
   if (user.role === "admin") return true;
   if (user.role !== "teacher") return false;
+  // Owner-only: a research study belongs to the teacher who created it.
+  if (study.created_by == null || Number(study.created_by) !== Number(user.id)) return false;
   const uni = currentUniversityId(user);
   if (!uni) return false;
   const foreignClass = db.prepare("SELECT 1 FROM classes WHERE study_id=? AND COALESCE(university_id,1)!=?").get(study.id, uni);
@@ -112,8 +114,8 @@ r.get("/events", ...admin, (req, res) => {
         FROM research_events e
         JOIN research_studies s ON s.id=e.study_id
         JOIN users u ON u.id=e.user_id
-        WHERE e.study_id IS NOT NULL AND u.university_id=?
-        ORDER BY e.id DESC LIMIT 1000`).all(currentUniversityId(req.user) || -1);
+        WHERE e.study_id IS NOT NULL AND s.created_by=?
+        ORDER BY e.id DESC LIMIT 1000`).all(req.user.id);
   } else if (req.user.role === "admin") {
     rows = db.prepare(`SELECT e.*, s.title_fa, s.title_en, COALESCE(u.name_fa,u.name_en,u.username) AS user_name, u.role AS user_role
         FROM research_events e
@@ -126,10 +128,13 @@ r.get("/events", ...admin, (req, res) => {
 });
 r.delete("/events/:id", ...admin, (req, res) => {
   const id = Number(req.params.id || 0);
-  const row = db.prepare(`SELECT e.id, u.university_id, u.role
+  const row = db.prepare(`SELECT e.id, e.study_id, u.university_id, u.role
       FROM research_events e LEFT JOIN users u ON u.id=e.user_id WHERE e.id=?`).get(id);
   if (!row) return res.status(404).json({ error: "not_found" });
-  if (!teacherOwnsStudentRow(req.user, row.university_id, row.role)) {
+  if (req.user.role === "teacher") {
+    const st = db.prepare("SELECT * FROM research_studies WHERE id=?").get(row.study_id);
+    if (!canManageStudy(req.user, st)) return res.status(403).json({ error: "wrong_university", stage: "access" });
+  } else if (!teacherOwnsStudentRow(req.user, row.university_id, row.role)) {
     return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
   durableTransaction(() => {
@@ -280,14 +285,14 @@ r.get("/consent/status", authRequired, (req, res) => {
     }
     if (req.user.role === "teacher") {
       if (cid) {
-        const cl = db.prepare("SELECT university_id FROM classes WHERE id=?").get(cid);
-        if (!cl || cl.university_id !== currentUniversityId(req.user)) {
+        const cl = db.prepare("SELECT owner_id, university_id FROM classes WHERE id=?").get(cid);
+        if (!cl || cl.owner_id !== req.user.id || Number(cl.university_id || 1) !== Number(currentUniversityId(req.user) || 1)) {
           return res.status(403).json({ error: "wrong_university", stage: "consent" });
         }
       }
       if (eid) {
-        const ex = db.prepare("SELECT university_id FROM exams WHERE id=?").get(eid);
-        if (!ex || ex.university_id !== currentUniversityId(req.user)) {
+        const ex = db.prepare("SELECT owner_id, university_id FROM exams WHERE id=?").get(eid);
+        if (!ex || ex.owner_id !== req.user.id || Number(ex.university_id || 1) !== Number(currentUniversityId(req.user) || 1)) {
           return res.status(403).json({ error: "wrong_university", stage: "consent" });
         }
       }

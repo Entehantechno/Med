@@ -26,17 +26,48 @@ function currentUniversityId(user) {
   if (!user?.id) return null;
   return db.prepare("SELECT university_id FROM users WHERE id=?").get(user.id)?.university_id || null;
 }
-function teacherOwnsStudent(user, studentUniversityId, studentRole) {
+/* Teacher report scope (owner-only): a teacher sees an attempt only when it
+   belongs to one of THEIR classes or exams in their own university. Colleagues
+   and other teachers' students stay invisible; admin sees everything. */
+function teacherScope(user) {
+  const uni = currentUniversityId(user) || 1;
+  return {
+    classes: new Set(db.prepare("SELECT id FROM classes WHERE owner_id=? AND COALESCE(university_id,1)=?").all(user.id, uni).map((r) => Number(r.id))),
+    exams: new Set(db.prepare("SELECT id FROM exams WHERE owner_id=? AND COALESCE(university_id,1)=?").all(user.id, uni).map((r) => Number(r.id))),
+  };
+}
+function inScope(scope, a) {
+  return (a.class_id != null && scope.classes.has(Number(a.class_id)))
+    || (a.exam_id != null && scope.exams.has(Number(a.exam_id)));
+}
+function teacherOwnsAttempt(user, a) {
+  if (user.role === "admin") return true;
+  if (user.role !== "teacher" || !a) return false;
+  return inScope(teacherScope(user), a);
+}
+/* May this teacher open a student's record? Only students enrolled in one of
+   the teacher's own classes or exams (students must be student-role). */
+function teacherSeesStudent(user, studentId) {
   if (user.role === "admin") return true;
   if (user.role !== "teacher") return false;
-  if (studentRole !== "student") return false;
-  const uni = currentUniversityId(user);
-  return uni != null && studentUniversityId != null && Number(studentUniversityId) === Number(uni);
+  const u = db.prepare("SELECT role FROM users WHERE id=?").get(studentId);
+  if (!u || u.role !== "student") return false;
+  const uni = currentUniversityId(user) || 1;
+  const hit = db.prepare(`
+    SELECT 1 FROM class_members m JOIN classes c ON c.id = m.class_id
+     WHERE m.user_id=? AND c.owner_id=? AND COALESCE(c.university_id,1)=?
+    UNION ALL
+    SELECT 1 FROM exam_participants p JOIN exams e ON e.id = p.exam_id
+     WHERE p.user_id=? AND e.owner_id=? AND COALESCE(e.university_id,1)=?
+    LIMIT 1`).get(studentId, user.id, uni, studentId, user.id, uni);
+  return !!hit;
 }
 function scopedAttemptRows(user) {
   const rows = rowsWithNames();
   if (user.role === "admin") return rows;
-  return rows.filter((a) => teacherOwnsStudent(user, a.student_university_id, a.student_role));
+  if (user.role !== "teacher") return [];
+  const scope = teacherScope(user);
+  return rows.filter((a) => inScope(scope, a));
 }
 
 function mapRow(a) {
@@ -57,6 +88,7 @@ function mapRow(a) {
     student_university_id: a.student_university_id, student_role: a.student_role,
     case_fa: caseTitleFa, case_en: caseTitleEn,
     exam_id: a.exam_id, exam_fa: a.exam_fa, exam_en: a.exam_en,
+    class_id: a.class_id ?? null,
     study_id: a.exam_study_id || a.class_study_id || null,
     research: !!(a.exam_study_id || a.class_study_id),
     // teacher review of the AI score
@@ -103,7 +135,9 @@ r.get("/summary", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const cards = countUniBank("flashcards", uni);
   const scoped = scopedAttemptRows(req.user);
   const attempts = scoped.length;
-  const exams = uni
+  const exams = req.user.role === "teacher"
+    ? db.prepare("SELECT COUNT(*) n FROM exams WHERE active=1 AND owner_id=? AND COALESCE(university_id,1)=?").get(req.user.id, uni || 1).n
+    : uni
     ? db.prepare("SELECT COUNT(*) n FROM exams WHERE active=1 AND COALESCE(university_id,1)=?").get(uni).n
     : db.prepare("SELECT COUNT(*) n FROM exams WHERE active=1").get().n;
   const avg = scoped.length ? scoped.reduce((s, a) => s + Number(a.score || 0), 0) / scoped.length : 0;
@@ -184,7 +218,7 @@ r.get("/attempts/:id", authRequired, requireRole("teacher", "admin"), (req, res)
       LEFT JOIN exams e ON e.id=a.exam_id
      WHERE a.id=?`).get(req.params.id);
   if (!a) return res.status(404).json({ error: "not found" });
-  if (!teacherOwnsStudent(req.user, a.student_university_id, a.student_role)) {
+  if (!teacherOwnsAttempt(req.user, a)) {
     return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
   const base = mapRow(a);
@@ -203,10 +237,10 @@ r.get("/attempts/:id", authRequired, requireRole("teacher", "admin"), (req, res)
 r.delete("/attempts/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   try {
   const a = db.prepare(`
-    SELECT a.id, u.university_id AS student_university_id, u.role AS student_role
+    SELECT a.id, a.class_id, a.exam_id, u.university_id AS student_university_id, u.role AS student_role
       FROM attempts a LEFT JOIN users u ON u.id=a.user_id WHERE a.id=?`).get(req.params.id);
   if (!a) return res.status(404).json({ error: "not found" });
-  if (!teacherOwnsStudent(req.user, a.student_university_id, a.student_role)) {
+  if (!teacherOwnsAttempt(req.user, a)) {
     return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
   durableTransaction(() => db.prepare("DELETE FROM attempts WHERE id=?").run(req.params.id));
@@ -223,7 +257,7 @@ r.put("/attempts/:id/review", authRequired, requireRole("teacher", "admin"), (re
     SELECT a.*, u.university_id AS student_university_id, u.role AS student_role
       FROM attempts a LEFT JOIN users u ON u.id=a.user_id WHERE a.id=?`).get(req.params.id);
   if (!a) return res.status(404).json({ error: "not found" });
-  if (!teacherOwnsStudent(req.user, a.student_university_id, a.student_role)) {
+  if (!teacherOwnsAttempt(req.user, a)) {
     return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
   const b = req.body || {};
@@ -263,8 +297,7 @@ r.get("/progress/:userId", authRequired, (req, res) => {
   const isStaff = ["teacher", "admin"].includes(req.user.role);
   if (!isStaff && req.user.id !== uid) return res.status(403).json({ error: "forbidden" });
   if (req.user.role === "teacher") {
-    const target = db.prepare("SELECT university_id, role FROM users WHERE id=?").get(uid);
-    if (!target || !teacherOwnsStudent(req.user, target.university_id, target.role)) {
+    if (!teacherSeesStudent(req.user, uid)) {
       return res.status(403).json({ error: "wrong_university", stage: "access" });
     }
   }
@@ -310,10 +343,10 @@ r.get("/student/:userId", authRequired, requireRole("teacher", "admin"), (req, r
   try {
   const u = db.prepare("SELECT id,name_fa,name_en,student_no,role,university_id FROM users WHERE id=?").get(req.params.userId);
   if (!u) return res.status(404).json({ error: "not found" });
-  if (!teacherOwnsStudent(req.user, u.university_id, u.role)) {
+  if (!teacherSeesStudent(req.user, u.id)) {
     return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
-  const rows = db.prepare(
+  let rows = db.prepare(
     `SELECT a.*, c.data_json AS case_json, e.title_fa AS exam_fa, e.title_en AS exam_en
        FROM attempts a
        LEFT JOIN cases c ON c.id = a.case_id
@@ -324,6 +357,10 @@ r.get("/student/:userId", authRequired, requireRole("teacher", "admin"), (req, r
     transcript: J(a.transcript_json, {}),
     eval: J(a.eval_json, {}),
   }));
+  if (req.user.role === "teacher") {
+    const scope = teacherScope(req.user);
+    rows = rows.filter((a) => inScope(scope, a));
+  }
   res.json({ student: u, attempts: rows });
   } catch (e) {
     res.status(500).json({ error: "student_report_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
