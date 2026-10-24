@@ -21,6 +21,7 @@ import "./scroll-unlock.css";
 import { initRum } from "./lib/rum.js";
 import { safeLocal } from "./lib/storage.js";
 import { initSwUpdate } from "./lib/sw-update.js";
+import { installKeyboardCssVars } from "./lib/keyboard-viewport.js";
 
 /* Apply saved font-size (and theme) as early as possible to avoid a flash of
    the default size before React hydrates the context. Accessibility-friendly. */
@@ -43,6 +44,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
 );
 
 initRum();
+// R54: publish --kb-top/--kb-h/--kb-inset + html.kb-up so every fixed/sticky
+// text surface (modal sheets, support chat, exam composer) clears the keyboard.
+installKeyboardCssVars();
 
 const runWhenIdle = (fn, timeout = 3000) => {
   if ("requestIdleCallback" in window) window.requestIdleCallback(fn, { timeout });

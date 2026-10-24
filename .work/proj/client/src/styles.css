@@ -910,6 +910,8 @@ html[dir="rtl"] .micro-ref-text{text-align:right}
 .lp-hero{position:relative;overflow:hidden;display:grid;grid-template-columns:1.1fr 380px;gap:40px;align-items:center;
   padding:clamp(40px,7vw,90px) clamp(14px,5vw,60px);max-width:1200px;margin:0 auto}
 @media(max-width:960px){.lp-hero{grid-template-columns:1fr;text-align:center;gap:28px}}
+/* R54: phone first screen — headline + primary CTA + secondary CTA all fit in 360x640 */
+@media(max-width:760px){.lp-hero{padding-top:24px}}
 @media(max-width:960px){.lp-hero-mock{max-width:360px;margin:0 auto}}
 .lp-hero-glow{position:absolute;top:-10%;inset-inline-end:-5%;width:min(520px,80vw);height:min(520px,80vw);border-radius:50%;
   background:radial-gradient(circle,var(--primaryGlow),transparent 65%);filter:blur(30px);pointer-events:none;z-index:0}

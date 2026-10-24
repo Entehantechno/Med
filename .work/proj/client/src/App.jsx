@@ -161,7 +161,7 @@ function AppInner() {
           onRequireAuth={() => setAuthView("signup")} />}
         {authOpen &&
           <Login asModal initialMode={authView === "signup" ? "signup" : "login"} onBackHome={() => setAuthView("landing")} />}
-        <Suspense fallback={null}><InstallPrompt suppressed={authOpen} /></Suspense>
+        <Suspense fallback={null}><InstallPrompt suppressed={authOpen} waitForScroll /></Suspense>
         <Toast msg={toast} />
       </>
     );

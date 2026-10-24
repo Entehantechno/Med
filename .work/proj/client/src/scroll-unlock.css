@@ -168,3 +168,34 @@ html.overlay-open body{
 .path-section-wrap{
   content-visibility:visible;
 }
+
+/* ── R54: keyboard-aware text surfaces ───────────────────────────────────────
+   While the on-screen keyboard covers the page (html.kb-up, set by
+   installKeyboardCssVars), fixed/sticky surfaces that hold a text field must
+   sit inside the visible band above the keyboard. Browsers cannot scroll
+   fixed or sticky-to-layout-viewport elements into view on their own, so we
+   publish --kb-top / --kb-h / --kb-inset and use them here. Desktop is
+   unaffected: the class is only set when visualViewport shrinks. */
+
+/* Modal dialogs (mobile bottom sheets): the backdrop covers only the visible band. */
+html.kb-up .modal-back{
+  inset:auto;
+  top:var(--kb-top,0px);
+  left:0;
+  right:0;
+  height:var(--kb-h,100dvh);
+}
+html.kb-up .modal{
+  max-height:calc(var(--kb-h,100dvh) - 16px);
+}
+
+/* Support chat panel: lift it above the keyboard and fit it in the visible band. */
+html.kb-up .support-panel{
+  bottom:calc(10px + var(--kb-inset,0px));
+  max-height:calc(var(--kb-h,100dvh) - 24px);
+}
+
+/* Exam / learning chat composer (sticky bottom on mobile). */
+html.kb-up .chat-input{
+  bottom:calc(8px + var(--kb-inset,0px));
+}

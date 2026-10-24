@@ -67,3 +67,48 @@ export function useKeyboardInset() {
 
   return inset;
 }
+
+/* ── Global keyboard CSS variables (R54) ────────────────────────────────────
+   Every fixed/sticky surface that holds a text field (modal bottom sheets,
+   support chat panel, exam chat composer) needs the same three numbers:
+     --kb-top    top of the visible band (visualViewport.offsetTop)
+     --kb-h      height of the visible band
+     --kb-inset  distance from the layout bottom to the keyboard top
+   and the class `kb-up` on <html> while the keyboard covers the page.
+   innerHeight is intentionally NOT changed (LearnApp's kb-open depends on it). */
+export function keyboardCssState(layoutHeight, vv) {
+  const band = computeKeyboardInset(layoutHeight, vv);
+  const inset = band.covered ? Math.max(0, Math.round(layoutHeight - band.top - band.height)) : 0;
+  return { ...band, inset };
+}
+
+/** Installs the listeners once. Returns a cleanup function. */
+export function installKeyboardCssVars(win = typeof window !== "undefined" ? window : null) {
+  if (!win || !win.document) return () => {};
+  const root = win.document.documentElement;
+  let frame = 0;
+  const apply = () => {
+    frame = 0;
+    const s = keyboardCssState(win.innerHeight, win.visualViewport);
+    root.style.setProperty("--kb-top", `${s.top}px`);
+    root.style.setProperty("--kb-h", `${s.covered ? s.height : win.innerHeight}px`);
+    root.style.setProperty("--kb-inset", `${s.inset}px`);
+    root.classList.toggle("kb-up", s.covered);
+  };
+  const schedule = () => { if (!frame) frame = win.requestAnimationFrame(apply); };
+  apply();
+  const vv = win.visualViewport;
+  win.addEventListener("resize", schedule);
+  vv?.addEventListener("resize", schedule);
+  vv?.addEventListener("scroll", schedule);
+  return () => {
+    if (frame) win.cancelAnimationFrame(frame);
+    win.removeEventListener("resize", schedule);
+    vv?.removeEventListener("resize", schedule);
+    vv?.removeEventListener("scroll", schedule);
+    root.classList.remove("kb-up");
+    root.style.removeProperty("--kb-top");
+    root.style.removeProperty("--kb-h");
+    root.style.removeProperty("--kb-inset");
+  };
+}

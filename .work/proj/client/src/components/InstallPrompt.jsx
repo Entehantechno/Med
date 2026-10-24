@@ -74,10 +74,14 @@ function snooze() {
 /* `suppressed`: the parent wants the card out of the way (e.g. the sign-in modal is open).
    The card also hides itself while the on-screen keyboard covers the page, so it never
    sits on top of a form the visitor is typing in. State is kept, so it appears again later. */
-export default function InstallPrompt({ suppressed = false }) {
+export default function InstallPrompt({ suppressed = false, waitForScroll = false }) {
   const { t, lang, flag } = useApp();
   const kb = useKeyboardInset();
   const hideCard = suppressed || kb.covered;
+  // R54: on the logged-out landing the card must not cover the hero CTAs on first paint.
+  // With waitForScroll it appears only after the visitor has scrolled ~one screen,
+  // so the first screen stays readable. No timer: a card that pops up later over the CTA is the same problem.
+  const [gateOpen, setGateOpen] = useState(!waitForScroll);
   const [deferred, setDeferred] = useState(null); // Android beforeinstallprompt event
   const [show, setShow] = useState(false);        // show the install card
   const [iosOpen, setIosOpen] = useState(false);  // iOS instructions modal
@@ -116,6 +120,16 @@ export default function InstallPrompt({ suppressed = false }) {
     };
   }, [enabled, t]);
 
+  // R54: open the scroll gate once the visitor has scrolled past the first screen.
+  useEffect(() => {
+    if (!waitForScroll || gateOpen) return undefined;
+    const open = () => setGateOpen(true);
+    const onScroll = () => { if (window.scrollY > window.innerHeight * 0.8) open(); };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [waitForScroll, gateOpen]);
+
   // 2) iOS has no event — show a gentle hint after a short delay if not snoozed.
   useEffect(() => {
     if (!enabled || isStandalone() || !isIOS() || isSnoozed()) return;
@@ -147,7 +161,7 @@ export default function InstallPrompt({ suppressed = false }) {
   return (
     <>
       {/* Install card (bottom sheet) */}
-      {show && !hideCard && (
+      {show && !hideCard && gateOpen && (
         <div className="pwa-install" role="dialog" aria-label={t("installTitle")}>
           <div className="pwa-install-icon" aria-hidden="true">
             <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">

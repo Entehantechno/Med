@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useApp } from "../context.jsx";
 import { useScrollLock } from "../utils/useScrollLock.js";
 import { TopBar } from "../components/UI.jsx";
@@ -14,7 +14,19 @@ function LoginModalShell({ onBackHome, children }) {
   // to the visible band (visualViewport) so the focused field and the submit
   // button stay above the keyboard instead of sliding underneath it.
   const kb = useKeyboardInset();
+  const overlayRef = useRef(null);
   const style = kb.covered ? { "--kb-top": `${kb.top}px`, "--kb-h": `${kb.height}px` } : undefined;
+  // The keyboard usually opens AFTER the field is focused, so onFocusCapture
+  // runs while kb.covered is still false. When the keyboard appears, centre the
+  // field that already has focus inside the visible band.
+  useEffect(() => {
+    if (!kb.covered) return undefined;
+    const el = document.activeElement;
+    const overlay = overlayRef.current;
+    if (!overlay || !el || !overlay.contains(el) || !el.matches?.("input, select, textarea")) return undefined;
+    const id = window.setTimeout(() => el.scrollIntoView?.({ block: "center", behavior: "smooth" }), 320);
+    return () => window.clearTimeout(id);
+  }, [kb.covered]);
   const onFocusCapture = (e) => {
     const el = e.target;
     if (!kb.covered || !el?.matches?.("input, select, textarea")) return;
@@ -23,6 +35,7 @@ function LoginModalShell({ onBackHome, children }) {
   };
   return (
     <div
+      ref={overlayRef}
       className={`login-modal-overlay${kb.covered ? " kb-covered" : ""}`}
       style={style}
       onFocusCapture={onFocusCapture}
