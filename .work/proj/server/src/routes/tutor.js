@@ -70,12 +70,15 @@ r.put("/settings", authRequired, requireRole("admin"), (req, res) => {
 });
 r.get("/context-settings", ...admin, (req, res) => {
   if (refuseCm(req, res)) return;
-  const uni = req.user.role === "teacher" ? (currentUniversityId(req.user) || -1) : null;
-  const classes = uni
-    ? db.prepare("SELECT id,name_fa,name_en,tutor_enabled,tutor_prompt FROM classes WHERE COALESCE(university_id,1)=? ORDER BY id DESC LIMIT 200").all(uni)
+  // Teachers see only the classes/exams they own, inside their own university.
+  // Admin sees everything.
+  const teacher = req.user.role === "teacher";
+  const uni = teacher ? (currentUniversityId(req.user) || -1) : null;
+  const classes = teacher
+    ? db.prepare("SELECT id,name_fa,name_en,tutor_enabled,tutor_prompt FROM classes WHERE owner_id=? AND COALESCE(university_id,1)=? ORDER BY id DESC LIMIT 200").all(req.user.id, uni)
     : db.prepare("SELECT id,name_fa,name_en,tutor_enabled,tutor_prompt FROM classes ORDER BY id DESC LIMIT 200").all();
-  const exams = uni
-    ? db.prepare("SELECT id,title_fa,title_en,tutor_enabled,tutor_prompt FROM exams WHERE university_id=? ORDER BY id DESC LIMIT 200").all(uni)
+  const exams = teacher
+    ? db.prepare("SELECT id,title_fa,title_en,tutor_enabled,tutor_prompt FROM exams WHERE owner_id=? AND university_id=? ORDER BY id DESC LIMIT 200").all(req.user.id, uni)
     : db.prepare("SELECT id,title_fa,title_en,tutor_enabled,tutor_prompt FROM exams ORDER BY id DESC LIMIT 200").all();
   res.json({ classes, exams });
 });
@@ -84,13 +87,17 @@ r.put("/context-settings", ...admin, (req, res) => {
   const b = req.body || {}, id = Number(b.contextId || 0);
   if (!id) return res.status(400).json({ error: "bad_id" });
   if (req.user.role === "teacher") {
+    // Owner-only: a teacher may change tutor settings only for their own
+    // class/exam in their own university.
     const uni = currentUniversityId(req.user) || -1;
     if (b.contextType === "class") {
-      const cl = db.prepare("SELECT university_id FROM classes WHERE id=?").get(id);
+      const cl = db.prepare("SELECT university_id,owner_id FROM classes WHERE id=?").get(id);
       if (!cl || cl.university_id !== uni) return res.status(403).json({ error: "wrong_university", stage: "access" });
+      if (Number(cl.owner_id) !== Number(req.user.id)) return res.status(403).json({ error: "not_owner", stage: "access" });
     } else if (b.contextType === "exam") {
-      const ex = db.prepare("SELECT university_id FROM exams WHERE id=?").get(id);
+      const ex = db.prepare("SELECT university_id,owner_id FROM exams WHERE id=?").get(id);
       if (!ex || ex.university_id !== uni) return res.status(403).json({ error: "wrong_university", stage: "access" });
+      if (Number(ex.owner_id) !== Number(req.user.id)) return res.status(403).json({ error: "not_owner", stage: "access" });
     }
   }
   if (!["class", "exam"].includes(b.contextType)) return res.status(400).json({ error: "bad_context" });

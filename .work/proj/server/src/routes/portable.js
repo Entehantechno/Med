@@ -1952,8 +1952,8 @@ export function createPortableRouter({ selectedUniversity }) {
   r.get(
     "/validate",
     authRequired,
-    requireRole("admin", "teacher"),
-    requirePerm("uni.content", "learn.data"),
+    requireRole("admin"),
+    requirePerm("learn.data"),
     (req, res) =>
       res.json({
         schema: "medschool.university-portable.v2",
@@ -1969,8 +1969,8 @@ export function createPortableRouter({ selectedUniversity }) {
   r.post(
     "/export",
     authRequired,
-    requireRole("admin", "teacher"),
-    requirePerm("uni.content", "learn.data"),
+    requireRole("admin"),
+    requirePerm("learn.data"),
     (req, res) => {
       const uni = selectedUniversity(req);
       if (!uni)
@@ -2009,8 +2009,8 @@ export function createPortableRouter({ selectedUniversity }) {
   r.post(
     "/validate",
     authRequired,
-    requireRole("admin", "teacher"),
-    requirePerm("uni.content", "learn.data"),
+    requireRole("admin"),
+    requirePerm("learn.data"),
     bundleUpload.single("bundle"),
     async (req, res) => {
       try {
