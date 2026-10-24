@@ -196,6 +196,19 @@ describe("blog markdown does not treat // as a relative URL", () => {
   });
 });
 
+describe("R55: blog image URLs cannot break out of the src attribute", () => {
+  it("does not let a quote inject an event handler into a standalone image", () => {
+    const html = renderMarkdown('![x](/a"onerror="alert`1`)');
+    expect(html).not.toMatch(/<img[^>]*\sonerror=/i);
+    expect(html).not.toMatch(/src="\/a"/);
+    expect(html).toMatch(/src="\/a&quot;onerror=&quot;alert`1`"/);
+  });
+  it("still renders a normal same-origin image and blocks javascript: URLs", () => {
+    expect(renderMarkdown("![x](/uploads/a.png)")).toMatch(/src="\/uploads\/a\.png"/);
+    expect(renderMarkdown("![x](javascript:alert(1))")).toMatch(/src="#"/);
+  });
+});
+
 describe("security headers & input validation (v65 hardening)", () => {
   it("sends Permissions-Policy denying sensors/payment/camera/mic", async () => {
     const res = await request(app).get("/api/health");

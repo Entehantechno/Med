@@ -14,7 +14,7 @@
    - 349 maps (100 internal Harrison + 221 non-internal + 28 basic/high-density) (see seedMindmapBank) — visually rich
 */
 
-import { db, persistNow } from "../db.js";
+import { db, persistNow, onDbReady } from "../db.js";
 import { isEnabled } from "./flags.js";
 
 export const MINDMAP_SYSTEMS = ["cardio","pulmo","gastro","nephro","endo","neuro","heme","rheum","infect","emergency","peds","obgyn","surgery","path","pharm","radio","ent","uro","ortho","psych","derm","ophth","stats","ethics","immuno","nutrition","genetics","anatomy","physio","biochem","histology","embryo","micro","biophys","physics","other"];
@@ -24,9 +24,7 @@ export const MINDMAP_BRANCHES = ["definition","etiology","patho","clinical","wor
 export const MINDMAP_FREE_DAILY_LIMIT = 5; // competitive: free gets 5 maps/day, premium unlimited
 
 // --- daily limit helpers (free tier) ---
-try {
-  db.exec(`CREATE TABLE IF NOT EXISTS mindmap_daily_views (user_id INTEGER NOT NULL, day TEXT NOT NULL, cnt INTEGER DEFAULT 0, PRIMARY KEY (user_id, day))`);
-} catch {}
+// R55: schema work is deferred until the database is open (see onDbReady in db.js).
 export function mindmapDailyInfo(userId) {
   const day = new Date().toISOString().slice(0,10);
   try {
@@ -393,8 +391,9 @@ export function importCSV(csv) {
   return { imported, errors };
 }
 
-// Ensure tables
-try {
+// Ensure tables (R55: run by ensureMindmapSchema once the DB is open)
+export function ensureMindmapSchema() {
+  db.exec(`CREATE TABLE IF NOT EXISTS mindmap_daily_views (user_id INTEGER NOT NULL, day TEXT NOT NULL, cnt INTEGER DEFAULT 0, PRIMARY KEY (user_id, day))`);
   db.exec(`
     CREATE TABLE IF NOT EXISTS mindmap_bank (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -427,7 +426,8 @@ try {
     );
     CREATE INDEX IF NOT EXISTS idx_mh_slug ON mindmap_history(slug);
   `);
-} catch {}
+}
+onDbReady(() => { try { ensureMindmapSchema(); } catch (e) { console.error("[mindmap] schema:", e.message); } });
 
 // Seed 50 high-yield Harrison-based mindmaps — idempotent, premium + free mix
 export function seedMindmapBank() {

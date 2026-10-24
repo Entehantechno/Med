@@ -210,9 +210,14 @@ export default function Login({ initialMode = "login", onBackHome, asModal = fal
             </>
           )}
 
-          <button data-testid="login-submit" type="submit" className="btn btn-primary btn-block" disabled={busy}>
-            {busy ? "…" : (mode === "login" ? t("enter") : t("signup"))}
-          </button>
+          {/* R55: the primary action is docked. While the keyboard is open the dock
+              sticks to the bottom of the visible band (see scroll-unlock.css), so the
+              submit button is always reachable above the keyboard, not only by scrolling. */}
+          <div className="login-submit-dock">
+            <button data-testid="login-submit" type="submit" className="btn btn-primary btn-block" disabled={busy}>
+              {busy ? "…" : (mode === "login" ? t("enter") : t("signup"))}
+            </button>
+          </div>
           </form>
 
           <div className="mt16" style={{ borderTop: "1px solid var(--border)", paddingTop: 14 }}>

@@ -107,6 +107,15 @@ html.overlay-open body{
   padding-bottom:10px !important;
 }
 .login-modal-overlay.kb-covered .login-modal-shell{ margin-block:0; }
+/* R55: keep the primary action inside the visible band while the keyboard is open. */
+.login-modal-overlay.kb-covered .login-submit-dock{
+  position:sticky;
+  bottom:0;
+  z-index:2;
+  margin-top:8px;
+  padding:8px 0 4px;
+  background:var(--card,#fff);
+}
 .login-modal-overlay.kb-covered .login-card{
   min-height:0 !important;
   justify-content:flex-start !important;

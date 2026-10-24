@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
    achievements, ads, and premium (simulated). */
 import { Router } from "express";
 import { searchPool, normalizeText, highlightRanges, snippet as searchSnippet, suggest as suggestValues } from "../lib/textsearch.js";
-import { db, persistNow } from "../db.js";
+import { db, persistNow, onDbReady } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import {
   getProfile, awardXp, loseHeart, refillHearts, maxHearts, heartRefillGems,
@@ -1586,8 +1586,8 @@ r.get("/mindmap/:slug", ...learner, flagGate("mindmap"), (req, res) => {
 });
 
 /* ---------------- MINDMAP BANK (premium) ---------------- */
-// seeded on first hit + at server boot
-try { seedMindmapBank(); } catch {}
+// seeded at server boot (R55: deferred until the DB is open) + on first hit
+onDbReady(() => { try { seedMindmapBank(); } catch (e) { console.error("[mindmap] seed:", e.message); } });
 // Facet vocab (for client filter UI)
 r.get("/mindmap-bank/facets", ...learner, (req, res) => {
   res.json({ facets: mindmapFacets() });

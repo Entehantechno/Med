@@ -19,6 +19,15 @@ describe("document scrolling is not trapped", () => {
     expect(css).toMatch(/\.login-modal-overlay/);
   });
 
+  it("R55: the auth submit dock sticks inside the visible band only while the keyboard is open", () => {
+    const css = read("scroll-unlock.css");
+    const login = read("pages/Login.jsx");
+    expect(login).toMatch(/className="login-submit-dock"/);
+    expect(login).toMatch(/data-testid="login-submit"/);
+    expect(css).toMatch(/\.login-modal-overlay\.kb-covered \.login-submit-dock\s*\{[^}]*position:\s*sticky/s);
+    expect(css).toMatch(/\.login-modal-overlay\.kb-covered \.login-submit-dock\s*\{[^}]*bottom:\s*0/s);
+  });
+
   it("is imported after the other stylesheets in main.jsx", () => {
     const main = read("main.jsx");
     const unlock = main.indexOf('import "./scroll-unlock.css"');

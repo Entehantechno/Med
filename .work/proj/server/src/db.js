@@ -247,6 +247,17 @@ export const db = {
 };
 
 // Must be called (and awaited) once before using `db`.
+/* R55: schema helpers must run once the database is open. Modules used to run
+   `db.exec(CREATE TABLE …)` at import time, before initDb() had set rawDb, so the
+   call threw and a `catch {}` hid it (mindmap tables were never created → HTTP 500
+   on /api/learn/mindmap-bank). Register such work here instead; it runs right after
+   initDb() opens the database. Registering after the DB is open runs immediately. */
+const readyHooks = [];
+export function onDbReady(fn) {
+  if (rawDb) { fn(); return; }
+  readyHooks.push(fn);
+}
+
 export async function initDb() {
   if (rawDb) return;
   SQL = await initSqlJs({ locateFile: () => wasmPath() });
@@ -266,6 +277,9 @@ export async function initDb() {
   // Upgrade safety: snapshot the EXISTING database before any migrations run,
   // so a bad upgrade can always be rolled back. No-op on a brand-new DB.
   try { autoBackup(); } catch { /* best-effort, never block startup */ }
+  for (const fn of readyHooks.splice(0)) {
+    try { fn(); } catch (e) { console.error("[db] ready hook failed:", e && e.message ? e.message : e); }
+  }
 }
 
 /* Copy the current medlab.db into DATA_DIR/backups with a timestamp, and keep

@@ -106,7 +106,9 @@ export function renderMarkdown(md) {
       const alt = imOnly[1];
       const raw = imOnly[2];
       const url = /^https?:\/\//i.test(raw) || (raw.startsWith("/") && !raw.startsWith("//")) ? raw : "#";
-      out.push(`<figure class="blog-figure"><img src="${url}" alt="${esc(alt)}" loading="lazy" />${alt ? `<figcaption>${esc(alt)}</figcaption>` : ""}</figure>`);
+      // R55: the URL must be escaped too. A value such as /a"onerror="alert`1` passes the
+      // "starts with /" check and would otherwise break out of the src attribute (stored XSS).
+      out.push(`<figure class="blog-figure"><img src="${esc(url)}" alt="${esc(alt)}" loading="lazy" />${alt ? `<figcaption>${esc(alt)}</figcaption>` : ""}</figure>`);
       i++; continue;
     }
 
