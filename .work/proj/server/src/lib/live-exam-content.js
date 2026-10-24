@@ -76,3 +76,24 @@ export function studentMaySeeFlashcard(userId, cardId) {
   if (!reserved.has(cid)) return true;
   return allowedReserved.has(cid);
 }
+
+/* May this student see the correct answer for `cardId` (the `reveal` flag on
+   /flashcards/check)? The client sends `reveal` from its own settings, so the
+   server must enforce the same policy: the site-wide exam setting must allow
+   it, and a live exam the student sits that uses this card must allow it too. */
+export function studentRevealAllowed(userId, cardId, globalShowCorrect = true) {
+  if (!globalShowCorrect) return false;
+  const cid = Number(cardId);
+  const now = Date.now();
+  const rows = db.prepare(
+    "SELECT id, flashcard_ids, show_correct, starts_at, ends_at FROM exams WHERE active=1 AND use_flashcards=1"
+  ).all();
+  for (const r of rows) {
+    if (!examStillLive(r, now)) continue;
+    if (!parseIds(r.flashcard_ids).includes(cid)) continue;
+    if (r.show_correct) continue;
+    const mine = db.prepare("SELECT 1 FROM exam_participants WHERE exam_id=? AND user_id=?").get(r.id, userId);
+    if (mine) return false;
+  }
+  return true;
+}

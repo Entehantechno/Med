@@ -26,23 +26,53 @@ function CountUp({ value, duration = 900, delay = 0 }) {
   return <>{n == null ? "—" : n}</>;
 }
 
+const LIVE_MS = 5000;
+
 /* Competition leaderboard: animated podium (top 3) + ranked list below. */
 export default function Leaderboard({ examId, meUserId, onClose }) {
   const { t, lang } = useApp();
   const [data, setData] = useState(null);
   const [err, setErr] = useState("");
   const [reveal, setReveal] = useState(false);
+  const [updatedAt, setUpdatedAt] = useState(null);
 
+  /* Live ranking: re-fetch every LIVE_MS while the tab is visible. The API
+     answers with an ETag (sendPrivateJson), so an unchanged board costs a
+     304 with no body. A failed poll keeps the last good board on screen. */
   useEffect(() => {
-    api.get(`/exams/${examId}/leaderboard`)
-      .then((d) => { setData(d); setTimeout(() => setReveal(true), 100); })
-      .catch((e) => setErr(String(e.message)));
+    let alive = true;
+    let inFlight = false;
+    let timer = null;
+    const load = () => {
+      if (!alive || inFlight) return;
+      if (typeof document !== "undefined" && document.hidden) return;
+      inFlight = true;
+      api.get(`/exams/${examId}/leaderboard`, { revalidate: true, timeoutMs: 15000 })
+        .then((d) => {
+          if (!alive) return;
+          if (d) setData(d);
+          setErr("");
+          setUpdatedAt(Date.now());
+          setReveal(true);
+        })
+        .catch((e) => { if (alive) setErr(String(e.message || e)); })
+        .finally(() => { inFlight = false; });
+    };
+    const schedule = () => { clearInterval(timer); timer = setInterval(load, LIVE_MS); };
+    const onVis = () => { if (!document.hidden) load(); };
+    load();
+    schedule();
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVis);
+    };
   }, [examId]);
 
   const name = (r) => (lang === "fa" ? r.name_fa : r.name_en) || r.student_no || "—";
 
-  if (err) return <div className="err-banner">{err}</div>;
-  if (!data) return <Spinner />;
+  if (!data) return err ? <div className="err-banner">{err}</div> : <Spinner />;
 
   const ranked = data.ranked || [];
   const top3 = ranked.slice(0, 3);
@@ -58,6 +88,12 @@ export default function Leaderboard({ examId, meUserId, onClose }) {
       <div className="lb-head">
         <h3><Icon name="trophy" size={16} /> {lang === "fa" ? data.exam.title_fa : data.exam.title_en}</h3>
         {onClose && <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>{t("close")}</button>}
+      </div>
+      <div className="small muted" role="status" aria-live="polite" style={{ margin: "-4px 0 10px" }}>
+        {err
+          ? (lang === "fa" ? "اتصال برای به‌روزرسانی قطع شد؛ نمایش آخرین رتبه‌بندی." : "Update failed; showing the last ranking.")
+          : (lang === "fa" ? `زنده · هر ${LIVE_MS / 1000} ثانیه به‌روز می‌شود` : `Live · refreshes every ${LIVE_MS / 1000}s`)}
+        {updatedAt ? ` · ${new Date(updatedAt).toLocaleTimeString(lang === "fa" ? "fa-IR" : "en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}` : ""}
       </div>
 
       {ranked.length === 0 ? (

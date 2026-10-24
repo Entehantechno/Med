@@ -3572,7 +3572,8 @@ function ClassLiveBoard({ classId, onClose }) {
   const load = () => {
     if (typeof document !== "undefined" && document.hidden) return;
     setBoardErr("");
-    api.get(`/classes/${classId}/live-board`, { revalidate: true }).then((d) => { if (d) setData(d); }).catch((e) => { setBoardErr(String(e.message || e)); setData({ __err: true, ranked: [] }); });
+    // A failed poll keeps the last good board on screen (with a warning) instead of blanking it.
+    api.get(`/classes/${classId}/live-board`, { revalidate: true, timeoutMs: 15000 }).then((d) => { if (d) setData(d); }).catch((e) => { setBoardErr(String(e.message || e)); setData((prev) => (prev && !prev.__err ? prev : { __err: true, ranked: [] })); });
   };
   useEffect(() => {
     load();
@@ -3584,7 +3585,7 @@ function ClassLiveBoard({ classId, onClose }) {
   const openDetail = async (row) => { setDetailFor(row); setDetail(null); try { setDetail(await api.get(`/classes/${classId}/live-board/${row.user_id}/details`)); } catch (e) { setDetail({ __err: true, message: String(e.message || e), attempts: [] }); } };
   const shell = (content) => full ? <div className="live-board-full">{content}</div> : <Modal title={fa ? "صفحه زنده رقابت کلاس" : "Live classroom board"} onClose={onClose} wide>{content}</Modal>;
   if (!data) return shell(<Spinner />);
-  if (data.__err || boardErr) return shell(<div className="card empty-state"><div className="ico">⚠️</div><h3>{boardErr || (fa ? "بارگذاری صفحه زنده شکست خورد" : "Live board failed")}</h3><button type="button" className="btn btn-ghost mt16" onClick={load}>{fa ? "تلاش دوباره" : "Retry"}</button></div>);
+  if (data.__err) return shell(<div className="card empty-state"><div className="ico">⚠️</div><h3>{boardErr || (fa ? "بارگذاری صفحه زنده شکست خورد" : "Live board failed")}</h3><button type="button" className="btn btn-ghost mt16" onClick={load}>{fa ? "تلاش دوباره" : "Retry"}</button></div>);
   const cl = data.class || {}, rows = data.ranked || [];
   const medal = (r) => r === 1 ? "🥇" : r === 2 ? "🥈" : r === 3 ? "🥉" : r;
   const content = <div className="live-board">
@@ -3592,6 +3593,7 @@ function ClassLiveBoard({ classId, onClose }) {
       <div className="live-board-title"><h2 style={{ margin: 0 }}>{fa ? cl.name_fa : cl.name_en}</h2><div className="small muted">{fa ? "به‌روزرسانی خودکار هر ۵ ثانیه؛ برای دیدن پاسخ‌ها روی نام دانشجو بزنید." : "Auto-refreshes every 5 seconds; click a student name to see answers."} · {(data.updatedAt || "").slice(11,19)}</div></div>
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}><button type="button" className="btn btn-ghost btn-sm" onClick={load}>{fa ? "به‌روزرسانی" : "Refresh"}</button><button type="button" className="btn btn-primary btn-sm" onClick={()=>setFull(!full)}>{full ? (fa ? "خروج از تمام‌صفحه" : "Exit full") : (fa ? "تمام‌صفحه برای تخته" : "Full screen")}</button>{full && <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>{fa ? "بستن" : "Close"}</button>}</div>
     </div>
+    {boardErr && <div className="err-banner small mb16">{fa ? "به‌روزرسانی ناموفق بود؛ آخرین داده‌ی دریافت‌شده نمایش داده می‌شود." : "Refresh failed; showing the last data received."}</div>}
     <div className="grid grid-3 mb16"><div className="card stat-card"><div className="num">{data.totals?.students || 0}</div><div className="lbl">{fa ? "دانشجو" : "Students"}</div></div><div className="card stat-card"><div className="num">{data.totals?.items || 0}</div><div className="lbl">{fa ? "فعالیت" : "Activities"}</div></div><div className="card stat-card"><div className="num">{rows.filter(r=>r.score!=null).length}</div><div className="lbl">{fa ? "شرکت‌کننده" : "Participants"}</div></div></div>
     <div className="live-board-grid">
             <VirtualList className="live-board-ranks" itemCount={rows.length} itemHeight={full ? 88 : 76} maxHeight={full ? 720 : 520}>{({ index, style }) => { const r = rows[index]; return <div style={style} className={`live-rank-row ${r.rank===1?'top1':''} ${detailFor?.user_id===r.user_id?'selected':''}`} key={r.user_id}><div className="live-rank-medal">{medal(r.rank)}</div><div><button type="button" className="live-rank-name" onClick={()=>openDetail(r)}>{r.displayName}</button><div className="small muted">{fa ? "پیشرفت" : "Progress"}: {r.done}/{r.total}{cl.live_board_speed && r.timeSec != null && (<span> · ⏱ {Math.floor(r.timeSec / 60)}:{String(r.timeSec % 60).padStart(2, "0")}</span>)}</div></div><div className="live-score">{r.score==null ? "—" : r.score}</div><div className="live-progress"><div className="pbar"><span style={{ width: `${r.progress || 0}%` }} /></div><div className="small muted">{r.progress || 0}%</div></div></div>; }}</VirtualList>

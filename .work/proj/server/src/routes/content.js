@@ -19,7 +19,7 @@ import { normalizeRubric } from "../lib/grading-rubric.js";
 import { resolveAiConfig } from "../lib/ai-engine.js";
 import { DEFAULT_LAB_TESTS, DEFAULT_IMAGING, DEFAULT_PARACLINIC, cleanOrderList } from "../data/order-catalog-defaults.js";
 import { studentSafeFlashcard, gradeFlashcard } from "../lib/flashcard-grade.js";
-import { studentMaySeeFlashcard, studentFlashcardAccess, caseInLiveExam } from "../lib/live-exam-content.js";
+import { studentMaySeeFlashcard, studentFlashcardAccess, caseInLiveExam, studentRevealAllowed } from "../lib/live-exam-content.js";
 import { sqlInList } from "../lib/http-cache.js";
 import { isLearnContent, caseIsLearn } from "../lib/content-track.js";
 import { policyRow, policyReadiness, referenceSnapshotForPolicy, publicReferenceSnapshot, sanitizeReferenceIds } from "../lib/reference-governance.js";
@@ -535,19 +535,25 @@ r.post("/flashcards/check", authRequired, (req, res) => {
     let full;
     try { full = parse(row); } catch { return res.status(404).json({ error: "not_found", stage: "evaluate" }); }
     const allowLegacy = ["teacher", "admin", "content_manager", "support"].includes(req.user.role);
+    let body = req.body || {};
     if (req.user.role === "learner") {
       if (full.track !== "learn") return res.status(403).json({ error: "university_only", stage: "evaluate" });
-      return res.json(flashcardLanguageFallback(gradeFlashcard(full, req.body || {}, { allowLegacy })));
+      return res.json(flashcardLanguageFallback(gradeFlashcard(full, body, { allowLegacy })));
     }
     if (req.user.role === "student") {
       const uni = currentUniversityId(req.user);
       if ((row.university_id || 1) !== uni) return res.status(403).json({ error: "wrong_university", stage: "evaluate" });
       if (!studentMaySeeFlashcard(req.user.id, id)) return res.status(403).json({ error: "not_in_window", stage: "evaluate" });
       if (full.track === "learn") return res.status(403).json({ error: "wrong_track", stage: "evaluate" });
+      // The client asks for the answer only when its settings allow it; the server must not
+      // trust that flag (it would otherwise hand out answers with showCorrect turned off).
+      if (body.reveal && !studentRevealAllowed(req.user.id, id, getSetting("exam", {}).showCorrect !== false)) {
+        body = { ...body, reveal: false };
+      }
     }
     if (req.user.role === "content_manager" || req.user.role === "support") {
       if (full.track !== "learn") return res.status(403).json({ error: "university_only", stage: "evaluate" });
-      return res.json(flashcardLanguageFallback(gradeFlashcard(full, req.body || {}, { allowLegacy })));
+      return res.json(flashcardLanguageFallback(gradeFlashcard(full, body, { allowLegacy })));
     }
     if (req.user.role === "teacher") {
       if (full.track === "learn") return res.status(403).json({ error: "wrong_track", stage: "evaluate" });
@@ -557,7 +563,7 @@ r.post("/flashcards/check", authRequired, (req, res) => {
         return res.status(403).json({ error: "wrong_owner", stage: "evaluate" });
       }
     }
-    res.json(flashcardLanguageFallback(gradeFlashcard(full, req.body || {}, { allowLegacy })));
+    res.json(flashcardLanguageFallback(gradeFlashcard(full, body, { allowLegacy })));
   } catch (e) {
     res.status(500).json({ error: "flashcard_check_failed", stage: "evaluate", message: String(e.message || e).slice(0, 200) });
   }

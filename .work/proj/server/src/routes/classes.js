@@ -133,8 +133,7 @@ r.get("/", authRequired, (req, res) => {
        WHERE m.user_id=? AND c.active=1 AND c.university_id=(SELECT university_id FROM users WHERE id=m.user_id) ORDER BY c.id DESC`
     ).all(req.user.id);
   } else if (req.user.role === "teacher") {
-    const uni = currentUniversityId(req.user);
-    classes = db.prepare("SELECT * FROM classes WHERE active=1 AND COALESCE(university_id,1)=? ORDER BY id DESC").all(uni || -1);
+    classes = db.prepare("SELECT * FROM classes WHERE active=1 AND owner_id=? AND COALESCE(university_id,1)=? ORDER BY id DESC").all(req.user.id, currentUniversityId(req.user) || 1);
   } else if (req.user.role === "admin") {
     classes = db.prepare("SELECT * FROM classes WHERE active=1 ORDER BY id DESC").all();
   } else if (req.user.role === "learner") {
@@ -174,8 +173,7 @@ r.get("/", authRequired, (req, res) => {
    MUST sit before /:id so "conversations" is not parsed as a class id. */
 r.get("/conversations", authRequired, requireRole("teacher", "admin"), (req, res) => {
   try {
-  const uni = req.user.role === "teacher" ? (currentUniversityId(req.user) || -1) : null;
-  const rows = uni
+  const rows = req.user.role === "teacher"
     ? db.prepare(
       `SELECT a.id, a.user_id, a.case_id, a.class_id, a.score, a.created_at, a.duration_sec,
               a.turns, a.tests, a.imaging_count, a.ddx_count,
@@ -187,9 +185,9 @@ r.get("/conversations", authRequired, requireRole("teacher", "admin"), (req, res
          JOIN classes c ON c.id = a.class_id
          JOIN users u ON u.id = a.user_id
          LEFT JOIN cases cs ON cs.id = a.case_id
-        WHERE a.type='vp' AND c.university_id=? AND c.active=1
+        WHERE a.type='vp' AND c.owner_id=? AND COALESCE(c.university_id,1)=? AND c.active=1
         ORDER BY a.id DESC LIMIT 250`
-    ).all(uni)
+    ).all(req.user.id, currentUniversityId(req.user) || 1)
     : db.prepare(
       `SELECT a.id, a.user_id, a.case_id, a.class_id, a.score, a.created_at, a.duration_sec,
               a.turns, a.tests, a.imaging_count, a.ddx_count,
@@ -259,9 +257,8 @@ function zonesFor(ans) {
 /* Inbox of student drawings awaiting teacher approve/reject.
    MUST sit before /:id so "drawing-inbox" is not parsed as a class id. */
 r.get("/drawing-inbox", authRequired, requireRole("teacher", "admin"), (req, res) => {
-  const uni = req.user.role === "teacher" ? (currentUniversityId(req.user) || -1) : null;
-  const classes = uni
-    ? db.prepare("SELECT id, name_fa, name_en, code FROM classes WHERE COALESCE(university_id,1)=? AND active=1").all(uni)
+  const classes = req.user.role === "teacher"
+    ? db.prepare("SELECT id, name_fa, name_en, code FROM classes WHERE owner_id=? AND COALESCE(university_id,1)=? AND active=1").all(req.user.id, currentUniversityId(req.user) || 1)
     : db.prepare("SELECT id, name_fa, name_en, code FROM classes WHERE active=1").all();
   const parseLocal = (s, fb) => { try { return JSON.parse(s || ""); } catch { return fb; } };
   const statusOf = (ans) => ans?.drawing?.approval?.status || (ans?.pendingApproval ? "pending" : "none");
@@ -308,7 +305,7 @@ r.get("/:id", authRequired, (req, res) => {
   try {
   const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(req.params.id);
   if (!cl) return res.status(404).json({ error: "not found", stage: "boot" });
-  if (req.user.role === "teacher" && cl.university_id !== currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university", stage: "access" });
+  if (req.user.role === "teacher" && !teacherOwnsClass(req.user, cl)) return res.status(403).json({ error: "wrong_university", stage: "access" });
   if (req.user.role === "learner") {
     return res.status(403).json({ error: "university_only", reason: "university_only", stage: "access" });
   }
@@ -507,9 +504,9 @@ r.put("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const { name_fa, name_en, desc_fa, desc_en, maxAttempts, gradingRole, historyForm,
           liveBoardEnabled, liveBoardAnonymous, logTranscript, studyId, gradingRubric,
           flashNoPenalty, liveBoardSpeed } = req.body || {};
-  const cur = db.prepare("SELECT name_fa,name_en,desc_fa,desc_en,max_attempts,exam_mode, timer_enabled, timer_minutes, grading_role, history_form, university_id, live_board_enabled, live_board_anonymous, log_transcript, study_id, grading_json, flash_no_penalty, live_board_speed FROM classes WHERE id=?").get(req.params.id);
+  const cur = db.prepare("SELECT name_fa,name_en,desc_fa,desc_en,max_attempts,exam_mode, timer_enabled, timer_minutes, grading_role, history_form, university_id, live_board_enabled, live_board_anonymous, log_transcript, study_id, grading_json, flash_no_penalty, live_board_speed, owner_id FROM classes WHERE id=?").get(req.params.id);
   if (!cur) return res.status(404).json({ error: "not found" });
-  if (req.user.role === "teacher" && cur.university_id !== currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university" });
+  if (req.user.role === "teacher" && !teacherOwnsClass(req.user, cur)) return res.status(403).json({ error: "wrong_university" });
   let settings;
   try { settings = classExamSettings(req.body || {}, cur); }
   catch (e) { return res.status(400).json({ error: "invalid_class_setting", field: e.message }); }
@@ -552,7 +549,7 @@ r.put("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
 r.delete("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(req.params.id);
   if (!cl) return res.status(404).json({ error: "not found", stage: "access" });
-  if (req.user.role === "teacher" && cl.university_id !== currentUniversityId(req.user)) {
+  if (req.user.role === "teacher" && !teacherOwnsClass(req.user, cl)) {
     return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
   durableTransaction(() => db.prepare("UPDATE classes SET active=0 WHERE id=?").run(req.params.id));
@@ -565,7 +562,7 @@ r.put("/:id/cases", authRequired, requireRole("teacher", "admin"), (req, res) =>
  if(!Array.isArray(list)||list.length>10000||list.some(x=>!x||!Number.isSafeInteger(x.case_id)||x.case_id<=0|| (x.weight!==undefined&&(!Number.isFinite(x.weight)||x.weight<=0))))return res.status(400).json({error:'invalid_content_selection'});
  const cl=db.prepare('SELECT * FROM classes WHERE id=?').get(req.params.id);
  if(!cl)return res.status(404).json({error:'not_found'});
- if(req.user.role==='teacher'&&cl.university_id!==currentUniversityId(req.user))return res.status(403).json({error:'wrong_university'});
+ if(req.user.role==='teacher'&&!teacherOwnsClass(req.user,cl))return res.status(403).json({error:'wrong_university'});
  try{
  const mapped=academicContentTransaction(()=>{
  const mapped=list.map(x=>({...x,case_id:academicCopy('cases',x.case_id,cl.university_id,req.user,cl.owner_id||req.user.id)}));
@@ -583,7 +580,7 @@ r.put("/:id/flashcards", authRequired, requireRole("teacher", "admin"), (req, re
  if(!Array.isArray(list)||list.length>10000||list.some(x=>!x||!Number.isSafeInteger(x.flashcard_id)||x.flashcard_id<=0|| (x.weight!==undefined&&(!Number.isFinite(x.weight)||x.weight<=0))))return res.status(400).json({error:'invalid_content_selection'});
  const cl=db.prepare('SELECT * FROM classes WHERE id=?').get(req.params.id);
  if(!cl)return res.status(404).json({error:'not_found'});
- if(req.user.role==='teacher'&&cl.university_id!==currentUniversityId(req.user))return res.status(403).json({error:'wrong_university'});
+ if(req.user.role==='teacher'&&!teacherOwnsClass(req.user,cl))return res.status(403).json({error:'wrong_university'});
  try{
  const mapped=academicContentTransaction(()=>{
  const mapped=list.map(x=>({...x,flashcard_id:academicCopy('flashcards',x.flashcard_id,cl.university_id,req.user,cl.owner_id||req.user.id)}));
@@ -744,7 +741,7 @@ r.put("/:id/members", authRequired, requireRole("teacher", "admin"), (req, res) 
   const cid = req.params.id;
   const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(cid);
   if (!cl) return res.status(404).json({ error: "not_found" });
-  if (req.user.role === "teacher" && cl.university_id !== currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university" });
+  if (req.user.role === "teacher" && !teacherOwnsClass(req.user, cl)) return res.status(403).json({ error: "wrong_university" });
   const result = durableTransaction(() => {
     const allowed=[]; const healed=[]; const blocked=[];
     for(const uid of userIds){
@@ -773,7 +770,7 @@ r.put("/:id/members", authRequired, requireRole("teacher", "admin"), (req, res) 
 r.post("/:id/members/resolve", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(req.params.id);
   if (!cl) return res.status(404).json({ error: "not_found" });
-  if (req.user.role === "teacher" && cl.university_id !== currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university" });
+  if (req.user.role === "teacher" && !teacherOwnsClass(req.user, cl)) return res.status(403).json({ error: "wrong_university" });
   const raw = Array.isArray(req.body?.studentNos) ? req.body.studentNos : splitStudentNos(req.body?.studentNos);
   const names = req.body?.names || {};
   const createMissing = !!req.body?.createMissing;
@@ -813,7 +810,7 @@ const parseJson = (s, fb) => { try { return JSON.parse(s || ""); } catch { retur
 function drawingStatus(ans) { return ans?.drawing?.approval?.status || (ans?.pendingApproval ? "pending" : "none"); }
 r.get("/:id/drawing-reviews", authRequired, requireRole("teacher", "admin"), (req,res)=>{
   const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(req.params.id); if(!cl) return res.status(404).json({error:"not_found"});
-  if (req.user.role === "teacher" && cl.university_id !== currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university" });
+  if (req.user.role === "teacher" && !teacherOwnsClass(req.user, cl)) return res.status(403).json({ error: "wrong_university" });
   const rows = db.prepare(`SELECT a.*,u.name_fa,u.name_en,u.student_no FROM class_flashcard_attempts a LEFT JOIN users u ON u.id=a.user_id WHERE a.class_id=? ORDER BY a.id DESC`).all(cl.id);
   const reviews=[];
   for(const row of rows){ const answers=parseJson(row.answers_json,[]); (Array.isArray(answers)?answers:[]).forEach((ans,idx)=>{ if(ans?.type==='drawing' && ans.drawing?.preview) reviews.push({source:'class', attemptId:row.id, answerIndex:idx, classId:cl.id, card_id:ans.card_id, order:ans.order, student:{id:row.user_id,name_fa:row.name_fa,name_en:row.name_en,student_no:row.student_no}, score:row.score, question_fa:ans.question_fa, question_en:ans.question_en, proposedPoints:ans.proposedPoints||0, points:ans.points||0, status:drawingStatus(ans), drawing:ans.drawing, created_at:row.created_at, zones:(()=>{const d=drawingCardFor(ans.card_id)?.drawing; return d&&drawingAssistEnabled(d)?(d.zones||[]):[];})(), assist:assistFor(ans)}); }); }
@@ -826,7 +823,7 @@ const drawingReviewSchema = {
 };
 r.post("/:id/drawing-reviews/:attemptId/:answerIndex", authRequired, requireRole("teacher", "admin"), validateBody(drawingReviewSchema), (req,res)=>{
   const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(req.params.id); if(!cl) return res.status(404).json({error:"not_found"});
-  if (req.user.role === "teacher" && cl.university_id !== currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university" });
+  if (req.user.role === "teacher" && !teacherOwnsClass(req.user, cl)) return res.status(403).json({ error: "wrong_university" });
   const at=db.prepare("SELECT * FROM class_flashcard_attempts WHERE id=? AND class_id=?").get(req.params.attemptId, cl.id); if(!at) return res.status(404).json({error:"attempt_not_found"});
   const answers=parseJson(at.answers_json,[]); const idx=Number(req.params.answerIndex), ans=answers[idx]; if(!ans||ans.type!=="drawing") return res.status(404).json({error:"drawing_not_found"});
   const prev=Number(ans.points||0), proposed=Math.max(0, Number(req.body?.points ?? ans.proposedPoints ?? (ans.drawing?.pointsFrac ?? 0) * 100)||0);
@@ -945,7 +942,7 @@ function classAnalyticsPayload(cl, { allItems = false } = {}) {
 r.get("/:id/analytics", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(req.params.id);
   if (!cl) return res.status(404).json({ error: "not_found" });
-  if (req.user.role === "teacher" && cl.university_id !== currentUniversityId(req.user)) return res.status(403).json({ error: "wrong_university" });
+  if (req.user.role === "teacher" && !teacherOwnsClass(req.user, cl)) return res.status(403).json({ error: "wrong_university" });
   res.json(classAnalyticsPayload(cl));
 });
 
@@ -956,7 +953,7 @@ r.get("/:id/analytics.csv", authRequired, requireRole("teacher", "admin"), (req,
   try {
     const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(req.params.id);
     if (!cl) return res.status(404).json({ error: "not_found" });
-    if (req.user.role === "teacher" && cl.university_id !== currentUniversityId(req.user)) {
+    if (req.user.role === "teacher" && !teacherOwnsClass(req.user, cl)) {
       return res.status(403).json({ error: "wrong_university" });
     }
     const fa = (req.query.lang || "fa") !== "en";
@@ -973,15 +970,18 @@ r.get("/:id/analytics.csv", authRequired, requireRole("teacher", "admin"), (req,
 /* ---- Teacher/admin: review a student's attempts in this class, INCLUDING the
    full AI conversation transcript + the section-by-section evaluation, so they
    can verify the AI's scoring and the student's history-taking. ---- */
+/* A teacher works only on classes they own, inside their own university
+   (a NULL university_id is the default university 1). Colleagues — even in the
+   same university — get no access. */
+function teacherOwnsClass(user, cl) {
+  if (!cl || !user || user.role !== "teacher") return false;
+  if (cl.owner_id !== user.id) return false;
+  return Number(cl.university_id || 1) === Number(currentUniversityId(user) || 1);
+}
 function canManageClass(user, cl) {
   if (!cl) return false;
   if (user.role === "admin") return true;
-  if (user.role !== "teacher") return false;
-  // Same-university teachers with class access can review transcripts and
-  // export logs — owner-only was blocking co-teachers from giving feedback.
-  const uni = currentUniversityId(user);
-  if (uni && cl.university_id === uni) return true;
-  return cl.owner_id === user.id;
+  return teacherOwnsClass(user, cl);
 }
 
 /* ---- Teacher display: live classroom competition board.

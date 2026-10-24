@@ -41,6 +41,7 @@ const parseExam = (row) => ({
   show_ai: !!row.show_ai, show_micro: !!row.show_micro,
   log_transcript: !!row.log_transcript, study_id: row.study_id || null,
   university_id: row.university_id || null,
+  owner_id: row.owner_id || null,   // staff ownership check; stripped from student responses
 });
 
 function windowState(exam, now = Date.now()) {
@@ -76,7 +77,8 @@ function createStudentForUniversity({ sno, name = "", universityId }) {
 }
 function canManageExam(user, ex) {
   if (user.role === "admin") return true;
-  return user.role === "teacher" && ex.university_id === currentUniversityId(user);
+  // Teachers manage only the exams they created (co-teachers of the same university do not).
+  return user.role === "teacher" && !!ex && ex.owner_id === user.id;
 }
 
 /* ---- List exams ----
@@ -107,7 +109,7 @@ r.get("/", authRequired, (req, res) => {
       const exhausted = (hasCases || hasFlash)
         && (!hasCases || vpUsed >= maxA)
         && (!hasFlash || flashUsed >= maxA);
-      const { case_ids, flashcard_ids, ...pub } = ex;
+      const { case_ids, flashcard_ids, ...pub } = ex; delete pub.owner_id;
       return { ...pub, state: windowState(ex), attemptsUsed: used, vpAttemptsUsed: vpUsed, flashAttemptsUsed: flashUsed, exhausted };
     });
     return res.json(out);
@@ -119,7 +121,7 @@ r.get("/", authRequired, (req, res) => {
     return res.status(403).json({ error: "forbidden", stage: "access" });
   }
   const rows = req.user.role === "teacher"
-    ? db.prepare("SELECT * FROM exams WHERE active=1 AND university_id=? ORDER BY id DESC").all(currentUniversityId(req.user) || -1)
+    ? db.prepare("SELECT * FROM exams WHERE active=1 AND owner_id=? ORDER BY id DESC").all(req.user.id)
     : db.prepare("SELECT * FROM exams WHERE active=1 ORDER BY id DESC").all();
   const nBy = new Map();
   if (rows.length) {
@@ -146,6 +148,9 @@ r.get("/:id", authRequired, (req, res) => {
   if (req.user.role === "learner") {
     return res.status(403).json({ error: "university_only", reason: "university_only", stage: "access" });
   }
+  if (req.user.role === "teacher" && !canManageExam(req.user, row)) {
+    return res.status(403).json({ error: "not_owner", stage: "access" });
+  }
 
   if (req.user.role === "student") {
     if (!ex.active) return res.status(404).json({ error: "not found", stage: "exam" });
@@ -162,7 +167,7 @@ r.get("/:id", authRequired, (req, res) => {
     // settings (classes are not involved in scheduled exams).
     const flashNoPenalty = effectiveFlashNoPenalty(null, row.university_id);
     if (state !== "open") {
-      const { case_ids, flashcard_ids, ...safe } = ex;
+      const { case_ids, flashcard_ids, ...safe } = ex; delete safe.owner_id;
       return res.json({ ...safe, case_ids: [], flashcard_ids: [], state, attemptsUsed: used, vpAttemptsUsed: vpUsed, flashAttemptsUsed: flashUsed, cases: [], locked: true, flashNoPenalty });
     }
     const caseWant = sqlInList(ex.case_ids || []);
@@ -192,11 +197,12 @@ r.get("/:id", authRequired, (req, res) => {
     const vpExhausted = hasCases && vpUsed >= maxA;
     const flashExhausted = hasFlash && flashUsed >= maxA;
     if ((!hasCases || vpExhausted) && (!hasFlash || flashExhausted) && (hasCases || hasFlash)) {
-      const { case_ids, flashcard_ids, ...safe } = ex;
+      const { case_ids, flashcard_ids, ...safe } = ex; delete safe.owner_id;
       return res.json({ ...safe, case_ids: [], flashcard_ids: [], state, attemptsUsed: used, vpAttemptsUsed: vpUsed, flashAttemptsUsed: flashUsed, cases: [], locked: true, lockReason: "attempts", flashNoPenalty });
     }
+    const { owner_id: _ownerId, ...exPublic } = ex;
     return res.json({
-      ...ex,
+      ...exPublic,
       flashcard_ids: flashExhausted ? [] : flashcard_ids,
       state, attemptsUsed: used, vpAttemptsUsed: vpUsed, flashAttemptsUsed: flashUsed,
       cases: vpExhausted ? [] : cases, locked: false,

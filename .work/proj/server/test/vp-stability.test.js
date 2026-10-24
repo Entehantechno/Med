@@ -265,8 +265,8 @@ describe("class rubric override actually changes the intern score", () => {
   });
 });
 
-describe("same-university teachers can review a class they did not create", () => {
-  it("peer teacher can fetch the conversation CSV of a classmate's class", async () => {
+describe("a teacher's classes are visible only to its owner and admin", () => {
+  it("peer teacher (same university) cannot fetch the conversation CSV of another teacher's class", async () => {
     const ttk = await token("teacher");
     const atk = await token("admin");
     const peerName = `teacher_peer_${Date.now()}`;
@@ -287,8 +287,12 @@ describe("same-university teachers can review a class they did not create", () =
     });
     const ptk = await token(peerName, "demo");
     const csv = await request(app).get(`/api/classes/${cid}/conversation-log.csv`).set(A(ptk));
-    expect(csv.status).toBe(200);
-    expect(csv.text).toContain("student_msg");
+    expect(csv.status).toBe(403);
+    const own = await request(app).get(`/api/classes/${cid}/conversation-log.csv`).set(A(ttk));
+    expect(own.status).toBe(200);
+    expect(own.text).toContain("student_msg");
+    const adm = await request(app).get(`/api/classes/${cid}/conversation-log.csv`).set(A(atk));
+    expect(adm.status).toBe(200);
   });
 });
 

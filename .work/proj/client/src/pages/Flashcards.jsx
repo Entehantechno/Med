@@ -503,7 +503,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
               {state.fb === "bad" && <div className="ddle-banner bad">{t("incorrect")}</div>}
               {state.fb === "ok" && <div className="ddle-banner ok">✓ {t("correct")}</div>}
               {state.revealed && settings.showCorrect && (
-                <div className="ddle-banner bad">{t("correctAnswerWas")} <b>{(() => { const c = (card.options || []).find((o) => o.correct); return c ? (lang === "fa" ? c.fa : c.en) : "—"; })()}</b></div>
+                <div className="ddle-banner bad">{t("correctAnswerWas")} <b>{(() => { const c = (state.correctIndex != null ? (card.options || [])[state.correctIndex] : null) || (card.options || []).find((o) => o.correct); return c ? (lang === "fa" ? c.fa : c.en) : "—"; })()}</b></div>
               )}
 
               {/* Search + Submit */}
