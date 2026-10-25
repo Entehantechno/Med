@@ -39,9 +39,9 @@
 - 140021114031 — امیرمهدی سلطانی
 
 ## فایل‌های مرتبط
-- اسکریپت: `.work/proj/scripts/import-arak-from-word.js` + `extract-word.py`
+- اسکریپت: `scripts/import-arak-from-word.js` + `extract-word.py`
 - گزارش JSON: `ARAK-IMPORT-REPORT-2026-10-04.json`
 - دیتابیس sandbox: `.work/medschool-data/medlab.db` (1.1M) — قابل `persistNow` و بک‌آپ
 
 ## قابلیت تکرار
-اسکریپت `node .work/proj/scripts/import-arak-from-word.js` را روی سرور پروداکشن (که `DATA_DIR` واقعی را دارد) اجرا کنید — به‌صورت idempotent هم دمو را پاک و هم اراک را upsert می‌کند.
+اسکریپت `node scripts/import-arak-from-word.js` را روی سرور پروداکشن (که `DATA_DIR` واقعی را دارد) اجرا کنید — به‌صورت idempotent هم دمو را پاک و هم اراک را upsert می‌کند.

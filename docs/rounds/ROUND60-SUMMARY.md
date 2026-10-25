@@ -32,7 +32,7 @@
 
 | مسیر | کاربرد |
 | --- | --- |
-| `.work/proj/docs/round60-open-evidence.json` | دفتر ساخت‌یافتهٔ شواهد، ۱۵ ردیف و پیوند منابع |
+| `docs/round60-open-evidence.json` | دفتر ساخت‌یافتهٔ شواهد، ۱۵ ردیف و پیوند منابع |
 | `.work/round60-open-evidence/evidence-brief.md` | گزارش خوانا و فارسی برای تصمیم تحریریه |
 | `.work/round60-open-evidence/open-records.md` | تصویر محافظت‌شدهٔ متن، گزینه‌ها، کلید فعلی و اثرانگشت هر ۱۵ ردیف |
 | `.work/round60-open-evidence/curate_round60.py` | مولد تکرارپذیرِ خروجی؛ فقط خواندنی برای payloadها |

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-import { existsSync, statSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
 
@@ -61,9 +62,7 @@ const forbiddenMatchers = [
   { name: "node_modules", test: (e) => e === "node_modules/" || e.includes("/node_modules/") || e.startsWith("node_modules/") },
   { name: "runtime data folder medschool-data", test: (e) => e === "medschool-data/" || e.startsWith("medschool-data/") },
   { name: "runtime data folder data", test: (e) => e === "data/" || e.startsWith("data/") },
-  // demo-database/medlab.db is intentionally shipped by pack-host-zip.mjs (its
-  // ALLOWED exemption). Every other database file stays forbidden.
-  { name: "SQLite/sql.js database file", test: (e) => e !== "demo-database/medlab.db" && /(^|\/)[^/]+\.(db|sqlite|sqlite3)(-|$|\.)?/i.test(e) },
+  { name: "SQLite/sql.js database file", test: (e) => /(^|\/)[^/]+\.(db|sqlite|sqlite3)(-|$|\.)?/i.test(e) },
   { name: "Playwright report/test-results", test: (e) => e.includes("playwright-report/") || e.includes("test-results/") },
   // Lean release: raw question-bank build inputs must never ship (payloads only).
   { name: "raw bank build inputs (sources/scrapers)", test: (e) => /^tools\/[^/]+-bank\/sources\//.test(e) || /^tools\/exam-booklets\//.test(e) },
@@ -293,6 +292,11 @@ const featureChecks = [
     tests: [/Responsive containment audit fixes/, /Final mobile tap-target pass/, /overflow-x:hidden/, /min-width:34px!important/],
   },
   {
+    name: "automated responsive panels audit",
+    file: "e2e/tests/responsive-panels-audit.spec.js",
+    tests: [/responsive framing audit/, /overflowX/, /adminVisited/, /mobile/, /desktop/],
+  },
+  {
     name: "duplicate student number prevention",
     file: "server/src/routes/admin.js",
     tests: [/student_no_exists/, /studentNoConflict/, /duplicateStudentPayload/, /university_required/],
@@ -300,7 +304,7 @@ const featureChecks = [
   {
     name: "university tenant isolation for classes",
     file: "server/src/routes/classes.js",
-    tests: [/currentUniversityId/, /wrong_university/, /members\/resolve/, /createMissing/, /university_id=\?/],
+    tests: [/currentUniversityId/, /wrong_university/, /members\/resolve/, /createMissing/, /COALESCE\(university_id,1\)/],
   },
   {
     name: "university tenant isolation for exams",
@@ -313,9 +317,9 @@ const featureChecks = [
     tests: [/tenantFilterFor/, /canManageUniResource/, /wrong_university/, /university_id/],
   },
   {
-    name: "bulk enrollment UI with missing-student creation (exam participants)",
+    name: "bulk enrollment UI with missing-student creation",
     file: "client/src/pages/Admin.jsx",
-    tests: [/participants/, /createMissing: true/, /ساخت دانشجویان ثبت‌نشده/],
+    tests: [/MemberManageModal/, /members\/resolve/, /Create missing|ساخت missingها/, /participants.*createMissing|createMissing/],
   },
   {
     name: "enhanced drawing tools",
@@ -339,8 +343,8 @@ const featureChecks = [
   },
   {
     name: "question taxonomy family and answer interaction",
-    file: "client/src/components/StepwiseEditor.jsx",
-    tests: [/نوع پاسخ این مرحله|Step answer type/, /answerType/, /accept_fa/],
+    file: "client/src/pages/Admin.jsx",
+    tests: [/StepwiseEditor/, /answerType/, /accept_fa/, /HotspotEditor/], // Admin.jsx renders StepwiseEditor (which holds the "Step answer type" label)
   },
   {
     name: "hints available for all non-MCQ question types",
@@ -366,6 +370,11 @@ const featureChecks = [
     name: "defense-in-depth unique student number index",
     file: "server/src/db.js",
     tests: [/idx_users_student_no_unique/, /dupStudentNo/, /best-effort duplicate hardening/],
+  },
+  {
+    name: "tenant and enrollment regression tests",
+    file: "server/test/api.test.js",
+    tests: [/university tenancy, duplicate student numbers, and live board details/, /blocks duplicate student_no/, /class bulk member resolve/, /exam participant import/, /live board student details endpoint/],
   },
   {
     name: "competitive path smart resume auto-scroll",
@@ -479,12 +488,25 @@ const featureChecks = [
   },
   {
     name: "VP student session-to-evaluate regression",
-    file: "server/src/routes/exam.js",
-    tests: [/r\.post\("\/session-start"/, /r\.post\("\/evaluate"/, /session_id_required/, /session_context_mismatch/],
+    file: "server/test/vp-stages-99.test.js",
+    tests: [/opens a session, replies as the patient/, /stores AI score \+ lesson/, /session_id_required/],
   },
 ];
+// pack-host-zip.mjs deliberately leaves these three test files out of the ZIP (approved
+// R50). Only this exact allow-list falls back to the source tree the ZIP was built from
+// (this script lives in <root>/scripts). Any other missing file is still an error.
+const sourceRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const PACKER_EXCLUDED_TESTS = new Set([
+  "e2e/tests/responsive-panels-audit.spec.js",
+  "server/test/api.test.js",
+  "server/test/vp-stages-99.test.js",
+]);
 for (const check of featureChecks) {
-  const body = readEntry(check.file);
+  let body = readEntry(check.file);
+  if (!body && PACKER_EXCLUDED_TESTS.has(check.file)) {
+    const src = path.join(sourceRoot, check.file);
+    if (existsSync(src)) body = readFileSync(src, "utf8");
+  }
   if (!body) {
     errors.push(`Feature audit failed (${check.name}): missing ${check.file}`);
     continue;

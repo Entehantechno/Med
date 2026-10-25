@@ -67,7 +67,7 @@
 
 | مسیر | کاربرد |
 | --- | --- |
-| `.work/proj/docs/round62-legacy-review.json` | dossier ماشین‌خوانِ ۶۴ ردیف، snapshot، تصمیم، اولویت، مرجع و هش حفاظت‌شده |
+| `docs/round62-legacy-review.json` | dossier ماشین‌خوانِ ۶۴ ردیف، snapshot، تصمیم، اولویت، مرجع و هش حفاظت‌شده |
 | `.work/round62-legacy-review/legacy-queue-review-brief.md` | گزارش فارسیِ ردیف‌به‌ردیف با استدلال و پیوند مستقیم منبع |
 | `.work/round62-legacy-review/curate_round62.py` | مولد بازتولیدپذیر و فقط‌خواندنی dossier/brief |
 | `.work/round62-legacy-review/test_round62.py` | آزمون حفاظت payload، پوشش ۶۴تایی، breakdown و عدم‌اعمال |

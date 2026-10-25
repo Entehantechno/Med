@@ -56,7 +56,7 @@
 
 | مسیر | کاربرد |
 | --- | --- |
-| `.work/proj/docs/round61-remaining-review.json` | دفتر ماشین‌خوانِ ۲۷ ردیف، شواهد، شرایط بازیابی و شمارش کل صف |
+| `docs/round61-remaining-review.json` | دفتر ماشین‌خوانِ ۲۷ ردیف، شواهد، شرایط بازیابی و شمارش کل صف |
 | `.work/round61-remaining-review/remaining-review-brief.md` | گزارش فارسی مسیر و شواهد هر ردیف |
 | `.work/round61-remaining-review/curate_round61.py` | مولد بازتولیدپذیر و فقط‌خواندنیِ دفتر |
 | `.work/round61-remaining-review/test_round61_remaining_review.py` | آزمون حفاظت از payload، پوشش کامل و صحت دسته‌بندی |

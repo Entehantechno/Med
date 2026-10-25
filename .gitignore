@@ -1,15 +1,29 @@
-# Extracted copies of the unchanged question-bank data live in the delivery ZIP.
-# Restore them for local development with scripts/restore-question-bank.py.
-.work/
-# Temporary unpacking of supplementary documents from the previous delivery.
-.work/extract/
-# Runtime/test data and dependencies must not be part of the source patch.
-**/node_modules/
-**/dist/
-**/__pycache__/
+# ---- dependencies & build output -------------------------------------------
+node_modules/
+dist/
+__pycache__/
 *.pyc
-.work/medschool-data/
-**/.env
-**/*.db
-**/*.db-wal
-**/*.db-shm
+
+# ---- secrets, databases, uploads, backups ----------------------------------
+.env
+*.db
+*.db-shm
+*.db-wal
+server/uploads/img_*
+backups/
+.work/
+
+# ---- QA / test output (regenerated on every run, never shipped) ------------
+qa-artifacts/
+qa-shots/
+e2e-data/
+test-results/
+playwright-report/
+
+# ---- large generated artefacts ---------------------------------------------
+# The chunked import payloads are the real artefact; the single-file copy is a
+# 4 MB duplicate of them and is no longer written by to_import.py.
+tools/neurology-bank/import-payload.json
+
+# OS noise
+.DS_Store

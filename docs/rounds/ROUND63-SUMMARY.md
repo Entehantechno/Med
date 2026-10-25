@@ -68,7 +68,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 .work/round63-rewrite-specification/test_round
 
 ## پرونده‌های تحویلی
 
-- `.work/proj/docs/round63-rewrite-specification.json` — dossier قابل‌پردازش با ۲۷ قرارداد بازنویسی و registry منبع‌ها.
+- `docs/round63-rewrite-specification.json` — dossier قابل‌پردازش با ۲۷ قرارداد بازنویسی و registry منبع‌ها.
 - `.work/round63-rewrite-specification/curate_round63.py` — مولد فقط‌خواندنی و بازتولیدپذیر.
 - `.work/round63-rewrite-specification/test_round63.py` — آزمون regression.
 - `.work/round63-rewrite-specification/rewrite-specification-brief.md` — brief فارسیِ خوانا.

@@ -131,7 +131,7 @@
 
 ## ۶) وضعیت شاخه و فایل‌ها
 
-- تغییرات در `.work/proj/` (پروژه) و این گزارش در `.work/APP-ROUND60-REPORT.md`.
+- تغییرات در `` (پروژه) و این گزارش در `.work/APP-ROUND60-REPORT.md`.
 - فایل‌های جدید:
   - `client/src/lib/match-pairs.js`، `match-pairs.test.js`
   - `client/src/styles-r60.css`

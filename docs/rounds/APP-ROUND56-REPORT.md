@@ -76,9 +76,9 @@
 - **Compression/cache:** `compression` با threshold ۱۰۲۴ بایت؛ فایل‌های precompressed `.br/.gz` سرو می‌شوند؛ کش‌ها درست تنظیم شده‌اند.
 
 ### ۲.۷ کلید پاسخ بانک — اعمال بستهٔ R58 (با تأیید شما)
-- ابزار: `.work/proj/tools/apply_round58_keys.py` با `--apply --include-outdated` (ابتدا dry-run تأیید شد).
+- ابزار: `tools/apply_round58_keys.py` با `--apply --include-outdated` (ابتدا dry-run تأیید شد).
 - **۶۴ جابه‌جایی `correct_index`** (۵۸ اصلاح تأییدشده + ۶ ردیف منسوخ) روی فایل‌های payload بخش‌های ۲۳، ۲۴، ۲۵، ۲۷، ۲۸، ۲۹ اعمال شد.
-- حسابرسی: `.work/proj/docs/round58-key-application.json` (هش پیش/پس هر فایل و from/to هر ردیف).
+- حسابرسی: `docs/round58-key-application.json` (هش پیش/پس هر فایل و from/to هر ردیف).
 - متن پرسش، گزینه‌ها و فیلدهای دیگر دست‌نخورده‌اند؛ فقط کلید تغییر کرده است.
 - نتیجه: دو تست `round58 remediation pack` از قرمز به سبز تغییر کردند.
 
