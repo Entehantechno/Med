@@ -571,9 +571,6 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
       setEvalRes(res); setPhase("report");
       // Keep the generated report in the browser cache (generation language).
       cacheGeneratedReport({ attemptId: res?.attemptId, lang: res?.reportLang || lang, evaluation: res }).catch(() => {});
-      if (user?.role === "learner" && !classId && !examId) {
-        api.post("/learn/vpatient/daily-reward", { caseId }, { timeoutMs: 15_000, stage: "report" }).catch(() => {});
-      }
     } catch (e) {
       if (generation !== encounterGeneration.current) return;
       const stage = e?.data?.stage || (e?.status === 401 ? "auth" : "evaluate");
