@@ -183,7 +183,7 @@ function AppInner() {
     else if (route.name === "exams") page = <StudentExams go={go} home={home} />;
     else if (route.name === "caseList") page = <CaseList go={go} home={home} />;
     else if (route.name === "exam") page = <Exam caseId={route.caseId} classId={route.classId} examId={route.examId} examDuration={route.examDuration} untimed={route.untimed} antiCheat={route.antiCheat} go={go} home={home} />;
-    else if (route.name === "flashcards") page = <Flashcards examId={route.examId} flashcardIds={route.flashcardIds} examDuration={route.examDuration} shuffle={route.shuffle} antiCheat={route.antiCheat} competition={route.competition} classId={route.classId} classFlashcardId={route.classFlashcardId} classCombined={route.classCombined} showCorrect={route.showCorrect} showHints={route.showHints} noPenalty={route.noPenalty} go={go} home={home} />;
+    else if (route.name === "flashcards") page = <Flashcards examId={route.examId} flashcardIds={route.flashcardIds} examDuration={route.examDuration} shuffle={route.shuffle} antiCheat={route.antiCheat} competition={route.competition} classId={route.classId} classFlashcardId={route.classFlashcardId} classCombined={route.classCombined} showCorrect={route.showCorrect} showHints={route.showHints} noPenalty={route.noPenalty} allowBack={route.allowBack} allowChange={route.allowChange} go={go} home={home} />;
     else page = <StudentHome go={go} />;
   } else {
     page = <Admin home={home} />;

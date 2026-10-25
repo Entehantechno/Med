@@ -12,14 +12,11 @@ function norm(s) {
     .replace(/[ًٌٍَُِّْ]/g, "").replace(/\s+/g, " ").trim();
 }
 
-export default function SearchAnswer({ options, lang, disabled, onPick, placeholder, clearOnPick, withSubmit }) {
+export default function SearchAnswer({ options, lang, disabled, onPick, placeholder, clearOnPick }) {
   const { t } = useApp();
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [hi, setHi] = useState(0);
-  // In withSubmit mode, selecting from autocomplete should NOT grade/submit yet.
-  // The user's answer is committed only when they press the explicit submit button.
-  const [pending, setPending] = useState(null);
   const boxRef = useRef(null);
 
   // Each option carries BOTH languages: `label` (primary, chosen language) and
@@ -51,7 +48,7 @@ export default function SearchAnswer({ options, lang, disabled, onPick, placehol
   }, [q, items]);
 
   useEffect(() => { setHi(0); }, [q]);
-  useEffect(() => { setPending(null); setQ(""); }, [options, lang]);
+  useEffect(() => { setQ(""); }, [options, lang]);
   useEffect(() => {
     const onDoc = (e) => { if (boxRef.current && !boxRef.current.contains(e.target)) setOpen(false); };
     document.addEventListener("mousedown", onDoc);
@@ -60,10 +57,11 @@ export default function SearchAnswer({ options, lang, disabled, onPick, placehol
 
   const pick = (it) => {
     if (!it) return;
-    setQ(clearOnPick && !withSubmit ? "" : it.label);
+    // Selecting only reports the index; the host page decides when to commit
+    // (Flashcards confirms with its own button, ExamOtherType on its check button).
+    setQ(clearOnPick ? "" : it.label);
     setOpen(false);
-    if (withSubmit) setPending(it);
-    else onPick(it.i);
+    onPick(it.i);
   };
 
   const onKey = (e) => {
@@ -82,17 +80,8 @@ export default function SearchAnswer({ options, lang, disabled, onPick, placehol
     return (<>{label.slice(0, idx)}<mark style={{ background: "var(--primaryGlow)", color: "inherit", borderRadius: 4 }}>{label.slice(idx, idx + q.length)}</mark>{label.slice(idx + q.length)}</>);
   };
 
-  const submitTop = () => {
-    const chosen = pending || results[hi];
-    if (!chosen) return;
-    onPick(chosen.i);
-    if (clearOnPick) setQ("");
-    setPending(null);
-    setOpen(false);
-  };
-
   return (
-    <div className={`search-answer ${withSubmit ? "with-submit" : ""}`} ref={boxRef}>
+    <div className="search-answer" ref={boxRef}>
       <div className="search-row">
         <div className="search-input-wrap">
           <span className="search-ico"><Icon name="search" size={16} /></span>
@@ -105,7 +94,6 @@ export default function SearchAnswer({ options, lang, disabled, onPick, placehol
             autoComplete="off"
           />
         </div>
-        {withSubmit && <button type="button" className="btn btn-accent" disabled={disabled} onClick={submitTop}>{t("submit")}</button>}
       </div>
       {open && !disabled && (
         <div className="search-list">

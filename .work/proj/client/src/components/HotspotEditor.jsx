@@ -4,7 +4,7 @@ import HotspotStage, { RegionOverlay } from "./HotspotStage.jsx";
 
 const emptyHs = () => ({
   shape: "circle", x: 50, y: 50, r: 10, w: 22, h: 16, points: [],
-  label_fa: "", label_en: "", confirm: true, regions: [{ shape: "circle", x: 50, y: 50, r: 10 }],
+  label_fa: "", label_en: "", regions: [{ shape: "circle", x: 50, y: 50, r: 10 }],
 });
 
 export default function HotspotEditor({ imageUrl, value, onChange, lang }) {
@@ -169,8 +169,6 @@ export default function HotspotEditor({ imageUrl, value, onChange, lang }) {
         <div className="field"><label>{fa ? "برچسب هدف (EN) — بعد از پاسخ" : "Target label EN — after answer"}</label>
           <input value={hs.label_en || ""} onChange={(e) => commit({ label_en: e.target.value })} /></div>
       </div>
-      <label className="toggle-row"><span>{fa ? "دانشجو اول پین بگذارد، بعد تأیید کند (پیشنهادی برای آزمون)" : "Learner places a pin, then confirms (recommended for exams)"}</span>
-        <input type="checkbox" checked={hs.confirm !== false} onChange={(e) => commit({ confirm: e.target.checked })} /></label>
     </div>
   );
 }

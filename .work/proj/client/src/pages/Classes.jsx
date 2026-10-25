@@ -160,7 +160,7 @@ export function ClassDetail({ classId, go, back, home }) {
               <h4>{lang==='fa'?'آزمون سؤال‌های کلاس':'Class question exam'}</h4>
               <p>{lang==='fa'?`${flashcards.length} سؤال؛ یک ثبت نهایی. نمره هر سؤال در کارنامه حفظ می‌شود.`:`${flashcards.length} questions, one final submission. Each question remains in the gradebook.`}</p>
               <button type="button" className="btn btn-primary" disabled={flashcards.some(f=>f.graded&&(f.attemptsUsed??0)>=(maxAttempts??1))}
-                onClick={()=>go('flashcards',{classId,classCombined:true,flashcardIds:flashcards.map(f=>f.flashcard_id),noPenalty:!!cl.flashNoPenalty})}>
+                onClick={()=>go('flashcards',{classId,classCombined:true,flashcardIds:flashcards.map(f=>f.flashcard_id),noPenalty:!!cl.flashNoPenalty,allowBack:!!cl.flashAllowBack,allowChange:!!cl.flashAllowChange})}>
                 {lang==='fa'?'شروع آزمون کلاس':'Start class exam'}
               </button>
               {flashcards.some(f=>f.graded&&(f.attemptsUsed??0)>=(maxAttempts??1))&&<p role="status">{lang==='fa'?'فرصت شرکت در یکی از سؤال‌ها تمام شده است.':'One or more questions have no attempts remaining.'}</p>}
@@ -176,6 +176,8 @@ export function ClassDetail({ classId, go, back, home }) {
                     <div className="case-meta">
                       <span className="tag" style={f.graded ? {} : { opacity: .7 }}>{f.graded ? t("gradedShort") : t("practiceShort")}</span>
                       {!!data.class?.flashNoPenalty && <span className="tag" style={{ color: "var(--ok,#16a34a)", borderColor: "var(--ok,#16a34a)" }}>{lang === "fa" ? "🎯 بدون کسر نمره" : "🎯 no penalty"}</span>}
+                      {!!data.class?.flashAllowBack && <span className="tag">{lang === "fa" ? "↩ بازگشت به کارت قبلی" : "↩ back allowed"}</span>}
+                      {!!data.class?.flashAllowChange && <span className="tag">{lang === "fa" ? "✎ تغییر پاسخ مجاز" : "✎ answers changeable"}</span>}
                       {f.graded && <span className="tag">{t("weightField")}: {f.weight}</span>}
                       {f.graded && <span className="tag">{t("attemptsRemaining")}: {remaining}/{maxAttempts}</span>}
                       {f.best != null && <span className="tag" style={{ color: "var(--ok)", borderColor: "var(--ok)" }}>{t("bestScore")}: {f.best}</span>}
@@ -183,7 +185,7 @@ export function ClassDetail({ classId, go, back, home }) {
                   </div>
                   <button type="button" className="btn btn-primary" disabled={exhausted}
                     style={exhausted ? { opacity: .5, cursor: "not-allowed" } : {}}
-                    onClick={() => !exhausted && go("flashcards", { flashcardIds: [f.flashcard_id], classId, classFlashcardId: f.flashcard_id, noPenalty: !!data.class?.flashNoPenalty })}>
+                    onClick={() => !exhausted && go("flashcards", { flashcardIds: [f.flashcard_id], classId, classFlashcardId: f.flashcard_id, noPenalty: !!data.class?.flashNoPenalty, allowBack: !!data.class?.flashAllowBack, allowChange: !!data.class?.flashAllowChange })}>
                     {f.best != null ? t("retake") : t("startClassCase")}
                   </button>
                 </div>

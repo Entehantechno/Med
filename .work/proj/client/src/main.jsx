@@ -16,6 +16,7 @@ import "./design-refresh.css";
 // is raised to 52gz to accommodate; UX > 0.5KB.
 import "./styles-motion-ads.css";
 import "./styles-speed-fixes.css";
+import "./styles-r60.css";
 import "./mobile-learn.css";
 import "./scroll-unlock.css";
 import { initRum } from "./lib/rum.js";

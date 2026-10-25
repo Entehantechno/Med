@@ -4,6 +4,7 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import { useApp } from "../context.jsx";
 import { api } from "../api.js";
 import HotspotPlayer from "./HotspotPlayer.jsx";
+import { clickLeft, clickRight, leftOwnerOf, pairColor, pairIndexOfLeft } from "../lib/match-pairs.js";
 
 /* Renders non-MCQ exam questions authored by teachers, working with the RAW
    flashcard data_json shape. Supported: truefalse | fill | match | order |
@@ -25,11 +26,20 @@ function LocalHints({ hints, showHints, fa }) {
   </div>;
 }
 
-export default function ExamOtherType({ card, lang, done, showCorrect, showHints = true, hints = [], onGraded }) {
+export default function ExamOtherType({ card, lang, done, showCorrect, showHints = true, hints = [], onGraded, editing = false }) {
   card=useMemo(()=>flashcardLanguageFallback(card),[card]);
   const { t } = useApp();
   const [sel, setSel] = useState(card.type === "match" ? { pairs: {}, activeLeft: null } : card.type === "order" ? [] : null);
   const [checked, setChecked] = useState(false);
+  // "Change answer" (R60): the parent sets editing=true to reopen a graded card
+  // with the student's previous answer still in place. Leaving edit mode either
+  // follows a fresh grade (which already set checked) or cancels — both end in
+  // the locked view, so one effect covers both paths.
+  const wasEditing = useRef(false);
+  useEffect(() => {
+    if (editing) { wasEditing.current = true; setChecked(false); }
+    else if (wasEditing.current) { wasEditing.current = false; setChecked(true); }
+  }, [editing]);
   const [right, setRight] = useState(false);
   const [reveal, setReveal] = useState(null);
   const [gradeErr, setGradeErr] = useState("");
@@ -108,16 +118,39 @@ export default function ExamOtherType({ card, lang, done, showCorrect, showHints
         </div>
       )}
       {card.type === "match" && (
-        <div className="match-grid">
-          <div className="match-col">{left.map((l) => {
-            const connected = sel?.pairs?.[l.id] != null; let cls = "opt match-item";
-            if (sel?.activeLeft === l.id) cls += " sel"; if (connected && !checked) cls += " connected"; if (checked) cls += right ? " ok" : " bad";
-            return <button type="button" key={l.id} className={cls} disabled={checked} onClick={() => setSel((s) => ({ ...s, activeLeft: l.id }))}>{l.text}</button>;
-          })}</div>
-          <div className="match-col">{rightCol.map((rr) => {
-            const used = Object.values(sel?.pairs || {}).includes(rr.id); let cls = "opt match-item"; if (used && !checked) cls += " connected";
-            return <button type="button" key={rr.id} className={cls} disabled={checked || (used && sel?.activeLeft == null)} onClick={() => setSel((s) => (s.activeLeft == null ? s : { pairs: { ...s.pairs, [s.activeLeft]: rr.id }, activeLeft: null }))}>{rr.text}</button>;
-          })}</div>
+        <div>
+          <div className="small muted mb8">{fa
+            ? "یک مورد سمت چپ و سپس مورد راست مربوط به آن را بزنید. برای تغییر اتصال، روی همان مورد سمت چپ بزنید و دوباره جفت کنید. رنگ هر جفت یکسان است."
+            : "Tap a left item, then its match on the right. To change a link, tap the left item again and re-pair. Each pair shares one colour."}</div>
+          <div className="match-grid">
+            <div className="match-col">{left.map((l, i) => {
+              const linked = sel?.pairs?.[l.id] != null;
+              const c = linked ? pairColor(i) : null;
+              let cls = "opt match-item";
+              if (sel?.activeLeft === l.id) cls += " sel";
+              if (linked && !checked) cls += " connected";
+              if (checked) cls += right ? " ok" : " bad";
+              return <button type="button" key={l.id} className={cls} disabled={checked}
+                style={c && !checked ? { borderColor: c, background: `${c}1f`, boxShadow: `inset 4px 0 0 ${c}` } : undefined}
+                aria-pressed={sel?.activeLeft === l.id} onClick={() => setSel((s) => clickLeft(s, l.id))}>
+                {linked && !checked && <span className="pair-no" style={{ background: c }}>{i + 1}</span>}
+                {l.text}
+              </button>;
+            })}</div>
+            <div className="match-col">{rightCol.map((rr) => {
+              const owner = leftOwnerOf(sel, rr.id);
+              const linked = owner != null;
+              const c = linked ? pairColor(pairIndexOfLeft(left.map((x) => x.id), owner)) : null;
+              let cls = "opt match-item";
+              if (linked && !checked) cls += " connected";
+              return <button type="button" key={rr.id} className={cls} disabled={checked}
+                style={c && !checked ? { borderColor: c, background: `${c}1f`, boxShadow: `inset 4px 0 0 ${c}` } : undefined}
+                onClick={() => setSel((s) => clickRight(s, rr.id))}>
+                {linked && !checked && <span className="pair-no" style={{ background: c }}>{pairIndexOfLeft(left.map((x) => x.id), owner) + 1}</span>}
+                {rr.text}
+              </button>;
+            })}</div>
+          </div>
         </div>
       )}
       {card.type === "order" && (
@@ -135,13 +168,19 @@ export default function ExamOtherType({ card, lang, done, showCorrect, showHints
 
 function DrawingQuestion({ card, lang, checked, setChecked, onGraded, hints, showHints }) {
   const fa = lang === "fa";
-  const canvasRef = useRef(null);
+  /* Two stacked layers (R60).
+     - baseRef: background + the traced reference image. Painted once, never edited.
+     - inkRef:  transparent. The pen, highlighter, shapes AND the eraser all paint
+       here, so the eraser (destination-out) removes only the student's own ink,
+       never the reference or the background. Undo/redo snapshots hold ink only. */
+  const baseRef = useRef(null);
+  const inkRef = useRef(null);
   const wrapRef = useRef(null);
   const drawingRef = useRef(false);
   const lastRef = useRef(null);
   const shapeStart = useRef(null);
-  const [strokeCount, setStrokeCount] = useState(0);
-  const [snapshots, setSnapshots] = useState([]);
+  const [strokeCount, setStrokeCount] = useState(0);   // ink strokes only; eraser strokes do not count
+  const [history, setHistory] = useState([]);          // undo steps: { src, strokes, labels }
   const [redoStack, setRedoStack] = useState([]);
   const [rubricDone, setRubricDone] = useState({});
   const drawing = card.drawing || {};
@@ -157,56 +196,59 @@ function DrawingQuestion({ card, lang, checked, setChecked, onGraded, hints, sho
   const ratio = ({ "16:9": 9 / 16, "4:3": 3 / 4, "1:1": 1, "3:4": 4 / 3 }[drawing.aspect] || 0.62);
 
   const cssSize = () => {
-    const c = canvasRef.current; if (!c) return { w: 0, h: 0 };
+    const c = inkRef.current; if (!c) return { w: 0, h: 0 };
     const r = c.getBoundingClientRect(); return { w: r.width, h: r.height };
   };
-  /* ---- ink-mask capture for the teacher's advisory coverage/IoU score ----
-     We rasterise the PRISTINE canvas (reference image included) once, then
-     at submit rasterise the final canvas; any cell that changed is ink.
-     Erased strokes and the traced slide therefore never count as drawing. */
+
+  /* ---- ink mask for the teacher's advisory coverage score ----
+     Reads the ink layer's alpha only. The base layer is never part of the mask,
+     so the traced slide cannot count as drawing. */
   const MASK_W = 32;
   const maskDims = () => ({ w: MASK_W, h: Math.max(12, Math.round(MASK_W * ratio)) });
-  const baseGridRef = useRef(null);
-  const gridCanvasRef = useRef(null);
-  const readGrid = () => {
-    const c = canvasRef.current; if (!c) return null;
+  const maskCanvasRef = useRef(null);
+  const packInkMask = () => {
+    const ink = inkRef.current; if (!ink) return null;
     const { w, h } = maskDims();
-    let off = gridCanvasRef.current;
-    if (!off) { off = document.createElement("canvas"); gridCanvasRef.current = off; }
+    let off = maskCanvasRef.current;
+    if (!off) { off = document.createElement("canvas"); maskCanvasRef.current = off; }
     off.width = w; off.height = h;
     const ctx = off.getContext("2d", { willReadFrequently: true });
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, w, h);
-    try { ctx.drawImage(c, 0, 0, w, h); return ctx.getImageData(0, 0, w, h).data; }
-    catch { return null; }   // tainted canvas (cross-origin image) → no mask
-  };
-  const captureBase = () => { try { baseGridRef.current = readGrid(); } catch { baseGridRef.current = null; } };
-  const packInkMask = () => {
-    const base = baseGridRef.current, now = readGrid();
-    if (!now) return null;
-    const { w, h } = maskDims();
-    const cells = new Uint8Array(w * h);
-    for (let i = 0; i < w * h; i++) {
-      const j = i * 4;
-      if (!base) { cells[i] = now[j + 3] > 20 ? 1 : 0; continue; }
-      const d = Math.abs(now[j] - base[j]) + Math.abs(now[j + 1] - base[j + 1]) + Math.abs(now[j + 2] - base[j + 2]);
-      cells[i] = d > 60 ? 1 : 0;
-    }
+    let px;
+    try { ctx.drawImage(ink, 0, 0, w, h); px = ctx.getImageData(0, 0, w, h).data; }
+    catch { return null; }
     const bytes = new Uint8Array(Math.ceil((w * h) / 8));
-    for (let i = 0; i < w * h; i++) if (cells[i]) bytes[i >> 3] |= 1 << (7 - (i & 7));
+    for (let i = 0; i < w * h; i++) if (px[i * 4 + 3] > 20) bytes[i >> 3] |= 1 << (7 - (i & 7));
     let bin = "";
     for (let i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode(...bytes.subarray(i, i + 8192));
     let data = "";
     try { data = btoa(bin); } catch { data = ""; }
     return data ? { w, h, data } : null;
   };
-  const saveSnap = () => setSnapshots((s) => [...s.slice(-12), canvasRef.current.toDataURL("image/png")]);
-  const restore = (src) => {
-    const c = canvasRef.current, ctx = c.getContext("2d"), { w, h } = cssSize(), img = new Image();
-    img.onload = () => { ctx.setTransform(1, 0, 0, 1, 0, 0); const dpr = window.devicePixelRatio || 1; ctx.scale(dpr, dpr); ctx.drawImage(img, 0, 0, w, h); };
+
+  // Ink-only snapshot of the current step (undo/redo never touches the base layer).
+  const pushHistory = (strokes, nextLabels) => {
+    const ink = inkRef.current; if (!ink) return;
+    setHistory((h) => [...h.slice(-12), { src: ink.toDataURL("image/png"), strokes, labels: nextLabels }]);
+    setRedoStack([]);
+  };
+  // Replace the ink layer with a snapshot (null = blank). Sync clear, async draw.
+  const paintInk = (src) => {
+    const ink = inkRef.current; if (!ink) return;
+    const dpr = window.devicePixelRatio || 1;
+    const { w, h } = cssSize();
+    const apply = (img) => {
+      const c = inkRef.current; if (!c) return;
+      const cx = c.getContext("2d");
+      cx.setTransform(1, 0, 0, 1, 0, 0); cx.clearRect(0, 0, c.width, c.height); cx.scale(dpr, dpr);
+      if (img) cx.drawImage(img, 0, 0, w, h);
+    };
+    if (!src) return apply(null);
+    const img = new Image();
+    img.onload = () => apply(img);
     img.src = src;
   };
-  const paintBase = (ctx, w, h, then) => {
+  const paintBase = (ctx, w, h) => {
     ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
     if (drawing.traceReference && drawing.referenceImageUrl) {
       const img = new Image();
@@ -216,23 +258,25 @@ function DrawingQuestion({ card, lang, checked, setChecked, onGraded, hints, sho
         ctx.globalAlpha = 0.92;
         ctx.drawImage(img, (w - dw) / 2, (h - dh) / 2, dw, dh);
         ctx.globalAlpha = 1;
-        then?.();
       };
-      img.onerror = () => then?.();
       img.src = drawing.referenceImageUrl;
-    } else then?.();
+    }
   };
 
   useEffect(() => {
-    const canvas = canvasRef.current; if (!canvas) return;
-    const cssW = Math.min(760, Math.max(300, wrapRef.current?.clientWidth || canvas.parentElement?.clientWidth || 520));
+    const base = baseRef.current, ink = inkRef.current; if (!base || !ink) return;
+    const cssW = Math.min(760, Math.max(300, wrapRef.current?.clientWidth || base.parentElement?.clientWidth || 520));
     const cssH = Math.round(cssW * ratio), dpr = window.devicePixelRatio || 1;
-    canvas.width = cssW * dpr; canvas.height = cssH * dpr; canvas.style.width = "100%"; canvas.style.height = `${cssH}px`;
-    const ctx = canvas.getContext("2d"); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.scale(dpr, dpr); ctx.lineCap = "round"; ctx.lineJoin = "round";
-    paintBase(ctx, cssW, cssH, () => { setSnapshots([canvas.toDataURL("image/png")]); setRedoStack([]); setStrokeCount(0); setLabels([]); baseGridRef.current = null; captureBase(); });
+    for (const c of [base, ink]) { c.width = cssW * dpr; c.height = cssH * dpr; c.style.height = `${cssH}px`; }
+    const bctx = base.getContext("2d"); bctx.setTransform(1, 0, 0, 1, 0, 0); bctx.scale(dpr, dpr);
+    paintBase(bctx, cssW, cssH);
+    const ictx = ink.getContext("2d"); ictx.setTransform(1, 0, 0, 1, 0, 0); ictx.scale(dpr, dpr);
+    ictx.lineCap = "round"; ictx.lineJoin = "round";
+    setHistory([{ src: null, strokes: 0, labels: [] }]);
+    setRedoStack([]); setStrokeCount(0); setLabels([]);
   }, [card.id]);
 
-  const pos = (e) => { const c = canvasRef.current, r = c.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+  const pos = (e) => { const c = inkRef.current, r = c.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
   const strokeStyle = (ctx) => {
     const tool = brush.tool;
     ctx.globalCompositeOperation = tool === "eraser" ? "destination-out" : "source-over";
@@ -241,12 +285,12 @@ function DrawingQuestion({ card, lang, checked, setChecked, onGraded, hints, sho
     ctx.lineWidth = tool === "eraser" ? brush.size * 3 : tool === "highlighter" ? brush.size * 4 : brush.size;
   };
   const drawFree = (from, to) => {
-    const ctx = canvasRef.current.getContext("2d"); strokeStyle(ctx);
+    const ctx = inkRef.current.getContext("2d"); strokeStyle(ctx);
     ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(to.x, to.y); ctx.stroke();
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
   };
   const commitShape = (from, to) => {
-    const ctx = canvasRef.current.getContext("2d"); strokeStyle(ctx);
+    const ctx = inkRef.current.getContext("2d"); strokeStyle(ctx);
     if (brush.tool === "line") { ctx.beginPath(); ctx.moveTo(from.x, from.y); ctx.lineTo(to.x, to.y); ctx.stroke(); }
     else if (brush.tool === "rect") { ctx.strokeRect(Math.min(from.x, to.x), Math.min(from.y, to.y), Math.abs(to.x - from.x), Math.abs(to.y - from.y)); }
     ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
@@ -256,12 +300,13 @@ function DrawingQuestion({ card, lang, checked, setChecked, onGraded, hints, sho
     const p = pos(e);
     if (brush.tool === "label") {
       const { w, h } = cssSize();
-      setLabels((ls) => [...ls, { x: (p.x / w) * 100, y: (p.y / h) * 100, text: String(ls.length + 1) }]);
-      setStrokeCount((n) => n + 1);
+      const nl = [...labels, { x: (p.x / w) * 100, y: (p.y / h) * 100, text: String(labels.length + 1) }];
+      setLabels(nl); setStrokeCount((n) => n + 1);
+      pushHistory(strokeCount + 1, nl);
       return;
     }
     drawingRef.current = true; lastRef.current = p; shapeStart.current = p;
-    canvasRef.current.setPointerCapture?.(e.pointerId);
+    inkRef.current.setPointerCapture?.(e.pointerId);
   };
   const move = (e) => {
     if (!drawingRef.current || checked) return; e.preventDefault();
@@ -271,24 +316,48 @@ function DrawingQuestion({ card, lang, checked, setChecked, onGraded, hints, sho
   const up = (e) => {
     if (!drawingRef.current) return; drawingRef.current = false;
     if (brush.tool === "line" || brush.tool === "rect") commitShape(shapeStart.current, pos(e));
-    setStrokeCount((n) => n + 1); setRedoStack([]); saveSnap();
-    try { canvasRef.current.releasePointerCapture?.(e.pointerId); } catch {}
+    const isEraser = brush.tool === "eraser";
+    const strokes = isEraser ? strokeCount : strokeCount + 1;
+    if (!isEraser) setStrokeCount(strokes);
+    pushHistory(strokes, labels);
+    try { inkRef.current.releasePointerCapture?.(e.pointerId); } catch { /* */ }
   };
   const clear = () => {
-    const c = canvasRef.current, ctx = c.getContext("2d"), { w, h } = cssSize();
-    const dpr = window.devicePixelRatio || 1; ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.scale(dpr, dpr);
-    paintBase(ctx, w, h, () => { setStrokeCount(0); setRedoStack([]); setSnapshots([c.toDataURL("image/png")]); setLabels([]); baseGridRef.current = null; captureBase(); });
+    paintInk(null);
+    setStrokeCount(0); setLabels([]); setRedoStack([]);
+    setHistory([{ src: null, strokes: 0, labels: [] }]);
   };
-  const undo = () => { if (snapshots.length <= 1) return; const next = snapshots.slice(0, -1); setRedoStack((r) => [snapshots[snapshots.length - 1], ...r].slice(0, 12)); setSnapshots(next); restore(next[next.length - 1]); setStrokeCount((n) => Math.max(0, n - 1)); };
-  const redo = () => { if (!redoStack.length) return; const [first, ...rest] = redoStack; setRedoStack(rest); setSnapshots((s) => [...s, first]); restore(first); setStrokeCount((n) => n + 1); };
+  const undo = () => {
+    if (history.length <= 1) return;
+    const cur = history[history.length - 1], prev = history[history.length - 2];
+    setRedoStack((r) => [cur, ...r].slice(0, 12));
+    setHistory(history.slice(0, -1));
+    paintInk(prev.src); setStrokeCount(prev.strokes); setLabels(prev.labels);
+  };
+  const redoStroke = () => {
+    if (!redoStack.length) return;
+    const [first, ...rest] = redoStack;
+    setRedoStack(rest); setHistory((h) => [...h, first]);
+    paintInk(first.src); setStrokeCount(first.strokes); setLabels(first.labels);
+  };
+  // Preview = base + ink. A cross-origin reference image taints the canvas; then no preview.
+  const compositePreview = () => {
+    const base = baseRef.current, ink = inkRef.current; if (!base || !ink) return "";
+    try {
+      const off = document.createElement("canvas");
+      off.width = base.width; off.height = base.height;
+      const ctx = off.getContext("2d");
+      ctx.drawImage(base, 0, 0); ctx.drawImage(ink, 0, 0);
+      return off.toDataURL("image/jpeg", 0.55);
+    } catch { return ""; }
+  };
   const finish = () => {
     const checkedCount = Object.values(rubricDone).filter(Boolean).length;
     const total = rubric.length || 1;
     const pointsFrac = rubric.length ? checkedCount / total : (strokeCount > 0 ? 1 : 0);
-    const preview = canvasRef.current?.toDataURL("image/jpeg", 0.55) || "";
-    // The ink mask exists only for the teacher's optional score assist; when
-    // the teacher switched it off (plain canvas + manual review), don't
-    // capture/send anything extra.
+    const preview = compositePreview();
+    // The ink mask exists only for the teacher's optional score assist; when the
+    // teacher switched it off (plain canvas + manual review), don't send it.
     const mask = drawing.assistEnabled === false ? null : packInkMask();
     setChecked(true);
     onGraded(true, { requiresApproval: true, pointsFrac, drawing: { strokeCount, labels, rubricChecked: checkedCount, rubricTotal: rubric.length, pointsFrac, preview, ...(mask ? { mask } : {}), approval: { status: "pending" } } });
@@ -306,20 +375,21 @@ function DrawingQuestion({ card, lang, checked, setChecked, onGraded, hints, sho
     <LocalHints hints={hints} showHints={showHints && !checked} fa={fa} />
     {drawing.referenceImageUrl && !drawing.traceReference && <div className="drawing-ref"><img src={drawing.referenceImageUrl} alt="" /></div>}
     <div className="drawing-toolbar">
-      {tools.map(([id, lab]) => <button key={id} type="button" className={`chip-btn ${brush.tool === id ? "on" : ""}`} onClick={() => setBrush((b)=>({...b,tool:id}))} disabled={checked}>{lab}</button>)}
-      {["#111827", "#2563eb", "#dc2626", "#16a34a", "#f59e0b", "#ffffff"].map((c) => <button key={c} type="button" aria-label={c} className={`draw-color ${brush.color===c?"on":""}`} style={{ background: c }} onClick={() => setBrush((b)=>({...b,color:c,tool:b.tool==="eraser"?"pen":b.tool}))} disabled={checked} />)}
-      <label className="small muted">{fa ? "ضخامت" : "Size"}<input type="range" min="2" max="16" value={brush.size} onChange={(e)=>setBrush((b)=>({...b,size:+e.target.value}))} disabled={checked}/></label>
-      <button type="button" className={`chip-btn ${brush.grid ? "on" : ""}`} onClick={() => setBrush((b)=>({...b,grid:!b.grid}))} disabled={checked}>{fa ? "شبکه" : "Grid"}</button>
-      <button type="button" className="btn btn-ghost btn-sm" onClick={undo} disabled={checked || snapshots.length<=1}>{fa ? "برگشت" : "Undo"}</button>
-      <button type="button" className="btn btn-ghost btn-sm" onClick={redo} disabled={checked || !redoStack.length}>{fa ? "بازگشت" : "Redo"}</button>
-      <button type="button" className="btn btn-ghost btn-sm" onClick={clear} disabled={checked}>{fa ? "پاک کردن" : "Clear"}</button>
+      {tools.map(([id, lab]) => <button key={id} type="button" className={`chip-btn ${brush.tool === id ? "on" : ""}`} onClick={() => setBrush((b) => ({ ...b, tool: id }))} disabled={checked}>{lab}</button>)}
+      {["#111827", "#2563eb", "#dc2626", "#16a34a", "#f59e0b", "#ffffff"].map((c) => <button key={c} type="button" aria-label={c} className={`draw-color ${brush.color === c ? "on" : ""}`} style={{ background: c }} onClick={() => setBrush((b) => ({ ...b, color: c, tool: b.tool === "eraser" ? "pen" : b.tool }))} disabled={checked} />)}
+      <label className="small muted">{fa ? "ضخامت" : "Size"}<input type="range" min="2" max="16" value={brush.size} onChange={(e) => setBrush((b) => ({ ...b, size: +e.target.value }))} disabled={checked} /></label>
+      <button type="button" className={`chip-btn ${brush.grid ? "on" : ""}`} onClick={() => setBrush((b) => ({ ...b, grid: !b.grid }))} disabled={checked}>{fa ? "شبکه" : "Grid"}</button>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={undo} disabled={checked || history.length <= 1}>{fa ? "برگشت" : "Undo"}</button>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={redoStroke} disabled={checked || !redoStack.length}>{fa ? "دوباره" : "Redo"}</button>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={clear} disabled={checked}>{fa ? "پاک کردن همه" : "Clear all"}</button>
     </div>
     <div className="drawing-stage" ref={wrapRef}>
-      <canvas ref={canvasRef} className="drawing-canvas" style={{ background: bg }} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onPointerLeave={up} aria-label={fa ? "بوم نقاشی پاسخ" : "Drawing answer canvas"} />
+      <canvas ref={baseRef} className="drawing-canvas drawing-base" style={{ background: bg }} aria-hidden="true" />
+      <canvas ref={inkRef} className="drawing-canvas drawing-ink" style={{ background: "transparent" }} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onPointerLeave={up} aria-label={fa ? "بوم نقاشی پاسخ" : "Drawing answer canvas"} />
       {brush.grid && <div className="drawing-grid-overlay" aria-hidden="true" />}
       {labels.map((lb, i) => <span key={i} className="draw-label" style={{ left: `${lb.x}%`, top: `${lb.y}%` }}>{lb.text}</span>)}
     </div>
-    {rubric.length > 0 && <div className="drawing-rubric"><div className="small muted">{fa ? "پس از کشیدن، معیارهایی را که رعایت کرده‌اید علامت بزنید. نمره نهایی بعد از تأیید استاد ثبت می‌شود." : "Check the criteria you met. Final score is recorded after teacher approval."}</div>{rubric.map((r, i) => <label className="toggle-row" key={i}><span>{r}</span><input type="checkbox" checked={!!rubricDone[i]} disabled={checked} onChange={(e)=>setRubricDone((s)=>({...s,[i]:e.target.checked}))}/></label>)}</div>}
+    {rubric.length > 0 && <div className="drawing-rubric"><div className="small muted">{fa ? "پس از کشیدن، معیارهایی را که رعایت کرده‌اید علامت بزنید. نمره نهایی بعد از تأیید استاد ثبت می‌شود." : "Check the criteria you met. Final score is recorded after teacher approval."}</div>{rubric.map((r, i) => <label className="toggle-row" key={i}><span>{r}</span><input type="checkbox" checked={!!rubricDone[i]} disabled={checked} onChange={(e) => setRubricDone((s) => ({ ...s, [i]: e.target.checked }))} /></label>)}</div>}
     {checked ? <div className="ddle-banner ok">✓ {fa ? "نقاشی ثبت شد و در انتظار تأیید استاد است" : "Drawing submitted and pending teacher approval"}</div> : <button type="button" className="btn btn-primary btn-block mt16" disabled={strokeCount < minStrokes} onClick={finish}>{fa ? "ثبت نقاشی برای بررسی استاد" : "Submit for teacher review"}</button>}
   </div>;
 }
@@ -575,6 +645,8 @@ function HotspotExam({ card, lang, showCorrect, checked, setChecked, onGraded, h
   const [overlayHs, setOverlayHs] = useState(null);
   const [gradeErr, setGradeErr] = useState("");
   const sent = useRef(false);
+  // Re-opened for a changed answer (checked back to false): allow one new grade.
+  useEffect(() => { if (!checked) sent.current = false; }, [checked]);
   const finish = async (pt) => {
     if (checked || sent.current) return;
     sent.current = true;

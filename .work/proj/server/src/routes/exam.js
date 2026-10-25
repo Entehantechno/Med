@@ -6,7 +6,7 @@ import { acquireCompletion, completionBusy, publicEvaluation } from "../lib/vp-c
    All AI logic lives server-side; prompts pulled from DB.
    ================================================================ */
 import { Router } from "express";
-import { effectiveFlashNoPenalty } from "../lib/orglimits.js";
+import { effectiveFlashNoPenalty, effectiveFlashAllowChange } from "../lib/orglimits.js";
 import { db, persistNow, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { validateBody, s as vs } from "../lib/validate.js";
@@ -18,7 +18,7 @@ import { caseIsLearn } from "../lib/content-track.js";
 import { DEFAULT_LAB_TESTS, DEFAULT_IMAGING, DEFAULT_PARACLINIC, cleanOrderList, catalogContainsQuery } from "../data/order-catalog-defaults.js";
 import { classAttemptInfo } from "./classes.js";
 import { examAccess } from "./exams.js";
-import { scoreSubmittedAnswers, gradeSubmittedDeck, gradeSubmittedDeckDetailed } from "../lib/flashcard-grade.js";
+import { scoreSubmittedAnswers, gradeSubmittedDeck, gradeSubmittedDeckDetailed, changedCardCount } from "../lib/flashcard-grade.js";
 import { getVpatientConfig, awardVpatientXp, getVpatientAiEffective, getVpatientPromptsEffective, vpatientAccess } from "../lib/vpatient.js";
 import { isEnabled } from "../lib/flags.js";
 import { audit } from "../lib/audit.js";
@@ -880,6 +880,9 @@ r.post("/flashcard-result", authRequired, validateBody(flashResultSchema), (req,
       return res.status(403).json({ error: msg, reason, stage: "exam" });
     }
     examDeck = acc.exam;
+    if (changedCardCount(answers) && !effectiveFlashAllowChange(examDeck, examDeck.university_id)) {
+      return res.status(403).json({ error: "answer_change_not_allowed", stage: "evaluate" });
+    }
     const studentUni = db.prepare("SELECT university_id FROM users WHERE id=?").get(req.user.id)?.university_id;
     if (!studentUni || Number(studentUni) !== Number(examDeck.university_id)) {
       return res.status(403).json({ error: "wrong_university", stage: "access" });

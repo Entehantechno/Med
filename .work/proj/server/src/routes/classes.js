@@ -18,8 +18,8 @@ import { createItemAnalysis, addFlashAnswer as iaAdd, noteTrend as iaTrend, fini
 import { assessDrawing, drawingAssistEnabled } from "../lib/drawingassist.js";
 import { validateBody, s as vs } from "../lib/validate.js";
 import { recordStudyEvent, studyIdForClass } from "../lib/research-log.js";
-import { scoreSubmittedAnswers, gradeSubmittedDeckDetailed, formatFlashAnswer } from "../lib/flashcard-grade.js";
-import { effectiveFlashNoPenalty, effectiveLiveBoardSpeed, checkStudentLimit, triInput } from "../lib/orglimits.js";
+import { scoreSubmittedAnswers, gradeSubmittedDeckDetailed, formatFlashAnswer, changedCardCount } from "../lib/flashcard-grade.js";
+import { effectiveFlashNoPenalty, effectiveFlashAllowBack, effectiveFlashAllowChange, effectiveLiveBoardSpeed, checkStudentLimit, triInput } from "../lib/orglimits.js";
 import { isLearnContent } from "../lib/content-track.js";
 import { normDigits } from "../lib/textsearch.js";
 import { sendPrivateJson } from "../lib/http-cache.js";
@@ -68,6 +68,8 @@ function decorateClass(cl, { forStudent = false } = {}) {
   };
   // Resolved feature flags (class override → university → global default).
   out.flashNoPenalty = effectiveFlashNoPenalty(cl);
+  out.flashAllowBack = effectiveFlashAllowBack(cl);
+  out.flashAllowChange = effectiveFlashAllowChange(cl);
   out.liveBoardSpeed = effectiveLiveBoardSpeed(cl);
   if (forStudent) {
     delete out.grading_json;
@@ -505,8 +507,8 @@ r.post("/", authRequired, requireRole("teacher", "admin"), (req, res) => {
 r.put("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const { name_fa, name_en, desc_fa, desc_en, maxAttempts, gradingRole, historyForm,
           liveBoardEnabled, liveBoardAnonymous, logTranscript, studyId, gradingRubric,
-          flashNoPenalty, liveBoardSpeed } = req.body || {};
-  const cur = db.prepare("SELECT name_fa,name_en,desc_fa,desc_en,max_attempts,exam_mode, timer_enabled, timer_minutes, grading_role, history_form, university_id, live_board_enabled, live_board_anonymous, log_transcript, study_id, grading_json, flash_no_penalty, live_board_speed, owner_id FROM classes WHERE id=?").get(req.params.id);
+          flashNoPenalty, flashAllowBack, flashAllowChange, liveBoardSpeed } = req.body || {};
+  const cur = db.prepare("SELECT name_fa,name_en,desc_fa,desc_en,max_attempts,exam_mode, timer_enabled, timer_minutes, grading_role, history_form, university_id, live_board_enabled, live_board_anonymous, log_transcript, study_id, grading_json, flash_no_penalty, live_board_speed, flash_allow_back, flash_allow_change, owner_id FROM classes WHERE id=?").get(req.params.id);
   if (!cur) return res.status(404).json({ error: "not found" });
   if (req.user.role === "teacher" && !teacherOwnsClass(req.user, cur)) return res.status(403).json({ error: "wrong_university" });
   let settings;
@@ -539,14 +541,16 @@ r.put("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   // university (then global) default, true/false/"on"/"off" = forced for this class.
   const npNext  = flashNoPenalty === undefined ? (cur.flash_no_penalty ?? null) : triInput(flashNoPenalty);
   const spdNext = liveBoardSpeed === undefined ? (cur.live_board_speed ?? null) : triInput(liveBoardSpeed);
+  const fbNext  = flashAllowBack === undefined ? (cur.flash_allow_back ?? null) : triInput(flashAllowBack);
+  const fcNext  = flashAllowChange === undefined ? (cur.flash_allow_change ?? null) : triInput(flashAllowChange);
   durableTransaction(() => {
     db.prepare(
-      "UPDATE classes SET name_fa=?,name_en=?,desc_fa=?,desc_en=?,max_attempts=?,grading_role=?,history_form=?,live_board_enabled=?,live_board_anonymous=?,log_transcript=?,study_id=?,grading_json=?,flash_no_penalty=?,live_board_speed=?,exam_mode=?,timer_enabled=?,timer_minutes=? WHERE id=?"
-    ).run(name_fa === undefined ? cur.name_fa : name_fa, name_en === undefined ? cur.name_en : name_en, desc_fa === undefined ? cur.desc_fa : desc_fa, desc_en === undefined ? cur.desc_en : desc_en, maxAttempts === undefined ? cur.max_attempts : maxAttempts, role, hform, liveOn ? 1 : 0, liveAnon ? 1 : 0, logOn ? 1 : 0, study, gradingJson, npNext ?? null, spdNext ?? null, settings.exam_mode, settings.timer_enabled, settings.timer_minutes, req.params.id);
+      "UPDATE classes SET name_fa=?,name_en=?,desc_fa=?,desc_en=?,max_attempts=?,grading_role=?,history_form=?,live_board_enabled=?,live_board_anonymous=?,log_transcript=?,study_id=?,grading_json=?,flash_no_penalty=?,live_board_speed=?,flash_allow_back=?,flash_allow_change=?,exam_mode=?,timer_enabled=?,timer_minutes=? WHERE id=?"
+    ).run(name_fa === undefined ? cur.name_fa : name_fa, name_en === undefined ? cur.name_en : name_en, desc_fa === undefined ? cur.desc_fa : desc_fa, desc_en === undefined ? cur.desc_en : desc_en, maxAttempts === undefined ? cur.max_attempts : maxAttempts, role, hform, liveOn ? 1 : 0, liveAnon ? 1 : 0, logOn ? 1 : 0, study, gradingJson, npNext ?? null, spdNext ?? null, fbNext ?? null, fcNext ?? null, settings.exam_mode, settings.timer_enabled, settings.timer_minutes, req.params.id);
   });
-  audit(req, "class.update", "class", { id: Number(req.params.id), log_transcript: logOn, live_board_enabled: liveOn, study_id: study, flash_no_penalty: npNext, live_board_speed: spdNext });
+  audit(req, "class.update", "class", { id: Number(req.params.id), log_transcript: logOn, live_board_enabled: liveOn, study_id: study, flash_no_penalty: npNext, live_board_speed: spdNext, flash_allow_back: fbNext, flash_allow_change: fcNext });
   res.json({ ok: true, logTranscript: logOn, studyId: study, gradingRubric: gradingJson ? JSON.parse(gradingJson) : null,
-    flashNoPenalty: npNext, liveBoardSpeed: spdNext, ...settings });
+    flashNoPenalty: npNext, liveBoardSpeed: spdNext, flashAllowBack: effectiveFlashAllowBack({ flash_allow_back: fbNext, university_id: cur.university_id }), flashAllowChange: effectiveFlashAllowChange({ flash_allow_change: fcNext, university_id: cur.university_id }), ...settings });
 });
 r.delete("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
   const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(req.params.id);
@@ -615,10 +619,11 @@ function combinedDeck(userId, cid) {
     AND f.university_id=? ORDER BY f.id`).all(cid,cl.university_id).filter(f=>!isLearnContent(f.data_json));
   if (!rows.length || rows.length > 300) throw Object.assign(new Error('combined_deck_size'),{status:422});
   const noPenalty=effectiveFlashNoPenalty(cl);
+  const allowBack=effectiveFlashAllowBack(cl), allowChange=effectiveFlashAllowChange(cl);
   // Hash content and policies, not just IDs: editing a question while it is open cannot silently change its grade.
-  const version=crypto.createHash('sha256').update(JSON.stringify([cl.exam_mode,cl.max_attempts,noPenalty,
+  const version=crypto.createHash('sha256').update(JSON.stringify([cl.exam_mode,cl.max_attempts,noPenalty,allowBack,allowChange,
     rows.map(f=>[f.id,f.data_json,f.weight,f.graded])])).digest('hex');
-  return {rows,noPenalty,version};
+  return {rows,noPenalty,allowBack,allowChange,version};
 }
 function assertCombinedAttempts(userId,cid,rows) {
   for (const f of rows) {
@@ -631,7 +636,7 @@ r.get('/:id/flashcards/config',authRequired,requireRole('student'),(req,res)=>{
   try {
     const cid=Number(req.params.id), deck=combinedDeck(req.user.id,cid);
     assertCombinedAttempts(req.user.id,cid,deck.rows);
-    res.json({ids:deck.rows.map(f=>f.id),version:deck.version,noPenalty:deck.noPenalty});
+    res.json({ids:deck.rows.map(f=>f.id),version:deck.version,noPenalty:deck.noPenalty,allowBack:deck.allowBack,allowChange:deck.allowChange});
   } catch(e) { res.status(e.status||500).json({error:e.message}); }
 });
 r.post('/:id/flashcards/finish',authRequired,requireRole('student'),validateBody({
@@ -648,6 +653,7 @@ r.post('/:id/flashcards/finish',authRequired,requireRole('student'),validateBody
       if(req.body.version!==deck.version)throw Object.assign(new Error('class_questions_changed'),{status:409});
       assertCombinedAttempts(userId,cid,deck.rows);
       const answers=req.body.answers||[];
+      if(!deck.allowChange&&changedCardCount(answers))throw Object.assign(new Error('answer_change_not_allowed'),{status:403});
       const load=id=>{const f=deck.rows.find(x=>x.id===id);return f?{...JSON.parse(f.data_json),id:f.id}:null};
       // Validate the whole payload first. Omitted cards still count as unanswered (zero).
       for(const a of answers)if(!Number.isSafeInteger(Number(a.card_id??a.cardId??a.id)))throw Object.assign(new Error('invalid_card_id'),{status:400});
@@ -698,6 +704,9 @@ r.post("/:id/flashcard/:fid/finish", authRequired, requireRole("student"), valid
   // No-penalty policy for this deck: class override → university → global.
   const clsRow = db.prepare("SELECT * FROM classes WHERE id=?").get(cid);
   const noPenalty = effectiveFlashNoPenalty(clsRow);
+  if (changedCardCount(answers) && !effectiveFlashAllowChange(clsRow)) {
+    return res.status(403).json({ error: "answer_change_not_allowed", stage: "evaluate" });
+  }
   let score;
   if (answers.length) {
     const deck = gradeSubmittedDeckDetailed(loadFlash, answers, [fid], { noPenalty });
@@ -734,7 +743,7 @@ r.get("/:id/flashcard/:fid/config", authRequired, requireRole("student"), (req, 
   const info = classFlashcardInfo(req.user.id, cid, fid);
   if (!info.allowed) return res.status(403).json({ error: "not allowed", stage: "access" });
   const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(cid);
-  res.json({ noPenalty: effectiveFlashNoPenalty(cl) });
+  res.json({ noPenalty: effectiveFlashNoPenalty(cl), allowBack: effectiveFlashAllowBack(cl), allowChange: effectiveFlashAllowChange(cl) });
 });
 
 /* ---- Set the class's members (replace list) ---- */

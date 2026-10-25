@@ -1538,7 +1538,7 @@ function DrawingZoneEditor({ drawing, onChange, lang }) {
 export function CardModal({ card, onClose, onSave }) {
   const { t, lang } = useApp();
   const [f, setF] = useState({
-    title_fa: "", title_en: "", questionText_fa: "", questionText_en: "",
+    title_fa: "", title_en: "",
     q_fa: "", q_en: "",
     imageUrl: "", category_fa: "", category_en: "", difficulty: "medium",
     questionType: "image", answerMode: "choice", color: "#bcd7f0",
@@ -3002,6 +3002,10 @@ function ClassManage({ classId, back }) {
     // Tri-state class feature overrides: "inherit" follows university → global.
     flashNoPenalty: d.class.flash_no_penalty == null ? "inherit" : (d.class.flash_no_penalty ? "on" : "off"),
     liveBoardSpeed: d.class.live_board_speed == null ? "inherit" : (d.class.live_board_speed ? "on" : "off"),
+    flashAllowBack: d.class.flash_allow_back == null ? "inherit" : (d.class.flash_allow_back ? "on" : "off"),
+    flashAllowChange: d.class.flash_allow_change == null ? "inherit" : (d.class.flash_allow_change ? "on" : "off"),
+    effAllowBack: !!d.class.flashAllowBack,
+    effAllowChange: !!d.class.flashAllowChange,
     effNoPenalty: !!d.class.flashNoPenalty,
     effLiveSpeed: !!d.class.liveBoardSpeed,
   }); }).catch((e) => setLoadErr(String(e.message || e)));
@@ -3113,6 +3117,28 @@ function ClassManage({ classId, back }) {
                 ? `وضعیت مؤثر فعلی: ${info.effNoPenalty ? "«فعال»" : "«غیرفعال»"} ${info.flashNoPenalty === "inherit" ? "(از دانشگاه/پیش‌فرض به ارث رسیده)" : "(تنظیم همین کلاس)"}`
                 : `Currently effective: ${info.effNoPenalty ? "ON" : "OFF"} ${info.flashNoPenalty === "inherit" ? "(inherited)" : "(this class)"}`}
             </div>
+          </div>
+          <div className="field">
+            <label>{lang === "fa" ? "بازگشت به کارت‌های قبلی (فلش‌کارت)" : "Back to earlier cards (flashcards)"}</label>
+            <select value={info.flashAllowBack} onChange={(e) => setF("flashAllowBack", e.target.value)}>
+              <option value="inherit">{lang === "fa" ? "پیروی از دانشگاه/پیش‌فرض" : "Inherit (university / global)"}</option>
+              <option value="on">{lang === "fa" ? "مجاز — دانشجو می‌تواند به کارت‌های قبلی برگردد" : "Allowed — students can return to earlier cards"}</option>
+              <option value="off">{lang === "fa" ? "مجاز نیست — فقط به ترتیب و یک‌طرفه" : "Not allowed — one-way order only"}</option>
+            </select>
+            <div className="small muted mt4">{lang === "fa"
+              ? `وضعیت مؤثر فعلی: ${info.effAllowBack ? "«مجاز»" : "«مجاز نیست»"} ${info.flashAllowBack === "inherit" ? "(از دانشگاه/پیش‌فرض به ارث رسیده)" : "(تنظیم همین کلاس)"}`
+              : `Currently effective: ${info.effAllowBack ? "ALLOWED" : "NOT ALLOWED"} ${info.flashAllowBack === "inherit" ? "(inherited)" : "(this class)"}`}</div>
+          </div>
+          <div className="field">
+            <label>{lang === "fa" ? "تغییر پاسخ پس از تأیید (فلش‌کارت)" : "Change an answer after confirming"}</label>
+            <select value={info.flashAllowChange} onChange={(e) => setF("flashAllowChange", e.target.value)}>
+              <option value="inherit">{lang === "fa" ? "پیروی از دانشگاه/پیش‌فرض" : "Inherit (university / global)"}</option>
+              <option value="on">{lang === "fa" ? "مجاز — دانشجو می‌تواند پاسخ تأییدشده را عوض کند" : "Allowed — students can change a confirmed answer"}</option>
+              <option value="off">{lang === "fa" ? "مجاز نیست — پاسخ قفل می‌شود" : "Not allowed — answers stay locked"}</option>
+            </select>
+            <div className="small muted mt4">{lang === "fa"
+              ? `وضعیت مؤثر فعلی: ${info.effAllowChange ? "«مجاز»" : "«مجاز نیست»"} ${info.flashAllowChange === "inherit" ? "(از دانشگاه/پیش‌فرض به ارث رسیده)" : "(تنظیم همین کلاس)"}`
+              : `Currently effective: ${info.effAllowChange ? "ALLOWED" : "NOT ALLOWED"} ${info.flashAllowChange === "inherit" ? "(inherited)" : "(this class)"}`}</div>
           </div>
           <div className="field">
             <label>⏱ {lang === "fa" ? "در تخته رقابت، با نمره برابر کسی جلوتر است که زمان کمتری گذاشته" : "Leaderboard tie-break: less total time wins"}</label>
@@ -4085,6 +4111,9 @@ function ExamModal({ exam, onClose, onSave }) {
     shuffle: false, anti_cheat: true, competition: false, show_correct: true, show_hints: true, show_ai: true, show_micro: true,
     ...exam,
     logTranscript: !!exam.log_transcript, studyId: exam.study_id || exam.studyId || "",
+    // Tri-state navigation flags: "inherit" follows the university / global default.
+    flash_allow_back: exam.flash_allow_back == null ? "inherit" : (exam.flash_allow_back ? "on" : "off"),
+    flash_allow_change: exam.flash_allow_change == null ? "inherit" : (exam.flash_allow_change ? "on" : "off"),
   });
   // Shamsi schedule: one date + a start/end time window (Iran time). Derived
   // from the exam's stored ISO start/end, defaulting to today 10:00–11:00.
@@ -4229,6 +4258,22 @@ function ExamModal({ exam, onClose, onSave }) {
       <label className="toggle-row" style={{ cursor: "pointer" }}>
         <span>{t("showMicro")}</span>
         <div className={`switch ${f.show_micro ? "on" : ""}`} onClick={() => set("show_micro", !f.show_micro)} /></label>
+      <div className="field mt8">
+        <label>{lang === "fa" ? "↩ بازگشت به کارت‌های قبلی (فلش‌کارت)" : "↩ Back to earlier cards (flashcards)"}</label>
+        <select value={f.flash_allow_back} onChange={(e) => set("flash_allow_back", e.target.value)}>
+          <option value="inherit">{lang === "fa" ? "پیروی از دانشگاه/پیش‌فرض" : "Inherit (university / global)"}</option>
+          <option value="on">{lang === "fa" ? "مجاز" : "Allowed"}</option>
+          <option value="off">{lang === "fa" ? "مجاز نیست" : "Not allowed"}</option>
+        </select>
+      </div>
+      <div className="field mt8">
+        <label>{lang === "fa" ? "تغییر پاسخ پس از تأیید (فلش‌کارت)" : "Change an answer after confirming"}</label>
+        <select value={f.flash_allow_change} onChange={(e) => set("flash_allow_change", e.target.value)}>
+          <option value="inherit">{lang === "fa" ? "پیروی از دانشگاه/پیش‌فرض" : "Inherit (university / global)"}</option>
+          <option value="on">{lang === "fa" ? "مجاز" : "Allowed"}</option>
+          <option value="off">{lang === "fa" ? "مجاز نیست" : "Not allowed"}</option>
+        </select>
+      </div>
       <div className="small muted mt8">{t("antiCheatHint")}</div>
       <div className="divider" />
       <label className="toggle-row" style={{ cursor: "pointer" }}>
@@ -9259,6 +9304,14 @@ function Universities() {
               <input type="checkbox" checked={!!defaults.flash_no_penalty} onChange={(e) => saveDefaults({ flash_no_penalty: e.target.checked })} />
             </label>
             <label className="toggle-row">
+              <span>↩ {lang === "fa" ? "پیش‌فرض: بازگشت به کارت‌های قبلی" : "Default: back to earlier cards"}</span>
+              <input type="checkbox" checked={!!defaults.flash_allow_back} onChange={(e) => saveDefaults({ flash_allow_back: e.target.checked })} />
+            </label>
+            <label className="toggle-row">
+              <span>✎ {lang === "fa" ? "پیش‌فرض: تغییر پاسخ تأییدشده" : "Default: change a confirmed answer"}</span>
+              <input type="checkbox" checked={!!defaults.flash_allow_change} onChange={(e) => saveDefaults({ flash_allow_change: e.target.checked })} />
+            </label>
+            <label className="toggle-row">
               <span>⏱ {lang === "fa" ? "تساوی جدول رقابت با زمان کمتر" : "Leaderboard tie-break by less time"}</span>
               <input type="checkbox" checked={!!defaults.live_board_speed} onChange={(e) => saveDefaults({ live_board_speed: e.target.checked })} />
             </label>
@@ -9362,6 +9415,8 @@ function UniversityModal({ uni, onClose, onSaved }) {
     max_students: uni.max_students ?? "", max_vp_msgs_month: uni.max_vp_msgs_month ?? "", max_vp_tokens_month: uni.max_vp_tokens_month ?? "",
     flash_no_penalty: uni.flash_no_penalty == null ? "inherit" : (uni.flash_no_penalty ? "on" : "off"),
     live_board_speed: uni.live_board_speed == null ? "inherit" : (uni.live_board_speed ? "on" : "off"),
+    flash_allow_back: uni.flash_allow_back == null ? "inherit" : (uni.flash_allow_back ? "on" : "off"),
+    flash_allow_change: uni.flash_allow_change == null ? "inherit" : (uni.flash_allow_change ? "on" : "off"),
   });
   const [err, setErr] = useState("");
   const save = async () => {
@@ -9441,6 +9496,23 @@ function UniversityModal({ uni, onClose, onSaved }) {
 
       {/* ---- Per-university feature flags (override global defaults) ---- */}
       <div className="grid grid-2 mt8">
+        <div className="field">
+          <label>{lang === "fa" ? "↩ بازگشت به کارت‌های قبلی (فلش‌کارت)" : "↩ Back to earlier cards (flashcards)"}</label>
+          <select value={f.flash_allow_back} onChange={(e) => setF({ ...f, flash_allow_back: e.target.value })}>
+            <option value="inherit">{lang === "fa" ? "پیروی از پیش‌فرض سراسری" : "Follow global default"}</option>
+            <option value="on">{lang === "fa" ? "برای این دانشگاه مجاز" : "Allowed for this university"}</option>
+            <option value="off">{lang === "fa" ? "برای این دانشگاه مجاز نیست" : "Not allowed for this university"}</option>
+          </select>
+        </div>
+        <div className="field">
+          <label>{lang === "fa" ? "تغییر پاسخ پس از تأیید (فلش‌کارت)" : "Change an answer after confirming"}</label>
+          <select value={f.flash_allow_change} onChange={(e) => setF({ ...f, flash_allow_change: e.target.value })}>
+            <option value="inherit">{lang === "fa" ? "پیروی از پیش‌فرض سراسری" : "Follow global default"}</option>
+            <option value="on">{lang === "fa" ? "برای این دانشگاه مجاز" : "Allowed for this university"}</option>
+            <option value="off">{lang === "fa" ? "برای این دانشگاه مجاز نیست" : "Not allowed for this university"}</option>
+          </select>
+        </div>
+
         <div className="field">
           <label>🎯 {lang === "fa" ? "فلش‌کارت بدون کسر نمره" : "No-penalty flashcards"}</label>
           <select value={f.flash_no_penalty} onChange={(e) => setF({ ...f, flash_no_penalty: e.target.value })}>

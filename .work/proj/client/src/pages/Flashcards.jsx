@@ -25,7 +25,7 @@ function flashChrome(embedded, home, inner) {
   return <div className="app"><TopBar onHome={home} />{inner}</div>;
 }
 
-export default function Flashcards({ home, examId, flashcardIds, examDuration, shuffle, antiCheat, competition, classId, classFlashcardId, classCombined = false, showCorrect: examShowCorrect, showHints: examShowHints, noPenalty: noPenaltyProp, embedded = false }) {
+export default function Flashcards({ home, examId, flashcardIds, examDuration, shuffle, antiCheat, competition, classId, classFlashcardId, classCombined = false, showCorrect: examShowCorrect, showHints: examShowHints, noPenalty: noPenaltyProp, allowBack: allowBackProp, allowChange: allowChangeProp, embedded = false }) {
   // Tell sw-update.js that in-progress work is on screen: a new build must
   // not auto-reload the page until this screen unmounts.
   useEffect(() => { markBusy(true); return () => markBusy(false); }, []);
@@ -51,7 +51,13 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
   const [cards, setCards] = useState(null); // filtered deck being practiced
   const [settings, setSettings] = useState({ showHints: true, showCorrect: true });
   const [idx, setIdx] = useState(0);
-  const [state, setState] = useState(newState());
+  // Per-card state (R60): every card keeps its own answer, so a student can go
+  // back to it. Only the current card is interactive.
+  const [cardStates, setCardStates] = useState([]);
+  const [reachedIdx, setReachedIdx] = useState(0);   // furthest card ever shown (revisits are below it)
+  // Navigation flags set by the teacher (class / exam) or admin (defaults): may the
+  // student go back to earlier cards, and may they change a confirmed answer.
+  const [navCfg, setNavCfg] = useState({ back: !!allowBackProp, change: !!allowChangeProp });
   const [results, setResults] = useState([]);
   const [totalHints, setTotalHints] = useState(0);
   const [finished, setFinished] = useState(false);
@@ -70,10 +76,30 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
   const gradeBusy = useRef(false);
 
   function newState() {
-    return { hintsShown: 0, tried: [], solved: false, revealed: false, fb: null, hotspotClicks: [], overlayHotspot: null, correctIndex: null, startedAt: Date.now() };
+    return { hintsShown: 0, tried: [], solved: false, revealed: false, fb: null, hotspotClicks: [], overlayHotspot: null, correctIndex: null, startedAt: Date.now(),
+      picked: null, editing: false, changes: 0, snapshot: null };
   }
 
   const inExam = !!examId || !!classId;   // class flashcard sets behave like a fixed deck
+  // Card state accessors. A card is LOCKED once confirmed, unless it is being
+  // edited ("change answer"). Handlers act on the current card only.
+  const stateOf = (j) => cardStates[j] || newState();
+  const state = stateOf(idx);
+  const setStateAt = (j, upd) => setCardStates((arr) => {
+    const n = arr.slice();
+    const cur = n[j] || newState();
+    n[j] = typeof upd === "function" ? upd(cur) : { ...cur, ...upd };
+    return n;
+  });
+  const setState = (upd) => setStateAt(idx, upd);
+  const locked = (state.solved || state.revealed) && !state.editing;
+  // Class config fetch for nav flags when the route did not pass them.
+  useEffect(() => {
+    if (!classId || !classFlashcardId || (allowBackProp != null && allowChangeProp != null)) return;
+    api.get(`/classes/${classId}/flashcard/${classFlashcardId}/config`, { timeoutMs: 15000, stage: "boot" })
+      .then((d) => setNavCfg({ back: !!d?.allowBack, change: !!d?.allowChange }))
+      .catch(() => {});
+  }, [classId, classFlashcardId]);
   const { leaves } = useAntiCheat(inExam && antiCheat);
   /* Resolve no-penalty: an explicit route prop wins (loaded by the caller with
      the class/exam payload); class decks can also ask the server directly. */
@@ -94,7 +120,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
         let requestedIds=flashcardIds;
         if(classCombined&&classId){
           const cfg=await api.get(`/classes/${classId}/flashcards/config`,{timeoutMs:15000,stage:'boot'});
-          combinedConfig.current=cfg;requestedIds=cfg.ids;setNoPenaltyCfg(!!cfg.noPenalty);
+          combinedConfig.current=cfg;requestedIds=cfg.ids;setNoPenaltyCfg(!!cfg.noPenalty);setNavCfg({back:!!cfg.allowBack,change:!!cfg.allowChange});
         }
         const examIds = Array.isArray(requestedIds) ? requestedIds.map(Number).filter((n) => Number.isFinite(n) && n > 0) : [];
         const flashPath = inExam
@@ -122,7 +148,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
         }
         setAllCards(filtered); setSettings(next);
         if (inExam) {
-          setCards(filtered); startRef.current = Date.now();
+          setCards(filtered); setCardStates(filtered.map(() => newState())); startRef.current = Date.now();
           if (examDuration) setTimeLeft(examDuration * 60);
         }
       } catch (e) {
@@ -141,7 +167,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
   }, [timeLeft, finished]);
 
   const startDeck = (deck) => {
-    setCards(deck); setIdx(0); setState(newState()); setResults([]); setTotalHints(0);
+    setCards(deck); setIdx(0); setCardStates(deck.map(() => newState())); setReachedIdx(0); setResults([]); setTotalHints(0);
     setFinished(false); startRef.current = Date.now(); hotspotLock.current = false;
   };
 
@@ -204,11 +230,9 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
   const hintImages = lang === "fa" ? (card.hint_images_fa || []) : (card.hint_images_en || []);
   const hintText = (h) => (h && typeof h === "object") ? (h.text || h.label || "") : String(h || "");
   const hintImage = (h, i) => (h && typeof h === "object" && h.imageUrl) ? h.imageUrl : (hintImages[i] || "");
-  const isHotspot = card.type === "hotspot";
-  const hotspot = card.hotspot || { x: 50, y: 50, r: 8 };
 
   const hotspotClick = async (pt) => {
-    if (state.solved || state.revealed || hotspotLock.current) return;
+    if (locked || hotspotLock.current) return;
     hotspotLock.current = true;
     setGradeErr("");
     const moreHints = settings.showHints && state.hintsShown < hints.length;
@@ -220,14 +244,14 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
       const overlayHotspot = r.reveal?.hotspot || null;
       if (r.ok) {
         const pts = noPenaltyCfg ? cardMax : Math.max(0, cardMax - state.hintsShown * hintPenaltyUnit);
-        setState((s) => ({ ...s, solved: true, fb: "ok", hotspotClicks: clicks, overlayHotspot: overlayHotspot || s.overlayHotspot }));
+        setState((s) => ({ ...s, editing: false, snapshot: null, picked: null, solved: true, fb: "ok", hotspotClicks: clicks, overlayHotspot: overlayHotspot || s.overlayHotspot }));
         setResults((rr) => { const n = [...rr]; n[idx] = { solved: true, points: pts, hintsUsed: state.hintsShown, hintLevel: state.hintsShown, responseMs: Math.max(0, Date.now() - (state.startedAt || startRef.current)), hotspotClicks: clicks }; return n; });
       } else if (moreHints) {
         setTotalHints((h) => h + 1);
-        setState((s) => ({ ...s, fb: "bad", hintsShown: s.hintsShown + 1, hotspotClicks: clicks, overlayHotspot: overlayHotspot || s.overlayHotspot }));
+        setState((s) => ({ ...s, editing: false, snapshot: null, picked: null, fb: "bad", hintsShown: s.hintsShown + 1, hotspotClicks: clicks, overlayHotspot: overlayHotspot || s.overlayHotspot }));
         hotspotLock.current = false;
       } else {
-        setState((s) => ({ ...s, revealed: true, fb: "bad", hotspotClicks: clicks, overlayHotspot: overlayHotspot || s.overlayHotspot }));
+        setState((s) => ({ ...s, editing: false, snapshot: null, picked: null, revealed: true, fb: "bad", hotspotClicks: clicks, overlayHotspot: overlayHotspot || s.overlayHotspot }));
         setResults((rr) => { const n = [...rr]; n[idx] = { solved: false, points: 0, hintsUsed: state.hintsShown, hintLevel: state.hintsShown, responseMs: Math.max(0, Date.now() - (state.startedAt || startRef.current)), hotspotClicks: clicks }; return n; });
       }
     } catch (e) {
@@ -241,8 +265,14 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
   // Fraction of the card's points lost per hint used: 1 / (totalHints + 1).
   const hintPenaltyUnit = cardMax / ((hints.length || 0) + 1);
 
-  const choose = async (optIdx) => {
-    if (state.solved || state.revealed || state.tried.includes(optIdx) || gradeBusy.current) return;
+  // Selecting an option never grades it (R60): the student confirms first.
+  const pick = (optIdx) => {
+    if (locked || gradeBusy.current || state.tried.includes(optIdx)) return;
+    setState((s) => ({ ...s, picked: optIdx }));
+  };
+  const confirmChoice = async () => {
+    const optIdx = state.picked;
+    if (locked || optIdx == null || state.tried.includes(optIdx) || gradeBusy.current) return;
     const opt = (card.options || [])[optIdx];
     if (!opt) return;
     gradeBusy.current = true;
@@ -254,15 +284,15 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
       }, { timeoutMs: 15000, stage: "evaluate" });
       if (r.ok) {
         const pts = noPenaltyCfg ? cardMax : Math.max(0, cardMax - state.hintsShown * hintPenaltyUnit);
-        setState((s) => ({ ...s, solved: true, fb: "ok", correctIndex: r.reveal?.index ?? optIdx }));
+        setState((s) => ({ ...s, editing: false, snapshot: null, picked: null, solved: true, fb: "ok", correctIndex: r.reveal?.index ?? optIdx }));
         setResults((rr) => { const n = [...rr]; n[idx] = { solved: true, points: pts, hintsUsed: state.hintsShown, hintLevel: state.hintsShown, responseMs: Math.max(0, Date.now() - (state.startedAt || startRef.current)), selectedIdx: optIdx, triedIdxs: [...state.tried, optIdx] }; return n; });
       } else {
         const tried = [...state.tried, optIdx];
         if (moreHints) {
           setTotalHints((h) => h + 1);
-          setState((s) => ({ ...s, tried, hintsShown: s.hintsShown + 1, fb: "bad" }));
+          setState((s) => ({ ...s, editing: false, snapshot: null, picked: null, tried, hintsShown: s.hintsShown + 1, fb: "bad" }));
         } else {
-          setState((s) => ({ ...s, tried, revealed: true, fb: null, correctIndex: r.reveal?.index ?? s.correctIndex }));
+          setState((s) => ({ ...s, editing: false, snapshot: null, picked: null, tried, revealed: true, fb: null, correctIndex: r.reveal?.index ?? s.correctIndex }));
           setResults((rr) => { const n = [...rr]; n[idx] = { solved: false, points: 0, hintsUsed: state.hintsShown, hintLevel: state.hintsShown, responseMs: Math.max(0, Date.now() - (state.startedAt || startRef.current)), selectedIdx: optIdx, triedIdxs: tried }; return n; });
         }
       }
@@ -272,8 +302,6 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
       gradeBusy.current = false;
     }
   };
-  // answerMode: "search" reveals the answer only when the student submits a pick
-  const answerMode = card.answerMode === "search" ? "search" : "choice";
 
   const submitResults = async () => {
     if (finished) return;
@@ -319,6 +347,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
         hotspotClicks: r.hotspotClicks || [],
         drawing: r.drawing || null,
         stepResults: r.stepResults || [],
+        changes: cardStates[i]?.changes || 0,
       };
     });
     const solvedCount = finalResults.filter((r) => r && r.solved).length;
@@ -359,29 +388,210 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
   finishRef.current = submitResults;
 
   const next = async () => {
-    if (idx < cards.length - 1) { setIdx(idx + 1); setState(newState()); hotspotLock.current = false; gradeBusy.current = false; setGradeErr(""); return; }
+    if (!locked) return;
+    if (idx < cards.length - 1) { setIdx(idx + 1); setReachedIdx((r) => Math.max(r, idx + 1)); hotspotLock.current = false; gradeBusy.current = false; setGradeErr(""); return; }
     await submitResults();
+  };
+  const prev = () => {
+    if (!navCfg.back || idx <= 0 || state.editing) return;
+    setIdx(idx - 1); hotspotLock.current = false; gradeBusy.current = false; setGradeErr("");
+  };
+  // "Change answer": reopen a confirmed card. The previous grade is kept in
+  // `snapshot` until a new confirm, so cancelling restores it exactly.
+  const startEdit = () => {
+    if (!navCfg.change || !locked) return;
+    hotspotLock.current = false; gradeBusy.current = false; setGradeErr("");
+    setState((s) => ({
+      ...s, editing: true, changes: (s.changes || 0) + 1,
+      snapshot: { solved: s.solved, revealed: s.revealed, fb: s.fb, correctIndex: s.correctIndex, tried: s.tried, picked: s.picked, hotspotClicks: s.hotspotClicks, overlayHotspot: s.overlayHotspot },
+      solved: false, revealed: false, fb: null, tried: [], picked: null, hotspotClicks: [], overlayHotspot: null, correctIndex: null,
+    }));
+  };
+  const cancelEdit = () => {
+    if (!state.editing) return;
+    const snap = state.snapshot || {};
+    setState((s) => ({ ...snap, editing: false, snapshot: null, changes: Math.max(0, (s.changes || 0) - 1) }));
+    hotspotLock.current = true;
+    setGradeErr("");
   };
   const fmtT = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
-  const done = state.solved || state.revealed;
+  const done = locked;
   const lettersFa = ["الف", "ب", "ج", "د", "ه", "و"];
   const lettersEn = ["A", "B", "C", "D", "E", "F"];
   const letters = lang === "en" ? lettersEn : lettersFa;
+  // Visited cards stay mounted (hidden) while back-navigation is on, so an
+  // answered ExamOtherType keeps its drawing / matching / step state.
+  const shownIdxs = navCfg.back ? Array.from({ length: Math.max(idx, reachedIdx) + 1 }, (_, j) => j) : [idx];
 
-  // Guess rows (Doctordle-style): total rows = number of hints + 1 (final).
-  const rowCount = Math.max(1, (hints.length || 0) + 1);
-  const guesses = [];
-  // wrong attempts first (in order), then the winning pick if solved
-  for (const optIdx of state.tried) {
-    const o = (card.options || [])[optIdx];
-    if (o) guesses.push({ label: lang === "fa" ? o.fa : o.en, correct: false });
-  }
-  if (state.solved) {
-    const opts = card.options || [];
-    const c = opts.find((o) => o.correct) || opts[state.correctIndex] || opts[state.tried[state.tried.length - 1]];
-    if (c) guesses.push({ label: lang === "fa" ? c.fa : c.en, correct: true });
-  }
+  const renderCard = (j) => {
+    const c = cards[j];
+    const isCur = j === idx;
+    const st = stateOf(j);
+    const dn = (st.solved || st.revealed) && !st.editing;
+    const cHints = lang === "fa" ? (c.hints_fa || []) : (c.hints_en || []);
+    const cHintImages = lang === "fa" ? (c.hint_images_fa || []) : (c.hint_images_en || []);
+    const cHintText = (h) => (h && typeof h === "object") ? (h.text || h.label || "") : String(h || "");
+    const cHintImage = (h, i) => (h && typeof h === "object" && h.imageUrl) ? h.imageUrl : (cHintImages[i] || "");
+    const cIsHotspot = c.type === "hotspot";
+    const cHotspot = c.hotspot || { x: 50, y: 50, r: 8 };
+    const cMode = c.answerMode === "search" ? "search" : "choice";
+    const cRowCount = Math.max(1, (cHints.length || 0) + 1);
+    // Guess rows (Doctordle-style): wrong attempts first, then the winning pick.
+    const cGuesses = [];
+    for (const optIdx of st.tried) {
+      const o = (c.options || [])[optIdx];
+      if (o) cGuesses.push({ label: lang === "fa" ? o.fa : o.en, correct: false });
+    }
+    if (st.solved) {
+      const opts = c.options || [];
+      const win = opts.find((o) => o.correct) || opts[st.correctIndex] || opts[st.tried[st.tried.length - 1]];
+      if (win) cGuesses.push({ label: lang === "fa" ? win.fa : win.en, correct: true });
+    }
+    const pickedOpt = st.picked != null ? (c.options || [])[st.picked] : null;
+    const pickedLabel = pickedOpt ? (lang === "fa" ? pickedOpt.fa : pickedOpt.en) : "";
+    const confirmBtn = isCur && !dn && st.picked != null && (
+      <button type="button" className="btn btn-accent btn-block mt16" disabled={gradeBusy.current} onClick={confirmChoice}>{t("confirmAnswer")}</button>
+    );
+    return (
+      <div className="ddle-card">
+        {/* The learner sees the QUESTION, not the teacher-facing title. The
+            title/category are an admin label for finding cards — never shown
+            to students. Falls back to title only if a card has no question. */}
+        <h2 className="ddle-title">{biField(c, "questionText", lang) || biField(c, "q", lang) || biField(c, "title", lang)}</h2>
+        <div className="ddle-underline" />
+
+        {/* Optional image in the question */}
+        {c.imageUrl && !cIsHotspot && (
+          <div className="ddle-img zoomable-img" title={lang === "fa" ? "برای بزرگ‌نمایی کلیک کنید" : "Click to zoom"} onClick={() => setZoomSrc(c.imageUrl)}>
+            <img src={c.imageUrl} alt="" />
+            <span className="zoom-badge"><Icon name="search" size={14} /> {lang === "fa" ? "بزرگ‌نمایی" : "Zoom"}</span>
+          </div>
+        )}
+
+        {/* HINTS at the top — each in its own light-blue box (as in the reference) */}
+        {settings.showHints && Array.from({ length: st.hintsShown }).map((_, i) => {
+          const h = cHints[i];
+          const img = cHintImage(h, i);
+          return (
+            <div className="ddle-question ddle-hint" key={i}>
+              <span className="ddle-hint-label">{t("hint")} {i + 1}:</span> {cHintText(h)}
+              {img && <div className="hint-img zoomable-img" onClick={() => setZoomSrc(img)}><img src={img} alt="" /><span className="zoom-badge"><Icon name="search" size={14} /></span></div>}
+            </div>
+          );
+        })}
+
+        {cIsHotspot ? (
+          <>
+            <HotspotPlayer
+              key={c.id}
+              imageUrl={c.imageUrl} hotspot={st.overlayHotspot || cHotspot} lang={lang} done={dn}
+              showCorrect={settings.showCorrect} clicks={st.hotspotClicks || []}
+              onCommit={isCur ? hotspotClick : undefined}
+            />
+            {st.fb === "bad" && <div className="ddle-banner bad">{t("incorrect")}</div>}
+            {st.fb === "ok" && <div className="ddle-banner ok">✓ {t("correct")}</div>}
+          </>
+        ) : c.type && c.type !== "mcq" && c.type !== "image" ? (
+          <ExamOtherType
+            key={c.id}
+            card={c} lang={lang} done={dn} editing={!!st.editing} showCorrect={settings.showCorrect} showHints={settings.showHints} hints={cHints}
+            onGraded={isCur ? (isRight, detail = {}) => {
+
+                  const frac = detail.pointsFrac == null ? (isRight ? 1 : 0) : Math.max(0, Math.min(1, Number(detail.pointsFrac) || 0));
+                  const proposedPoints = cardMax * frac;
+                  // Strict mode mirrors the server: hints deduct on every card
+                  // type; no-penalty mode keeps the full fraction.
+                  const pts = detail.requiresApproval ? 0 : (noPenaltyCfg ? proposedPoints : Math.max(0, proposedPoints - state.hintsShown * hintPenaltyUnit));
+                  setState((s) => ({ ...s, editing: false, snapshot: null, picked: null, solved: true, revealed: !isRight, fb: detail.requiresApproval ? "ok" : (isRight ? "ok" : "bad") }));
+                  setResults((r) => { const n = [...r]; n[idx] = { solved: isRight, points: pts, proposedPoints, pendingApproval: !!detail.requiresApproval, hintsUsed: state.hintsShown, hintLevel: state.hintsShown, responseMs: Math.max(0, Date.now() - (state.startedAt || startRef.current)), ...detail }; return n; });
+            } : undefined}
+          />
+        ) : cMode === "choice" ? (
+          <>
+            <div className="mc-options">
+              {(c.options || []).map((opt, i) => {
+                let cls = "mc-opt";
+                const isTried = st.tried.includes(i);
+                if (dn && (opt.correct || i === st.correctIndex)) cls += " correct";
+                else if (isTried) cls += " wrong";
+                else if (dn) cls += " dim";
+                else if (st.picked === i) cls += " sel";
+                return (
+                  <button type="button" key={i} className={cls} disabled={!isCur || dn || isTried} aria-pressed={st.picked === i} onClick={() => pick(i)}>
+                    <span className="mc-letter">{letters[i]}</span>
+                    <span className="mc-opt-body">
+                      {opt.imageUrl && <img className="mc-opt-img" src={opt.imageUrl} alt="" />}
+                      <span>{lang === "fa" ? opt.fa : opt.en}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            {!dn && st.picked == null && isCur && <div className="small muted mt8">{t("pickFirst")}</div>}
+            {confirmBtn}
+          </>
+        ) : (<>
+          {/* Empty guess rows: only shown AFTER the first guess, so a fresh
+              question isn't cluttered with confusing blank grey boxes. */}
+          {cGuesses.length > 0 && (
+            <div className="ddle-rows">
+              {Array.from({ length: Math.max(0, cRowCount - cGuesses.length) }).map((_, i) => (
+                <div className="ddle-row" key={i}><span className="ddle-row-empty" /></div>
+              ))}
+            </div>
+          )}
+
+          {/* Status banner */}
+          {st.fb === "bad" && <div className="ddle-banner bad">{t("incorrect")}</div>}
+          {st.fb === "ok" && <div className="ddle-banner ok">✓ {t("correct")}</div>}
+          {st.revealed && settings.showCorrect && (
+            <div className="ddle-banner bad">{t("correctAnswerWas")} <b>{(() => { const cc = (st.correctIndex != null ? (c.options || [])[st.correctIndex] : null) || (c.options || []).find((o) => o.correct); return cc ? (lang === "fa" ? cc.fa : cc.en) : "—"; })()}</b></div>
+          )}
+
+          {/* Search: picking only selects; the confirm button commits (R60) */}
+          {!dn && <SearchAnswer
+            options={c.options} lang={lang} disabled={dn} clearOnPick
+            onPick={(i) => { if (isCur) pick(i); }}
+          />}
+          {!dn && st.picked == null && isCur && <div className="small muted mt8">{t("pickFirst")}</div>}
+          {!dn && pickedLabel && <div className="small mt8">{t("yourChoice")}: <b>{pickedLabel}</b></div>}
+          {confirmBtn}
+
+          {/* Previous WRONG answers listed BELOW the search box (numbered) */}
+          {cGuesses.filter((g) => !g.correct).length > 0 && (
+            <div className="ddle-guesses">
+              {cGuesses.filter((g) => !g.correct).map((g, i) => (
+                <div className="ddle-guess" key={i}>
+                  <span className="ddle-guess-no">{i + 1}</span>
+                  <span className="ddle-guess-label">{g.label}</span>
+                  <span className="ddle-guess-x">✗</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </>)}
+
+        {isCur && (
+          <div className="flash-nav">
+            {navCfg.back && idx > 0 && !st.editing && (
+              <button type="button" className="btn btn-ghost" onClick={prev}>← {t("prevCard")}</button>
+            )}
+            {st.editing && <button type="button" className="btn btn-ghost" onClick={cancelEdit}>{t("cancelChange")}</button>}
+            {dn && navCfg.change && (
+              <button type="button" className="btn btn-ghost" onClick={startEdit}>{t("changeAnswer")}</button>
+            )}
+            {dn && (
+              <button type="button" className="btn btn-accent flash-nav-next" onClick={next}>
+                {idx < cards.length - 1 ? `${t("nextCard")} →` : `${((examId || classCombined) ? t("examDone") : t("flashDone"))} →`}
+              </button>
+            )}
+            {dn && idx < reachedIdx && !navCfg.change && <div className="small muted flash-nav-note">🔒 {t("lockedAnswer")}</div>}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return flashChrome(embedded, home, (
       <>
@@ -417,121 +627,9 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
           </div>
           {cards.length > 20 && <div className="progress-count">{idx + 1} / {cards.length}</div>}
 
-          <div className="ddle-card">
-            {/* The learner sees the QUESTION, not the teacher-facing title. The
-                title/category are an admin label for finding cards — never shown
-                to students. Falls back to title only if a card has no question. */}
-            <h2 className="ddle-title">{biField(card, "questionText", lang) || biField(card, "q", lang) || biField(card, "title", lang)}</h2>
-            <div className="ddle-underline" />
-
-            {/* Optional image in the question */}
-            {card.imageUrl && !isHotspot && (
-              <div className="ddle-img zoomable-img" title={lang === "fa" ? "برای بزرگ‌نمایی کلیک کنید" : "Click to zoom"} onClick={() => setZoomSrc(card.imageUrl)}>
-                <img src={card.imageUrl} alt="" />
-                <span className="zoom-badge"><Icon name="search" size={14} /> {lang === "fa" ? "بزرگ‌نمایی" : "Zoom"}</span>
-              </div>
-            )}
-
-            {/* HINTS at the top — each in its own light-blue box (as in the reference) */}
-            {settings.showHints && Array.from({ length: state.hintsShown }).map((_, i) => {
-              const h = hints[i];
-              const img = hintImage(h, i);
-              return (
-                <div className="ddle-question ddle-hint" key={i}>
-                  <span className="ddle-hint-label">{t("hint")} {i + 1}:</span> {hintText(h)}
-                  {img && <div className="hint-img zoomable-img" onClick={() => setZoomSrc(img)}><img src={img} alt="" /><span className="zoom-badge"><Icon name="search" size={14} /></span></div>}
-                </div>
-              );
-            })}
-
-            {isHotspot ? (
-              <>
-                <HotspotPlayer
-                  key={card.id}
-                  imageUrl={card.imageUrl} hotspot={state.overlayHotspot || hotspot} lang={lang} done={done}
-                  showCorrect={settings.showCorrect} clicks={state.hotspotClicks || []}
-                  onCommit={hotspotClick}
-                />
-                {state.fb === "bad" && <div className="ddle-banner bad">{t("incorrect")}</div>}
-                {state.fb === "ok" && <div className="ddle-banner ok">✓ {t("correct")}</div>}
-              </>
-            ) : card.type && card.type !== "mcq" && card.type !== "image" ? (
-              <ExamOtherType
-                key={card.id}
-                card={card} lang={lang} done={done} showCorrect={settings.showCorrect} showHints={settings.showHints} hints={hints}
-                  onGraded={(isRight, detail = {}) => {
-                  const frac = detail.pointsFrac == null ? (isRight ? 1 : 0) : Math.max(0, Math.min(1, Number(detail.pointsFrac) || 0));
-                  const proposedPoints = cardMax * frac;
-                  // Strict mode mirrors the server: hints deduct on every card
-                  // type; no-penalty mode keeps the full fraction.
-                  const pts = detail.requiresApproval ? 0 : (noPenaltyCfg ? proposedPoints : Math.max(0, proposedPoints - state.hintsShown * hintPenaltyUnit));
-                  setState((s) => ({ ...s, solved: true, revealed: !isRight, fb: detail.requiresApproval ? "ok" : (isRight ? "ok" : "bad") }));
-                  setResults((r) => { const n = [...r]; n[idx] = { solved: isRight, points: pts, proposedPoints, pendingApproval: !!detail.requiresApproval, hintsUsed: state.hintsShown, hintLevel: state.hintsShown, responseMs: Math.max(0, Date.now() - (state.startedAt || startRef.current)), ...detail }; return n; });
-                }}
-              />
-            ) : answerMode === "choice" ? (
-              <div className="mc-options">
-                {(card.options || []).map((opt, i) => {
-                  let cls = "mc-opt";
-                  if (done && (opt.correct || i === state.correctIndex)) cls += " correct";
-                  else if (state.tried.includes(i)) cls += " wrong";
-                  else if (done) cls += " dim";
-                  return (
-                    <button type="button" key={i} className={cls} disabled={done || state.tried.includes(i)} onClick={() => choose(i)}>
-                      <span className="mc-letter">{letters[i]}</span>
-                      <span className="mc-opt-body">
-                        {opt.imageUrl && <img className="mc-opt-img" src={opt.imageUrl} alt="" />}
-                        <span>{lang === "fa" ? opt.fa : opt.en}</span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            ) : (<>
-              {/* Empty guess rows: only shown AFTER the first guess, so a fresh
-                  question isn't cluttered with confusing blank grey boxes. They
-                  give the Wordle-style "attempts remaining" cue once relevant. */}
-              {guesses.length > 0 && (
-                <div className="ddle-rows">
-                  {Array.from({ length: Math.max(0, rowCount - guesses.length) }).map((_, i) => (
-                    <div className="ddle-row" key={i}><span className="ddle-row-empty" /></div>
-                  ))}
-                </div>
-              )}
-
-              {/* Status banner */}
-              {state.fb === "bad" && <div className="ddle-banner bad">{t("incorrect")}</div>}
-              {state.fb === "ok" && <div className="ddle-banner ok">✓ {t("correct")}</div>}
-              {state.revealed && settings.showCorrect && (
-                <div className="ddle-banner bad">{t("correctAnswerWas")} <b>{(() => { const c = (state.correctIndex != null ? (card.options || [])[state.correctIndex] : null) || (card.options || []).find((o) => o.correct); return c ? (lang === "fa" ? c.fa : c.en) : "—"; })()}</b></div>
-              )}
-
-              {/* Search + Submit */}
-              {!done && <SearchAnswer
-                options={card.options} lang={lang} disabled={done} clearOnPick withSubmit
-                onPick={(i) => choose(i)}
-              />}
-
-              {/* Previous WRONG answers listed BELOW the search box (numbered) */}
-              {guesses.filter((g) => !g.correct).length > 0 && (
-                <div className="ddle-guesses">
-                  {guesses.filter((g) => !g.correct).map((g, i) => (
-                    <div className="ddle-guess" key={i}>
-                      <span className="ddle-guess-no">{i + 1}</span>
-                      <span className="ddle-guess-label">{g.label}</span>
-                      <span className="ddle-guess-x">✗</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </>)}
-
-            {done && (
-              <button type="button" className="btn btn-accent btn-block mt16" onClick={next}>
-                {idx < cards.length - 1 ? `${t("nextCard")} →` : `${((examId || classCombined) ? t("examDone") : t("flashDone"))} →`}
-              </button>
-            )}
-          </div>
+          {shownIdxs.map((j) => (
+            <div key={cards[j].id} hidden={j !== idx}>{renderCard(j)}</div>
+          ))}
         </div>
       </div>
       {zoomSrc && (

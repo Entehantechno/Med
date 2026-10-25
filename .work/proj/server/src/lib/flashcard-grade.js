@@ -118,9 +118,9 @@ export function studentSafeFlashcard(full) {
       return rest;
     });
   }
-  if (out.hotspot && typeof out.hotspot === "object") {
-    out.hotspot = { confirm: out.hotspot.confirm !== false };
-  }
+  // Regions stay server-side until the answer is graded. Every hotspot is a
+  // place-then-confirm question (no tap-to-grade mode), so nothing else is sent.
+  if (out.hotspot && typeof out.hotspot === "object") out.hotspot = {};
   if (out.puzzle && typeof out.puzzle === "object") {
     const pins = Array.isArray(out.puzzle.pins) ? out.puzzle.pins : [];
     const bank = pins.map((p, i) => ({
@@ -569,4 +569,11 @@ export function formatFlashAnswer(ans, fa = true) {
   }
   if (ans.answer != null && typeof ans.answer !== "object") return String(ans.answer);
   return "—";
+}
+
+/* R60: how many submitted cards were changed after confirming. The client sends
+   `changes` per card (confirmed "change answer" reopenings). The server refuses
+   a submission with changes when the exam/class has allow-change turned off. */
+export function changedCardCount(rows) {
+  return (Array.isArray(rows) ? rows : []).filter((a) => Number(a?.changes) > 0).length;
 }

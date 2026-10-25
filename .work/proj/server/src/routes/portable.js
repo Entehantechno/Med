@@ -1362,8 +1362,9 @@ export async function importUniversityBundle(buffer, options = {}) {
             active, created_at, live_board_enabled, live_board_anonymous,
             university_id, grading_role, history_form, grading_json,
             tutor_enabled, tutor_prompt, log_transcript, study_id,
-            exam_mode, timer_enabled, timer_minutes, flash_no_penalty, live_board_speed
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            exam_mode, timer_enabled, timer_minutes, flash_no_penalty, live_board_speed,
+            flash_allow_back, flash_allow_change
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .run(
           c.name_fa,
@@ -1392,6 +1393,8 @@ export async function importUniversityBundle(buffer, options = {}) {
           c.timer_minutes ?? 30,
           c.flash_no_penalty ?? null,
           c.live_board_speed ?? null,
+          c.flash_allow_back ?? null,
+          c.flash_allow_change ?? null,
         );
       classMap.set(srcId, Number(insCls.lastInsertRowid));
     }
@@ -1418,8 +1421,8 @@ export async function importUniversityBundle(buffer, options = {}) {
             use_flashcards, starts_at, ends_at, duration_min, max_attempts,
             lang, shuffle, anti_cheat, competition, show_correct, show_hints,
             show_ai, show_micro, owner_id, active, created_at, university_id,
-            tutor_enabled, tutor_prompt, log_transcript, study_id
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            tutor_enabled, tutor_prompt, log_transcript, study_id, flash_allow_back, flash_allow_change
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         )
         .run(
           e.title_fa,
@@ -1449,6 +1452,8 @@ export async function importUniversityBundle(buffer, options = {}) {
           e.tutor_prompt,
           e.log_transcript ?? 0,
           targetStudyId,
+          e.flash_allow_back ?? null,
+          e.flash_allow_change ?? null,
         );
       examMap.set(srcId, Number(insEx.lastInsertRowid));
     }

@@ -12,7 +12,7 @@ import { createItemAnalysis, addFlashAnswer as iaAdd, noteTrend as iaTrend, fini
 import { assessDrawing, drawingAssistEnabled } from "../lib/drawingassist.js";
 import { validateBody, s as vs } from "../lib/validate.js";
 import { normDigits } from "../lib/textsearch.js";
-import { checkStudentLimit, effectiveFlashNoPenalty } from "../lib/orglimits.js";
+import { checkStudentLimit, effectiveFlashNoPenalty, effectiveFlashAllowBack, effectiveFlashAllowChange, triInput } from "../lib/orglimits.js";
 import { sendPrivateJson, sqlInList } from "../lib/http-cache.js";
 
 
@@ -39,6 +39,8 @@ const parseExam = (row) => ({
   shuffle: !!row.shuffle, anti_cheat: !!row.anti_cheat, competition: !!row.competition,
   show_correct: !!row.show_correct, show_hints: !!row.show_hints,
   show_ai: !!row.show_ai, show_micro: !!row.show_micro,
+  // Raw tri-state (NULL = inherit university → global); the student route resolves them.
+  flash_allow_back: row.flash_allow_back ?? null, flash_allow_change: row.flash_allow_change ?? null,
   log_transcript: !!row.log_transcript, study_id: row.study_id || null,
   university_id: row.university_id || null,
   owner_id: row.owner_id || null,   // staff ownership check; stripped from student responses
@@ -166,9 +168,12 @@ r.get("/:id", authRequired, (req, res) => {
     // No-penalty flashcards for this exam come from its university's licence
     // settings (classes are not involved in scheduled exams).
     const flashNoPenalty = effectiveFlashNoPenalty(null, row.university_id);
+    const flashAllowBack = effectiveFlashAllowBack(ex, row.university_id);
+    const flashAllowChange = effectiveFlashAllowChange(ex, row.university_id);
+    const flashNav = { flashAllowBack, flashAllowChange };
     if (state !== "open") {
       const { case_ids, flashcard_ids, ...safe } = ex; delete safe.owner_id;
-      return res.json({ ...safe, case_ids: [], flashcard_ids: [], state, attemptsUsed: used, vpAttemptsUsed: vpUsed, flashAttemptsUsed: flashUsed, cases: [], locked: true, flashNoPenalty });
+      return res.json({ ...safe, case_ids: [], flashcard_ids: [], state, attemptsUsed: used, vpAttemptsUsed: vpUsed, flashAttemptsUsed: flashUsed, cases: [], locked: true, flashNoPenalty, ...flashNav });
     }
     const caseWant = sqlInList(ex.case_ids || []);
     const caseBy = new Map();
@@ -198,7 +203,7 @@ r.get("/:id", authRequired, (req, res) => {
     const flashExhausted = hasFlash && flashUsed >= maxA;
     if ((!hasCases || vpExhausted) && (!hasFlash || flashExhausted) && (hasCases || hasFlash)) {
       const { case_ids, flashcard_ids, ...safe } = ex; delete safe.owner_id;
-      return res.json({ ...safe, case_ids: [], flashcard_ids: [], state, attemptsUsed: used, vpAttemptsUsed: vpUsed, flashAttemptsUsed: flashUsed, cases: [], locked: true, lockReason: "attempts", flashNoPenalty });
+      return res.json({ ...safe, case_ids: [], flashcard_ids: [], state, attemptsUsed: used, vpAttemptsUsed: vpUsed, flashAttemptsUsed: flashUsed, cases: [], locked: true, lockReason: "attempts", flashNoPenalty, ...flashNav });
     }
     const { owner_id: _ownerId, ...exPublic } = ex;
     return res.json({
@@ -206,7 +211,7 @@ r.get("/:id", authRequired, (req, res) => {
       flashcard_ids: flashExhausted ? [] : flashcard_ids,
       state, attemptsUsed: used, vpAttemptsUsed: vpUsed, flashAttemptsUsed: flashUsed,
       cases: vpExhausted ? [] : cases, locked: false,
-      vpLocked: vpExhausted, flashLocked: flashExhausted, flashNoPenalty,
+      vpLocked: vpExhausted, flashLocked: flashExhausted, flashNoPenalty, ...flashNav,
     });
   }
 
@@ -297,6 +302,8 @@ function saveBody(b, universityId = 1, prev = {}, actor) {
     bit(b.shuffle, 0), bit(b.anti_cheat, 1), bit(b.competition, 0),
     bit(b.show_correct, 1), bit(b.show_hints, 1), bit(b.show_ai, 1), bit(b.show_micro, 1),
     logOn ? 1 : 0, study,
+    // Tri-state: an omitted key keeps the stored value (prev is merged above); null = inherit.
+    triInput(b.flash_allow_back), triInput(b.flash_allow_change),
   ];
 }
 r.post("/", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -314,8 +321,8 @@ r.post("/", authRequired, requireRole("teacher", "admin"), (req, res) => {
   }
   const info = academicContentTransaction(() => db.prepare(
     `INSERT INTO exams (title_fa,title_en,desc_fa,desc_en,case_ids,flashcard_ids,use_flashcards,
-       starts_at,ends_at,duration_min,max_attempts,lang,shuffle,anti_cheat,competition,show_correct,show_hints,show_ai,show_micro,log_transcript,study_id,owner_id,university_id)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+       starts_at,ends_at,duration_min,max_attempts,lang,shuffle,anti_cheat,competition,show_correct,show_hints,show_ai,show_micro,log_transcript,study_id,flash_allow_back,flash_allow_change,owner_id,university_id)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
   ).run(...saveBody(b, uni, {}, req.user), req.user.id, uni));
   res.json({ id: info.lastInsertRowid });
 });
@@ -333,7 +340,7 @@ r.put("/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
     db.prepare(
       `UPDATE exams SET title_fa=?,title_en=?,desc_fa=?,desc_en=?,case_ids=?,flashcard_ids=?,
          use_flashcards=?,starts_at=?,ends_at=?,duration_min=?,max_attempts=?,lang=?,
-         shuffle=?,anti_cheat=?,competition=?,show_correct=?,show_hints=?,show_ai=?,show_micro=?,log_transcript=?,study_id=? WHERE id=?`
+         shuffle=?,anti_cheat=?,competition=?,show_correct=?,show_hints=?,show_ai=?,show_micro=?,log_transcript=?,study_id=?,flash_allow_back=?,flash_allow_change=? WHERE id=?`
     ).run(...saveBody(b, parseExam(row).university_id || 1, row, req.user), req.params.id);
   });
   res.json({ ok: true });

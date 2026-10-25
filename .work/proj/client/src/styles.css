@@ -419,8 +419,6 @@ tbody tr:last-child td{border-bottom:none}
 
 /* search row with green submit (Doctordle style) */
 .search-row{display:flex;gap:8px;align-items:stretch}
-.search-answer.with-submit .search-input-wrap{flex:1 1 auto;min-width:0}
-.search-answer.with-submit .btn{white-space:nowrap;border-radius:11px;flex:0 0 auto;padding-left:16px;padding-right:16px}
 
 /* ---- guess-game card: hints, status banner, numbered wrong guesses ---- */
 .ddle-hint{background:#eef3fb;border-color:#d4e6f5}

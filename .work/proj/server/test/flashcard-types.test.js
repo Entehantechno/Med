@@ -132,7 +132,6 @@ describe("flashcard KF and puzzle payloads persist", () => {
     const list = await request(app).get("/api/flashcards").set(A(tk));
     const card = list.body.find((c) => c.id === created.body.id);
     expect(card.type).toBe("hotspot");
-    expect(card.hotspot.confirm).toBe(true);
     expect(card.hotspot.regions.length).toBe(2);
     expect(card.hotspot.regions[0].shape).toBe("polygon");
     expect(card.hotspot.regions[0].points.length).toBe(4);

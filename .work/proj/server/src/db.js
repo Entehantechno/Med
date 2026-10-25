@@ -1030,6 +1030,8 @@ export function initSchema() {
     sales_method TEXT,                          -- سازمانی | معرف | فاکتور رسمی | آزمایشی...
     -- Per-university feature flags (NULL = inherit the global default)
     flash_no_penalty INTEGER,                   -- no-penalty flashcards (h / wrong-stage free)
+    flash_allow_back INTEGER,                   -- flashcard exams: students may return to earlier cards
+    flash_allow_change INTEGER,                 -- flashcard exams: students may change a confirmed answer
     live_board_speed INTEGER,                   -- leaderboard tie-break by less time
     created_at TEXT DEFAULT (datetime('now'))
   );
@@ -1928,6 +1930,9 @@ export function initSchema() {
   //   live_board_speed — live-board tie-break by less total time
   if (!liveClassCols.includes("flash_no_penalty")) db.exec("ALTER TABLE classes ADD COLUMN flash_no_penalty INTEGER");
   if (!liveClassCols.includes("live_board_speed")) db.exec("ALTER TABLE classes ADD COLUMN live_board_speed INTEGER");
+  //   flash_allow_back / flash_allow_change — tri-state like the flags above; teacher per class, admin per university/global
+  if (!liveClassCols.includes("flash_allow_back")) db.exec("ALTER TABLE classes ADD COLUMN flash_allow_back INTEGER");
+  if (!liveClassCols.includes("flash_allow_change")) db.exec("ALTER TABLE classes ADD COLUMN flash_allow_change INTEGER");
   // Existing deployments: backfill the university licensing / flag columns.
   const uniColMig = db.prepare("PRAGMA table_info(universities)").all().map((c) => c.name);
   if (!uniColMig.includes("limits_enabled")) db.exec("ALTER TABLE universities ADD COLUMN limits_enabled INTEGER NOT NULL DEFAULT 0");
@@ -1939,6 +1944,8 @@ export function initSchema() {
   if (!uniColMig.includes("sales_method")) db.exec("ALTER TABLE universities ADD COLUMN sales_method TEXT");
   if (!uniColMig.includes("flash_no_penalty")) db.exec("ALTER TABLE universities ADD COLUMN flash_no_penalty INTEGER");
   if (!uniColMig.includes("live_board_speed")) db.exec("ALTER TABLE universities ADD COLUMN live_board_speed INTEGER");
+  if (!uniColMig.includes("flash_allow_back")) db.exec("ALTER TABLE universities ADD COLUMN flash_allow_back INTEGER");
+  if (!uniColMig.includes("flash_allow_change")) db.exec("ALTER TABLE universities ADD COLUMN flash_allow_change INTEGER");
   db.exec(`UPDATE classes SET university_id=(SELECT university_id FROM users WHERE users.id=classes.owner_id)
            WHERE university_id IS NULL AND owner_id IS NOT NULL`);
   db.exec("UPDATE classes SET university_id=1 WHERE university_id IS NULL");
@@ -1947,6 +1954,8 @@ export function initSchema() {
   db.exec(`UPDATE exams SET university_id=(SELECT university_id FROM users WHERE users.id=exams.owner_id)
            WHERE university_id IS NULL AND owner_id IS NOT NULL`);
   db.exec("UPDATE exams SET university_id=1 WHERE university_id IS NULL");
+  if (!examTenantCols.includes("flash_allow_back")) db.exec("ALTER TABLE exams ADD COLUMN flash_allow_back INTEGER");
+  if (!examTenantCols.includes("flash_allow_change")) db.exec("ALTER TABLE exams ADD COLUMN flash_allow_change INTEGER");
   const checklistCols = db.prepare("PRAGMA table_info(checklists)").all().map((c) => c.name);
   if (!checklistCols.includes("owner_id")) db.exec("ALTER TABLE checklists ADD COLUMN owner_id INTEGER");
   // ads: optional per-lesson targeting (node_id) so admins can attach/disable an ad on individual lessons

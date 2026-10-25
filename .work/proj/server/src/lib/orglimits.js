@@ -33,14 +33,28 @@ export function universityRow(id) {
   try { return db.prepare("SELECT * FROM universities WHERE id=?").get(id) || null; } catch { return null; }
 }
 
+/** Generic resolution: row column → university column → global settings key → default. */
+function effectiveTriFlag(row, universityId, col, settingKey, dflt = false) {
+  const t = tri(row?.[col]);
+  if (t !== null) return t;
+  const tu = tri(universityRow(universityId ?? row?.university_id)?.[col]);
+  if (tu !== null) return tu;
+  return boolSetting(settingKey, dflt);
+}
+
 /** Effective "no-penalty flashcards" for a class row (or bare university_id). */
 export function effectiveFlashNoPenalty(cls = null, universityId = null) {
-  const t = tri(cls?.flash_no_penalty);
-  if (t !== null) return t;
-  const uni = universityRow(universityId ?? cls?.university_id);
-  const tu = tri(uni?.flash_no_penalty);
-  if (tu !== null) return tu;
-  return boolSetting("default_flash_no_penalty", false);
+  return effectiveTriFlag(cls, universityId, "flash_no_penalty", "default_flash_no_penalty", false);
+}
+
+/* Flashcard navigation flags (exam or class). Teachers set them on the exam /
+   class; admins set the university and global defaults. Both default OFF, so an
+   unconfigured exam keeps the strict one-way flow. */
+export function effectiveFlashAllowBack(row = null, universityId = null) {
+  return effectiveTriFlag(row, universityId, "flash_allow_back", "default_flash_allow_back", false);
+}
+export function effectiveFlashAllowChange(row = null, universityId = null) {
+  return effectiveTriFlag(row, universityId, "flash_allow_change", "default_flash_allow_change", false);
 }
 
 /** Effective "leaderboard tie-break by less time" for a class row. */
@@ -183,6 +197,8 @@ export function parseLicensingBody(b = {}) {
   if (b.license_expires_at !== undefined) patch.license_expires_at = b.license_expires_at === null ? null : String(b.license_expires_at).slice(0, 40);
   if (b.sales_method !== undefined) patch.sales_method = b.sales_method === null ? null : String(b.sales_method).slice(0, 60);
   if (b.flash_no_penalty !== undefined) patch.flash_no_penalty = triInput(b.flash_no_penalty);
+  if (b.flash_allow_back !== undefined) patch.flash_allow_back = triInput(b.flash_allow_back);
+  if (b.flash_allow_change !== undefined) patch.flash_allow_change = triInput(b.flash_allow_change);
   if (b.live_board_speed !== undefined) patch.live_board_speed = triInput(b.live_board_speed);
   return { patch };
 }

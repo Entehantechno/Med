@@ -14,7 +14,7 @@ export default function HotspotPlayer({
   const doneRef = useRef(done);
   const [pending, setPending] = useState(null);
   const [zoomed, setZoomed] = useState(false);
-  const confirmMode = hs.confirm !== false && !done;
+  // Every hotspot is place-then-confirm (R60): a tap only moves the pin.
   doneRef.current = done;
 
   useEffect(() => {
@@ -44,17 +44,15 @@ export default function HotspotPlayer({
     if (done || disabled || busy.current) return;
     if (!imgRef.current) return;
     tap.current = { x: e.clientX, y: e.clientY, id: e.pointerId, moved: false };
-    if (hs.confirm !== false) {
-      placePending(e);
-      e.currentTarget.setPointerCapture?.(e.pointerId);
-    }
+    placePending(e);
+    e.currentTarget.setPointerCapture?.(e.pointerId);
   };
 
   const move = (e) => {
     if (!tap.current || tap.current.id !== e.pointerId) return;
     const dx = e.clientX - tap.current.x, dy = e.clientY - tap.current.y;
     if (dx * dx + dy * dy > 36) tap.current.moved = true;
-    if (hs.confirm !== false && !done && !disabled) {
+    if (!done && !disabled) {
       if (tap.current.moved) e.preventDefault?.();
       placePending(e);
     }
@@ -62,14 +60,9 @@ export default function HotspotPlayer({
 
   const up = (e) => {
     if (!tap.current || (e.pointerId != null && tap.current.id !== e.pointerId)) return;
-    const start = tap.current;
     tap.current = null;
     try { e.currentTarget?.releasePointerCapture?.(e.pointerId); } catch { /* */ }
-    if (done || disabled || busy.current) return;
-    if (hs.confirm !== false) return;
-    if (start.moved) return;
-    const pt = eventToPct(e, imgRef.current);
-    if (pt) commit(pt);
+    // A release never grades: the learner confirms the pin with the button.
   };
 
   useEffect(() => {
@@ -114,7 +107,7 @@ export default function HotspotPlayer({
           {fa ? (zoomed ? "اندازهٔ عادی" : "بزرگ‌نمایی تصویر") : (zoomed ? "Normal size" : "Enlarge image")}
         </button>
       </div>
-      {confirmMode && (
+      {!done && (
         <div className="hotspot-confirm">
           <button type="button" className="btn btn-primary btn-block mt8" disabled={!pending} onClick={confirm}>
             {fa ? (pending ? "ثبت این نقطه" : "اول روی تصویر بزنید") : (pending ? "Confirm this pin" : "Tap the image first")}

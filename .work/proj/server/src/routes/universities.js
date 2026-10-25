@@ -44,6 +44,8 @@ r.get("/", authRequired, requireRole("admin", "teacher"), (req, res) => {
     })),
     defaults: {
       flash_no_penalty: boolSetting("default_flash_no_penalty", false),
+      flash_allow_back: boolSetting("default_flash_allow_back", false),
+      flash_allow_change: boolSetting("default_flash_allow_change", false),
       live_board_speed: boolSetting("default_live_board_speed", false),
     },
   });
@@ -55,6 +57,8 @@ r.get("/", authRequired, requireRole("admin", "teacher"), (req, res) => {
 r.get("/defaults", ...admin, (req, res) => {
   res.json({
     flash_no_penalty: boolSetting("default_flash_no_penalty", false),
+    flash_allow_back: boolSetting("default_flash_allow_back", false),
+    flash_allow_change: boolSetting("default_flash_allow_change", false),
     live_board_speed: boolSetting("default_live_board_speed", false),
   });
 });
@@ -63,11 +67,15 @@ r.put("/defaults", ...admin, (req, res) => {
   const b = req.body || {};
   durableTransaction(() => {
   if (b.flash_no_penalty !== undefined) setSetting("default_flash_no_penalty", b.flash_no_penalty ? "1" : "0");
+  if (b.flash_allow_back !== undefined) setSetting("default_flash_allow_back", b.flash_allow_back ? "1" : "0");
+  if (b.flash_allow_change !== undefined) setSetting("default_flash_allow_change", b.flash_allow_change ? "1" : "0");
   if (b.live_board_speed !== undefined) setSetting("default_live_board_speed", b.live_board_speed ? "1" : "0");
   });
-  audit(req, "university.defaults", "universities", { flash_no_penalty: b.flash_no_penalty, live_board_speed: b.live_board_speed });
+  audit(req, "university.defaults", "universities", { flash_no_penalty: b.flash_no_penalty, flash_allow_back: b.flash_allow_back, flash_allow_change: b.flash_allow_change, live_board_speed: b.live_board_speed });
   res.json({ ok: true,
     flash_no_penalty: boolSetting("default_flash_no_penalty", false),
+    flash_allow_back: boolSetting("default_flash_allow_back", false),
+    flash_allow_change: boolSetting("default_flash_allow_change", false),
     live_board_speed: boolSetting("default_live_board_speed", false) });
 });
 
