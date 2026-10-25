@@ -1588,17 +1588,6 @@ export function initSchema() {
       const jPath = path.join(__dirname, "data", "medical-universities.json");
       if (fs.existsSync(jPath)) list = JSON.parse(fs.readFileSync(jPath, "utf8"));
     } catch {}
-    // Fallback: try JS file if JSON missing
-    if (!list.length) {
-      try {
-        const cPath = path.join(__dirname, "..", "..", "client", "src", "data", "medical-universities.js");
-        if (fs.existsSync(cPath)) {
-          const txt = fs.readFileSync(cPath, "utf8");
-          const m = txt.match(/MEDICAL_UNIVERSITIES\s*=\s*(\[[\s\S]*?\])(?:\s*;|\s*export)/);
-          if (m) list = eval("(" + m[1] + ")");
-        }
-      } catch {}
-    }
     if (list && list.length) {
       const ins = db.prepare("INSERT OR IGNORE INTO universities (name_fa,name_en,city_fa,city_en,code,active) VALUES (?,?,?,?,?,1)");
       const byCode = db.prepare("SELECT id, name_fa FROM universities WHERE code=?");

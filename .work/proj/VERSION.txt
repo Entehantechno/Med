@@ -1,1 +1,1 @@
-2026.10.24-r56-wiring-security-cleanup
+2026.10.25-r59-async-docker-hardening

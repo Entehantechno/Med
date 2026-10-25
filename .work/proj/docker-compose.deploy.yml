@@ -53,6 +53,24 @@ services:
       VAPID_SUBJECT: "${VAPID_SUBJECT:-mailto:admin@medschool.ir}"
     volumes:
       - medlab-data:/app/server      # keeps the database + uploads safe
+    # Hardening: no privilege escalation, no Linux capabilities (the app listens
+    # on 4000 inside the network and needs none), bounded memory/processes,
+    # a private /tmp, a tiny init process to forward signals and reap children,
+    # and capped log growth.
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+    init: true
+    mem_limit: 1g
+    pids_limit: 256
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
     restart: unless-stopped
 
   # ---- Caddy: automatic HTTPS reverse proxy ----
@@ -69,6 +87,8 @@ services:
       - caddy-config:/config
     depends_on:
       - medlab
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
   # ---- Automatic daily database backups ----
@@ -80,6 +100,8 @@ services:
       - ./backups:/backups           # snapshots land in ./backups on your machine
       - ./deploy/backup.sh:/backup.sh:ro
     entrypoint: ["/bin/sh", "/backup.sh"]
+    security_opt:
+      - no-new-privileges:true
     restart: unless-stopped
 
 volumes:

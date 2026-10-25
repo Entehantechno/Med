@@ -193,10 +193,15 @@ export function authLimiter() {
 /* Central error handler — logs full detail server-side, returns a generic
    message to the client (never leaks stack traces in production). */
 export function errorHandler(err, req, res, next) {
-  console.error("[error]", req.method, req.path, err && err.stack ? err.stack : err);
+  // Only server faults (5xx) get a stack trace. Client faults such as malformed
+  // JSON (400) or an oversized body (413) are expected traffic: logging them with
+  // full stacks let anyone flood the log and slowed every bad request down.
+  const given = Number(err && err.status);
+  const status = given >= 400 && given < 600 ? given : 500;
+  if (status >= 500) console.error("[error]", req.method, req.path, err && err.stack ? err.stack : err);
   if (res.headersSent) return next(err);
   const dev = process.env.NODE_ENV !== "production";
-  res.status(err.status || 500).json({
+  res.status(status).json({
     error: "server_error",
     message: dev ? String(err && err.message || err) : "Something went wrong.",
   });

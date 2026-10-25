@@ -3,6 +3,9 @@
    index.js starts the server; tests import this directly.
    ================================================================ */
 import "dotenv/config";
+// Express 4 does not forward rejected promises from async handlers to the error
+// handler; without this patch a failing `await` leaves the request hanging.
+import "express-async-errors";
 import express from "express";
 import qs from "qs";
 import cors from "cors";

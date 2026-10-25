@@ -7,17 +7,22 @@ import react from "@vitejs/plugin-react";
    - Page components are code-split via React.lazy in App.jsx (each page = its
      own chunk), so learners never download the admin bundle and vice-versa.
    - Target modern browsers to ship less transpiled/polyfilled code. */
-export default defineConfig({
+// The API server listens on PORT (default 4000 — see server/src/index.js).
+// Override with VITE_API_TARGET when the API runs elsewhere. This proxy is
+// server-side (dev only), so the browser still only ever talks to its own origin.
+const API_TARGET = process.env.VITE_API_TARGET || "http://localhost:4000";
+
+export default defineConfig(({ command }) => ({
   plugins: [react()],
-  // Drop console.* / debugger in the production build (smaller + cleaner).
-  esbuild: { drop: ["console", "debugger"] },
+  // Drop console.* / debugger from the production bundle only; keep them in dev.
+  esbuild: command === "build" ? { drop: ["console", "debugger"] } : {},
   server: {
     port: 5173,
     host: "0.0.0.0",
     allowedHosts: true,
     hmr: { clientPort: 443 },
     proxy: {
-      "/api": "http://localhost:3001",
+      "/api": API_TARGET,
     },
   },
   build: {
@@ -43,4 +48,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

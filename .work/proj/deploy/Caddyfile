@@ -18,13 +18,16 @@ www.medschool.ir {
 medschool.ir {
     encode zstd gzip
 
-    # Enterprise Security Headers (Qualys SSL Labs A+ rating)
+    # Enterprise Security Headers (Qualys SSL Labs A+ rating).
+    # Permissions-Policy and CSP are NOT set here on purpose: the app emits the
+    # complete policy (src/lib/security.js), and a second, shorter header from
+    # the proxy would silently override it. -Server hides the server software.
     header {
         Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
         X-Content-Type-Options "nosniff"
         X-Frame-Options "DENY"
         Referrer-Policy "strict-origin-when-cross-origin"
-        Permissions-Policy "accelerometer=(), camera=(), geolocation=(), microphone=()"
+        -Server
     }
 
     reverse_proxy medlab:4000 {
