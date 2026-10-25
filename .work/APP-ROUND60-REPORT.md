@@ -140,4 +140,5 @@
   - `server/test/flash-navigation.test.js`
   - `server/test/flash-change-enforcement.test.js`
 - `.work/` در `.gitignore` است؛ فایل‌های tracked با `git add -f` و فایل‌های جدید با `git add -f` اضافه شدند. پوشهٔ `.work/tmp/` (اسکریپت‌های patch) عمداً commit نشد.
-- ZIP انتشار R60 هنوز ساخته نشده است (منتظر تأیید کاربر).
+- ZIP انتشار: `MED-School-FINAL-2026-10-25-R60.zip` در ریشهٔ مخزن (ساخته‌شده از همین commit، غیر tracked، مانند R59). `release:check` سبز؛ ۸۳۲ فایل، ۲۷.۵ MB؛ `JWT_SECRET` در `.env` خالی؛ `client/dist` و `node_modules` مطابق قاعده.
+- یادداشت عملیاتی: در میانهٔ دور، ورک‌اسپیس به یک snapshot قدیمی برگشت (شاخهٔ محلی روی `b4ec28f`). شاخه با `git fetch` و fast-forward به `origin/arena/3419d01b-med` (`e91788c`) همگام شد؛ هیچ commit محلی از دست نرفت. ZIP اولیه که در آن وضعیت ساخته شده بود دور ریخته شد و ZIP فعلی از کد commit‌شده ساخته شد.
