@@ -2317,7 +2317,7 @@ function ChecklistEditor({ ch, meta = { sections: [], internalHistory: [] }, onS
                 <td><input value={it.fa || ""} onChange={(e) => setItem(idx, "fa", e.target.value)} style={{ minWidth: 180 }} /></td>
                 <td><input dir="ltr" value={it.en || ""} onChange={(e) => setItem(idx, "en", e.target.value)} style={{ minWidth: 160 }} /></td>
                 <td><input type="number" min="1" value={it.weight} onChange={(e) => setItem(idx, "weight", e.target.value)} style={{ width: 60 }} /></td>
-                <td><input value={keysText(it)} onChange={(e) => setItem(idx, "keys", e.target.value)} placeholder={fa ? "مثال: درد، بازو، pain" : "e.g. pain, arm"} style={{ minWidth: 150 }} /></td>
+                <td><input value={keysText(it)} onChange={(e) => setItem(idx, "keys", e.target.value)} placeholder={fa ? "مثال: درد|pain، بازو|arm — | یعنی مترادف یک نکتهٔ امتیازی" : "e.g. pain|ache, arm — | = synonyms of one point"} title={fa ? "هر نکتهٔ امتیازی را با | بین مترادف‌هایش بنویسید؛ هر نکته جدا امتیاز نسبی دارد." : "Write synonyms of one scoring point with |; each point earns its own share."} style={{ minWidth: 150 }} /></td>
                 <td style={{ whiteSpace: "nowrap" }}>
                   <button type="button" className="btn btn-sm btn-ghost" title={fa ? "بالا" : "Up"} onClick={() => move(idx, -1)}><Icon name="chevronUp" size={13} /></button>
                   <button type="button" className="btn btn-sm btn-ghost" title={fa ? "پایین" : "Down"} onClick={() => move(idx, 1)}><Icon name="chevronDown" size={13} /></button>
@@ -3850,9 +3850,18 @@ function VpConversations() {
   const [detail, setDetail] = useState(null);
   const [busy, setBusy] = useState(false);
   const [loadErr, setLoadErr] = useState("");
-  const load = () => {
+  const [total, setTotal] = useState(0);
+  // Paged: the server returns the newest rows first plus the full total, so the
+  // inbox never silently hides older saved chats. "Load more" appends the next page.
+  const PAGE = 250;
+  const load = (more = false) => {
     setLoadErr("");
-    api.get("/classes/conversations").then((d) => setRows(Array.isArray(d?.attempts) ? d.attempts : [])).catch((e) => { setLoadErr(String(e.message || e)); setRows({ __err: true }); });
+    const offset = more && Array.isArray(rows) ? rows.length : 0;
+    api.get(`/classes/conversations?limit=${PAGE}&offset=${offset}`).then((d) => {
+      const list = Array.isArray(d?.attempts) ? d.attempts : [];
+      setTotal(Number(d?.total) || list.length);
+      setRows((prev) => (more && Array.isArray(prev) ? [...prev, ...list] : list));
+    }).catch((e) => { setLoadErr(String(e.message || e)); setRows({ __err: true }); });
   };
   useEffect(() => { load(); }, []);
   const open = async (row) => {
@@ -3873,7 +3882,7 @@ function VpConversations() {
     <div className="card">
       <div className="section-title">
         <h4><Icon name="chat" size={16} /> {t("vpConversations")}</h4>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={load}>{fa ? "بروزرسانی" : "Refresh"}</button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => load(false)}>{fa ? "بروزرسانی" : "Refresh"}</button>
       </div>
       <div className="small muted mb16">
         {fa
@@ -3905,6 +3914,12 @@ function VpConversations() {
             </tr>
           ))}</tbody>
         </table></div>
+      )}
+      {Array.isArray(rows) && rows.length > 0 && (
+        <div className="row-between mt16 small muted" style={{ alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+          <span>{fa ? `نمایش ${rows.length.toLocaleString("fa-IR")} از ${total.toLocaleString("fa-IR")} گفت‌وگو` : `Showing ${rows.length} of ${total} conversations`}</span>
+          {rows.length < total && <button type="button" className="btn btn-sm btn-ghost" disabled={busy} onClick={() => load(true)}>{fa ? "بارگذاری بیشتر" : "Load more"}</button>}
+        </div>
       )}
     </div>
   );

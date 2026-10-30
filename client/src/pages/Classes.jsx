@@ -99,7 +99,8 @@ export function ClassDetail({ classId, go, back, home }) {
   if (!data) return <div className="app"><TopBar onHome={home} /><Spinner /></div>;
 
   const { class: cl, cases, flashcards = [], grade, doneCount, maxAttempts } = data;
-  const totalItems = (cases?.length || 0) + (flashcards?.length || 0);
+  // Archived (deactivated) cases stay listed for history but are not graded items.
+  const totalItems = (cases?.filter((c) => !c.archived).length || 0) + (flashcards?.length || 0);
   return (
     <div className="app">
       <TopBar onHome={home} />
@@ -128,10 +129,12 @@ export function ClassDetail({ classId, go, back, home }) {
             const used = c.attemptsUsed ?? 0;
             const remaining = Math.max(0, (maxAttempts ?? 1) - used);
             const exhausted = remaining <= 0;
+            const archived = !!c.archived;
             return (
               <div className="case-item" key={c.case_id}>
                 <div style={{ minWidth: 0 }}>
                   <strong>{biField(c, "title", lang) || biField(c, "chief", lang) || `#${c.case_id}`}</strong> <span className="badge-ver">v{c.version}</span>
+                  {archived && <span className="tag muted" style={{ marginInlineStart: 6 }}>{lang === "fa" ? "بایگانی‌شده (فقط سابقه)" : "Archived (history only)"}</span>}
                   <StarRating score={c.best} lang={lang} />
                   <div className="case-meta">
                     <Pill kind={c.difficulty}>{t(c.difficulty)}</Pill>
@@ -141,9 +144,9 @@ export function ClassDetail({ classId, go, back, home }) {
                     {c.best != null && <span className="tag" style={{ color: "var(--ok)", borderColor: "var(--ok)" }}>{t("bestScore")}: {c.best}</span>}
                   </div>
                 </div>
-                <button type="button" className="btn btn-primary" disabled={exhausted}
-                  style={exhausted ? { opacity: .5, cursor: "not-allowed" } : {}}
-                  onClick={() => !exhausted && go("exam", { caseId: c.case_id, classId, untimed: !cl.timer_enabled, examDuration: cl.timer_enabled ? cl.timer_minutes : undefined })}>
+                <button type="button" className="btn btn-primary" disabled={exhausted || archived}
+                  style={exhausted || archived ? { opacity: .5, cursor: "not-allowed" } : {}}
+                  onClick={() => !exhausted && !archived && go("exam", { caseId: c.case_id, classId, untimed: !cl.timer_enabled, examDuration: cl.timer_enabled ? cl.timer_minutes : undefined })}>
                   {c.best != null ? t("retake") : t("startClassCase")}
                 </button>
               </div>

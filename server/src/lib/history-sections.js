@@ -55,6 +55,14 @@ export function isHistorySection(key) {
   return !!(s && s.isHistory);
 }
 
+/* Partial credit for one evaluated checklist item, in [0, 1]. Every item
+   contributes in proportion to `credit` (keyed facets, PL/DDX coverage, and
+   LLM-graded items). Older records without `credit` fall back to done (0/1). */
+export function itemCredit(r) {
+  if (r && typeof r.credit === "number" && Number.isFinite(r.credit)) return Math.max(0, Math.min(1, r.credit));
+  return r && r.done ? 1 : 0;
+}
+
 /* Weighted % over a SUBSET of sections. Returns null when the subset has no
    items (so callers can fall back deliberately instead of showing a fake 0). */
 export function scoreForScope(results = [], scopeKeys = [], lang = "fa") {
@@ -63,7 +71,7 @@ export function scoreForScope(results = [], scopeKeys = [], lang = "fa") {
     const sec = SECTION_KEYS.includes(r.section) ? r.section : inferSection(r);
     if (!scopeKeys.includes(sec)) continue;
     const w = Number(r.weight) || 0;
-    if (r.done) earned += w;
+    earned += w * itemCredit(r);
     total += w; items += 1;
   }
   return { score: total ? Math.round((earned / total) * 100) : null, earned, total, items };
@@ -82,7 +90,7 @@ export function computeSectionScores(results = [], lang = "fa") {
   for (const r of results) {
     const sec = SECTION_KEYS.includes(r.section) ? r.section : inferSection(r);
     const w = Number(r.weight) || 0;
-    const e = r.done ? w : 0;
+    const e = w * itemCredit(r);
     (bySection[sec] ||= { key: sec, label: sectionLabel(sec, lang), earned: 0, total: 0, items: 0 });
     bySection[sec].earned += e; bySection[sec].total += w; bySection[sec].items += 1;
     totalAll += w; earnedAll += e;

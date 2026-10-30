@@ -14,6 +14,7 @@ import { validateBody, s as vs } from "../lib/validate.js";
 import { normDigits } from "../lib/textsearch.js";
 import { checkStudentLimit, effectiveFlashNoPenalty, effectiveFlashAllowBack, effectiveFlashAllowChange, triInput } from "../lib/orglimits.js";
 import { sendPrivateJson, sqlInList } from "../lib/http-cache.js";
+import { itemCredit } from "../lib/history-sections.js";
 
 
 // robust student_no splitter: comma, semicolon, whitespace, Persian comma/semicolon, slash, pipe, colon
@@ -541,7 +542,7 @@ function examAnalyticsPayload(ex, { allItems = false } = {}) {
         iaTrend(ia, a.created_at, a.score);
         const ev = examParse(a.eval_json, {});
         if (ev.sectionScores) for (const [k, v] of Object.entries(ev.sectionScores)) examAddAgg(criterionAgg, `vp:${k}`, k, k, v, 100);
-        if (Array.isArray(ev.results)) for (const r of ev.results) examAddAgg(criterionAgg, `crit:${r.label || r.id}`, r.label || r.id, r.label || r.id, r.done ? 100 : 0, 100);
+        if (Array.isArray(ev.results)) for (const r of ev.results) examAddAgg(criterionAgg, `crit:${r.label || r.id}`, r.label || r.id, r.label || r.id, Math.round(itemCredit(r) * 100), 100);
       } else {
         iaTrend(ia, a.created_at, a.score);
         const tr = examParse(a.transcript_json, {}), answers = Array.isArray(tr.answers) ? tr.answers : [];

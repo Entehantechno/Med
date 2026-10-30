@@ -14,6 +14,7 @@ import { audit } from "../lib/audit.js";
 import { sessionsForAttempt } from "../lib/vplogging.js";
 import { getSetting } from "./content.js";
 import { normalizeRubric, parseClassRubric, csvScopeLabel } from "../lib/grading-rubric.js";
+import { itemCredit } from "../lib/history-sections.js";
 import { createItemAnalysis, addFlashAnswer as iaAdd, noteTrend as iaTrend, finishItemAnalysis, answerTelemetry, itemAnalysisCsv } from "../lib/itemanalysis.js";
 import { assessDrawing, drawingAssistEnabled } from "../lib/drawingassist.js";
 import { validateBody, s as vs } from "../lib/validate.js";
@@ -175,35 +176,34 @@ r.get("/", authRequired, (req, res) => {
    MUST sit before /:id so "conversations" is not parsed as a class id. */
 r.get("/conversations", authRequired, requireRole("teacher", "admin"), (req, res) => {
   try {
-  const rows = req.user.role === "teacher"
-    ? db.prepare(
+  /* Paginated, never silently truncated: the inbox used to stop at the newest
+     250 rows, so older saved chats dropped out of the list as new ones arrived
+     ("it was there yesterday, gone today"). Every row stays reachable through
+     offset paging, and the response reports the full total. Archived (inactive)
+     classes are kept too: deactivating a class must not hide its records. */
+  const limit = Math.max(1, Math.min(500, Math.floor(Number(req.query.limit) || 250)));
+  const offset = Math.max(0, Math.floor(Number(req.query.offset) || 0));
+  const isTeacher = req.user.role === "teacher";
+  const scopeSql = isTeacher ? "AND c.owner_id=? AND COALESCE(c.university_id,1)=?" : "";
+  const scopeArgs = isTeacher ? [req.user.id, currentUniversityId(req.user) || 1] : [];
+  const total = db.prepare(
+    `SELECT COUNT(*) n FROM attempts a JOIN classes c ON c.id = a.class_id
+      WHERE a.type='vp' ${scopeSql}`
+  ).get(...scopeArgs).n;
+  const rows = db.prepare(
       `SELECT a.id, a.user_id, a.case_id, a.class_id, a.score, a.created_at, a.duration_sec,
               a.turns, a.tests, a.imaging_count, a.ddx_count,
               (a.transcript_json IS NOT NULL AND a.transcript_json != '') AS has_transcript,
               u.name_fa, u.name_en, u.student_no,
-              c.name_fa AS class_fa, c.name_en AS class_en, c.code,
+              c.name_fa AS class_fa, c.name_en AS class_en, c.code, c.active AS class_active,
               cs.data_json
          FROM attempts a
          JOIN classes c ON c.id = a.class_id
          JOIN users u ON u.id = a.user_id
          LEFT JOIN cases cs ON cs.id = a.case_id
-        WHERE a.type='vp' AND c.owner_id=? AND COALESCE(c.university_id,1)=? AND c.active=1
-        ORDER BY a.id DESC LIMIT 250`
-    ).all(req.user.id, currentUniversityId(req.user) || 1)
-    : db.prepare(
-      `SELECT a.id, a.user_id, a.case_id, a.class_id, a.score, a.created_at, a.duration_sec,
-              a.turns, a.tests, a.imaging_count, a.ddx_count,
-              (a.transcript_json IS NOT NULL AND a.transcript_json != '') AS has_transcript,
-              u.name_fa, u.name_en, u.student_no,
-              c.name_fa AS class_fa, c.name_en AS class_en, c.code,
-              cs.data_json
-         FROM attempts a
-         JOIN classes c ON c.id = a.class_id
-         JOIN users u ON u.id = a.user_id
-         LEFT JOIN cases cs ON cs.id = a.case_id
-        WHERE a.type='vp' AND c.active=1
-        ORDER BY a.id DESC LIMIT 250`
-    ).all();
+        WHERE a.type='vp' ${scopeSql}
+        ORDER BY a.id DESC LIMIT ? OFFSET ?`
+    ).all(...scopeArgs, limit, offset);
   const attempts = rows.map((row) => {
     let title_fa = "", title_en = "";
     try { const cd = row.data_json ? JSON.parse(row.data_json) : {}; title_fa = cd.title_fa || ""; title_en = cd.title_en || ""; } catch { /* */ }
@@ -214,10 +214,11 @@ r.get("/conversations", authRequired, requireRole("teacher", "admin"), (req, res
       has_transcript: !!row.has_transcript,
       name_fa: row.name_fa, name_en: row.name_en, student_no: row.student_no,
       class_fa: row.class_fa, class_en: row.class_en, code: row.code,
+      class_active: !!row.class_active,
       title_fa, title_en,
     };
   });
-  res.json({ attempts });
+  res.json({ attempts, total, limit, offset });
   } catch (e) {
     res.status(500).json({ error: "conversations_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
@@ -330,7 +331,16 @@ r.get("/:id", authRequired, (req, res) => {
     .map((row) => ({ case_id: row.case_id, weight: row.weight, active: !!row.active, ...caseTitle(row, req.user.role === "student") }));
   // Students must not see (or be graded against) a case the teacher deactivated.
   // Staff still see it so they know why the student cannot start.
-  const cases = req.user.role === "student" ? allCases.filter((c) => c.active) : allCases;
+  // A deactivated case the student already worked on stays visible as an
+  // archived row (history + best score), but cannot be started again and does
+  // not count toward grading (gradeCases below is still active-only). Hiding it
+  // made earlier encounters disappear from the student's own class page.
+  const attemptedCaseIds = req.user.role === "student"
+    ? new Set(db.prepare("SELECT DISTINCT case_id FROM attempts WHERE user_id=? AND class_id=? AND type='vp'").all(req.user.id, cl.id).map((r) => r.case_id))
+    : null;
+  const cases = req.user.role === "student"
+    ? allCases.filter((c) => c.active || attemptedCaseIds.has(c.case_id)).map((c) => ({ ...c, archived: !c.active }))
+    : allCases;
   // Grade both views on ACTIVE cases only. Including a deactivated case in the
   // teacher's denominator made the gradebook disagree with what the student saw.
   const gradeCases = allCases.filter((c) => c.active);
@@ -388,9 +398,11 @@ r.get("/:id", authRequired, (req, res) => {
     for (const r of db.prepare("SELECT case_id, COUNT(*) n FROM attempts WHERE user_id=? AND class_id=? GROUP BY case_id").all(req.user.id, cl.id)) usedCase.set(r.case_id, r.n);
     const usedFlash = new Map();
     for (const r of db.prepare("SELECT flashcard_id, COUNT(*) n FROM class_flashcard_attempts WHERE user_id=? AND class_id=? GROUP BY flashcard_id").all(req.user.id, cl.id)) usedFlash.set(r.flashcard_id, r.n);
+    const bestByCase = new Map();
+    for (const r of db.prepare("SELECT case_id, MAX(score) best FROM attempts WHERE user_id=? AND class_id=? AND type='vp' GROUP BY case_id").all(req.user.id, cl.id)) bestByCase.set(r.case_id, r.best);
     const withUsage = cases.map((cc) => {
       const used = usedCase.get(cc.case_id) || 0;
-      const best = g.perCase.find((p) => p.case_id === cc.case_id)?.best;
+      const best = g.perCase.find((p) => p.case_id === cc.case_id)?.best ?? bestByCase.get(cc.case_id);
       return { ...cc, attemptsUsed: used, best };
     });
     const flashUsage = flashcards.map((cf) => {
@@ -879,7 +891,7 @@ function classAnalyticsPayload(cl, { allItems = false } = {}) {
       if (ev.sectionScores) {
         for (const [k, v] of Object.entries(ev.sectionScores)) addAgg(criterionAgg, `vp:${k}`, k, k, v, 100);
       }
-      if (Array.isArray(ev.results)) for (const r of ev.results) addAgg(criterionAgg, `crit:${r.label || r.id}`, r.label || r.id, r.label || r.id, r.done ? 100 : 0, 100);
+      if (Array.isArray(ev.results)) for (const r of ev.results) addAgg(criterionAgg, `crit:${r.label || r.id}`, r.label || r.id, r.label || r.id, Math.round(itemCredit(r) * 100), 100);
     }
     for (const a of fl) {
       scores.push(Number(a.score || 0));
@@ -1127,7 +1139,7 @@ r.get("/:id/live-board/:userId/details", authRequired, requireRole("teacher", "a
   const vpRows = db.prepare(`SELECT a.id, a.case_id, a.score, a.transcript_json, a.eval_json, a.duration_sec, a.created_at, c.data_json
     FROM attempts a LEFT JOIN cases c ON c.id=a.case_id
     WHERE a.class_id=? AND a.user_id=? AND a.type='vp'
-    ORDER BY a.id DESC LIMIT 20`).all(cl.id, uid).map((a) => {
+    ORDER BY a.id DESC`).all(cl.id, uid).map((a) => {
       const cd = parseJson(a.data_json, {});
       return { kind: "vp", attemptId: a.id, case_id: a.case_id, title_fa: cd.title_fa || "", title_en: cd.title_en || "", score: a.score, duration_sec: a.duration_sec, created_at: a.created_at, transcript: parseJson(a.transcript_json, {}), eval: parseJson(a.eval_json, {}) };
     });
@@ -1135,7 +1147,7 @@ r.get("/:id/live-board/:userId/details", authRequired, requireRole("teacher", "a
   const flashRows = db.prepare(`SELECT a.id, a.flashcard_id, a.score, a.answers_json, a.duration_sec, a.created_at, f.data_json
     FROM class_flashcard_attempts a LEFT JOIN flashcards f ON f.id=a.flashcard_id
     WHERE a.class_id=? AND a.user_id=?
-    ORDER BY a.id DESC LIMIT 30`).all(cl.id, uid).map((a) => {
+    ORDER BY a.id DESC`).all(cl.id, uid).map((a) => {
       const fd = parseJson(a.data_json, {});
       const raw = parseJson(a.answers_json, []);
       const answers = (Array.isArray(raw) ? raw : []).map((ans) => ({

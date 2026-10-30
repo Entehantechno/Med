@@ -140,7 +140,12 @@ describe("virtual patient & evaluation (mock engine)", () => {
         },
       });
     expect(res.status).toBe(200);
-    expect(res.body.score).toBeGreaterThan(70);
+    // R62: pl01 (problem list) is now proportional. The case lists 3 expected
+    // problems and this answer covers 1 of them (0.33 credit on weight 3), so the
+    // intern score is 67 (it was 73 under the old all-or-nothing pl01). Range kept
+    // so the test still guards the score against regressions in either direction.
+    expect(res.body.score).toBeGreaterThan(60);
+    expect(res.body.score).toBeLessThan(75);
     expect(res.body.finalDxCorrect).toBe(true);
     expect(Array.isArray(res.body.results)).toBe(true);
   });

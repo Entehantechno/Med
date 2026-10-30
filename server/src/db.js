@@ -12,6 +12,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { migrateUsersRoleCheck } from "./lib/users-role-migrate.js";
+import { regroupDefaultItems } from "./lib/checklist-facets.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Persistent data (DB + uploads + backups) lives OUTSIDE the code in DATA_DIR
@@ -2440,6 +2441,22 @@ export function initSchema() {
 
   ensureContentIdentity(db);
   universityOnlyCases(db);
+  // Round 62: default checklist items move to evidence-point keys so each item
+  // earns partial credit. Only items whose id AND legacy keys match the shipped
+  // defaults are rewritten, so teacher-edited items are never touched. One-time.
+  if (!db.prepare("SELECT 1 FROM settings WHERE key='migr.checklist_points_r62'").get()) {
+    db.transaction(() => {
+      for (const row of db.prepare("SELECT id, items_json FROM checklists").all()) {
+        let parsed; try { parsed = JSON.parse(row.items_json || "[]"); } catch { continue; }
+        const wrapped = !Array.isArray(parsed) && Array.isArray(parsed?.items);
+        const { items: next, changed } = regroupDefaultItems(wrapped ? parsed.items : parsed);
+        if (!changed) continue;
+        const out = wrapped ? { ...parsed, items: next } : next;
+        db.prepare("UPDATE checklists SET items_json=? WHERE id=?").run(JSON.stringify(out), row.id);
+      }
+      db.prepare("INSERT OR REPLACE INTO settings (key,value) VALUES ('migr.checklist_points_r62','1')").run();
+    })();
+  }
   db.exec(`CREATE TRIGGER IF NOT EXISTS cases_academic_insert BEFORE INSERT ON cases
     WHEN json_valid(NEW.data_json) AND json_extract(NEW.data_json,'$.track')='learn'
     BEGIN SELECT RAISE(ABORT, 'virtual_patient_university_only'); END;
