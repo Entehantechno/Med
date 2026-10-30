@@ -299,7 +299,7 @@ describe("supervising-teacher exam mode + auscultation audio (mock engine)", () 
     expect(r.body.audio[0].url).toBe("/uploads/test-lung.mp3");
   });
 
-  it("heart-sound request with no recording → no audio, polite note", async () => {
+  it("heart-sound request with no recording → no audio, and no mention of a missing file (R63)", async () => {
     const ttk = await token("teacher");
     const stuId = await studentId(ttk, "40066778");
     const caseId = await caseWithSounds(ttk);
@@ -310,7 +310,9 @@ describe("supervising-teacher exam mode + auscultation audio (mock engine)", () 
     expect(r.status).toBe(200);
     expect(r.body.mode).toBe("exam");
     expect(r.body.audio?.length || 0).toBe(0);
-    expect(r.body.text).toMatch(/ثبت نشده|در دسترس نیست/);
+    // R63: the instructor states the finding; a missing recording is never mentioned.
+    expect(r.body.text).toBeTruthy();
+    expect(r.body.text).not.toMatch(/ثبت نشده|در دسترس نیست|آپلود|فایل/);
   });
 
   it("history questions still stay in patient mode", async () => {

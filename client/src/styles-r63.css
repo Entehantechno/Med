@@ -1,0 +1,58 @@
+/* Round 63 — grouped content pickers (teacher/admin class content) and the
+   compact permanent-code chip. Kept separate so the picker rules are easy to find. */
+
+.cpk { display: grid; gap: 8px; }
+.cpk-toolbar { display: grid; gap: 8px; position: sticky; top: 0; z-index: 2;
+  background: var(--panel); padding-bottom: 6px; }
+.cpk-search { display: flex; align-items: center; gap: 6px; border: 1px solid var(--border);
+  border-radius: 10px; padding: 6px 10px; background: var(--panel2); color: var(--muted); }
+.cpk-search input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--text);
+  font: inherit; outline: none; }
+.cpk-clear { border: 0; background: transparent; color: var(--muted); cursor: pointer; padding: 2px; }
+.cpk-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.cpk-count-total { margin-inline-start: auto; }
+.cpk-empty { padding: 16px 0; }
+
+.cpk-group { border: 1px solid var(--border); border-radius: 12px; background: var(--panel); overflow: hidden; }
+.cpk-head { display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 6px 10px; background: var(--panel2); }
+.cpk-toggle { display: flex; align-items: center; gap: 8px; min-width: 0; border: 0; background: transparent;
+  color: var(--text); cursor: pointer; font: inherit; text-align: start; padding: 4px 0; }
+.cpk-toggle b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cpk-badge { font-size: .72rem; color: var(--muted); border: 1px solid var(--border); border-radius: 999px;
+  padding: 1px 8px; white-space: nowrap; }
+.cpk-badge.on { color: var(--accent2); border-color: var(--accent); background: var(--accentGlow); }
+
+.cpk-rows { display: grid; }
+.cpk-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 10px;
+  border-top: 1px solid var(--border); }
+.cpk-row.on { background: color-mix(in srgb, var(--accent) 6%, transparent); }
+.cpk-main { display: flex; align-items: center; gap: 8px; flex: 1 1 220px; min-width: 0; cursor: pointer; }
+.cpk-row.on .cpk-main { flex-basis: 100%; }
+.cpk-main input { flex: 0 0 auto; }
+.cpk-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cpk-meta { font-size: .72rem; color: var(--muted); white-space: nowrap; }
+.cpk-extra { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.cpk-opts { display: inline-flex; align-items: center; gap: 4px; }
+.cpk-chip { border: 1px solid var(--border); background: var(--panel); color: var(--muted); border-radius: 999px;
+  padding: 2px 10px; font: inherit; font-size: .75rem; cursor: pointer; }
+.cpk-chip.on { color: var(--accent2); border-color: var(--accent); background: var(--accentGlow); }
+.cpk-weight { display: inline-flex; align-items: center; gap: 4px; font-size: .75rem; color: var(--muted); }
+.cpk-weight input { width: 56px; padding: 4px 6px; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--panel); color: var(--text); }
+.cpk-bulk { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+
+/* Compact permanent code: short label, full value on hover and in the clipboard. */
+.cc-compact { display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border);
+  background: var(--panel2); color: var(--muted); border-radius: 8px; padding: 1px 6px; cursor: pointer;
+  font: inherit; font-size: .72rem; white-space: nowrap; }
+.cc-compact code { font-size: .72rem; color: var(--text); background: transparent; }
+.cc-compact:hover { border-color: var(--accent); color: var(--accent2); }
+.cc-state { opacity: .8; }
+
+@media (max-width: 560px) {
+  .cpk-actions { gap: 4px; }
+  .cpk-count-total { margin-inline-start: 0; width: 100%; }
+  .cpk-row { padding: 6px 8px; }
+  .cpk-main { flex-basis: 100%; }
+}

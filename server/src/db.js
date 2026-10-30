@@ -18,6 +18,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Persistent data (DB + uploads + backups) lives OUTSIDE the code in DATA_DIR
 // so the site can be upgraded without losing data. See lib/paths.js.
 import { DB_PATH, BACKUPS_DIR, ensureDataDirs } from "./lib/paths.js";
+import { migrateR63 } from "./lib/r63-migration.js";
 import bcrypt from "bcryptjs";
 ensureDataDirs();
 
@@ -2457,6 +2458,9 @@ export function initSchema() {
       db.prepare("INSERT OR REPLACE INTO settings (key,value) VALUES ('migr.checklist_points_r62','1')").run();
     })();
   }
+  // Round 63: evidence-point facets for every default criterion, normal-by-default
+  // wording for missing chart data. Exact R62 defaults only (see lib/r63-migration.js).
+  migrateR63(db);
   db.exec(`CREATE TRIGGER IF NOT EXISTS cases_academic_insert BEFORE INSERT ON cases
     WHEN json_valid(NEW.data_json) AND json_extract(NEW.data_json,'$.track')='learn'
     BEGIN SELECT RAISE(ABORT, 'virtual_patient_university_only'); END;

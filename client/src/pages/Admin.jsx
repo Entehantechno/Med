@@ -10,7 +10,8 @@ import {acceptedAnswers,orderingRows,drawingRubrics,percentCoordinate,patientEdi
 import {validateQuestion,validatePatient} from "../lib/authoring-validation.js";
 import AuthoringModal, {AuthorSection,AuthorField,AuthorSummary} from "../components/AuthoringModal.jsx";
 import DemoSetup from "../components/DemoSetup.jsx";
-import ContentCode from "../components/ContentCode.jsx";
+import { CompactCode } from "../components/ContentCode.jsx";
+import ContentPicker, { groupFor } from "../components/ContentPicker.jsx";
 import "../search.css";
 import CompetitiveReferences from "./admin/CompetitiveReferences.jsx";
 import AiRoutesEditor from "../components/AiRoutesEditor.jsx";
@@ -35,7 +36,7 @@ import { SITE_CONTENT_SCHEMA } from "../data/site-content-schema.js";
 import Leaderboard from "../components/Leaderboard.jsx";
 import StatNum from "../components/StatNum.jsx";
 import Icon from "../components/Icon.jsx";
-import BulkSelectBar, { groupsBy } from "../components/BulkSelectBar.jsx";
+import BulkSelectBar from "../components/BulkSelectBar.jsx";
 import { passwordErrorText } from "../lib/password-errors.js";
 import { VpGradingPanel, VpGradingRubric, mergeRubric, emptyRubric } from "../components/VpGradingRubric.jsx";
 import { SkeletonCards, SkeletonTable } from "../components/Skeleton.jsx";
@@ -709,7 +710,6 @@ function AddStudentModal({ cases, onClose, onDone }) {
   const [f, setF] = useState({ studentNo: "", name_fa: "", name_en: "", password: "", maxAttempts: 1 });
   const [caseIds, setCaseIds] = useState([]);
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
-  const toggleCase = (id) => setCaseIds((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
   const submit = async () => {
     if (!f.studentNo.trim()) return toast(t("studentNo"));
     try {
@@ -735,14 +735,7 @@ function AddStudentModal({ cases, onClose, onDone }) {
       <div className="divider" />
       <label className="small muted">{t("assignExams")}</label>
       <div className="small muted mb8">{t("assignExamsHint")}</div>
-      <BulkSelectBar lang={lang} shownIds={cases.map((c) => c.id)} selectedIds={caseIds} onChange={setCaseIds}
-        groups={groupsBy(cases, (c) => `${lang === "fa" ? "دانشگاه" : "University"} ${c.university_id}`, (c) => c.id)} />
-      {cases.map((c) => (
-        <label key={c.id} className="toggle-row" style={{ cursor: "pointer" }}>
-          <span>{biField(c, "title", lang)} <span className="badge-ver">v{c.version}</span></span>
-          <input type="checkbox" checked={caseIds.includes(c.id)} onChange={() => toggleCase(c.id)} style={{ width: 18, height: 18 }} />
-        </label>
-      ))}
+      <CaseChecklist cases={cases} selected={caseIds} onChange={setCaseIds} />
       <div className="field mt16"><label>{t("maxAttemptsField")}</label>
         <input type="number" min="1" value={f.maxAttempts} onChange={(e) => set("maxAttempts", +e.target.value || 1)} /></div>
     </Modal>
@@ -1027,7 +1020,6 @@ function AccessModal({ user, cases, onClose, onDone }) {
   useEffect(() => { if (error) errorRef.current?.scrollIntoView?.({ block: "nearest" }); }, [error]);
   const quotaError = fa ? "تعداد دفعات آزمون باید عدد صحیحِ مثبت و معتبر باشد." : "Attempts must be a valid positive whole number.";
   const listError = fa ? "حداکثر ۴۰۰ مورد را در یک درخواست انتخاب کنید؛ هیچ تغییری ذخیره نشد." : "Select at most 400 cases per request; no changes were saved.";
-  const toggleCase = (id) => setCaseIds((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
   const close = () => { if (!savingRef.current) onClose(); };
   const save = async () => {
     if (savingRef.current) return;
@@ -1057,14 +1049,7 @@ function AccessModal({ user, cases, onClose, onDone }) {
       <div aria-busy={saving}>
       <label className="small muted">{t("assignExams")}</label>
       <div className="small muted mb8">{t("assignExamsHint")}</div>
-      <BulkSelectBar lang={lang} shownIds={cases.map((c) => c.id)} selectedIds={caseIds} onChange={setCaseIds}
-        groups={groupsBy(cases, (c) => `${lang === "fa" ? "دانشگاه" : "University"} ${c.university_id}`, (c) => c.id)} />
-      {cases.map((c) => (
-        <label key={c.id} className="toggle-row" style={{ cursor: "pointer" }}>
-          <span>{biField(c, "title", lang)} <span className="badge-ver">v{c.version}</span></span>
-          <input type="checkbox" disabled={saving} checked={caseIds.includes(c.id)} onChange={() => toggleCase(c.id)} style={{ width: 18, height: 18 }} />
-        </label>
-      ))}
+      <CaseChecklist cases={cases} selected={caseIds} onChange={setCaseIds} disabled={saving} />
       <div className="field mt16"><label htmlFor="assignment-attempts">{t("maxAttemptsField")}</label>
         <input id="assignment-attempts" type="number" min="1" step="1" disabled={saving} value={maxAttempts} onChange={(e) => setMaxAttempts(e.target.value)} /></div>
       </div>
@@ -1135,7 +1120,7 @@ function Cases() {
         columns={[
           { key: "title", label: t("caseTitle"), sortValue: (c) => biField(c, "title", lang), render: (c) => <>{biField(c, "title", lang)} <span className="badge-ver">v{c.version}</span></> },
           { key: "active", label: lang === 'fa' ? 'وضعیت' : 'Status', render: c => c.active ? (lang === 'fa' ? 'فعال' : 'Active') : (lang === 'fa' ? 'بایگانی' : 'Archived') },
-          { key: "public_code", label: lang === 'fa' ? 'کد ثابت' : 'Permanent code', render: c => <ContentCode code={c.public_code} /> },
+          { key: "public_code", label: lang === 'fa' ? 'کد ثابت' : 'Permanent code', render: c => <CompactCode code={c.public_code} /> },
           { key: "university_id", label: lang === 'fa' ? 'شناسه دانشگاه' : 'University ID' },
           { key: "updated_at", label: lang === 'fa' ? 'آخرین ویرایش' : 'Last updated', render: c => c.updated_at || '—' },
           { key: "specialty", label: t("specialty"), sortValue: (c) => biField(c, "specialty", lang), render: (c) => biField(c, "specialty", lang) },
@@ -1452,12 +1437,13 @@ function Flashcards() {
         storageKey="admin-cards"
         defaultHiddenColumns={["university_id", "updated_at"]}
         initialSort={{ key: "title", dir: "asc" }}
-        searchKeys={[(c) => c.public_code, (c) => c.title_fa, (c) => c.title_en]}
+        searchKeys={[(c) => c.public_code, (c) => c.title_fa, (c) => c.title_en, (c) => c.category_fa, (c) => c.category_en]}
         rowKey={(c) => c.id}
         columns={[
           { key: "title", label: t("title"), sortValue: (c) => biField(c, "title", lang), render: (c) => <>{biField(c, "title", lang)} <span className="badge-ver">v{c.version}</span></> },
+          { key: "category", label: t("category"), sortValue: (c) => biField(c, "category", lang) || "", render: (c) => biField(c, "category", lang) ? <span className="chip-exam small">{biField(c, "category", lang)}</span> : <span className="muted small">—</span> },
           { key: "active", label: lang === 'fa' ? 'وضعیت' : 'Status', render: c => c.active ? (lang === 'fa' ? 'فعال' : 'Active') : (lang === 'fa' ? 'بایگانی' : 'Archived') },
-          { key: "public_code", label: lang === 'fa' ? 'کد ثابت' : 'Permanent code', render: c => <ContentCode code={c.public_code} /> },
+          { key: "public_code", label: lang === 'fa' ? 'کد ثابت' : 'Permanent code', render: c => <CompactCode code={c.public_code} /> },
           { key: "university_id", label: lang === 'fa' ? 'شناسه دانشگاه' : 'University ID' },
           { key: "updated_at", label: lang === 'fa' ? 'آخرین ویرایش' : 'Last updated', render: c => c.updated_at || '—' },
           { key: "type", label: lang === "fa" ? "نوع" : "Type", sortValue: (c) => flashTypeLabel(c.type, lang), render: (c) => <span className="tag">{c.type==='fill'&&c.answerMode==='search'?(lang==='fa'?'اتوکامپلیت':'Autocomplete'):flashTypeLabel(c.type, lang)}</span> },
@@ -3188,10 +3174,8 @@ function ClassManage({ classId, back }) {
 
       <div className="small muted">{t("classSettingsHint")}</div>
 
-      {editCases && <PickModal title={t("selectCases")} items={allCases}
-        groups={groupsBy(allCases, (c) => `${lang === "fa" ? "دانشگاه" : "University"} ${c.university_id}`, (c) => c.id)}
-        labelFn={(c) => `${biField(c, "title", lang)} · ${c.public_code || c.id} · ${lang === "fa" ? "دانشگاه" : "University"} ${c.university_id}`} idFn={(c) => c.id}
-        selected={cases.map((c) => c.case_id)} withWeight
+      {editCases && <CasePickModal title={t("selectCases")} items={allCases}
+        selected={cases.map((c) => c.case_id)}
         initialWeights={Object.fromEntries(cases.map((c) => [c.case_id, c.weight]))}
         onClose={() => setEditCases(false)}
         onSave={async (ids, weights) => {
@@ -3267,43 +3251,48 @@ function ClassMemberAdd({ classId, onDone }) {
 }
 
 /* Flashcard picker with per-set graded/practice + weight (teacher choice). */
+/* Round 63 — flashcard picker for a class: grouped by category (collapsed by
+   default), short permanent codes, and grading mode + weight only on selected rows. */
 function FlashPickModal({ items, selected, lang, onClose, onSave }) {
   const { t } = useApp();
+  const fa = lang !== "en";
   const init = Object.fromEntries((selected || []).map((f) => [f.flashcard_id, { on: true, graded: !!f.graded, weight: f.weight || 1 }]));
   const [rows, setRows] = useState(init);
-  const set = (id, patch) => setRows((s) => ({ ...s, [id]: { on: true, graded: true, weight: 1, ...(s[id] || {}), ...patch } }));
-  const toggle = (id) => setRows((s) => { const cur = s[id]; if (cur?.on) { const n = { ...s }; delete n[id]; return n; } return { ...s, [id]: { on: true, graded: true, weight: 1 } }; });
+  const ids = Object.keys(rows).filter((id) => rows[id]?.on).map(Number);
+  const setRow = (id, patch) => setRows((s) => ({ ...s, [id]: { on: true, graded: true, weight: 1, ...(s[id] || {}), ...patch } }));
+  // Keep per-card mode and weight for cards that stay selected; new cards start graded at weight 1.
+  const onChange = (nextIds) => setRows((s) => {
+    const next = {};
+    for (const id of nextIds) next[id] = { on: true, graded: s[id]?.graded ?? true, weight: s[id]?.weight || 1 };
+    return next;
+  });
+  const setAllGraded = (graded) => setRows((s) => Object.fromEntries(Object.entries(s).map(([id, v]) => [id, v.on ? { ...v, graded } : v])));
   return (
     <Modal title={t("selectFlashcards")} onClose={onClose}
-      onSave={() => onSave(Object.entries(rows).filter(([, v]) => v.on).map(([id, v]) => ({ flashcard_id: +id, graded: !!v.graded, weight: v.weight || 1 })))}>
+      onSave={() => onSave(ids.map((id) => ({ flashcard_id: id, graded: !!rows[id].graded, weight: rows[id].weight || 1 })))}>
       <div className="small muted mb8">{t("classFlashHint")}</div>
-      <BulkSelectBar lang={lang} shownIds={items.map((it) => it.id)} selectedIds={Object.keys(rows).filter((id) => rows[id]?.on).map(Number)}
-        onChange={(ids) => setRows((s) => { const next = {}; for (const id of ids) next[id] = { on: true, graded: s[id]?.graded ?? true, weight: s[id]?.weight || 1 }; return next; })}
-        groups={groupsBy(items, (it) => `${lang === "fa" ? "دانشگاه" : "University"} ${it.university_id}`, (it) => it.id)}
-        extra={<>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setRows((s) => Object.fromEntries(Object.entries(s).map(([id, v]) => [id, v.on ? { ...v, graded: true } : v])))}>{lang === "fa" ? "همه نمره‌دار" : "All graded"}</button>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setRows((s) => Object.fromEntries(Object.entries(s).map(([id, v]) => [id, v.on ? { ...v, graded: false } : v])))}>{lang === "fa" ? "همه تمرینی" : "All practice"}</button>
-        </>} />
-      {items.map((it) => {
-        const r = rows[it.id];
-        return (
-          <div key={it.id} className="fp-row">
-            <label style={{ cursor: "pointer", flex: 1, display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-              <input type="checkbox" checked={!!r?.on} onChange={() => toggle(it.id)} style={{ width: 18, height: 18 }} />
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis" }}>{biField(it, "title", lang) || `#${it.id}`} · {it.public_code || it.id} · {lang === "fa" ? "دانشگاه" : "University"} {it.university_id}</span>
-            </label>
-            {r?.on && (
-              <div className="fp-opts">
-                <button type="button" className={`chip-btn ${r.graded ? "on" : ""}`} onClick={() => set(it.id, { graded: true })}>{t("gradedShort")}</button>
-                <button type="button" className={`chip-btn ${!r.graded ? "on" : ""}`} onClick={() => set(it.id, { graded: false })}>{t("practiceShort")}</button>
-                {r.graded && <input type="number" min="1" className="fp-weight" value={r.weight} title={t("weightField")}
-                  onChange={(e) => set(it.id, { weight: +e.target.value || 1 })} />}
-              </div>
-            )}
-          </div>
-        );
-      })}
-      {items.length === 0 && <div className="small muted center" style={{ padding: 16 }}>{t("noFlashcardsAvail")}</div>}
+      <div className="cpk-bulk">
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAllGraded(true)}>{fa ? "همه نمره‌دار" : "All graded"}</button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setAllGraded(false)}>{fa ? "همه تمرینی" : "All practice"}</button>
+      </div>
+      <ContentPicker lang={lang} items={items} selected={ids} onChange={onChange}
+        idOf={(it) => it.id}
+        titleOf={(it) => biField(it, "title", lang) || `#${it.id}`}
+        groupOf={(it) => groupFor(biField(it, "category", lang) || biField(it, "course", lang), fa ? "بدون دسته" : "Uncategorized")}
+        metaOf={(it) => (fa ? `دانشگاه ${it.university_id}` : `Univ. ${it.university_id}`)}
+        codeOf={(it) => it.public_code}
+        renderExtra={(it) => {
+          const r = rows[it.id] || {};
+          return (
+            <span className="cpk-opts">
+              <button type="button" className={`cpk-chip ${r.graded ? "on" : ""}`} onClick={() => setRow(it.id, { graded: true })}>{t("gradedShort")}</button>
+              <button type="button" className={`cpk-chip ${!r.graded ? "on" : ""}`} onClick={() => setRow(it.id, { graded: false })}>{t("practiceShort")}</button>
+              {r.graded && <input type="number" min="1" className="fp-weight" value={r.weight} title={t("weightField")}
+                onChange={(e) => setRow(it.id, { weight: +e.target.value || 1 })} />}
+            </span>
+          );
+        }}
+        emptyText={t("noFlashcardsAvail")} />
     </Modal>
   );
 }
@@ -3925,48 +3914,47 @@ function VpConversations() {
   );
 }
 
-function PickModal({ title, items, labelFn, idFn, selected, withWeight, initialWeights = {}, searchable = true, searchPlaceholder, groups = null, onClose, onSave }) {
+/* Round 63 — VP case checklist for exam, student-access and student-add forms.
+   Same grouped picker as the class picker so the three forms look alike. */
+function CaseChecklist({ cases, selected, onChange, disabled = false }) {
   const { t, lang } = useApp();
-  const [sel, setSel] = useState(selected || []);
-  const [weights, setWeights] = useState(initialWeights);
-  const [q, setQ] = useState("");
-  const toggle = (id) => setSel((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
-  const needle = q.trim().toLowerCase();
-  // Show a search box for lists where scanning by eye gets slow. Real classes
-  // have many students, so keep the threshold low (still hidden for tiny lists).
-  const showSearch = searchable && items.length > 3;
-  const visible = !needle ? items : items.filter((it) => String(labelFn(it) ?? "").toLowerCase().includes(needle));
+  const fa = lang !== "en";
   return (
-    <Modal title={title} onClose={onClose} onSave={() => onSave(sel, weights)}>
-      {showSearch && (
-        <div className="dt-search pick-search" style={{ maxWidth: "100%", marginBottom: 10 }}>
-          <Icon name="search" size={16} />
-          <input value={q} onChange={(e) => setQ(e.target.value)}
-            placeholder={searchPlaceholder || t("searchByName")} />
-          {q && <button type="button" className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={14} /></button>}
-        </div>
-      )}
-      <BulkSelectBar lang={lang} shownIds={visible.map(idFn)} selectedIds={sel} onChange={setSel} groups={groups || []} />
-      {visible.map((it) => {
-        const id = idFn(it);
-        return (
-          <div key={id} className="toggle-row">
-            <label style={{ cursor: "pointer", flex: 1, display: "flex", alignItems: "center", gap: 10 }}>
-              <input type="checkbox" checked={sel.includes(id)} onChange={() => toggle(id)} style={{ width: 18, height: 18 }} />
-              <span>{labelFn(it)}</span>
-            </label>
-            {withWeight && sel.includes(id) &&
-              <input type="number" min="1" value={weights[id] || 1} style={{ width: 70 }}
-                onChange={(e) => setWeights((w) => ({ ...w, [id]: +e.target.value || 1 }))} />}
-          </div>
-        );
-      })}
-      {!items.length && <div className="small muted">—</div>}
-      {items.length > 0 && !visible.length && <div className="small muted center" style={{ padding: 12 }}>{t("noResults")}</div>}
-    </Modal>
+    <ContentPicker lang={lang} items={cases} selected={selected} onChange={onChange} disabled={disabled}
+      idOf={(c) => c.id}
+      titleOf={(c) => biField(c, "title", lang) || `#${c.id}`}
+      groupOf={(c) => groupFor(biField(c, "specialty", lang), fa ? "بدون تخصص" : "No specialty")}
+      metaOf={(c) => `v${c.version} · ${fa ? "دانشگاه" : "Univ."} ${c.university_id}`}
+      codeOf={(c) => c.public_code}
+      emptyText={t("noResults")} />
   );
 }
 
+/* Round 63 — class case picker: grouped by specialty (collapsed by default),
+   short permanent codes, and a weight field only on selected cases. */
+function CasePickModal({ title, items, selected, initialWeights = {}, onClose, onSave }) {
+  const { t, lang } = useApp();
+  const fa = lang !== "en";
+  const [sel, setSel] = useState(selected || []);
+  const [weights, setWeights] = useState(initialWeights);
+  return (
+    <Modal title={title} onClose={onClose} onSave={() => onSave(sel, weights)}>
+      <ContentPicker lang={lang} items={items} selected={sel} onChange={setSel}
+        idOf={(c) => c.id}
+        titleOf={(c) => biField(c, "title", lang) || `#${c.id}`}
+        groupOf={(c) => groupFor(biField(c, "specialty", lang), fa ? "بدون تخصص" : "No specialty")}
+        metaOf={(c) => [c.difficulty ? t(c.difficulty) : "", fa ? `دانشگاه ${c.university_id}` : `Univ. ${c.university_id}`].filter(Boolean).join(" · ")}
+        codeOf={(c) => c.public_code}
+        renderExtra={(c) => (
+          <label className="cpk-weight">{fa ? "وزن" : "Weight"}
+            <input type="number" min="1" value={weights[c.id] || 1}
+              onChange={(e) => setWeights((w) => ({ ...w, [c.id]: +e.target.value || 1 }))} />
+          </label>
+        )}
+        emptyText={fa ? "موردی برای انتخاب وجود ندارد." : "Nothing to select."} />
+    </Modal>
+  );
+}
 
 function MemberManageModal({classId,onClose,onSaved}) {
  return <AcademicMembers kind="classes" id={classId} onClose={onClose} onSaved={onSaved}/>;
@@ -4044,72 +4032,18 @@ function cardTitle(c, lang) { return biField(c, "title", lang) || biField(c, "qu
 function cardCat(c, lang, t) { return biField(c, "category", lang) || biField(c, "course", lang) || t("uncategorized") || "—"; }
 function cardCourse(c, lang, t) { return biField(c, "course", lang) || t("uncategorized") || "—"; }
 function cardType(c) { return c.type || c.questionType || "mcq"; }
-function cardSearchText(c) { return [c.id,c.title_fa,c.title_en,c.q_fa,c.q_en,c.questionText_fa,c.questionText_en,c.category_fa,c.category_en,c.course_fa,c.course_en,c.difficulty,c.type,c.questionType,c.answerMode].join(" ").toLowerCase(); }
-function uniqSorted(arr) { return [...new Set(arr.filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),"fa")); }
-
-/* Professional question-bank picker: search + filters + grouped selection.
-   Used when building exams so teachers can find cards quickly in large banks. */
-function CardPicker({ cards, selected, onToggle, onSelectAll }) {
+/* Round 63 — exam flashcard picker: grouped by category (collapsed by default),
+   short permanent codes, course/difficulty/type as small text. */
+function CardPicker({ cards, selected, onSelectAll }) {
   const { t, lang } = useApp();
-  const [q, setQ] = useState("");
-  const [course, setCourse] = useState("");
-  const [cat, setCat] = useState("");
-  const [difficulty, setDifficulty] = useState("");
-  const [type, setType] = useState("");
-  const sel = new Set(selected || []);
-  const courses = uniqSorted(cards.map((c) => cardCourse(c, lang, t)));
-  const cats = uniqSorted(cards.map((c) => cardCat(c, lang, t)));
-  const diffs = uniqSorted(cards.map((c) => c.difficulty || "medium"));
-  const types = uniqSorted(cards.map(cardType));
-  const needle = q.trim().toLowerCase();
-  const visible = cards.filter((c) => {
-    if (course && cardCourse(c, lang, t) !== course) return false;
-    if (cat && cardCat(c, lang, t) !== cat) return false;
-    if (difficulty && (c.difficulty || "medium") !== difficulty) return false;
-    if (type && cardType(c) !== type) return false;
-    return !needle || cardSearchText(c).includes(needle);
-  });
-  const groups = {};
-  for (const c of visible) { const k = `${cardCourse(c, lang, t)} / ${cardCat(c, lang, t)}`; (groups[k] = groups[k] || []).push(c); }
-  const groupNames = Object.keys(groups).sort((a,b)=>a.localeCompare(b,"fa"));
-  const visibleIds = visible.map((c) => c.id);
-  const toggleGroup = (name) => {
-    const ids = groups[name].map((c) => c.id);
-    const allOn = ids.every((id) => sel.has(id));
-    onSelectAll(allOn ? (selected || []).filter((id) => !ids.includes(id)) : [...new Set([...(selected || []), ...ids])]);
-  };
   return (
-    <div className="card-picker pro-picker">
-      <div className="dt-search mb8" style={{ maxWidth: "100%" }}>
-        <Icon name="search" size={15} />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("searchFlashcardsPh") || (lang === "fa" ? "جستجو در عنوان، سؤال، دسته، ID…" : "Search title, question, category, ID…")} />
-        {q && <button type="button" className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={13} /></button>}
-      </div>
-      <div className="picker-filters">
-        <select value={course} onChange={(e)=>setCourse(e.target.value)}><option value="">{lang==="fa"?"همه دوره‌ها":"All courses"}</option>{courses.map(x=><option key={x} value={x}>{x}</option>)}</select>
-        <select value={cat} onChange={(e)=>setCat(e.target.value)}><option value="">{lang==="fa"?"همه دسته‌ها":"All categories"}</option>{cats.map(x=><option key={x} value={x}>{x}</option>)}</select>
-        <select value={difficulty} onChange={(e)=>setDifficulty(e.target.value)}><option value="">{lang==="fa"?"همه سختی‌ها":"All difficulties"}</option>{diffs.map(x=><option key={x} value={x}>{x}</option>)}</select>
-        <select value={type} onChange={(e)=>setType(e.target.value)}><option value="">{lang==="fa"?"همه نوع‌ها":"All types"}</option>{types.map(x=><option key={x} value={x}>{x}</option>)}</select>
-      </div>
-      <div className="picker-toolbar small muted">
-        <span>{visible.length} {lang==="fa"?"نتیجه":"results"}</span>
-      </div>
-      <BulkSelectBar lang={lang} shownIds={visibleIds} selectedIds={selected || []} onChange={onSelectAll}
-        groups={groupNames.map((name) => ({ key: name, label: name, ids: groups[name].map((c) => c.id) }))} />
-      {groupNames.length === 0 && <div className="small muted center" style={{ padding: 14 }}>{t("noFlashcardsAvail")}</div>}
-      {groupNames.map((name) => {
-        const ids = groups[name].map((c) => c.id); const allOn = ids.every((id) => sel.has(id));
-        return <div className="cp-group" key={name}>
-          <div className="cp-group-head"><span className="cp-cat">📚 {name} <span className="cp-count">({groups[name].length})</span></span><button type="button" className="chip-btn" onClick={() => toggleGroup(name)}>{allOn ? t("deselectAll") : t("selectAll")}</button></div>
-          <div className="picker-list">
-            {groups[name].map((c) => <label key={c.id} className="toggle-row picker-card" style={{ cursor: "pointer" }}>
-              <span className="picker-card-text"><b>{cardTitle(c, lang)}</b><small>#{c.id} · {c.difficulty || "medium"} · {cardType(c)}</small></span>
-              <input type="checkbox" checked={sel.has(c.id)} onChange={() => onToggle(c.id)} style={{ width: 18, height: 18 }} />
-            </label>)}
-          </div>
-        </div>;
-      })}
-    </div>
+    <ContentPicker lang={lang} items={cards} selected={selected || []} onChange={onSelectAll}
+      idOf={(c) => c.id}
+      titleOf={(c) => cardTitle(c, lang)}
+      groupOf={(c) => groupFor(cardCat(c, lang, t), t("uncategorized"))}
+      metaOf={(c) => [cardCourse(c, lang, t), c.difficulty || "medium", cardType(c)].filter(Boolean).join(" · ")}
+      codeOf={(c) => c.public_code}
+      emptyText={t("noFlashcardsAvail")} />
   );
 }
 
@@ -4153,9 +4087,6 @@ function ExamModal({ exam, onClose, onSave }) {
     api.get("/flashcards").then((d) => setCards(Array.isArray(d) ? d : [])).catch((e) => { setCards([]); setBankErr(String(e.message || e)); });
   }, []);
   const set = (k, v) => setF((s) => ({ ...s, [k]: v }));
-  const toggleIn = (key, id) => setF((s) => ({
-    ...s, [key]: s[key].includes(id) ? s[key].filter((x) => x !== id) : [...s[key], id],
-  }));
   const submit = () => onSave({
     ...f,
     use_flashcards: type === "flash" || type === "both",
@@ -4210,23 +4141,14 @@ function ExamModal({ exam, onClose, onSave }) {
       {showVp && (<>
         <div className="divider" />
         <label className="small muted"><Icon name="patient" size={16} /> {t("selectVpCases")}</label>
-        <BulkSelectBar lang={lang} shownIds={cases.map((c) => c.id)} selectedIds={f.case_ids}
-          onChange={(ids) => set("case_ids", ids)}
-          groups={groupsBy(cases, (c) => `${lang === "fa" ? "دانشگاه" : "University"} ${c.university_id}`, (c) => c.id)} />
-        {cases.map((c) => (
-          <label key={c.id} className="toggle-row" style={{ cursor: "pointer" }}>
-            <span>{biField(c, "title", lang)}</span>
-            <input type="checkbox" checked={f.case_ids.includes(c.id)} onChange={() => toggleIn("case_ids", c.id)} style={{ width: 18, height: 18 }} />
-          </label>
-        ))}
+        <CaseChecklist cases={cases} selected={f.case_ids} onChange={(ids) => set("case_ids", ids)} />
       </>)}
 
       {showFlash && (<>
         <div className="divider" />
         <label className="small muted"><Icon name="flask" size={16} /> {t("selectFlashcards")}</label>
         <div className="small muted mb8">{t("flashAllHint")}</div>
-        <CardPicker cards={cards} selected={f.flashcard_ids} onToggle={(id) => toggleIn("flashcard_ids", id)}
-          onSelectAll={(ids) => set("flashcard_ids", ids)} />
+        <CardPicker cards={cards} selected={f.flashcard_ids} onSelectAll={(ids) => set("flashcard_ids", ids)} />
       </>)}
 
       <div className="divider" />

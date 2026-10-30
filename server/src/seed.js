@@ -114,45 +114,13 @@ insUser.run("support", hash, "پشتیبان", "Support Agent", null, "support",
 const insChecklist = db.prepare(
   `INSERT INTO checklists (id,name_fa,name_en,items_json) VALUES (?,?,?,?)`
 );
-insChecklist.run(1, "چک‌لیست ACS", "ACS Checklist", JSON.stringify([
-  { id: "i1", section: "communication", weight: 2, fa: "معرفی خود به‌عنوان پزشک و کسب رضایت", en: "Introduce self as doctor & obtain consent", keys: ["معرفی|من دکتر|من پزشک|دکتر شما|پزشک شما|من دانشجو|من اکسترن|من اینترن|دانشجوی پزشکی|introduce|i am dr|i am doctor|i am a medical student|i am a student|i am an extern|i am an intern", "اجازه هست|با اجازه|رضایت دارید|کسب رضایت|consent|permission"] },
-  { id: "i2", section: "history", weight: 3, fa: "پرسش ماهیت، محل و انتشار درد", en: "Ask pain character, site & radiation", keys: ["کجا|محل|location|site", "فشارنده|crush|character|quality", "انتشار|بازو|تیر کشیدن|radiat|arm"] },
-  { id: "i3", section: "history", weight: 2, fa: "پرسش عوامل خطر قلبی (دیابت، فشار، چربی، سیگار)", en: "Ask cardiac risk factors (DM, HTN, smoking, family)", keys: ["دیابت|diabet", "فشار خون|hypertens", "سیگار|smok", "سابقه قلبی|cardiac history"] },
-  { id: "i_ros", section: "history", weight: 2, fa: "مرور سیستم‌ها (ROS: تنگی‌نفس، تعریق سرد، تهوع، تپش قلب)", en: "Review of systems (ROS: dyspnea, cold sweat, nausea, palpitation)", keys: ["تنگی نفس|dyspnea|shortness of breath", "تعریق|عرق سرد|sweat", "تهوع|nausea", "تپش|palpitation"] },
-  { id: "i_exam", section: "exam", weight: 2, fa: "معاینه فیزیکی و علائم حیاتی (فشار خون، نبض، سمع قلب و ریه)", en: "Physical exam & vitals (BP, pulse, auscultation)", keys: ["معاینه|physical exam|examin", "علائم حیاتی|vitals|فشار خون|bp", "نبض|pulse", "سمع|auscultat"] },
-  { id: "i4", section: "workup", weight: 3, fa: "درخواست نوار قلب (ECG)", en: "Order ECG", keys: ["ecg", "نوار قلب", "الکتروکاردیو", "ekg"] },
-  { id: "i5", section: "workup", weight: 3, fa: "درخواست تروپونین و بیومارکرهای قلبی", en: "Order troponin & cardiac biomarkers", keys: ["troponin", "تروپونین", "ck-mb", "بیومارکر"] },
-  { id: "i6", section: "diagnosis", weight: 4, fa: "تشخیص صحیح STEMI / ACS", en: "Correct STEMI/ACS diagnosis", keys: ["stemi", "انفارکتوس", "سکته قلبی", "acs", "myocardial"] },
-  { id: "i7", section: "management", weight: 3, fa: "بیان برنامه درمان اولیه (آسپرین، نیترات، ارجاع برای آنژیوگرافی/PCI)", en: "State initial management (Aspirin, nitrate, cath lab/PCI)", keys: ["aspirin|آسپرین", "آنژیوگرافی|pci|reperfus", "درمان|treatment"] },
-]));
-insChecklist.run(2, "چک‌لیست درد شکم", "Abdominal Pain Checklist", JSON.stringify([
-  { id: "i1", section: "communication", weight: 2, fa: "معرفی خود به‌عنوان پزشک و کسب رضایت", en: "Introduce self as doctor & obtain consent", keys: ["معرفی|من دکتر|من پزشک|دکتر شما|پزشک شما|من دانشجو|من اکسترن|من اینترن|دانشجوی پزشکی|introduce|i am dr|i am doctor|i am a medical student|i am a student|i am an extern|i am an intern", "اجازه هست|با اجازه|رضایت دارید|کسب رضایت|consent|permission"] },
-  { id: "i2", section: "history", weight: 3, fa: "شرح‌حال درد، محل و ارتباط با مصرف غذای چرب", en: "Pain history, site & relation to fatty meals", keys: ["کجا|محل|location|site", "کیفیت درد|quality|character", "غذا|چرب|meal|fatty"] },
-  { id: "i3", section: "history", weight: 2, fa: "پرسش تهوع، استفراغ و تب", en: "Ask nausea/vomiting & fever", keys: ["تهوع|nausea", "استفراغ|vomit", "تب|fever"] },
-  { id: "i_ros", section: "history", weight: 2, fa: "مرور سیستم‌ها (ROS: وضعیت ادرار، ایکتر/زردی، تغییر رنگ مدفوع)", en: "Review of systems (ROS: jaundice, urinary, acholic stool)", keys: ["زردی|jaundice", "ادرار|urine", "مدفوع|stool"] },
-  { id: "i4", section: "exam", weight: 3, fa: "معاینه فیزیکی شکم و بررسی تندرنس یا علامت مورفی", en: "Abdominal physical exam & Murphy's sign / tenderness", keys: ["معاینه شکم|abdominal exam|physical exam|examin", "مورفی|murphy|تندرنس|tenderness|لمس|palpat"] },
-  { id: "i5", section: "workup", weight: 4, fa: "درخواست سونوگرافی شکم و کبد/کیسه صفرا", en: "Order abdominal/gallbladder ultrasound", keys: ["سونوگرافی", "سونو", "ultrasound", "sono"] },
-  { id: "i6", section: "diagnosis", weight: 4, fa: "تشخیص کوله‌سیستیت حاد", en: "Diagnose acute cholecystitis", keys: ["کوله سیستیت", "کوله‌سیستیت", "کیسه صفرا", "cholecystitis", "gallbladder"] },
-]));
+insChecklist.run(1, "چک‌لیست ACS", "ACS Checklist", JSON.stringify(DEFAULT_CHECKLIST_1));
+insChecklist.run(2, "چک‌لیست درد شکم", "Abdominal Pain Checklist", JSON.stringify(DEFAULT_CHECKLIST_2));
 
 // ---- Communication & history-taking OSCE checklist (fully editable in admin) ----
 // This mirrors the 13-item history-taking rubric; the AI examiner scores each
 // row from the whole encounter. Admins can edit/add/remove rows anytime.
-insChecklist.run(3, "شرح‌حال‌گیری و مهارت ارتباطی", "History-taking & communication", JSON.stringify([
-  { id: "c1", weight: 1, fa: "دانشجو به‌عنوان پزشک خود را به بیمار معرفی کرد.", en: "Introduced self to the patient as the doctor.", keys: ["من دکتر", "من پزشک", "دکتر شما", "پزشک شما", "معرفی", "introduce", "i am dr", "i am doctor"] },
-  { id: "c2", weight: 1, fa: "درباره‌ی نام و سن بیمار پرسید.", en: "Asked the patient's name and age.", keys: ["نام","اسم","سن","چند سال","name","age","how old"] },
-  { id: "c3", weight: 1, fa: "درباره‌ی سابقه‌ی بیماری خاص پرسید.", en: "Asked about significant past medical history.", keys: ["سابقه","بیماری قبلی","past history","pmh","medical history"] },
-  { id: "c4", weight: 1, fa: "پرسش‌ها واضح، منظم و با زبان ساده و قابل‌فهم برای بیمار عادی بود.", en: "Questions were clear, organized and in plain, patient-friendly language.", keys: [] },
-  { id: "c5", weight: 1, fa: "از سؤالات باز (Open-ended) استفاده کرد و اجازه‌ی صحبت آزادانه به بیمار داد.", en: "Used open-ended questions and let the patient speak freely.", keys: ["open","بگویید","توضیح","تعریف کنید"] },
-  { id: "c6", weight: 2, fa: "درباره‌ی شکایت اصلی (Chief Complaint) دقیق و کامل پرسید.", en: "Asked about the chief complaint accurately and completely.", keys: ["شکایت","مشکل","چه شده","chief complaint","complaint"] },
-  { id: "c7", weight: 2, fa: "شکایت اصلی را سیستماتیک بررسی کرد (محل، شدت، زمان شروع، عوامل تشدید/تسکین و ...).", en: "Explored the complaint systematically (site, severity, onset, aggravating/relieving factors…).", keys: ["محل","شدت","زمان","شروع","تشدید","تسکین","onset","severity","radiat","site","duration"] },
-  { id: "c8", weight: 1, fa: "درباره‌ی سابقه‌ی دارویی فعلی و آلرژی دارویی پرسید.", en: "Asked about current medications and drug allergies.", keys: ["دارو","مصرف","آلرژی","حساسیت","medication","drug","allergy"] },
-  { id: "c9", weight: 1, fa: "درباره‌ی سابقه‌ی بیماری‌های خانوادگی پرسید.", en: "Asked about family history of disease.", keys: ["خانواده","ارثی","family","hereditary"] },
-  { id: "c10", weight: 1, fa: "درباره‌ی مصرف سیگار، الکل و مواد مخدر پرسید.", en: "Asked about smoking, alcohol and drug use.", keys: ["سیگار","الکل","مواد","اعتیاد","smok","alcohol","drug use"] },
-  { id: "c11", weight: 1, fa: "درباره‌ی قدم بعدی (مثلاً معاینه‌ی فیزیکی یا آزمایش) به بیمار توضیح داد.", en: "Explained the next step (e.g. physical exam or tests) to the patient.", keys: ["معاینه","آزمایش","قدم بعد","exam","test","next step"] },
-  { id: "c12", weight: 1, fa: "رفتار کلی دانشجو باعث شد بیمار احساس راحتی و احترام کند.", en: "Overall conduct made the patient feel comfortable and respected.", keys: ["ممنون","لطفا","خواهش","راحت","احترام","thank","please"] },
-  { id: "c13", weight: 2, fa: "امتیاز کلی مهارت ارتباطی و شرح‌حال‌گیری دانشجو.", en: "Overall communication & history-taking skill.", keys: [] },
-]));
+insChecklist.run(3, "شرح‌حال‌گیری و مهارت ارتباطی", "History-taking & communication", JSON.stringify(DEFAULT_CHECKLIST_3));
 
 // ---- Cases ----
 const insCase = db.prepare(
@@ -371,8 +339,6 @@ const prompts = {
   patient_en: "You play a realistic virtual patient who has come to see a doctor. Answer ONLY from the PATIENT CHART (JSON). Core rule: Disclose information strictly bit by bit, answering ONLY what the doctor explicitly asked. If asked 'What is your problem?' or 'What brings you here?', answer ONLY with the chief complaint in a brief sentence (e.g. 'My stomach hurts, doctor'). Do NOT volunteer pain radiation, onset, severity, relieving/aggravating factors, associated symptoms, or history unless specifically asked for that exact item. Natural patient tone, brief 1-2 sentences.",
   // Operating rules for the patient (fully editable by the admin — previously
   // these were hard-coded inside the engine and could NOT be changed):
-  patient_rules_fa: "قوانین: ۱) اطلاعات را ذره‌ذره و متناسب با سؤال پزشک ارائه کن و هرگز بدون پرسش پزشک اطلاعاتی مثل انتشار درد، زمان شروع، شدت یا علائم همراه را فاش نکن. ۲) پاسخ‌ها را فقط از روی پروندهٔ بیمار استخراج کن و هیچ حقیقت پزشکیِ جدیدی از خودت نساز. ۳) اگر پزشک چیزی پرسید که در پرونده نیست، صریحاً بگو اطلاعات ثبت نشده است؛ پاسخ منفی یا طبیعی حدس نزن. ۴) هرگز تشخیص نهایی، نتیجهٔ آزمایش/تصویربرداری یا یافته‌های معاینهٔ فیزیکی را لو نده (معاینه را استاد انجام می‌دهد). ۵) اول‌شخص و از زبان بیمار عادی، کوتاه (۱ تا ۲ جمله) و طبیعی پاسخ بده.",
-  patient_rules_en: "Rules: 1) Disclose information strictly bit by bit as asked; never volunteer pain radiation, onset, severity, or associated symptoms unprompted. 2) Draw answers ONLY from the chart and never invent new facts. 3) If asked about something unrecorded, explicitly say it is not recorded; never invent negative or normal findings. 4) Never reveal the final diagnosis, lab/imaging results, or physical exam findings (the supervising teacher performs exams). 5) Reply in the first person as an ordinary patient, briefly (1-2 sentences) and naturally.",
   // Role prompt for the SUPERVISING-TEACHER responder (exam findings &
   // auscultation). The engine always appends its hard constraints on top.
   exam_teacher_fa: "تو استادِ نظارت (attending) هستی. دانشجو از تو خواسته معاینهٔ بیمار مجازی را انجام دهی و یافته‌ها را به او بگویی.",
@@ -382,13 +348,10 @@ const prompts = {
   labresult_rules_fa: "تو گزارش‌دهندهٔ آزمایشگاه/رادیولوژی هستی. لحن رسمی و کوتاه. فقط یک جمله بنویس.",
   labresult_rules_en: "You are the lab/radiology reporter. Formal, short tone. Write only one sentence.",
   // Deprecated templates; retained keys are never used to invent a result.
-  lab_normal_fa: "نتیجهٔ {item} در پرونده ثبت نشده است.",
-  lab_normal_en: "A result for {item} is not recorded in the chart.",
-  evaluator_fa: "تو یک استادِ ارزیابِ بالینی و مصحح سخت‌گیر و عادل OSCE هستی. کل تعامل دانشجو با بیمار مجازی را بررسی کن: متن گفتگو، آزمایش‌ها/تصویربرداری‌ها، پرابلم لیست، تشخیص‌های افتراقی و تشخیص نهایی. قوانین ارزیابی چک‌لیست: ۱) معرفی خود و کسب رضایت: دانشجو باید صراحتاً نام یا عنوان خود را به‌عنوان پزشک بیان کرده باشد و از بیمار اجازه/رضایت گرفته باشد؛ صرف گفتن «سلام» یا پرسیدن «مشکل چیست؟» به هیچ وجه معرفی و کسب رضایت نیست (done: false). ۲) بررسی سیستماتیک شکایت اصلی و مرور سیستم‌ها (ROS): تنها در صورتی تیک می‌خورد که دانشجو ویژگی‌های علامت و ارگان‌های دیگر را صریحاً پرسیده باشد. ۳) برای هر مورد یک دلیل کوتاه بنویس و خروجی را با فرمت معتبر JSON ارائه بده.",
-  evaluator_en: "You are a strict, fair clinical OSCE examiner. Review the student encounter: chat transcript, orders, problem list, differentials, and final diagnosis. Rules: 1) Introduction & consent: The student MUST have explicitly stated their name/role as doctor and asked for consent; merely saying 'hello' or 'what is your problem' is NOT introduction or consent (done: false). 2) Systematic exploration & ROS: Only mark done if the student specifically asked about characteristics and organ systems. 3) Provide a brief reason per item and return valid JSON.",
   micro_fa: "بر اساس نقاط ضعف و خطاهای این دانشجو در این سناریو، یک درسنامه میکرو-لرنینگِ کاربردی، ساختاریافته و جامع (شامل پیام کلیدی، رویکرد شرح‌حال، معاینه فیزیکی و مرور سیستم‌ها ROS، نکات دام‌دار، و جمع‌بندی طلایی) در قالب مارک‌داون بنویس تا دانشجو بلافاصله پس از مشاهده نمره، آن را بخواند و یاد بگیرد.",
   micro_en: "Based on the student's weaknesses and mistakes in this encounter, write a structured, practical clinical micro-learning lesson (covering core concept, H&P + ROS approach, common pitfalls, and golden takeaway) in markdown.",
 };
+Object.assign(prompts, PROMPT_DEFAULTS_R63); // R63 wording: missing chart data is normal, never 'not recorded'
 for (const [k, v] of Object.entries(prompts)) insPrompt.run(k, v);
 
 // ---- Settings ----
@@ -458,6 +421,8 @@ for (const key of Object.keys(BUILTIN_SUBJECTS)) {
 import { TOPICS, BASIC_TOPICS, SAMPLE_QUESTIONS } from "./data/preinternship.js";
 import { RICH } from "./data/microlearning.js";
 import { emojiForTopic } from "./lib/topicemoji.js";
+import { DEFAULT_CHECKLIST_1, DEFAULT_CHECKLIST_2, DEFAULT_CHECKLIST_3 } from "./data/default-checklists.js";
+import { PROMPT_DEFAULTS_R63 } from "./data/prompt-defaults.js";
 
 // helper to make a learner MCQ flashcard in the shape learn.js expects
 const insLearnCard = db.prepare(

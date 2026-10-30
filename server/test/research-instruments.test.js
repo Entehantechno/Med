@@ -345,9 +345,12 @@ describe("remedial assignment for scores below 6/10", () => {
     const atk = await token("40012345");
     const ev = await request(app).post("/api/exam/evaluate").set(A(atk))
       .send({ caseId: 1, classId: cid, lang: "fa", durationSec: 60,
-              session: { messages: [{ role: "student", text: "من دکتر هستم، اجازه هست سؤال بپرسم؟ درد به بازو انتشار دارد؟ دیابت یا تنگی نفس دارید؟ معاینه و علائم حیاتی را می‌خواهم؛ درمان مناسب و آسپرین را بررسی می‌کنم." }],
+              session: { messages: [{ role: "student", text: "من دکتر هستم، اجازه هست سؤال بپرسم؟ درد به بازو انتشار دارد؟ دیابت یا تنگی نفس دارید؟ معاینه و علائم حیاتی را می‌خواهم؛ نوار قلب را فوری درخواست می‌کنم و تروپونین و CK-MB را می‌خواهم؛ درمان اولیه را بررسی می‌کنم: آسپرین، نیترات و ارجاع فوری برای آنژیوگرافی یا PCI." }],
                          tests: ["ecg", "troponin"], imaging: ["cxr"], problemList: ["درد قفسه سینه"], ddx: ["STEMI"], finalDx: "STEMI" } });
     // The AI score is above the threshold; the teacher pulls it below.
+    // R63: keyed criteria are scored per evidence point, so the answer names each part
+    // of the criteria (urgent ECG, troponin + CK-MB, aspirin + nitrate + urgent PCI
+    // referral). The test stays a complete-answer scenario rather than a partial one.
     expect(ev.body.score).toBeGreaterThanOrEqual(60);
     await request(app).put(`/api/reports/attempts/${ev.body.attemptId}/review`).set(A(ttk))
       .send({ status: "adjusted", teacher_score: 30, teacher_feedback: "ضعیف" });

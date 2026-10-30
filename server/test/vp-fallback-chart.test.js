@@ -21,14 +21,23 @@ describe('chart-grounded local patient responses',()=>{
   expect(mockPatientReply(c,'Does the pain radiate?','en')).not.toMatch(/left arm|jaw/);
  });
  for(const q of ['Where exactly?','What does it feel like?','Do you have nausea?'])it(`does not invent symptoms for an empty chart: ${q}`,()=>{
-  expect(mockPatientReply({},q,'en')).toMatch(/not recorded/i);
+  // R63: information missing from the chart is stated as normal, never as 'not recorded'.
+  const r=mockPatientReply({},q,'en');
+  expect(r).toMatch(/nothing|no\b|normal|fine/i);
+  expect(r).not.toMatch(/not recorded|not documented|no record|not in (the )?(chart|record)/i);
  });
- it('does not fabricate social negatives',()=>expect(mockPatientReply({},'Do you smoke?','en')).toMatch(/not recorded/i));
+ it('does not fabricate social negatives',()=>{
+  // R63: the normal default is stated plainly; it is not claimed as recorded or absent from the record.
+  const r=mockPatientReply({},'Do you smoke?','en');
+  expect(r).not.toMatch(/not recorded|not documented|no record|not in (the )?(chart|record)/i);
+ });
  it('does not infer chief complaint severity from the diagnosis/title',()=>{
   expect(mockPatientReply({title_en:'Chest pain',chief_en:'Mild discomfort'},'What is the problem?','en')).toBe('Mild discomfort');
  });
  it('does not mistake this for a greeting',()=>{
-  expect(mockPatientReply({},'When did this start?','en')).toMatch(/not recorded/i);
+  const r=mockPatientReply({},'When did this start?','en');
+  expect(r).not.toMatch(/not recorded|not documented|no record|not in (the )?(chart|record)/i);
+  expect(r).not.toMatch(/hello|hi there|good (morning|afternoon)/i);
  });
  it('does not answer a drug-use question with the medication list',()=>{
   expect(mockPatientReply({social_en:'No recreational drugs.',meds_en:'Metformin'},'Any drug use?','en')).toContain('No recreational drugs');

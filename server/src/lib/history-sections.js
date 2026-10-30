@@ -139,51 +139,51 @@ export function computeSectionScores(results = [], lang = "fa") {
    ------------------------------------------------------------------------- */
 export const INTERNAL_HISTORY_TEMPLATE = [
   // --- Opening / rapport (still part of a good history encounter) ---
-  { sub: "opening", weight: 1, fa: "معرفی خود به‌عنوان پزشک و کسب رضایت", en: "Introduce self as doctor & obtain consent", keys: ["من دکتر", "من پزشک", "دکتر شما", "پزشک شما", "معرفی", "اجازه هست", "کسب رضایت", "با اجازه", "رضایت دارید", "introduce", "i am dr", "i am doctor", "consent"] },
-  { sub: "opening", weight: 1, fa: "پرسش نام، سن و شغل بیمار", en: "Ask name, age and occupation", keys: ["نام", "اسم", "سن", "چند سال", "شغل", "name", "age", "occupation", "job"] },
-  { sub: "opening", weight: 1, fa: "پرسش منبع و درصد اعتماد شرح‌حال", en: "Ask source & reliability of history", keys: ["منبع", "اعتماد", "همراه", "source", "reliab"] },
+  { sub: "opening", weight: 1, fa: "معرفی خود به‌عنوان پزشک و کسب رضایت", en: "Introduce self as doctor & obtain consent", keys: ["معرفی|من دکتر|من پزشک|دکتر شما|پزشک شما|من دانشجو|من اکسترن|من اینترن|دانشجوی پزشکی|introduce|i am dr|i am doctor|i am a medical student|i am a student|i am an extern|i am an intern", "اجازه هست|با اجازه|رضایت دارید|کسب رضایت|consent|permission"] },
+  { sub: "opening", weight: 1, fa: "پرسش سن و شغل بیمار", en: "Ask age and occupation", keys: ["سن|چند سال|age|how old", "شغل|occupation|job|work"] },
+  { sub: "opening", weight: 1, fa: "پرسش منبع و درصد اعتماد شرح‌حال", en: "Ask source & reliability of history", keys: ["منبع|source|همراه|از چه کسی|کی همراهتونه", "اعتماد|reliab|قابل اعتماد|اطمینان|درصد|percent"] },
 
   // --- Chief complaint ---
-  { sub: "cc", weight: 2, fa: "ثبت شکایت اصلی (C.C) به زبان بیمار", en: "Record the chief complaint (C.C)", keys: ["شکایت", "مشکل", "chief", "complaint", "cc", "problem"] },
-  { sub: "cc", weight: 1, fa: "پرسش مدت شکایت اصلی", en: "Ask duration of the chief complaint", keys: ["چند وقت", "از کی", "مدت", "duration", "since when", "how long"] },
+  { sub: "cc", weight: 2, fa: "ثبت شکایت اصلی (C.C) به زبان بیمار", en: "Record the chief complaint (C.C)", keys: ["شکایت|مشکل|complaint|chief|problem|درد سینه|chest pain|تپش|palpitation", "چه شده|چی شده|what happened|what brings|own words|به زبان خودش"] },
+  { sub: "cc", weight: 1, fa: "پرسش مدت شکایت اصلی", en: "Ask duration of the chief complaint", keys: ["چند وقت|مدت|چقدره|چند ساعته|چند روزه|how long|duration|since when|از کی", "کی شروع|شروع شد|onset|started|began|when did"] },
 
   // --- HPI / OPQRST ---
-  { sub: "hpi", weight: 1, fa: "نحوهٔ شروع و مراجعه (Onset)", en: "Onset & mode of arrival", keys: ["شروع", "چطور آمد", "onset", "started", "began"] },
-  { sub: "hpi", weight: 1, fa: "عوامل تشدیدکننده/تسکین‌دهنده (Provocation/Palliation)", en: "Provoking / relieving factors", keys: ["بدتر", "بهتر", "تشدید", "provok", "relie", "worse", "better", "aggravat"] },
-  { sub: "hpi", weight: 1, fa: "کیفیت درد/علامت (Quality)", en: "Quality of the symptom", keys: ["کیفیت", "چه جور", "فشارنده", "سوزشی", "quality", "sharp", "dull", "burning", "pressure"] },
-  { sub: "hpi", weight: 1, fa: "انتشار (Radiation)", en: "Radiation", keys: ["انتشار", "پخش", "radiat", "spread"] },
-  { sub: "hpi", weight: 1, fa: "شدت ۱ تا ۱۰ (Severity)", en: "Severity (1–10)", keys: ["شدت", "چقدر", "severity", "scale", "1 to 10", "how bad"] },
-  { sub: "hpi", weight: 1, fa: "زمان‌بندی و طول‌کشیدن (Timing)", en: "Timing / course", keys: ["زمان", "مدت", "مداوم", "متناوب", "timing", "constant", "intermittent"] },
-  { sub: "hpi", weight: 1, fa: "پرسش علائم همراه", en: "Ask associated symptoms", keys: ["علائم همراه", "همراه", "تهوع", "تعریق", "associated", "nausea", "sweating"] },
-  { sub: "hpi", weight: 1, fa: "سابقهٔ مشابه قبلی", en: "Previous similar episode", keys: ["قبلا", "سابقه مشابه", "before", "previous", "similar"] },
+  { sub: "hpi", weight: 1, fa: "نحوهٔ شروع و مراجعه (Onset)", en: "Onset & mode of arrival", keys: ["شروع|onset|started|began", "ناگهانی|تدریجی|sudden|gradual|abrupt|چطور شروع|چطوری شروع|چطور آمد"] },
+  { sub: "hpi", weight: 1, fa: "عوامل تشدیدکننده/تسکین‌دهنده (Provocation/Palliation)", en: "Provoking / relieving factors", keys: ["بدتر|تشدید|provok|aggravat|worse", "بهتر|تسکین|relie|better|ease|کم می‌شود|کم میشه"] },
+  { sub: "hpi", weight: 1, fa: "کیفیت درد/علامت (Quality)", en: "Quality of the symptom", keys: ["کیفیت|چه جور|چجوری|چطوری|quality|character|what does it feel like", "فشارنده|سوزشی|سوزش|تیز|کولیک|سنگین|مبهم|sharp|dull|burning|pressure|crush|colic|heavy"] },
+  { sub: "hpi", weight: 1, fa: "انتشار (Radiation)", en: "Radiation", keys: ["انتشار|پخش|radiat|spread|منتشر", "تیر|بازو|فک|پشت|شانه|jaw|arm|back|shoulder"] },
+  { sub: "hpi", weight: 1, fa: "شدت ۱ تا ۱۰ (Severity)", en: "Severity (1–10)", keys: ["شدت|severity|چقدر|how bad|scale|درجه", "۱ تا ۱۰|1 تا 10|1 to 10|1-10|از ۱۰|out of 10|scale of 10"] },
+  { sub: "hpi", weight: 1, fa: "زمان‌بندی و طول‌کشیدن (Timing)", en: "Timing / course", keys: ["زمان|timing|مداوم|پیوسته|constant|continuous", "متناوب|intermittent|episod|بیاید و برود|سیر|course|pattern"] },
+  { sub: "hpi", weight: 1, fa: "پرسش علائم همراه", en: "Ask associated symptoms", keys: ["علائم همراه|همراه|associated", "تهوع|تعریق|nausea|sweat|vomit|تنگی نفس|dyspnea"] },
+  { sub: "hpi", weight: 1, fa: "سابقهٔ مشابه قبلی", en: "Previous similar episode", keys: ["قبلا|قبلاً|before|previous|earlier|تا حالا|تا به حال", "مشابه|similar|same as|سابقه مشابه|بار قبل|episode"] },
 
   // --- Past medical history (PMH) ---
-  { sub: "pmh", weight: 1, fa: "پرسش بیماری‌های زمینه‌ای (DM/HTN/HLP/IHD...)", en: "Ask chronic diseases (DM/HTN/HLP/IHD...)", keys: ["دیابت", "فشار", "چربی", "قلبی", "dm", "htn", "diabet", "hypertens", "ihd", "mi"] },
-  { sub: "pmh", weight: 1, fa: "سابقهٔ بستری/جراحی/آنژیوگرافی", en: "Hospitalization / surgery / angiography", keys: ["بستری", "جراحی", "عمل", "آنژیو", "hospital", "surg", "angio"] },
-  { sub: "pmh", weight: 1, fa: "سابقهٔ دارویی (نام/دوز)", en: "Medication history (name/dose)", keys: ["دارو", "قرص", "مصرف می‌کنی", "medicat", "drug", "pill", "taking"] },
-  { sub: "pmh", weight: 1, fa: "غربالگری و واکسیناسیون", en: "Screening & vaccination", keys: ["غربالگری", "واکسن", "پاپ", "ماموگرافی", "screen", "vaccin", "pap", "mammo"] },
+  { sub: "pmh", weight: 1, fa: "پرسش بیماری‌های زمینه‌ای (DM/HTN/HLP/IHD...)", en: "Ask chronic diseases (DM/HTN/HLP/IHD...)", keys: ["دیابت|قند|diabet", "فشار|hypertens|htn|پرفشاری", "چربی|hlp|hyperlip|کلسترول|cholesterol|lipid", "قلبی|ihd|ischemic|کرونر|heart disease"] },
+  { sub: "pmh", weight: 1, fa: "سابقهٔ بستری/جراحی/آنژیوگرافی", en: "Hospitalization / surgery / angiography", keys: ["بستری|hospital|admission", "جراحی|عمل|surg|operation", "آنژیو|angio|کاتتریزاسیون|catheter"] },
+  { sub: "pmh", weight: 1, fa: "سابقهٔ دارویی (نام/دوز)", en: "Medication history (name/dose)", keys: ["دارو|قرص|medicat|drug|pill|taking|مصرف می‌کنی|مصرف می کنی", "دوز|dose|میلی گرم|mg|نام دارو|name of"] },
+  { sub: "pmh", weight: 1, fa: "غربالگری و واکسیناسیون", en: "Screening & vaccination", keys: ["غربالگری|screen", "واکسن|vaccin|پاپ|pap|ماموگرافی|mammo"] },
 
   // --- Family history (FH) ---
-  { sub: "fh", weight: 1, fa: "سابقهٔ خانوادگی بیماری‌های مرتبط", en: "Relevant family history", keys: ["خانواده", "پدر", "مادر", "family", "father", "mother", "hereditary"] },
+  { sub: "fh", weight: 1, fa: "سابقهٔ خانوادگی بیماری‌های مرتبط", en: "Relevant family history", keys: ["خانواده|family|پدر|مادر|father|mother", "ارثی|hereditary|genetic|فامیل|بستگان|relatives"] },
 
   // --- Allergy ---
-  { sub: "allergy", weight: 1, fa: "پرسش حساسیت و آلرژی", en: "Ask allergies", keys: ["حساسیت", "آلرژی", "allerg", "sensitiv"] },
+  { sub: "allergy", weight: 1, fa: "پرسش حساسیت و آلرژی", en: "Ask allergies", keys: ["آلرژی|حساسیت|allerg|sensitiv", "واکنش|reaction|کدام دارو|which drug|نوع"] },
 
   // --- Social history (SH) ---
-  { sub: "sh", weight: 1, fa: "مصرف سیگار/الکل/مواد مخدر", en: "Smoking / alcohol / drug use", keys: ["سیگار", "الکل", "مواد", "مخدر", "smok", "alcohol", "drug", "opium"] },
-  { sub: "sh", weight: 1, fa: "وضعیت سکونت/شغلی/عادات غذایی", en: "Living / occupation / diet habits", keys: ["سکونت", "خانه", "شغل", "غذا", "living", "diet", "occupation"] },
-  { sub: "sh", weight: 1, fa: "سفر اخیر/تماس با حیوانات", en: "Recent travel / animal contact", keys: ["سفر", "مسافرت", "حیوان", "travel", "animal", "contact"] },
+  { sub: "sh", weight: 1, fa: "مصرف سیگار/الکل/مواد مخدر", en: "Smoking / alcohol / drug use", keys: ["سیگار|smok|tobacco", "الکل|alcohol", "مواد|مخدر|اعتیاد|opium|drug use|substance|تریاک"] },
+  { sub: "sh", weight: 1, fa: "وضعیت سکونت/شغلی/عادات غذایی", en: "Living / occupation / diet habits", keys: ["سکونت|خانه|زندگی|living|home|house", "شغل|occupation|job|work", "غذا|رژیم|diet|تغذیه|food"] },
+  { sub: "sh", weight: 1, fa: "سفر اخیر/تماس با حیوانات", en: "Recent travel / animal contact", keys: ["سفر|مسافرت|travel|trip", "حیوان|animal|contact|گربه|سگ|dog|cat"] },
 
   // --- Review of systems (ROS) ---
-  { sub: "ros", weight: 1, fa: "مرور سیستم عمومی (تب/لرز/تعریق شبانه/کاهش وزن)", en: "General ROS (fever/chills/night sweats/weight loss)", keys: ["تب", "لرز", "تعریق", "وزن", "fever", "chills", "night sweat", "weight loss"] },
-  { sub: "ros", weight: 1, fa: "مرور سیستم تنفسی (سرفه/تنگی‌نفس/خلط)", en: "Respiratory ROS (cough/dyspnea/sputum)", keys: ["سرفه", "تنگی نفس", "خلط", "cough", "dyspnea", "sputum", "breath"] },
-  { sub: "ros", weight: 1, fa: "مرور سیستم قلبی‌عروقی (درد سینه/تپش/ادم)", en: "Cardiovascular ROS (chest pain/palpitation/edema)", keys: ["درد سینه", "تپش", "ادم", "chest pain", "palpitation", "edema"] },
-  { sub: "ros", weight: 1, fa: "مرور سیستم گوارشی (تهوع/استفراغ/تغییر اجابت)", en: "GI ROS (nausea/vomiting/bowel change)", keys: ["تهوع", "استفراغ", "اسهال", "یبوست", "nausea", "vomit", "diarrhea", "constipation"] },
-  { sub: "ros", weight: 1, fa: "مرور سیستم ادراری‌تناسلی", en: "Genitourinary ROS", keys: ["ادرار", "سوزش ادرار", "urin", "dysuria", "frequency"] },
-  { sub: "ros", weight: 1, fa: "مرور سیستم عصبی/روانی", en: "Neuro / psych ROS", keys: ["سردرد", "سرگیجه", "ضعف", "خواب", "headache", "dizz", "weakness", "sleep", "mood"] },
+  { sub: "ros", weight: 1, fa: "مرور سیستم عمومی (تب/لرز/تعریق شبانه/کاهش وزن)", en: "General ROS (fever/chills/night sweats/weight loss)", keys: ["تب|fever", "لرز|chills|تعریق شبانه|night sweat|عرق شب", "کاهش وزن|weight loss|وزن"] },
+  { sub: "ros", weight: 1, fa: "مرور سیستم تنفسی (سرفه/تنگی‌نفس/خلط)", en: "Respiratory ROS (cough/dyspnea/sputum)", keys: ["سرفه|cough", "تنگی نفس|dyspn|shortness of breath", "خلط|sputum|اسپوتوم"] },
+  { sub: "ros", weight: 1, fa: "مرور سیستم قلبی‌عروقی (درد سینه/تپش/ادم)", en: "Cardiovascular ROS (chest pain/palpitation/edema)", keys: ["درد سینه|chest pain", "تپش|palpitation", "ادم|ورم|edema|oedema"] },
+  { sub: "ros", weight: 1, fa: "مرور سیستم گوارشی (تهوع/استفراغ/تغییر اجابت)", en: "GI ROS (nausea/vomiting/bowel change)", keys: ["تهوع|nausea", "استفراغ|vomit", "اسهال|یبوست|diarrh|constipat|bowel|دفع"] },
+  { sub: "ros", weight: 1, fa: "مرور سیستم ادراری‌تناسلی", en: "Genitourinary ROS", keys: ["ادرار|urin", "سوزش ادرار|dysuria|burning urin", "تکرر ادرار|frequency|تکرر"] },
+  { sub: "ros", weight: 1, fa: "مرور سیستم عصبی/روانی", en: "Neuro / psych ROS", keys: ["سردرد|headache", "سرگیجه|dizz|vertigo", "ضعف|weakness|weak", "خواب|sleep|خلق|mood"] },
 
   // --- Summary / synthesis (still history-side clinical reasoning) ---
-  { sub: "summary", weight: 2, fa: "جمع‌بندی شرح‌حال و ساخت Problem List", en: "Summarize history & build a problem list", keys: ["خلاصه", "جمع بندی", "پروبلم", "summary", "problem list"] },
+  { sub: "summary", weight: 2, fa: "جمع‌بندی شرح‌حال و ساخت Problem List", en: "Summarize history & build a problem list", keys: ["خلاصه|جمع بندی|جمع‌بندی|summary|summar", "پروبلم|problem list|لیست مشکلات|فهرست مشکلات"] },
 ];
 
 /* Build ready-to-store checklist items from the internal-history template.
@@ -202,68 +202,68 @@ export function buildInternalHistoryItems() {
 
 // --- زنان و مامایی (OB/GYN — Shiraz form) ---
 export const OBGYN_HISTORY_TEMPLATE = [
-  { sub: "opening", weight: 1, fa: "معرفی و کسب رضایت + پرسش سن و G/P/A/L", en: "Introduce/consent + ask age & G/P/A/L", keys: ["من دکتر", "من پزشک", "دکتر شما", "پزشک شما", "معرفی", "اجازه هست", "کسب رضایت", "با اجازه", "رضایت دارید", "سن", "گراوید", "پاریتی", "gravida", "para", "consent", "i am dr", "i am doctor"] },
-  { sub: "cc", weight: 2, fa: "ثبت شکایت اصلی و LMP/GA", en: "Chief complaint + LMP/GA", keys: ["شکایت", "lmp", "قاعدگی", "بارداری", "هفته", "complaint", "gestational", "ga"] },
-  { sub: "pi", weight: 2, fa: "شرح بیماری فعلی (شروع، سیر، شدت)", en: "History of present illness (onset/course/severity)", keys: ["از کی", "شروع", "درد", "خونریزی", "onset", "bleeding", "pain", "course"] },
-  { sub: "menstrual", weight: 2, fa: "شرح‌حال قاعدگی (نظم، مدت، حجم، دیسمنوره)", en: "Menstrual history (regularity, duration, flow, dysmenorrhea)", keys: ["قاعدگی", "پریود", "نامنظم", "دیسمنوره", "menstrual", "period", "cycle", "dysmenorrhea"] },
-  { sub: "obstetric", weight: 2, fa: "شرح‌حال مامایی (زایمان‌ها، سقط، نوع زایمان)", en: "Obstetric history (deliveries, abortions, mode)", keys: ["زایمان", "سقط", "سزارین", "بارداری قبلی", "delivery", "abortion", "cesarean", "obstetric"] },
-  { sub: "gyn", weight: 1, fa: "سابقهٔ زنان (پاپ‌اسمیر، عفونت، جراحی زنان)", en: "Gynecologic history (Pap, infections, GYN surgery)", keys: ["پاپ", "عفونت", "کیست", "میوم", "pap smear", "infection", "cyst", "gyn surgery"] },
-  { sub: "contraception", weight: 1, fa: "روش پیشگیری از بارداری", en: "Contraception method", keys: ["پیشگیری", "قرص", "آی‌یو‌دی", "کاندوم", "contracepti", "ocp", "iud"] },
-  { sub: "pmh", weight: 1, fa: "سابقهٔ بیماری/جراحی/بستری قبلی", en: "Past medical/surgical/admission history", keys: ["سابقه", "بستری", "جراحی", "بیماری قبلی", "past", "surg", "admission"] },
-  { sub: "pmh", weight: 1, fa: "داروها و اعتیاد", en: "Drug therapy & addiction", keys: ["دارو", "قرص", "اعتیاد", "medicat", "drug", "addiction"] },
-  { sub: "fh", weight: 1, fa: "سابقهٔ خانوادگی (سرطان پستان/تخمدان...)", en: "Family history (breast/ovarian cancer...)", keys: ["خانواده", "سرطان", "پستان", "family", "cancer", "breast"] },
-  { sub: "ros", weight: 1, fa: "مرور سیستم‌ها (عمومی، ادراری، پستان، گوارشی)", en: "Review of systems (general, urinary, breast, GI)", keys: ["مرور سیستم", "ادرار", "پستان", "گوارش", "review of systems", "urinary", "breast"] },
-  { sub: "summary", weight: 2, fa: "جمع‌بندی و Problem List / DDx", en: "Summary & problem list / DDx", keys: ["خلاصه", "جمع بندی", "افتراقی", "summary", "problem list", "ddx"] },
+  { sub: "opening", weight: 1, fa: "معرفی و کسب رضایت + پرسش سن و G/P/A/L", en: "Introduce/consent + ask age & G/P/A/L", keys: ["معرفی|من دکتر|من پزشک|دکتر شما|پزشک شما|من دانشجو|من اکسترن|من اینترن|دانشجوی پزشکی|introduce|i am dr|i am doctor|i am a medical student|i am a student|i am an extern|i am an intern", "اجازه هست|با اجازه|رضایت دارید|کسب رضایت|consent|permission", "سن|چند سال|age|how old", "گراوید|پاریتی|gravida|para|سقط|abortion"] },
+  { sub: "cc", weight: 2, fa: "ثبت شکایت اصلی و LMP/GA", en: "Chief complaint + LMP/GA", keys: ["شکایت|complaint|chief|مشکل|problem", "lmp|آخرین قاعدگی|قاعدگی|last menstrual|period", "هفته|gestational age|سن بارداری|سن حاملگی"] },
+  { sub: "pi", weight: 2, fa: "شرح بیماری فعلی (شروع، سیر، شدت)", en: "History of present illness (onset/course/severity)", keys: ["از کی|شروع|onset|started|began", "درد|خونریزی|pain|bleeding", "سیر|course|شدت|severity|چقدر"] },
+  { sub: "menstrual", weight: 2, fa: "شرح‌حال قاعدگی (نظم، مدت، حجم، دیسمنوره)", en: "Menstrual history (regularity, duration, flow, dysmenorrhea)", keys: ["قاعدگی|پریود|menstrual|period|cycle|نامنظم|منظم|regular", "مدت|duration|چند روز|روز", "دیسمنوره|dysmenorrh|درد قاعدگی|جریان|flow|menorrhag"] },
+  { sub: "obstetric", weight: 2, fa: "شرح‌حال مامایی (زایمان‌ها، سقط، نوع زایمان)", en: "Obstetric history (deliveries, abortions, mode)", keys: ["زایمان|delivery|birth", "سقط|abortion|miscarr", "سزارین|cesarean|c-section|عادی|vaginal|نحوه زایمان|mode"] },
+  { sub: "gyn", weight: 1, fa: "سابقهٔ زنان (پاپ‌اسمیر، عفونت، جراحی زنان)", en: "Gynecologic history (Pap, infections, GYN surgery)", keys: ["پاپ|pap smear|pap", "عفونت|infection|sti|ترشح|discharge", "کیست|میوم|cyst|fibroid|myom|جراحی|gyn surgery|surgery"] },
+  { sub: "contraception", weight: 1, fa: "روش پیشگیری از بارداری", en: "Contraception method", keys: ["پیشگیری|contracep", "قرص|ocp|pill|ایمپلنت|implant|آی‌یو‌دی|iud|آی یو دی", "کاندوم|condom|عزل|withdraw"] },
+  { sub: "pmh", weight: 1, fa: "سابقهٔ بیماری/جراحی/بستری قبلی", en: "Past medical/surgical/admission history", keys: ["سابقه|past|history", "بیماری قبلی|بیماری زمینه|medical", "جراحی|surg|operation", "بستری|admission|hospital"] },
+  { sub: "pmh", weight: 1, fa: "داروها و اعتیاد", en: "Drug therapy & addiction", keys: ["دارو|قرص|medicat|drug|therapy", "اعتیاد|addiction|مواد|substance|سیگار|smok|الکل|alcohol"] },
+  { sub: "fh", weight: 1, fa: "سابقهٔ خانوادگی (سرطان پستان/تخمدان...)", en: "Family history (breast/ovarian cancer...)", keys: ["خانواده|family|فامیل", "سرطان|cancer|پستان|breast|تخمدان|ovar"] },
+  { sub: "ros", weight: 1, fa: "مرور سیستم‌ها (عمومی، ادراری، پستان، گوارشی)", en: "Review of systems (general, urinary, breast, GI)", keys: ["review of systems|مرور سیستم", "ادرار|urin|سوزش ادرار|dysuria", "پستان|breast", "گوارش|تهوع|نفخ|اسهال|یبوست|bowel|stool|diarrh|constipat"] },
+  { sub: "summary", weight: 2, fa: "جمع‌بندی و Problem List / DDx", en: "Summary & problem list / DDx", keys: ["خلاصه|جمع بندی|جمع‌بندی|summary|summar", "problem list|پروبلم|لیست مشکلات|فهرست مشکلات", "افتراقی|ddx|differential|تشخیص افتراقی"] },
 ];
 
 // --- قلب (Cardiology — Balinoma) ---
 export const CARDIO_HISTORY_TEMPLATE = [
-  { sub: "opening", weight: 1, fa: "معرفی و کسب رضایت", en: "Introduce & obtain consent", keys: ["من دکتر", "من پزشک", "دکتر شما", "پزشک شما", "معرفی", "اجازه هست", "کسب رضایت", "با اجازه", "رضایت دارید", "introduce", "i am dr", "i am doctor", "consent"] },
-  { sub: "cc", weight: 2, fa: "ثبت شکایت اصلی به زبان بیمار", en: "Record chief complaint in patient's words", keys: ["شکایت", "درد سینه", "تپش", "complaint", "chest pain", "palpitation"] },
-  { sub: "hpi", weight: 2, fa: "OPQRST درد سینه (شروع، کیفیت، انتشار)", en: "OPQRST of chest pain (onset, quality, radiation)", keys: ["شروع", "کیفیت", "انتشار", "onset", "quality", "radiation", "opqrst"] },
-  { sub: "hpi", weight: 1, fa: "پرسش ماهیت درد (پلورتیک/پوزیشنال/فشارنده)", en: "Ask pain nature (pleuritic/positional/pressure)", keys: ["پلورتیک", "پوزیشنال", "فشارنده", "pleuritic", "positional", "pressure"] },
-  { sub: "hpi", weight: 1, fa: "کلاس عملکردی NYHA و تحمل فعالیت", en: "NYHA functional class & exertional tolerance", keys: ["فعالیت", "پله", "پیاده روی", "nyha", "exertion", "stairs", "functional class"] },
-  { sub: "hpi", weight: 1, fa: "علائم همراه (تنگی‌نفس، سنکوپ، تعریق، تپش)", en: "Associated symptoms (dyspnea, syncope, sweating, palpitation)", keys: ["تنگی نفس", "سنکوپ", "تعریق", "تپش", "dyspnea", "syncope", "sweating", "palpitation"] },
-  { sub: "hpi", weight: 1, fa: "ارتوپنه / PND / ادم اندام", en: "Orthopnea / PND / limb edema", keys: ["ارتوپنه", "شب", "ادم", "پا ورم", "orthopnea", "pnd", "edema"] },
-  { sub: "pmh", weight: 2, fa: "سابقهٔ قلبی (MI/PCI/CABG/آنژیو/تعویض دریچه)", en: "Cardiac history (MI/PCI/CABG/angio/valve)", keys: ["سکته قلبی", "آنژیو", "استنت", "بای پس", "دریچه", "mi", "pci", "cabg", "angio", "valve"] },
-  { sub: "pmh", weight: 1, fa: "ریسک‌فاکتورها (DM/HTN/HLP/COPD/تیروئید)", en: "Risk factors (DM/HTN/HLP/COPD/thyroid)", keys: ["دیابت", "فشار", "چربی", "copd", "تیروئید", "dm", "htn", "hlp", "thyroid"] },
-  { sub: "pmh", weight: 1, fa: "داروها (نوع/دوز/کامپلاینس)", en: "Medications (type/dose/compliance)", keys: ["دارو", "قرص", "مصرف", "medicat", "drug", "compliance"] },
-  { sub: "fh", weight: 1, fa: "سابقهٔ خانوادگی MI/SCD/CABG زودرس", en: "Family history of premature MI/SCD/CABG", keys: ["خانواده", "سکته", "مرگ ناگهانی", "family", "mi", "scd", "premature"] },
-  { sub: "sh", weight: 1, fa: "سابقهٔ اجتماعی (سیگار/الکل/مواد/شغل)", en: "Social history (smoking/alcohol/drugs/job)", keys: ["سیگار", "الکل", "مواد", "شغل", "smok", "alcohol", "drug", "occupation"] },
-  { sub: "summary", weight: 2, fa: "جمع‌بندی و Problem List / DDx", en: "Summary & problem list / DDx", keys: ["خلاصه", "جمع بندی", "افتراقی", "summary", "problem list", "ddx"] },
+  { sub: "opening", weight: 1, fa: "معرفی و کسب رضایت", en: "Introduce & obtain consent", keys: ["معرفی|من دکتر|من پزشک|دکتر شما|پزشک شما|من دانشجو|من اکسترن|من اینترن|دانشجوی پزشکی|introduce|i am dr|i am doctor|i am a medical student|i am a student|i am an extern|i am an intern", "اجازه هست|با اجازه|رضایت دارید|کسب رضایت|consent|permission"] },
+  { sub: "cc", weight: 2, fa: "ثبت شکایت اصلی به زبان بیمار", en: "Record chief complaint in patient's words", keys: ["شکایت|مشکل|complaint|chief|problem|درد سینه|chest pain|تپش|palpitation", "چه شده|چی شده|what happened|what brings|own words|به زبان خودش"] },
+  { sub: "hpi", weight: 2, fa: "OPQRST درد سینه (شروع، کیفیت، انتشار)", en: "OPQRST of chest pain (onset, quality, radiation)", keys: ["شروع|onset|از کی", "کیفیت|quality|character|چطور", "انتشار|radiation|radiat|پخش"] },
+  { sub: "hpi", weight: 1, fa: "پرسش ماهیت درد (پلورتیک/پوزیشنال/فشارنده)", en: "Ask pain nature (pleuritic/positional/pressure)", keys: ["پلورتیک|pleuritic|تنفس عمیق|deep breath", "پوزیشنال|positional|وضعیت|posture|حرکت", "فشارنده|pressure|pressing|سنگین"] },
+  { sub: "hpi", weight: 1, fa: "کلاس عملکردی NYHA و تحمل فعالیت", en: "NYHA functional class & exertional tolerance", keys: ["فعالیت|exertion|exercise|ورزش", "پله|stairs|پیاده روی|walk|راه رفتن", "nyha|functional class|کلاس عملکردی|تحمل"] },
+  { sub: "hpi", weight: 1, fa: "علائم همراه (تنگی‌نفس، سنکوپ، تعریق، تپش)", en: "Associated symptoms (dyspnea, syncope, sweating, palpitation)", keys: ["تنگی نفس|dyspnea|shortness of breath", "سنکوپ|syncope|غش", "تعریق|sweat|عرق", "تپش|palpitation"] },
+  { sub: "hpi", weight: 1, fa: "ارتوپنه / PND / ادم اندام", en: "Orthopnea / PND / limb edema", keys: ["ارتوپنه|orthopn|بالش|متکا", "شب بیدار|نیمه شب|nocturnal|pnd|paroxysmal", "ادم|ورم|oedema|edema|پا ورم"] },
+  { sub: "pmh", weight: 2, fa: "سابقهٔ قلبی (MI/PCI/CABG/آنژیو/تعویض دریچه)", en: "Cardiac history (MI/PCI/CABG/angio/valve)", keys: ["سکته قلبی|myocardial|انفارکتوس", "pci|استنت|stent|آنژیو|angio", "cabg|بای پس|bypass", "دریچه|valve|valv"] },
+  { sub: "pmh", weight: 1, fa: "ریسک‌فاکتورها (DM/HTN/HLP/COPD/تیروئید)", en: "Risk factors (DM/HTN/HLP/COPD/thyroid)", keys: ["دیابت|diabet", "فشار|hypertens|htn|پرفشاری", "چربی|lipid|hyperlip|کلسترول|cholesterol", "copd|انسدادی|سی او پی دی", "تیروئید|thyroid"] },
+  { sub: "pmh", weight: 1, fa: "داروها (نوع/دوز/کامپلاینس)", en: "Medications (type/dose/compliance)", keys: ["دارو|medicat|قرص|drug", "دوز|dose|میلی گرم|mg", "compliance|پایبندی|مصرف منظم|adherence"] },
+  { sub: "fh", weight: 1, fa: "سابقهٔ خانوادگی MI/SCD/CABG زودرس", en: "Family history of premature MI/SCD/CABG", keys: ["خانواده|family|فامیل|پدر|مادر", "زودرس|premature|جوان|early age", "مرگ ناگهانی|scd|sudden death|sudden cardiac"] },
+  { sub: "sh", weight: 1, fa: "سابقهٔ اجتماعی (سیگار/الکل/مواد/شغل)", en: "Social history (smoking/alcohol/drugs/job)", keys: ["سیگار|smok", "الکل|alcohol", "مواد|مخدر|اعتیاد|drug|opium", "شغل|occupation|job|work"] },
+  { sub: "summary", weight: 2, fa: "جمع‌بندی و Problem List / DDx", en: "Summary & problem list / DDx", keys: ["خلاصه|جمع بندی|جمع‌بندی|summary|summar", "problem list|پروبلم|لیست مشکلات|فهرست مشکلات", "افتراقی|ddx|differential|تشخیص افتراقی"] },
 ];
 
 // --- اطفال (Pediatrics — Balinoma) ---
 export const PEDS_HISTORY_TEMPLATE = [
-  { sub: "opening", weight: 1, fa: "معرفی و کسب رضایت از همراه/والد", en: "Introduce & obtain consent from caregiver", keys: ["من دکتر", "من پزشک", "دکتر شما", "پزشک شما", "معرفی", "اجازه هست", "کسب رضایت", "با اجازه", "رضایت دارید", "همراه", "والد", "consent", "caregiver", "parent", "i am dr", "i am doctor"] },
-  { sub: "id", weight: 1, fa: "اطلاعات هویتی (نام، سن، جنس، منبع شرح‌حال)", en: "Identification (name, age, sex, source)", keys: ["نام", "سن", "جنس", "منبع", "name", "age", "sex", "source"] },
-  { sub: "cc", weight: 2, fa: "ثبت شکایت اصلی", en: "Record chief complaint", keys: ["شکایت", "مشکل", "complaint", "problem"] },
-  { sub: "pi", weight: 2, fa: "شرح بیماری فعلی (کیفیت، زمان، تظاهرات همراه)", en: "Present illness (quality, timing, associated features)", keys: ["از کی", "شروع", "کیفیت", "همراه", "onset", "quality", "timing", "associated"] },
-  { sub: "natal", weight: 2, fa: "سابقهٔ پره‌ناتال (بارداری مادر، دارو، بیماری)", en: "Prenatal history (pregnancy, meds, illness)", keys: ["بارداری", "حاملگی", "دارو مادر", "prenatal", "pregnancy", "maternal"] },
-  { sub: "natal", weight: 1, fa: "سابقهٔ حین/بعد تولد (نوع زایمان، آپگار، ایکتر)", en: "Peri/post-natal (delivery, Apgar, jaundice)", keys: ["زایمان", "آپگار", "زردی", "delivery", "apgar", "jaundice", "birth"] },
-  { sub: "development", weight: 2, fa: "تاریخچهٔ رشد و تکامل (وزن/قد/مایلستون‌ها)", en: "Growth & development (weight/height/milestones)", keys: ["رشد", "تکامل", "وزن", "قد", "نشستن", "راه رفتن", "growth", "development", "milestone"] },
-  { sub: "feeding", weight: 1, fa: "تاریخچهٔ تغذیه (شیر مادر/خشک، جامدات)", en: "Feeding history (breast/formula, solids)", keys: ["تغذیه", "شیر", "فرمولا", "جامد", "feeding", "breast", "formula", "solid"] },
-  { sub: "vaccine", weight: 1, fa: "واکسیناسیون (برنامهٔ کشوری)", en: "Vaccination (national schedule)", keys: ["واکسن", "واکسیناسیون", "vaccin", "immuniz"] },
-  { sub: "pmh", weight: 1, fa: "سابقهٔ بیماری/بستری/جراحی، دارو و آلرژی", en: "Past illness/admission/surgery, drugs & allergy", keys: ["سابقه", "بستری", "جراحی", "دارو", "آلرژی", "past", "admission", "surgery", "drug", "allergy"] },
-  { sub: "fh", weight: 1, fa: "سابقهٔ خانوادگی + نسبت فامیلی والدین", en: "Family history + parental consanguinity", keys: ["خانواده", "فامیلی", "ارثی", "family", "consanguin", "hereditary"] },
-  { sub: "sh", weight: 1, fa: "سابقهٔ اجتماعی (مهد/مدرسه، شغل والدین، محل زندگی)", en: "Social history (daycare/school, parents' job, home)", keys: ["مهد", "مدرسه", "شغل", "زندگی", "daycare", "school", "parents", "home"] },
-  { sub: "summary", weight: 2, fa: "جمع‌بندی و Problem List / DDx", en: "Summary & problem list / DDx", keys: ["خلاصه", "جمع بندی", "افتراقی", "summary", "problem list", "ddx"] },
+  { sub: "opening", weight: 1, fa: "معرفی و کسب رضایت از همراه/والد", en: "Introduce & obtain consent from caregiver", keys: ["معرفی|من دکتر|من پزشک|دکتر شما|پزشک شما|من دانشجو|من اکسترن|من اینترن|دانشجوی پزشکی|introduce|i am dr|i am doctor|i am a medical student|i am a student|i am an extern|i am an intern", "همراه|والد|مادر|پدر|caregiver|parent|رضایت|اجازه|consent|permission"] },
+  { sub: "id", weight: 1, fa: "شناسایی (سن، جنس، منبع)", en: "Identification (age, sex, source)", keys: ["سن|چند سال|age|how old", "جنس|sex|gender|پسر|دختر", "منبع|source|همراه|از چه کسی"] },
+  { sub: "cc", weight: 2, fa: "ثبت شکایت اصلی", en: "Record chief complaint", keys: ["شکایت|مشکل|complaint|problem", "چه شده|چی شده|what happened|what brings|مشکل"] },
+  { sub: "pi", weight: 2, fa: "شرح بیماری فعلی (کیفیت، زمان، تظاهرات همراه)", en: "Present illness (quality, timing, associated features)", keys: ["کیفیت|quality|چطور|character", "زمان|timing|شروع|onset|از کی", "همراه|associated|تب|استفراغ|اسهال"] },
+  { sub: "natal", weight: 2, fa: "سابقهٔ پره‌ناتال (بارداری مادر، دارو، بیماری)", en: "Prenatal history (pregnancy, meds, illness)", keys: ["بارداری|حاملگی|pregnan|prenatal", "دارو مادر|دارو|drug|medicat|maternal med", "بیماری مادر|maternal illness|عفونت|infection"] },
+  { sub: "natal", weight: 1, fa: "سابقهٔ حین/بعد تولد (نوع زایمان، آپگار، ایکتر)", en: "Peri/post-natal (delivery, Apgar, jaundice)", keys: ["زایمان|delivery|birth|تولد", "آپگار|apgar", "زردی|jaundice"] },
+  { sub: "development", weight: 2, fa: "تاریخچهٔ رشد و تکامل (وزن/قد/مایلستون‌ها)", en: "Growth & development (weight/height/milestones)", keys: ["رشد|growth", "تکامل|development|milestone|نشستن|راه رفتن|حرف زدن", "وزن|قد|weight|height|دور سر"] },
+  { sub: "feeding", weight: 1, fa: "تاریخچهٔ تغذیه (شیر مادر/خشک، جامدات)", en: "Feeding history (breast/formula, solids)", keys: ["شیر|breast|سینه|تغذیه|feeding", "فرمولا|formula", "جامد|solid|غذای کمکی|complementary"] },
+  { sub: "vaccine", weight: 1, fa: "واکسیناسیون (برنامهٔ کشوری)", en: "Vaccination (national schedule)", keys: ["واکسن|واکسیناسیون|vaccin|immuniz|ایمن‌سازی", "برنامه ملی|national schedule|schedule|تقویمی"] },
+  { sub: "pmh", weight: 1, fa: "سابقهٔ بیماری/بستری/جراحی، دارو و آلرژی", en: "Past illness/admission/surgery, drugs & allergy", keys: ["سابقه|past", "بستری|admission|hospital", "جراحی|surgery|surg", "دارو|drug|آلرژی|allerg"] },
+  { sub: "fh", weight: 1, fa: "سابقهٔ خانوادگی + نسبت فامیلی والدین", en: "Family history + parental consanguinity", keys: ["خانواده|family|فامیل", "خویشاوند|consanguin|ازدواج فامیلی|cousin", "ارثی|hereditary|genetic"] },
+  { sub: "sh", weight: 1, fa: "سابقهٔ اجتماعی (مهد/مدرسه، شغل والدین، محل زندگی)", en: "Social history (daycare/school, parents' job, home)", keys: ["مهد|daycare|nursery|پیش دبستانی|kindergarten", "مدرسه|school", "شغل|parents|occupation|job|والدین", "خانه|home|زندگی|living|house"] },
+  { sub: "summary", weight: 2, fa: "جمع‌بندی و Problem List / DDx", en: "Summary & problem list / DDx", keys: ["خلاصه|جمع بندی|جمع‌بندی|summary|summar", "problem list|پروبلم|لیست مشکلات|فهرست مشکلات", "افتراقی|ddx|differential|تشخیص افتراقی"] },
 ];
 
 // --- روان (Psychiatry — Kamalbakhsh Mir-Hosseini form) ---
 export const PSYCH_HISTORY_TEMPLATE = [
-  { sub: "opening", weight: 1, fa: "معرفی، برقراری ارتباط و کسب رضایت", en: "Introduce, build rapport & obtain consent", keys: ["من دکتر", "من پزشک", "دکتر شما", "پزشک شما", "معرفی", "اجازه هست", "کسب رضایت", "با اجازه", "رضایت دارید", "consent", "rapport", "introduce", "i am dr", "i am doctor"] },
-  { sub: "cc", weight: 2, fa: "ثبت شکایت اصلی به زبان بیمار", en: "Record chief complaint in patient's words", keys: ["شکایت", "مشکل", "complaint", "problem"] },
-  { sub: "hpi", weight: 2, fa: "شرح بیماری فعلی (شروع، سیر، عوامل)", en: "History of present illness (onset/course/factors)", keys: ["از کی", "شروع", "سیر", "onset", "course", "stressor"] },
-  { sub: "psych_past", weight: 2, fa: "سابقهٔ روان‌پزشکی قبلی (بستری، دارو، درمان)", en: "Past psychiatric history (admission, meds, therapy)", keys: ["روانپزشک", "بستری", "دارو", "بیمارستان روان", "psychiatric", "admission", "therapy"] },
-  { sub: "risk", weight: 2, fa: "ارزیابی خطر خودکشی/دیگرکشی", en: "Suicide / homicide risk assessment", keys: ["خودکشی", "آسیب", "دیگرکشی", "suicide", "self-harm", "homicide", "harm"] },
-  { sub: "substance", weight: 1, fa: "سابقهٔ مصرف مواد و الکل", en: "Substance & alcohol use history", keys: ["مواد", "الکل", "اعتیاد", "مصرف", "substance", "alcohol", "drug"] },
-  { sub: "medical", weight: 1, fa: "سابقهٔ طبی و دارویی مرتبط", en: "Relevant medical & drug history", keys: ["بیماری", "دارو", "طبی", "medical", "drug"] },
-  { sub: "personal", weight: 1, fa: "تاریخچهٔ شخصی/رشدی (کودکی، تحصیل، شغل، ازدواج)", en: "Personal/developmental history (childhood, education, job, marriage)", keys: ["کودکی", "تحصیل", "شغل", "ازدواج", "childhood", "education", "occupation", "marriage"] },
-  { sub: "family", weight: 1, fa: "سابقهٔ خانوادگی روان‌پزشکی", en: "Family psychiatric history", keys: ["خانواده", "ارثی", "family", "hereditary", "psychiatric family"] },
-  { sub: "mse", weight: 2, fa: "معاینهٔ وضعیت روانی (MSE): ظاهر، خلق، تفکر، ادراک", en: "Mental status exam (MSE): appearance, mood, thought, perception", keys: ["ظاهر", "خلق", "تفکر", "ادراک", "توهم", "هذیان", "appearance", "mood", "thought", "perception", "hallucination", "delusion", "mse"] },
-  { sub: "mse", weight: 1, fa: "بینش و قضاوت (Insight & Judgment)", en: "Insight & judgment", keys: ["بینش", "قضاوت", "insight", "judgment"] },
-  { sub: "summary", weight: 2, fa: "فرمولاسیون و برنامهٔ درمان", en: "Formulation & treatment plan", keys: ["خلاصه", "فرمولاسیون", "درمان", "summary", "formulation", "treatment plan"] },
+  { sub: "opening", weight: 1, fa: "معرفی، برقراری ارتباط و کسب رضایت", en: "Introduce, build rapport & obtain consent", keys: ["معرفی|من دکتر|من پزشک|دکتر شما|پزشک شما|من دانشجو|من اکسترن|من اینترن|دانشجوی پزشکی|introduce|i am dr|i am doctor|i am a medical student|i am a student|i am an extern|i am an intern", "اجازه هست|با اجازه|رضایت دارید|کسب رضایت|consent|permission", "راحت|احترام|rapport|همدلی|empath|نگران نباشید|اعتماد"] },
+  { sub: "cc", weight: 2, fa: "ثبت شکایت اصلی به زبان بیمار", en: "Record chief complaint in patient's words", keys: ["شکایت|مشکل|complaint|chief|problem|درد سینه|chest pain|تپش|palpitation", "چه شده|چی شده|what happened|what brings|own words|به زبان خودش"] },
+  { sub: "hpi", weight: 2, fa: "شرح بیماری فعلی (شروع، سیر، عوامل)", en: "History of present illness (onset/course/factors)", keys: ["شروع|onset|از کی|started", "سیر|course|روند|پیشرفت", "عامل|factor|stressor|استرس|تریگر|trigger|محرک"] },
+  { sub: "psych_past", weight: 2, fa: "سابقهٔ روان‌پزشکی قبلی (بستری، دارو، درمان)", en: "Past psychiatric history (admission, meds, therapy)", keys: ["روانپزشک|psychiatr", "بستری|admission|hospital|بیمارستان روان", "دارو|medicat|drug", "درمان|therapy|مشاوره|psychotherapy"] },
+  { sub: "risk", weight: 2, fa: "ارزیابی خطر خودکشی/دیگرکشی", en: "Suicide / homicide risk assessment", keys: ["خودکشی|suicid", "آسیب|self-harm|self harm|خودآزاری", "دیگرکشی|homicid|آسیب به دیگران|harm to others"] },
+  { sub: "substance", weight: 1, fa: "سابقهٔ مصرف مواد و الکل", en: "Substance & alcohol use history", keys: ["مواد|substance|drug|مخدر|اعتیاد", "الکل|alcohol"] },
+  { sub: "medical", weight: 1, fa: "سابقهٔ طبی و دارویی مرتبط", en: "Relevant medical & drug history", keys: ["بیماری|medical|طبی", "دارو|drug|medicat"] },
+  { sub: "personal", weight: 1, fa: "تاریخچهٔ شخصی/رشدی (کودکی، تحصیل، شغل، ازدواج)", en: "Personal/developmental history (childhood, education, job, marriage)", keys: ["کودکی|childhood", "تحصیل|education|school|مدرسه", "شغل|occupation|job", "ازدواج|marriage|married|همسر"] },
+  { sub: "family", weight: 1, fa: "سابقهٔ خانوادگی روان‌پزشکی", en: "Family psychiatric history", keys: ["خانواده|family", "روانی|psychiatric|ارثی|hereditary"] },
+  { sub: "mse", weight: 2, fa: "معاینهٔ وضعیت روانی (MSE): ظاهر، خلق، تفکر، ادراک", en: "Mental status exam (MSE): appearance, mood, thought, perception", keys: ["ظاهر|appearance|وضع ظاهری", "خلق|mood|affect", "تفکر|thought|thinking", "ادراک|توهم|هذیان|hallucin|delusion|perception"] },
+  { sub: "mse", weight: 1, fa: "بینش و قضاوت (Insight & Judgment)", en: "Insight & judgment", keys: ["بینش|insight", "قضاوت|judgment|judgement"] },
+  { sub: "summary", weight: 2, fa: "فرمولاسیون و برنامهٔ درمان", en: "Formulation & treatment plan", keys: ["خلاصه|summary|فرمولاسیون|formulation", "درمان|treatment plan|treatment|برنامه درمان"] },
 ];
 
 /* Registry of all history forms (order = display order). `key` is stored on the

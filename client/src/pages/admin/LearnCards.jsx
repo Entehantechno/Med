@@ -1,6 +1,6 @@
 import {validateQuestion} from "../../lib/authoring-validation.js";
 import AuthoringModal, {AuthorSection,AuthorSummary} from "../../components/AuthoringModal.jsx";
-import ContentCode from "../../components/ContentCode.jsx";
+import { CompactCode } from '../../components/ContentCode.jsx';
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useApp } from "../../context.jsx";
 import { api, getToken } from "../../api.js";
@@ -455,7 +455,7 @@ export default function LearnCards({ jump, onJumpConsumed } = {}) {
       <DataTable
         rows={sorted}
         selectable selectedIds={sel} onSelectionChange={setSel} exportable
-        defaultHiddenColumns={['media','usedIn']}
+        defaultHiddenColumns={['media','usedIn','public_code']}
         searchKeys={[(c) => c.public_code, (c) => `#${c.id}`, (c) => c.q, (c) => c.category, (c) => c.subject, (c) => c.facets?.chapter, (c) => c.facets?.concept, (c) => c.facets?.examLabel, (c) => c.type]}
         storageKey="admin-bank"
         hotkey
@@ -470,7 +470,7 @@ export default function LearnCards({ jump, onJumpConsumed } = {}) {
               {c.hasExplain ? <span className="lc-badge cat" title={t("hasExplainF")}>🗝️</span> : null}
               {c.category ? <span className="lc-badge cat">{c.category}</span> : null}
             </div>) },
-          { key: "public_code", label: fa ? 'کد ثابت' : 'Permanent code', render: c => <ContentCode code={c.public_code} /> },
+          { key: "public_code", label: fa ? 'کد ثابت' : 'Permanent code', render: c => <CompactCode code={c.public_code} /> },
           { key: "active", label: fa ? 'وضعیت' : 'Status', render: c => c.active ? (fa ? 'فعال' : 'Active') : (fa ? 'غیرفعال' : 'Inactive') },
           { key: "difficulty", label: t('difficulty'), render: c => t(c.difficulty) },
           { key: "subject", label: t("subjectCol"), sortValue: (c) => c.subject, render: (c) => c.subject || <span className="muted small">—</span> },

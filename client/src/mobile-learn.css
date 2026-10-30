@@ -272,7 +272,6 @@ button, a, .opt, .mc-opt, .tab, .nav-item{
 .unit-window-more:hover{color:var(--primary);border-color:var(--primary)}
 /* Perf+mobile 2026-10-03: tap targets ≥44px, picker 1col at 375px, lazy covers */
 @media (max-width:480px){
-  .picker-filters{grid-template-columns:1fr !important}
   .mindmap-card, .bank-card, .filter-chip{ min-height:44px }
   .mindmap-cover{ content-visibility:auto; contain-intrinsic-size:220px }
 }

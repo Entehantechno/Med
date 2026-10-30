@@ -254,8 +254,9 @@ describe("keyed checklist items: synonyms count, points are proportional", () =>
   });
 
   it("the seeded default checklists already use evidence points", () => {
-    const seedSrc = require("node:fs").readFileSync(new URL("../src/seed.js", import.meta.url), "utf8");
-    expect(seedSrc).toMatch(/id: "i_exam"[^\n]*keys: \["معاینه\|/);
+    // R63: the default checklists moved from seed.js into data/default-checklists.js.
+    const dataSrc = require("node:fs").readFileSync(new URL("../src/data/default-checklists.js", import.meta.url), "utf8");
+    expect(dataSrc).toMatch(/id: "i_exam"[^\n]*keys: \["معاینه\|/);
   });
   it("section scores use partial credit, not done-only (a 0.25 item earns a quarter of its weight)", async () => {
     const { itemCredit, computeSectionScores } = await import("../src/lib/history-sections.js");

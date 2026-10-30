@@ -140,12 +140,16 @@ describe("virtual patient & evaluation (mock engine)", () => {
         },
       });
     expect(res.status).toBe(200);
-    // R62: pl01 (problem list) is now proportional. The case lists 3 expected
-    // problems and this answer covers 1 of them (0.33 credit on weight 3), so the
-    // intern score is 67 (it was 73 under the old all-or-nothing pl01). Range kept
-    // so the test still guards the score against regressions in either direction.
-    expect(res.body.score).toBeGreaterThan(60);
-    expect(res.body.score).toBeLessThan(75);
+    // R62: pl01 (problem list) became proportional (0.33 on weight 3).
+    // R63: every criterion now has 2+ evidence points, so a partial answer earns
+    // partial credit per point instead of full credit for one keyword. This answer
+    // covers: consent/intro (full), 1 of 3 pain facets, 1 of 4 risk factors, 1 of 4
+    // ROS, 2 of 4 exam facets, ECG ordered without urgency (0.5), troponin without
+    // other biomarkers (0.5), aspirin without nitrate/PCI (0.33), correct diagnosis
+    // (full), 1 of 3 problem-list facets. Weighted result: 57. Range set around it so
+    // the test still guards regressions in either direction.
+    expect(res.body.score).toBeGreaterThan(50);
+    expect(res.body.score).toBeLessThan(65);
     expect(res.body.finalDxCorrect).toBe(true);
     expect(Array.isArray(res.body.results)).toBe(true);
   });

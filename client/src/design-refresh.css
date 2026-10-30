@@ -1892,24 +1892,11 @@ mark.stem-hl{ background:linear-gradient(transparent 55%, rgba(246,195,67,.6) 55
   .chat-input input{ font-size:16px; }   /* 16px avoids iOS zoom-on-focus */
 }
 
-/* ---- Class flashcard picker (graded/practice + weight) --------------------- */
-.fp-row{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); flex-wrap:wrap; }
-.fp-opts{ display:flex; align-items:center; gap:6px; flex:0 0 auto; }
+/* ---- Class flashcard picker: chip + weight (grouped picker lives in components/ContentPicker.jsx) ---- */
 .chip-btn{ border:1px solid var(--border); background:var(--panel2); color:var(--muted);
   border-radius:999px; padding:4px 12px; font-size:.8rem; font-weight:700; cursor:pointer; font-family:inherit; }
 .chip-btn.on{ background:var(--primary); color:#fff; border-color:var(--primary); }
 .fp-weight{ width:56px; padding:5px 8px; border-radius:8px; border:1px solid var(--border); background:var(--panel); color:var(--text); }
-@media (max-width:560px){ .fp-row{ align-items:flex-start; } .fp-opts{ width:100%; } }
-
-/* ---- Card picker (grouped by subject + searchable) for exam/class flashcards */
-.card-picker .cp-group{ margin-bottom:12px; }
-.card-picker .cp-group-head{ display:flex; align-items:center; justify-content:space-between; gap:8px;
-  padding:6px 4px; margin-bottom:4px; border-bottom:1.5px solid var(--border); position:sticky; top:0; background:var(--panel); z-index:1; }
-.card-picker .cp-cat{ font-weight:800; color:var(--primary); }
-.card-picker .cp-count{ color:var(--muted); font-weight:600; font-size:.85rem; }
-.card-picker .dt-search{ position:sticky; top:0; z-index:2; background:var(--panel); }
-/* Sticky search inside PickModal (add students to a class, cases, etc.). */
-.pick-search{ position:sticky; top:0; z-index:3; }
 
 /* ---------------------------------------------------------------------------
    RTL heading fix: Persian glyphs with high dots (ق، ث، ت …) were clipped at
