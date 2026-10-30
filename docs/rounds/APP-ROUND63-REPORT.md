@@ -57,4 +57,5 @@
 
 - `research-instruments.js` (جدول OSCE پروپوزال) همچنان «نام و سن» دارد؛ طبق دستور خارج از دامنه ماند.
 - `VpatientAdmin`/`VpatientLibrary` در `Admin.jsx` هنوز mount نشده‌اند (قرارداد R49، `/vpatient` = 410). تغییری نکردند.
-- ZIP: طبق الگوی R56–R60 در ریشهٔ repo و بدون track شدن ساخته می‌شود.
+- **ZIP:** `MED-School-FINAL-2026.10.30-R63.zip` در ریشهٔ repo (untracked، مطابق R56–R60). `check-release-zip.mjs`: موفق (836 فایل، 27.5 MB).
+- **تغییر بسته‌بندی:** `pack-host-zip.mjs` پوشهٔ `data/` ریشه (شامل `data/students/` با گزارش‌های ARAK) را حذف می‌کند. این پوشه داده‌های دانشجویی است و چک انتشار آن را ممنوع می‌داند؛ کد برنامه از `server/src/data/` می‌خواند، پس تأثیری بر اجرا ندارد. خود فایل‌ها در repo باقی‌اند؛ حذف آن‌ها از Git تصمیم جداگانه است.

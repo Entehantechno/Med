@@ -19,6 +19,7 @@ const skip = [
   /\.(test|spec)\.[cm]?[jt]sx?$/,
   /(^|\/)(vitest|playwright)\.config\./,
   /^scripts\/(audit-check|capacity-bench|check-release-zip|test_restore_question_bank)\./,
+  /^data\//, // runtime/personal data (e.g. data/students roster). App code reads server/src/data instead.
   /^tools\/(?![^/]+-bank\/import-payload|convert-past-exam-csv-to-import-json\.mjs$|past-exam-csv-template\.csv$)/,
   /(^|\/)node_modules\//,
   /(^|\/)\.git\//,
