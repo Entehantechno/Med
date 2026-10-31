@@ -76,7 +76,9 @@ function AppInner() {
     const onVis = () => { if (document.visibilityState === "visible") load(); };
     document.addEventListener("visibilitychange", onVis);
     return () => { alive = false; clearInterval(id); document.removeEventListener("visibilitychange", onVis); };
-  }, [user]);
+    // R64: the config is the same for every visitor (no auth dependence). Depending on
+    // [user] refetched it once more after /auth/me, a duplicate first-load request.
+  }, []);
 
   // Idle prefetch for the learner shell / student university routes when logged in
   useEffect(() => {

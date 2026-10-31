@@ -88,3 +88,57 @@ describe("R64 flashcard resume", () => {
     expect(r.status).toBe(400);
   });
 });
+
+// Successful settle of an expired, unswept run, and the stored-answer guard on finish.
+function insertGradedCard() {
+  const uni = db.prepare("SELECT university_id FROM classes WHERE id=?").get(classId).university_id;
+  const data = {
+    type: "mcq", title_en: "Settle", title_fa: "تسویه", questionText_en: "Q", questionText_fa: "پ",
+    options: [{ en: "A", fa: "الف", correct: true }, { en: "B", fa: "ب", correct: false }],
+  };
+  const id = db.prepare("INSERT INTO flashcards(data_json,active,university_id) VALUES (?,1,?)")
+    .run(JSON.stringify(data), uni).lastInsertRowid;
+  db.prepare("INSERT INTO class_flashcards(class_id,flashcard_id,weight,graded) VALUES (?,?,1,1)").run(classId, id);
+  return Number(id);
+}
+const attemptsFor = (cardId) => db.prepare(
+  "SELECT score FROM class_flashcard_attempts WHERE class_id=? AND flashcard_id=? AND user_id=? ORDER BY id"
+).all(classId, cardId, student.id);
+
+describe("R64 flashcard settle on expiry (successful path)", () => {
+  it("settles an expired, unswept run from its saved answers and records the graded attempt", async () => {
+    const cardId = insertGradedCard();
+    const ctx = `classfc:${classId}:${cardId}`;
+    const first = await request(app).post("/api/exam/flash-session").set(A()).send({ contextKey: ctx });
+    expect(first.status).toBe(200);
+    const saved = await request(app).put("/api/exam/flash-progress").set(A())
+      .send({ runId: first.body.runId, progress: { idx: 0, answers: [{ card_id: cardId, selectedIdx: 0 }] } });
+    expect(saved.status).toBe(200);
+    expireRun(first.body.runId);
+
+    const fresh = await request(app).post("/api/exam/flash-session").set(A()).send({ contextKey: ctx });
+    expect(fresh.status).toBe(200);
+    expect(fresh.body.runId).not.toBe(first.body.runId);
+    const oldRow = rowOf(first.body.runId);
+    expect(oldRow.finished_at).not.toBeNull();
+    expect(oldRow.expiry_error).toBeNull();
+    const got = attemptsFor(cardId);
+    expect(got.length).toBe(1);
+    expect(got[0].score).toBe(100);
+  });
+
+  it("after expiry, a late finish is graded from the stored answers, not the browser copy", async () => {
+    const cardId = insertGradedCard();
+    const ctx = `classfc:${classId}:${cardId}`;
+    const run = await request(app).post("/api/exam/flash-session").set(A()).send({ contextKey: ctx });
+    await request(app).put("/api/exam/flash-progress").set(A())
+      .send({ runId: run.body.runId, progress: { idx: 0, answers: [{ card_id: cardId, selectedIdx: 0 }] } });
+    expireRun(run.body.runId);
+    // The browser copy claims the wrong option; the stored correct answer must win.
+    const late = await request(app).post(`/api/classes/${classId}/flashcard/${cardId}/finish`).set(A())
+      .send({ answers: [{ card_id: cardId, selectedIdx: 1 }] });
+    expect(late.status).toBe(200);
+    expect(late.body.score).toBe(100);
+    expect(attemptsFor(cardId).at(-1).score).toBe(100);
+  });
+});

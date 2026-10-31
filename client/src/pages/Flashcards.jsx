@@ -10,6 +10,7 @@ import { useAntiCheat } from "../utils/antiCheat.js";
 import Icon from "../components/Icon.jsx";
 import ExamOtherType from "../components/ExamOtherType.jsx";
 import HotspotPlayer from "../components/HotspotPlayer.jsx";
+import { remainingFromServer, isResumedSession } from "../lib/resume-state.js";
 
 function shuffleArray(a) {
   const arr = [...a];
@@ -142,7 +143,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
         const runKey = inExam ? flashRunKey() : null;
         const run = runKey ? await openFlashRun(runKey) : null;
         const byId = new Map(filtered.map((card) => [card.id, card]));
-        const savedOrder = run?.resumed && Array.isArray(run.progress?.order)
+        const savedOrder = isResumedSession(run) && Array.isArray(run.progress?.order)
           ? run.progress.order.map((id) => byId.get(id)).filter(Boolean) : null;
         const resumeOk = !!savedOrder && savedOrder.length === filtered.length;
         if (resumeOk) filtered = savedOrder;
@@ -159,7 +160,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
           setCards(filtered); setCardStates(filtered.map(() => newState())); startRef.current = Date.now();
           runRef.current = run?.runId ?? null;
           if (resumeOk) applyRun(run.progress);
-          if (run) setTimeLeft(typeof run.remainingSec === "number" ? run.remainingSec : null);
+          if (run) setTimeLeft(remainingFromServer(run, null));
           else if (examDuration) setTimeLeft(examDuration * 60);
           if (resumeOk) setRunResumed(true);
         }

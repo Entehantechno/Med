@@ -398,7 +398,7 @@ export function detectExamRequest(userText) {
   if (!n) return false;
   // Past-history questions about an examination that already happened stay in
   // the PATIENT's voice ("Have you been examined?", "آیا قبلاً معاینه شده‌اید؟").
-  if (/(قبلا.{0,16}معاینه|معاینه.?ش(?:ده|دم|دید|دیم|دن|د)(?![\u0600-\u06FF])|تاریخچه.{0,12}معاینه|معاینه قبلی|have you been exam|were you exam|did (they|anyone|somebody|a doctor|the doctor).{0,28}exam|last (physical )?exam|previous (physical )?exam|past (physical )?exam)/.test(n)) {
+  if (/(قبلا.{0,16}معاینه|معاینه.?ش(?:ده|دم|دید|دیم|دن|د)(?![\u0600-\u06FF])|تاریخچه.{0,12}معاینه|معاینه قبلی|have you been exam|were you exam|did you (?:ever )?(?:have|get|had|undergo|do)\b.{0,24}(?:exam|physical)|have you (?:ever )?had\b.{0,24}(?:exam|physical)|did (they|anyone|somebody|a doctor|the doctor).{0,28}exam|last (physical )?exam|previous (physical )?exam|past (physical )?exam)/.test(n)) {
     return false;
   }
   // Everyday language that is NOT a station exam request.
@@ -413,6 +413,8 @@ export function detectExamRequest(userText) {
       || /(high blood pressure|hypertension).{0,20}(do you|have you|history)/.test(n)) {
     return false;
   }
+  // R64: a bare English exam request with an optional "please" ("exam please", "physical please").
+  if (/^\s*(?:please\s+)?(?:full\s+|complete\s+)?(?:physical|exam(?:ination)?)(?:\s+please)?[\s.!?]*$/i.test(n)) return true;
   // Short station commands the student types as a one-word request.
   if (/^(معاینه( فیزیکی)?|علائم حیاتی|ویتال( ساین)?ها?|نیتال( ساین)?ها?|فشار خون|نبض|سمع( قلب| ریه)?|physical exam(ination)?|examine|exam|vitals?|vital signs?|blood pressure|pulse|auscultat(e|ion)?)[\s؟!?.!]*$/.test(n)) {
     return true;
@@ -424,7 +426,7 @@ export function detectExamRequest(userText) {
   // R64: a clinician asked to examine ("دکتر ریه‌هایش را گوش کنید", "Let me listen to his heart").
   if (staffExamRequest(n)) return true;
   const fa = /(معاینه (کامل|عمومی|سر تا پا)|معاینه فیزیکی|بیمار را معاینه|معاینه (کن|کنید|بکن|بکنید|بشه|شود|می ?کنم|می ?کنیم)|لطفا.{0,20}معاینه|علائم حیاتی|ویتال|سمع (قلب|ریه|ریه ها|قلب و ریه)|گوش (بده|بدهید).{0,16}(قلب|ریه)|لمس (شکم|کبد|طحال)|دق (شکم|ریه)|تندرنس|ریباند|سوفل|رال|ویزینگ|یافته.?های معاینه|معاینه (شکم|قلب|ریه|قفسه|گردن|اندام|تیروئید|نورولوژ)|شکم را معاینه|قلب را معاینه|ریه را معاینه|(فشار ?خون|نبض).{0,20}(بگیر|چک|چقدر|چنده|بیمار|اندازه)|(بگیر(ید)?|چک کن|اندازه.?گیری).{0,24}(فشار ?خون|نبض))/.test(n);
-  const en = /\b(full exam(ination)?|complete exam(ination)?|head[- ]to[- ]toe|physical exam(ination)?|please exam(ine)?|(exam(ine)?|check|inspect|palpat|percuss|auscultat).{0,40}(patient|him|her|chest|abdomen|heart|lungs?|belly|thyroid|pupils?|reflex)|can you exam(ine)?|could you exam(ine)?|i (want|need|would like) to exam(ine)?|let me exam(ine)?|vital signs?|heart sounds?|lung sounds?|bowel sounds?|listen to (the )?(heart|lungs?|chest|abdomen)|(take|check|measure|what('?s| is) (your |the )?).{0,16}(blood pressure|pulse|\bbp\b)|(blood pressure|pulse).{0,16}(please|now|of the patient))\b/.test(n);
+  const en = /\b(full exam(ination)?|complete exam(ination)?|head[- ]to[- ]toe|physical exam(ination)?|please exam(ine)?|(?:do|perform|conduct|run|give)\s+(?:a|an|the|my|his|her)?\s*(?:full|complete|whole|routine|general)?\s*(?:physical|exam(?:ination)?)\b|(exam(ine)?|check|inspect|palpat|percuss|auscultat).{0,40}(patient|him|her|chest|abdomen|heart|lungs?|belly|thyroid|pupils?|reflex)|can you exam(ine)?|could you exam(ine)?|i (want|need|would like) to exam(ine)?|let me exam(ine)?|vital signs?|heart sounds?|lung sounds?|bowel sounds?|listen to (the )?(heart|lungs?|chest|abdomen)|(take|check|measure|what('?s| is) (your |the )?).{0,16}(blood pressure|pulse|\bbp\b)|(blood pressure|pulse).{0,16}(please|now|of the patient))\b/.test(n);
   // Imperative / request forms the fixed phrases above miss ("فشارش را بگیرید",
   // "listen to the chest", "please palpate the abdomen"). Reaches the attending
   // instead of the patient persona, which must never answer for an exam.
@@ -471,8 +473,38 @@ export function pickAuscultationSounds(caseData, organs) {
    examination findings. Used without an API key and as the fallback on error. */
 /* Split the free-text recorded findings into fragments (comma / semicolon /
    newline separated) and keep only those that mention the requested systems. */
+/* R64: split recorded exam text into scoped fragments. Sentences (Latin/Persian
+   full stop, ?, !, ;, newline) are hard boundaries. Inside a sentence, a comma
+   clause opens a new fragment only when it names a system; a negation clause
+   ("بدون رال", "بدون ادم یا DVT") or a clause that names no system stays with the
+   fragment before it. The old comma-only split detached "بدون ..." from its
+   system, and a full stop was never a separator, so one request leaked the whole
+   exam text (including unrelated systems). */
+const NEGATED_CLAUSE_RE = /^(?:بدون|بی\s|عدم|فاقد|without\b|no\b|not\b|negative\b)/i;
+function examFragments(text) {
+  const out = [];
+  const sentences = String(text || "").split(/(?<=[.۔!?؟])\s+|[;؛\n]+/).map((x) => x.trim()).filter(Boolean);
+  for (const sentence0 of sentences) {
+    const sentence = sentence0.replace(/[.۔!?؟]+$/, "").trim();
+    // Tokens alternate clause, separator, clause... so the original separator is kept.
+    const tokens = sentence.split(/([،,]+)/);
+    let cur = null;
+    let sep = "";
+    for (let i = 0; i < tokens.length; i += 2) {
+      const clause = (tokens[i] || "").trim();
+      const nextSep = tokens[i + 1] || "";
+      if (!clause) { sep = nextSep; continue; }
+      const namesSystem = EXAM_SYSTEMS.some((d) => d.key !== "vitals" && d.re.test(norm(clause)));
+      if (cur !== null && (NEGATED_CLAUSE_RE.test(clause) || !namesSystem)) cur += (sep.includes("،") ? "، " : ", ") + clause;
+      else { if (cur !== null) out.push(cur); cur = clause; }
+      sep = nextSep;
+    }
+    if (cur !== null) out.push(cur);
+  }
+  return out;
+}
 export function scopedExamFindings(examText, systems) {
-  const frags = String(examText || "").split(/[،,;؛\n]+/).map((x) => x.trim()).filter(Boolean);
+  const frags = examFragments(examText);
   const wanted = (systems || []).filter((k) => k !== "vitals");
   if (!wanted.length) return { text: frags.join(", "), matched: frags.length > 0 };
   const defs = EXAM_SYSTEMS.filter((d) => wanted.includes(d.key));
@@ -667,8 +699,10 @@ export async function patientReply({ caseData, userText, history = [], lang, pro
   const audioPayload = sounds.length ? { audio: sounds } : {};
 
   const scope = isExam ? detectExamScope(userText) : null;
-  if (isExam && scope?.full && !isAusc) {
-    // A blanket "full exam" is never reported — the attending asks which exam.
+  // R64: a request that names no system or manoeuvre (a blanket "full exam", "examine
+  // the patient", "do the physical") is never answered with a guessed finding or with
+  // vitals. The attending asks which exam exactly, in every language and both roles.
+  if (isExam && !isAusc && (scope?.full || !scope?.systems?.length)) {
     return { text: askWhichExam(lang), source: "rule", mode: "exam", clarify: true };
   }
   const scopeLabels = (scope?.systems || []).map((k) => examSystemLabel(k, lang));

@@ -104,13 +104,26 @@ async function staleWhileRevalidate(request, cacheName) {
   return cached || network || fetch(request);
 }
 
-// HTML navigations: try network, fall back to cached shell, then offline page.
+// R64: a navigation is not held hostage by a stalled network. After NAV_TIMEOUT_MS the
+// cached app shell answers at once, and the network response keeps running in the
+// background so the cache is refreshed for the next visit. A network error still walks
+// the same fallback chain as before (page cache, shell, offline page).
+const NAV_TIMEOUT_MS = 3000;
 async function networkFirstNav(request) {
   const cache = await caches.open(SHELL_CACHE);
-  try {
-    const resp = await fetch(request);
+  const network = fetch(request).then((resp) => {
     if (resp && resp.ok) cache.put("/index.html", resp.clone());
     return resp;
+  });
+  network.catch(() => {});   // a late failure must not raise an unhandled rejection
+  let timer = null;
+  const timeout = new Promise((resolve) => { timer = setTimeout(() => resolve(null), NAV_TIMEOUT_MS); });
+  try {
+    const first = await Promise.race([network, timeout]);
+    if (first) return first;
+    const shell = (await cache.match(request)) || (await cache.match("/index.html"));
+    if (shell) return shell;            // stalled network, cached shell available: paint now
+    return await network;               // first visit on this device: wait for the network
   } catch (_) {
     return (
       (await cache.match(request)) ||
@@ -118,6 +131,8 @@ async function networkFirstNav(request) {
       (await cache.match(OFFLINE_URL)) ||
       new Response("Offline", { status: 503, headers: { "Content-Type": "text/plain" } })
     );
+  } finally {
+    if (timer) clearTimeout(timer);
   }
 }
 

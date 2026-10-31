@@ -119,7 +119,6 @@ export function AppProvider({ children }) {
     (async () => {
       if (getToken()) {
         try {
-          // R64: flags load once, in the effect below that runs when `user` is set (no second /flags call here).
           const { user } = await api.me(); setUser(user);
         }
         catch { setToken(null); }
@@ -128,10 +127,24 @@ export function AppProvider({ children }) {
     })();
   }, []);
 
-  // load flags after any login too
+  // R64: flags are fetched once per signed-in session. A returning visitor's token is
+  // already known at mount, so that request starts together with /auth/me instead of
+  // waiting for `user` (one round trip less on the critical path). The `user` effect
+  // below then adopts that request rather than sending a second one, and a sign-out
+  // clears the marker so the next sign-in fetches again.
+  const flagsFor = useRef(null);
+  const loadFlags = useCallback((tag) => {
+    flagsFor.current = tag;
+    // A failed request releases its marker, so the next sign-in fetches again.
+    api.get("/flags").then((d) => setFlags(d.flags || {})).catch(() => { if (flagsFor.current === tag) flagsFor.current = null; });
+  }, []);
+  useEffect(() => { if (getToken() && flagsFor.current === null) loadFlags("session"); }, [loadFlags]);
   useEffect(() => {
-    if (user) api.get("/flags").then((d) => setFlags(d.flags || {})).catch(() => {});
-  }, [user]);
+    if (!user) { if (flagsFor.current !== "session") flagsFor.current = null; return; }
+    if (flagsFor.current === "session") { flagsFor.current = user.id; return; }
+    if (flagsFor.current === user.id) return;
+    loadFlags(user.id);
+  }, [user, loadFlags]);
 
   // feature-flag check (defaults to enabled if unknown)
   const flag = useCallback((key) => (key in flags ? !!flags[key] : true), [flags]);

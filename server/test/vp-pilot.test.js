@@ -102,7 +102,8 @@ describe('10-student pilot isolation and completion safety',()=>{
   const a=await start();provider(30);
   expect((await submit(0,a)).status).toBe(200);
   const next=await request(app).post('/api/exam/session-start').set(A(0)).send({caseId:1,classId});
-  expect(next.status).toBeGreaterThanOrEqual(400);expect(next.body.sessionId).toBeUndefined();expect(count()).toBe(1);
+  // The budget refusal is 403 with a stable reason, and no encounter is created.
+  expect(next.status).toBe(403);expect(next.body.reason).toBe('attempts_exhausted');expect(next.body.sessionId).toBeUndefined();expect(count()).toBe(1);
  });
 
  it('releases failed evaluation for retry and refuses abandon during grading',async()=>{

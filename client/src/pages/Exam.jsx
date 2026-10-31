@@ -10,6 +10,7 @@ import { useAntiCheat } from "../utils/antiCheat.js";
 import Icon from "../components/Icon.jsx";
 import ClinicalLesson, { EvaluationProvenance } from "../components/ClinicalLesson.jsx";
 import { translateReport, applyReportBundle, cacheGeneratedReport } from "../lib/report-translate.js";
+import { remainingFromServer, isResumedSession } from "../lib/resume-state.js";
 
 /* Named steps of the virtual-patient path so a failure is never a silent
    reset: the student sees WHERE it stopped (case / consent / session / chat /
@@ -216,9 +217,9 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
     if (sess.gradingScope) setGradingScope(sess.gradingScope);
     // R64: the server holds the deadline. Its remaining time and elapsed time are authoritative.
     startRef.current = Date.now() - (Number(sess.elapsedSec) || 0) * 1000;
-    setTimeLeft(typeof sess.remainingSec === "number" ? sess.remainingSec : (mins > 0 ? mins * 60 : null));
-    if (sess.resumed) restoreEncounter(sess.progress, sess.events);
-    setResumed(!!sess.resumed);
+    setTimeLeft(remainingFromServer(sess, mins > 0 ? mins * 60 : null));
+    if (isResumedSession(sess)) restoreEncounter(sess.progress, sess.events);
+    setResumed(isResumedSession(sess));
     autoFinishTried.current = false;
     finishingRef.current = false;
     setBoot({ status: "ready", stage: "exam" });
