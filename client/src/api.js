@@ -75,6 +75,8 @@ async function req(method, path, body, opts = {}) {
     const err = new Error(typeof msg === "string" ? msg : `HTTP ${res.status}`);
     err.data = data;
     err.status = res.status;
+    // R64: the server closed this timed encounter or run. Screens listen and finish from the stored answers.
+    if (data.error === "session_expired") { try { window.dispatchEvent(new CustomEvent("medlab-session-expired")); } catch { /* no window */ } }
     throw err;
   }
   if (method === "GET") {

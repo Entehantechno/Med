@@ -52,8 +52,13 @@ export function loggingEnabledFor(classId, examId) {
 
 /* Open a session. Called when the student enters the encounter, so the row
    exists (and the clock is server-side) even if they never finish. */
-export function startSession({ userId, caseId, classId, examId, studyId, lang, requestId = null, referenceSnapshotJson = null, encounterSnapshotJson = null }) {
-  if (requestId != null && (typeof requestId !== "string" || !/^[A-Za-z0-9_-]{8,100}$/.test(requestId))) {
+/** True when a client-supplied start requestId is present but malformed (idempotency key). */
+export function invalidStartRequestId(requestId) {
+  return requestId != null && (typeof requestId !== "string" || !/^[A-Za-z0-9_-]{8,100}$/.test(requestId));
+}
+
+export function startSession({ userId, caseId, classId, examId, studyId, lang, requestId = null, referenceSnapshotJson = null, encounterSnapshotJson = null, limitSec = 0 }) {
+  if (invalidStartRequestId(requestId)) {
     return { error: "invalid_start_request_id", status: 400 };
   }
   if (requestId) {
@@ -65,20 +70,24 @@ export function startSession({ userId, caseId, classId, examId, studyId, lang, r
         return { error: "start_request_context_mismatch", status: 409 };
       }
       persistNow({ throwOnError: true });
-      return { sessionId: existing.id, loggingEnabled: !!existing.logging_enabled, serverNow: existing.started_ms, replayed: true };
+      return { sessionId: existing.id, loggingEnabled: !!existing.logging_enabled, serverNow: existing.started_ms, deadlineMs: existing.deadline_ms ?? null, limitSec: existing.limit_sec || 0, replayed: true };
     }
   }
   const logging = loggingEnabledFor(classId, examId) ? 1 : 0;
   const serverNow = Date.now();
+  // R64: the deadline is fixed here, on the server. 0 = untimed (no deadline).
+  const limit = Math.max(0, Math.round(Number(limitSec) || 0));
+  const deadlineMs = limit > 0 ? serverNow + limit * 1000 : null;
   const info = durableTransaction(() => db.prepare(
-    `INSERT INTO vp_sessions (user_id,case_id,class_id,exam_id,study_id,logging_enabled,lang,started_ms,start_request_id,reference_snapshot_json,encounter_snapshot_json)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?)`
+    `INSERT INTO vp_sessions (user_id,case_id,class_id,exam_id,study_id,logging_enabled,lang,started_ms,start_request_id,reference_snapshot_json,encounter_snapshot_json,limit_sec,deadline_ms)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`
   ).run(Number(userId), Number(caseId), classId ? Number(classId) : null,
         examId ? Number(examId) : null, studyId ? Number(studyId) : null, logging,
         lang === "en" ? "en" : "fa", serverNow, requestId, JSON.stringify(referenceSnapshotJson
           ? parseReferenceSnapshot(referenceSnapshotJson)
-          : snapshotForCaseRow(db.prepare("SELECT * FROM cases WHERE id=?").get(Number(caseId)))), encounterSnapshotJson));
-  return { sessionId: info.lastInsertRowid, loggingEnabled: !!logging, serverNow };
+          : snapshotForCaseRow(db.prepare("SELECT * FROM cases WHERE id=?").get(Number(caseId)))), encounterSnapshotJson,
+        limit, deadlineMs));
+  return { sessionId: info.lastInsertRowid, loggingEnabled: !!logging, serverNow, deadlineMs, limitSec: limit };
 }
 
 export function getSession(sessionId) {

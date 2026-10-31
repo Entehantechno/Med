@@ -41,8 +41,10 @@ let firstControllerSeen = typeof navigator !== "undefined" && !!navigator.servic
 /* Is it OK to blow the page away right now? */
 export function isSafeToReload() {
   if (typeof document === "undefined") return false;
-  if (document.visibilityState !== "visible") return true;       // background tab: nobody is looking
+  // R64: busy is checked FIRST. A hidden tab can still hold an unfinished exam,
+  // flashcard run or virtual-patient encounter; reloading it loses the student's work.
   if (document.body?.dataset?.busy === "1") return false;         // exam/lesson/VP marked busy
+  if (document.visibilityState !== "visible") return true;       // background tab with no work in progress
   if (document.querySelector(".modal-back, [role=dialog][aria-modal=true]")) return false;
   const ae = document.activeElement;
   if (ae && /^(INPUT|TEXTAREA|SELECT)$/.test(ae.tagName)) return false;
@@ -63,11 +65,15 @@ function tryReload() {
 
 /* Screens with in-progress work call markBusy(true) on mount and markBusy(false)
    on unmount; the reload waits until they are gone. */
+/* R64: a counter, not a flag. Nested or overlapping busy screens (an exam that
+   opens a flashcard panel, a lesson inside a class) must all end before a reload. */
+let busyDepth = 0;
 export function markBusy(on) {
   try {
-    if (on) document.body.dataset.busy = "1";
+    busyDepth = Math.max(0, busyDepth + (on ? 1 : -1));
+    if (busyDepth > 0) document.body.dataset.busy = "1";
     else delete document.body.dataset.busy;
-    if (!on) setTimeout(tryReload, 400);   // leaving the busy screen = good moment
+    if (busyDepth === 0) setTimeout(tryReload, 400);   // last busy screen gone = good moment
   } catch { /* ignore */ }
 }
 
@@ -76,9 +82,11 @@ export function initSwUpdate() {
 
   // 4) stale lazy chunks after a deploy → one reload
   window.addEventListener("vite:preloadError", (e) => {
-    if (safeSession.getItem(PRELOAD_KEY)) return;   // avoid a reload loop
-    safeSession.setItem(PRELOAD_KEY, "1");
     e.preventDefault?.();
+    if (safeSession.getItem(PRELOAD_KEY)) return;   // avoid a reload loop
+    // R64: a stale chunk must not reload the page mid-task. Wait for a safe moment.
+    if (!isSafeToReload()) { pendingReload = true; return; }
+    safeSession.setItem(PRELOAD_KEY, "1");
     doReload();
   });
   // clear the guard once a page rendered fine

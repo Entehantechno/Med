@@ -245,6 +245,9 @@ async function main() {
   };
   setTimeout(tick, 15000);                 // once shortly after boot
   setInterval(tick, 60 * 60 * 1000);       // then hourly
+  // R64: finalize encounters and flashcard runs whose time ran out (every 30 s).
+  const { startTimedExpiry } = await import("./lib/timed-expiry.js");
+  startTimedExpiry();
 }
 
 main().catch((e) => {

@@ -323,7 +323,8 @@ describe("OSCE checklists (editable rubrics)", () => {
     const list = (await request(app).get("/api/checklists").set("Authorization", `Bearer ${tk}`)).body;
     const hx = list.find((c) => c.name_en === "History-taking & communication");
     expect(hx).toBeTruthy();
-    expect(hx.items.length).toBe(13);
+    // R64: c7 is split into c7a and c7b for partial credit, so the checklist has 14 criteria.
+    expect(hx.items.length).toBe(14);
     // edit: add a new item + reword one
     const items = [...hx.items, { id: "cX", weight: 2, fa: "موردِ آزمایشی", en: "Test item", keys: ["x"] }];
     const put = await request(app).put(`/api/checklists/${hx.id}`).set("Authorization", `Bearer ${tk}`)
@@ -331,7 +332,7 @@ describe("OSCE checklists (editable rubrics)", () => {
     expect(put.status).toBe(200);
     const after = (await request(app).get("/api/checklists").set("Authorization", `Bearer ${tk}`)).body
       .find((c) => c.id === hx.id);
-    expect(after.items.length).toBe(14);
+    expect(after.items.length).toBe(15);   // 14 seeded criteria + the one added here
     // create a brand-new checklist, then delete it
     const created = await request(app).post("/api/checklists").set("Authorization", `Bearer ${tk}`)
       .send({ name_fa: "جدید", name_en: "Fresh", items: [{ id: "a", weight: 1, fa: "الف", en: "A", keys: [] }] });

@@ -383,6 +383,16 @@ export function sanitizeCaseForPatient(caseData) {
    without an AI key, and so auscultation audio can be attached reliably. */
 
 /* True when the student asks to examine the patient / about exam findings. */
+/* R64: requests addressed to a teacher, nurse or other clinician. The patient
+   persona must never refuse these; the supervising instructor answers from the
+   recorded findings. ZWNJ (U+200C) is treated as a space so "ریه‌هایش" matches. */
+const STAFF_EXAM_FA = /(?:قلب|ریه|سینه|شکم|گردن|پوست|مفاصل|اندام|صدا(?:ی|های)?)[^؟?]{0,24}(?:گوش\s*(?:کن|کنید|کنین|کنم|بده|بدید|بدین|بدم)|بشنو|بشنوید|بشنوم|سمع)|(?:شکم|کبد|طحال)[^؟?]{0,24}لمس|(?:فشار\s*خون|نبض|دما|تنفس\w*|اکسیژن|وضعیت\s*(?:عمومی|تنفسی))[^؟?]{0,24}(?:بگیر|بگیرید|بگیرین|اندازه|بررسی|چک\s*کن|چک\s*کنید|بسنج)|معاینه\s*(?:بالینی|فیزیکی)|علائم\s*حیاتی/;
+const STAFF_EXAM_EN = /\b(?:listen(?:ing)?|inspect(?:ing)?|look(?:ing)?\s+at|palpat\w*|press(?:ing)?\s+on|percuss\w*|auscultat\w*)\s+(?:to\s+)?(?:his|her|the|their|your|my|patient'?s|a)?\s*(?:heart|chest|lungs?|breath sounds?|abdomen|belly|skin|thyroid|neck|pulse|pupils?|reflexes|legs?|extremities)\b/;
+function staffExamRequest(n) {
+  const s = String(n || "").replace(/\u200c/g, " ");
+  return STAFF_EXAM_FA.test(s) || STAFF_EXAM_EN.test(s);
+}
+
 export function detectExamRequest(userText) {
   const n = norm(userText);
   if (!n) return false;
@@ -411,6 +421,8 @@ export function detectExamRequest(userText) {
   // avoids reclassifying historical/personal questions already excluded above.
   if (/^(please )?(neurologic(al)?|skin|cardiac|cardiovascular|abdominal|respiratory|musculoskeletal|genitourinary|pelvic|mental status|head and neck) exam(ination)?[\s?!.,]*$/.test(n)
       || /^معاینه[ٔ ]*(عصبی|پوست|روان|ادراری|تناسلی|لگن|سر و گردن|اسکلتی)[\s؟!?.]*$/.test(n)) return true;
+  // R64: a clinician asked to examine ("دکتر ریه‌هایش را گوش کنید", "Let me listen to his heart").
+  if (staffExamRequest(n)) return true;
   const fa = /(معاینه (کامل|عمومی|سر تا پا)|معاینه فیزیکی|بیمار را معاینه|معاینه (کن|کنید|بکن|بکنید|بشه|شود|می ?کنم|می ?کنیم)|لطفا.{0,20}معاینه|علائم حیاتی|ویتال|سمع (قلب|ریه|ریه ها|قلب و ریه)|گوش (بده|بدهید).{0,16}(قلب|ریه)|لمس (شکم|کبد|طحال)|دق (شکم|ریه)|تندرنس|ریباند|سوفل|رال|ویزینگ|یافته.?های معاینه|معاینه (شکم|قلب|ریه|قفسه|گردن|اندام|تیروئید|نورولوژ)|شکم را معاینه|قلب را معاینه|ریه را معاینه|(فشار ?خون|نبض).{0,20}(بگیر|چک|چقدر|چنده|بیمار|اندازه)|(بگیر(ید)?|چک کن|اندازه.?گیری).{0,24}(فشار ?خون|نبض))/.test(n);
   const en = /\b(full exam(ination)?|complete exam(ination)?|head[- ]to[- ]toe|physical exam(ination)?|please exam(ine)?|(exam(ine)?|check|inspect|palpat|percuss|auscultat).{0,40}(patient|him|her|chest|abdomen|heart|lungs?|belly|thyroid|pupils?|reflex)|can you exam(ine)?|could you exam(ine)?|i (want|need|would like) to exam(ine)?|let me exam(ine)?|vital signs?|heart sounds?|lung sounds?|bowel sounds?|listen to (the )?(heart|lungs?|chest|abdomen)|(take|check|measure|what('?s| is) (your |the )?).{0,16}(blood pressure|pulse|\bbp\b)|(blood pressure|pulse).{0,16}(please|now|of the patient))\b/.test(n);
   // Imperative / request forms the fixed phrases above miss ("فشارش را بگیرید",
@@ -615,10 +627,31 @@ function confusedQuestionsReply(lang) {
 /* The patient persona must never refuse or hand off a physical exam ("exam is
    not my job"). A reply that does is replaced by the supervising attending's
    chart-based findings. */
+/* Patient replies that refuse or hand off an exam. R63 matched only a negation
+   that FOLLOWED the exam term, so "نمی‌توانم معاینه کنم" and "I can't examine"
+   slipped through. Negation may come before or after the term, and the patient
+   may hand the exam to staff ("از دکتر بپرسید", "ask the doctor"). */
+const ZW = "[\\s\\u200c]*";
+const EXAM_TERM_FA = "(?:معاین\\w*|علائم\\s*حیاتی|لمس|سمع|ضربه\\s*بزن\\w*|بررسی\\s*فیزیکی)";
+const EXAM_TERM_EN = "(?:exam\\w*|palpat\\w*|auscult\\w*|percuss\\w*|vitals?|vital signs?|listen\\w*|inspect\\w*)";
+const REFUSE_FA_BEFORE = new RegExp(`نمی${ZW}(?:کنم|کنیم|توانم|تونم|شوم|شم|شه|شود)[^.؟?!]{0,40}${EXAM_TERM_FA}`);
+const REFUSE_FA_AFTER = new RegExp(`${EXAM_TERM_FA}[^.؟?!]{0,40}نمی${ZW}(?:کنم|کنیم|توانم|تونم|شوم|شم)`);
+const HANDOFF_FA = new RegExp(`${EXAM_TERM_FA}[^.؟?!]{0,60}(?:از|به)\\s+(?:دکتر|پزشک|پرستار|استاد)|(?:کار|وظیفه)\\s+(?:دکتر|پزشک|پرستار|استاد)\\s*(?:است|هست)?[^.؟?!]{0,40}${EXAM_TERM_FA}`);
+const REFUSE_EN_BEFORE = new RegExp(`\\b(?:can(?:'|’)?t|cannot|can not|could(?:n'?t| not)|unable to|not able to|won'?t|will not|do(?:n'?t| not)|am not (?:going|able|allowed)|not allowed to|not going to)\\b[^.?!]{0,40}\\b${EXAM_TERM_EN}`, "i");
+const REFUSE_EN_AFTER = new RegExp(`\\b${EXAM_TERM_EN}\\b[^.?!]{0,40}\\b(?:can(?:'|’)?t|cannot|unable|not able|not allowed)\\b`, "i");
+const HANDOFF_EN = new RegExp(`\\b${EXAM_TERM_EN}\\b[^.?!]{0,60}\\b(?:ask|see|talk to|speak (?:to|with))\\s+(?:the |a |your )?(?:doctor|physician|nurse|dr)\\b|\\b(?:ask|see|talk to)\\s+(?:the |a |your )?(?:doctor|physician|nurse|dr)\\b[^.?!]{0,60}\\b${EXAM_TERM_EN}\\b`, "i");
+
 export function deflectsExamRequest(text) {
   const t = norm(text);
+  const raw = String(text || "");
   return /(?:معاین\w*|علائم\s*حیاتی).{0,50}(?:کار\s+من|وظیفه\s+من|کار\s+شما|وظیفه\s+شما|نیست|نمی\s*(?:کنم|توانم|تونم))|(?:کار|وظیفه)\s+(?:من|شما)\s+نیست/.test(t)
-    || /(?:not my (?:job|role|task|problem)|isn'?t my (?:job|role)|(?:exam|examination|palpat\w*|vitals?).{0,60}(?:not my|your (?:job|role)|the doctor should|a doctor should))/i.test(String(text || ""));
+    || /(?:not my (?:job|role|task|problem)|isn'?t my (?:job|role)|(?:exam|examination|palpat\w*|vitals?).{0,60}(?:not my|your (?:job|role)|the doctor should|a doctor should))/i.test(raw)
+    || refusesExamFindings(t, raw);
+}
+
+function refusesExamFindings(t, raw) {
+  return REFUSE_FA_BEFORE.test(t) || REFUSE_FA_AFTER.test(t) || HANDOFF_FA.test(t)
+    || REFUSE_EN_BEFORE.test(raw) || REFUSE_EN_AFTER.test(raw) || HANDOFF_EN.test(raw);
 }
 
 export async function patientReply({ caseData, userText, history = [], lang, prompts, aiCfg }, opts = {}) {

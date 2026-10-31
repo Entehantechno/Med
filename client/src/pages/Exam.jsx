@@ -163,6 +163,7 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
   const autoFinishTried = useRef(false);
   const examSnapRef = useRef({});
   const [timeLeft, setTimeLeft] = useState(null);
+  const [resumed, setResumed] = useState(false);
   const [evalRes, setEvalRes] = useState(null);
   const [error, setError] = useState("");   // server-side refusal (e.g. attempts exhausted)
   /* Boot path: loading → consent | ready | blocked | error. Timer and chat
@@ -189,6 +190,21 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
   const startRef = useRef(Date.now());
   const chatEnd = useRef(null);
 
+  // R64: rebuild the transcript the student had when they left (autosaved on the server).
+  const restoreEncounter = (progress, events) => {
+    const p = progress && typeof progress === "object" ? progress : {};
+    const list = (v) => (Array.isArray(v) ? v : []);
+    const snap = {
+      messages: list(p.messages), tests: list(p.tests), imaging: list(p.imaging), paraclinic: list(p.paraclinic),
+      ddx: list(p.ddx), finalDx: typeof p.finalDx === "string" ? p.finalDx : "",
+      problemList: typeof p.problemList === "string" ? p.problemList : "",
+    };
+    examSnapRef.current = { ...examSnapRef.current, ...snap };
+    setMessages(snap.messages); setTests(snap.tests); setImaging(snap.imaging); setParaclinic(snap.paraclinic);
+    setDdx(snap.ddx); setFinalDx(snap.finalDx); setProblemList(snap.problemList);
+    eventsRef.current = list(events);
+  };
+
   const applySession = (sess, mins) => {
     if (!sess?.sessionId) {
       throw Object.assign(new Error("session_failed"), { status: 502, data: { error: "session_failed", stage: "session" } });
@@ -198,8 +214,11 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
     loggingRef.current = !!sess.loggingEnabled;
     setLoggingOn(!!sess.loggingEnabled);
     if (sess.gradingScope) setGradingScope(sess.gradingScope);
-    startRef.current = Date.now();
-    setTimeLeft(mins > 0 ? mins * 60 : null);
+    // R64: the server holds the deadline. Its remaining time and elapsed time are authoritative.
+    startRef.current = Date.now() - (Number(sess.elapsedSec) || 0) * 1000;
+    setTimeLeft(typeof sess.remainingSec === "number" ? sess.remainingSec : (mins > 0 ? mins * 60 : null));
+    if (sess.resumed) restoreEncounter(sess.progress, sess.events);
+    setResumed(!!sess.resumed);
     autoFinishTried.current = false;
     finishingRef.current = false;
     setBoot({ status: "ready", stage: "exam" });
@@ -252,7 +271,7 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
     examSnapRef.current = { messages: [], tests: [], imaging: [], paraclinic: [], ddx: [], finalDx: "", problemList: "" };
     setTyping(false);
     setMessages([]); setTests([]); setParaclinic([]); setRequestedImages([]); setImaging([]); setDdx([]); setFinalDx(""); setProblemList("");
-    setPhase("exam"); setEvalRes(null); setTimeLeft(null); setError("");
+    setPhase("exam"); setEvalRes(null); setTimeLeft(null); setError(""); setResumed(false);
     sessionIdRef.current = null; eventsRef.current = [];
     finishingRef.current = false; sendingRef.current = false; autoFinishTried.current = false;
     (async () => {
@@ -355,20 +374,49 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
     finally { setConsentBusy(false); leaveExam(); }
   };
 
-  /* An abandoned session is meaningful for the study (it is a dropout data
-     point, and the partial transcript shows where they got stuck). Uses fetch
-     with keepalive rather than sendBeacon because the auth token has to travel
-     as a header, which sendBeacon cannot set. */
-  useEffect(() => () => {
-    if (finishingRef.current) return;
-    if (!sessionIdRef.current || !loggingRef.current || !eventsRef.current.length) return;
-    try {
-      fetch("/api/exam/session-abandon", {
-        method: "POST", keepalive: true, credentials: "same-origin",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
-        body: JSON.stringify({ sessionId: sessionIdRef.current, events: eventsRef.current }),
-      }).catch(() => {});
-    } catch { /* best-effort */ }
+  /* R64: autosave the encounter so far. The server keeps it, so a reload, a closed tab,
+     or a dropped connection resumes the same transcript within the time limit. */
+  const progressPayload = () => ({ sessionId: sessionIdRef.current, progress: examSnapRef.current, events: eventsRef.current });
+  const saveProgressNow = async (timeoutMs = 15_000) => {
+    if (!sessionIdRef.current || finishingRef.current) return;
+    try { await api.put("/exam/session-progress", progressPayload(), { timeoutMs, stage: "session" }); }
+    catch { /* the next change or the leave-page save retries */ }
+  };
+  useEffect(() => {
+    if (boot.status !== "ready" || phase !== "exam") return;
+    const id = setTimeout(() => { saveProgressNow(); }, 1200);
+    return () => clearTimeout(id);
+  }, [messages, tests, imaging, paraclinic, ddx, finalDx, problemList, boot.status, phase]);
+
+  /* Leaving (tab hidden, page closed, or the screen unmounted) saves once more with keepalive.
+     Bodies over the 64 KB keepalive limit are skipped; the debounced save already holds them. */
+  useEffect(() => {
+    const leave = () => {
+      if (finishingRef.current || !sessionIdRef.current) return;
+      const body = JSON.stringify(progressPayload());
+      if (body.length > 60_000) return;
+      try {
+        fetch("/api/exam/session-abandon", {
+          method: "POST", keepalive: true, credentials: "same-origin",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` }, body,
+        }).catch(() => {});
+      } catch { /* best-effort */ }
+    };
+    const onHide = () => { if (document.visibilityState === "hidden") leave(); };
+    window.addEventListener("pagehide", leave);
+    document.addEventListener("visibilitychange", onHide);
+    return () => {
+      window.removeEventListener("pagehide", leave);
+      document.removeEventListener("visibilitychange", onHide);
+      leave();
+    };
+  }, []);
+
+  // The server closed the encounter (time ran out while away): finish now from the stored transcript.
+  useEffect(() => {
+    const onExpired = () => setTimeLeft((x) => (x == null ? x : 0));
+    window.addEventListener("medlab-session-expired", onExpired);
+    return () => window.removeEventListener("medlab-session-expired", onExpired);
   }, []);
 
   useEffect(() => {
@@ -376,7 +424,8 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
     if (timeLeft <= 0) {
       if (autoFinishTried.current) return;
       autoFinishTried.current = true;
-      finish();
+      // Deliver what the student already sent, then grade it (the server honours the save grace).
+      saveProgressNow(5_000).finally(() => finish());
       return;
     }
     const id = setTimeout(() => setTimeLeft((x) => x - 1), 1000);
@@ -710,6 +759,7 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
           <div style={{ textAlign: "end" }}>
             <div className="small muted">{t("examTimer")}</div>
             <div className="timer">{untimed ? t("noTimeLimit") : fmt(timeLeft ?? 0)}</div>
+            {resumed && <div className="muted small">{lang === "fa" ? "ادامه جلسه قبلی — پیشرفت شما بازیابی شد" : "Resumed — your progress was restored"}</div>}
           </div>
         </div>
         {!!examId && antiCheat && leaves > 0 && (

@@ -47,17 +47,20 @@ describe("R63 evidence points: no all-or-nothing criterion", () => {
     expect(criteria.length).toBeGreaterThanOrEqual(120);
   });
 
-  it.each(criteria.map((c) => [c.where, c]))("%s has at least two evidence points", (_w, c) => {
+  // R64: the ECG criterion is one criterion with no timing facet (the user's explicit choice),
+  // so it is the one all-or-nothing criterion. Every other criterion keeps two or more points.
+  const ECG_EXCEPTION = "checklist1:i4";
+  it.each(criteria.filter((c) => c.where !== ECG_EXCEPTION).map((c) => [c.where, c]))("%s has at least two evidence points", (_w, c) => {
     const points = evidencePoints(c.keys);
     expect(points.length).toBeGreaterThanOrEqual(2);
     // every point is a non-empty synonym group
     expect(points.every((p) => p.length >= 1)).toBe(true);
   });
 
-  it("a single synonym hit earns part of a two-point criterion, not the whole", () => {
+  it("ECG is the single deliberate exception: one synonym hit is the whole criterion (R64)", () => {
     const ecg = DEFAULT_CHECKLIST_1.find((x) => x.id === "i4");
-    expect(keyedCredit("I will order an ECG now", ecg.keys)).toBeCloseTo(0.5, 5);
-    expect(keyedCredit("I will order an ECG as soon as possible", ecg.keys)).toBe(1);
+    expect(ecg.weight).toBe(3);
+    expect(keyedCredit("I will order an ECG now", ecg.keys)).toBe(1);
     expect(keyedCredit("nothing relevant", ecg.keys)).toBe(0);
   });
 

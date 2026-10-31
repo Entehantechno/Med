@@ -25,16 +25,12 @@ export default function Landing({ publicConfig, onGetStarted, onSignIn, onBlog, 
   const [scrolled, setScrolled] = useState(false); // header gets a shadow after the hero
   const [menuOpen, setMenuOpen] = useState(false);  // phone menu sheet
 
+  // R64: App already fetches /site-content/config (and polls it). Landing only reads that
+  // result, so the first load makes one config request instead of two in sequence.
   useEffect(() => {
-    if (publicConfig) {
-      setBanner(publicConfig.banner?.on ? publicConfig.banner : null);
-      setStoreEnabled(!!publicConfig.storeEnabled);
-      return;
-    }
-    api.get("/site-content/config").then((c) => {
-      setBanner(c.banner?.on ? c.banner : null);
-      setStoreEnabled(!!c.storeEnabled);
-    }).catch(() => {});
+    if (!publicConfig) return;
+    setBanner(publicConfig.banner?.on ? publicConfig.banner : null);
+    setStoreEnabled(!!publicConfig.storeEnabled);
   }, [publicConfig]);
   // real live social proof (stats, testimonials, FAQ, trust badges)
   useEffect(() => {

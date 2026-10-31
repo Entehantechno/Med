@@ -206,7 +206,7 @@ describe("the logged data is validated before it is trusted", () => {
     expect(read.status).toBe(403);
   });
 
-  it("an abandoned session is still closed and keeps its partial log", async () => {
+  it("an abandoned session stays open, keeps its partial log, and resumes with it (R64)", async () => {
     const ttk = await token("teacher");
     const stuId = ((await request(app).get("/api/users").set(A(ttk))).body).find((u) => u.username === "40012345").id;
     const cid = await makeClass(ttk, stuId, 1, { logTranscript: true });
@@ -216,10 +216,15 @@ describe("the logged data is validated before it is trusted", () => {
     const res = await request(app).post("/api/exam/session-abandon").set(A(stk))
       .send({ sessionId: sess.body.sessionId, events: vpEvents.slice(0, 3) });
     expect(res.status).toBe(200);
-    expect(res.body.stored).toBe(3);
+    expect(res.body.resumable).toBe(true);
+    expect(res.body.stored).toBe(1);
     const row = db.prepare("SELECT finished_at, attempt_id FROM vp_sessions WHERE id=?").get(sess.body.sessionId);
-    expect(row.finished_at).toBeTruthy();
-    expect(row.attempt_id).toBeNull();     // never graded — it is a dropout record
+    expect(row.finished_at).toBeNull();     // not closed: the student can come back within the time limit
+    expect(row.attempt_id).toBeNull();      // not graded by leaving
+    const back = await request(app).post("/api/exam/session-start").set(A(stk)).send({ caseId: 1, classId: cid });
+    expect(back.body.sessionId).toBe(sess.body.sessionId);
+    expect(back.body.resumed).toBe(true);
+    expect(back.body.events.length).toBe(3);   // the partial log comes back with the encounter
   });
 });
 

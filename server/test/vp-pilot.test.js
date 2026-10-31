@@ -97,15 +97,14 @@ describe('10-student pilot isolation and completion safety',()=>{
   expect(ids.size).toBe(70);expect(count()).toBe(70);expect(fetch).toHaveBeenCalledTimes(140);
  },180_000);
  it('does not let different sessions exceed one student attempt budget',async()=>{
+  // R64: a finished encounter is never resumed, so the second start is a new encounter, and the budget refuses it.
   db.prepare('UPDATE classes SET max_attempts=1 WHERE id=?').run(classId);
-  const a=await start(),b=await start();provider(30);
-  const results=await Promise.all([submit(0,a),submit(0,b)]);
-  expect(results.map(r=>r.status).sort()).toEqual([200,409]);expect(count()).toBe(1);
-  const winner=results.find(r=>r.status===200).body.attemptId;
-  const won=db.prepare('SELECT id FROM vp_sessions WHERE attempt_id=?').get(winner).id;
-  expect((await submit(0,won)).body.attemptId).toBe(winner);
-  expect((await submit(0,won===a?b:a)).status).toBe(403);
+  const a=await start();provider(30);
+  expect((await submit(0,a)).status).toBe(200);
+  const next=await request(app).post('/api/exam/session-start').set(A(0)).send({caseId:1,classId});
+  expect(next.status).toBeGreaterThanOrEqual(400);expect(next.body.sessionId).toBeUndefined();expect(count()).toBe(1);
  });
+
  it('releases failed evaluation for retry and refuses abandon during grading',async()=>{
   const sid=await start();let signal,release;
   const entered=new Promise(resolve=>{signal=resolve;});
@@ -121,9 +120,13 @@ describe('10-student pilot isolation and completion safety',()=>{
   const r=await submit(0,sid);expect(r.status).toBe(200);expect(r.body.results).toEqual([]);
   expect(r.body.microlearning).toBe('');expect(r.body.meta.rubric).toBeUndefined();expect(r.body.sectionScores).toBeUndefined();
  });
- it('rejects a closed abandoned session and a missing session in production student grading',async()=>{
-  const sid=await start();await request(app).post('/api/exam/session-abandon').set(A(0)).send({sessionId:sid});
-  expect((await submit(0,sid)).status).toBe(409);expect((await submit(0,null)).status).toBe(400);expect(count()).toBe(0);
+ it('rejects a missing session in production student grading; a left session stays gradable',async()=>{
+  // R64: leaving only saves the encounter. It is not closed, so the student can resume or grade it.
+  const sid=await start();
+  const left=await request(app).post('/api/exam/session-abandon').set(A(0)).send({sessionId:sid});
+  expect(left.body.resumable).toBe(true);
+  expect((await submit(0,null)).status).toBe(400);
+  expect((await submit(0,sid)).status).toBe(200);expect(count()).toBe(1);
  });
 
  it('rolls back the grade if storing its session events fails',async()=>{
@@ -224,16 +227,15 @@ describe('10-student pilot isolation and completion safety',()=>{
   const r=await submit(0,sid);expect(r.status).toBe(409);expect(r.body.error).toBe('study_context_changed');
   expect(count()).toBe(0);expect(fetch).not.toHaveBeenCalled();
  });
- it('rolls back every abandon event if one event insert fails',async()=>{
+ it('keeps the events a student left with, and the resumed encounter returns them',async()=>{
   const sid=await start();const events=[...body(0,sid).events,{kind:'patient_msg',text:'Second event',atMs:2}];
-  db.exec(`CREATE TEMP TRIGGER abandon_log_failure BEFORE INSERT ON vp_session_events WHEN NEW.session_id=${sid} AND NEW.seq=1 BEGIN SELECT RAISE(ABORT,'synthetic event failure'); END;`);
-  try {
-   const r=await request(app).post('/api/exam/session-abandon').set(A(0)).send({sessionId:sid,events});
-   expect(r.status).toBe(500);expect(db.prepare('SELECT COUNT(*) n FROM vp_session_events WHERE session_id=?').get(sid).n).toBe(0);
-  }finally{db.exec('DROP TRIGGER abandon_log_failure');}
-  expect((await request(app).post('/api/exam/session-abandon').set(A(0)).send({sessionId:sid,events})).status).toBe(200);
-  expect(db.prepare('SELECT COUNT(*) n FROM vp_session_events WHERE session_id=?').get(sid).n).toBe(2);
+  const r=await request(app).post('/api/exam/session-abandon').set(A(0)).send({sessionId:sid,events});
+  expect(r.status).toBe(200);
+  const resumed=await request(app).post('/api/exam/session-start').set(A(0)).send({caseId:1,classId});
+  expect(resumed.body.sessionId).toBe(sid);expect(resumed.body.resumed).toBe(true);
+  expect(resumed.body.events.length).toBe(2);
  });
+
  it('does not acknowledge an abandoned-session save when the disk write failed',async()=>{
   const sid=await start();const events=body(0,sid).events;
   const quiet=vi.spyOn(console,'error').mockImplementation(()=>{});
@@ -241,7 +243,8 @@ describe('10-student pilot isolation and completion safety',()=>{
   const r=await request(app).post('/api/exam/session-abandon').set(A(0)).send({sessionId:sid,events});
   disk.mockRestore();quiet.mockRestore();expect(r.status).toBe(500);
   expect((await request(app).post('/api/exam/session-abandon').set(A(0)).send({sessionId:sid,events})).status).toBe(200);
-  expect(db.prepare('SELECT COUNT(*) n FROM vp_session_events WHERE session_id=?').get(sid).n).toBe(1);
+  const resumed=await request(app).post('/api/exam/session-start').set(A(0)).send({caseId:1,classId});
+  expect(resumed.body.events.length).toBe(1);
  });
 
  it('does not interrupt grading merely because the protocol wording changes',async()=>{

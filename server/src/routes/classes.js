@@ -4,6 +4,7 @@ import {academicCopy,academicContentTransaction} from '../lib/academic-sharing.j
    enrolls students. Students take the class cases to earn a class
    grade (replacing the traditional logbook).
    ================================================================ */
+import { closeFlashProgress, expiredFlashRun } from "../lib/timed-session.js";
 import { Router } from "express";
 import { safeFilename, spreadsheetCell } from "../lib/csv.js";
 import crypto from "crypto";
@@ -657,6 +658,9 @@ r.post('/:id/flashcards/finish',authRequired,requireRole('student'),validateBody
 }),(req,res)=>{
   try {
     const cid=Number(req.params.id),userId=req.user.id;
+    // R64: a run whose time is up is graded from its stored answers (idempotent replays unchanged).
+    const guard=expiredFlashRun({userId,contextKey:`classcomb:${cid}`});
+    if(guard?.verdict==='stored') req.body.answers=guard.answers;
     const result=durableTransaction(()=>{
       // Check current membership/tenant before looking up the idempotency result.
       const deck=combinedDeck(userId,cid);
@@ -690,6 +694,7 @@ r.post('/:id/flashcards/finish',authRequired,requireRole('student'),validateBody
       db.prepare('INSERT INTO class_flash_submissions(class_id,user_id,submission_id,result_json) VALUES (?,?,?,?)').run(cid,userId,req.body.submissionId,JSON.stringify(result));
       return result;
     });
+    closeFlashProgress(userId,`classcomb:${cid}`);   // R64: the saved run is complete
     res.json(result);
   } catch(e) {res.status(e.status||500).json({error:e.message,stage:'evaluate'});}
 });
@@ -700,6 +705,10 @@ r.post("/:id/flashcard/:fid/finish", authRequired, requireRole("student"), valid
   const info = classFlashcardInfo(req.user.id, cid, fid);
   if (!info.allowed) return res.status(403).json({ error: "not allowed", stage: "access" });
   if (info.graded && info.remaining <= 0) return res.status(429).json({ error: "no attempts left", remaining: 0, stage: "access" });
+  // R64: a run whose time is up is graded from its stored answers, and a closed one takes no more.
+  const guard = expiredFlashRun({ userId: req.user.id, contextKey: `classfc:${cid}:${fid}` });
+  if (guard?.verdict === "closed") return res.status(409).json({ error: "session_expired", stage: "flashcards" });
+  if (guard?.verdict === "stored") req.body.answers = guard.answers;
   if(db.prepare('SELECT exam_mode FROM classes WHERE id=?').get(cid)?.exam_mode==='combined')
     return res.status(409).json({error:'combined_submission_required'});
   const answers = Array.isArray(req.body?.answers) ? req.body.answers : [];
@@ -741,6 +750,7 @@ r.post("/:id/flashcard/:fid/finish", authRequired, requireRole("student"), valid
       data: { flashcardId: fid, score, type: "flash" }, persist: false,
     });
   });
+  closeFlashProgress(req.user.id, `classfc:${cid}:${fid}`);   // R64: the saved run is complete
   res.json({ ok: true, score, noPenalty });
   } catch (e) {
     res.status(500).json({ error: "class_flashcard_finish_failed", stage: "evaluate", message: String(e.message || e).slice(0, 200) });

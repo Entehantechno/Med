@@ -22,7 +22,8 @@ import { scoreSubmittedAnswers, gradeSubmittedDeck, gradeSubmittedDeckDetailed, 
 import { getVpatientConfig, awardVpatientXp, getVpatientAiEffective, getVpatientPromptsEffective, vpatientAccess } from "../lib/vpatient.js";
 import { isEnabled } from "../lib/flags.js";
 import { audit } from "../lib/audit.js";
-import { startSession, getSession, finishSession, loggingEnabledFor, serverElapsedSec } from "../lib/vplogging.js";
+import { startSession, getSession, finishSession, loggingEnabledFor, serverElapsedSec, invalidStartRequestId } from "../lib/vplogging.js";
+import { limitSecFor, deadlineOf, isExpired, savesOpen, expiredFlashRun, remainingSec, findOpenVpSession, findExpiredOpenVp, findOpenFlashSession, findExpiredOpenFlash, flashRemaining, readVpProgress, saveVpProgress, readFlashProgress, saveFlashProgress, closeFlashProgress } from "../lib/timed-session.js";
 import { normalizeRubric, parseClassRubric } from "../lib/grading-rubric.js";
 import { parseReferenceSnapshot, referenceSnapshotForPolicy, referencePromptContract, decorateMicrolearning, publicReferenceSnapshot, selectedReferenceSnapshot } from "../lib/reference-governance.js";
 
@@ -305,9 +306,11 @@ function loadChecklist(id) {
    The row exists even if the student never finishes — an abandoned session is
    itself meaningful for a study (dropout). Faculty-authored content is pinned;
    learner conversation remains unrecorded when logging is off. */
-r.post("/session-start", authRequired, (req, res) => {
+r.post("/session-start", authRequired, async (req, res) => {
   try {
   const { caseId, classId, examId, lang = "fa", requestId = null } = req.body || {};
+  // Validated before any resume, so a bad requestId is refused even when an open encounter exists.
+  if (invalidStartRequestId(requestId)) return res.status(400).json({ error: "invalid_start_request_id", stage: "session" });
   const caseData = loadCase(caseId);
   if (!caseData) return res.status(404).json({ error: "case not found", stage: "case" });
   const caseRow = db.prepare("SELECT active FROM cases WHERE id=?").get(caseId);
@@ -326,9 +329,38 @@ r.post("/session-start", authRequired, (req, res) => {
     if (role === "history") gradingScope = "extern";
     else if (role === "overall") gradingScope = "intern";
   }
+  // R64: resume the open, unexpired encounter instead of starting another. Resuming
+  // keeps the same clock and the same attempt budget, and returns the saved transcript.
+  // An encounter whose time ran out, but which no sweep has settled yet, is finalized
+  // as it stood first. A quick return therefore never opens a second attempt.
+  const stale = findExpiredOpenVp({ userId: req.user.id, caseId: caseData.id, classId: ownerClassId, examId: ownerExamId, studyId, lang });
+  if (stale) {
+    const { finalizeVpRow } = await import("../lib/timed-expiry.js");
+    const settled = await finalizeVpRow(stale);
+    if (settled.status === "deferred") return res.status(409).json({ error: "evaluation_in_progress", stage: "session", retryable: true });
+  }
+  const resumable = findOpenVpSession({ userId: req.user.id, caseId: caseData.id, classId: ownerClassId, examId: ownerExamId, studyId, lang });
+  if (resumable) {
+    const pinnedResume = encounterOrDeny(res, resumable, "session");
+    if (!pinnedResume) return;
+    const now = Date.now();
+    const snap = readVpProgress(resumable);
+    const body = {
+      sessionId: resumable.id, loggingEnabled: !!resumable.logging_enabled, lang: resumable.lang,
+      serverNow: now, deadlineMs: deadlineOf(resumable), remainingSec: remainingSec(resumable, now), elapsedSec: Math.round(serverElapsedSec(resumable)), resumed: true,
+      progress: snap.session, events: snap.events,
+      gradingScope: pinnedResume.gradingScope, caseCard: studentSafeCase(pinnedResume.caseData),
+    };
+    if (req.user.role !== "student" && req.user.role !== "learner") body.gradingRubric = pinnedResume.gradingRubric;
+    return res.json(body);
+  }
   let gradingRubric = resolveClassRubric(ownerClassId);
+  // R64: the time limit comes from the container (class timer, exam duration, or the
+  // practice setting). The browser never supplies it.
+  const limitSec = limitSecFor({ classId: ownerClassId, examId: ownerExamId,
+    fallbackMin: req.user.role === "learner" ? 15 : (getSetting("exam", {}).duration || 15) });
   const s = startSession({
-    userId: req.user.id, caseId: caseData.id,
+    limitSec, userId: req.user.id, caseId: caseData.id,
     classId: ownerClassId, examId: ownerExamId, lang,
     studyId, requestId, encounterSnapshotJson: sealEncounter({ caseData, checklist: loadChecklist(caseData.checklist_id), gradingScope, gradingRubric }), referenceSnapshotJson: JSON.stringify(caseData.reference_snapshot),
   });
@@ -344,7 +376,7 @@ r.post("/session-start", authRequired, (req, res) => {
     });
   }
   gradingRubric = pinned.gradingRubric;
-  const payload = { ...s, gradingScope: pinned.gradingScope, caseCard: studentSafeCase(pinned.caseData) };
+  const payload = { ...s, remainingSec: remainingSec(getSession(s.sessionId)), gradingScope: pinned.gradingScope, caseCard: studentSafeCase(pinned.caseData) };
   if (req.user.role !== "student" && req.user.role !== "learner") payload.gradingRubric = gradingRubric;
   res.json(payload);
   } catch (e) {
@@ -352,10 +384,11 @@ r.post("/session-start", authRequired, (req, res) => {
   }
 });
 
-/* ---- Abandoned encounter ----
-   Fired from the browser when the student leaves mid-session. Closes the
-   session and stores whatever was logged so far. Ownership is enforced inside
-   finishSession(), so one student cannot close another's session. */
+/* ---- Leaving an encounter (R64) ----
+   Fired when the student leaves (unload, navigation, dropped connection). It no
+   longer closes the encounter: the student may come back and continue until the
+   deadline. This call only saves what is known, and only while the encounter is
+   still open. A finished encounter answers resumable:false. */
 r.post("/session-abandon", authRequired, (req, res) => {
   try {
   const { sessionId, events = [] } = req.body || {};
@@ -363,18 +396,48 @@ r.post("/session-abandon", authRequired, (req, res) => {
   const owned = getSession(sessionId);
   if (!owned) return res.status(404).json({ error: "session_not_found", stage: "session" });
   if (Number(owned.user_id) !== Number(req.user.id)) return res.status(403).json({ error: "not_your_session", stage: "session" });
+  if (owned.finished_at) return res.json({ ok: true, resumable: false, stored: 0 });
+  // A grading run in progress owns this encounter: leaving must not race it.
   if (completionBusy(req.user.id, owned.case_id)) return res.status(409).json({ error: "evaluation_in_progress", stage: "session", retryable: true });
-  // Completed sessions are immutable: a late unload merely acknowledges the
-  // already-closed record, without collecting any new content.
-  if (!owned.finished_at) {
-    const study = studyForContext({ classId: owned.class_id, examId: owned.exam_id });
-    if (Number(owned.study_id || 0) !== Number(study?.id || 0)) return res.status(409).json({ error: "study_context_changed", stage: "session" });
-    const consent = assertConsent(req.user, { classId: owned.class_id, examId: owned.exam_id });
-    if (!consent.ok) return denyAccess(res, { ...consent, allowed: false }, "session");
+  const consent = assertConsent(req.user, { classId: owned.class_id, examId: owned.exam_id });
+  if (!consent.ok) return denyAccess(res, { ...consent, allowed: false }, "session");
+  const study = studyForContext({ classId: owned.class_id, examId: owned.exam_id });
+  if (Number(owned.study_id || 0) !== Number(study?.id || 0)) return res.status(409).json({ error: "study_context_changed", stage: "session" });
+  const expired = !savesOpen(owned);
+  const prior = readVpProgress(owned);
+  const withEvents = owned.logging_enabled && Array.isArray(events) ? { ...prior.session, events } : prior.session;
+  const saved = expired ? { ok: false } : saveVpProgress(owned.id, withEvents);
+  // Not acknowledged unless stored (e.g. too large): the browser keeps its copy.
+  if (!expired && !saved.ok) return res.status(413).json({ error: saved.error || "progress_too_large", stage: "session" });
+  res.json({ ok: true, resumable: !expired, stored: saved.ok ? 1 : 0, deadlineMs: deadlineOf(owned) });
+  } catch (e) {
+    res.status(500).json({ error: "session_failed", stage: "session", message: String(e.message || e).slice(0, 200) });
   }
-  const out = durableTransaction(() => finishSession({ sessionId, userId: req.user.id, events, durationSec: 0, attemptId: null, persist: false }));
-  if (out.error) return res.status(out.error === "session_not_found" ? 404 : 403).json({ error: out.error, stage: "session" });
-  res.json({ ok: true, stored: out.stored, loggingEnabled: out.loggingEnabled });
+});
+
+/* ---- Autosave the encounter so far (R64) ----
+   Called after each change in the browser (debounced). Stored server-side so a
+   reload or a dropped connection resumes the same transcript, and so an expired
+   encounter can be finalized as it stood. Events are kept only when logging is on. */
+r.put("/session-progress", authRequired, (req, res) => {
+  try {
+  const { sessionId, progress = {}, events = [] } = req.body || {};
+  if (!sessionId) return res.status(400).json({ error: "session_id_required", stage: "session" });
+  const owned = getSession(sessionId);
+  if (!owned) return res.status(404).json({ error: "session_not_found", stage: "session" });
+  if (Number(owned.user_id) !== Number(req.user.id)) return res.status(403).json({ error: "not_your_session", stage: "session" });
+  if (owned.finished_at) return res.status(409).json({ error: "session_closed", stage: "session" });
+  if (completionBusy(req.user.id, owned.case_id)) return res.status(409).json({ error: "evaluation_in_progress", stage: "session", retryable: true });
+  if (!savesOpen(owned)) return res.status(409).json({ error: "session_expired", stage: "session", remainingSec: 0 });
+  const study = studyForContext({ classId: owned.class_id, examId: owned.exam_id });
+  if (Number(owned.study_id || 0) !== Number(study?.id || 0)) return res.status(409).json({ error: "study_context_changed", stage: "session" });
+  const consent = assertConsent(req.user, { classId: owned.class_id, examId: owned.exam_id });
+  if (!consent.ok) return denyAccess(res, { ...consent, allowed: false }, "session");
+  const body = progress && typeof progress === "object" ? progress : {};
+  const withEvents = owned.logging_enabled && Array.isArray(events) ? { ...body, events } : body;
+  const saved = saveVpProgress(owned.id, withEvents);
+  if (!saved.ok) return res.status(413).json({ error: saved.error, stage: "session" });
+  res.json({ ok: true, remainingSec: remainingSec(owned) });
   } catch (e) {
     res.status(500).json({ error: "session_failed", stage: "session", message: String(e.message || e).slice(0, 200) });
   }
@@ -393,6 +456,8 @@ function interactionAccessGuard(req, res, caseId, classId, examId, acc, stage) {
     if (req.body?.sessionId) {
       const session = getSession(req.body.sessionId);
       if (!session || session.finished_at) { res.status(409).json({ error: "session_closed", stage }); return false; }
+      // R64: the deadline ends interaction. The attempt is graded from the saved snapshot.
+      if (isExpired(session)) { res.status(409).json({ error: "session_expired", stage, remainingSec: 0 }); return false; }
     }
     const live = db.prepare("SELECT status,role,token_ver FROM users WHERE id=?").get(req.user.id);
     if (!live || live.status !== "active" || live.role !== req.user.role || Number(live.token_ver || 1) !== Number(req.user.ver || 1)) {
@@ -436,6 +501,7 @@ function interactionContext(req, res, stage) {
     res.status(409).json({ error: "session_context_mismatch", stage }); return null;
   }
   if (session.finished_at) { res.status(409).json({ error: "session_closed", stage }); return null; }
+  if (isExpired(session)) { res.status(409).json({ error: "session_expired", stage, remainingSec: 0 }); return null; }
   const context = { classId: session.class_id, examId: session.exam_id };
   if (Number(session.study_id || 0) !== Number(studyForContext(context)?.id || 0)) {
     res.status(409).json({ error: "study_context_changed", stage }); return null;
@@ -518,7 +584,9 @@ r.post("/order", authRequired, async (req, res) => {
 });
 
 /* ---- Finish exam -> evaluate + store attempt ---- */
-r.post("/evaluate", authRequired, async (req, res) => {
+/* Grades one encounter. Shared by POST /evaluate and by the expiry sweeper
+   (lib/timed-expiry.js), so an expired encounter is judged by the same code. */
+async function evaluateRoute(req, res) {
   let releaseCompletion;
   const acceptedAt = Date.now();
   try {
@@ -565,7 +633,12 @@ r.post("/evaluate", authRequired, async (req, res) => {
     message_fa: "ارزیابی این برخورد هنوز در حال انجام است؛ کمی صبر کنید و دوباره دریافت نتیجه را امتحان کنید.",
     message_en: "This encounter is still being evaluated. Wait briefly, then retry to retrieve the result."
   });
-  const session = (req.body?.session && typeof req.body.session === "object") ? req.body.session : {};
+  // R64: after the deadline the attempt is judged on the snapshot saved while the
+  // student was still working, with the server-side time limit (client body ignored).
+  const storedSnapshot = vpSession && !vpSession.finished_at && isExpired(vpSession) ? readVpProgress(vpSession) : null;
+  if (storedSnapshot) { events = storedSnapshot.events; durationSec = vpSession.limit_sec || durationSec; }
+  const session = storedSnapshot ? storedSnapshot.session
+    : ((req.body?.session && typeof req.body.session === "object") ? req.body.session : {});
   const pinned = vpSession ? encounterOrDeny(res, vpSession, "evaluate") : null;
   if (vpSession && !pinned) return;
   const caseData = pinned?.caseData || loadCase(caseId);
@@ -848,7 +921,8 @@ r.post("/evaluate", authRequired, async (req, res) => {
   } finally {
     releaseCompletion?.();
   }
-});
+}
+r.post("/evaluate", authRequired, evaluateRoute);
 
 /* ---- Flashcard practice submit (multiple choice / search) ---- */
 const flashResultSchema = {
@@ -863,13 +937,69 @@ const flashResultSchema = {
   answers: vs.array((x, pp) => (x && typeof x === "object" && !Array.isArray(x)
     ? { ok: true, value: x } : { ok: false, error: `${pp} must be an object` }), { optional: true, max: 300 }),
 };
+/* ---- Flashcard runs (R64) ----
+   A run is opened on the server, so the answers saved while the student works
+   are kept and the run resumes after leaving. A finished run starts fresh. */
+const FLASH_KEY = /^(exam:\d+|classfc:\d+:\d+|classcomb:\d+)$/;
+r.post("/flash-session", authRequired, async (req, res) => {
+  try {
+    const key = String(req.body?.contextKey || "");
+    if (!FLASH_KEY.test(key)) return res.status(400).json({ error: "invalid_context", stage: "flashcards" });
+    if (!["student", "learner"].includes(req.user.role)) return res.status(403).json({ error: "students_only", stage: "flashcards" });
+    const now = Date.now();
+    // Same rule as /session-start: an expired run is settled as it stood before a new one opens.
+    const stale = findExpiredOpenFlash({ userId: req.user.id, contextKey: key, now });
+    if (stale) {
+      const { finalizeFlashRow } = await import("../lib/timed-expiry.js");
+      const settled = await finalizeFlashRow(stale);
+      if (settled.status === "deferred") return res.status(409).json({ error: "evaluation_in_progress", stage: "flashcards", retryable: true });
+    }
+    const open = findOpenFlashSession({ userId: req.user.id, contextKey: key, now });
+    if (open) {
+      return res.json({ runId: open.id, resumed: true, remainingSec: flashRemaining(open, now), deadlineMs: deadlineOf(open), progress: readFlashProgress(open) });
+    }
+    const [kind, a] = key.split(":");
+    const examId = kind === "exam" ? Number(a) : null;
+    const classId = kind === "exam" ? null : Number(a);
+    const limitSec = limitSecFor({ classId, examId, fallbackMin: 15 });
+    const deadlineMs = limitSec > 0 ? now + limitSec * 1000 : null;
+    const runId = durableTransaction(() => db.prepare(
+      "INSERT INTO flash_progress (user_id, context_key, started_ms, limit_sec, deadline_ms, progress_json, progress_ms) VALUES (?,?,?,?,?,?,?)"
+    ).run(req.user.id, key, now, limitSec, deadlineMs, "{}", now).lastInsertRowid);
+    res.json({ runId: Number(runId), resumed: false, remainingSec: limitSec > 0 ? limitSec : null, deadlineMs, progress: {} });
+  } catch (e) {
+    res.status(500).json({ error: "flash_session_failed", stage: "flashcards", message: String(e.message || e).slice(0, 200) });
+  }
+});
+
+r.put("/flash-progress", authRequired, (req, res) => {
+  try {
+    const runId = Number(req.body?.runId) || 0;
+    const row = db.prepare("SELECT * FROM flash_progress WHERE id=? AND user_id=?").get(runId, req.user.id);
+    if (!row) return res.status(404).json({ error: "run_not_found", stage: "flashcards" });
+    if (row.finished_at) return res.status(409).json({ error: "run_closed", stage: "flashcards" });
+    if (!savesOpen(row)) return res.status(409).json({ error: "session_expired", stage: "flashcards", remainingSec: 0 });
+    const saved = saveFlashProgress(row, req.body?.progress || {});
+    if (!saved.ok) return res.status(413).json({ error: saved.error, stage: "flashcards" });
+    res.json({ ok: true, remainingSec: flashRemaining(row) });
+  } catch (e) {
+    res.status(500).json({ error: "flash_progress_failed", stage: "flashcards", message: String(e.message || e).slice(0, 200) });
+  }
+});
+
 r.post("/flashcard-result", authRequired, validateBody(flashResultSchema), (req, res) => {
   try {
-  const { score, hints = 0, durationSec = 0, lang = "fa", examId,
+  let { score, hints = 0, durationSec = 0, lang = "fa", examId,
           total = 0, correct = 0, wrong = 0, answers = [] } = req.body || {};
   // Only enrolled students may attach a flash result to a university exam.
   // Learners/teachers sending examId would otherwise land in the gradebook.
   const examOwner = req.user.role === "student" ? (examId || null) : null;
+  // R64: once the run's time is up, the stored answers are graded, and a closed run takes no more.
+  if (examOwner) {
+    const guard = expiredFlashRun({ userId: req.user.id, contextKey: `exam:${examOwner}` });
+    if (guard?.verdict === "closed") return res.status(409).json({ error: "session_expired", stage: "flashcards" });
+    if (guard?.verdict === "stored") answers = guard.answers;
+  }
   let examDeck = null;
   if (examOwner) {
     const acc = examAccess(req.user.id, examOwner, null);
@@ -943,6 +1073,7 @@ r.post("/flashcard-result", authRequired, validateBody(flashResultSchema), (req,
     }
     return info;
   });
+  if (examOwner) closeFlashProgress(req.user.id, `exam:${examOwner}`, info.lastInsertRowid);   // R64
   res.json({ attemptId: info.lastInsertRowid, score: scoreN });
   } catch (e) {
     res.status(500).json({ error: "flashcard_result_failed", stage: "evaluate", message: String(e.message || e).slice(0, 200) });
@@ -1020,4 +1151,5 @@ r.post("/attempts/:id/translate", authRequired, async (req, res) => {
   }
 });
 
+export { evaluateRoute };
 export default r;

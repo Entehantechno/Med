@@ -19,6 +19,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // so the site can be upgraded without losing data. See lib/paths.js.
 import { DB_PATH, BACKUPS_DIR, ensureDataDirs } from "./lib/paths.js";
 import { migrateR63 } from "./lib/r63-migration.js";
+import { migrateR64 } from "./lib/r64-migration.js";
 import bcrypt from "bcryptjs";
 ensureDataDirs();
 
@@ -2253,6 +2254,37 @@ export function initSchema() {
     db.exec("ALTER TABLE vp_sessions ADD COLUMN start_request_id TEXT");
   }
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_vp_start_request ON vp_sessions(user_id,start_request_id) WHERE start_request_id IS NOT NULL");
+  // R64: resumable encounters. The server sets the deadline from the case time limit,
+  // keeps the last autosaved transcript (progress_json), and counts expiry retries.
+  // Additive only; existing rows get NULL deadlines (untimed, resumable until finished).
+  {
+    const vpCols = new Set(db.prepare("PRAGMA table_info(vp_sessions)").all().map((c) => c.name));
+    if (!vpCols.has("limit_sec")) db.exec("ALTER TABLE vp_sessions ADD COLUMN limit_sec INTEGER DEFAULT 0");
+    if (!vpCols.has("deadline_ms")) db.exec("ALTER TABLE vp_sessions ADD COLUMN deadline_ms INTEGER");
+    if (!vpCols.has("progress_json")) db.exec("ALTER TABLE vp_sessions ADD COLUMN progress_json TEXT");
+    if (!vpCols.has("progress_ms")) db.exec("ALTER TABLE vp_sessions ADD COLUMN progress_ms INTEGER");
+    if (!vpCols.has("expiry_attempts")) db.exec("ALTER TABLE vp_sessions ADD COLUMN expiry_attempts INTEGER NOT NULL DEFAULT 0");
+    if (!vpCols.has("expiry_error")) db.exec("ALTER TABLE vp_sessions ADD COLUMN expiry_error TEXT");
+  }
+  db.exec("CREATE INDEX IF NOT EXISTS idx_vp_sessions_open ON vp_sessions(finished_at, deadline_ms)");
+  // R64: flashcard runs resume from saved progress. Plain (non-unique) index on purpose:
+  // an expired, unfinalized row must never block a new run.
+  db.exec(`CREATE TABLE IF NOT EXISTS flash_progress (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    context_key TEXT NOT NULL,
+    started_ms INTEGER NOT NULL,
+    limit_sec INTEGER DEFAULT 0,
+    deadline_ms INTEGER,
+    progress_json TEXT NOT NULL DEFAULT '{}',
+    progress_ms INTEGER,
+    finished_at TEXT,
+    attempt_id INTEGER,
+    expiry_attempts INTEGER NOT NULL DEFAULT 0,
+    expiry_error TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_flash_progress_open ON flash_progress(user_id, context_key, finished_at);
+  CREATE INDEX IF NOT EXISTS idx_flash_progress_deadline ON flash_progress(finished_at, deadline_ms);`);
   // Reference snapshot columns for source-aware microlearning (added after initial creation)
   // Nullable for historical sessions. Never invent a past clinical version.
   if (!db.prepare("PRAGMA table_info(vp_sessions)").all().some(c => c.name === "encounter_snapshot_json")) {
@@ -2461,6 +2493,8 @@ export function initSchema() {
   // Round 63: evidence-point facets for every default criterion, normal-by-default
   // wording for missing chart data. Exact R62 defaults only (see lib/r63-migration.js).
   migrateR63(db);
+  // R64: ECG back to one criterion; history/exam/symptom criteria split for partial credit.
+  migrateR64(db);
   db.exec(`CREATE TRIGGER IF NOT EXISTS cases_academic_insert BEFORE INSERT ON cases
     WHEN json_valid(NEW.data_json) AND json_extract(NEW.data_json,'$.track')='learn'
     BEGIN SELECT RAISE(ABORT, 'virtual_patient_university_only'); END;

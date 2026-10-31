@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { markBusy } from "../lib/sw-update.js";
 import { useApp } from "../context.jsx";
-import { api, loadFailKind, loadFailText } from "../api.js";
+import { api, loadFailKind, loadFailText, getToken } from "../api.js";
 import { TopBar, Spinner, Pill } from "../components/UI.jsx";
 import { biField } from "../lib/bifield.js";
 import SearchAnswer from "../components/SearchAnswer.jsx";
@@ -138,7 +138,15 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
           filtered = examIds.length ? list.filter((card) => examIds.includes(card.id)) : [];
         }
         if(classCombined && filtered.length!==examIds.length)throw new Error('class_questions_changed');
-        if (inExam && shuffle) filtered = shuffleArray(filtered);
+        // R64: an exam or class run resumes its saved progress. The server holds the clock and the card order.
+        const runKey = inExam ? flashRunKey() : null;
+        const run = runKey ? await openFlashRun(runKey) : null;
+        const byId = new Map(filtered.map((card) => [card.id, card]));
+        const savedOrder = run?.resumed && Array.isArray(run.progress?.order)
+          ? run.progress.order.map((id) => byId.get(id)).filter(Boolean) : null;
+        const resumeOk = !!savedOrder && savedOrder.length === filtered.length;
+        if (resumeOk) filtered = savedOrder;
+        else if (inExam && shuffle) filtered = shuffleArray(filtered);
         let next = s && typeof s === "object"
           ? { showHints: s.showHints !== false, showCorrect: s.showCorrect !== false }
           : { showHints: true, showCorrect: true };
@@ -149,7 +157,11 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
         setAllCards(filtered); setSettings(next);
         if (inExam) {
           setCards(filtered); setCardStates(filtered.map(() => newState())); startRef.current = Date.now();
-          if (examDuration) setTimeLeft(examDuration * 60);
+          runRef.current = run?.runId ?? null;
+          if (resumeOk) applyRun(run.progress);
+          if (run) setTimeLeft(typeof run.remainingSec === "number" ? run.remainingSec : null);
+          else if (examDuration) setTimeLeft(examDuration * 60);
+          if (resumeOk) setRunResumed(true);
         }
       } catch (e) {
         setLoadErr(loadFailKind(e));
@@ -158,10 +170,85 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
     })();
   }, [bootNonce]);
 
-  // countdown timer (exam mode)
+  // R64: the run this screen is playing (server row). Null for free practice and when unavailable.
+  const runRef = useRef(null);
+  const [runResumed, setRunResumed] = useState(false);
+  const flashRunKey = () => {
+    if (examId) return `exam:${examId}`;
+    if (classCombined && classId) return `classcomb:${classId}`;
+    if (classId && classFlashcardId) return `classfc:${classId}:${classFlashcardId}`;
+    return null;
+  };
+  const openFlashRun = async (contextKey) => {
+    try { return await api.post("/exam/flash-session", { contextKey }, { timeoutMs: 15000, stage: "boot" }); }
+    catch { return null; }   // not a student, or the server is unreachable: play without saving
+  };
+  const applyRun = (p) => {
+    if (typeof p.idx === "number") setIdx(p.idx);
+    if (typeof p.reachedIdx === "number") setReachedIdx(p.reachedIdx);
+    if (Array.isArray(p.cardStates)) setCardStates(p.cardStates);
+    if (Array.isArray(p.results)) setResults(p.results);
+    if (typeof p.totalHints === "number") setTotalHints(p.totalHints);
+    if (typeof p.submissionId === "string" && p.submissionId) submissionId.current = p.submissionId;
+  };
+  const runBody = () => {
+    const progress = {
+      idx, reachedIdx, order: cards ? cards.map((c) => c.id) : [], cardStates, results, totalHints,
+      submissionId: submissionId.current, version: combinedConfig.current?.version || null,
+      answers: cards ? buildAnswers(resultsNow()) : [],
+    };
+    return { runId: runRef.current, progress };
+  };
+  // The leave-page save runs from an effect with no dependencies, so it reads the latest body through a ref.
+  const runBodyRef = useRef(null);
+  runBodyRef.current = runBody;
+  const saveRun = async (timeoutMs = 15000) => {
+    if (!runRef.current || !cards || finished) return;
+    try { await api.put("/exam/flash-progress", runBody(), { timeoutMs, stage: "flashcards" }); }
+    catch { /* the next change or the leave-page save retries */ }
+  };
+  // Autosave after each change (debounced). Stops once the run is finished.
+  useEffect(() => {
+    if (!runRef.current || !cards || finished) return;
+    const id = setTimeout(() => { saveRun(); }, 1200);
+    return () => clearTimeout(id);
+  }, [idx, cardStates, results, totalHints, finished, cards]);
+  // Leaving the screen saves once more (keepalive; large bodies are covered by the debounced save).
+  useEffect(() => {
+    const leave = () => {
+      if (!runRef.current || finishRef.current == null || !runBodyRef.current) return;
+      const body = JSON.stringify(runBodyRef.current());
+      if (body.length > 60_000) return;
+      try {
+        fetch("/api/exam/flash-progress", {
+          method: "PUT", keepalive: true, credentials: "same-origin",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` }, body,
+        }).catch(() => {});
+      } catch { /* best-effort */ }
+    };
+    const onHide = () => { if (document.visibilityState === "hidden") leave(); };
+    window.addEventListener("pagehide", leave);
+    document.addEventListener("visibilitychange", onHide);
+    return () => {
+      window.removeEventListener("pagehide", leave);
+      document.removeEventListener("visibilitychange", onHide);
+      leave();
+    };
+  }, []);
+  // The server closed the run (time ran out while away): submit the stored answers now.
+  useEffect(() => {
+    const onExpired = () => setTimeLeft((x) => (x == null ? x : 0));
+    window.addEventListener("medlab-session-expired", onExpired);
+    return () => window.removeEventListener("medlab-session-expired", onExpired);
+  }, []);
+
+  // countdown timer (exam mode). At zero, save what was answered, then finish.
   useEffect(() => {
     if (timeLeft == null || finished) return;
-    if (timeLeft <= 0) { finishRef.current && finishRef.current(); return; }
+    if (timeLeft <= 0) {
+      saveRun(5000).finally(() => { finishRef.current && finishRef.current(); });
+      return;
+    }
     const id = setTimeout(() => setTimeLeft((x) => x - 1), 1000);
     return () => clearTimeout(id);
   }, [timeLeft, finished]);
@@ -303,15 +390,19 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
     }
   };
 
-  const submitResults = async () => {
-    if (finished) return;
+  // Results so far, including the card on screen once it is answered. Shared by the final submit and the autosave.
+  const resultsNow = () => {
     const finalResults = [...results];
     // ensure the current card's result is recorded
     if (state.solved && finalResults[idx] == null)
       finalResults[idx] = { solved: true, points: Math.max(0, cardMax - state.hintsShown * hintPenaltyUnit), hintsUsed: state.hintsShown, hintLevel: state.hintsShown, responseMs: Math.max(0, Date.now() - (state.startedAt || startRef.current)), triedIdxs: state.tried };
     else if (state.revealed && finalResults[idx] == null)
       finalResults[idx] = { solved: false, points: 0, hintsUsed: state.hintsShown, hintLevel: state.hintsShown, responseMs: Math.max(0, Date.now() - (state.startedAt || startRef.current)), triedIdxs: state.tried };
-    const answerDetails = cards.map((c, i) => {
+    return finalResults;
+  };
+  // One record per card. The final submit and the autosave both use it, so the server's
+  // expiry settle grades exactly what the final submit would have sent.
+  const buildAnswers = (finalResults) => cards.map((c, i) => {
       const r = finalResults[i] || { solved: false, points: 0, hintsUsed: 0, hintLevel: 0, responseMs: 0, triedIdxs: [] };
       const opts = c.options || [];
       const tried = Array.isArray(r.triedIdxs) ? r.triedIdxs : (r.selectedIdx != null ? [r.selectedIdx] : []);
@@ -349,7 +440,12 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
         stepResults: r.stepResults || [],
         changes: cardStates[i]?.changes || 0,
       };
-    });
+  });
+
+  const submitResults = async () => {
+    if (finished) return;
+    const finalResults = resultsNow();
+    const answerDetails = buildAnswers(finalResults);
     const solvedCount = finalResults.filter((r) => r && r.solved).length;
     const wrongCount = finalResults.filter((r) => r && !r.solved).length;
     // weighted total out of 100 (equal share per card, minus hint penalties)
@@ -603,6 +699,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
               <div style={{ textAlign: "end" }}>
                 <div className="small muted">{t("examTimer")}</div>
                 <div className="timer">{fmtT(timeLeft)}</div>
+                {runResumed && <div className="small muted">{lang === "fa" ? "ادامه جلسه قبلی — پیشرفت بازیابی شد" : "Resumed — progress restored"}</div>}
               </div>
             )}
             <button type="button" className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>

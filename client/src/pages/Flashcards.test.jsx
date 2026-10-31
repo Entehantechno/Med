@@ -34,12 +34,13 @@ describe('Flashcards confirm gate (R60)', () => {
     mount();
     await screen.findByText('Pick the beta letter');
     fireEvent.click(screen.getByText('Beta').closest('button'));
-    expect(mocks.post).not.toHaveBeenCalled();
+    // R64: the run-open POST (/exam/flash-session) is not grading; only /flashcards/check counts here.
+    const checks = () => mocks.post.mock.calls.filter(([path]) => path === '/flashcards/check');
+    expect(checks()).toHaveLength(0);
     expect(screen.queryByRole('button', { name: /nextCard/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'confirmAnswer' }));
-    await waitFor(() => expect(mocks.post).toHaveBeenCalledTimes(1));
-    expect(mocks.post.mock.calls[0][0]).toBe('/flashcards/check');
-    expect(mocks.post.mock.calls[0][1]).toMatchObject({ cardId: 1, optionIndex: 1, type: 'mcq' });
+    await waitFor(() => expect(checks()).toHaveLength(1));
+    expect(checks()[0][1]).toMatchObject({ cardId: 1, optionIndex: 1, type: 'mcq' });
   });
 
   it('does not show a next button until the answer is confirmed', async () => {

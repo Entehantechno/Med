@@ -119,8 +119,8 @@ export function AppProvider({ children }) {
     (async () => {
       if (getToken()) {
         try {
+          // R64: flags load once, in the effect below that runs when `user` is set (no second /flags call here).
           const { user } = await api.me(); setUser(user);
-          try { const { flags } = await api.get("/flags"); setFlags(flags || {}); } catch { /* */ }
         }
         catch { setToken(null); }
       }
