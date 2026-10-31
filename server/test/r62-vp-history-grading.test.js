@@ -51,8 +51,9 @@ describe("one question at a time", () => {
     expect(countStudentQuestions("درد کجاست از کی شروع شد")).toBe(1);
   });
 
-  it("three questions in one message: the patient says they are confused (fa and en)", async () => {
-    const fa = await patientReply({ caseData: {}, userText: "سن شما چند سال است؟ درد کجاست؟ از کی شروع شد؟", history: [], lang: "fa", prompts: {}, aiCfg: {} });
+  it("four questions in one message: the patient says they are confused (fa and en)", async () => {
+    // R66: up to three questions are answered; four is too many.
+    const fa = await patientReply({ caseData: {}, userText: "سن شما چند سال است؟ درد کجاست؟ از کی شروع شد؟ سیگار می‌کشید؟", history: [], lang: "fa", prompts: {}, aiCfg: {} });
     expect(fa.source).toBe("rule");
     expect(fa.text).toMatch(/گیج/);
     expect(fa.text).toMatch(/یک سؤال/);
