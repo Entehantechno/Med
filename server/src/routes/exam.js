@@ -526,7 +526,11 @@ r.post("/patient-reply", authRequired, async (req, res) => {
     if (refuseInactiveCase(res, req.user, caseId)) return;
     const { aiCfg, prompts } = engineContext(req, req.body);
     const canDeliver = interactionAccessGuard(req, res, caseId, classId, examId, acc, "chat");
-    const result = await patientReply({ caseData, userText: text, history, lang, prompts, aiCfg });
+    // The encounter id fixes the patient's name for this encounter; the student's name
+    // decides the honorific («آقای دکتر» / «خانم دکتر» / «دکتر»).
+    const seed = `${req.body?.sessionId || "none"}|${caseId}`;
+    const result = await patientReply({ caseData, userText: text, history, lang, prompts, aiCfg },
+      { seed, student: db.prepare("SELECT name_fa, name_en FROM users WHERE id=?").get(req.user.id) || {} });
     if (!canDeliver()) return;
     if (!String(result?.text || "").trim()) {
       return res.status(502).json({ error: "empty_reply", stage: "chat" });
