@@ -173,6 +173,74 @@ r.get("/", authRequired, (req, res) => {
   }
 });
 
+/* R65: one CSV row per logged event. `withClass` adds class_id and class_code
+   columns for exports that span several classes. Every value goes through
+   spreadsheetCell (formula-injection safe). */
+function conversationCsvLines(sessions, withClass) {
+  const esc = spreadsheetCell;
+  const header = ["session_id", "user_id", "student_no", "case_id", "attempt_id", "seq", "at_ms", "kind", "text", "detail", "started_at"];
+  if (withClass) header.unshift("class_id", "class_code");
+  const lines = [header.map(esc).join(",")];
+  for (const s of sessions) {
+    const events = db.prepare("SELECT seq,at_ms,kind,payload_json FROM vp_session_events WHERE session_id=? ORDER BY seq").all(s.id);
+    for (const e of events) {
+      let p = {}; try { p = JSON.parse(e.payload_json); } catch { /* */ }
+      const { text, query, tab, note, source, found, ...rest } = p;
+      const row = [
+        s.id, s.user_id, s.student_no || "", s.case_id, s.attempt_id || "",
+        e.seq, e.at_ms, e.kind,
+        (text ?? ""), JSON.stringify({ ...(query ? { query } : {}), ...(tab ? { tab } : {}), ...(note ? { note } : {}), ...(source ? { source } : {}), ...(found != null ? { found } : {}), ...rest }),
+        s.started_at,
+      ];
+      if (withClass) row.unshift(s.class_id, s.class_code || "");
+      lines.push(row.map(esc).join(","));
+    }
+  }
+  return lines;
+}
+
+/* R65: export ALL saved conversations (admin: every class; teacher: own classes in
+   the current university), or ONE class with ?classId=. Same access rules as the
+   class inbox. 409 when there is nothing recorded to export. */
+r.get("/conversation-log.csv", authRequired, requireRole("teacher", "admin"), (req, res) => {
+  try {
+    const isTeacher = req.user.role === "teacher";
+    const classId = Math.max(0, Math.floor(Number(req.query.classId) || 0));
+    let scopeSql = "";
+    const args = [];
+    if (isTeacher) {
+      scopeSql += " AND c.owner_id=? AND COALESCE(c.university_id,1)=?";
+      args.push(req.user.id, currentUniversityId(req.user) || 1);
+    }
+    let classCode = "";
+    if (classId) {
+      const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(classId);
+      if (!cl) return res.status(404).json({ error: "not found" });
+      if (!canManageClass(req.user, cl)) return res.status(403).json({ error: "not your class" });
+      scopeSql += " AND s.class_id=?";
+      args.push(cl.id);
+      classCode = cl.code || "";
+    }
+    const sessions = db.prepare(
+      `SELECT s.*, u.student_no, c.code AS class_code FROM vp_sessions s
+         JOIN classes c ON c.id = s.class_id
+         LEFT JOIN users u ON u.id = s.user_id
+        WHERE s.logging_enabled=1${scopeSql}
+        ORDER BY c.id, s.id`
+    ).all(...args);
+    if (!sessions.length) return res.status(409).json({ error: "no_recorded_conversations" });
+    const lines = conversationCsvLines(sessions, true);
+    audit(req, "conversation.export_all", "class", { classId: classId || null, sessions: sessions.length, scope: isTeacher ? "own" : "all" });
+    const day = new Date().toISOString().slice(0, 10);
+    const name = classId ? `conversation-log-${safeFilename(classCode, String(classId))}` : `conversation-log-all-${day}`;
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="${name}.csv"`);
+    res.send("\uFEFF" + lines.join("\n"));
+  } catch (e) {
+    res.status(500).json({ error: "conversation_export_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
+  }
+});
+
 /* Inbox of saved virtual-patient chats for teacher/admin validation.
    MUST sit before /:id so "conversations" is not parsed as a class id. */
 r.get("/conversations", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -1253,7 +1321,8 @@ r.get("/:id/attempts/:attemptId/session-log", authRequired, requireRole("teacher
 
 /* ---- CSV export of every logged conversation in a class ----
    One row per event, so the file can be pivoted in any stats package. Columns
-   are fixed-width ASCII so no encoding surprises in Excel/SPSS/R. */
+   are fixed-width ASCII so no encoding surprises in Excel/SPSS/R. The row
+   builder is shared with the all-classes export below (R65). */
 r.get("/:id/conversation-log.csv", authRequired, requireRole("teacher", "admin"), (req, res) => {
   try {
   const cl = db.prepare("SELECT * FROM classes WHERE id=?").get(req.params.id);
@@ -1264,27 +1333,11 @@ r.get("/:id/conversation-log.csv", authRequired, requireRole("teacher", "admin")
   ).get(cl.id);
   if (!cl.log_transcript && !hasLogged) return res.status(409).json({ error: "logging_disabled" });
 
-  const esc = spreadsheetCell;
-  const header = ["session_id","user_id","student_no","case_id","attempt_id","seq","at_ms","kind","text","detail","started_at"];
-  const lines = [header.map(esc).join(",")];
-
   const sessions = db.prepare(
     `SELECT s.*, u.student_no FROM vp_sessions s LEFT JOIN users u ON u.id=s.user_id
-      WHERE s.class_id=? AND s.logging_enabled=1 ORDER BY s.id, 1`
+      WHERE s.class_id=? AND s.logging_enabled=1 ORDER BY s.id`
   ).all(cl.id);
-  for (const s of sessions) {
-    const events = db.prepare("SELECT seq,at_ms,kind,payload_json FROM vp_session_events WHERE session_id=? ORDER BY seq").all(s.id);
-    for (const e of events) {
-      let p = {}; try { p = JSON.parse(e.payload_json); } catch { /* */ }
-      const { text, query, tab, note, source, found, ...rest } = p;
-      lines.push([
-        s.id, s.user_id, s.student_no || "", s.case_id, s.attempt_id || "",
-        e.seq, e.at_ms, e.kind,
-        (text ?? ""), JSON.stringify({ ...(query ? { query } : {}), ...(tab ? { tab } : {}), ...(note ? { note } : {}), ...(source ? { source } : {}), ...(found != null ? { found } : {}), ...rest }),
-        s.started_at,
-      ].map(esc).join(","));
-    }
-  }
+  const lines = conversationCsvLines(sessions, false);
   audit(req, "class.conversation_export", "class", { id: cl.id, sessions: sessions.length });
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
   res.setHeader("Content-Disposition", `attachment; filename="conversation-log-${safeFilename(cl.code, String(cl.id))}.csv"`);

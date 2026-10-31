@@ -393,6 +393,27 @@ function staffExamRequest(n) {
   return STAFF_EXAM_FA.test(s) || STAFF_EXAM_EN.test(s);
 }
 
+/* R65: a bare list of exam terms. Two or more terms (\"vitals and heart\"), or one
+   vital-sign term (\"heart rate please\"). Each part must be a whole term. */
+const EXAM_VITAL_TERM = /^(?:vitals?|vital signs?|علائم حیاتی|ویتال(?:[\u200c ]?ساین)?ها?|blood pressure|فشار خون|bp|pulse|نبض|heart rate|temperature|دما|respiratory rate|oxygen saturation|spo2)$/;
+const EXAM_SYSTEM_TERM = /^(?:heart|قلب|lungs?|ریه(?:[\u200c ]?ها)?|chest|سینه|قفسه سینه|abdomen|abdominal|شکم|neck|گردن|skin|پوست|neuro(?:logical)?|عصبی|reflexes|رفلکس|legs?|پاها|اندام[\u200c ]?ها|اندام)$/;
+/* R65: a single exam term on its own ("شکم", "heart", "علائم حیاتی"). */
+export function isBareExamTerm(text) {
+  const core = norm(text).replace(/^(?:please|لطفا|لطفاً)\s+/, "").replace(/\s+(?:please|لطفا|لطفاً)$/, "")
+    .replace(/[\s.!?؟،,]+$/, "").trim();
+  return EXAM_VITAL_TERM.test(core) || EXAM_SYSTEM_TERM.test(core);
+}
+function bareExamTermList(n) {
+  const core = String(n || "").trim()
+    .replace(/^(?:please|لطفا|لطفاً)\s+/, "").replace(/\s+(?:please|لطفا|لطفاً)$/, "")
+    .replace(/[\s.!?؟،,]+$/, "");
+  if (!core) return false;
+  const parts = core.split(/\s*(?:\band\b|&|،|,|\s+و\s+)\s*/).map((x) => x.trim()).filter(Boolean);
+  if (!parts.length || parts.length > 4) return false;
+  if (!parts.every((p) => EXAM_VITAL_TERM.test(p) || EXAM_SYSTEM_TERM.test(p))) return false;
+  return parts.length > 1 || EXAM_VITAL_TERM.test(parts[0]);
+}
+
 export function detectExamRequest(userText) {
   const n = norm(userText);
   if (!n) return false;
@@ -413,6 +434,9 @@ export function detectExamRequest(userText) {
       || /(high blood pressure|hypertension).{0,20}(do you|have you|history)/.test(n)) {
     return false;
   }
+  // R65: a bare list of exam terms addressed to staff ("vitals and heart",
+  // "heart rate please", "علائم حیاتی و قلب"). Patient questions are not lists of terms.
+  if (bareExamTermList(n)) return true;
   // R64: a bare English exam request with an optional "please" ("exam please", "physical please").
   if (/^\s*(?:please\s+)?(?:full\s+|complete\s+)?(?:physical|exam(?:ination)?)(?:\s+please)?[\s.!?]*$/i.test(n)) return true;
   // Short station commands the student types as a one-word request.
@@ -433,7 +457,7 @@ export function detectExamRequest(userText) {
   return fa || en || looseExamRequest(n);
 }
 
-const LOOSE_EXAM_FA = /معاین|سمع|لمس\s*(?:کن|کنید|کنین|کنم)|ضربه\s*(?:بزن|بزنید|بزنین)|پرکاس|پالپاس|علائم\s*حیاتی|(?:نبض|فشار(?:\s*خون)?[\u0600-\u06FF]{0,3}|دما|تب|تنفس|اکسیژن)[^؟?]{0,24}(?:بگیر|بگیرید|بگیرین|اندازه|بسنج|بسنجید|چک\s*کن|بررسی\s*کن)/;
+const LOOSE_EXAM_FA = /معاین|سمع|لمس\s*(?:کن|کنید|کنین|کنم)|(?:حس|رفلکس|قدرت\s*عضلان|مردمک)[^؟?]{0,24}(?:چک|بررسی|تست|بسنج|بسنجید|امتحان)\s*(?:کن|کنید|کنین|کنم)|ضربه\s*(?:بزن|بزنید|بزنین)|پرکاس|پالپاس|علائم\s*حیاتی|(?:نبض|فشار(?:\s*خون)?[\u0600-\u06FF]{0,3}|دما|تب|تنفس|اکسیژن)[^؟?]{0,24}(?:بگیر|بگیرید|بگیرین|اندازه|بسنج|بسنجید|چک\s*کن|بررسی\s*کن)/;
 const LOOSE_EXAM_EN = /\b(?:palpat\w*|percuss\w*|auscultat\w*)\b|^\s*(?:examine|exam)\b[\s.!?]*$|\b(?:please|can you|could you|would you|let'?s|i (?:want|need|would like) (?:to )?|go ahead and|perform|do (?:a|an|the))\s+(?:\w+\s+){0,3}(?:examin\w*|exam\b|listen to|check (?:his|her|the|their|your)?\s*(?:bp|pulse|vitals?|temperature|heart|chest))|\b(?:check|take|measure|record)\s+(?:his|her|the|their|your|patient'?s)?\s*(?:bp|blood pressure|pulse|vitals?|vital signs?|temperature|respirat\w*|heart rate|spo2|oxygen)\b/i;
 function looseExamRequest(n) {
   // Interrogative patient questions about symptoms stay with the patient:
@@ -535,8 +559,9 @@ export function teacherExamReply(caseData, lang, organs, scope = null) {
     out += say(`معاینهٔ ${label} را انجام دادم؛ ${parts.join("؛ ")}.`,
                `I examined the ${label}; ${parts.join("; ")}.`);
   }
-  if (wantVitals && vit) out += " " + say(`علائم حیاتی: ${vit}.`, `Vital signs: ${vit}.`);
-  else if (wantVitals) out += " " + say(`${normalExamLine(["vitals"], "fa")}.`, `${normalExamLine(["vitals"], "en")}.`);
+  const sep = out.endsWith(" ") ? "" : " ";
+  if (wantVitals && vit) out += sep + say(`علائم حیاتی: ${vit}.`, `Vital signs: ${vit}.`);
+  else if (wantVitals) out += sep + say(`${normalExamLine(["vitals"], "fa")}.`, `${normalExamLine(["vitals"], "en")}.`);
   return out;
 }
 
@@ -551,15 +576,15 @@ const EXAM_SYSTEMS = [
   { key: "general",  fa: "ظاهر عمومی", en: "general appearance",
     re: /(ظاهر عمومی|وضعیت عمومی|general appearance|general (exam|look|condition)|appearance|رنگ پریده|pallor|cyanos|سیانوز|زردی|icter|jaundice|ادم|edema|لنفادنوپاتی|lymph)/ },
   { key: "heent",    fa: "سر و گردن", en: "head & neck",
-    re: /(سر و گردن|گردن|تیروئید|thyroid|\bneck\b|heent|head and neck|jvp|ورید ژوگولار|مردمک|pupil|چشم|\beyes?\b|گوش|\bears?\b|حلق|throat|pharynx|دهان|\bmouth\b|oral)/ },
+    re: /(سر و گردن|گردن|تیروئید|thyroid|\bneck\b|heent|head and neck|jvp|ورید ژوگولار|مردمک|pupil|چشم|\beyes?\b|گوش(?![\u200c\s]*(?:کن|کنید|کنین|کنم|بده|بدید|بدین|بدم|بدهید|بشنو|بشنوید|بشنوم))|\bears?\b|حلق|throat|pharynx|دهان|\bmouth\b|oral)/ },
   { key: "chest",    fa: "ریه و قفسهٔ سینه", en: "lungs / chest",
     re: /(ریه|ریوی|قفسه سینه|قفسهٔ سینه|تنفسی|رال|ویزینگ|کراکل|رطوبت|خس خس|خس‌خس|کاهش صدا|ماتیته|crepit|dullness|\blungs?\b|pulmonary|respiratory exam|\bchest\b|breath sounds?|crackles?|wheez|rales|percussion of (the )?chest|thorax)/ },
   { key: "heart",    fa: "قلب", en: "cardiovascular",
-    re: /(قلب|قلبی|سوفل|صدای قلب|گالوپ|gallop|\brub\b|فرکشن|s3|s4|\bheart\b|cardiac|cardiovascular|murmur|heart sounds?|precordi|apex beat|peripheral pulses?|نبض محیطی)/ },
+    re: /(قلب|قلبی|سوفل|صدای قلب|گالوپ|gallop|\brub\b|فرکشن|s3|s4|\bheart\b(?!\s*rate)|cardiac|cardiovascular|murmur|heart sounds?|precordi|apex beat|peripheral pulses?|نبض محیطی)/ },
   { key: "abdomen",  fa: "شکم", en: "abdomen",
     re: /(شکم|شکمی|کبد|طحال|تندرنس|ریباند|گاردینگ|مورفی|مک ?برنی|صدای روده|\babdom|\bbelly\b|hepat|spleen|splen|bowel sounds?|rebound|guarding|murphy|mcburney|rovsing|psoas|tenderness|\bruq\b|\brlq\b|\bluq\b|\bllq\b|epigastr|flank|\bcva\b)/ },
   { key: "neuro",    fa: "عصبی", en: "neurological",
-    re: /(نورولوژ|عصبی|رفلکس|قدرت عضلان|حس|اعصاب کرانیال|گلاسکو|\bgcs\b|neuro|reflex|cranial nerves?|motor|sensory|gait|mental status|babinski|romberg|cerebell|nystagmus)/ },
+    re: /(نورولوژ|عصبی|رفلکس|قدرت عضلان|(?<![\u0600-\u06FF])حس(?:ی|ها|های)?(?![\u0600-\u06FF])|اعصاب کرانیال|گلاسکو|\bgcs\b|neuro|reflex|cranial nerves?|motor|sensory|gait|mental status|babinski|romberg|cerebell|nystagmus)/ },
   { key: "msk",      fa: "اسکلتی‌عضلانی و اندام‌ها", en: "musculoskeletal / extremities",
     re: /(اندام|مفصل|مفاصل|زانو|ستون فقرات|کمر|extremit|\blimbs?\b|joint|\bknee\b|\bhip\b|spine|\bback\b|musculoskeletal|\bmsk\b|range of motion|straight leg|calf|\blegs?\b|\barms?\b)/ },
   { key: "skin",     fa: "پوست", en: "skin",
@@ -591,6 +616,39 @@ export function askWhichExam(lang) {
   return lang === "fa"
     ? `استاد نظارت: در این ایستگاه «معاینهٔ کامل» انجام نمی‌دهیم؛ دقیقاً کدام معاینه را می‌خواهی؟ هر بار یک سیستم یا یک مانور را نام ببر (مثلاً: ${list}).`
     : `Supervisor: we don't do a blanket "full exam" at this station — which examination exactly? Name one system or manoeuvre at a time (e.g. ${list}).`;
+}
+
+/* R65: the instructor reports ONE examination per reply. Vital signs count as one
+   examination. The keys are the requested EXAM_SYSTEMS keys plus the auscultation
+   organ (lung -> chest, heart -> heart). */
+export function requestedExamKeys(scope, organs = []) {
+  const auscSys = (organs || []).map((o) => (o === "lung" ? "chest" : o === "heart" ? "heart" : null)).filter(Boolean);
+  return [...new Set([...(scope?.systems || []), ...auscSys])];
+}
+/* "Which one first?" question. Lists only the examinations the student named,
+   and reports none of them. */
+export function askOneExamFirst(lang, labels) {
+  const list = [...new Set(labels.filter(Boolean))].join(lang === "fa" ? "، " : ", ");
+  return lang === "fa"
+    ? `استاد نظارت: هر بار فقط یک معاینه را گزارش می‌کنم. کدام‌یک را اول می‌خواهی: ${list}؟`
+    : `Supervisor: I report one examination at a time. Which one first: ${list}?`;
+}
+/* Output guard for the model path: true when the reply volunteers a system the
+   student did not ask for. vitals and the generic appearance block are ignored. */
+export function namesOtherSystem(text, keys) {
+  const n = norm(text);
+  return EXAM_SYSTEMS.some((d) => d.key !== "vitals" && d.key !== "general" && !keys.includes(d.key) && d.re.test(n));
+}
+
+/* R65: the chart the supervising-teacher model may read for one request. Only the
+   requested system's findings and, when vitals were asked, the vitals. */
+export function examModelChart(caseData, lang, keys = [], sounds = []) {
+  const reqSystems = (keys || []).filter((k) => k !== "vitals");
+  return {
+    exam_findings: reqSystems.length ? (scopedExamFindings(pick(caseData, "exam", lang), reqSystems).text || null) : null,
+    vitals: (keys || []).includes("vitals") ? (caseData?.vitals || null) : null,
+    available_recordings: (sounds || []).map((s) => s.kind),
+  };
 }
 
 /* Hard output guard: whatever the model says, the case's final diagnosis text
@@ -694,11 +752,30 @@ export async function patientReply({ caseData, userText, history = [], lang, pro
     return { text: confusedQuestionsReply(lang), source: "rule", mode: "patient", clarify: true };
   }
   const isAusc = detectAuscultation(userText);
-  const isExam = detectExamRequest(userText) || !!isAusc;
+  // R65: after the instructor's "which one first?" (or any exam answer), a student who
+  // replies with one system word ("شکم", "heart") is continuing the exam, not chatting
+  // with the patient.
+  const lastTurn = history[history.length - 1];
+  const continuesExam = lastTurn?.mode === "exam" && isBareExamTerm(userText);
+  const isExam = detectExamRequest(userText) || !!isAusc || continuesExam;
   const sounds = isAusc ? pickAuscultationSounds(caseData, isAusc.organs) : [];
   const audioPayload = sounds.length ? { audio: sounds } : {};
 
   const scope = isExam ? detectExamScope(userText) : null;
+  const keys = isExam ? requestedExamKeys(scope, isAusc?.organs) : [];
+  const keyLabel = (k) => examSystemLabel(k, lang);
+  // R65: one examination per reply. Auscultation with no organ named ("سمع") asks
+  // lungs or heart, and never plays both recordings or reports vitals.
+  if (isExam && isAusc && !isAusc.organs.length) {
+    const sayLung = lang === "fa" ? "سمع ریه" : "lung auscultation";
+    const sayHeart = lang === "fa" ? "سمع قلب" : "heart auscultation";
+    return { text: askOneExamFirst(lang, [sayLung, sayHeart, ...keys.map(keyLabel)]), source: "rule", mode: "exam", clarify: true };
+  }
+  // R65: two or more different examinations in one message ("heart and lungs",
+  // "vitals and heart") -> ask which one first. Nothing is reported yet.
+  if (isExam && keys.length > 1) {
+    return { text: askOneExamFirst(lang, keys.map(keyLabel)), source: "rule", mode: "exam", clarify: true };
+  }
   // R64: a request that names no system or manoeuvre (a blanket "full exam", "examine
   // the patient", "do the physical") is never answered with a guessed finding or with
   // vitals. The attending asks which exam exactly, in every language and both roles.
@@ -732,11 +809,10 @@ export async function patientReply({ caseData, userText, history = [], lang, pro
           : `Non-negotiable rules: 1) Speak ONLY from the EXAM FINDINGS and VITALS below and never invent anything. 2) NEVER state or hint at the final diagnosis or disease name — even if asked directly, say reaching the diagnosis is the student's job. 3) Keep it short (2-4 sentences). 4) Report ONLY the part the student asked for${scopeLabels.length ? ` (this request: ${scopeLabels.join(", ")})` : ""}; at most one organ system per reply, never volunteer other systems' findings. 5) If the data has no finding for the requested part, report it as a normal examination; never say that anything is missing, unrecorded or unavailable. 6) If the student asks for a "full exam", ask which examination exactly.`);
         const sys = (adminTeacher.trim() ? adminTeacher + "\n\n" : "") + builtinTeacher + "\n\n" + constraints +
           "";
-        const chart = {
-          exam_findings: pick(caseData, "exam", lang) || null,
-          vitals: caseData?.vitals || null,
-          available_recordings: sounds.map((s) => s.kind),
-        };
+        // R65: the model gets ONLY the requested system's findings and, when vital
+        // signs were asked, the vitals. The full exam text used to be sent here, so
+        // the model could read out every system at once.
+        const chart = examModelChart(caseData, lang, keys, sounds);
         const msgs = [{ role: "system", content: sys + "\n\n" +
           (lang === "fa" ? "داده‌های معاینه (فقط بر همین اساس پاسخ بده):\n" : "EXAM DATA (answer only from this):\n") +
           JSON.stringify(chart) }];
@@ -748,7 +824,15 @@ export async function patientReply({ caseData, userText, history = [], lang, pro
         }
         msgs.push({ role: "user", content: userText });
         const out = await callRealLLM(aiCfg, msgs, { temperature: 0.4 });
-        if (out) return { text: redactDiagnosis(out.trim(), caseData, lang), source: "llm", mode: "exam", ...audioPayload };
+        if (out) {
+          const clean = redactDiagnosis(out.trim(), caseData, lang);
+          // R65 output guard: a reply that volunteers another system falls back to
+          // the deterministic reply for the requested part only.
+          if (namesOtherSystem(clean, keys)) {
+            return { text: teacherExamReply(caseData, lang, isAusc?.organs, scope), source: "chart", mode: "exam", status: "scope-guard", ...audioPayload };
+          }
+          return { text: clean, source: "llm", mode: "exam", ...audioPayload };
+        }
         throw new Error("AI returned an empty response");
       } catch (e) {
         if (opts.throwOnError) throw e;

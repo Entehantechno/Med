@@ -3835,7 +3835,12 @@ function ConversationDetail({ detail, onBack }) {
 function VpConversations() {
   const { t, lang } = useApp();
   const fa = lang === "fa";
+  const toast = useToast();
   const [rows, setRows] = useState(null);
+  // R65: export every saved conversation, or one class, as one CSV for the instructors.
+  const [exportClass, setExportClass] = useState("");
+  const [exportClasses, setExportClasses] = useState([]);
+  const [exporting, setExporting] = useState(false);
   const [detail, setDetail] = useState(null);
   const [busy, setBusy] = useState(false);
   const [loadErr, setLoadErr] = useState("");
@@ -3853,6 +3858,31 @@ function VpConversations() {
     }).catch((e) => { setLoadErr(String(e.message || e)); setRows({ __err: true }); });
   };
   useEffect(() => { load(); }, []);
+  // The class picker lists the classes this user may export (teacher: own; admin: all).
+  useEffect(() => {
+    api.get("/classes").then((d) => setExportClasses(Array.isArray(d) ? d : (Array.isArray(d?.classes) ? d.classes : []))).catch(() => {});
+  }, []);
+  const exportCsv = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const qs = exportClass ? `?classId=${encodeURIComponent(exportClass)}` : "";
+      const r = await fetch(`/api/classes/conversation-log.csv${qs}`, { credentials: "same-origin", headers: { Authorization: `Bearer ${getToken()}` } });
+      if (r.status === 409) { toast(fa ? "هیچ گفت‌وگوی ثبت‌شده‌ای برای خروجی وجود ندارد." : "No recorded conversations to export."); return; }
+      if (r.status === 403) { toast(fa ? "دسترسی به خروجی این کلاس ندارید." : "You cannot export this class."); return; }
+      if (!r.ok) { toast(fa ? "خروجی گفت‌وگوها در دسترس نیست." : "Conversation export is not available."); return; }
+      const blob = await r.blob();
+      const cls = exportClasses.find((c) => String(c.id) === String(exportClass));
+      const name = exportClass ? `conversation-log-${cls?.code || exportClass}.csv` : `conversation-log-all-${new Date().toISOString().slice(0, 10)}.csv`;
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob); a.download = name; a.click();
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      toast(fa ? "خروجی گفت‌وگوها انجام نشد." : "Conversation export failed.");
+    } finally {
+      setExporting(false);
+    }
+  };
   const open = async (row) => {
     setBusy(true);
     try { setDetail(await api.get(`/classes/${row.class_id}/attempts/${row.id}`)); }
@@ -3877,6 +3907,26 @@ function VpConversations() {
         {fa
           ? "اینجا همه گفت‌وگوهای ذخیره‌شدهٔ کلاس‌هاست: حرف دانشجو، بیمار مجازی، استاد مجازی (معاینه)، درخواست آزمایش/تصویربرداری و درسنامه. برای اعتبارسنجی نمره باز کنید."
           : "Every saved class conversation: student, virtual patient, supervising teacher (exam), lab/imaging orders and microlearning. Open one to validate the grade."}
+      </div>
+      {/* R65: one CSV of every saved conversation (all of yours, or one class). */}
+      <div className="row-between mb16" style={{ gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        <div className="row" style={{ gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <select value={exportClass} onChange={(e) => setExportClass(e.target.value)}
+                  aria-label={fa ? "کلاس برای خروجی" : "Class to export"} style={{ minWidth: 220 }}>
+            <option value="">{fa ? "همه گفت‌وگوهای ذخیره‌شده" : "All saved conversations"}</option>
+            {exportClasses.map((c) => (
+              <option key={c.id} value={c.id}>{c.code ? `${c.code} — ` : ""}{biField(c, "name", lang) || c.name_en || c.name_fa || `#${c.id}`}</option>
+            ))}
+          </select>
+          <button type="button" className="btn btn-ghost btn-sm" disabled={exporting} onClick={exportCsv}>
+            <Icon name="download" size={14} /> {exporting
+              ? (fa ? "در حال آماده‌سازی…" : "Preparing…")
+              : exportClass
+                ? (fa ? "خروجی گفت‌وگوهای این کلاس (CSV)" : "Export this class (CSV)")
+                : (fa ? "خروجی همه گفت‌وگوها (CSV)" : "Export all conversations (CSV)")}
+          </button>
+        </div>
+        <span className="small muted">{fa ? "فایل CSV برای ارائه به اساتید؛ هر ردیف یک رویداد با زمان." : "CSV for the instructors; one timestamped event per row."}</span>
       </div>
       {rows?.__err || loadErr ? <div className="empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری گفت‌وگوها شکست خورد" : "Could not load conversations")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setRows(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div> : rows == null ? <Spinner /> : rows.length === 0 ? (
         <div className="small muted center" style={{ padding: 24 }}>{fa ? "هنوز گفت‌وگوی ذخیره‌شده‌ای نیست. ثبت گفت‌وگو را در تنظیمات کلاس روشن بگذارید." : "No saved conversations yet. Keep conversation logging on in the class settings."}</div>
