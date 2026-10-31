@@ -261,7 +261,10 @@ function planTopic(topic, cards, prefix = {}) {
   });
   const subjectFa = topic.name_fa;
   const subjectEn = topic.name_en;
-  const syllabus = syllabusFor(topic.slug);
+  // Basic-science topics (anatomy, physio, …) have no syllabus. Use an empty
+  // list so their cards fall through to the booklet/subject fallback instead
+  // of crashing the whole curation run ("reading 'find'" on null).
+  const syllabus = syllabusFor(topic.slug) || [];
 
   // 1) classify into syllabus chapters (fallback: booklet chapter, then subject)
   const buckets = new Map();   // key -> { fa, en, ord, cards }

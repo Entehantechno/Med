@@ -279,16 +279,27 @@ export function questionsByConcept({ concept, mindmapSlug = null, lang = "fa", l
   });
 }
 
+// Input errors carry an HTTP status so errorHandler answers 4xx, not 500.
+function httpError(status, message) {
+  const e = new Error(message);
+  e.status = status;
+  return e;
+}
+const badRequest = (msg) => httpError(400, msg);
+const notFound = (msg) => httpError(404, msg);
+const conflict = (msg) => httpError(409, msg);
+const SLUG_RE = /^[a-z0-9-]+$/;
+
 // Admin: upsert mindmap
 export function upsertMindmap(data) {
   const now = new Date().toISOString();
   const graphStr = typeof data.graph_json === "string" ? data.graph_json : JSON.stringify(data.graph_json || { nodes: [], edges: [] });
   // validation
-  if (!data.slug || !/^[a-z0-9-]+$/.test(data.slug)) throw new Error("slug must be [a-z0-9-]");
-  if (!data.title_fa || !data.title_en) throw new Error("titles required");
+  if (!data.slug || !SLUG_RE.test(String(data.slug))) throw badRequest("slug must be [a-z0-9-]");
+  if (!data.title_fa || !data.title_en) throw badRequest("titles required");
   let graph = null;
-  try { graph = JSON.parse(graphStr); } catch { throw new Error("invalid graph_json"); }
-  if (!graph.nodes || !Array.isArray(graph.nodes)) throw new Error("graph.nodes required");
+  try { graph = JSON.parse(graphStr); } catch { throw badRequest("invalid graph_json"); }
+  if (!graph || !graph.nodes || !Array.isArray(graph.nodes)) throw badRequest("graph.nodes required");
   const existing = db.prepare("SELECT id FROM mindmap_bank WHERE slug=?").get(data.slug);
   if (existing) {
     db.prepare(`
@@ -324,8 +335,9 @@ export function deleteMindmap(slug, actor="admin") {
 
 export function duplicateMindmap(slug, newSlug) {
   const r = db.prepare("SELECT * FROM mindmap_bank WHERE slug=?").get(slug);
-  if (!r) throw new Error("not found");
-  if (db.prepare("SELECT 1 FROM mindmap_bank WHERE slug=?").get(newSlug)) throw new Error("new slug exists");
+  if (!r) throw notFound("not found");
+  if (!newSlug || !SLUG_RE.test(String(newSlug))) throw badRequest("slug must be [a-z0-9-]");
+  if (db.prepare("SELECT 1 FROM mindmap_bank WHERE slug=?").get(newSlug)) throw conflict("new slug exists");
   const now = new Date().toISOString();
   const info = db.prepare(`
     INSERT INTO mindmap_bank (slug,title_fa,title_en,type,system,level,summary_fa,summary_en,graph_json,cover_url,is_premium,status,created_at,updated_at)
@@ -334,12 +346,18 @@ export function duplicateMindmap(slug, newSlug) {
   return db.prepare("SELECT * FROM mindmap_bank WHERE id=?").get(info.lastInsertRowid);
 }
 
-export function linkQuestion({ question_id, mindmap_slug, node_slug = null, weight = 1 }) {
+export function linkQuestion({ question_id, mindmap_slug, node_slug = null, weight = 1 } = {}) {
+  const qid = Number(question_id);
+  if (!Number.isInteger(qid) || qid <= 0) throw badRequest("question_id required");
+  if (!mindmap_slug || typeof mindmap_slug !== "string") throw badRequest("mindmap_slug required");
+  const w = weight === undefined || weight === null || weight === "" ? 1 : Number(weight);
+  if (!Number.isFinite(w)) throw badRequest("weight must be a number");
+  if (!db.prepare("SELECT 1 FROM mindmap_bank WHERE slug=?").get(mindmap_slug)) throw notFound("mindmap not found");
   db.prepare(`
     INSERT INTO question_mindmap_links (question_id,mindmap_slug,node_slug,weight)
     VALUES (?,?,?,?)
     ON CONFLICT(question_id,mindmap_slug) DO UPDATE SET node_slug=excluded.node_slug, weight=excluded.weight
-  `).run(question_id, mindmap_slug, node_slug, weight);
+  `).run(qid, mindmap_slug, node_slug || null, w);
 }
 
 export function unlinkQuestion({ question_id, mindmap_slug }) {
@@ -372,7 +390,7 @@ export function exportCSV(lang="fa") {
 }
 export function importCSV(csv) {
   const lines = csv.split(/\r?\n/).filter(Boolean);
-  if (lines.length < 2) throw new Error("empty csv");
+  if (lines.length < 2) throw badRequest("empty csv");
   const header = lines[0].split(",").map(h=>h.replace(/^"|"$/g,"").trim());
   let imported=0, errors=[];
   for (let i=1;i<lines.length;i++) {

@@ -200,10 +200,14 @@ export function errorHandler(err, req, res, next) {
   const status = given >= 400 && given < 600 ? given : 500;
   if (status >= 500) console.error("[error]", req.method, req.path, err && err.stack ? err.stack : err);
   if (res.headersSent) return next(err);
+  // 4xx messages are deliberate validation texts written by us (e.g. "slug must
+  // be [a-z0-9-]") and the user needs them to fix the request, so they are shown
+  // in production too. 5xx details stay hidden outside development.
   const dev = process.env.NODE_ENV !== "production";
+  const detail = String(err && err.message || err);
   res.status(status).json({
     error: "server_error",
-    message: dev ? String(err && err.message || err) : "Something went wrong.",
+    message: dev || status < 500 ? detail : "Something went wrong.",
   });
 }
 

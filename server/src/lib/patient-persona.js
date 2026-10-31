@@ -59,7 +59,10 @@ export function genderFromStudentName({ name_fa, name_en } = {}) {
     if (MALE_FA.includes(fa)) return "male";
     if (FEMALE_FA.includes(fa)) return "female";
   }
-  const en = firstToken(name_en).toLowerCase();
+  // Some accounts keep the English name in the Persian field ("Maryam Hosseini").
+  // A Latin-script name_fa is read as English, not dropped.
+  const faIsLatin = /^[A-Za-z]/.test(String(name_fa || "").trim());
+  const en = (firstToken(name_en) || (faIsLatin ? String(name_fa).trim().split(/\s+/)[0] : "")).toLowerCase();
   if (en) {
     if (MALE_EN.some((n) => n.toLowerCase() === en)) return "male";
     if (FEMALE_EN.some((n) => n.toLowerCase() === en)) return "female";
