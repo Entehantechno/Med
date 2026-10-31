@@ -1299,14 +1299,15 @@ export function mockPatientReply(c, userText, lang) {
   // topics because these words appear in no other branch's keywords.
   if (containsAny(q, ["چند سالتان", "چند ساله", "سن شما", "سنتان", "چه سنی", "چند سال دارید", "how old", "your age", "age are you"])) {
     const age = Number(c?.age);
-    if (!Number.isFinite(age) || age <= 0) return say("سنم در پرونده ذکر نشده دکتر.", "My age is not recorded in my chart, doctor.");
+    // A real patient never says the chart lacks a fact: when the value is unknown, they hesitate.
+    if (!Number.isFinite(age) || age <= 0) return say("ببخشید دکتر، الان دقیق یادم نیست.", "Sorry doctor, I can't recall that exactly right now.");
     return say(`${age} ساله هستم دکتر.`, `I am ${age} years old, doctor.`);
   }
   if (containsAny(q, ["جنسیت", "مرد هستید", "زن هستید", "خانم هستید", "آقا هستید", "your sex", "your gender", "are you male", "are you female"])) {
     const sex = String(c?.sex || "").toLowerCase();
     if (sex === "male") return say("مرد هستم دکتر.", "I am male, doctor.");
     if (sex === "female") return say("زن هستم دکتر.", "I am female, doctor.");
-    return say("جنسیتم در پرونده ذکر نشده دکتر.", "My sex is not recorded in my chart, doctor.");
+    return say("ببخشید دکتر، الان دقیق یادم نیست.", "Sorry doctor, I can't recall that exactly right now.");
   }
 
   // Relief and aggravating factors are answered from the chart's history text.

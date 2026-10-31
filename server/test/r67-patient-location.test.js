@@ -23,8 +23,14 @@ describe("R67 patient answers: radiation, age, sex, relief, history", () => {
     expect(mockPatientReply(fullCase, "چند سالتان است؟", "fa")).toContain("58");
     expect(mockPatientReply(fullCase, "How old are you?", "en")).toContain("58 years old");
   });
-  it("a chart without an age says so instead of inventing one", () => {
-    expect(mockPatientReply({ ...chestCase }, "چند سالتان است؟", "fa")).toMatch(/ذکر نشده/);
+  it("a chart without an age: the patient hesitates, never invents a number and never says 'not recorded'", () => {
+    const a = mockPatientReply({ ...chestCase }, "چند سالتان است؟", "fa");
+    expect(a).not.toMatch(/\d/);
+    expect(a).not.toMatch(/ذکر نشده|پرونده|record|chart/i);
+  });
+  it("a chart without a sex: the patient hesitates, never says 'not recorded'", () => {
+    const a = mockPatientReply({ ...chestCase }, "جنسیت شما چیست؟", "fa");
+    expect(a).not.toMatch(/ذکر نشده|پرونده/);
   });
   it("sex is answered from the chart", () => {
     expect(mockPatientReply(fullCase, "جنسیت شما چیست؟", "fa")).toContain("مرد");
