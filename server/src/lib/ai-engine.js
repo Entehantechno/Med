@@ -1292,12 +1292,42 @@ export function mockPatientReply(c, userText, lang) {
     return field("chief").split(/(?:\s+(?:for|since|with)\s+|\s+از\s+|[،,]|\s+همراه\s+|\s+با انتشار\s+)/i)[0].trim() || normalAnswer;
 
   // Radiation must precede location: "anywhere" contains "where".
-  if (containsAny(q, ["انتشار", "تیر", "radiat", "بازو", "شانه", "فک", "پشت", "jaw", "arm", "shoulder", "back"]))
-    return excerpt(/انتشار|تیر|radiat|shoot/);
-  if (containsAny(q, ["کی شروع", "چه زمانی", "از کی", "onset", "when", "how long", "چند ساعت", "دیشب"]))
+  if (containsAny(q, ["انتشار", "منتشر", "منتقل", "تابش", "تیر", "radiat", "spread", "بازو", "شانه", "فک", "پشت", "jaw", "arm", "shoulder", "back"]))
+    return excerpt(/انتشار|منتشر|منتقل|تابش|تیر|radiat|spread|shoot/);
+
+  // Age and sex come from the chart card, never invented. Checked before the other
+  // topics because these words appear in no other branch's keywords.
+  if (containsAny(q, ["چند سالتان", "چند ساله", "سن شما", "سنتان", "چه سنی", "چند سال دارید", "how old", "your age", "age are you"])) {
+    const age = Number(c?.age);
+    if (!Number.isFinite(age) || age <= 0) return say("سنم در پرونده ذکر نشده دکتر.", "My age is not recorded in my chart, doctor.");
+    return say(`${age} ساله هستم دکتر.`, `I am ${age} years old, doctor.`);
+  }
+  if (containsAny(q, ["جنسیت", "مرد هستید", "زن هستید", "خانم هستید", "آقا هستید", "your sex", "your gender", "are you male", "are you female"])) {
+    const sex = String(c?.sex || "").toLowerCase();
+    if (sex === "male") return say("مرد هستم دکتر.", "I am male, doctor.");
+    if (sex === "female") return say("زن هستم دکتر.", "I am female, doctor.");
+    return say("جنسیتم در پرونده ذکر نشده دکتر.", "My sex is not recorded in my chart, doctor.");
+  }
+
+  // Relief and aggravating factors are answered from the chart's history text.
+  if (containsAny(q, ["با استراحت", "استراحت", "بهتر می‌شود", "بهتر میشه", "کم می‌شود", "کم میشه", "تسکین", "relie", "eases", "better with rest"]))
+    return excerpt(/استراحت|بهبود|بهتر|کم نمی|نمی‌یابد|relie|rest/);
+  // Only explicit "worse" wording: "هنگام فعالیت شروع شد؟" is an onset question and must not match here.
+  if (containsAny(q, ["بدتر می‌شود", "بدتر میشه", "با فعالیت بدتر", "worse with", "worsen"]))
+    return excerpt(/فعالیت|هنگام|بدتر|exertion|activity|worse/);
+  if (containsAny(q, ["کی شروع", "چه زمانی", "از کی", "شروع شد", "شروع شده", "onset", "when", "how long", "چند ساعت", "دیشب"]))
     return excerpt(/شروع|از .*پیش|ساعت|دیشب|started|began|onset|\bhours?\b|\bdays?\b|last night|since/);
-  if (containsAny(q, ["کجا", "محل", "کجای", "where", "location", "exact"]))
-    return excerpt(/درد|سینه|شکم|pain|chest|abdom/);
+  // Location: answer with a BODY SITE only. The old pattern matched any clause
+  // containing "درد"/"pain", so "where is the pain?" was answered with the onset
+  // clause ("pain started 2 hours ago…") and never named the site.
+  if (containsAny(q, ["کجا", "محل", "کجای", "where", "location", "exact"])) {
+    const SITE = /سینه|قفسه|شکم|پشت|گردن|chest|abdom|stomach|back|neck|head/i;
+    for (const name of ["chief", "history", "ros"]) {
+      const clause = field(name).split(/[،,;؛\n.!؟?]+/).map((s) => s.trim()).find((s) => SITE.test(norm(s)));
+      if (clause) return clause.split(/\s+(?:از|since|for|for about|started)\s+/i)[0].trim();
+    }
+    return normalAnswer;
+  }
   if (containsAny(q, ["کیفیت", "ماهیت", "چطوری", "چه‌جور", "چجوری", "فشارنده", "سنگین", "کولیک", "غذا", "چرب", "character", "quality", "feel like"]))
     return excerpt(/فشارنده|سنگین|کولیک|سوزش|تیز|مبهم|crush|pressure|heavy|colic|burn|sharp|dull/);
   if (containsAny(q, ["تهوع", "استفراغ", "عرق", "تنگی نفس", "سرد", "تب", "nausea", "vomit", "sweat", "shortness of breath", "dyspnea", "fever"]))
@@ -1307,7 +1337,7 @@ export function mockPatientReply(c, userText, lang) {
     return recorded("social");
   if (containsAny(q, ["خانواده", "family", "پدر", "مادر", "father", "mother", "ارثی"]))
     return recorded("family");
-  if (containsAny(q, ["سابقه", "بیماری قبلی", "past", "history of", "pmh"]))
+  if (containsAny(q, ["سابقه", "بیماری قبلی", "past", "history of", "pmh", "قند", "دیابت", "فشار خون", "diabet", "hypertens", "blood pressure", "blood sugar"]))
     return recorded("pmh");
   if (containsAny(q, ["دارو", "medication", "قرص", "drug"]) || /\bmeds?\b/.test(q))
     return recorded("meds");

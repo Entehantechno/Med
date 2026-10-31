@@ -228,8 +228,10 @@ r.get("/conversation-log.csv", authRequired, requireRole("teacher", "admin"), (r
         WHERE s.logging_enabled=1${scopeSql}
         ORDER BY c.id, s.id`
     ).all(...args);
-    if (!sessions.length) return res.status(409).json({ error: "no_recorded_conversations" });
+    // A session with no events yields no data rows: answer 409 rather than a
+    // header-only file that looks like a successful export but has nothing in it.
     const lines = conversationCsvLines(sessions, true);
+    if (lines.length < 2) return res.status(409).json({ error: "no_recorded_conversations" });
     audit(req, "conversation.export_all", "class", { classId: classId || null, sessions: sessions.length, scope: isTeacher ? "own" : "all" });
     const day = new Date().toISOString().slice(0, 10);
     const name = classId ? `conversation-log-${safeFilename(classCode, String(classId))}` : `conversation-log-all-${day}`;
@@ -1338,6 +1340,7 @@ r.get("/:id/conversation-log.csv", authRequired, requireRole("teacher", "admin")
       WHERE s.class_id=? AND s.logging_enabled=1 ORDER BY s.id`
   ).all(cl.id);
   const lines = conversationCsvLines(sessions, false);
+  if (lines.length < 2) return res.status(409).json({ error: "no_recorded_conversations" });
   audit(req, "class.conversation_export", "class", { id: cl.id, sessions: sessions.length });
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
   res.setHeader("Content-Disposition", `attachment; filename="conversation-log-${safeFilename(cl.code, String(cl.id))}.csv"`);
