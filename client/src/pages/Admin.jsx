@@ -6538,6 +6538,17 @@ function downloadWithAuth(url, filename, token) {
     }).catch((e) => { window.alert(e.message || "download failed"); });
 }
 
+/* Module-level (not defined inside the render): an inline component type changes on every
+   render, which remounts its checkbox and drops keyboard focus. */
+function VpRow({ cfg, setCfg, k, label, hint }) {
+  return (
+    <label style={{ display: "flex", alignItems: "flex-start", gap: 10, fontWeight: 700, marginTop: 14 }}>
+      <input type="checkbox" checked={!!cfg[k]} onChange={(e) => setCfg({ ...cfg, [k]: e.target.checked })} style={{ marginTop: 3 }} />
+      <span>{label}{hint && <span className="small muted" style={{ display: "block", fontWeight: 400 }}>{hint}</span>}</span>
+    </label>
+  );
+}
+
 function VpatientSettings() {
   const { t, lang } = useApp();
   const toast = useToast();
@@ -6575,12 +6586,6 @@ function VpatientSettings() {
     } catch (e) { toast(String(e.message)); }
   };
 
-  const Row = ({ k, label, hint }) => (
-    <label style={{ display: "flex", alignItems: "flex-start", gap: 10, fontWeight: 700, marginTop: 14 }}>
-      <input type="checkbox" checked={!!cfg[k]} onChange={(e) => setCfg({ ...cfg, [k]: e.target.checked })} style={{ marginTop: 3 }} />
-      <span>{label}{hint && <span className="small muted" style={{ display: "block", fontWeight: 400 }}>{hint}</span>}</span>
-    </label>
-  );
 
   return (
     <div>
@@ -6598,14 +6603,14 @@ function VpatientSettings() {
       )}
 
       <div className="card mb16">
-        <Row k="enabled" label={fa ? "فعال‌سازی بیمار مجازی برای کاربران رقابتی" : "Enable virtual patient for competitive learners"}
+        <VpRow cfg={cfg} setCfg={setCfg} k="enabled" label={fa ? "فعال‌سازی بیمار مجازی برای کاربران رقابتی" : "Enable virtual patient for competitive learners"}
           hint={fa ? "با روشن‌کردن، یک تبِ «بیمار مجازی» به کاربران اضافه می‌شود." : "Adds a 'Virtual patient' tab for learners."} />
-        <Row k="premium_only" label={fa ? "فقط برای کاربران پریمیوم" : "Premium members only"}
+        <VpRow cfg={cfg} setCfg={setCfg} k="premium_only" label={fa ? "فقط برای کاربران پریمیوم" : "Premium members only"}
           hint={fa ? "اگر خاموش باشد، همهٔ کاربران رقابتی دسترسی دارند." : "If off, all competitive learners get access."} />
         <hr style={{ border: "none", borderTop: "1px dashed var(--border)", margin: "16px 0" }} />
-        <Row k="in_path" label={fa ? "نمایش در مسیر یادگیری" : "Show in the learning path"}
+        <VpRow cfg={cfg} setCfg={setCfg} k="in_path" label={fa ? "نمایش در مسیر یادگیری" : "Show in the learning path"}
           hint={fa ? "اجازهٔ قراردادن کیس به‌عنوان گرهٔ مسیر." : "Allow surfacing a case as a path node."} />
-        <Row k="in_daily" label={fa ? "بیمارِ امروز در چالش روزانه" : "Case of the day in the daily challenge"}
+        <VpRow cfg={cfg} setCfg={setCfg} k="in_daily" label={fa ? "بیمارِ امروز در چالش روزانه" : "Case of the day in the daily challenge"}
           hint={fa ? "یک کیسِ ثابت در روز که با پاداش جم کامل می‌شود." : "A daily rotating case rewarded with gems."} />
         <div className="field mt16" style={{ maxWidth: 220 }}>
           <label>{fa ? "پاداش جمِ بیمارِ امروز" : "Case-of-the-day gem reward"}</label>
@@ -6621,7 +6626,7 @@ function VpatientSettings() {
           {fa ? "ارزیابِ خودکار (هوش مصنوعیِ بیمار مجازی) به عملکرد کاربر یک درصد می‌دهد. آن درصد در «سقف XP» ضرب می‌شود و XP حاصل به رنکینگ کاربر اضافه می‌شود. سیاست «بهترین امتیاز»: تکرار یک کیس فقط اگر بهتر شوی XP بیشتری می‌دهد (قابل تقلب نیست)."
               : "The auto-evaluator (the virtual patient's AI examiner) grades performance as a percentage. That percent × the XP cap = ranking XP added to the learner. Best-score policy: replaying a case only adds XP if you improve (no farming)."}
         </p>
-        <Row k="award_xp" label={fa ? "افزودن XP به رنکینگ پس از اتمام کیس" : "Award ranking XP on case completion"} />
+        <VpRow cfg={cfg} setCfg={setCfg} k="award_xp" label={fa ? "افزودن XP به رنکینگ پس از اتمام کیس" : "Award ranking XP on case completion"} />
         <div className="field mt16" style={{ maxWidth: 260 }}>
           <label>{fa ? "سقف XP پیش‌فرض (برای ۱۰۰٪)" : "Default XP cap (for 100%)"}</label>
           <input type="number" min="0" value={cfg.default_xp_max}
@@ -6786,6 +6791,15 @@ export function VpatientAiConfig() {
 }
 
 /* ---- Separate prompts for the competitive virtual patient ---- */
+/* Module-level for the same reason as VpRow (a textarea remounted on every keystroke). */
+function VpPromptField({ p, set, fa, k, label }) {
+  return (
+    <div className="field"><label>{label}</label>
+      <textarea style={{ minHeight: 70 }} value={p[k] || ""} onChange={(e) => set(k, e.target.value)}
+        placeholder={fa ? "خالی = استفاده از پرامپت دانشگاهی" : "blank = use university prompt"} /></div>
+  );
+}
+
 function VpatientPrompts() {
   const { t, lang } = useApp();
   const fa = lang === "fa";
@@ -6801,11 +6815,6 @@ function VpatientPrompts() {
   if (!p) return <Spinner />;
   const set = (k, v) => setP((s) => ({ ...s, [k]: v }));
   const save = async () => { const d = await api.put("/admin/vpatient/prompts", { prompts: p }); setP(d.prompts); toast(t("saved")); };
-  const Field = ({ k, label }) => (
-    <div className="field"><label>{label}</label>
-      <textarea style={{ minHeight: 70 }} value={p[k] || ""} onChange={(e) => set(k, e.target.value)}
-        placeholder={fa ? "خالی = استفاده از پرامپت دانشگاهی" : "blank = use university prompt"} /></div>
-  );
   return (
     <div className="card">
       <h4 className="mb8"><Icon name="brain" size={16} /> {fa ? "پرامپت‌های بیمار مجازی رقابتی" : "Competitive virtual-patient prompts"}</h4>
@@ -6813,20 +6822,20 @@ function VpatientPrompts() {
         {fa ? "مستقل از بخش دانشگاهی. هر پرامپتی که خالی بماند، از نسخهٔ دانشگاهی استفاده می‌شود." : "Independent from the university section. Any blank prompt falls back to the university version."}
       </div>
       <div className="small muted mb8"><Icon name="chat" size={16} /> {fa ? "نقش بیمار" : "Patient role"}</div>
-      <Field k="patient_fa" label={`${t("promptPatient")} (FA)`} />
-      <Field k="patient_en" label={`${t("promptPatient")} (EN)`} />
-      <Field k="patient_rules_fa" label={`${t("promptPatientRules")} (FA)`} />
-      <Field k="patient_rules_en" label={`${t("promptPatientRules")} (EN)`} />
+      <VpPromptField p={p} set={set} fa={fa} k="patient_fa" label={`${t("promptPatient")} (FA)`} />
+      <VpPromptField p={p} set={set} fa={fa} k="patient_en" label={`${t("promptPatient")} (EN)`} />
+      <VpPromptField p={p} set={set} fa={fa} k="patient_rules_fa" label={`${t("promptPatientRules")} (FA)`} />
+      <VpPromptField p={p} set={set} fa={fa} k="patient_rules_en" label={`${t("promptPatientRules")} (EN)`} />
       <div className="small muted mb8 mt8"><Icon name="flask" size={16} /> {fa ? "گزارش آزمایش/تصویربرداری" : "Lab / imaging reporter"}</div>
-      <Field k="labresult_rules_fa" label={`${t("promptLabRules")} (FA)`} />
-      <Field k="labresult_rules_en" label={`${t("promptLabRules")} (EN)`} />
-      <Field k="lab_normal_fa" label={`${t("promptLabNormal")} (FA)`} />
-      <Field k="lab_normal_en" label={`${t("promptLabNormal")} (EN)`} />
+      <VpPromptField p={p} set={set} fa={fa} k="labresult_rules_fa" label={`${t("promptLabRules")} (FA)`} />
+      <VpPromptField p={p} set={set} fa={fa} k="labresult_rules_en" label={`${t("promptLabRules")} (EN)`} />
+      <VpPromptField p={p} set={set} fa={fa} k="lab_normal_fa" label={`${t("promptLabNormal")} (FA)`} />
+      <VpPromptField p={p} set={set} fa={fa} k="lab_normal_en" label={`${t("promptLabNormal")} (EN)`} />
       <div className="small muted mb8 mt8"><Icon name="check" size={16} /> {fa ? "ارزیاب و ریزآموزش" : "Evaluator & microlearning"}</div>
-      <Field k="evaluator_fa" label={`${fa ? "ارزیاب" : "Evaluator"} (FA)`} />
-      <Field k="evaluator_en" label={`${fa ? "ارزیاب" : "Evaluator"} (EN)`} />
-      <Field k="micro_fa" label={`${fa ? "ریزآموزش" : "Microlearning"} (FA)`} />
-      <Field k="micro_en" label={`${fa ? "ریزآموزش" : "Microlearning"} (EN)`} />
+      <VpPromptField p={p} set={set} fa={fa} k="evaluator_fa" label={`${fa ? "ارزیاب" : "Evaluator"} (FA)`} />
+      <VpPromptField p={p} set={set} fa={fa} k="evaluator_en" label={`${fa ? "ارزیاب" : "Evaluator"} (EN)`} />
+      <VpPromptField p={p} set={set} fa={fa} k="micro_fa" label={`${fa ? "ریزآموزش" : "Microlearning"} (FA)`} />
+      <VpPromptField p={p} set={set} fa={fa} k="micro_en" label={`${fa ? "ریزآموزش" : "Microlearning"} (EN)`} />
       <button type="button" className="btn btn-primary mt8" onClick={save}>{t("save")}</button>
     </div>
   );
