@@ -683,7 +683,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
                 {idx < cards.length - 1 ? `${t("nextCard")} →` : `${((examId || classCombined) ? t("examDone") : t("flashDone"))} →`}
               </button>
             )}
-            {dn && idx < reachedIdx && !navCfg.change && <div className="small muted flash-nav-note">🔒 {t("lockedAnswer")}</div>}
+            {dn && idx < reachedIdx && !navCfg.change && <div className="small muted flash-nav-note"><Icon name="lock" size={12} style={{ verticalAlign: "-1px" }} /> {t("lockedAnswer")}</div>}
           </div>
         )}
       </div>

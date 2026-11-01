@@ -77,6 +77,253 @@ function branchStyle(b) {
   return m[b] || { bg: "#f1f5f9", fg: "#334155", icon: "•", label: b };
 }
 
+/* Hoisted to module scope so its zoom state survives parent re-renders (it used to remount on every render). */
+const GraphView = ({ data, structure="radial", pitch=false, pitchIdx=0, setPitchIdx=()=>{}, zen=false, hovered, setHovered, lang, openQuestionsFor, setDetail }) => {
+  const [zoom, setZoom] = useState(1);
+  // Pitch (presentation) mode — XMind Pitch inspired: one node per slide
+  if (pitch && data && !data.locked) {
+    const nodes = data.nodes || [];
+    const cur = nodes[Math.min(Math.max(0, pitchIdx), Math.max(0, nodes.length-1))] || null;
+    const st = cur ? branchStyle(cur.branch) : null;
+    return (
+      <div className="mm-pitch rounded-[20px] border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 md:p-8 shadow-xl text-white relative overflow-hidden" style={{ minHeight: 420 }}>
+        <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-gradient-to-br from-violet-600/20 to-indigo-600/20 blur-3xl" />
+        <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-gradient-to-br from-sky-600/20 to-cyan-600/20 blur-3xl" />
+        <div className="relative flex items-center justify-between gap-3 mb-6">
+          <span className="text-xs font-black tracking-widest text-white/60">{lang==="fa"?"حالتِ پرزنتیشن":"PITCH"} • {pitchIdx+1} / {nodes.length}</span>
+          <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold backdrop-blur">{data.title}</span>
+        </div>
+        {cur ? (
+          <div className="relative mx-auto max-w-2xl rounded-[20px] border border-white/10 bg-white p-6 md:p-7 shadow-2xl text-slate-900">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="flex h-10 w-10 items-center justify-center rounded-xl text-lg" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span>
+              <span className="text-xs font-black tracking-wide" style={{ color: st.fg }}>{st.label}</span>
+              <span className="ms-auto text-xs font-bold text-slate-500">{cur.branch}</span>
+            </div>
+            <div className="text-lg md:text-xl font-black leading-relaxed text-slate-900">{lang==="fa"?cur.label_fa:cur.label_en}</div>
+            <div className="mt-4 flex gap-2">
+              <button onClick={()=>openQuestionsFor(cur.id, data.slug)} className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-black text-white hover:bg-black"> {lang==="fa"?"سؤالاتِ این گره":"Questions for this node"} →</button>
+              <button onClick={()=>setPitchIdx(i=>Math.max(0,i-1))} disabled={pitchIdx===0} className="ms-auto rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold disabled:opacity-40">‹ {lang==="fa"?"قبلی":"Prev"}</button>
+              <button onClick={()=>setPitchIdx(i=>Math.min(nodes.length-1,i+1))} disabled={pitchIdx>=nodes.length-1} className="rounded-full bg-sky-600 px-4 py-2 text-sm font-black text-white hover:bg-sky-700 disabled:opacity-40">{lang==="fa"?"بعدی":"Next"} ›</button>
+            </div>
+          </div>
+        ) : (<div className="text-center text-white/70">{lang==="fa"?"گره‌ای نیست":"No nodes"}</div>)}
+        <div className="relative mt-6 flex justify-center gap-1.5">
+          {nodes.map((_,i)=>(<span key={i} className={`h-1.5 rounded-full transition ${i===pitchIdx?"w-8 bg-white":"w-1.5 bg-white/30"}`} />))}
+        </div>
+        <button onClick={()=>setPitchIdx(0)} className="absolute bottom-4 end-4 rounded-full bg-white/10 px-3 py-1 text-xs font-bold backdrop-blur hover:bg-white/20">{lang==="fa"?"از نو":"Restart"}</button>
+      </div>
+    );
+  }
+  if (data.locked) {
+    const isDaily = data.error === "daily_limit" || (data.daily && data.daily.remaining <= 0);
+    return (
+      <div className="relative overflow-hidden rounded-[20px] border border-amber-200 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 p-8 text-center shadow-lg">
+        <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-gradient-to-br from-amber-200/50 to-orange-200/50 blur-2xl" />
+        <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-gradient-to-br from-yellow-200/50 to-amber-200/50 blur-2xl" />
+        <div className="relative">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-3xl shadow-lg shadow-amber-500/25">{isDaily ? "⏳" : <Icon name="lock" size={14} style={{ verticalAlign: "-2px" }} />}</div>
+          <h3 className="mt-4 text-xl font-black text-amber-900">{isDaily ? (lang === "fa" ? "سهم امروز تمام شد" : "Daily limit reached") : (lang === "fa" ? "این نقشه ویژهٔ پرمیوم است" : "Premium Only")}</h3>
+          <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-amber-800/80">
+            {isDaily ? (lang === "fa" ? "امروز ۵ نقشه دیدید — فردا دوباره ۵ نقشه رایگان دارید. با پلاس نامحدود می‌شود." : "You viewed 5 maps today — 5 more free tomorrow. Go Plus for unlimited.") : (lang === "fa" ? "با پرمیوم، ۳۴۹ مایندمپ و اپروچِ لینک‌دار به بانک را باز کنید — ۳ نقشه برای آشنایی رایگان است." : "Unlock 349 linked maps with Premium — 3 free to preview.")}
+          </p>
+          <div className="mt-6 flex justify-center gap-3">
+            <button onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))} className="rounded-full bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3 text-sm font-black text-white shadow-lg shadow-amber-500/25 transition hover:scale-105 hover:shadow-xl">
+              {lang === "fa" ? <><Icon name="star" size={14} style={{ verticalAlign: "-2px" }} />{" ارتقا به پرمیوم"}</> : <><Icon name="star" size={14} style={{ verticalAlign: "-2px" }} />{" Upgrade"}</>}
+            </button>
+            <button onClick={() => setDetail(null)} className="rounded-full border border-amber-200 bg-white/80 px-6 py-3 text-sm font-bold text-amber-800 backdrop-blur transition hover:bg-white">
+              {lang === "fa" ? "بازگشت" : "Back"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  const nodes = data.nodes || [];
+  const edges = data.edges || [];
+  const hasPos = nodes.some(n => n.x !== 0 || n.y !== 0);
+
+  // Structure switch: XMind-like alternatives (even when hasPos true)
+  if (structure === "timeline" && nodes.length) {
+    return (
+      <div className="mm-timeline rounded-[20px] border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm overflow-x-auto">
+        <div className="flex items-stretch gap-0 min-w-max">
+          {nodes.map((n,i)=>{ const st=branchStyle(n.branch); return (
+            <div key={n.id} className="flex items-center gap-0">
+              <button onClick={()=>openQuestionsFor(n.id, data.slug)} className="group relative flex w-[220px] shrink-0 flex-col gap-2 rounded-2xl border-2 bg-white p-4 text-start shadow-sm hover:-translate-y-0.5 hover:shadow-md transition" style={{ borderColor: st.fg }}>
+                <span className="flex h-7 w-7 items-center justify-center rounded-full text-xs" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span>
+                <span className="text-xs font-black" style={{ color: st.fg }}>{st.label}</span>
+                <span className="text-sm font-bold leading-tight text-slate-800 line-clamp-3">{lang==="fa"?n.label_fa:n.label_en}</span>
+              </button>
+              {i < nodes.length-1 && <span className="mx-2 h-0.5 w-8 shrink-0 rounded bg-slate-300" />}
+            </div>
+          );})}
+        </div>
+      </div>
+    );
+  }
+  if (structure === "fish" && nodes.length) {
+    return (
+      <div className="mm-fish rounded-[20px] border border-slate-200 bg-white p-6 shadow-sm overflow-x-auto">
+        <div className="relative min-w-max">
+          <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-0.5 rounded-full bg-gradient-to-r from-slate-300 via-slate-400 to-slate-300" />
+          <div className="relative flex gap-6 py-8">
+            {nodes.map((n,i)=>{ const up=i%2===0; const st=branchStyle(n.branch); return (
+              <div key={n.id} className={`flex w-[200px] shrink-0 flex-col items-center gap-2 ${up?"-translate-y-6":"translate-y-6"}`}>
+                {up && (<button onClick={()=>openQuestionsFor(n.id, data.slug)} className="rounded-2xl border-2 bg-white p-3 shadow hover:shadow-md transition text-start" style={{ borderColor: st.fg }}><span className="flex h-6 w-6 items-center justify-center rounded-full text-xs mx-auto" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span><span className="mt-1 block text-xs font-bold text-center line-clamp-2">{lang==="fa"?n.label_fa:n.label_en}</span></button>)}
+                <span className={`h-6 w-0.5 rounded-full ${up?"bg-slate-300":"bg-slate-300 order-first"}`} style={{ height: 24 }} />
+                {!up && (<button onClick={()=>openQuestionsFor(n.id, data.slug)} className="rounded-2xl border-2 bg-white p-3 shadow hover:shadow-md transition text-start" style={{ borderColor: st.fg }}><span className="flex h-6 w-6 items-center justify-center rounded-full text-xs mx-auto" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span><span className="mt-1 block text-xs font-bold text-center line-clamp-2">{lang==="fa"?n.label_fa:n.label_en}</span></button>)}
+              </div>
+            );})}
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (structure === "logic" && nodes.length) {
+    return (
+      <div className="mm-logic rounded-[20px] border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm">
+        <div className="flex flex-col gap-3 max-w-2xl mx-auto">
+          {nodes.map(n=>{ const st=branchStyle(n.branch); return (
+            <button key={n.id} onClick={()=>openQuestionsFor(n.id, data.slug)} className="flex gap-3 rounded-2xl border bg-white p-4 text-start shadow-sm hover:shadow-md transition" style={{ borderColor: st.fg, borderInlineStartWidth: 6 }}>
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span>
+              <div className="min-w-0 flex-1">
+                <div className="text-xs font-black" style={{ color: st.fg }}>{st.label} • {n.branch}</div>
+                <div className="mt-1 text-sm font-bold leading-relaxed text-slate-800">{lang==="fa"?n.label_fa:n.label_en}</div>
+              </div>
+              <span className="self-center text-slate-400">›</span>
+            </button>
+          );})}
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasPos || nodes.length > 10) {
+    return (
+      <div className="space-y-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {nodes.map(n => {
+            const st = branchStyle(n.branch);
+            return (
+              <button
+                key={n.id}
+                onClick={() => openQuestionsFor(n.id, data.slug)}
+                onMouseEnter={() => setHovered(n.id)}
+                onMouseLeave={() => setHovered(null)}
+                className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 text-start shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/50"
+                style={{ borderTop: `4px solid ${st.fg}` }}
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-slate-50/0 via-slate-50/0 to-slate-50 opacity-0 transition group-hover:opacity-100" />
+                <div className="relative">
+                  <div className="flex items-center gap-2">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl text-sm" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span>
+                    <span className="text-xs font-black tracking-wide" style={{ color: st.fg }}>{st.label}</span>
+                    <span className="ms-auto text-xs opacity-60">↗</span>
+                  </div>
+                  <div className="mt-3 line-clamp-3 text-sm font-bold leading-relaxed text-slate-800">{lang === "fa" ? n.label_fa : n.label_en}</div>
+                  <div className="mt-2 text-xs font-medium text-slate-500">{lang === "fa" ? "لمس کنید → سؤالات مرتبط" : "Tap → related Qs"}</div>
+                </div>
+                {hovered === n.id && <div className="absolute inset-0 rounded-2xl ring-2 ring-slate-900/5" />}
+              </button>
+            );
+          })}
+        </div>
+        {edges.length > 0 && (
+          <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4">
+            <div className="mb-3 flex items-center gap-2 text-sm font-black text-slate-700">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 text-white">→</span>
+              {lang === "fa" ? "مسیرهای ارتباطی" : "Connections"}
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {edges.map((e, i) => (
+                <span key={i} className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm">
+                  <span className="h-2 w-2 rounded-full bg-sky-500" /> {e.from} <span className="text-slate-400">→</span> {e.to} {e.label && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">{e.label}</span>}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // SVG graph — attractive
+  const W = 760, H = 520, pad = 24;
+  const xs = nodes.map(n => n.x), ys = nodes.map(n => n.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  const scaleX = (maxX - minX) || 1, scaleY = (maxY - minY) || 1;
+  const norm = n => ({ ...n, _x: pad + ((n.x - minX) / scaleX) * (W - pad * 2 - 160) + 80, _y: pad + ((n.y - minY) / scaleY) * (H - pad * 2 - 60) + 30 });
+  const N = nodes.map(norm);
+  const idPos = Object.fromEntries(N.map(n => [n.id, n]));
+  const meta = sysMeta(data.system);
+
+  return (
+    <div className="overflow-hidden rounded-[20px] border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-50 shadow-sm">
+      <div className="flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur">
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl text-white shadow" style={{ background: meta.color }}>{data.type === "approach" ? <Icon name="compass" size={14} style={{ verticalAlign: "-2px" }} /> : <Icon name="brain" size={14} style={{ verticalAlign: "-2px" }} />}</span>
+          <span className="text-sm font-black text-slate-800">{data.title}</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <button onClick={() => setZoom(z => Math.max(0.6, +(z-0.15).toFixed(2)))} className="h-8 w-8 rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50" aria-label="zoom out">−</button>
+          <span className="min-w-9 text-center text-xs font-bold text-slate-600">{Math.round(zoom*100)}%</span>
+          <button onClick={() => setZoom(z => Math.min(1.6, +(z+0.15).toFixed(2)))} className="h-8 w-8 rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50" aria-label="zoom in">+</button>
+          <button onClick={() => setZoom(1)} className="ms-1 rounded-full border border-slate-200 bg-slate-900 px-3 py-1 text-xs font-black text-white">⤢ {lang==="fa"?"بازنشانی":"Reset"}</button>
+          <span className="ms-2 hidden text-xs font-medium text-slate-500 sm:inline">{lang === "fa" ? "روی گره بزنید → سؤالات" : "Tap node → Questions"}</span>
+        </div>
+      </div>
+      <div className="mindmap-graph relative h-[520px] w-full overflow-auto bg-[radial-gradient(circle_at_1px_1px,_#e2e8f0_1px,_transparent_0)] bg-[length:20px_20px]"
+        onWheel={e => { if(e.ctrlKey||e.metaKey){ e.preventDefault(); const d = e.deltaY>0?-0.08:0.08; setZoom(z=>Math.min(1.6,Math.max(0.6,+(z+d).toFixed(2)))) } }}
+        onDoubleClick={() => setZoom(z=> z===1?1.35:1)}
+      >
+        <div style={{ width: W, height: H, transform: `scale(${zoom})`, transformOrigin: "0 0" }} className="relative">
+        <svg width={W} height={H} className="absolute inset-0">
+          <defs>
+            <marker id="arrow" viewBox="0 0 10 10" refX={8} refY={5} markerWidth={8} markerHeight={8} orient="auto">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
+            </marker>
+            <filter id="shadow">
+              <feDropShadow dx="0" dy="4" stdDeviation="6" floodOpacity="0.1" />
+            </filter>
+          </defs>
+          {edges.map((e, i) => {
+            const a = idPos[e.from], b = idPos[e.to];
+            if (!a || !b) return null;
+            return (
+              <g key={i}>
+                <line x1={a._x} y1={a._y} x2={b._x} y2={b._y} stroke="#cbd5e1" strokeWidth={3} strokeLinecap="round" markerEnd="url(#arrow)" opacity={0.9} />
+                {e.label && (
+                  <g>
+                    <rect x={(a._x + b._x) / 2 - 22} y={(a._y + b._y) / 2 - 14} width={44} height={16} rx={8} fill="white" stroke="#e2e8f0" />
+                    <text x={(a._x + b._x) / 2} y={(a._y + b._y) / 2 - 3} fontSize={10} fill="#475569" textAnchor="middle" fontWeight={700}>{e.label}</text>
+                  </g>
+                )}
+              </g>
+            );
+          })}
+        </svg>
+        {N.map(n => {
+          const st = branchStyle(n.branch);
+          return (
+            <button
+              key={n.id}
+              onClick={() => openQuestionsFor(n.id, data.slug)}
+              className="group absolute flex w-[160px] -translate-x-[80px] -translate-y-[28px] flex-col items-center gap-1 rounded-2xl border-2 bg-white px-3 py-2.5 shadow-lg transition-all hover:z-10 hover:scale-105 hover:shadow-xl"
+              style={{ left: n._x, top: n._y, borderColor: st.fg, filter: "url(#shadow)" }}
+            >
+              <span className="flex h-6 w-6 items-center justify-center rounded-full text-xs" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span>
+              <span className="text-center text-xs font-black leading-tight" style={{ color: st.fg }}>{st.label}</span>
+              <span className="text-center text-xs font-bold leading-tight text-slate-800 line-clamp-3">{lang === "fa" ? n.label_fa : n.label_en}</span>
+            </button>
+          );
+        })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function Mindmap({ onBack }) {
   const { t, lang } = useApp();
   const [mode, setMode] = useState("bank");
@@ -174,251 +421,6 @@ export default function Mindmap({ onBack }) {
     }).catch(() => setToast("خطا"));
   };
 
-  const GraphView = ({ data, structure="radial", pitch=false, pitchIdx=0, setPitchIdx=()=>{}, zen=false }) => {
-    const [zoom, setZoom] = useState(1);
-    // Pitch (presentation) mode — XMind Pitch inspired: one node per slide
-    if (pitch && data && !data.locked) {
-      const nodes = data.nodes || [];
-      const cur = nodes[Math.min(Math.max(0, pitchIdx), Math.max(0, nodes.length-1))] || null;
-      const st = cur ? branchStyle(cur.branch) : null;
-      return (
-        <div className="mm-pitch rounded-[20px] border border-slate-200 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 md:p-8 shadow-xl text-white relative overflow-hidden" style={{ minHeight: 420 }}>
-          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-gradient-to-br from-violet-600/20 to-indigo-600/20 blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-gradient-to-br from-sky-600/20 to-cyan-600/20 blur-3xl" />
-          <div className="relative flex items-center justify-between gap-3 mb-6">
-            <span className="text-xs font-black tracking-widest text-white/60">{lang==="fa"?"حالتِ پرزنتیشن":"PITCH"} • {pitchIdx+1} / {nodes.length}</span>
-            <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold backdrop-blur">{data.title}</span>
-          </div>
-          {cur ? (
-            <div className="relative mx-auto max-w-2xl rounded-[20px] border border-white/10 bg-white p-6 md:p-7 shadow-2xl text-slate-900">
-              <div className="flex items-center gap-3 mb-4">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl text-lg" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span>
-                <span className="text-xs font-black tracking-wide" style={{ color: st.fg }}>{st.label}</span>
-                <span className="ms-auto text-xs font-bold text-slate-500">{cur.branch}</span>
-              </div>
-              <div className="text-lg md:text-xl font-black leading-relaxed text-slate-900">{lang==="fa"?cur.label_fa:cur.label_en}</div>
-              <div className="mt-4 flex gap-2">
-                <button onClick={()=>openQuestionsFor(cur.id, data.slug)} className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-black text-white hover:bg-black"> {lang==="fa"?"سؤالاتِ این گره":"Questions for this node"} →</button>
-                <button onClick={()=>setPitchIdx(i=>Math.max(0,i-1))} disabled={pitchIdx===0} className="ms-auto rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold disabled:opacity-40">‹ {lang==="fa"?"قبلی":"Prev"}</button>
-                <button onClick={()=>setPitchIdx(i=>Math.min(nodes.length-1,i+1))} disabled={pitchIdx>=nodes.length-1} className="rounded-full bg-sky-600 px-4 py-2 text-sm font-black text-white hover:bg-sky-700 disabled:opacity-40">{lang==="fa"?"بعدی":"Next"} ›</button>
-              </div>
-            </div>
-          ) : (<div className="text-center text-white/70">{lang==="fa"?"گره‌ای نیست":"No nodes"}</div>)}
-          <div className="relative mt-6 flex justify-center gap-1.5">
-            {nodes.map((_,i)=>(<span key={i} className={`h-1.5 rounded-full transition ${i===pitchIdx?"w-8 bg-white":"w-1.5 bg-white/30"}`} />))}
-          </div>
-          <button onClick={()=>setPitchIdx(0)} className="absolute bottom-4 end-4 rounded-full bg-white/10 px-3 py-1 text-xs font-bold backdrop-blur hover:bg-white/20">{lang==="fa"?"از نو":"Restart"}</button>
-        </div>
-      );
-    }
-    if (data.locked) {
-      const isDaily = data.error === "daily_limit" || (data.daily && data.daily.remaining <= 0);
-      return (
-        <div className="relative overflow-hidden rounded-[20px] border border-amber-200 bg-gradient-to-br from-amber-50 via-orange-50 to-yellow-50 p-8 text-center shadow-lg">
-          <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-gradient-to-br from-amber-200/50 to-orange-200/50 blur-2xl" />
-          <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-gradient-to-br from-yellow-200/50 to-amber-200/50 blur-2xl" />
-          <div className="relative">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-3xl shadow-lg shadow-amber-500/25">{isDaily ? "⏳" : <Icon name="lock" size={14} style={{ verticalAlign: "-2px" }} />}</div>
-            <h3 className="mt-4 text-xl font-black text-amber-900">{isDaily ? (lang === "fa" ? "سهم امروز تمام شد" : "Daily limit reached") : (lang === "fa" ? "این نقشه ویژهٔ پرمیوم است" : "Premium Only")}</h3>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-amber-800/80">
-              {isDaily ? (lang === "fa" ? "امروز ۵ نقشه دیدید — فردا دوباره ۵ نقشه رایگان دارید. با پلاس نامحدود می‌شود." : "You viewed 5 maps today — 5 more free tomorrow. Go Plus for unlimited.") : (lang === "fa" ? "با پرمیوم، ۳۴۹ مایندمپ و اپروچِ لینک‌دار به بانک را باز کنید — ۳ نقشه برای آشنایی رایگان است." : "Unlock 349 linked maps with Premium — 3 free to preview.")}
-            </p>
-            <div className="mt-6 flex justify-center gap-3">
-              <button onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))} className="rounded-full bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3 text-sm font-black text-white shadow-lg shadow-amber-500/25 transition hover:scale-105 hover:shadow-xl">
-                {lang === "fa" ? <><Icon name="star" size={14} style={{ verticalAlign: "-2px" }} />{" ارتقا به پرمیوم"}</> : <><Icon name="star" size={14} style={{ verticalAlign: "-2px" }} />{" Upgrade"}</>}
-              </button>
-              <button onClick={() => setDetail(null)} className="rounded-full border border-amber-200 bg-white/80 px-6 py-3 text-sm font-bold text-amber-800 backdrop-blur transition hover:bg-white">
-                {lang === "fa" ? "بازگشت" : "Back"}
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    }
-    const nodes = data.nodes || [];
-    const edges = data.edges || [];
-    const hasPos = nodes.some(n => n.x !== 0 || n.y !== 0);
-
-    // Structure switch: XMind-like alternatives (even when hasPos true)
-    if (structure === "timeline" && nodes.length) {
-      return (
-        <div className="mm-timeline rounded-[20px] border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm overflow-x-auto">
-          <div className="flex items-stretch gap-0 min-w-max">
-            {nodes.map((n,i)=>{ const st=branchStyle(n.branch); return (
-              <div key={n.id} className="flex items-center gap-0">
-                <button onClick={()=>openQuestionsFor(n.id, data.slug)} className="group relative flex w-[220px] shrink-0 flex-col gap-2 rounded-2xl border-2 bg-white p-4 text-start shadow-sm hover:-translate-y-0.5 hover:shadow-md transition" style={{ borderColor: st.fg }}>
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full text-xs" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span>
-                  <span className="text-xs font-black" style={{ color: st.fg }}>{st.label}</span>
-                  <span className="text-sm font-bold leading-tight text-slate-800 line-clamp-3">{lang==="fa"?n.label_fa:n.label_en}</span>
-                </button>
-                {i < nodes.length-1 && <span className="mx-2 h-0.5 w-8 shrink-0 rounded bg-slate-300" />}
-              </div>
-            );})}
-          </div>
-        </div>
-      );
-    }
-    if (structure === "fish" && nodes.length) {
-      return (
-        <div className="mm-fish rounded-[20px] border border-slate-200 bg-white p-6 shadow-sm overflow-x-auto">
-          <div className="relative min-w-max">
-            <div className="absolute left-0 right-0 top-1/2 h-1 -translate-y-0.5 rounded-full bg-gradient-to-r from-slate-300 via-slate-400 to-slate-300" />
-            <div className="relative flex gap-6 py-8">
-              {nodes.map((n,i)=>{ const up=i%2===0; const st=branchStyle(n.branch); return (
-                <div key={n.id} className={`flex w-[200px] shrink-0 flex-col items-center gap-2 ${up?"-translate-y-6":"translate-y-6"}`}>
-                  {up && (<button onClick={()=>openQuestionsFor(n.id, data.slug)} className="rounded-2xl border-2 bg-white p-3 shadow hover:shadow-md transition text-start" style={{ borderColor: st.fg }}><span className="flex h-6 w-6 items-center justify-center rounded-full text-xs mx-auto" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span><span className="mt-1 block text-xs font-bold text-center line-clamp-2">{lang==="fa"?n.label_fa:n.label_en}</span></button>)}
-                  <span className={`h-6 w-0.5 rounded-full ${up?"bg-slate-300":"bg-slate-300 order-first"}`} style={{ height: 24 }} />
-                  {!up && (<button onClick={()=>openQuestionsFor(n.id, data.slug)} className="rounded-2xl border-2 bg-white p-3 shadow hover:shadow-md transition text-start" style={{ borderColor: st.fg }}><span className="flex h-6 w-6 items-center justify-center rounded-full text-xs mx-auto" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span><span className="mt-1 block text-xs font-bold text-center line-clamp-2">{lang==="fa"?n.label_fa:n.label_en}</span></button>)}
-                </div>
-              );})}
-            </div>
-          </div>
-        </div>
-      );
-    }
-    if (structure === "logic" && nodes.length) {
-      return (
-        <div className="mm-logic rounded-[20px] border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm">
-          <div className="flex flex-col gap-3 max-w-2xl mx-auto">
-            {nodes.map(n=>{ const st=branchStyle(n.branch); return (
-              <button key={n.id} onClick={()=>openQuestionsFor(n.id, data.slug)} className="flex gap-3 rounded-2xl border bg-white p-4 text-start shadow-sm hover:shadow-md transition" style={{ borderColor: st.fg, borderInlineStartWidth: 6 }}>
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span>
-                <div className="min-w-0 flex-1">
-                  <div className="text-xs font-black" style={{ color: st.fg }}>{st.label} • {n.branch}</div>
-                  <div className="mt-1 text-sm font-bold leading-relaxed text-slate-800">{lang==="fa"?n.label_fa:n.label_en}</div>
-                </div>
-                <span className="self-center text-slate-400">›</span>
-              </button>
-            );})}
-          </div>
-        </div>
-      );
-    }
-
-    if (!hasPos || nodes.length > 10) {
-      return (
-        <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {nodes.map(n => {
-              const st = branchStyle(n.branch);
-              return (
-                <button
-                  key={n.id}
-                  onClick={() => openQuestionsFor(n.id, data.slug)}
-                  onMouseEnter={() => setHovered(n.id)}
-                  onMouseLeave={() => setHovered(null)}
-                  className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 text-start shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/50"
-                  style={{ borderTop: `4px solid ${st.fg}` }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-slate-50/0 via-slate-50/0 to-slate-50 opacity-0 transition group-hover:opacity-100" />
-                  <div className="relative">
-                    <div className="flex items-center gap-2">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-xl text-sm" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span>
-                      <span className="text-xs font-black tracking-wide" style={{ color: st.fg }}>{st.label}</span>
-                      <span className="ms-auto text-xs opacity-60">↗</span>
-                    </div>
-                    <div className="mt-3 line-clamp-3 text-sm font-bold leading-relaxed text-slate-800">{lang === "fa" ? n.label_fa : n.label_en}</div>
-                    <div className="mt-2 text-xs font-medium text-slate-500">{lang === "fa" ? "لمس کنید → سؤالات مرتبط" : "Tap → related Qs"}</div>
-                  </div>
-                  {hovered === n.id && <div className="absolute inset-0 rounded-2xl ring-2 ring-slate-900/5" />}
-                </button>
-              );
-            })}
-          </div>
-          {edges.length > 0 && (
-            <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4">
-              <div className="mb-3 flex items-center gap-2 text-sm font-black text-slate-700">
-                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900 text-white">→</span>
-                {lang === "fa" ? "مسیرهای ارتباطی" : "Connections"}
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {edges.map((e, i) => (
-                  <span key={i} className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm">
-                    <span className="h-2 w-2 rounded-full bg-sky-500" /> {e.from} <span className="text-slate-400">→</span> {e.to} {e.label && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-amber-800">{e.label}</span>}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    // SVG graph — attractive
-    const W = 760, H = 520, pad = 24;
-    const xs = nodes.map(n => n.x), ys = nodes.map(n => n.y);
-    const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
-    const scaleX = (maxX - minX) || 1, scaleY = (maxY - minY) || 1;
-    const norm = n => ({ ...n, _x: pad + ((n.x - minX) / scaleX) * (W - pad * 2 - 160) + 80, _y: pad + ((n.y - minY) / scaleY) * (H - pad * 2 - 60) + 30 });
-    const N = nodes.map(norm);
-    const idPos = Object.fromEntries(N.map(n => [n.id, n]));
-    const meta = sysMeta(data.system);
-
-    return (
-      <div className="overflow-hidden rounded-[20px] border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-50 shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur">
-          <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl text-white shadow" style={{ background: meta.color }}>{data.type === "approach" ? <Icon name="compass" size={14} style={{ verticalAlign: "-2px" }} /> : <Icon name="brain" size={14} style={{ verticalAlign: "-2px" }} />}</span>
-            <span className="text-sm font-black text-slate-800">{data.title}</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <button onClick={() => setZoom(z => Math.max(0.6, +(z-0.15).toFixed(2)))} className="h-8 w-8 rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50" aria-label="zoom out">−</button>
-            <span className="min-w-9 text-center text-xs font-bold text-slate-600">{Math.round(zoom*100)}%</span>
-            <button onClick={() => setZoom(z => Math.min(1.6, +(z+0.15).toFixed(2)))} className="h-8 w-8 rounded-full border border-slate-200 bg-white text-slate-700 hover:bg-slate-50" aria-label="zoom in">+</button>
-            <button onClick={() => setZoom(1)} className="ms-1 rounded-full border border-slate-200 bg-slate-900 px-3 py-1 text-xs font-black text-white">⤢ {lang==="fa"?"بازنشانی":"Reset"}</button>
-            <span className="ms-2 hidden text-xs font-medium text-slate-500 sm:inline">{lang === "fa" ? "روی گره بزنید → سؤالات" : "Tap node → Questions"}</span>
-          </div>
-        </div>
-        <div className="mindmap-graph relative h-[520px] w-full overflow-auto bg-[radial-gradient(circle_at_1px_1px,_#e2e8f0_1px,_transparent_0)] bg-[length:20px_20px]"
-          onWheel={e => { if(e.ctrlKey||e.metaKey){ e.preventDefault(); const d = e.deltaY>0?-0.08:0.08; setZoom(z=>Math.min(1.6,Math.max(0.6,+(z+d).toFixed(2)))) } }}
-          onDoubleClick={() => setZoom(z=> z===1?1.35:1)}
-        >
-          <div style={{ width: W, height: H, transform: `scale(${zoom})`, transformOrigin: "0 0" }} className="relative">
-          <svg width={W} height={H} className="absolute inset-0">
-            <defs>
-              <marker id="arrow" viewBox="0 0 10 10" refX={8} refY={5} markerWidth={8} markerHeight={8} orient="auto">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8" />
-              </marker>
-              <filter id="shadow">
-                <feDropShadow dx="0" dy="4" stdDeviation="6" floodOpacity="0.1" />
-              </filter>
-            </defs>
-            {edges.map((e, i) => {
-              const a = idPos[e.from], b = idPos[e.to];
-              if (!a || !b) return null;
-              return (
-                <g key={i}>
-                  <line x1={a._x} y1={a._y} x2={b._x} y2={b._y} stroke="#cbd5e1" strokeWidth={3} strokeLinecap="round" markerEnd="url(#arrow)" opacity={0.9} />
-                  {e.label && (
-                    <g>
-                      <rect x={(a._x + b._x) / 2 - 22} y={(a._y + b._y) / 2 - 14} width={44} height={16} rx={8} fill="white" stroke="#e2e8f0" />
-                      <text x={(a._x + b._x) / 2} y={(a._y + b._y) / 2 - 3} fontSize={10} fill="#475569" textAnchor="middle" fontWeight={700}>{e.label}</text>
-                    </g>
-                  )}
-                </g>
-              );
-            })}
-          </svg>
-          {N.map(n => {
-            const st = branchStyle(n.branch);
-            return (
-              <button
-                key={n.id}
-                onClick={() => openQuestionsFor(n.id, data.slug)}
-                className="group absolute flex w-[160px] -translate-x-[80px] -translate-y-[28px] flex-col items-center gap-1 rounded-2xl border-2 bg-white px-3 py-2.5 shadow-lg transition-all hover:z-10 hover:scale-105 hover:shadow-xl"
-                style={{ left: n._x, top: n._y, borderColor: st.fg, filter: "url(#shadow)" }}
-              >
-                <span className="flex h-6 w-6 items-center justify-center rounded-full text-xs" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span>
-                <span className="text-center text-xs font-black leading-tight" style={{ color: st.fg }}>{st.label}</span>
-                <span className="text-center text-xs font-bold leading-tight text-slate-800 line-clamp-3">{lang === "fa" ? n.label_fa : n.label_en}</span>
-              </button>
-            );
-          })}
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="page mx-auto max-w-6xl">
@@ -501,7 +503,7 @@ export default function Mindmap({ onBack }) {
               </div>
               <div className={zen?"mm-zen-wrap":""} style={zen?{ position:"fixed", inset:0, zIndex:80, background:"rgba(248,250,252,.86)", backdropFilter:"saturate(1.3) blur(14px)", WebkitBackdropFilter:"saturate(1.3) blur(14px)", padding:"20px 16px 16px", overflow:"auto" }:{}}>
                 {zen && <button type="button" onClick={()=>setZen(false)} style={{ position:"fixed", top:12, insetInlineEnd:12, zIndex:81, width:36, height:36, borderRadius:999, border:"1px solid #e2e8f0", background:"#fff", display:"grid", placeItems:"center", boxShadow:"0 8px 18px rgba(0,0,0,.12)" }}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}
-                <GraphView data={detail} structure={structure} pitch={pitch} pitchIdx={pitchIdx} setPitchIdx={setPitchIdx} zen={zen} />
+                <GraphView data={detail} structure={structure} pitch={pitch} pitchIdx={pitchIdx} setPitchIdx={setPitchIdx} zen={zen} hovered={hovered} setHovered={setHovered} lang={lang} openQuestionsFor={openQuestionsFor} setDetail={setDetail} />
               </div>
 
               {detail.related?.length > 0 && (
@@ -698,7 +700,7 @@ export default function Mindmap({ onBack }) {
 
                           <div className="flex gap-4">
                             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-2xl text-white shadow-lg" style={{ background: meta.color, boxShadow: `0 8px 20px ${meta.color}30` }}>
-                              {it.type === "approach" ? <Icon name="compass" size={14} style={{ verticalAlign: "-2px" }} /> : meta.icon}
+                              {it.type === "approach" ? <Icon name="compass" size={14} style={{ verticalAlign: "-2px" }} /> : <Glyph value={meta.icon} />}
                             </div>
                             <div className="min-w-0 flex-1">
                               <h3 className="line-clamp-2 text-sm font-black leading-tight text-slate-900 group-hover:text-slate-950">{it.title}</h3>

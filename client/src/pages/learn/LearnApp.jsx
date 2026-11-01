@@ -298,7 +298,7 @@ export default function LearnApp() {
   else if (tabDisabled)
     page = (
       <div className="page"><div className="card empty-state">
-        <div className="ico">🔒</div>
+        <div className="ico"><Icon name="lock" size={28} /></div>
         <h3>{lang === "fa" ? "این قابلیت فعلاً غیرفعال است" : "This feature is currently off"}</h3>
         <div className="muted small">{lang === "fa" ? "مدیر سایت این بخش را خاموش کرده است." : "The site admin has switched this section off."}</div>
         <button type="button" className="btn btn-primary mt16" onClick={() => setTab("home")}>{t("learnHome")}</button>

@@ -1,6 +1,6 @@
 # گزارش R72 — بازطراحی UI/UX (مرحلهٔ ۱ و ۲الف)
 
-> نسخه: `2026.11.01-r72d-ui` · شاخه: `arena/3419d01b-med`
+> نسخه: `2026.11.01-r72e-ui` · شاخه: `arena/3419d01b-med`
 > مهارت طراحی: `ui-ux-pro-max-skill` (نصب شده با `uipro init --ai universal --global`)
 > محدوده: کیفیت بصری و دسترس‌پذیری لمسی. **منطق کسب‌وکار، API، دیتابیس و رمز ادمین تغییر نکرد.**
 
@@ -76,6 +76,34 @@
 - `Landing` را lazy نکردم، چون مهمان‌ها یک رفت‌وبرگشت اضافه می‌بینند و صفحهٔ خالی ممکن است؛ سرعت ادراکی فعلی خوب است.
 - فونت Estedad ۹۰۰ (۲۸ KB) فقط برای تیترها استفاده می‌شود. حذف آن ۲۸ KB از بار اول مهمان کم می‌کند، اما هویت بصری تیترها را تغییر می‌دهد.
 - هفت فایل CSS روی هم بار می‌شوند. ادغام قوانین تکراری می‌تواند CSS را کم‌حجم‌تر کند؛ این کار بزرگ است و ریسک بصری دارد.
+
+## ۲ه. مرحلهٔ ۲ه — نصب skillها و باگ‌های کشف‌شده
+
+**skillهای نصب‌شده (سراسری، `~/.agents/skills/`):** ۱۱۳ پوشهٔ skill از این مخازن:
+- `Graphify-Labs/graphify` (CLI پایتونی از PyPI با نام `graphifyy` در venv جدا؛ skill با `graphify install --platform agents` ثبت شد)
+- `DietrichGebert/ponytail` (۶ skill: ponytail، audit، debt، gain، help، review؛ نسخهٔ `skills/`، نه `.openclaw/`)
+- `cloudflare/security-audit-skill` (security-audit)
+- `vercel-labs/agent-skills` (۸ skill، از جمله react-best-practices، web-design-guidelines، vercel-optimize)
+- `obra/superpowers` (۱۵ skill: systematic-debugging، verification-before-completion، test-driven-development، writing-plans، requesting-code-review و …)
+- `anthropics/skills` (۱۹ skill، از جمله frontend-design، webapp-testing، skill-creator؛ پوشهٔ `template` کنار گذاشته شد)
+- `coreyhaines31/marketingskills` (۵۳ skill: copywriting، cro، seo-audit، page و …)
+- `supabase/agent-skills` (۲ skill؛ پروژه SQLite است، پس فقط برای مرجع نگه داشته شد)
+
+**استفاده در این مرحله:**
+- `graphify update` روی کپی `client/src` و `server/src` (خارج از مخزن): ۳۳۲۶ گره، ۱۰۷۸۳ یال، ۱۲۳ جامعه. `god-nodes` نشان داد `useApp`، `Icon` و `api` مرکزی‌ترین ماژول‌ها هستند.
+- `react-best-practices` (rerender-no-inline-components): ۲۲ کامپوننت داخل کامپوننت پیدا شد؛ مهم‌ترین آن‌ها `GraphView` در مایندمپ بود.
+- `systematic-debugging`: ریشه‌یابی اینکه چرا اموجی‌ها بعد از بیلد هنوز دیده می‌شوند (سرور بازبینی بیلد قدیمی را سرو می‌کرد).
+- `verification-before-completion`: هر تغییر با بیلد، vitest، تست سرور، و اسکن DOM تأیید شد.
+- `security-audit` (بررسی سریع): چهار جای `dangerouslySetInnerHTML` همه از `sanitizeHtml` (DOMPurify) استفاده می‌کنند.
+
+**باگ‌های رفع‌شده در این مرحله:**
+- `GraphView` (مایندمپ) داخل `Mindmap` تعریف شده بود و هر رندر والد آن را دوباره mount می‌کرد؛ یعنی بزرگ‌نمایی (`zoom`) ریست می‌شد و SVG بزرگ دوباره ساخته می‌شد. به سطح ماژول منتقل شد؛ وابستگی‌ها (`hovered`، `setHovered`، `lang`، `openQuestionsFor`، `setDetail`) به‌صورت prop داده شدند. `branchStyle` و `sysMeta` در سطح ماژول‌اند و امن‌اند.
+- اموجی‌های باقی‌مانده در مایندمپ (`meta.icon` در ابتدای خط شرطی) و قفل‌های اموجی در Flashcards و LearnApp به آیکن تبدیل شدند.
+- متن خلاصهٔ نقشه‌های پرمیوم در سرور (`mindmapBank.js`) بدون اموجی شد؛ آیکن قفل را کلاینت نشان می‌دهد.
+
+**تست:** `client` vitest: ۲۶ فایل، ۱۳۳ تست پاس؛ `server` mindmap-schema و api: ۵۱۹ تست پاس (۲۷ skip). اسکن DOM صفحهٔ مایندمپ: صفر اموجی متنی.
+
+**بودجه (پس از ۲ه):** CSS کل ۶۵.۹۹۸ KB؛ JS ورودی ۲۷.۰۱ KB (بالای سقف ۲۵ KB که از HEAD مانده است).
 
 ## ۳. باقی‌مانده (برای دور بعد)
 

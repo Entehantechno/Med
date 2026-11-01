@@ -194,7 +194,7 @@ export function searchMindmaps({
     const locked = isLocked(c) && globalIdx >= previews && !isPremium;
     const isPreview = isLocked(c) && globalIdx < previews;
     if (locked) {
-      return { ...c, locked:true, isPreview:false, nodes:[], edges:[], graph:{nodes:[],edges:[]}, summary: lang==="fa" ? "🔒 ویژه پرمیوم — روزانه ۵ نقشه برای رایگان" : "🔒 Premium only — 5/day for free", _haystack: undefined };
+      return { ...c, locked:true, isPreview:false, nodes:[], edges:[], graph:{nodes:[],edges:[]}, summary: lang==="fa" ? "ویژه پرمیوم — روزانه ۵ نقشه برای رایگان" : "Premium only — 5/day for free", _haystack: undefined };
     }
     return { ...c, locked:false, isPreview, _haystack: undefined };
   });
