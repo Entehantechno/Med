@@ -35,7 +35,8 @@ export function LineChart({ values, height = 130, color = "var(--primary)" }) {
   const path = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
   const area = `${path} L${w},${h} L0,${h} Z`;
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={height} preserveAspectRatio="none">
+    <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={height} preserveAspectRatio="none"
+      style={{ display: "block", width: "100%", height: `${height}px` }}>
       <defs>
         <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity="0.35" />
@@ -91,7 +92,7 @@ export function RadarChart({ data, size = 260, color = "var(--primary)" }) {
   const rings = [0.25, 0.5, 0.75, 1];
   const poly = data.map((d, i) => pt(i, R * (Math.max(0, Math.min(100, d.value)) / 100)).map((x) => x.toFixed(1)).join(",")).join(" ");
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} width="100%" height={size} style={{ maxWidth: size }}>
+    <svg viewBox={`0 0 ${size} ${size}`} width="100%" height={size} style={{ maxWidth: size, display: "block", height: `${size}px` }}>
       {rings.map((rr, k) => (
         <polygon key={k} points={data.map((_, i) => pt(i, R * rr).map((x) => x.toFixed(1)).join(",")).join(" ")}
           fill="none" stroke="var(--border)" strokeWidth="1" />

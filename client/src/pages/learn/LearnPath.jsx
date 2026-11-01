@@ -276,10 +276,10 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
 
   // motivating message based on progress
   const motivate = allDone
-    ? (fa ? "تمام مسیر را کامل کردی! 🏆" : "You finished the whole path! 🏆")
+    ? (fa ? "تمام مسیر را کامل کردی!" : "You finished the whole path!")
     : totalPct >= 66 ? (fa ? "به خط پایان نزدیکی — ادامه بده!" : "Almost there — keep going!")
     : totalPct >= 33 ? (fa ? "عالی پیش می‌روی!" : "Great progress!")
-    : totalPct > 0 ? (fa ? "قدم‌های اول برداشته شد 💪" : "You're off to a strong start 💪")
+    : totalPct > 0 ? (fa ? "قدم‌های اول برداشته شد" : "You're off to a strong start")
     : (fa ? "سفر یادگیری‌ات همین‌جا شروع می‌شود" : "Your learning journey starts here");
 
   let lastParent = null;
@@ -293,7 +293,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
       <div className={`path-progress-card ${compact ? "ppc-compact" : ""}`}>
         {compact && currentNode && (
           <div className="ppc-mini">
-            <span className="ppc-mini-title">{currentTopic?.emoji || "📘"} {currentNode.title}</span>
+            <span className="ppc-mini-title">{currentTopic?.emoji || <Icon name="book" size={14} />} {currentNode.title}</span>
             <span className="ppc-mini-pct">{totalPct}%</span>
             <button type="button" className="btn btn-primary btn-sm" onClick={startCurrent}><Icon name="play" size={13} /> {fa ? "ادامه" : "Continue"}</button>
           </div>
@@ -308,7 +308,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
           <div className="ppc-continue">
             <div className="ppc-continue-info">
               <div className="ppc-continue-label">{fa ? "قدم بعدی" : "Up next"}</div>
-              <div className="ppc-continue-title">{currentTopic?.emoji || "📘"} {currentNode.title}</div>
+              <div className="ppc-continue-title">{currentTopic?.emoji || <Icon name="book" size={18} />} {currentNode.title}</div>
               {currentNode.subtitle && <div className="ppc-continue-subtitle small muted">{currentNode.subtitle}</div>}
             </div>
             <div className="ppc-continue-actions">
@@ -329,10 +329,10 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
       <div className="mm-strip card" style={{ marginBottom: 16, padding: 16, borderRadius: 16, border: "1px solid #e2e8f0", background: "linear-gradient(180deg,#ffffff 0%, #f8fbff 100%)", boxShadow: "0 6px 22px rgba(15,23,42,.06)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span style={{ width: 36, height: 36, borderRadius: 12, background: "linear-gradient(135deg,#06b6d4,#6366f1)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 18, boxShadow: "0 8px 18px rgba(99,102,241,.25)" }}>🧠</span>
+            <span style={{ width: 36, height: 36, borderRadius: 12, background: "linear-gradient(135deg,#06b6d4,#6366f1)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 18, boxShadow: "0 8px 18px rgba(99,102,241,.25)" }}><Icon name="brain" size={20} /></span>
             <div>
               <div style={{ fontWeight: 900, fontSize: ".98rem", lineHeight: 1.1 }}>{fa ? "مایندمپ‌ها — دسته‌بندی سیستمیک" : "MindMaps — Browse by System"}</div>
-              <div className="small muted" style={{ fontSize: ".78rem", lineHeight: 1.6 }}>{fa ? "۳۴۹ نقشهٔ لینک‌دار به بانک سوالات — رفرنس نامحدود ✓ · مایندمپ ۵/روز برای رایگان" : "349 linked maps — ref unlimited ✓ · 5/day free mindmaps"} {mindBank?.total ? <span style={{ background: "#0f172a", color: "#fff", borderRadius: 999, padding: "1px 8px", fontWeight: 800, fontSize: ".72rem", marginInlineStart: 6 }}>{mindBank.total} {fa ? "نقشه" : "maps"}</span> : null} {mindBank?.daily && mindBank.daily.limit < 999 ? <span className={`small`} style={{ background: mindBank.daily.remaining <= 1 ? "#fee2e2" : mindBank.daily.remaining <= 3 ? "#fef3c7" : "#dcfce7", color: mindBank.daily.remaining <= 1 ? "#991b1b" : mindBank.daily.remaining <= 3 ? "#92400e" : "#065f46", borderRadius: 999, padding: "1px 8px", fontWeight: 800, marginInlineStart: 6 }}>{mindBank.daily.remaining}/{mindBank.daily.limit} {fa ? "امروز" : "left today"}</span> : null}</div>
+              <div className="small muted" style={{ fontSize: ".78rem", lineHeight: 1.6 }}>{fa ? "۳۴۹ نقشهٔ لینک‌دار به بانک سوالات — رفرنس نامحدود · مایندمپ ۵/روز برای رایگان" : "349 linked maps — ref unlimited · 5/day free mindmaps"} {mindBank?.total ? <span style={{ background: "#0f172a", color: "#fff", borderRadius: 999, padding: "1px 8px", fontWeight: 800, fontSize: ".72rem", marginInlineStart: 6 }}>{mindBank.total} {fa ? "نقشه" : "maps"}</span> : null} {mindBank?.daily && mindBank.daily.limit < 999 ? <span className={`small`} style={{ background: mindBank.daily.remaining <= 1 ? "#fee2e2" : mindBank.daily.remaining <= 3 ? "#fef3c7" : "#dcfce7", color: mindBank.daily.remaining <= 1 ? "#991b1b" : mindBank.daily.remaining <= 3 ? "#92400e" : "#065f46", borderRadius: 999, padding: "1px 8px", fontWeight: 800, marginInlineStart: 6 }}>{mindBank.daily.remaining}/{mindBank.daily.limit} {fa ? "امروز" : "left today"}</span> : null}</div>
             </div>
           </div>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => { try{ window.dispatchEvent(new CustomEvent("medlab-go",{detail:"mindmap"})); }catch{}}} style={{ borderRadius: 999, border: "1px solid #e2e8f0", background: "#fff" }}>{fa ? "همهٔ نقشه‌ها →" : "View all →"}</button>
@@ -351,7 +351,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
           })}
         </div>
         <div className="small muted" style={{ marginTop: 10, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", lineHeight: 1.7 }}>
-          <span style={{ background: "#eff6ff", border: "1px solid #dbeafe", borderRadius: 999, padding: "2px 8px", fontWeight: 700, color: "#1d4ed8" }}>📚 {fa ? "رفرنس نامحدود" : "Ref unlimited"} ✓</span>
+          <span style={{ background: "#eff6ff", border: "1px solid #dbeafe", borderRadius: 999, padding: "2px 8px", fontWeight: 700, color: "#1d4ed8", display: "inline-flex", alignItems: "center", gap: 4 }}><Icon name="book" size={13} /> {fa ? "رفرنس نامحدود" : "Ref unlimited"} <Icon name="check" size={13} /></span>
           <span style={{ opacity: .9 }}>{fa ? "هر نقشه به سؤالات لینک است — دو کلیک تا تسلط" : "Every map links to Qbank — 2 clicks to mastery"}</span>
           <span style={{ marginInlineStart: "auto", opacity: .75 }}>{fa ? "۳ نقشه برای آشنایی رایگان است" : "3 free previews, then Plus"}</span>
         </div>
@@ -402,10 +402,10 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
                 {topic.emoji ? <span className="node-emoji">{topic.emoji}</span> : <Icon name={topic.icon} size={22} />}
               </div>
               <div className="unit-header-body">
-                <div className="unit-header-title">{topic.name}{complete && " ✓"}</div>
+                <div className="unit-header-title">{topic.name}{complete && <Icon name="check" size={14} style={{ marginInlineStart: 4, verticalAlign: "middle" }} />}</div>
                 {topic.canJump && flag("jump_ahead") && (
                   <button type="button" className="unit-jump-btn" onClick={() => setJumpTopic(topic)} title={fa ? "با یک آزمون کوتاه، از این واحد بپر" : "Skip this unit with a short quiz"}>
-                    🚀 {fa ? "پرش از واحد" : "Jump ahead"}
+                    <Icon name="bolt" size={14} /> {fa ? "پرش از واحد" : "Jump ahead"}
                   </button>
                 )}
               </div>
@@ -477,7 +477,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
                           <span className="unit-bubble bubble" style={!n.done && !n.locked && n.kind !== "boss" && !n.legendary ? { background: topic.color } : undefined}>
                             <span className="bubble-gloss" aria-hidden="true" />
                             {n.locked ? <Icon name="lock" size={26} />
-                              : n.legendary ? <span className="node-emoji">👑</span>
+                              : n.legendary ? <span className="node-emoji"><Icon name="crown" size={18} /></span>
                               : n.done ? <Icon name="check" size={30} />
                               : n.kind === "boss" ? <Icon name="trophy" size={26} />
                               : (n.emoji || topic.emoji)
@@ -503,28 +503,28 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
                                     title={sat.title}
                                     aria-label={sat.title}
                                   >
-                                    {sat.done ? (satMastered ? "👑" : "✓") : "👑"}
+                                    {sat.done ? (satMastered ? <Icon name="crown" size={16} /> : <Icon name="check" size={16} />) : <Icon name="crown" size={16} />}
                                   </button>
                                   {popSat === sat.id && (
                                     <div className="satellite-pop" role="status">
                                       {sat.premiumLocked ? (
                                         <div>
-                                          <div style={{ fontWeight: 800 }}>👑 {sat.title || (fa ? "تمرین تکمیلی" : "Extra Practice")}</div>
+                                          <div style={{ fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="crown" size={16} /> {sat.title || (fa ? "تمرین تکمیلی" : "Extra Practice")}</div>
                                           <div className="small muted mt2" style={{ fontSize: ".72rem" }}>
                                             {fa ? `${sat.cards || 20} سؤال مفهومی تکمیلی` : `${sat.cards || 20} bonus practice questions`}
                                           </div>
                                           <button type="button" className="btn btn-primary btn-xs mt6" onClick={goPremium} style={{ width: "100%", padding: "4px 8px", fontSize: ".72rem" }}>
-                                            {fa ? "👑 ارتقا به پلاس" : "👑 Upgrade to Plus"}
+                                            <Icon name="crown" size={14} /> {fa ? "ارتقا به پلاس" : "Upgrade to Plus"}
                                           </button>
                                         </div>
                                       ) : sat.locked ? (
                                         <div>
-                                          <div style={{ fontWeight: 800 }}>🔒 {sat.title || (fa ? "آزمون ماهواره‌ای" : "Satellite Test")}</div>
+                                          <div style={{ fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="lock" size={16} /> {sat.title || (fa ? "آزمون ماهواره‌ای" : "Satellite Test")}</div>
                                           <div className="small muted mt2">{fa ? "اول درس اصلی را کامل کن" : "Finish main lesson first"}</div>
                                         </div>
                                       ) : (
                                         <div>
-                                          <div style={{ fontWeight: 800 }}>👑 {sat.title}</div>
+                                          <div style={{ fontWeight: 800, display: "inline-flex", alignItems: "center", gap: 6 }}><Icon name="crown" size={16} /> {sat.title}</div>
                                           <div className="small muted mt2">{sat.cards} {fa ? "سؤال تکمیلی" : "practice questions"}</div>
                                           <div className="small mt4" style={{ color: "var(--accent,#22a06b)", fontWeight: 700 }}>
                                             {sat.done ? (fa ? "تکرار تمرین" : "Practice again") : (fa ? "شروع آزمون" : "Start")}
@@ -585,7 +585,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
 
       {allDone && (
         <div className="path-finish-card">
-          🏆 <div>{fa ? "تبریک! کل مسیر یادگیری را کامل کردی." : "Congratulations! You completed the entire path."}</div>
+          <Icon name="trophy" size={20} /> <div>{fa ? "تبریک! کل مسیر یادگیری را کامل کردی." : "Congratulations! You completed the entire path."}</div>
         </div>
       )}
     </div>

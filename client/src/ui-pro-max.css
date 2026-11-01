@@ -8,9 +8,6 @@
 
 /* 1. Touch targets: icon-only controls reach 44x44 CSS px (WCAG 2.5.5).
       The visible glyph stays the same size; only the hit area grows. */
-.pw-toggle {
-  height: 44px;
-}
 .lp-icon-btn,
 .pw-toggle,
 .login-modal-close {
@@ -35,3 +32,14 @@
 .stat-card .num * {
   font-variant-numeric: tabular-nums;
 }
+
+/* 3. Header controls reach 44px tall (name, language, theme, logout). */
+.topbar .btn{min-height:44px}
+
+/* 4. Docked support tab keeps its 26px peek; a 22px transparent extension on
+   the inner side gives a 44px touch area. The global mobile rule
+   (mobile-learn.css) forces buttons to 44px wide, so min-width is reset. */
+.support-fab.docked{min-width:0}
+.support-fab.docked::before{content:"";position:absolute;top:0;bottom:0;width:22px}
+[dir=rtl] .support-fab.docked:not(.side-start)::before,[dir=ltr] .support-fab.docked.side-start::before{left:100%}
+[dir=ltr] .support-fab.docked:not(.side-start)::before,[dir=rtl] .support-fab.docked.side-start::before{right:100%}
