@@ -2356,6 +2356,7 @@ export function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_users_role           ON users(role);
     CREATE INDEX IF NOT EXISTS idx_users_student_no     ON users(student_no);
     CREATE INDEX IF NOT EXISTS idx_users_email          ON users(email);
+    CREATE INDEX IF NOT EXISTS idx_users_email_lower    ON users(lower(email));
     CREATE INDEX IF NOT EXISTS idx_users_university     ON users(university_id);
     CREATE INDEX IF NOT EXISTS idx_card_attempts_user   ON card_attempts(user_id, card_id);
     CREATE INDEX IF NOT EXISTS idx_card_attempts_day    ON card_attempts(day);

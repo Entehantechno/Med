@@ -2222,7 +2222,7 @@ mark.stem-hl{ background:linear-gradient(transparent 55%, rgba(246,195,67,.6) 55
 .lesson-q-accent{position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,#0ea5e9,#6366f1,#ec4899);opacity:.9}
 .lesson-q-card .lesson-q{margin:8px 0 14px;text-align:start}
 .lesson-resource-bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px dashed var(--border)}
-.lesson-res-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:var(--panel2);font-weight:800;font-size:.78rem;cursor:pointer;transition:all .15s;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.lesson-res-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:var(--panel2);font-weight:800;font-size:.78rem;cursor:pointer;transition:background-color .15s, border-color .15s, color .15s, box-shadow .15s, transform .15s, opacity .15s;box-shadow:0 2px 10px rgba(0,0,0,.04)}
 .lesson-res-btn:hover{transform:translateY(-1px);box-shadow:0 8px 16px rgba(0,0,0,.08)}
 .lesson-res-ico{width:26px;height:26px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;color:#fff;flex:none}
 .lesson-res-label{white-space:nowrap}
@@ -2772,6 +2772,10 @@ tbody tr:hover td{ transform: translateX(1px) }
   box-shadow: 0 0 0 3px rgba(37,105,176,.18), 0 0 0 1px var(--primary) !important;
 }
 [data-theme="dark"] :focus-visible{ box-shadow: 0 0 0 3px rgba(79,147,232,.24), 0 0 0 1px var(--primary) !important }
+/* Forced-colors (Windows high contrast) drops box-shadow: keep a visible focus ring. */
+@media (forced-colors: active){
+  :focus-visible{ outline: 2px solid Highlight !important; outline-offset: 2px }
+}
 
 /* reduce motion */
 @media (prefers-reduced-motion: reduce){

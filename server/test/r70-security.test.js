@@ -128,14 +128,15 @@ describe("R70 · API keys hidden and encrypted at rest", () => {
     expect(JSON.stringify(res.body)).not.toContain("REALKEY");
   });
 
-  it("the retired admin VP-patient AI endpoints answer 410 and never echo a key", async () => {
-    // admin.js guards /vpatient/* with a router-level 410; the masking there is defence in depth.
+  it("the revived admin VP-patient AI endpoints (admin-only, R72) work and never echo a key", async () => {
+    // R72 revival: /vpatient/* is open to admins again (learner routes stay 410). Masking is still required.
     const put = await request(app).put("/api/admin/vpatient/ai").set(bearer(admin))
       .send({ provider: "OpenAI", model: "gpt-4o-mini", apiKey: "sk-vp-SECRET-7777" });
-    expect(put.status).toBe(410);
+    expect(put.status).toBe(200);
     expect(JSON.stringify(put.body)).not.toContain("SECRET-7777");
     const get = await request(app).get("/api/admin/vpatient/ai").set(bearer(admin));
-    expect(get.status).toBe(410);
+    expect(get.status).toBe(200);
+    expect(JSON.stringify(get.body)).not.toContain("SECRET-7777");
   });
 
   it("generic admin settings write seals a provider key and audit never logs it", async () => {

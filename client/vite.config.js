@@ -1,5 +1,21 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { dedupeOverriddenCss } from "./scripts/css-dedupe.mjs";
+
+/* Build-only: drop CSS declarations that a later identical-selector rule always
+   overrides (see scripts/css-dedupe.mjs). Source stylesheets are not changed. */
+const cssDedupe = {
+  name: "med-css-dedupe",
+  apply: "build",
+  enforce: "post",
+  generateBundle(_options, bundle) {
+    for (const file of Object.values(bundle)) {
+      if (file.type === "asset" && file.fileName.endsWith(".css")) {
+        file.source = dedupeOverriddenCss(String(file.source)).css;
+      }
+    }
+  },
+};
 
 /* Production build is tuned for fast first paint + cache-friendly chunks:
    - React/ReactDOM live in a stable `react-vendor` chunk so app changes don't
@@ -13,7 +29,7 @@ import react from "@vitejs/plugin-react";
 const API_TARGET = process.env.VITE_API_TARGET || "http://localhost:4000";
 
 export default defineConfig(({ command }) => ({
-  plugins: [react()],
+  plugins: [react(), cssDedupe],
   // Drop console.* / debugger from the production bundle only; keep them in dev.
   esbuild: command === "build" ? { drop: ["console", "debugger"] } : {},
   server: {

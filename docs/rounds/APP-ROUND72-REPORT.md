@@ -170,10 +170,48 @@
 - سرور: تست احیا پاس؛ `vp-stability` با ۱۷۷ تست پاس و ۱۸ skip.
 - مرورگر (۱۳۶۶ پیکسل، ادمین): منو و صفحهٔ پرامپت‌ها باز می‌شوند؛ تایپ در textarea فوکوس و متن را نگه می‌دارد؛ خطای صفحه نیست. ذخیره‌ای انجام نشد.
 
+## ۲ی. مرحلهٔ ۲ی — CSS بدون تغییر منبع، انتقال‌های دقیق، امنیت و پایگاه‌داده
+
+**هدف:** بازیابی سهمیهٔ CSS بدون دست‌بردن در فایل‌های منبع، حذف `transition: all`، و بررسی امنیت و دیتابیس با مهارت‌ها.
+
+**تغییرات:**
+- `client/scripts/css-dedupe.mjs` (جدید) + `client/vite.config.js` (افزونهٔ فقط build): declarationهایی که توسط یک قاعدهٔ بعدیِ با همان selector و همان at-rule override می‌شوند حذف می‌شوند. مقادیر با syntax جدید (`color-mix`، `oklch`، `env()` و …) و keyframes دست نخورده می‌مانند. فایل‌های منبع تغییر نکردند.
+- `client/src/lib/css-dedupe.test.js` (جدید): ۹ تست.
+- `client/package.json`: `postcss@^8.5.32` به‌صورت devDependency صریح اضافه شد (قبلاً transitive بود).
+- `transition: all` (۱۴ مورد در `styles.css`، `search.css`، `styles-speed-fixes.css`، `design-refresh.css`) به فهرست صریح ویژگی‌ها (`background-color`، `border-color`، `color`، `box-shadow`، `transform`، `opacity`) با همان مدت و تابع زمانی تبدیل شد.
+- `design-refresh.css`: برای حالت forced-colors (ویندوز high contrast) که box-shadow را حذف می‌کند، یک outline در `:focus-visible` اضافه شد.
+- `server/src/db.js`: ایندکس `idx_users_email_lower ON users(lower(email))`. کوئری ورود با ایمیل (`lower(email) = lower(?) OR username = ? OR student_no = ?`) قبلاً full scan روی `users` می‌کرد؛ با این ایندکس `MULTI-INDEX OR` می‌شود.
+- `server/test/r70-security.test.js`: تستی که پس از احیای ادمین هنوز 410 را انتظار داشت به «ادمین ۲۰۰ و بدون نشت کلید» تبدیل شد (مطابق تصمیم احیا در ۲ط).
+
+**اندازه‌ها:**
+- CSS کل gzip: ۶۵.۹۹۸ → **۶۴.۷۳۶ KB** (سقف ۶۶). entry CSS: ۵۹.۶۵ → ۵۸.۴۲ KB. entry JS: ۲۳.۴۳ KB (سقف ۲۵).
+- سقف‌ها بدون تغییر ماندند.
+
+**امنیت (بررسی، بدون تغییر رفتار):**
+- `npm audit --omit=dev`: سرور و کلاینت هر دو ۰ آسیب‌پذیری.
+- **ریشهٔ‌ پروژه (`package.json` و `package-lock.json` که `npm start` و هاست از آن استفاده می‌کنند):** `audit-check` (گیت انتشار) ۱ critical + ۳ high شامل `body-parser`، `compression`، `multer` و `proxy-addr` (IP spoofing) را گزارش داد. با `npm audit fix --omit=dev --package-lock-only` رفع شد (فقط lock؛ `multer` 2.5.0، `compression` 1.8.2، `body-parser` 1.20.9، `proxy-addr` 2.0.8، `qs` 6.16.2). گیت حالا برای ریشه، سرور و کلاینت صفر است. نصب تمیز با `--ignore-scripts` و import این پکیج‌ها پاس شد؛ build بومی `better-sqlite3` در sandbox به دلیل toolchain شکست خورد (محیطی، نه ناشی از این تغییر).
+- SQL: همهٔ interpolationها فقط نام جدول/ستون از allowlist یا کد ثابت هستند؛ مقادیر کاربر همیشه parameterized‌اند؛ `ORDER BY` در `universities.js` از `Object.hasOwn` استفاده می‌کند.
+- helmet با CSP، کوکی `httpOnly` و `sameSite: lax`، CORS با allowlist، بررسی magic bytes برای آپلود تصویر و ویدیو، و توقف production در صورت `JWT_SECRET` ضعیف از قبل وجود داشت.
+- باقی‌مانده (تصمیم محصول): `ADMIN_IP_ALLOWLIST` تنظیم نشده؛ `FORCE_HTTPS=0` فقط در محیط بررسی من است. رمز ادمین تغییر نکرد.
+
+**دیتابیس:** WAL، `foreign_keys=ON`، `secure_delete`، `trusted_schema=OFF`، `quick_check` در boot و حدود ۷۰ ایندکس از قبل موجود بود. فقط ایندکس ایمیل اضافه شد.
+
+**بصری (۱۳۶۶ و ۳۷۵ پیکسل، روشن و تیره، ۱۵ صفحه):**
+- صفحات مهمان و ادمین و مسیر یادگیری ۱۳۶۶ بی‌تفاوت (۰ پیکسل اختلاف).
+- نقاط اختلاف در خانهٔ یادگیرنده (حباب «دکتر مِد») از محتوای چرخشی است: دو گرفتن از یک build تا ۳۹۶۷ پیکسل در همان ناحیه اختلاف دارد.
+- اختلاف مشاهده‌شده در مسیر یادگیری ۳۷۵ پیکسل: ۳ بار از ۴ گرفتن، قاب نازک ۱ پیکسلی دور کارت‌ها (۳۹۰۳ پیکسل)؛ یک گرفتن بعدی بدون اختلاف بود. هنوز به‌طور قطعی بازتولید نشده؛ باید با چشم بررسی شود.
+
+**تست:**
+- کلاینت: vitest ۱۴۲ تست پاس (۱۳۳ + ۹ جدید)؛ build بدون خطا؛ `perf:budget` پاس.
+- سرور: کل suite (پیش از رفع `r70`): ۱۹۷۶ پاس، ۴۵ skip، ۴۶ شکست. ۴۵ شکست در `master-bank.test.js` است که **در commit پایه هم رخ می‌دهد** (داده/هش محتوای بانک سوال؛ ربطی به این مرحله ندارد) و رفع نشدند. شکست ۴۶ام در `r70-security` بود که پس از به‌روزرسانی تست احیا پاس است (۵۳/۵۳).
+
 ## ۳. باقی‌مانده (برای دور بعد)
 
 - **حذف اموجی از صفحات دیگر:** `Admin.jsx` (۲۴۹)، `learn/Mindmap.jsx` (۹۴)، `admin/MindmapBankAdmin.jsx` (۷۱)، `learn/Lesson.jsx`، `MotionAd`، `PremiumBanner`، `Quests`، `DailyChallenge`.
 - **بودجهٔ JS:** کاهش ۱.۸ KB از JS ورودی با code-splitting.
+- **a11y باقی‌مانده:** ۳۸ `<img>` بدون ابعاد (تصاویر کاربر؛ نیاز به ابعاد ذاتی)، ~۳۶ کلیک روی `div/span`، `autoFocus` در ۱۰ جا، و بررسی دکمه‌های فقط‑آیکن از نظر `aria-label`.
+- **کد مرده:** `ContentManagement` در `Admin.jsx` هنوز حذف نشده.
+- **تست‌های `master-bank` (۴۵ شکست در پایه):** نیاز به بررسی یکپارچگی داده/هش.
 - **بررسی کامل:** فلش‌کارت، دسته‌بندی بیمار مجازی، صفحات مدیر و مدرس.
 - **مشکل‌های R71 (بدون تغییر):** اندازه‌گیری مجدد زمان بوت، اصلاح ادعاهای `DATABASE-RESEARCH-FA.md`، تست CLI ایمپورت دانش‌آموزان، تأیید Node ≥ 22.14، سیاست رمز دانش‌آموز.
 
