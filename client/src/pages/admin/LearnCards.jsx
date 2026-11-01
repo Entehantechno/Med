@@ -239,7 +239,7 @@ export default function LearnCards({ jump, onJumpConsumed } = {}) {
       {demoInfo?.count > 0 && (
         <div className="card lc-demo-banner mb16">
           <div className="lc-demo-text">
-            <strong><Icon name="alert" size={14} /> {t("demoCardsTitle")}</strong>
+            <strong><Icon name="warn" size={14} /> {t("demoCardsTitle")}</strong>
             <span className="muted small">
               {t("demoCardsBody").replace("{n}", demoInfo.count).replace("{k}", demoInfo.usedInNodes)}
             </span>
