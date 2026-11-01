@@ -91,7 +91,7 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
       {banner && bannerText && (
         <a className="lp-banner" href={banner.url || "#"} style={{ background: banner.bg || "#2f7fd1" }}
           onClick={(e) => { if (!banner.url) { e.preventDefault(); onGetStarted(); } }}>
-          <span className="lp-banner-text">📣 {bannerText}</span>
+          <span className="lp-banner-text"><Icon name="bell" size={16} /> {bannerText}</span>
           {bannerCta && <span className="lp-banner-cta">{bannerCta} {fa ? "←" : "→"}</span>}
         </a>
       )}
@@ -268,7 +268,7 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
         <div className="lp-testimonials">
           {testimonials.map((t, i) => (
             <div className="lp-testi" key={t.id || i}>
-              <div className="lp-stars">{"★".repeat(t.rating || 5)}{"☆".repeat(5 - (t.rating || 5))}</div>
+              <div className="lp-stars" role="img" aria-label={fa ? `${t.rating || 5} از ۵ ستاره` : `${t.rating || 5} out of 5 stars`}><span aria-hidden="true">{"★".repeat(t.rating || 5)}{"☆".repeat(5 - (t.rating || 5))}</span></div>
               <p>{t.quote}</p>
               <div className="lp-testi-author">
                 <Avatar name={t.name} photo={t.photo} />
@@ -354,15 +354,15 @@ function MockPath() {
   return (
     <div className="mock-card">
       <div className="mock-hud">
-        <span className="mock-pill flame">🔥 12</span>
-        <span className="mock-pill xp">★ 340</span>
-        <span className="mock-pill heart">❤ 5</span>
+        <span className="mock-pill flame" aria-label="۱۲ روز پشت‌سرهم"><Icon name="flame" size={14} /> ۱۲</span>
+        <span className="mock-pill xp" aria-label="۳۴۰ امتیاز"><Icon name="star" size={14} /> ۳۴۰</span>
+        <span className="mock-pill heart" aria-label="۵ جان"><Icon name="heart" size={14} /> ۵</span>
       </div>
       <div className="mock-path">
         {nodes.map((n, i) => (
           <div key={i} className={`mock-node ${n.done ? "done" : ""} ${n.active ? "active" : ""}`}
             style={{ marginInlineStart: `${(i % 2 === 0 ? 0 : 60)}px` }}>
-            {n.done ? "✓" : n.active ? "▶" : "★"}
+            {n.done ? <Icon name="check" size={18} /> : n.active ? <Icon name="play" size={16} /> : <Icon name="star" size={16} />}
           </div>
         ))}
       </div>
@@ -372,11 +372,11 @@ function MockPath() {
 
 function MockLeague() {
   const rows = [
-    ["🥇", "سینا", 765], ["🥈", "نگار", 650], ["🥉", "شما", 620], ["4", "رضا", 540],
+    ["1", "سینا", 765], ["2", "نگار", 650], ["3", "شما", 620], ["4", "رضا", 540],
   ];
   return (
     <div className="mock-card mock-league">
-      <div className="mock-league-title">🏆 لیگ نقره</div>
+      <div className="mock-league-title"><Icon name="trophy" size={16} /> لیگ نقره</div>
       {rows.map(([m, name, xp], i) => (
         <div className={`mock-lg-row ${name === "شما" ? "me" : ""}`} key={i}>
           <span className="mock-lg-rank">{m}</span>

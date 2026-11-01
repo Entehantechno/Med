@@ -20,6 +20,8 @@ import "./styles-speed-fixes.css";
 import "./styles-r60.css";
 import "./mobile-learn.css";
 import "./scroll-unlock.css";
+// R72 UI/UX pass (ui-ux-pro-max review): audit-driven fixes only. Loaded last.
+import "./ui-pro-max.css";
 import { initRum } from "./lib/rum.js";
 import { safeLocal } from "./lib/storage.js";
 import { initSwUpdate } from "./lib/sw-update.js";

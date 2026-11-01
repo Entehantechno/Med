@@ -185,22 +185,22 @@ export default function Login({ initialMode = "login", onBackHome, asModal = fal
           ) : (
             <>
               <div className="field mt16" style={{ textAlign: "start" }}>
-                <label>{t("emailOrUsername")}</label>
-                <input data-testid="login-username" name="username" autoComplete="username"
+                <label htmlFor="login-identifier">{t("emailOrUsername")}</label>
+                <input id="login-identifier" data-testid="login-username" name="username" autoComplete="username"
                   value={identifier} onChange={(e) => setIdentifier(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && submit()} autoFocus />
               </div>
               <div className="field" style={{ textAlign: "start" }}>
-                <label>{t("password")}</label>
+                <label htmlFor="login-password-input">{t("password")}</label>
                 <div className="pw-wrap">
-                  <input dir="ltr" data-testid="login-password" type={showPw ? "text" : "password"} name="password" autoComplete="current-password"
+                  <input id="login-password-input" dir="ltr" data-testid="login-password" type={showPw ? "text" : "password"} name="password" autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)} onKeyDown={(e) => e.key === "Enter" && submit()} />
                   <button type="button" className="pw-toggle" aria-label={showPw ? (fa ? "پنهان کردن رمز" : "Hide password") : (fa ? "نمایش رمز" : "Show password")} onClick={() => setShowPw((v) => !v)}>{showPw ? (fa ? "پنهان" : "Hide") : (fa ? "نمایش" : "Show")}</button>
                 </div>
                 {mode === "login" && (
                   <div className="small mt8" style={{ textAlign: "end" }}>
-                    <button type="button" className="btn btn-ghost btn-sm" style={{ padding: "2px 6px", fontSize: ".82rem" }}
+                    <button type="button" className="btn btn-ghost btn-sm login-forgot" style={{ padding: "2px 6px", fontSize: ".82rem" }}
                       onClick={() => window.location.assign("/reset-password")}>
                       {fa ? "فراموشی رمز؟" : "Forgot password?"}
                     </button>
