@@ -310,7 +310,7 @@ export default function Browse() {
                 <div className="small muted">{active} {fa ? "فیلتر فعال" : "active"} · {total.toLocaleString(fa ? "fa-IR" : "en-US")} {fa ? "نتیجه" : "results"}</div>
               </div>
             </div>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowFil(false)}><Icon name="close" size={14} /></button>
+            <button aria-label={t("close")} type="button" className="btn btn-ghost btn-sm" onClick={() => setShowFil(false)}><Icon name="close" size={14} /></button>
           </div>
           <div className="facet-panel">
             {FACETS.filter((f) => more || PRIMARY.includes(f.key) || fil[f.key]?.length).map((f) => {

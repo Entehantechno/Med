@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
-import Icon from "../../components/Icon.jsx";
 
 export default function BugHunt() {
   const { lang } = useApp();

@@ -14,7 +14,7 @@ export default function Maintenance({ info, onAdminLogin }) {
     <div className="maintenance-screen">
       <div className="maintenance-topbar">
         <button type="button" className="btn btn-ghost btn-sm" onClick={toggleLang}><Icon name="globe" size={16} /> {fa ? "English" : "فارسی"}</button>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={toggleTheme}><Icon name={theme === "dark" ? "sun" : "moon"} size={16} /></button>
+        <button type="button" className="btn btn-ghost btn-sm" aria-label={theme === "dark" ? (lang === "fa" ? "حالت روشن" : "Light mode") : (lang === "fa" ? "حالت تیره" : "Dark mode")} onClick={toggleTheme}><Icon name={theme === "dark" ? "sun" : "moon"} size={16} /></button>
       </div>
       <div className="maintenance-card">
         <div className="maintenance-emoji">🛠️</div>

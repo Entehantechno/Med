@@ -7,7 +7,7 @@ import Landing from "./pages/Landing.jsx";
 // Everything else is code-split (React.lazy) so each audience downloads only
 // the JavaScript it actually uses. Big win: the huge Admin bundle is never
 // shipped to learners/visitors, and the learner app isn't shipped to admins.
-import { routeChunks, intentProps, warmIdleSequence, onIdle, warm } from "./lib/routes-prefetch.js";
+import { routeChunks, intentProps } from "./lib/routes-prefetch.js";
 const Login = lazy(routeChunks.login);
 const Blog = lazy(routeChunks.blog);
 const PublicStore = lazy(routeChunks.store);

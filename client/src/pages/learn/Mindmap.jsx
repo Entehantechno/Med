@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useMindmapView } from "../../lib/lesson-translate.js";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
@@ -48,10 +48,6 @@ const SYSTEMS = [
   { id: "biophys", label_fa: "بیوفیزیک", label_en: "Biophys", icon: "🔭", grad: "from-indigo-500 to-violet-600", color: "#6366f1" },
   { id: "physics", label_fa: "فیزیک", label_en: "Phys", icon: "⚛️", grad: "from-indigo-500 to-violet-600", color: "#6366f1" },
   { id: "other", label_fa: "سایر", label_en: "Other", icon: "✨", grad: "from-slate-500 to-gray-600", color: "#64748b" },
-];
-const TYPES = [
-  { id: "mind", label_fa: "مایندمپ", label_en: "Mind", icon: "🧠" },
-  { id: "approach", label_fa: "اپروچ", label_en: "Approach", icon: "🧭" },
 ];
 const LEVELS = [
   { id: "core", label_fa: "پایه", label_en: "Core", color: "#0ea5e9" },
@@ -502,7 +498,7 @@ export default function Mindmap({ onBack }) {
                 </div>
               </div>
               <div className={zen?"mm-zen-wrap":""} style={zen?{ position:"fixed", inset:0, zIndex:80, background:"rgba(248,250,252,.86)", backdropFilter:"saturate(1.3) blur(14px)", WebkitBackdropFilter:"saturate(1.3) blur(14px)", padding:"20px 16px 16px", overflow:"auto" }:{}}>
-                {zen && <button type="button" onClick={()=>setZen(false)} style={{ position:"fixed", top:12, insetInlineEnd:12, zIndex:81, width:36, height:36, borderRadius:999, border:"1px solid #e2e8f0", background:"#fff", display:"grid", placeItems:"center", boxShadow:"0 8px 18px rgba(0,0,0,.12)" }}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}
+                {zen && <button aria-label={t("close")} type="button" onClick={()=>setZen(false)} style={{ position:"fixed", top:12, insetInlineEnd:12, zIndex:81, width:36, height:36, borderRadius:999, border:"1px solid #e2e8f0", background:"#fff", display:"grid", placeItems:"center", boxShadow:"0 8px 18px rgba(0,0,0,.12)" }}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}
                 <GraphView data={detail} structure={structure} pitch={pitch} pitchIdx={pitchIdx} setPitchIdx={setPitchIdx} zen={zen} hovered={hovered} setHovered={setHovered} lang={lang} openQuestionsFor={openQuestionsFor} setDetail={setDetail} />
               </div>
 
@@ -536,7 +532,7 @@ export default function Mindmap({ onBack }) {
                       <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-600 text-white"></span>
                       {lang === "fa" ? `سؤالات: ${nodeQ.concept}` : `Questions: ${nodeQ.concept}`}
                     </h3>
-                    <button onClick={() => setNodeQ(null)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-600 shadow hover:bg-slate-50"><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>
+                    <button aria-label={t("close")} onClick={() => setNodeQ(null)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-600 shadow hover:bg-slate-50"><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>
                   </div>
                   {nodeQ.items.length === 0 ? (
                     <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white/70 p-6 text-center text-sm text-slate-600">{lang === "fa" ? "موردی یافت نشد" : "No questions yet"}</div>
@@ -572,7 +568,7 @@ export default function Mindmap({ onBack }) {
                         className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 ps-10 pe-10 text-sm font-medium placeholder:text-slate-400 focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-500/10"
                       />
                       {qInput && (
-                        <button onClick={() => { setQInput(""); setQ(""); }} className="absolute inset-y-0 end-2 my-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white hover:bg-slate-800"><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>
+                        <button aria-label={t("clearField")} onClick={() => { setQInput(""); setQ(""); }} className="absolute inset-y-0 end-2 my-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white hover:bg-slate-800"><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>
                       )}
                     </div>
                     <div className="flex items-center gap-2">

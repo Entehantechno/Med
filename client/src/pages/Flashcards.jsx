@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { markBusy } from "../lib/sw-update.js";
 import { useApp } from "../context.jsx";
 import { api, loadFailKind, loadFailText, getToken } from "../api.js";
-import { TopBar, Spinner, Pill } from "../components/UI.jsx";
+import { TopBar, Spinner } from "../components/UI.jsx";
 import { biField } from "../lib/bifield.js";
 import SearchAnswer from "../components/SearchAnswer.jsx";
 import Leaderboard from "../components/Leaderboard.jsx";
@@ -740,19 +740,6 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
   ));
 }
 
-function HistoSvg({ color }) {
-  const circles = Array.from({ length: 40 }).map((_, i) => {
-    const x = Math.random() * 100, y = Math.random() * 100, r = 3 + Math.random() * 10;
-    return <circle key={i} cx={`${x}%`} cy={`${y}%`} r={r}
-      fill={`rgba(120,40,80,${0.15 + Math.random() * 0.3})`} stroke="rgba(90,20,60,.5)" />;
-  });
-  return (
-    <svg width="100%" height="100%" viewBox="0 0 400 240" preserveAspectRatio="none"
-      style={{ position: "absolute", inset: 0 }}>
-      <rect width="400" height="240" fill={color} />{circles}
-    </svg>
-  );
-}
 
 function DeckPicker({ allCards, onStart, home, embedded = false }) {
   const { t, lang } = useApp();

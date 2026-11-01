@@ -25,8 +25,7 @@ import AudioUpload from "../components/AudioUpload.jsx";
 import MediaLibraryPicker from "../components/MediaLibraryPicker.jsx";
 import { BarChart, LineChart, Donut, RadarChart } from "../components/Charts.jsx";
 import { biField } from "../lib/bifield.js";
-import { fmtDate, fmtDateTime, fmtDuration,
-  todayJalali, jalaliMonthDays, jalaliTimeToIso, isoToJalaliParts, fmtDateLong } from "../utils/date.js";
+import { fmtDate, fmtDateTime, fmtDuration, todayJalali, jalaliTimeToIso, isoToJalaliParts, fmtDateLong } from "../utils/date.js";
 import { SUBJECTS } from "../data/subject-catalog.js";
 import SearchAnswer from "../components/SearchAnswer.jsx";
 import OrderSearch from "../components/OrderSearch.jsx";
@@ -40,8 +39,8 @@ import Icon from "../components/Icon.jsx";
 import { Glyph } from "../components/Glyph.jsx";
 import BulkSelectBar from "../components/BulkSelectBar.jsx";
 import { passwordErrorText } from "../lib/password-errors.js";
-import { VpGradingPanel, VpGradingRubric, mergeRubric, emptyRubric } from "../components/VpGradingRubric.jsx";
-import { SkeletonCards, SkeletonTable } from "../components/Skeleton.jsx";
+import { VpGradingPanel, VpGradingRubric, mergeRubric } from "../components/VpGradingRubric.jsx";
+import { SkeletonTable } from "../components/Skeleton.jsx";
 import ErrorBoundary from "../components/ErrorBoundary.jsx";
 import VirtualList from "../components/VirtualList.jsx";
 import HotspotEditor from "../components/HotspotEditor.jsx";
@@ -113,7 +112,7 @@ function AdminBell() {
       {open && (
         <div className="card" style={{ position: "absolute", insetInlineEnd: 0, top: "110%", zIndex: 50, width: 340, maxWidth: "88vw", maxHeight: 420, overflowY: "auto", boxShadow: "0 10px 30px rgba(0,0,0,.18)" }}>
           <div className="section-title" style={{ marginBottom: 8 }}><h4 style={{ fontSize: ".95rem" }}>{t("adminNotifs")}</h4>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOpen(false)}><Icon name="close" size={13} /></button></div>
+            <button aria-label={t("close")} type="button" className="btn btn-ghost btn-sm" onClick={() => setOpen(false)}><Icon name="close" size={13} /></button></div>
           {d.notifications.length === 0 ? <div className="small muted center" style={{ padding: 14 }}>{t("adminNoNotifs")}</div> :
             d.notifications.map((n) => (
               <div key={n.id} className="small" style={{ padding: "8px 6px", borderBottom: "1px solid var(--border,#eee)", opacity: n.seen ? 0.7 : 1 }}>
@@ -289,7 +288,7 @@ export default function Admin({ home }) {
               <Icon name="search" size={15} />
               <input value={navQuery} onChange={(e) => setNavQuery(e.target.value)}
                 placeholder={t("searchPlaceholder") || "جستجو…"} />
-              {navQuery && <button type="button" className="dt-clear" onClick={() => setNavQuery("")}><Icon name="close" size={13} /></button>}
+              {navQuery && <button aria-label={t("clearField")} type="button" className="dt-clear" onClick={() => setNavQuery("")}><Icon name="close" size={13} /></button>}
             </div>
             {navSections.map((sec) => {
               const nq = navQuery.trim().toLowerCase();
@@ -1519,7 +1518,7 @@ function DrawingZoneEditor({ drawing, onChange, lang }) {
       <span className="tag">#{i + 1}</span>
       <input style={{ maxWidth: 120 }} value={z.label || ""} onChange={(e) => setLabel(i, e.target.value)} placeholder={fa ? "شماره برچسب" : "Label #"} />
       <span className="small muted">{Math.round(z.w)}٪ × {Math.round(z.h)}٪</span>
-      <button type="button" className="btn btn-sm btn-danger" onClick={() => remove(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>
+      <button aria-label={lang === "fa" ? "حذف" : "Delete"} type="button" className="btn btn-sm btn-danger" onClick={() => remove(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>
     </div>)}
   </div>;
 }
@@ -1851,7 +1850,7 @@ export function CardModal({ card, onClose, onSave }) {
             <div className="inline-form mt8" key={i} style={{ alignItems: "center" }}>
               <input dir="rtl" lang="fa" data-content-language="fa" placeholder={lang === "fa" ? "معیار فارسی" : "Criterion FA"} value={(f.drawing?.rubric_fa || [])[i] || ""} onChange={(e)=>setRubric("rubric_fa", i, e.target.value)} />
               <input aria-label="Criterion EN" dir="ltr" lang="en" data-content-language="en" placeholder="Criterion EN" value={(f.drawing?.rubric_en || [])[i] || ""} onChange={(e)=>setRubric("rubric_en", i, e.target.value)} />
-              <button type="button" className="btn btn-sm btn-danger" onClick={()=>delRubric(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>
+              <button aria-label={t("delete")} type="button" className="btn btn-sm btn-danger" onClick={()=>delRubric(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>
             </div>
           ))}
           {f.drawing?.assistEnabled !== false && <DrawingZoneEditor drawing={f.drawing} lang={lang} onChange={(zones)=>setDrawing("zones", zones)} />}
@@ -1870,7 +1869,7 @@ export function CardModal({ card, onClose, onSave }) {
           <div className="section-title"><label className="small muted">{t("kfItems")}</label><button type="button" className="btn btn-sm btn-ghost" onClick={addKfItem}>+ {t("add")}</button></div>
           {(f.kf?.items || []).map((it, i) => (
             <div className="card mt8" key={i} style={{ padding: 10, background: "var(--panel2)" }}>
-              <div className="section-title"><b>{lang === "fa" ? `مورد ${i + 1}` : `Item ${i + 1}`}</b>{(f.kf?.items || []).length > 1 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delKfItem(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}</div>
+              <div className="section-title"><b>{lang === "fa" ? `مورد ${i + 1}` : `Item ${i + 1}`}</b>{(f.kf?.items || []).length > 1 && <button aria-label={t("delete")} type="button" className="btn btn-sm btn-danger" onClick={() => delKfItem(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}</div>
               <div className="field"><label>{lang === "fa" ? "نوع این مورد" : "Item type"}</label>
                 <select aria-label={[lang === "fa" ? "نوع این مورد" : "Item type"].join(' ')} value={it.kind || "short"} onChange={(e) => setKfItem(i, "kind", e.target.value)}>
                   <option value="short">{lang === "fa" ? "پاسخ کوتاه" : "Short answer"}</option>
@@ -1928,7 +1927,7 @@ export function CardModal({ card, onClose, onSave }) {
               <input type="number" min="0" max="100" step="0.1" value={p.y} onChange={(e) => setPin(i, "y", Number(e.target.value))} style={{ width: 72 }} />
               <input aria-label="FA" dir="rtl" lang="fa" data-content-language="fa" placeholder="FA" value={p.label_fa || ""} onChange={(e) => setPin(i, "label_fa", e.target.value)} />
               <input aria-label="EN" dir="ltr" lang="en" data-content-language="en" placeholder="EN" value={p.label_en || ""} onChange={(e) => setPin(i, "label_en", e.target.value)} />
-              <button type="button" className="btn btn-sm btn-danger" onClick={() => delPin(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>
+              <button aria-label={t("delete")} type="button" className="btn btn-sm btn-danger" onClick={() => delPin(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>
             </div>
           ))}
           <div className="grid grid-2 mt8">
@@ -1999,7 +1998,7 @@ export function CardModal({ card, onClose, onSave }) {
               <span style={{ fontWeight: 800 }}>↔</span>
               <input dir="rtl" lang="fa" data-content-language="fa" style={{ minWidth: 90 }} placeholder={`راست FA`} value={p[2]} onChange={(e) => setPair(i, 2, e.target.value)} />
               <input dir="ltr" lang="en" data-content-language="en" style={{ minWidth: 90 }} placeholder={`Right EN`} value={p[3]} onChange={(e) => setPair(i, 3, e.target.value)} />
-              {f.pairs.length > 2 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delPair(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}
+              {f.pairs.length > 2 && <button aria-label={t("delete")} type="button" className="btn btn-sm btn-danger" onClick={() => delPair(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}
             </div>
           ))}
         </>
@@ -2026,7 +2025,7 @@ export function CardModal({ card, onClose, onSave }) {
                 <option value="B">B</option>
                 <option value="both">{lang === "fa" ? "هر دو" : "both"}</option>
               </select>
-              {(f.features || []).length > 1 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delFeature(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}
+              {(f.features || []).length > 1 && <button aria-label={t("delete")} type="button" className="btn btn-sm btn-danger" onClick={() => delFeature(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}
             </div>
           ))}
         </>
@@ -2043,7 +2042,7 @@ export function CardModal({ card, onClose, onSave }) {
               <span style={{ fontWeight: 800, width: 22 }}>{i + 1}.</span>
               <input placeholder={`FA #${i + 1}`} value={it} onChange={(e) => setItem(i, "items_fa", e.target.value)} />
               <input dir="ltr" lang="en" data-content-language="en" placeholder={`EN #${i + 1}`} value={f.items_en[i] || ""} onChange={(e) => setItem(i, "items_en", e.target.value)} />
-              {f.items_fa.length > 2 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delItem(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}
+              {f.items_fa.length > 2 && <button aria-label={t("delete")} type="button" className="btn btn-sm btn-danger" onClick={() => delItem(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}
             </div>
           ))}
         </>
@@ -2086,7 +2085,7 @@ export function CardModal({ card, onClose, onSave }) {
                 <input type="radio" aria-label={`${t("markCorrect")} ${i+1}`} name="correct" checked={!!o.correct} onChange={() => setCorrect(i)} style={{ width: 18, flexShrink: 0 }} title={t("markCorrect")} />
                 <input dir="rtl" lang="fa" data-content-language="fa" placeholder={`FA #${i + 1}`} value={o.fa} onChange={(e) => setOpt(i, "fa", e.target.value)} />
                 <input dir="ltr" lang="en" data-content-language="en" placeholder={`EN #${i + 1}`} value={o.en} onChange={(e) => setOpt(i, "en", e.target.value)} />
-                {f.options.length > 2 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delOpt(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}
+                {f.options.length > 2 && <button aria-label={t("delete")} type="button" className="btn btn-sm btn-danger" onClick={() => delOpt(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}
               </div>
               {/* per-option rationale — WHY this option is right/wrong (UWorld-style) */}
               <div className="grid grid-2 mt8" style={{ gap: 8 }}>
@@ -4158,15 +4157,15 @@ function ExamModal({ exam, onClose, onSave }) {
         <div className="small muted mb16">{t("chooseExamType")}</div>
         {bankErr && <div className="err-banner mb8">{bankErr}</div>}
         <div className="grid grid-3">
-          <div className="card mod-card center" onClick={() => setType("vp")}>
+          <div className="card mod-card center" role="button" tabIndex={0} onClick={() => setType("vp")} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setType("vp"); } }}>
             <div className="mod-ico" style={{ background: "var(--grad-primary)", margin: "0 auto 12px" }}><Icon name="patient" size={30} /></div>
             <h3 style={{ fontSize: "1rem" }}>{t("modVirtualPatient")}</h3>
           </div>
-          <div className="card mod-card center" onClick={() => setType("flash")}>
+          <div className="card mod-card center" role="button" tabIndex={0} onClick={() => setType("flash")} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setType("flash"); } }}>
             <div className="mod-ico" style={{ background: "var(--grad-green)", margin: "0 auto 12px" }}><Icon name="flask" size={30} /></div>
             <h3 style={{ fontSize: "1rem" }}>{t("modFlashcard")}</h3>
           </div>
-          <div className="card mod-card center" onClick={() => setType("both")}>
+          <div className="card mod-card center" role="button" tabIndex={0} onClick={() => setType("both")} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setType("both"); } }}>
             <div className="mod-ico" style={{ background: "var(--grad-purple)", margin: "0 auto 12px" }}><Icon name="puzzle" size={30} /></div>
             <h3 style={{ fontSize: "1rem" }}>{t("examBoth")}</h3>
           </div>
@@ -4229,25 +4228,25 @@ function ExamModal({ exam, onClose, onSave }) {
       <label className="small muted"><Icon name="settings" size={16} /> {t("examSettings")}</label>
       <label className="toggle-row" style={{ cursor: "pointer" }}>
         <span><Icon name="dice" size={16} /> {t("shuffleQuestions")}</span>
-        <div className={`switch ${f.shuffle ? "on" : ""}`} onClick={() => set("shuffle", !f.shuffle)} /></label>
+        <div className={`switch ${f.shuffle ? "on" : ""}`} role="switch" tabIndex={0} aria-checked={!!f.shuffle} aria-label={"shuffle"} onClick={() => set("shuffle", !f.shuffle)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); set("shuffle", !f.shuffle); } }} /></label>
       <label className="toggle-row" style={{ cursor: "pointer" }}>
         <span><Icon name="shield" size={16} /> {t("antiCheat")}</span>
-        <div className={`switch ${f.anti_cheat ? "on" : ""}`} onClick={() => set("anti_cheat", !f.anti_cheat)} /></label>
+        <div className={`switch ${f.anti_cheat ? "on" : ""}`} role="switch" tabIndex={0} aria-checked={!!f.anti_cheat} aria-label={"anti_cheat"} onClick={() => set("anti_cheat", !f.anti_cheat)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); set("anti_cheat", !f.anti_cheat); } }} /></label>
       <label className="toggle-row" style={{ cursor: "pointer" }}>
         <span><Icon name="trophy" size={16} /> {t("competitionMode")}</span>
-        <div className={`switch ${f.competition ? "on" : ""}`} onClick={() => set("competition", !f.competition)} /></label>
+        <div className={`switch ${f.competition ? "on" : ""}`} role="switch" tabIndex={0} aria-checked={!!f.competition} aria-label={"competition"} onClick={() => set("competition", !f.competition)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); set("competition", !f.competition); } }} /></label>
       <label className="toggle-row" style={{ cursor: "pointer" }}>
         <span>{t("showCorrect")}</span>
-        <div className={`switch ${f.show_correct ? "on" : ""}`} onClick={() => set("show_correct", !f.show_correct)} /></label>
+        <div className={`switch ${f.show_correct ? "on" : ""}`} role="switch" tabIndex={0} aria-checked={!!f.show_correct} aria-label={"show_correct"} onClick={() => set("show_correct", !f.show_correct)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); set("show_correct", !f.show_correct); } }} /></label>
       <label className="toggle-row" style={{ cursor: "pointer" }}>
         <span>{t("showHints")}</span>
-        <div className={`switch ${f.show_hints ? "on" : ""}`} onClick={() => set("show_hints", !f.show_hints)} /></label>
+        <div className={`switch ${f.show_hints ? "on" : ""}`} role="switch" tabIndex={0} aria-checked={!!f.show_hints} aria-label={"show_hints"} onClick={() => set("show_hints", !f.show_hints)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); set("show_hints", !f.show_hints); } }} /></label>
       <label className="toggle-row" style={{ cursor: "pointer" }}>
         <span>{t("showAiAnalysis")}</span>
-        <div className={`switch ${f.show_ai ? "on" : ""}`} onClick={() => set("show_ai", !f.show_ai)} /></label>
+        <div className={`switch ${f.show_ai ? "on" : ""}`} role="switch" tabIndex={0} aria-checked={!!f.show_ai} aria-label={"show_ai"} onClick={() => set("show_ai", !f.show_ai)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); set("show_ai", !f.show_ai); } }} /></label>
       <label className="toggle-row" style={{ cursor: "pointer" }}>
         <span>{t("showMicro")}</span>
-        <div className={`switch ${f.show_micro ? "on" : ""}`} onClick={() => set("show_micro", !f.show_micro)} /></label>
+        <div className={`switch ${f.show_micro ? "on" : ""}`} role="switch" tabIndex={0} aria-checked={!!f.show_micro} aria-label={"show_micro"} onClick={() => set("show_micro", !f.show_micro)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); set("show_micro", !f.show_micro); } }} /></label>
       <div className="field mt8">
         <label>{lang === "fa" ? "↩ بازگشت به کارت‌های قبلی (فلش‌کارت)" : "↩ Back to earlier cards (flashcards)"}</label>
         <select value={f.flash_allow_back} onChange={(e) => set("flash_allow_back", e.target.value)}>
@@ -4268,7 +4267,7 @@ function ExamModal({ exam, onClose, onSave }) {
       <div className="divider" />
       <label className="toggle-row" style={{ cursor: "pointer" }}>
         <span><Icon name="flask" size={16} /> {lang === "fa" ? "ثبت گفت‌وگو برای پژوهش" : "Log encounter for research"}</span>
-        <div className={`switch ${f.logTranscript ? "on" : ""}`} onClick={() => set("logTranscript", !f.logTranscript)} /></label>
+        <div className={`switch ${f.logTranscript ? "on" : ""}`} role="switch" tabIndex={0} aria-checked={!!f.logTranscript} aria-label={"logTranscript"} onClick={() => set("logTranscript", !f.logTranscript)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); set("logTranscript", !f.logTranscript); } }} /></label>
       <ClassStudyField value={f.studyId} onChange={(id) => set("studyId", id)} />
     </Modal>
   );
@@ -4294,7 +4293,7 @@ function StudentSearchAdd({ onAdd }) {
       <div className="dt-search" style={{ maxWidth: "100%" }}>
         <Icon name="search" size={16} />
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("searchByNameOrNo")} />
-        {q && <button type="button" className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={14} /></button>}
+        {q && <button aria-label={t("clearField")} type="button" className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={14} /></button>}
       </div>
       {matches.length > 0 && (
         <div className="stu-results">
@@ -4954,7 +4953,7 @@ function SiteContent() {
         <div className="dt-search" style={{ marginBottom: 0, flex: 1, minWidth: 200 }}>
           <Icon name="search" size={16} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("searchPlaceholder")} />
-          {q && <button type="button" className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={14} /></button>}
+          {q && <button aria-label={t("clearField")} type="button" className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={14} /></button>}
         </div>
       </div>
 
@@ -4962,7 +4961,7 @@ function SiteContent() {
         const open = needle ? true : openSec === sec.id;
         return (
           <div className="card mb8" key={sec.id}>
-            <div className="cms-sec-head" onClick={() => !needle && setOpenSec(open ? null : sec.id)}
+            <div className="cms-sec-head" role="button" tabIndex={0} aria-expanded={!!open} onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && !needle) { e.preventDefault(); setOpenSec(open ? null : sec.id); } }} onClick={() => !needle && setOpenSec(open ? null : sec.id)}
               style={{ cursor: needle ? "default" : "pointer", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <strong>{lang === "fa" ? sec.title_fa : sec.title_en}</strong>
               {!needle && <Icon name={open ? "chevronUp" : "chevronDown"} size={16} />}
@@ -5397,7 +5396,7 @@ function SupportInbox() {
                 <textarea rows={1} value={reply} onChange={(e) => setReply(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendReply(); } }}
                   placeholder={t("supportReplyPlaceholder")} />
-                <button type="button" className="support-send" disabled={busy || !reply.trim()} onClick={sendReply}><Icon name="send" size={18} /></button>
+                <button aria-label={t("send")} type="button" className="support-send" disabled={busy || !reply.trim()} onClick={sendReply}><Icon name="send" size={18} /></button>
               </div>
             </>
           )}
@@ -5550,7 +5549,7 @@ function PremiumAccounts() {
       <div className="card">
         <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
           <input value={q} onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load(q)} placeholder={fa ? "جستجوی مشترک…" : "Search subscribers…"} style={{ flex: 1 }} />
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => load(q)}><Icon name="search" size={14} /></button>
+          <button aria-label={t("search")} type="button" className="btn btn-ghost btn-sm" onClick={() => load(q)}><Icon name="search" size={14} /></button>
         </div>
         {d.subscribers.length === 0
           ? <div className="empty-state"><div className="ico"><Icon name="crown" size={40} /></div><h3>{fa ? "هنوز مشترک پریمیومی نیست" : "No premium subscribers yet"}</h3></div>
@@ -5564,7 +5563,7 @@ function PremiumAccounts() {
                 <td>{s.lifetime ? "∞" : (s.daysLeft === 0 ? <span className="pill pill-danger">{fa ? "منقضی" : "expired"}</span> : s.daysLeft)}</td>
                 <td>
                   <button type="button" className="btn btn-ghost btn-sm" onClick={() => doGrant(s.id, 30, false)} title={fa ? "+۳۰ روز" : "+30 days"}>+30</button>
-                  <button type="button" className="btn btn-danger btn-sm" onClick={() => doRevoke(s.id)}><Icon name="close" size={12} /></button>
+                  <button aria-label={t("revoke")} type="button" className="btn btn-danger btn-sm" onClick={() => doRevoke(s.id)}><Icon name="close" size={12} /></button>
                 </td>
               </tr>
             ))}</tbody></table></div>}
@@ -5575,7 +5574,7 @@ function PremiumAccounts() {
           <div className="field"><label>{fa ? "جستجوی کاربر (نام/یوزرنیم/ایمیل)" : "Find learner (name/username/email)"}</label>
             <div style={{ display: "flex", gap: 8 }}>
               <input value={grant.search} onChange={(e) => setGrant({ ...grant, search: e.target.value })} onKeyDown={(e) => e.key === "Enter" && searchLearners(grant.search)} style={{ flex: 1 }} />
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => searchLearners(grant.search)}><Icon name="search" size={14} /></button>
+              <button aria-label={t("search")} type="button" className="btn btn-ghost btn-sm" onClick={() => searchLearners(grant.search)}><Icon name="search" size={14} /></button>
             </div>
           </div>
           <div className="grid grid-2 mb16">
@@ -5981,7 +5980,7 @@ function DxEditor({ edit, setEdit, save, t, fa }) {
             <div className="field"><label>{fa ? `سرنخ ${i + 1} (فا)` : `Clue ${i + 1} (fa)`}</label><input value={c.fa} onChange={(e) => setClue(i, "fa", e.target.value)} /></div>
             <div className="field"><label>{fa ? `سرنخ ${i + 1} (en)` : `Clue ${i + 1} (en)`}</label><input value={c.en} onChange={(e) => setClue(i, "en", e.target.value)} /></div>
           </div>
-          <button type="button" className="btn btn-sm btn-danger" onClick={() => delClue(i)}><Icon name="trash" size={12} /></button>
+          <button aria-label={t("delete")} type="button" className="btn btn-sm btn-danger" onClick={() => delClue(i)}><Icon name="trash" size={12} /></button>
         </div>
       ))}
 
@@ -6000,7 +5999,7 @@ function DxEditor({ edit, setEdit, save, t, fa }) {
             <div className="field"><label>{fa ? `گزینه ${i + 1} (فا)` : `Option ${i + 1} (fa)`}</label><input value={o.fa} onChange={(e) => setOpt(i, "fa", e.target.value)} /></div>
             <div className="field"><label>{fa ? `گزینه ${i + 1} (en)` : `Option ${i + 1} (en)`}</label><input value={o.en} onChange={(e) => setOpt(i, "en", e.target.value)} /></div>
           </div>
-          <button type="button" className="btn btn-sm btn-danger" onClick={() => delOpt(i)}><Icon name="trash" size={12} /></button>
+          <button aria-label={t("delete")} type="button" className="btn btn-sm btn-danger" onClick={() => delOpt(i)}><Icon name="trash" size={12} /></button>
         </div>
       ))}
 
@@ -6180,8 +6179,8 @@ function BadgesAdmin() {
               </div>
             </div>
             <div style={{ display: "flex", gap: 6 }}>
-              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEdit({ ...b })}><Icon name="edit" size={13} /></button>
-              <button type="button" className="btn btn-danger btn-sm" onClick={() => remove(b.id)}><Icon name="trash" size={13} /></button>
+              <button aria-label={t("edit")} type="button" className="btn btn-ghost btn-sm" onClick={() => setEdit({ ...b })}><Icon name="edit" size={13} /></button>
+              <button aria-label={t("delete")} type="button" className="btn btn-danger btn-sm" onClick={() => remove(b.id)}><Icon name="trash" size={13} /></button>
             </div>
           </div>
         ))}
@@ -6191,7 +6190,7 @@ function BadgesAdmin() {
           <div className="field"><label>{fa ? "آیکون" : "Icon"}</label>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
               {BADGE_ICONS.map((ic) => (
-                <button key={ic} type="button" className={`btn btn-sm ${edit.icon === ic ? "btn-primary" : "btn-ghost"}`} onClick={() => setEdit({ ...edit, icon: ic })} style={{ padding: "8px 10px" }}>
+                <button key={ic} type="button" aria-label={ic} aria-pressed={edit.icon === ic} className={`btn btn-sm ${edit.icon === ic ? "btn-primary" : "btn-ghost"}`} onClick={() => setEdit({ ...edit, icon: ic })} style={{ padding: "8px 10px" }}>
                   <Icon name={ic} size={18} />
                 </button>
               ))}
@@ -7288,7 +7287,7 @@ function BlogAdminList({ d, stats: s, fa, t, toast, load, setEditing, KPI }) {
         <div className="dt-search" style={{ flex: 1, minWidth: 180 }}>
           <Icon name="search" size={15} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={fa ? "جستجوی مقاله…" : "Search posts…"} />
-          {q && <button type="button" className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={13} /></button>}
+          {q && <button aria-label={t("clearField")} type="button" className="dt-clear" onClick={() => setQ("")}><Icon name="close" size={13} /></button>}
         </div>
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="">{fa ? "همه" : "All"}</option>
@@ -9324,7 +9323,7 @@ function Universities() {
         <div className="dt-search">
           <Icon name="search" size={16} />
           <input aria-label={lang==="fa"?"جستجوی دانشگاه‌ها":"Search universities"} value={uniQ} onChange={(e) => setUniQ(e.target.value)} placeholder={lang==="fa"?"جستجو با نام دانشگاه، شهر یا کد…":"Search university, city or code…"} />
-          {uniQ && <button type="button" className="dt-clear" onClick={() => setUniQ("")}><Icon name="close" size={14} /></button>}
+          {uniQ && <button aria-label={t("clearField")} type="button" className="dt-clear" onClick={() => setUniQ("")}><Icon name="close" size={14} /></button>}
         </div>
       )}
       <div className="grid grid-2">
@@ -9705,7 +9704,7 @@ function AuditLog() {
   return (
     <div className="page">
       <div className="section-title"><h4><Icon name="clock" size={18} /> {t("auditLog")}</h4>
-        <div className="inline-form" style={{ gap: 8 }}><input placeholder={t("action")} value={action} onChange={(e) => setAction(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load()} style={{ maxWidth: 160 }} /><button type="button" className="btn btn-ghost btn-sm" onClick={load}><Icon name="search" size={14} /></button></div>
+        <div className="inline-form" style={{ gap: 8 }}><input placeholder={t("action")} value={action} onChange={(e) => setAction(e.target.value)} onKeyDown={(e) => e.key === "Enter" && load()} style={{ maxWidth: 160 }} /><button aria-label={t("search")} type="button" className="btn btn-ghost btn-sm" onClick={load}><Icon name="search" size={14} /></button></div>
       </div>
       {items.length === 0 && <div className="card empty-state"><div className="ico"><Icon name="clock" size={40} /></div><h3>{t("noAudit")}</h3></div>}
       <div className="table-wrap"><table><thead><tr><th>{t("actor")}</th><th>{t("action")}</th><th>{t("resource")}</th><th>{t("when")}</th></tr></thead><tbody>
@@ -9717,44 +9716,6 @@ function AuditLog() {
   );
 }
 
-/* ---- Content (microlearning) management ---- */
-function ContentManagement() {
-  const { t, lang } = useApp();
-  const toast = useToast();
-  const [cards, setCards] = useState(null);
-  const [editing, setEditing] = useState(null);
-  const [importing, setImporting] = useState(false);
-  const load = () => api.get(`/admin/content/cards?lang=${lang}`).then((d) => setCards(d.cards)).catch(() => setCards([]));
-  useEffect(() => { load(); }, []);
-  const toggleActive = async (c) => { await api.post(`/admin/content/cards/${c.id}/active`, { active: !c.active }); load(); };
-  if (!cards) return <Spinner />;
-  return (
-    <div className="page">
-      <div className="section-title"><h4><Icon name="book" size={18} /> {t("contentMgmt")}</h4>
-        <button type="button" className="btn btn-primary btn-sm" onClick={() => setImporting(true)}>
-          <Icon name="upload" size={14} /> {t("bulkImport")}
-        </button>
-      </div>
-      <div className="small muted mb16">{cards.length} {t("flashcards")}</div>
-      {importing && <LazyAdminChunk><ImportModal onClose={() => setImporting(false)} onDone={() => { setImporting(false); toast(t("saved")); load(); }} /></LazyAdminChunk>}
-      <div className="table-wrap"><table><thead><tr><th>#</th><th>{t("title")}</th><th>{t("questionTypeLabel")}</th><th>{t("hasMicro")}</th><th></th></tr></thead><tbody>
-        {cards.slice(0, 200).map((c) => (
-          <tr key={c.id} style={{ opacity: c.active ? 1 : .5 }}>
-            <td>{c.id}</td>
-            <td style={{ maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.q}</td>
-            <td><span className="tag">{t("qt" + c.type.charAt(0).toUpperCase() + c.type.slice(1)) || c.type}</span></td>
-            <td>{c.hasMicro ? <Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> : "—"}</td>
-            <td style={{ textAlign: "end", whiteSpace: "nowrap" }}>
-              <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}><Icon name="edit" size={13} /> {t("editMicro")}</button>
-              <button type="button" className="btn btn-sm btn-ghost" onClick={() => toggleActive(c)}>{c.active ? <Icon name="lock" size={13} /> : <Icon name="check" size={13} />}</button>
-            </td>
-          </tr>
-        ))}
-      </tbody></table></div>
-      {editing && <MicroEditModal card={editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); toast(t("saved")); load(); }} />}
-    </div>
-  );
-}
 
 /* Bulk import of pre-internship questions (CSV, all types + QB micro). */
 function MicroEditModal({ card, onClose, onSaved }) {

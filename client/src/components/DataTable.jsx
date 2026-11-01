@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect, useDeferredValue, useRef } from "react";
 import { useApp } from "../context.jsx";
-import Icon from "./Icon.jsx";
 import SearchBox, { Highlight, highlightLocal, normFa } from "./SearchBox.jsx";
 
 /* Reusable table with a search box, click-to-sort column headers and PAGINATION.

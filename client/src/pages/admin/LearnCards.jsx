@@ -11,7 +11,6 @@ import { Highlight, highlightLocal } from "../../components/SearchBox.jsx";
 import { SUBJECTS } from "../../data/subject-catalog.js";
 import { MicroLesson } from "../learn/QuestionTypes.jsx";
 import ImportModal from "./ImportModal.jsx";
-import ImageUpload from "../../components/ImageUpload.jsx";
 import MediaUpload from "../../components/MediaUpload.jsx";
 
 /* Competitive-track content management (single merged tab):

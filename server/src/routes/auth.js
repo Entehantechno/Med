@@ -86,7 +86,9 @@ async function loginRoute(req, res) {
   // Exact username wins over a student number / email that happens to equal it.
   let user;
   try {
-    user = db.prepare("SELECT * FROM users WHERE username = ? OR username = ? OR student_no = ? OR student_no = ? OR lower(email) = lower(?) ORDER BY (username = ?) DESC, (username = ?) DESC, (student_no = ?) DESC, id ASC LIMIT 1").get(id, idNorm, id, idNorm, id, id, idNorm, id);
+    // Candidate ids come from three indexed lookups (username, student_no, lower(email));
+    // the join back on the primary key avoids a full users scan on every sign-in.
+    user = db.prepare("WITH c(id) AS (SELECT id FROM users WHERE username = ? OR username = ? UNION SELECT id FROM users WHERE student_no = ? OR student_no = ? UNION SELECT id FROM users WHERE lower(email) = lower(?)) SELECT u.* FROM c JOIN users u ON u.id = c.id ORDER BY (u.username = ?) DESC, (u.username = ?) DESC, (u.student_no = ?) DESC, u.id ASC LIMIT 1").get(id, idNorm, id, idNorm, id, id, idNorm, id);
   } catch (e) {
     console.error("[auth] login lookup failed:", e?.message || e);
     return res.status(500).json({ error: "server_error", stage: "login_lookup" });

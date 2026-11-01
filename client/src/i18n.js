@@ -1,6 +1,7 @@
 /* Bilingual dictionary + helpers (React) */
 export const I18N = {
   fa: {
+    clearField: "پاک کردن", revoke: "لغو",
     dir: "rtl", langName: "فارسی", otherLang: "English", darkMode: "حالت تاریک", lightMode: "حالت روشن",
     appName: "MED School", appSub: "رقابت هوشمند پزشکی",
     login: "ورود به سامانه", username: "نام کاربری", password: "رمز عبور", enter: "ورود",
@@ -841,6 +842,7 @@ export const I18N = {
     valid: "معتبر", errors: "خطاها", imported: "واردشده", pasteOrUpload: "ابتدا فایل را بارگذاری یا محتوا را وارد کنید",
   },
   en: {
+    clearField: "Clear", revoke: "Revoke",
     dir: "ltr", langName: "English", otherLang: "فارسی", darkMode: "Dark mode", lightMode: "Light mode",
     appName: "MED School", appSub: "Smart medical competition",
     login: "Sign In", username: "Username", password: "Password", enter: "Enter",

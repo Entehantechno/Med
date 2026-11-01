@@ -4,10 +4,8 @@ import Icon from "../../components/Icon.jsx";
 import { playTap } from "../../lib/feedback.js";
 import { optionLetter, optionLetterAria } from "../../lib/optionLetter.js";
 import MediaEmbed from "../../components/MediaEmbed.jsx";
-import Emphasis from "../../components/Emphasis.jsx";
 import GlossaryText from "../../components/GlossaryText.jsx";
 import { normFa } from "../../components/SearchBox.jsx";
-import { api } from "../../api.js";
 import { useLessonFields } from "../../lib/lesson-translate.js";
 
 /* Each question type exposes: render UI + report whether the current answer is correct
@@ -21,32 +19,6 @@ function shuffle(arr) {
   return a;
 }
 
-/* Anki-style bury/suspend (FSRS) — tiny inline controls for the review queue. */
-function BurySuspendRow({ cardId, onDone }) {
-  const { lang } = useApp();
-  const fa = lang === "fa";
-  const [msg, setMsg] = useState("");
-  const [busy, setBusy] = useState(null);
-  const act = async (kind) => {
-    if (busy) return;
-    setBusy(kind);
-    try {
-      if (kind === "bury") await api.post("/learn/review/bury", { cardId });
-      else if (kind === "suspend") await api.post("/learn/review/suspend", { cardId });
-      setMsg(kind === "bury" ? (fa ? "تا فردا مخفی شد" : "Buried until tomorrow") : (fa ? "تعلیق شد" : "Suspended"));
-      onDone?.(kind);
-    } catch (e) {
-      setMsg(e.message || "خطا");
-    } finally { setBusy(null); setTimeout(() => setMsg(""), 2500); }
-  };
-  return (
-    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
-      <button type="button" className="btn btn-ghost btn-sm" disabled={!!busy} onClick={() => act("bury")} title={fa ? "این کارت را تا فردا مخفی کن (bury)" : "Bury until tomorrow"}>⏸ {fa ? "مخفی تا فردا" : "Bury"}</button>
-      <button type="button" className="btn btn-ghost btn-sm" disabled={!!busy} onClick={() => act("suspend")} title={fa ? "تعلیق کامل — تا وقتی خودت برگردانی نمایش داده نمی‌شود" : "Suspend indefinitely"}>🚫 {fa ? "تعلیق" : "Suspend"}</button>
-      {msg && <span className="small muted">{msg}</span>}
-    </div>
-  );
-}
 
 /* MCQ */
 export function MCQ({ card, checked, sel, setSel, isCorrect, glossary }) {

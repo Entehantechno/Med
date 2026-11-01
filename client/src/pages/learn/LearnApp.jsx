@@ -455,7 +455,7 @@ export default function LearnApp() {
             <div className="learn-more-search">
               <Icon name="search" size={16} style={{ opacity:.6 }} />
               <input value={moreQuery} onChange={(e)=>setMoreQuery(e.target.value)} placeholder={lang==="fa"?"جستجوی سریعِ ابزار… / مثلاً آزمون، لیگ، فلش":"Search tools… try quiz, league, flash"} autoFocus={false} />
-              {moreQuery && <button type="button" className="learn-more-search-clear" onClick={()=>setMoreQuery("")}><Icon name="close" size={14} /></button>}
+              {moreQuery && <button aria-label={t("clearField")} type="button" className="learn-more-search-clear" onClick={()=>setMoreQuery("")}><Icon name="close" size={14} /></button>}
             </div>
             {programs.length > 1 && (
               <div className="learn-more-sec">

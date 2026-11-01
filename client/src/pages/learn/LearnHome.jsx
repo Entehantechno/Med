@@ -3,7 +3,6 @@ import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
 import { GemIcon, XpIcon, StreakIcon } from "../../components/StatIcons.jsx";
-import { AdCard } from "./AdCard.jsx";
 import { MotionAd } from "./MotionAd.jsx";
 import { PremiumHero, PremiumInline } from "./PremiumBanner.jsx";
 import { RewardedAd } from "./RewardedAd.jsx";

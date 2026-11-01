@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
-import Icon from "../../components/Icon.jsx";
 
 /* Visual mnemonics (Sketchy-style): illustrated memory scenes with hooks that
    link each scene element to a fact. Authored by teachers/admins — no AI. */

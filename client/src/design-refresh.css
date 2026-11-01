@@ -2585,9 +2585,13 @@ mark.stem-hl{ background:linear-gradient(transparent 55%, rgba(246,195,67,.6) 55
   box-shadow: 0 14px 36px rgba(15,23,42,.07), 0 1px 0 rgba(255,255,255,.7) inset !important;
   overflow:hidden;
 }
+/* Light glass hero needs dark ink (white text was ~1.2:1 on it); dark glass keeps white. */
+.home-hero{ color:#0f172a; }
+.home-hero .home-greet{ color:inherit; }
 [data-theme="dark"] .home-hero{
   background: rgba(30,41,59,.64) !important;
   border-color: rgba(255,255,255,.07) !important;
+  color:#f8fafc;
 }
 .home-hero::before{
   content:""; position:absolute; inset:0; pointer-events:none; opacity:.5;

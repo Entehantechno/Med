@@ -40,8 +40,8 @@ export default function StoreManager() {
             </div>
             <button type="button" className="btn btn-sm btn-ghost" onClick={() => setManage(c.id)}><Icon name="play" size={13} /> {t("manageLessons")}</button>
             <button type="button" className="btn btn-sm btn-ghost" onClick={() => togglePub(c)}>{c.published ? t("unpublish") : t("publish")}</button>
-            <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEdit(c)}><Icon name="edit" size={13} /></button>
-            <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)}><Icon name="trash" size={13} /></button>
+            <button aria-label={t("edit")} type="button" className="btn btn-sm btn-ghost" onClick={() => setEdit(c)}><Icon name="edit" size={13} /></button>
+            <button aria-label={t("delete")} type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)}><Icon name="trash" size={13} /></button>
           </div>
         </div>
       ))}
@@ -126,8 +126,8 @@ function LessonManager({ courseId, onBack }) {
             <button type="button" className={`btn btn-sm ${l.free_preview ? "btn-accent" : "btn-ghost"}`} onClick={() => toggleFree(l)} title={t("freePreview")}>
               {l.free_preview ? `✓ ${t("freePreview")}` : t("makeFree")}
             </button>
-            <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEdit(l)}><Icon name="edit" size={13} /></button>
-            <button type="button" className="btn btn-sm btn-danger" onClick={() => del(l.id)}><Icon name="trash" size={13} /></button>
+            <button aria-label={t("edit")} type="button" className="btn btn-sm btn-ghost" onClick={() => setEdit(l)}><Icon name="edit" size={13} /></button>
+            <button aria-label={t("delete")} type="button" className="btn btn-sm btn-danger" onClick={() => del(l.id)}><Icon name="trash" size={13} /></button>
           </div>
         </div>
       ))}

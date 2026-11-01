@@ -1,4 +1,3 @@
-import React from 'react';
 
 export default function AiRoutesEditor({ cfg, onChange, providers = [], fa = true }) {
   const routes = cfg.routes || [];

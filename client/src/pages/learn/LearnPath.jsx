@@ -7,7 +7,6 @@ import { XpIcon } from "../../components/StatIcons.jsx";
 import { DrMed, Microbe, MascotSay } from "../../components/PathMascots.jsx";
 import { loadMascots, currentMascots, drLine, microbeLine, guideImg, DEFAULT_MASCOTS } from "../../lib/mascotConfig.js";
 import Confetti from "../../components/Confetti.jsx";
-import { AdCard } from "./AdCard.jsx";
 import { MotionAd } from "./MotionAd.jsx";
 import { PremiumInline } from "./PremiumBanner.jsx";
 import { safeLocal } from "../../lib/storage.js";

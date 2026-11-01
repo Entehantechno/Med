@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../../api.js";
 import { useApp } from "../../context.jsx";
 import Icon from "../../components/Icon.jsx";
@@ -52,22 +52,6 @@ const SYSTEMS = [
   { id: "other", label_fa: "سایر", label_en: "Other", icon: "✨", color: "#64748b", grad: "from-slate-500 to-gray-600" },
 ];
 function sysMeta(id) { return SYSTEMS.find(s => s.id === id) || SYSTEMS[SYSTEMS.length - 1]; }
-function branchStyle(b) {
-  const m = {
-    definition: { bg: "#dbeafe", fg: "#1e40af", icon: "📖", label: "تعریف" },
-    etiology: { bg: "#f3e8ff", fg: "#7c3aed", icon: "🔍", label: "علت" },
-    patho: { bg: "#fee2e2", fg: "#dc2626", icon: "⚙️", label: "پاتوفیزیو" },
-    clinical: { bg: "#ffedd5", fg: "#ea580c", icon: "🩺", label: "بالینی" },
-    workup: { bg: "#e0f2fe", fg: "#0369a1", icon: "🔬", label: "بررسی" },
-    treatment: { bg: "#dcfce7", fg: "#15803d", icon: "💊", label: "درمان" },
-    complication: { bg: "#fecaca", fg: "#991b1b", icon: "⚠️", label: "عارضه" },
-    ddx: { bg: "#f3e8ff", fg: "#6b21a8", icon: "🔀", label: "افتراقی" },
-    start: { bg: "#dbeafe", fg: "#1e3a8a", icon: "🚀", label: "شروع" },
-    question: { bg: "#fef3c7", fg: "#7c2d12", icon: "❓", label: "سؤال" },
-    action: { bg: "#dcfce7", fg: "#14532d", icon: "✅", label: "اقدام" },
-  };
-  return m[b] || { bg: "#f1f5f9", fg: "#334155", icon: "•", label: b };
-}
 
 export default function MindmapBankAdmin() {
   const { lang } = useApp();
@@ -246,7 +230,7 @@ export default function MindmapBankAdmin() {
             <div className="mt-3 grid gap-2 sm:grid-cols-3">
               <div className="sm:col-span-2 flex gap-2">
                 <input value={linking.search} onChange={e => setLinking(l => ({ ...l, search: e.target.value }))} placeholder={isFa ? "جستجوی سؤال: مثلاً STEMI، پنومونی..." : "Search Q: STEMI, pneumonia..."} className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm" />
-                <button onClick={searchQuestions} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white"></button>
+                <button type="button" onClick={searchQuestions} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white">{isFa ? "جستجو" : "Search"}</button>
               </div>
               <select value={linking.node} onChange={e => setLinking(l => ({ ...l, node: e.target.value }))} className="rounded-xl border px-3 py-2.5 text-sm">
                 <option value="">{isFa ? "گره (اختیاری)" : "Node (optional)"}</option>
@@ -339,7 +323,7 @@ export default function MindmapBankAdmin() {
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     <button onClick={() => openEdit(it.slug)} className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-bold text-white"><Icon name="edit" size={14} style={{ verticalAlign: "-2px" }} /> {isFa ? "ویرایش + لینک" : "Edit + link"}</button>
                     <button onClick={() => dup(it.slug)} className="rounded-full border bg-white px-3 py-1.5 text-xs"><Icon name="list" size={14} style={{ verticalAlign: "-2px" }} /> {isFa ? "کپی" : "Duplicate"}</button>
-                    <button onClick={() => del(it.slug)} className="rounded-full bg-rose-600 px-3 py-1.5 text-xs font-bold text-white"><Icon name="trash" size={14} style={{ verticalAlign: "-2px" }} /></button>
+                    <button aria-label={isFa ? "حذف" : "Delete"} onClick={() => del(it.slug)} className="rounded-full bg-rose-600 px-3 py-1.5 text-xs font-bold text-white"><Icon name="trash" size={14} style={{ verticalAlign: "-2px" }} /></button>
                   </div>
                 </div>
               );

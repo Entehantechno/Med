@@ -39,7 +39,7 @@ export default function MyCards() {
             <div style={{ fontWeight: 700 }}>{c.q}</div>
             <div className="small muted">{c.hints.length} {t("hints")}</div>
           </div>
-          <button type="button" className="btn btn-danger btn-sm" onClick={() => del(c.linkId)}><Icon name="trash" size={13} /></button>
+          <button aria-label={t("delete")} type="button" className="btn btn-danger btn-sm" onClick={() => del(c.linkId)}><Icon name="trash" size={13} /></button>
         </div>
       ))}
 
