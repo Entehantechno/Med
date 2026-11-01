@@ -1,5 +1,6 @@
 import { useApp } from "../context.jsx";
 import Icon from "./Icon.jsx";
+import { Glyph } from "./Glyph.jsx";
 import { GemIcon } from "./StatIcons.jsx";
 
 /* Post-quiz coaching card (AI-free, deterministic).
@@ -31,7 +32,7 @@ export default function LessonInsights({ report, srsAdded = 0, confidence = null
   return (
     <div className="card mt16 insights-card">
       <div className="insights-head">
-        <span className="node-emoji">🔎</span>
+        <span className="node-emoji"><Glyph value="🔎" /></span>
         <div>
           <div style={{ fontWeight: 800 }}>{t("errAnalysisTitle")}</div>
           <div className="small muted">{t("errAnalysisHint")}</div>
@@ -51,7 +52,7 @@ export default function LessonInsights({ report, srsAdded = 0, confidence = null
             {shown.map((k) => (
               <div key={k} className="insights-chip">
                 <span className="insights-dot" style={{ background: TYPE_META[k].color }} />
-                <span>{TYPE_META[k].emoji} {t("err_" + k)}</span>
+                <span><Glyph value={TYPE_META[k].emoji} /> {t("err_" + k)}</span>
                 <b>{counts[k]}</b>
               </div>
             ))}

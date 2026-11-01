@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
+import { Glyph } from "../../components/Glyph.jsx";
 import { useScrollLock } from "../../utils/useScrollLock.js";
 
 /* First-time welcome flow (shown once). Research (Duolingo pattern):
@@ -71,7 +72,7 @@ export default function WelcomeModal({ user, onDone }) {
             <div className="welcome-choices">
               {reasons.map((r) => (
                 <button type="button" key={r.id} className={`welcome-choice ${why === r.id ? "sel" : ""}`} onClick={() => setWhy(r.id)}>
-                  <span className="wc-emoji">{r.emoji}</span> {fa ? r.fa : r.en}
+                  <span className="wc-emoji"><Glyph value={r.emoji} /></span> {fa ? r.fa : r.en}
                 </button>
               ))}
             </div>
@@ -89,7 +90,7 @@ export default function WelcomeModal({ user, onDone }) {
             <div className="welcome-choices">
               {GOALS.map((g) => (
                 <button type="button" key={g.value} className={`welcome-choice ${goal === g.value ? "sel" : ""}`} onClick={() => setGoal(g.value)}>
-                  <span className="wc-emoji">{g.emoji}</span> {fa ? g.fa : g.en} <span className="wc-xp">{g.value} XP</span>
+                  <span className="wc-emoji"><Glyph value={g.emoji} /></span> {fa ? g.fa : g.en} <span className="wc-xp">{g.value} XP</span>
                 </button>
               ))}
             </div>

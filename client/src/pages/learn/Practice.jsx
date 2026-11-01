@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
+import { Glyph } from "../../components/Glyph.jsx";
 import Confetti from "../../components/Confetti.jsx";
 import StatNum from "../../components/StatNum.jsx";
 import { TYPE_MAP } from "./QuestionTypes.jsx";
@@ -63,7 +64,7 @@ export default function Practice({ onProfile, onBack }) {
         <div className="grid grid-2 mb16">
           {cards4.map(([k, n]) => (
             <div key={k} className="card practice-source">
-              <div className="ps-emoji">{SOURCE_META[k].emoji}</div>
+              <div className="ps-emoji"><Glyph value={SOURCE_META[k].emoji} /></div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 800 }}>{lang === "fa" ? SOURCE_META[k].fa : SOURCE_META[k].en}</div>
                 <div className="small muted">{n || 0} {t("cardsAvailable")}</div>
@@ -149,7 +150,7 @@ export default function Practice({ onProfile, onBack }) {
         <span className="hud-chip" style={{ fontSize: ".95rem" }}>🎯 {correct}/{cards.length}</span>
       </div>
       <div className="small muted center">
-        {idx + 1} {t("of")} {cards.length} · <span className="tag small">{src.emoji} {lang === "fa" ? src.fa : src.en}</span>
+        {idx + 1} {t("of")} {cards.length} · <span className="tag small"><Glyph value={src.emoji} /> {lang === "fa" ? src.fa : src.en}</span>
       </div>
       <div className="lesson-q">{card.q}</div>
       {card.image && <img src={card.image} alt="" className="ddle-img" style={{ maxHeight: 200, margin: "0 auto 16px", display: "block" }} />}

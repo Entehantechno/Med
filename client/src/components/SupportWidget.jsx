@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useApp } from "../context.jsx";
 import { api } from "../api.js";
 import Icon from "./Icon.jsx";
+import { Glyph } from "./Glyph.jsx";
 
 /* Floating in-app support chat. Always-on bubble (bottom corner) that opens a
    polished chat panel. Users pick a category (question/bug/feedback/account),
@@ -140,7 +141,7 @@ export default function SupportWidget() {
         <div className={`support-panel side-${side}`} role="dialog" aria-label={t("support")}>
           <div className="support-head">
             <div className="support-head-title">
-              <div className="support-avatar">🩺</div>
+              <div className="support-avatar"><Icon name="stethoscope" size={18} /></div>
               <div>
                 <div className="support-head-name">{t("supportTitle")}</div>
                 <div className="support-head-sub">{t("supportReplyTime")}</div>
@@ -172,7 +173,7 @@ export default function SupportWidget() {
                     <div className="small muted mb8">{t("supportPickTopic")}</div>
                     {Object.entries(CAT_META).map(([k, m]) => (
                       <button type="button" key={k} className={`support-cat ${category === k ? "active" : ""}`} onClick={() => setCategory(k)}>
-                        <span className="sc-emoji">{m.emoji}</span> {lang === "fa" ? m.fa : m.en}
+                        <span className="sc-emoji"><Glyph value={m.emoji} /></span> {lang === "fa" ? m.fa : m.en}
                       </button>
                     ))}
                   </div>

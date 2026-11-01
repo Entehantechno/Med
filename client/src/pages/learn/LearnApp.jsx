@@ -8,6 +8,7 @@ import { useScrollLock } from "../../utils/useScrollLock.js";
 import { api } from "../../api.js";
 import { TopBar, Spinner } from "../../components/UI.jsx";
 import Icon from "../../components/Icon.jsx";
+import { Glyph } from "../../components/Glyph.jsx";
 import { GemIcon, HeartIcon, XpIcon, StreakIcon } from "../../components/StatIcons.jsx";
 import LearnHome from "./LearnHome.jsx";
 import { NotificationBell } from "./NotificationBell.jsx";
@@ -245,7 +246,7 @@ export default function LearnApp() {
       ["practice", "target", t("smartPractice"), flag("smart_practice")],
       // Look-up mode: filter the official question bank by subject/chapter/year.
       ["browse", "search", t("browseTitle"), flag("bank_browse")],
-      ["customTest", "exam", lang === "fa" ? "آزمون‌ساز 👑" : "Create test 👑", flag("custom_test")],
+      ["customTest", "exam", lang === "fa" ? "آزمون‌ساز" : "Create test", flag("custom_test")],
       ["summaries", "book", t("summariesTitle"), flag("summaries")],
       ["examSim", "exam", t("examSim"), flag("exam_sim")],
       ["flashcards", "flask", t("learnFlashNav"), true],
@@ -375,7 +376,7 @@ export default function LearnApp() {
                 {programs.map((p) => (
                   <button type="button" key={p.slug} className={`program-opt ${activeProgram === p.slug ? "active" : ""}`}
                     onClick={() => switchProgram(p.slug)} title={p.label}>
-                    <span className="program-emoji">{p.emoji}</span>
+                    <span className="program-emoji"><Glyph value={p.emoji} /></span>
                     <span className="program-label">{p.label}</span>
                   </button>
                 ))}
@@ -463,7 +464,7 @@ export default function LearnApp() {
                   {programs.map((p) => (
                     <button key={p.slug} type="button" className={`learn-more-item ${activeProgram === p.slug ? "active" : ""}`}
                       onClick={() => switchProgram(p.slug)}>
-                      <span>{p.emoji}</span> {p.label}
+                      <span><Glyph value={p.emoji} /></span> {p.label}
                     </button>
                   ))}
                 </div>
@@ -520,7 +521,7 @@ export default function LearnApp() {
             })}
             {moreQuery && navSections.every(sec=> sec.items.filter(([id])=>!tabbarIds.includes(id)).filter(([id,ico,label])=> String(label).toLowerCase().includes(moreQuery.trim().toLowerCase())).length===0) && (
               <div className="card" style={{ padding:16, textAlign:"center", borderRadius:14, background:"var(--panel2)", border:"1px dashed var(--border)" }}>
-                <div style={{ fontSize:22 }}>🔍</div>
+                <div style={{ fontSize:22 }}><Glyph value="🔍" size={22} /></div>
                 <div style={{ fontWeight:800, marginTop:6 }}>{lang==="fa"?"چیزی یافت نشد":"No results"}</div>
                 <div className="small muted">{lang==="fa"?"واژهٔ دیگری را امتحان کنید":"Try another keyword"}</div>
                 <button type="button" className="btn btn-ghost btn-sm" style={{ marginTop:8 }} onClick={()=>setMoreQuery("")}>{lang==="fa"?"پاک کردنِ جستجو":"Clear search"}</button>

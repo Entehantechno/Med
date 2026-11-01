@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
+import { Glyph } from "../../components/Glyph.jsx";
 import { XpIcon } from "../../components/StatIcons.jsx";
 import { DrMed, Microbe, MascotSay } from "../../components/PathMascots.jsx";
 import { loadMascots, currentMascots, drLine, microbeLine, guideImg, DEFAULT_MASCOTS } from "../../lib/mascotConfig.js";
@@ -293,7 +294,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
       <div className={`path-progress-card ${compact ? "ppc-compact" : ""}`}>
         {compact && currentNode && (
           <div className="ppc-mini">
-            <span className="ppc-mini-title">{currentTopic?.emoji || <Icon name="book" size={14} />} {currentNode.title}</span>
+            <span className="ppc-mini-title">{currentTopic?.emoji ? <Glyph value={currentTopic.emoji} /> : <Icon name="book" size={14} />} {currentNode.title}</span>
             <span className="ppc-mini-pct">{totalPct}%</span>
             <button type="button" className="btn btn-primary btn-sm" onClick={startCurrent}><Icon name="play" size={13} /> {fa ? "ادامه" : "Continue"}</button>
           </div>
@@ -308,7 +309,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
           <div className="ppc-continue">
             <div className="ppc-continue-info">
               <div className="ppc-continue-label">{fa ? "قدم بعدی" : "Up next"}</div>
-              <div className="ppc-continue-title">{currentTopic?.emoji || <Icon name="book" size={18} />} {currentNode.title}</div>
+              <div className="ppc-continue-title">{currentTopic?.emoji ? <Glyph value={currentTopic.emoji} /> : <Icon name="book" size={18} />} {currentNode.title}</div>
               {currentNode.subtitle && <div className="ppc-continue-subtitle small muted">{currentNode.subtitle}</div>}
             </div>
             <div className="ppc-continue-actions">
@@ -345,7 +346,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
               <button key={s.id} type="button" onClick={() => goMindmapSystem(s.id)} title={`${fa ? s.fa : s.en}${cnt ? ` · ${cnt}` : ""}`}
                 className="mm-chip"
                 style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "7px 12px", borderRadius: 999, border: cnt ? "1px solid transparent" : "1px solid #e2e8f0", background: cnt ? s.color : "#fff", color: cnt ? "#fff" : "#334155", fontWeight: 800, fontSize: ".78rem", boxShadow: cnt ? `0 6px 16px ${s.color}33` : "0 1px 4px rgba(0,0,0,.04)", transform: isHot ? "scale(1.02)" : undefined, transition: "all .15s" }}>
-                <span style={{ fontSize: 14 }}>{s.icon}</span> {fa ? s.fa : s.en} {cnt ? <span style={{ background: "rgba(255,255,255,.22)", borderRadius: 999, padding: "1px 6px", fontSize: ".70rem", fontWeight: 900 }}>{cnt}</span> : null}
+                <span style={{ fontSize: 14 }}><Glyph value={s.icon} /></span> {fa ? s.fa : s.en} {cnt ? <span style={{ background: "rgba(255,255,255,.22)", borderRadius: 999, padding: "1px 6px", fontSize: ".70rem", fontWeight: 900 }}>{cnt}</span> : null}
               </button>
             );
           })}
@@ -399,7 +400,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
                  icon + title + a small progress count. No extra clutter. ---- */}
             <div className={`unit-header ${complete ? "unit-header-done" : ""}`} style={{ background: topic.color || "var(--grad-primary)", color: contrastText(topic.color || "#2569b0") }}>
               <div className="unit-header-ico">
-                {topic.emoji ? <span className="node-emoji">{topic.emoji}</span> : <Icon name={topic.icon} size={22} />}
+                {topic.emoji ? <span className="node-emoji"><Glyph value={topic.emoji} /></span> : <Icon name={topic.icon} size={22} />}
               </div>
               <div className="unit-header-body">
                 <div className="unit-header-title">{topic.name}{complete && <Icon name="check" size={14} style={{ marginInlineStart: 4, verticalAlign: "middle" }} />}</div>
@@ -422,7 +423,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
               const cnt = mindBank?.facetCounts?.system?.[sysId] || 0;
               return (
                 <div style={{ display:"flex", alignItems:"center", gap:8, flexWrap:"wrap", margin:"10px 2px 6px", padding:"8px 10px", borderRadius:12, background:`linear-gradient(135deg, ${meta.color}08, #ffffff)`, border:`1px solid ${meta.color}18`, boxShadow:"0 2px 10px rgba(15,23,42,.04)" }}>
-                  <span style={{ width:26, height:26, borderRadius:8, background: meta.color, color:"#fff", display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:14, boxShadow:`0 4px 10px ${meta.color}30` }}>{meta.icon}</span>
+                  <span style={{ width:26, height:26, borderRadius:8, background: meta.color, color:"#fff", display:"inline-flex", alignItems:"center", justifyContent:"center", fontSize:14, boxShadow:`0 4px 10px ${meta.color}30` }}><Glyph value={meta.icon} /></span>
                   <span className="small" style={{ fontWeight:800, color:"#0f172a" }}>{fa ? `نقشه‌های \u00AB${topic.name}\u00BB` : `Maps for ${topic.name}`}</span>
                   <span className="small muted" style={{ fontSize:".74rem" }}>• {cnt ? `${cnt} ${fa?"نقشه":"maps"}` : (fa?"نقشه‌های سیستمیک":"system maps")} </span>
                   {cnt > 0 && <span className="small" style={{ background: meta.color, color:"#fff", borderRadius:999, padding:"1px 7px", fontWeight:900, fontSize:".70rem" }}>{cnt}</span>}
@@ -481,7 +482,7 @@ export default function LearnPath({ openLesson, openLegendary, focusSlug, onFocu
                               : n.done ? <Icon name="check" size={30} />
                               : n.kind === "boss" ? <Icon name="trophy" size={26} />
                               : (n.emoji || topic.emoji)
-                                ? <span className="node-emoji">{n.emoji || topic.emoji}</span>
+                                ? <span className="node-emoji"><Glyph value={n.emoji || topic.emoji} /></span>
                                 : <Icon name="play" size={24} />}
                           </span>
                           {/* tiny star pips under DONE nodes — subtle, not a full label */}

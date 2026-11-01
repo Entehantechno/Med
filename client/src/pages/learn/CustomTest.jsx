@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
+import { Glyph } from "../../components/Glyph.jsx";
 import { TYPE_MAP, MicroLesson } from "./QuestionTypes.jsx";
 import { PeerPercentile, OptionStatsBars } from "../../components/PeerBits.jsx";
 import LabValuesModal from "../../components/LabValuesModal.jsx";
@@ -112,7 +113,7 @@ export default function CustomTest({ onProfile, onBack, resumeId = null, onPremi
         <div className="ct-chips">
           {(opts?.topics || []).map((tp) => (
             <button key={tp.slug} type="button" className={`ct-chip ${cfg.topic.includes(tp.slug) ? "on" : ""}`} style={{ "--c": tp.color }} onClick={() => toggle("topic", tp.slug)} aria-pressed={cfg.topic.includes(tp.slug)}>
-              <span className="ct-chip-emoji">{tp.emoji}</span>{tp.name}<span className="ct-count">{tp.count}</span>
+              <span className="ct-chip-emoji"><Glyph value={tp.emoji} /></span>{tp.name}<span className="ct-count">{tp.count}</span>
             </button>
           ))}
           {!opts && <span className="skeleton" style={{ height: 34, width: "100%" }} />}
@@ -126,7 +127,7 @@ export default function CustomTest({ onProfile, onBack, resumeId = null, onPremi
             <div className="ct-chips ct-chips-sm">
               {chapterPool.map((ch) => (
                 <button key={ch.topic.slug + ch.value} type="button" className={`ct-chip sm ${cfg.pathChapter.includes(ch.value) ? "on" : ""}`} style={{ "--c": ch.topic.color }} onClick={() => toggle("pathChapter", ch.value)} aria-pressed={cfg.pathChapter.includes(ch.value)}>
-                  {chosenTopics.length > 1 && <span className="ct-chip-emoji">{ch.topic.emoji}</span>}{ch.label}<span className="ct-count">{ch.count}</span>
+                  {chosenTopics.length > 1 && <span className="ct-chip-emoji"><Glyph value={ch.topic.emoji} /></span>}{ch.label}<span className="ct-count">{ch.count}</span>
                 </button>
               ))}
             </div>

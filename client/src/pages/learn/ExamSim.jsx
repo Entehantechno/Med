@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
+import { Glyph } from "../../components/Glyph.jsx";
 import { TYPE_MAP } from "./QuestionTypes.jsx";
 import { PeerPercentile } from "../../components/PeerBits.jsx";
 
@@ -110,7 +111,7 @@ export default function ExamSim({ onProfile, onBack, onPremium }) {
             {topics.map((tp) => (
               <button type="button" key={tp.slug} className={`btn btn-sm ${chosen.includes(tp.slug) ? "btn-primary" : "btn-ghost"}`}
                 onClick={() => toggleTopic(tp.slug)}>
-                <span style={{ fontSize: "1.1rem" }}>{tp.emoji}</span> {tp.title}
+                <span style={{ fontSize: "1.1rem" }}><Glyph value={tp.emoji} /></span> {tp.title}
               </button>
             ))}
           </div>

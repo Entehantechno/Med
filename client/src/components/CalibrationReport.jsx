@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useApp } from "../context.jsx";
 import { api } from "../api.js";
 import Icon from "./Icon.jsx";
+import { Glyph } from "./Glyph.jsx";
 
 /* Confidence calibration report (metacognition dashboard).
    Answers the clinical-safety question "do you know what you know?" — for each
@@ -45,7 +46,7 @@ export default function CalibrationReport() {
           const row = data.byLevel[L.v] || { n: 0, acc: null };
           return (
             <div key={L.v} className="calib-row">
-              <span className="calib-lbl">{L.emoji} {t(L.key)}</span>
+              <span className="calib-lbl"><Glyph value={L.emoji} /> {t(L.key)}</span>
               <div className="calib-bar">
                 <span style={{ width: `${row.acc ?? 0}%`, background: L.color }} />
               </div>
@@ -58,7 +59,7 @@ export default function CalibrationReport() {
 
       {verdictMeta.label && (
         <div className={`calib-verdict ${verdictMeta.cls}`}>
-          {verdictMeta.emoji} {verdictMeta.label}
+          <Glyph value={verdictMeta.emoji} /> {verdictMeta.label}
         </div>
       )}
     </div>

@@ -3,6 +3,7 @@ import { markBusy } from "../../lib/sw-update.js";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
+import { Glyph } from "../../components/Glyph.jsx";
 import Confetti from "../../components/Confetti.jsx";
 import StatNum from "../../components/StatNum.jsx";
 import { TYPE_MAP } from "./QuestionTypes.jsx";
@@ -67,7 +68,7 @@ export default function Checkpoint({ onProfile }) {
         {cps.map((c) => (
           <div key={c.section} className={`card cp-card ${c.unlocked ? "" : "locked"} ${c.everPassed ? "passed" : ""}`}>
             <div className="cp-head">
-              <span className="cp-emoji" aria-hidden="true">{c.emoji}</span>
+              <span className="cp-emoji" aria-hidden="true"><Glyph value={c.emoji} /></span>
               <div className="cp-head-txt">
                 <h3>{c.label}</h3>
                 <div className="small muted">{c.questionCount} {t("cpQuestions")} · {t("cpPass")} {c.passRatio}٪</div>
@@ -178,7 +179,7 @@ function ExamRunner({ exam, onProfile, onExit }) {
         {totalSecs > 0 && (
           <span className={`cp-timer ${timeLow ? "low" : ""}`} title={t("cpTimeLeft")} aria-live="off">⏱ {mm}:{ss}</span>
         )}
-        <span className="hud-chip" style={{ fontSize: ".95rem" }}><Icon name="exam" size={14} /> {exam.emoji} {exam.label}</span>
+        <span className="hud-chip" style={{ fontSize: ".95rem" }}><Icon name="exam" size={14} /> <Glyph value={exam.emoji} /> {exam.label}</span>
       </div>
 
       <div className="small muted center" style={{ marginBottom: 6 }}>

@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { api } from "../../api.js";
 import { useApp } from "../../context.jsx";
 import Icon from "../../components/Icon.jsx";
+import { Glyph } from "../../components/Glyph.jsx";
 
 /* MindMap Bank Admin — جذاب، کاربردی، دوسویه
    - 349 نقشه، فیلترهای faceted، جستجوی زنده
@@ -293,7 +294,7 @@ export default function MindmapBankAdmin() {
             {SYSTEMS.slice(0, 20).map(s => {
               const active = filterSys.includes(s.id);
               const cnt = facetCounts.system?.[s.id] || 0;
-              return <button key={s.id} onClick={() => toggle(filterSys, setFilterSys, s.id)} className={`rounded-full border px-2.5 py-1 text-xs font-bold ${active ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-200"}`}>{s.icon} {isFa ? s.label_fa : s.label_en} {cnt ? `(${cnt})` : ""}</button>;
+              return <button key={s.id} onClick={() => toggle(filterSys, setFilterSys, s.id)} className={`rounded-full border px-2.5 py-1 text-xs font-bold ${active ? "bg-slate-900 text-white border-slate-900" : "bg-white border-slate-200"}`}><Glyph value={s.icon} /> {isFa ? s.label_fa : s.label_en} {cnt ? `(${cnt})` : ""}</button>;
             })}
           </div>
           <div className="flex flex-wrap gap-1.5">

@@ -54,7 +54,7 @@ export default function OnboardingChecklist({ go, onProfile }) {
           <div className="onboard-steps">
             {ob.steps.map((s) => (
               <button type="button" key={s.key} className={`onboard-step ${s.done ? "done" : ""}`} onClick={() => !s.done && goStep(s.link)} disabled={s.done}>
-                <span className="os-check">{s.done ? "✅" : <Icon name={s.icon} size={16} />}</span>
+                <span className="os-check">{s.done ? <Icon name="check" size={16} /> : <Icon name={s.icon} size={16} />}</span>
                 <span className="os-body">
                   <span className="os-label">{s.label}</span>
                   {!s.done && <span className="os-hint small muted">{s.hint}</span>}

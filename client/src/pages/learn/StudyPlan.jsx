@@ -3,6 +3,7 @@ import { getCachedLesson, putCachedLesson } from "../../lib/lesson-cache.js";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
+import { Glyph } from "../../components/Glyph.jsx";
 import ShamsiDatePicker from "../../components/ShamsiDatePicker.jsx";
 import { fmtDate } from "../../utils/date.js";
 
@@ -118,7 +119,7 @@ export default function StudyPlan({ onBack, openMindmap }) {
               <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {plan.plan.weakestFirst.map((w) => (
                   <span key={w.slug} className="tag" style={{ fontSize: ".85rem" }}>
-                    {w.emoji} {w.title}{w.accuracy != null ? ` · ${w.accuracy}%` : ` · ${t("notStarted")}`}
+                    <Glyph value={w.emoji} /> {w.title}{w.accuracy != null ? ` · ${w.accuracy}%` : ` · ${t("notStarted")}`}
                   </span>
                 ))}
               </div>
@@ -136,7 +137,7 @@ export default function StudyPlan({ onBack, openMindmap }) {
                 <div className="sp-focus">
                   {d.focus.map((f, i) => (
                     <span key={i} className={`sp-chip ${d.kind === "mock" ? "mock" : ""}`}>
-                      <span style={{ fontSize: "1rem" }}>{f.emoji}</span> {f.title}
+                      <span style={{ fontSize: "1rem" }}><Glyph value={f.emoji} /></span> {f.title}
                     </span>
                   ))}
                 </div>

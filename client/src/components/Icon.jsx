@@ -92,3 +92,6 @@ export default function Icon({ name, size = 20, style, className = "" }) {
     </svg>
   );
 }
+
+// Used by Glyph.jsx (lazy routes) to know whether a value is an icon name.
+export function hasIcon(name) { return !!P[name]; }

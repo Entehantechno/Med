@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
+import { Glyph } from "../../components/Glyph.jsx";
 import StatNum from "../../components/StatNum.jsx";
 import CalibrationReport from "../../components/CalibrationReport.jsx";
 
@@ -51,7 +52,7 @@ export default function Progress({ go, onProgramChange }) {
               <button key={p.slug} type="button" disabled={switching}
                 className={`program-choice-opt ${active === p.slug ? "active" : ""}`}
                 onClick={() => switchProgram(p.slug)}>
-                <span className="pc-emoji">{p.emoji}</span> {p.label}
+                <span className="pc-emoji"><Glyph value={p.emoji} /></span> {p.label}
               </button>
             ))}
           </div>

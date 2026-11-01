@@ -3,6 +3,7 @@ import { useMindmapView } from "../../lib/lesson-translate.js";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
+import { Glyph } from "../../components/Glyph.jsx";
 
 /* MindMap Bank — 349 maps, premium + attractive UI
    - Glass cards, gradients, micro-animations, hover lift
@@ -191,7 +192,7 @@ export default function Mindmap({ onBack }) {
           {cur ? (
             <div className="relative mx-auto max-w-2xl rounded-[20px] border border-white/10 bg-white p-6 md:p-7 shadow-2xl text-slate-900">
               <div className="flex items-center gap-3 mb-4">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl text-lg" style={{ background: st.bg, color: st.fg }}>{st.icon}</span>
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl text-lg" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span>
                 <span className="text-xs font-black tracking-wide" style={{ color: st.fg }}>{st.label}</span>
                 <span className="ms-auto text-xs font-bold text-slate-500">{cur.branch}</span>
               </div>
@@ -246,7 +247,7 @@ export default function Mindmap({ onBack }) {
             {nodes.map((n,i)=>{ const st=branchStyle(n.branch); return (
               <div key={n.id} className="flex items-center gap-0">
                 <button onClick={()=>openQuestionsFor(n.id, data.slug)} className="group relative flex w-[220px] shrink-0 flex-col gap-2 rounded-2xl border-2 bg-white p-4 text-start shadow-sm hover:-translate-y-0.5 hover:shadow-md transition" style={{ borderColor: st.fg }}>
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full text-xs" style={{ background: st.bg, color: st.fg }}>{st.icon}</span>
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full text-xs" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span>
                   <span className="text-xs font-black" style={{ color: st.fg }}>{st.label}</span>
                   <span className="text-sm font-bold leading-tight text-slate-800 line-clamp-3">{lang==="fa"?n.label_fa:n.label_en}</span>
                 </button>
@@ -265,9 +266,9 @@ export default function Mindmap({ onBack }) {
             <div className="relative flex gap-6 py-8">
               {nodes.map((n,i)=>{ const up=i%2===0; const st=branchStyle(n.branch); return (
                 <div key={n.id} className={`flex w-[200px] shrink-0 flex-col items-center gap-2 ${up?"-translate-y-6":"translate-y-6"}`}>
-                  {up && (<button onClick={()=>openQuestionsFor(n.id, data.slug)} className="rounded-2xl border-2 bg-white p-3 shadow hover:shadow-md transition text-start" style={{ borderColor: st.fg }}><span className="flex h-6 w-6 items-center justify-center rounded-full text-xs mx-auto" style={{ background: st.bg, color: st.fg }}>{st.icon}</span><span className="mt-1 block text-xs font-bold text-center line-clamp-2">{lang==="fa"?n.label_fa:n.label_en}</span></button>)}
+                  {up && (<button onClick={()=>openQuestionsFor(n.id, data.slug)} className="rounded-2xl border-2 bg-white p-3 shadow hover:shadow-md transition text-start" style={{ borderColor: st.fg }}><span className="flex h-6 w-6 items-center justify-center rounded-full text-xs mx-auto" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span><span className="mt-1 block text-xs font-bold text-center line-clamp-2">{lang==="fa"?n.label_fa:n.label_en}</span></button>)}
                   <span className={`h-6 w-0.5 rounded-full ${up?"bg-slate-300":"bg-slate-300 order-first"}`} style={{ height: 24 }} />
-                  {!up && (<button onClick={()=>openQuestionsFor(n.id, data.slug)} className="rounded-2xl border-2 bg-white p-3 shadow hover:shadow-md transition text-start" style={{ borderColor: st.fg }}><span className="flex h-6 w-6 items-center justify-center rounded-full text-xs mx-auto" style={{ background: st.bg, color: st.fg }}>{st.icon}</span><span className="mt-1 block text-xs font-bold text-center line-clamp-2">{lang==="fa"?n.label_fa:n.label_en}</span></button>)}
+                  {!up && (<button onClick={()=>openQuestionsFor(n.id, data.slug)} className="rounded-2xl border-2 bg-white p-3 shadow hover:shadow-md transition text-start" style={{ borderColor: st.fg }}><span className="flex h-6 w-6 items-center justify-center rounded-full text-xs mx-auto" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span><span className="mt-1 block text-xs font-bold text-center line-clamp-2">{lang==="fa"?n.label_fa:n.label_en}</span></button>)}
                 </div>
               );})}
             </div>
@@ -281,7 +282,7 @@ export default function Mindmap({ onBack }) {
           <div className="flex flex-col gap-3 max-w-2xl mx-auto">
             {nodes.map(n=>{ const st=branchStyle(n.branch); return (
               <button key={n.id} onClick={()=>openQuestionsFor(n.id, data.slug)} className="flex gap-3 rounded-2xl border bg-white p-4 text-start shadow-sm hover:shadow-md transition" style={{ borderColor: st.fg, borderInlineStartWidth: 6 }}>
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm" style={{ background: st.bg, color: st.fg }}>{st.icon}</span>
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span>
                 <div className="min-w-0 flex-1">
                   <div className="text-xs font-black" style={{ color: st.fg }}>{st.label} • {n.branch}</div>
                   <div className="mt-1 text-sm font-bold leading-relaxed text-slate-800">{lang==="fa"?n.label_fa:n.label_en}</div>
@@ -312,7 +313,7 @@ export default function Mindmap({ onBack }) {
                   <div className="absolute inset-0 bg-gradient-to-br from-slate-50/0 via-slate-50/0 to-slate-50 opacity-0 transition group-hover:opacity-100" />
                   <div className="relative">
                     <div className="flex items-center gap-2">
-                      <span className="flex h-8 w-8 items-center justify-center rounded-xl text-sm" style={{ background: st.bg, color: st.fg }}>{st.icon}</span>
+                      <span className="flex h-8 w-8 items-center justify-center rounded-xl text-sm" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span>
                       <span className="text-xs font-black tracking-wide" style={{ color: st.fg }}>{st.label}</span>
                       <span className="ms-auto text-xs opacity-60">↗</span>
                     </div>
@@ -407,7 +408,7 @@ export default function Mindmap({ onBack }) {
                 className="group absolute flex w-[160px] -translate-x-[80px] -translate-y-[28px] flex-col items-center gap-1 rounded-2xl border-2 bg-white px-3 py-2.5 shadow-lg transition-all hover:z-10 hover:scale-105 hover:shadow-xl"
                 style={{ left: n._x, top: n._y, borderColor: st.fg, filter: "url(#shadow)" }}
               >
-                <span className="flex h-6 w-6 items-center justify-center rounded-full text-xs" style={{ background: st.bg, color: st.fg }}>{st.icon}</span>
+                <span className="flex h-6 w-6 items-center justify-center rounded-full text-xs" style={{ background: st.bg, color: st.fg }}><Glyph value={st.icon} /></span>
                 <span className="text-center text-xs font-black leading-tight" style={{ color: st.fg }}>{st.label}</span>
                 <span className="text-center text-xs font-bold leading-tight text-slate-800 line-clamp-3">{lang === "fa" ? n.label_fa : n.label_en}</span>
               </button>
@@ -597,7 +598,7 @@ export default function Mindmap({ onBack }) {
                           className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-black transition ${active ? "border-transparent text-white shadow-lg" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
                           style={active ? { background: s.color, boxShadow: `0 4px 12px ${s.color}30` } : {}}
                         >
-                          <span>{s.icon}</span> {lang === "fa" ? s.label_fa : s.label_en} {cnt ? <span className={`rounded-full px-1.5 py-0.5 text-xs ${active ? "bg-white/20" : "bg-slate-100"}`}>{cnt}</span> : null}
+                          <span><Glyph value={s.icon} /></span> {lang === "fa" ? s.label_fa : s.label_en} {cnt ? <span className={`rounded-full px-1.5 py-0.5 text-xs ${active ? "bg-white/20" : "bg-slate-100"}`}>{cnt}</span> : null}
                         </button>
                       );
                     })}
@@ -629,7 +630,7 @@ export default function Mindmap({ onBack }) {
                         const active = filterBranch.includes(b);
                         return (
                           <button key={b} onClick={() => toggle(filterBranch, setFilterBranch, b)} className="rounded-full border px-3 py-1.5 text-xs font-bold" style={{ background: active ? st.fg : "white", color: active ? "white" : st.fg, borderColor: st.fg, opacity: active ? 1 : 0.85 }}>
-                            {st.icon} {b} {bank?.facetCounts?.branch?.[b] ? `(${bank.facetCounts.branch[b]})` : ""}
+                            <Glyph value={st.icon} /> {b} {bank?.facetCounts?.branch?.[b] ? `(${bank.facetCounts.branch[b]})` : ""}
                           </button>
                         );
                       })}
@@ -771,7 +772,7 @@ export default function Mindmap({ onBack }) {
           ) : active && map ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="flex items-center gap-2 text-lg font-black text-slate-900"><span className="text-xl">{map.topic?.emoji}</span> {map.topic?.title}</h2>
+                <h2 className="flex items-center gap-2 text-lg font-black text-slate-900"><span className="text-xl"><Glyph value={map.topic?.emoji} /></span> {map.topic?.title}</h2>
                 <button onClick={() => { setActive(null); setMap(null); }} className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">
                   <Icon name={lang === "fa" ? "chevronRight" : "chevronLeft"} size={15} /> {t("mindmapAll")}
                 </button>
@@ -785,7 +786,7 @@ export default function Mindmap({ onBack }) {
               ) : (
                 <div className="rounded-[20px] border border-slate-200 bg-white p-6 shadow-sm">
                   <div className="flex items-center gap-3">
-                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl text-xl text-white" style={{ background: map.topic?.color || "#2f7fd1" }}>{map.topic?.emoji}</span>
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl text-xl text-white" style={{ background: map.topic?.color || "#2f7fd1" }}><Glyph value={map.topic?.emoji} /></span>
                     <div>
                       <div className="text-base font-black text-slate-900">{map.topic?.title}</div>
                       <div className="text-xs text-slate-600">{map.branches.length} {t("mindmapLessons")}</div>
@@ -794,7 +795,7 @@ export default function Mindmap({ onBack }) {
                   <div className="mt-6 grid gap-4 sm:grid-cols-2">
                     {viewMap.branches.map((br, i) => (
                       <div key={i} className="rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4">
-                        <div className="text-sm font-black text-slate-900">{br.emoji ? <span>{br.emoji} </span> : null}{br.lesson}</div>
+                        <div className="text-sm font-black text-slate-900">{br.emoji ? <span><Glyph value={br.emoji} /> </span> : null}{br.lesson}</div>
                         <ul className="mt-3 space-y-2">
                           {br.children.map((c, j) => (
                             <li key={j} className={`flex gap-2 rounded-xl px-3 py-2 text-sm ${c.kind === "golden" ? "bg-amber-50 font-bold text-amber-900 border border-amber-200" : "bg-white text-slate-700 border border-slate-200"}`}>
@@ -826,7 +827,7 @@ export default function Mindmap({ onBack }) {
                   {topics.filter(tp => tp.hasContent).map(tp => (
                     <button key={tp.slug} onClick={() => openClassic(tp.slug)} className="group rounded-[20px] border border-slate-200 bg-white p-5 text-start shadow-sm transition hover:-translate-y-1 hover:shadow-lg">
                       <div className="flex items-center gap-3">
-                        <span className="flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow" style={{ background: tp.color || "#2f7fd1" }}>{tp.emoji}</span>
+                        <span className="flex h-12 w-12 items-center justify-center rounded-2xl text-white shadow" style={{ background: tp.color || "#2f7fd1" }}><Glyph value={tp.emoji} /></span>
                         <div>
                           <div className="text-sm font-black text-slate-900 group-hover:text-slate-950">{tp.title}</div>
                           <div className="text-xs text-slate-600">{tp.branches} {t("mindmapLessons")}</div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
+import { Glyph } from "../../components/Glyph.jsx";
 
 /* Crowd difficulty insights: difficulty learned from real answer data, not a
    fixed label. Shows the hardest questions (lowest pass rate) so learners can
@@ -59,7 +60,7 @@ export default function CrowdInsights({ onBack }) {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 600 }}>{c.q}</div>
                   <div className="case-meta mt8" style={{ flexWrap: "wrap" }}>
-                    {c.topic && <span className="tag">{c.topic.emoji} {c.topic.title}</span>}
+                    {c.topic && <span className="tag"><Glyph value={c.topic.emoji} /> {c.topic.title}</span>}
                     <span className="tag" style={{ background: color(c.key) + "22", borderColor: color(c.key), color: color(c.key) }}>{label(c.key)}</span>
                     <span className="tag">✅ {c.passRate}% {t("crowdPassRate")}</span>
                     <span className="tag">👥 {c.seen}</span>

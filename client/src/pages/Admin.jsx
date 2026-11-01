@@ -37,6 +37,7 @@ import { SITE_CONTENT_SCHEMA } from "../data/site-content-schema.js";
 import Leaderboard from "../components/Leaderboard.jsx";
 import StatNum from "../components/StatNum.jsx";
 import Icon from "../components/Icon.jsx";
+import { Glyph } from "../components/Glyph.jsx";
 import BulkSelectBar from "../components/BulkSelectBar.jsx";
 import { passwordErrorText } from "../lib/password-errors.js";
 import { VpGradingPanel, VpGradingRubric, mergeRubric, emptyRubric } from "../components/VpGradingRubric.jsx";
@@ -427,7 +428,7 @@ function Dashboard() {
         <Stat num={s.avgScore} label={t("avgScore")} />
       </div>
 
-      <div className="grid grid-2 mt16">
+      <div className="grid grid-2 mt16" style={{ alignItems: "start" }}>
         <div className="card chart-card">
           <h4 className="mb8"><Icon name="chart" size={16} /> {t("scoreTrend")}</h4>
           <div className="small muted mb8">{t("last7")}</div>
@@ -9609,7 +9610,7 @@ function SiteControl() {
         <div className="small muted mb8">{t("programsControlHint")}</div>
         {programs.map((p) => (
           <label key={p.slug} className="toggle-row" style={{ cursor: "pointer" }}>
-            <span>{p.emoji} {lang === "fa" ? p.fa : p.en} <span className="muted small">({p.topics} {t("lessons")})</span></span>
+            <span><Glyph value={p.emoji} /> {lang === "fa" ? p.fa : p.en} <span className="muted small">({p.topics} {t("lessons")})</span></span>
             <input type="checkbox" checked={p.active !== false} onChange={() => toggleProgram(p.slug)} style={{ width: 20, height: 20 }} />
           </label>
         ))}

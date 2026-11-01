@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
+import { Glyph } from "../../components/Glyph.jsx";
 import { Spinner, Modal } from "../../components/UI.jsx";
 import { TYPE_MAP, MicroLesson } from "./QuestionTypes.jsx";
 import Emphasis from "../../components/Emphasis.jsx";
@@ -405,7 +406,7 @@ export default function Browse() {
 
       {!busy && !total && (
         <div className="card browse-empty-new" role="status">
-          <div style={{ fontSize: 42, lineHeight: 1, marginBottom: 10 }}>🔍</div>
+          <div style={{ fontSize: 42, lineHeight: 1, marginBottom: 10 }}><Glyph value="🔍" size={42} /></div>
           <div style={{ fontWeight: 800, fontSize: "1.05rem" }}>{t("browseEmpty")}</div>
           <p className="muted small" style={{ margin: "6px 0 0", maxWidth: 420, marginInline: "auto", lineHeight: 1.7 }}>{fa ? "فیلترها را کم کنید یا عبارت دیگری جست‌وجو کنید." : "Try fewer filters or a different query."}</p>
           {(activeChips.length > 0 || query.trim()) && (

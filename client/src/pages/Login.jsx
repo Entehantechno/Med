@@ -174,10 +174,10 @@ export default function Login({ initialMode = "login", onBackHome, asModal = fal
                 <label>{t("chooseProgram")}</label>
                 <div className="program-choice">
                   <button type="button" className={`program-choice-opt ${program === "preint" ? "active" : ""}`} onClick={() => setProgram("preint")}>
-                    <span className="pc-emoji">🩺</span> {t("programPreint")}
+                    <span className="pc-emoji"><Icon name="stethoscope" size={16} /></span> {t("programPreint")}
                   </button>
                   <button type="button" className={`program-choice-opt ${program === "basic" ? "active" : ""}`} onClick={() => setProgram("basic")}>
-                    <span className="pc-emoji">🔬</span> {t("programBasic")}
+                    <span className="pc-emoji"><Icon name="flask" size={16} /></span> {t("programBasic")}
                   </button>
                 </div>
               </div>

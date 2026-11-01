@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
+import { Glyph } from "../../components/Glyph.jsx";
 import { Spinner, Modal, useToast } from "../../components/UI.jsx";
 import { optionLetter } from "../../lib/optionLetter.js";
 
@@ -73,7 +74,7 @@ export default function PathManager() {
         <div className="ad-slot-tabs mb16">
           {programs.map((p) => (
             <button type="button" key={p.slug} className={`btn btn-sm ${program === p.slug ? "btn-primary" : "btn-ghost"}`} onClick={() => setProgram(p.slug)}>
-              <span style={{ fontSize: "1.05rem" }}>{p.emoji}</span> {lang === "fa" ? p.fa : p.en} ({p.topics})
+              <span style={{ fontSize: "1.05rem" }}><Glyph value={p.emoji} /></span> {lang === "fa" ? p.fa : p.en} ({p.topics})
             </button>
           ))}
         </div>
@@ -91,7 +92,7 @@ export default function PathManager() {
           <div className="pm-topic" onClick={() => setOpen((s) => ({ ...s, [topic.id]: !s[topic.id] }))} style={{ cursor: "pointer" }}>
             <span className="pm-drag" title={t("dragToReorder")}><Icon name="menu" size={16} /></span>
             <div className="pm-topic-ico" style={{ background: topic.color }}>
-              {topic.emoji ? <span className="node-emoji" style={{ fontSize: "1.3rem" }}>{topic.emoji}</span> : <Icon name={topic.icon} size={20} />}
+              {topic.emoji ? <span className="node-emoji" style={{ fontSize: "1.3rem" }}><Glyph value={topic.emoji} /></span> : <Icon name={topic.icon} size={20} />}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 800 }}>{lang === "en" ? (topic.name_en || topic.name_fa) : (topic.name_fa || topic.name_en)}</div>
@@ -111,7 +112,7 @@ export default function PathManager() {
                   onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
                   onDrop={(e) => { e.preventDefault(); e.stopPropagation(); onNodeDrop(topic.id, n.id); }}>
                   <span className="pm-drag" title={t("dragToReorder")}><Icon name="menu" size={14} /></span>
-                  <span className="node-emoji" style={{ fontSize: "1.1rem" }}>{n.emoji || topic.emoji || "📘"}</span>
+                  <span className="node-emoji" style={{ fontSize: "1.1rem" }}><Glyph value={n.emoji || topic.emoji || "📘"} /></span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 700 }}>{lang === "fa" ? n.title_fa : n.title_en || "—"}</div>
                     <div className="small muted">{n.cardCount} {t("questionsCount")} · {n.xp_reward} XP · {t(n.kind)}</div>

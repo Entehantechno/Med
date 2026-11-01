@@ -54,7 +54,12 @@ export function LineChart({ values, height = 130, color = "var(--primary)" }) {
 export function Donut({ parts, size = 140 }) {
   const { t } = useApp();
   const total = parts.reduce((a, b) => a + b.value, 0);
-  if (!total) return <div className="small muted">{t("noData")}</div>;
+  if (!total) return (
+    <div role="status" style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 12, background: "var(--panel2)", border: "1px dashed var(--line,#cbd5e1)" }}>
+      <span aria-hidden="true" style={{ width: 38, height: 38, borderRadius: "50%", border: "8px solid var(--panel,#e2e8f0)", flex: "0 0 auto" }} />
+      <span className="small muted">{t("noData")}</span>
+    </div>
+  );
   const r = 55, c = 2 * Math.PI * r;
   let offset = 0;
   return (

@@ -3,6 +3,15 @@ import { useApp } from "../../context.jsx";
 import { useEffect, useState } from "react";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
+import { Glyph } from "../../components/Glyph.jsx";
+
+/* Splits a leading emoji off a label and renders it as an icon (no emoji glyphs in UI). */
+const LEAD_EMOJI = /^(\p{Extended_Pictographic}\uFE0F?)\s*/u;
+function Pill({ text }) {
+  const m = LEAD_EMOJI.exec(String(text || ""));
+  if (!m) return text;
+  return <><Glyph value={m[1]} /> {String(text).slice(m[0].length)}</>;
+}
 
 /* ──────────────────────────────────────────────────────────────
    PREMIUM BANNERS — bilingual high-end motion upsell
@@ -166,14 +175,14 @@ export function PremiumBanner({ variant = "inline", onGhost, priceNote, offNote 
         <div className="premium-banner__icon" aria-hidden="true"><Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} /></div>
 
         <div className="premium-banner__text">
-          <span className="premium-banner__kicker">{c.kicker}</span>
+          <span className="premium-banner__kicker"><Pill text={c.kicker} /></span>
           {/* title contains <em> for gradient accent */}
           <h4 className="premium-banner__title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.title) }} />
           <p className="premium-banner__body">{c.body}</p>
 
           {c.pills?.length > 0 && (
             <div className="premium-banner__bullets">
-              {c.pills.map((p, i) => <span key={i} className="premium-banner__pill">{p}</span>)}
+              {c.pills.map((p, i) => <span key={i} className="premium-banner__pill"><Pill text={p} /></span>)}
             </div>
           )}
 

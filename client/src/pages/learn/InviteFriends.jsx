@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
+import { Glyph } from "../../components/Glyph.jsx";
 import { GemIcon } from "../../components/StatIcons.jsx";
 
 /* Invite Friends — double-sided referral dashboard + one-click social sharing
@@ -86,7 +87,7 @@ export default function InviteFriends({ onProfile }) {
         <div className="invite-share-grid">
           {channels.map((c) => (
             <button type="button" key={c.id} className="invite-share-btn" onClick={() => onChannel(c)}>
-              <span className="ish-emoji">{c.emoji}</span>
+              <span className="ish-emoji"><Glyph value={c.emoji} /></span>
               <span>{c.label}</span>
             </button>
           ))}
