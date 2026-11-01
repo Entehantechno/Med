@@ -22,7 +22,7 @@ export function OptionStatsBars({ card, sel, stats: statsProp }) {
   return (
     <div className="ost-wrap" aria-label={fa ? "شناسنامهٔ سؤال" : "Question stats"}>
       <div className="ost-head">
-        <span>👥 {fa ? "بقیه چه زدند؟" : "What did others pick?"}</span>
+        <span><Icon name="users" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "بقیه چه زدند؟" : "What did others pick?"}</span>
         <span className="small muted">{stats.total.toLocaleString(fa ? "fa-IR" : "en-US")} {fa ? "پاسخ" : "answers"}{stats.avgSec != null && <> · ⏱ {fa ? "میانگین" : "avg"} {stats.avgSec.toLocaleString(fa ? "fa-IR" : "en-US")}{fa ? " ثانیه" : "s"}</>}</span>
       </div>
       {card.options.map((o, i) => {
@@ -52,7 +52,7 @@ export function HintButton({ card, premium, onUsed, onProfile }) {
   if (hint) {
     return (
       <div className="hint-box" role="note">
-        <div className="hint-title">💡 {fa ? "راهنمای استاد" : "Attending hint"}</div>
+        <div className="hint-title"><Icon name="bulb" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "راهنمای استاد" : "Attending hint"}</div>
         <div className="hint-text">{hint}</div>
       </div>
     );
@@ -70,7 +70,7 @@ export function HintButton({ card, premium, onUsed, onProfile }) {
   return (
     <div className="hint-cta">
       <button type="button" className="btn btn-ghost btn-sm hint-btn" onClick={take} disabled={busy}>
-        💡 {fa ? "راهنمایی بگیر" : "Get a hint"} {!premium && <span className="hint-cost">👑</span>}
+        <Icon name="bulb" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "راهنمایی بگیر" : "Get a hint"} {!premium && <span className="hint-cost"><Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} /></span>}
       </button>
       {err === "premium" && <span className="small muted">{fa ? "راهنمایی قبل از پاسخ، ویژهٔ پرمیوم است." : "Pre-answer hints are a premium perk."}</span>}
       {err && err !== "premium" && <span className="small" style={{ color: "var(--danger)" }}>{err}</span>}
@@ -96,7 +96,7 @@ export function SaveFlashcardButton({ cardId, premium, onPremium }) {
         : (fa ? "ذخیره به‌عنوان فلش‌کارت" : "Save as flashcard");
   return (
     <button type="button" className={`btn btn-sm ${state === "done" ? "btn-accent" : "btn-ghost"} sfc-btn`} onClick={save} disabled={state === "busy" || state === "done" || state === "dup"} title={fa ? "این سؤال و پاسخنامه‌اش را به فلش‌کارت شخصی تبدیل کن (مرور فاصله‌دار)" : "Turn this question + explanation into a personal flashcard (spaced review)"}>
-      <Icon name="flask" size={13} /> {label} {!premium && "👑"}
+      <Icon name="flask" size={13} /> {label} {!premium && <Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} />}
     </button>
   );
 }
@@ -110,17 +110,17 @@ export function PeerPercentile({ peer, onPremium }) {
   if (peer.premiumRequired) {
     return (
       <button type="button" className="peer-card peer-locked" onClick={onPremium}>
-        <span className="peer-ico">📊</span>
+        <span className="peer-ico"><Icon name="chart" size={14} style={{ verticalAlign: "-2px" }} /></span>
         <span className="peer-body">
           <b>{fa ? "جایگاه تو بین بقیه؟" : "Where do you rank?"}</b>
           <span className="small muted">{fa ? "صدک، میانگین همتایان و مقایسهٔ زمان — ویژهٔ پرمیوم" : "Percentile, peer average and time comparison — premium"}</span>
         </span>
-        <span className="tag gold">👑</span>
+        <span className="tag gold"><Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} /></span>
       </button>
     );
   }
   if (!peer.ready) {
-    return <div className="peer-card small muted"><span className="peer-ico">📊</span> {fa ? `مقایسه با همتایان بعد از ${N(peer.min)} شرکت‌کننده فعال می‌شود (فعلاً ${N(peer.peers)}).` : `Peer comparison unlocks after ${N(peer.min)} participants (${N(peer.peers)} so far).`}</div>;
+    return <div className="peer-card small muted"><span className="peer-ico"><Icon name="chart" size={14} style={{ verticalAlign: "-2px" }} /></span> {fa ? `مقایسه با همتایان بعد از ${N(peer.min)} شرکت‌کننده فعال می‌شود (فعلاً ${N(peer.peers)}).` : `Peer comparison unlocks after ${N(peer.min)} participants (${N(peer.peers)} so far).`}</div>;
   }
   const faster = peer.mySecPerQ != null && peer.peerSecPerQ != null ? peer.mySecPerQ <= peer.peerSecPerQ : null;
   return (
@@ -137,7 +137,7 @@ export function PeerPercentile({ peer, onPremium }) {
         <div className="peer-bar-row"><span>{fa ? "بقیه" : "Peers"}</span><span className="peer-bar"><span style={{ width: `${peer.peerAvg}%` }} /></span><b>{N(peer.peerAvg)}٪</b></div>
       </div>
       {peer.mySecPerQ != null && peer.peerSecPerQ != null && (
-        <div className={`peer-time ${faster ? "ok" : "slow"}`}>⏱ {fa ? `هر سؤال ${N(peer.mySecPerQ)} ثانیه (بقیه ${N(peer.peerSecPerQ)} ثانیه)` : `${N(peer.mySecPerQ)}s per question (peers ${N(peer.peerSecPerQ)}s)`} {faster ? "🚀" : "🐢"}</div>
+        <div className={`peer-time ${faster ? "ok" : "slow"}`}>⏱ {fa ? `هر سؤال ${N(peer.mySecPerQ)} ثانیه (بقیه ${N(peer.peerSecPerQ)} ثانیه)` : `${N(peer.mySecPerQ)}s per question (peers ${N(peer.peerSecPerQ)}s)`} {faster ? "" : ""}</div>
       )}
     </div>
   );
@@ -154,12 +154,12 @@ export function DailyReportCard({ go, goToTopic }) {
   if (d.premiumRequired) {
     return (
       <button type="button" className="card mb16 dr-card dr-locked" onClick={() => go?.("premium")}>
-        <div className="mod-ico dr-ico">📈</div>
+        <div className="mod-ico dr-ico"><Icon name="chart" size={14} style={{ verticalAlign: "-2px" }} /></div>
         <div style={{ flex: 1, minWidth: 0, textAlign: "start" }}>
           <div style={{ fontWeight: 800 }}>{fa ? "گزارش روزانهٔ عملکرد" : "Daily performance report"}</div>
           <div className="small muted">{fa ? "تعداد پاسخ، دقت، زمان و ضعیف‌ترین مبحث امروز — ویژهٔ پرمیوم" : "Answers, accuracy, time and today's weakest topic — premium"}</div>
         </div>
-        <span className="tag gold">👑</span>
+        <span className="tag gold"><Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} /></span>
       </button>
     );
   }
@@ -170,7 +170,7 @@ export function DailyReportCard({ go, goToTopic }) {
   return (
     <div className="card mb16 dr-card">
       <div className="dr-head">
-        <div className="mod-ico dr-ico">📈</div>
+        <div className="mod-ico dr-ico"><Icon name="chart" size={14} style={{ verticalAlign: "-2px" }} /></div>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 800 }}>{fa ? "امروزِ تو" : "Your day"}</div>
           <div className="small muted">{fa ? "در مقایسه با دیروز" : "compared with yesterday"}</div>
@@ -187,7 +187,7 @@ export function DailyReportCard({ go, goToTopic }) {
       </div>
       {r.weak ? (
         <button type="button" className="dr-weak" onClick={() => (goToTopic ? goToTopic(r.weak.slug) : go?.("path"))}>
-          <span>🎯 {fa ? "ضعیف‌ترین مبحث امروز:" : "Weakest today:"} <b>{r.weak.name}</b> <span className="muted">({N(r.weak.accuracy)}٪ {fa ? "از" : "of"} {N(r.weak.answered)})</span></span>
+          <span><Icon name="target" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "ضعیف‌ترین مبحث امروز:" : "Weakest today:"} <b>{r.weak.name}</b> <span className="muted">({N(r.weak.accuracy)}٪ {fa ? "از" : "of"} {N(r.weak.answered)})</span></span>
           <span className="dr-go">{fa ? "تمرین ←" : "Practice →"}</span>
         </button>
       ) : t.answered === 0 ? (

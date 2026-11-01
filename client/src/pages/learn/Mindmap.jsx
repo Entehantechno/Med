@@ -197,7 +197,7 @@ export default function Mindmap({ onBack }) {
               </div>
               <div className="text-lg md:text-xl font-black leading-relaxed text-slate-900">{lang==="fa"?cur.label_fa:cur.label_en}</div>
               <div className="mt-4 flex gap-2">
-                <button onClick={()=>openQuestionsFor(cur.id, data.slug)} className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-black text-white hover:bg-black">🔗 {lang==="fa"?"سؤالاتِ این گره":"Questions for this node"} →</button>
+                <button onClick={()=>openQuestionsFor(cur.id, data.slug)} className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-black text-white hover:bg-black"> {lang==="fa"?"سؤالاتِ این گره":"Questions for this node"} →</button>
                 <button onClick={()=>setPitchIdx(i=>Math.max(0,i-1))} disabled={pitchIdx===0} className="ms-auto rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold disabled:opacity-40">‹ {lang==="fa"?"قبلی":"Prev"}</button>
                 <button onClick={()=>setPitchIdx(i=>Math.min(nodes.length-1,i+1))} disabled={pitchIdx>=nodes.length-1} className="rounded-full bg-sky-600 px-4 py-2 text-sm font-black text-white hover:bg-sky-700 disabled:opacity-40">{lang==="fa"?"بعدی":"Next"} ›</button>
               </div>
@@ -217,14 +217,14 @@ export default function Mindmap({ onBack }) {
           <div className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-gradient-to-br from-amber-200/50 to-orange-200/50 blur-2xl" />
           <div className="absolute -bottom-10 -left-10 h-32 w-32 rounded-full bg-gradient-to-br from-yellow-200/50 to-amber-200/50 blur-2xl" />
           <div className="relative">
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-3xl shadow-lg shadow-amber-500/25">{isDaily ? "⏳" : "🔒"}</div>
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-3xl shadow-lg shadow-amber-500/25">{isDaily ? "⏳" : <Icon name="lock" size={14} style={{ verticalAlign: "-2px" }} />}</div>
             <h3 className="mt-4 text-xl font-black text-amber-900">{isDaily ? (lang === "fa" ? "سهم امروز تمام شد" : "Daily limit reached") : (lang === "fa" ? "این نقشه ویژهٔ پرمیوم است" : "Premium Only")}</h3>
             <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-amber-800/80">
               {isDaily ? (lang === "fa" ? "امروز ۵ نقشه دیدید — فردا دوباره ۵ نقشه رایگان دارید. با پلاس نامحدود می‌شود." : "You viewed 5 maps today — 5 more free tomorrow. Go Plus for unlimited.") : (lang === "fa" ? "با پرمیوم، ۳۴۹ مایندمپ و اپروچِ لینک‌دار به بانک را باز کنید — ۳ نقشه برای آشنایی رایگان است." : "Unlock 349 linked maps with Premium — 3 free to preview.")}
             </p>
             <div className="mt-6 flex justify-center gap-3">
               <button onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))} className="rounded-full bg-gradient-to-r from-amber-500 to-orange-600 px-6 py-3 text-sm font-black text-white shadow-lg shadow-amber-500/25 transition hover:scale-105 hover:shadow-xl">
-                {lang === "fa" ? "✨ ارتقا به پرمیوم" : "✨ Upgrade"}
+                {lang === "fa" ? <><Icon name="star" size={14} style={{ verticalAlign: "-2px" }} />{" ارتقا به پرمیوم"}</> : <><Icon name="star" size={14} style={{ verticalAlign: "-2px" }} />{" Upgrade"}</>}
               </button>
               <button onClick={() => setDetail(null)} className="rounded-full border border-amber-200 bg-white/80 px-6 py-3 text-sm font-bold text-amber-800 backdrop-blur transition hover:bg-white">
                 {lang === "fa" ? "بازگشت" : "Back"}
@@ -357,7 +357,7 @@ export default function Mindmap({ onBack }) {
       <div className="overflow-hidden rounded-[20px] border border-slate-200 bg-gradient-to-br from-slate-50 via-white to-slate-50 shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-200 bg-white/80 px-4 py-3 backdrop-blur">
           <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-xl text-white shadow" style={{ background: meta.color }}>{data.type === "approach" ? "🧭" : "🧠"}</span>
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl text-white shadow" style={{ background: meta.color }}>{data.type === "approach" ? <Icon name="compass" size={14} style={{ verticalAlign: "-2px" }} /> : <Icon name="brain" size={14} style={{ verticalAlign: "-2px" }} />}</span>
             <span className="text-sm font-black text-slate-800">{data.title}</span>
           </div>
           <div className="flex items-center gap-1">
@@ -424,10 +424,10 @@ export default function Mindmap({ onBack }) {
       {/* Top switch */}
       <div className="mb-4 flex gap-2">
         <button onClick={() => setMode("bank")} className={`rounded-full px-5 py-2.5 text-sm font-black shadow-sm transition ${mode === "bank" ? "bg-slate-900 text-white shadow-slate-900/20" : "bg-white text-slate-700 hover:bg-slate-50 border border-slate-200"}`}>
-          ⭐ {lang === "fa" ? "بانکِ مایندمپ — ۳۴۹" : "MindMap Bank — 349"}
+          <Icon name="star" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "بانکِ مایندمپ — ۳۴۹" : "MindMap Bank — 349"}
         </button>
         <button onClick={() => setMode("classic")} className={`rounded-full px-5 py-2.5 text-sm font-bold transition ${mode === "classic" ? "bg-slate-900 text-white" : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"}`}>
-          🗺️ {lang === "fa" ? "نقشه‌های درسی" : "Lesson maps"}
+           {lang === "fa" ? "نقشه‌های درسی" : "Lesson maps"}
         </button>
       </div>
 
@@ -447,7 +447,7 @@ export default function Mindmap({ onBack }) {
                   <Icon name={lang === "fa" ? "chevronRight" : "chevronLeft"} size={16} /> {lang === "fa" ? "بازگشت به بانک" : "Back"}
                 </button>
                 <div className="hidden items-center gap-2 sm:flex">
-                  <span className="flex h-8 w-8 items-center justify-center rounded-xl text-white" style={{ background: sysMeta(detail.system).color }}>{detail.type === "approach" ? "🧭" : "🧠"}</span>
+                  <span className="flex h-8 w-8 items-center justify-center rounded-xl text-white" style={{ background: sysMeta(detail.system).color }}>{detail.type === "approach" ? <Icon name="compass" size={14} style={{ verticalAlign: "-2px" }} /> : <Icon name="brain" size={14} style={{ verticalAlign: "-2px" }} />}</span>
                   <span className="text-sm font-black text-slate-800">{detail.system.toUpperCase()}</span>
                 </div>
               </div>
@@ -458,7 +458,7 @@ export default function Mindmap({ onBack }) {
                 <div className="relative">
                   <div className="flex flex-wrap items-start gap-3">
                     <span className="flex h-12 w-12 items-center justify-center rounded-2xl text-2xl text-white shadow-lg" style={{ background: sysMeta(detail.system).color, boxShadow: `0 8px 20px ${sysMeta(detail.system).color}40` }}>
-                      {detail.type === "approach" ? "🧭" : "🧠"}
+                      {detail.type === "approach" ? <Icon name="compass" size={14} style={{ verticalAlign: "-2px" }} /> : <Icon name="brain" size={14} style={{ verticalAlign: "-2px" }} />}
                     </span>
                     <div className="min-w-0 flex-1">
                       <h1 className="text-xl font-black leading-tight text-slate-900 md:text-2xl">{detail.title}</h1>
@@ -476,7 +476,7 @@ export default function Mindmap({ onBack }) {
               {/* ——— Mindmap toolbar: Zen / Pitch / Structure (XMind + Miro) ——— */}
               <div className={`mm-toolbar ${zen?"mm-toolbar--zen":""}`} style={{ display:"flex", flexWrap:"wrap", gap:8, alignItems:"center", justifyContent:"space-between", padding:"10px 12px", borderRadius:16, background: zen?"rgba(255,255,255,.82)":"#fff", backdropFilter: zen?"saturate(1.4) blur(12px)":"none", border:"1px solid #e2e8f0", boxShadow:"0 8px 22px rgba(15,23,48,.06)" }}>
                 <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
-                  <span className="small muted" style={{ fontWeight:800, fontSize:".72rem", display:"flex", alignItems:"center", gap:6 }}><span style={{ width:22, height:22, borderRadius:7, background:"linear-gradient(135deg,#06b6d4,#6366f1)", display:"inline-grid", placeItems:"center", color:"#fff", fontSize:11 }}>✨</span> {lang==="fa"?"نما":"View"}</span>
+                  <span className="small muted" style={{ fontWeight:800, fontSize:".72rem", display:"flex", alignItems:"center", gap:6 }}><span style={{ width:22, height:22, borderRadius:7, background:"linear-gradient(135deg,#06b6d4,#6366f1)", display:"inline-grid", placeItems:"center", color:"#fff", fontSize:11 }}><Icon name="star" size={14} style={{ verticalAlign: "-2px" }} /></span> {lang==="fa"?"نما":"View"}</span>
                   {[
                     {id:"radial", fa:"شعاعی", en:"Radial", ico:"🌸"},
                     {id:"logic", fa:"درختی", en:"Tree", ico:"🌳"},
@@ -493,20 +493,20 @@ export default function Mindmap({ onBack }) {
                     {pitch?"⏹":"▶"} {lang==="fa"?"پرزنتیشن":"Pitch"}
                   </button>
                   <button type="button" onClick={()=>setZen(z=>!z)} className="btn btn-ghost btn-sm" style={{ borderRadius:999, border:"1px solid #e2e8f0", background: zen?"#0ea5e9":"#fff", color: zen?"#fff":"#334155", fontWeight:800 }}>
-                    {zen?"✕":"◐"} {zen?(lang==="fa"?"خروج از Zen":"Exit Zen"):(lang==="fa"?"حالتِ Zen":"Zen")}
+                    {zen?<Icon name="close" size={14} style={{ verticalAlign: "-2px" }} />:"◐"} {zen?(lang==="fa"?"خروج از Zen":"Exit Zen"):(lang==="fa"?"حالتِ Zen":"Zen")}
                   </button>
                   <button type="button" onClick={()=>{ const blob=new Blob([JSON.stringify(detail,null,2)],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=(detail.slug||'mindmap')+'.json'; a.click(); URL.revokeObjectURL(url); }} className="btn btn-ghost btn-sm" style={{ borderRadius:999, border:'1px solid #e2e8f0', background:'#fff' }} title={lang==='fa'?'خروجیِ پرزنتیشن':'Export'}>{lang==='fa'?'خروجی':'Export'} ⤓</button>
                 </div>
               </div>
               <div className={zen?"mm-zen-wrap":""} style={zen?{ position:"fixed", inset:0, zIndex:80, background:"rgba(248,250,252,.86)", backdropFilter:"saturate(1.3) blur(14px)", WebkitBackdropFilter:"saturate(1.3) blur(14px)", padding:"20px 16px 16px", overflow:"auto" }:{}}>
-                {zen && <button type="button" onClick={()=>setZen(false)} style={{ position:"fixed", top:12, insetInlineEnd:12, zIndex:81, width:36, height:36, borderRadius:999, border:"1px solid #e2e8f0", background:"#fff", display:"grid", placeItems:"center", boxShadow:"0 8px 18px rgba(0,0,0,.12)" }}>✕</button>}
+                {zen && <button type="button" onClick={()=>setZen(false)} style={{ position:"fixed", top:12, insetInlineEnd:12, zIndex:81, width:36, height:36, borderRadius:999, border:"1px solid #e2e8f0", background:"#fff", display:"grid", placeItems:"center", boxShadow:"0 8px 18px rgba(0,0,0,.12)" }}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}
                 <GraphView data={detail} structure={structure} pitch={pitch} pitchIdx={pitchIdx} setPitchIdx={setPitchIdx} zen={zen} />
               </div>
 
               {detail.related?.length > 0 && (
                 <div className="rounded-[20px] border border-slate-200 bg-white p-5 shadow-sm">
                   <div className="mb-4 flex items-center gap-2">
-                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 text-white">🎯</span>
+                    <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-900 text-white"><Icon name="target" size={14} style={{ verticalAlign: "-2px" }} /></span>
                     <h3 className="text-sm font-black text-slate-900">{lang === "fa" ? "سؤالاتِ پیشنهادی" : "Suggested Questions"}</h3>
                     <span className="ms-auto rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{detail.related.length}</span>
                   </div>
@@ -530,10 +530,10 @@ export default function Mindmap({ onBack }) {
                 <div className="rounded-[20px] border-2 border-sky-200 bg-gradient-to-br from-sky-50 to-indigo-50 p-5 shadow-lg">
                   <div className="flex items-center justify-between">
                     <h3 className="flex items-center gap-2 text-sm font-black text-slate-900">
-                      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-600 text-white">🔗</span>
+                      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-600 text-white"></span>
                       {lang === "fa" ? `سؤالات: ${nodeQ.concept}` : `Questions: ${nodeQ.concept}`}
                     </h3>
-                    <button onClick={() => setNodeQ(null)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-600 shadow hover:bg-slate-50">✕</button>
+                    <button onClick={() => setNodeQ(null)} className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-slate-600 shadow hover:bg-slate-50"><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>
                   </div>
                   {nodeQ.items.length === 0 ? (
                     <div className="mt-4 rounded-2xl border border-dashed border-slate-300 bg-white/70 p-6 text-center text-sm text-slate-600">{lang === "fa" ? "موردی یافت نشد" : "No questions yet"}</div>
@@ -541,7 +541,7 @@ export default function Mindmap({ onBack }) {
                     <div className="mt-4 grid gap-3">
                       {nodeQ.items.map(q => (
                         <div key={q.id} className="flex items-center gap-3 rounded-2xl border border-white bg-white p-4 shadow-sm">
-                          <div className="flex-1 text-sm font-medium text-slate-800">{q.q ? q.q.slice(0, 110) : `Q#${q.id}`} {q.premium ? "👑" : ""}</div>
+                          <div className="flex-1 text-sm font-medium text-slate-800">{q.q ? q.q.slice(0, 110) : `Q#${q.id}`} {q.premium ? <Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} /> : ""}</div>
                           <button onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "browse" }))} className="rounded-full bg-sky-600 px-4 py-2 text-xs font-black text-white hover:bg-sky-700">
                             {lang === "fa" ? "حل" : "Solve"}
                           </button>
@@ -561,7 +561,7 @@ export default function Mindmap({ onBack }) {
                 <div className="flex flex-col gap-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                     <div className="relative flex-1">
-                      <span className="absolute inset-y-0 start-3 flex items-center text-slate-400">🔎</span>
+                      <span className="absolute inset-y-0 start-3 flex items-center text-slate-400"></span>
                       <input
                         value={qInput}
                         onChange={e => setQInput(e.target.value)}
@@ -569,18 +569,18 @@ export default function Mindmap({ onBack }) {
                         className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 ps-10 pe-10 text-sm font-medium placeholder:text-slate-400 focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-500/10"
                       />
                       {qInput && (
-                        <button onClick={() => { setQInput(""); setQ(""); }} className="absolute inset-y-0 end-2 my-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white hover:bg-slate-800">✕</button>
+                        <button onClick={() => { setQInput(""); setQ(""); }} className="absolute inset-y-0 end-2 my-2 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white hover:bg-slate-800"><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
                       <select value={sort} onChange={e => setSort(e.target.value)} className="h-12 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-700 focus:border-slate-300 focus:outline-none">
-                        <option value="default">{lang === "fa" ? "✨ پیشنهادی" : "✨ Featured"}</option>
-                        <option value="newest">{lang === "fa" ? "🆕 جدیدترین" : "🆕 Newest"}</option>
-                        <option value="nodes">{lang === "fa" ? "🧩 بیشترین گره" : "🧩 Most nodes"}</option>
-                        <option value="title">{lang === "fa" ? "🔤 الفبا" : "🔤 A–Z"}</option>
+                        <option value="default">{lang === "fa" ? <><Icon name="star" size={14} style={{ verticalAlign: "-2px" }} />{" پیشنهادی"}</> : <><Icon name="star" size={14} style={{ verticalAlign: "-2px" }} />{" Featured"}</>}</option>
+                        <option value="newest">{lang === "fa" ? "جدیدترین" : "Newest"}</option>
+                        <option value="nodes">{lang === "fa" ? <><Icon name="puzzle" size={14} style={{ verticalAlign: "-2px" }} />{" بیشترین گره"}</> : <><Icon name="puzzle" size={14} style={{ verticalAlign: "-2px" }} />{" Most nodes"}</>}</option>
+                        <option value="title">{lang === "fa" ? "الفبا" : "A–Z"}</option>
                       </select>
                       {(q || filterSys.length || filterType.length || filterLevel.length || filterBranch.length) && (
-                        <button onClick={clearFilters} className="h-12 rounded-2xl border border-rose-200 bg-rose-50 px-4 text-sm font-black text-rose-700 hover:bg-rose-100">✕ {lang === "fa" ? "پاک" : "Clear"}</button>
+                        <button onClick={clearFilters} className="h-12 rounded-2xl border border-rose-200 bg-rose-50 px-4 text-sm font-black text-rose-700 hover:bg-rose-100"><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "پاک" : "Clear"}</button>
                       )}
                     </div>
                   </div>
@@ -605,8 +605,8 @@ export default function Mindmap({ onBack }) {
 
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="text-xs font-black text-slate-700">{lang === "fa" ? "نوع:" : "Type:"}</span>
-                    <button onClick={() => toggle(filterType, setFilterType, "mind")} className={`rounded-full border px-4 py-1.5 text-xs font-black ${filterType.includes("mind") ? "border-indigo-600 bg-indigo-600 text-white shadow" : "border-slate-200 bg-white text-slate-700"}`}>🧠 Mind {bank?.facetCounts?.type?.mind ? `(${bank.facetCounts.type.mind})` : ""}</button>
-                    <button onClick={() => toggle(filterType, setFilterType, "approach")} className={`rounded-full border px-4 py-1.5 text-xs font-black ${filterType.includes("approach") ? "border-amber-600 bg-amber-600 text-white shadow" : "border-slate-200 bg-white text-slate-700"}`}>🧭 Approach {bank?.facetCounts?.type?.approach ? `(${bank.facetCounts.type.approach})` : ""}</button>
+                    <button onClick={() => toggle(filterType, setFilterType, "mind")} className={`rounded-full border px-4 py-1.5 text-xs font-black ${filterType.includes("mind") ? "border-indigo-600 bg-indigo-600 text-white shadow" : "border-slate-200 bg-white text-slate-700"}`}><Icon name="brain" size={14} style={{ verticalAlign: "-2px" }} /> Mind {bank?.facetCounts?.type?.mind ? `(${bank.facetCounts.type.mind})` : ""}</button>
+                    <button onClick={() => toggle(filterType, setFilterType, "approach")} className={`rounded-full border px-4 py-1.5 text-xs font-black ${filterType.includes("approach") ? "border-amber-600 bg-amber-600 text-white shadow" : "border-slate-200 bg-white text-slate-700"}`}><Icon name="compass" size={14} style={{ verticalAlign: "-2px" }} /> Approach {bank?.facetCounts?.type?.approach ? `(${bank.facetCounts.type.approach})` : ""}</button>
                     <span className="mx-1 h-4 w-px bg-slate-200" />
                     {LEVELS.map(l => {
                       const active = filterLevel.includes(l.id);
@@ -644,7 +644,7 @@ export default function Mindmap({ onBack }) {
                           {q && <span className="ms-2 rounded-full border border-slate-200 bg-white px-3 py-1">“{q}”</span>}
                           {bank.previews ? <span className="ms-2 rounded-full bg-emerald-100 px-3 py-1 font-black text-emerald-800">{bank.previews} {lang === "fa" ? "رایگان" : "free"}</span> : null}
                           {bank.daily && bank.daily.limit < 999 && <span className={`ms-2 rounded-full px-3 py-1 font-black ${bank.daily.remaining <= 1 ? "bg-rose-100 text-rose-800" : bank.daily.remaining <= 3 ? "bg-amber-100 text-amber-800" : "bg-sky-100 text-sky-800"}`}>{bank.daily.remaining}/{bank.daily.limit} {lang === "fa" ? "امروز باقی‌مانده" : "left today"}</span>}
-                          <span className="ms-2 hidden rounded-full border border-sky-200 bg-sky-50 px-3 py-1 font-bold text-sky-700 sm:inline-flex">📚 {lang === "fa" ? "رفرنس نامحدود" : "ref unlimited"} ✓</span>
+                          <span className="ms-2 hidden rounded-full border border-sky-200 bg-sky-50 px-3 py-1 font-bold text-sky-700 sm:inline-flex"><Icon name="book" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "رفرنس نامحدود" : "ref unlimited"} <Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /></span>
                         </>
                       ) : (
                         <span className="animate-pulse rounded-full bg-slate-200 px-3 py-1 text-slate-200">...</span>
@@ -654,7 +654,7 @@ export default function Mindmap({ onBack }) {
                   </div>
                   {bank?.daily && bank.daily.limit < 999 && bank.daily.remaining <= 2 && (
                     <div className={`mt-3 rounded-xl border px-4 py-3 text-sm font-bold shadow-sm ${bank.daily.remaining === 0 ? "border-rose-200 bg-rose-50 text-rose-800" : "border-amber-200 bg-amber-50 text-amber-900"}`}>
-                      {bank.daily.remaining === 0 ? (lang === "fa" ? "🚫 سهم روزانهٔ مایندمپ تمام شد — با پلاس نامحدود می‌شود" : "Daily mindmap limit reached — Go Plus for unlimited") : (lang === "fa" ? `⚠️ فقط ${bank.daily.remaining} نقشهٔ دیگر امروز باقی‌مانده — با پلاس نامحدود` : `Only ${bank.daily.remaining} more today — Go Plus for unlimited`)}
+                      {bank.daily.remaining === 0 ? (lang === "fa" ? "سهم روزانهٔ مایندمپ تمام شد — با پلاس نامحدود می‌شود" : "Daily mindmap limit reached — Go Plus for unlimited") : (lang === "fa" ? `فقط ${bank.daily.remaining} نقشهٔ دیگر امروز باقی‌مانده — با پلاس نامحدود` : `Only ${bank.daily.remaining} more today — Go Plus for unlimited`)}
                       <button onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))} className="ms-2 rounded-full bg-slate-900 px-3 py-1 text-xs font-black text-white hover:bg-slate-800">{lang === "fa" ? "مشاهده پلاس" : "See Plus"}</button>
                     </div>
                   )}
@@ -667,7 +667,7 @@ export default function Mindmap({ onBack }) {
                 </div>
               ) : bank.items.length === 0 ? (
                 <div className="mt-6 rounded-[20px] border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-2xl shadow">🔍</div>
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white text-2xl shadow"><Icon name="search" size={14} style={{ verticalAlign: "-2px" }} /></div>
                   <h3 className="mt-4 text-sm font-black text-slate-900">{lang === "fa" ? "چیزی یافت نشد" : "Nothing found"}</h3>
                   <p className="mx-auto mt-1 max-w-md text-sm text-slate-600">{lang === "fa" ? "فیلترها را کم کنید یا واژهٔ دیگری جستجو کنید" : "Try fewer filters or another term"}</p>
                   <button onClick={clearFilters} className="mt-4 rounded-full bg-slate-900 px-6 py-2.5 text-sm font-black text-white hover:bg-slate-800">{lang === "fa" ? "پاک کردنِ فیلترها" : "Clear filters"}</button>
@@ -688,16 +688,16 @@ export default function Mindmap({ onBack }) {
                           <div className="absolute inset-x-0 top-0 h-1" style={{ background: meta.color }} />
                           {it.locked && (
                             <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-600 px-3 py-1 text-xs font-black text-white shadow">
-                              🔒 {lang === "fa" ? "پرمیوم" : "Premium"}
+                              <Icon name="lock" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "پرمیوم" : "Premium"}
                             </span>
                           )}
                           {it.isPreview && !it.locked && (
-                            <span className="absolute right-3 top-3 rounded-full bg-emerald-500 px-3 py-1 text-xs font-black text-white shadow">✓ {lang === "fa" ? "رایگان" : "Free"}</span>
+                            <span className="absolute right-3 top-3 rounded-full bg-emerald-500 px-3 py-1 text-xs font-black text-white shadow"><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "رایگان" : "Free"}</span>
                           )}
 
                           <div className="flex gap-4">
                             <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-2xl text-white shadow-lg" style={{ background: meta.color, boxShadow: `0 8px 20px ${meta.color}30` }}>
-                              {it.type === "approach" ? "🧭" : meta.icon}
+                              {it.type === "approach" ? <Icon name="compass" size={14} style={{ verticalAlign: "-2px" }} /> : meta.icon}
                             </div>
                             <div className="min-w-0 flex-1">
                               <h3 className="line-clamp-2 text-sm font-black leading-tight text-slate-900 group-hover:text-slate-950">{it.title}</h3>
@@ -714,7 +714,7 @@ export default function Mindmap({ onBack }) {
 
                           <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
                             <span className="inline-flex items-center gap-1.5 font-bold text-slate-600">
-                              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-white">🧩</span>
+                              <span className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-900 text-white"><Icon name="puzzle" size={14} style={{ verticalAlign: "-2px" }} /></span>
                               {it.nodes?.length || 0} {lang === "fa" ? "گره" : "nodes"} • {it.edges?.length || 0} {lang === "fa" ? "یال" : "edges"}
                             </span>
                             <span className="inline-flex items-center gap-1 font-black text-sky-600 group-hover:text-sky-700">
@@ -743,7 +743,7 @@ export default function Mindmap({ onBack }) {
                       <div className="rounded-[19px] bg-gradient-to-br from-violet-600 via-indigo-600 to-sky-600 p-6">
                         <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
                           <div className="text-white">
-                            <h3 className="text-base font-black">✨ {lang === "fa" ? "۳ نقشه رایگان، ۳۱۸ تای دیگر با پرمیوم" : "3 free, 318 more with Premium"}</h3>
+                            <h3 className="text-base font-black"><Icon name="star" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "۳ نقشه رایگان، ۳۱۸ تای دیگر با پرمیوم" : "3 free, 318 more with Premium"}</h3>
                             <p className="mt-1 text-sm text-violet-100">{lang === "fa" ? "هر گره به بانکِ سؤالات لینک است — دو کلیک تا تسلط" : "Every node links to Qbank — 2 clicks to mastery"}</p>
                           </div>
                           <button onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))} className="shrink-0 rounded-full bg-white px-6 py-3 text-sm font-black text-violet-700 shadow-lg hover:bg-violet-50">
@@ -778,7 +778,7 @@ export default function Mindmap({ onBack }) {
               </div>
               {map.empty ? (
                 <div className="rounded-[20px] border border-dashed border-slate-300 bg-white p-10 text-center">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-2xl">🗺️</div>
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-2xl"></div>
                   <h3 className="mt-4 font-black text-slate-900">{t("mindmapEmpty")}</h3>
                   <p className="mt-1 text-sm text-slate-600">{t("mindmapEmptyHint")}</p>
                 </div>
@@ -798,7 +798,7 @@ export default function Mindmap({ onBack }) {
                         <ul className="mt-3 space-y-2">
                           {br.children.map((c, j) => (
                             <li key={j} className={`flex gap-2 rounded-xl px-3 py-2 text-sm ${c.kind === "golden" ? "bg-amber-50 font-bold text-amber-900 border border-amber-200" : "bg-white text-slate-700 border border-slate-200"}`}>
-                              <span className="shrink-0">{c.kind === "golden" ? "⭐" : "•"}</span>
+                              <span className="shrink-0">{c.kind === "golden" ? <Icon name="star" size={14} style={{ verticalAlign: "-2px" }} /> : "•"}</span>
                               <span className="leading-relaxed">{c.label ?? (c.failed ? "—" : "⏳")}</span>
                             </li>
                           ))}
@@ -813,12 +813,12 @@ export default function Mindmap({ onBack }) {
           ) : (
             <>
               <div className="mb-4">
-                <h2 className="text-lg font-black text-slate-900">🗺️ {t("mindmaps")}</h2>
+                <h2 className="text-lg font-black text-slate-900"> {t("mindmaps")}</h2>
                 <p className="mt-1 text-sm text-slate-600">{t("mindmapsHint")}</p>
               </div>
               {topics.filter(tp => tp.hasContent).length === 0 ? (
                 <div className="rounded-[20px] border border-dashed border-slate-300 bg-white p-10 text-center">
-                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-2xl">🗺️</div>
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100 text-2xl"></div>
                   <h3 className="mt-4 font-black text-slate-900">{t("mindmapEmpty")}</h3>
                 </div>
               ) : (

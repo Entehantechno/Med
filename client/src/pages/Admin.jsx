@@ -102,7 +102,7 @@ function AdminBell() {
     const next = !open; setOpen(next);
     if (next && d.unseen > 0) { try { await api.post("/admin/notifications/seen", {}); setD((x) => ({ ...x, unseen: 0 })); } catch { /* */ } }
   };
-  const kindIcon = (k) => (k === "admin_digest" ? "📊" : k === "admin_alert" ? "⚠️" : "🔔");
+  const kindIcon = (k) => (k === "admin_digest" ? <Icon name="chart" size={14} style={{ verticalAlign: "-2px" }} /> : k === "admin_alert" ? <Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /> : <Icon name="bell" size={14} style={{ verticalAlign: "-2px" }} />);
   return (
     <div style={{ position: "relative" }}>
       <button type="button" className="btn btn-ghost btn-sm" onClick={toggle} title={t("adminNotifs")} style={{ position: "relative" }}>
@@ -399,7 +399,7 @@ function Dashboard() {
     api.get("/reports/summary").then(setS).catch((e) => { setLoadErr(String(e.message || e)); setS({ __err: true }); });
     api.get("/reports/attempts").then((d) => setAttempts(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setAttempts({ __err: true }); });
   }, []);
-  if (s?.__err || attempts?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (lang === "fa" ? "بارگذاری داشبورد شکست خورد" : "Could not load the dashboard")}</h3></div>;
+  if (s?.__err || attempts?.__err || loadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr || (lang === "fa" ? "بارگذاری داشبورد شکست خورد" : "Could not load the dashboard")}</h3></div>;
   if (!s || !attempts) return (<><div className="grid grid-4">{[0,1,2,3].map(i=><div className="card" key={i}><div className="skeleton sk-card"/></div>)}</div><div className="mt16"><SkeletonTable rows={4} /></div></>);
 
   // chronological order for the trend line
@@ -590,7 +590,7 @@ export function UsersManager({ scope = "all" }) {
 
   if (detail) return <UserDetail id={detail} onBack={() => { setDetail(null); load(); }} />;
   if (!users) return <Spinner />;
-  if (loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr}</h3><button type="button" className="btn btn-ghost mt16" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (loadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr}</h3><button type="button" className="btn btn-ghost mt16" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
 
   const heading = scope === "uni" ? t("uniUsersScope") : scope === "competitive" ? t("competitiveUsersScope") : t("allUsersScope");
   const showAssignments = showUniTools;
@@ -679,7 +679,7 @@ export function UsersManager({ scope = "all" }) {
           { key: "role", label: t("role"), sortValue: (u) => u.role, render: (u) => <Pill kind={u.role === "admin" ? "active" : "medium"}>{t(u.role)}</Pill> },
           ...(showAssignments ? [{ key: "assignments", label: t("assignments"), sortable: false, render: (u) => u.role === "student"
               ? ((u.caseIds || []).length ? (u.caseIds || []).map(caseTitle).join("، ") : <span className="muted small">{t("noStudentsExams")}</span>)
-              : "—" }] : [{ key: "xp", label: t("xp"), sortValue: (u) => u.role === "learner" ? (u.xp ?? 0) : -1, render: (u) => <>{u.role === "learner" ? (u.xp ?? 0) : "—"}{u.premium ? " 👑" : ""}</> }]),
+              : "—" }] : [{ key: "xp", label: t("xp"), sortValue: (u) => u.role === "learner" ? (u.xp ?? 0) : -1, render: (u) => <>{u.role === "learner" ? (u.xp ?? 0) : "—"}{u.premium ? "" : ""}</> }]),
           { key: "status", label: t("statusCol"), sortValue: (u) => u.status, render: (u) => <span className={`pill pill-${u.status === "active" ? "active" : "danger"}`}>{t(u.status === "active" ? "active" : "inactive")}</span> },
           { key: "actions", label: "", sortable: false, thStyle: { textAlign: "end" },
             render: (u) => (<span style={{ display: "flex", gap: 4, justifyContent: "flex-end", whiteSpace: "nowrap" }}>
@@ -817,7 +817,7 @@ function StudentImportModal({ onClose, onDone }) {
       if (classId) payload.class_id=Number(classId);
       const r = await api.post("/users/import", payload);
       setResult(r);
-      const msg = fa ? `✅ ${r.created} دانشجو ساخته شد${r.enrolled?` · ${r.enrolled} نفر به کلاس افزوده شد`:""} · نادیده: ${r.skipped}` : `✅ ${r.created} created${r.enrolled?` · ${r.enrolled} enrolled`:""} · skipped: ${r.skipped}`;
+      const msg = fa ? `${r.created} دانشجو ساخته شد${r.enrolled?` · ${r.enrolled} نفر به کلاس افزوده شد`:""} · نادیده: ${r.skipped}` : `${r.created} created${r.enrolled?` · ${r.enrolled} enrolled`:""} · skipped: ${r.skipped}`;
       toast(msg);
     } catch (e) { toast(String(e.message||e)); }
     finally { setBusy(false); }
@@ -839,7 +839,7 @@ function StudentImportModal({ onClose, onDone }) {
             <table className="small" style={{width:"100%",borderCollapse:"collapse"}}>
               <thead><tr style={{textAlign:"start",borderBottom:"1px solid var(--border)"}}><th style={{padding:"6px 8px"}}>{fa?"ستون":"Column"}</th><th style={{padding:"6px 8px"}}>{fa?"الزامی؟":"Required?"}</th><th style={{padding:"6px 8px"}}>{fa?"توضیح":"Notes"}</th></tr></thead>
               <tbody>
-                <tr><td style={{padding:"6px 8px"}}><code>student_no</code> / شماره دانشجویی</td><td style={{padding:"6px 8px"}}>✅</td><td style={{padding:"6px 8px"}}>{fa?"نام کاربری و رمز اولیه همین مقدار است":"username & initial password"}</td></tr>
+                <tr><td style={{padding:"6px 8px"}}><code>student_no</code> / شماره دانشجویی</td><td style={{padding:"6px 8px"}}><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /></td><td style={{padding:"6px 8px"}}>{fa?"نام کاربری و رمز اولیه همین مقدار است":"username & initial password"}</td></tr>
                 <tr><td style={{padding:"6px 8px"}}><code>name</code> / نام (تک‌ستون — هر زبانی)</td><td style={{padding:"6px 8px"}}>{fa?"اختیاری":"optional"}</td><td style={{padding:"6px 8px"}}>{fa?"نام کامل به هر زبانی؛ اگر خالی باشد شماره نمایش داده می‌شود":"full name in any language; defaults to student_no"}</td></tr>
                 <tr><td style={{padding:"6px 8px"}}><code>email</code> / ایمیل</td><td style={{padding:"6px 8px"}}>{fa?"اختیاری":"optional"}</td><td style={{padding:"6px 8px"}}>{fa?"اعتبارسنجی نمی‌شود؛ فقط ذخیره":"stored as-is"}</td></tr>
                 <tr><td style={{padding:"6px 8px"}}><code>university_code</code> / کد دانشگاه</td><td style={{padding:"6px 8px"}}>{fa?"اختیاری (ادمین)":"optional (admin)"}</td><td style={{padding:"6px 8px"}}>{fa?"مثلاً TUMS، SBMU، IUMS … — برای استاد نادیده گرفته می‌شود":"e.g. TUMS — ignored for teacher"}</td></tr>
@@ -851,11 +851,11 @@ function StudentImportModal({ onClose, onDone }) {
             {fa ? "• سطر اول اگر شامل «نام/شماره/ایمیل/کد» باشد به‌عنوان سرستون نادیده گرفته می‌شود — فرقی نمی‌کند فارسی یا انگلیسی باشد. • جداکننده: کاما، سمی‌کالن یا تب. • فایل اکسل را با «Save As → CSV UTF-8» ذخیره کنید." : "• First row is treated as header if it contains name/number/email/code. • Delimiters: comma, semicolon or tab. • Save Excel as CSV UTF-8."}
           </div>
           <div style={{display:"flex",gap:8,flexWrap:"wrap",marginTop:12}}>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={()=>downloadTemplate("fa")}>⬇️ {fa?"دانلود قالب فارسی":"Download FA template"}</button>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={()=>downloadTemplate("en")}>⬇️ Download EN template</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={()=>downloadTemplate("fa")}> {fa?"دانلود قالب فارسی":"Download FA template"}</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={()=>downloadTemplate("en")}> Download EN template</button>
             <button type="button" className="btn btn-ghost btn-sm" onClick={()=>{setText(fa?sampleFa:sampleEn); setTab("upload");}}>{fa?"پر کردن نمونه":"Fill sample"}</button>
           </div>
-          <div className="micro-box small mt12" style={{padding:"10px 12px"}}>💡 {fa ? "ثبت‌نام خودکار: دانشجو با وضعیت «فعال» ساخته می‌شود و با همان شماره دانشجویی می‌تواند وارد شود (رمز = شماره دانشجویی). اگر «افزودن به کلاس» انتخاب کنید یا ستون کد کلاس پر باشد، عضویت کلاس همان لحظه انجام می‌شود." : "Auto-enrollment: students are created active; login with student_no as both username & password. If a class is selected or class_code is filled, they are added to that class instantly."}</div>
+          <div className="micro-box small mt12" style={{padding:"10px 12px"}}><Icon name="bulb" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "ثبت‌نام خودکار: دانشجو با وضعیت «فعال» ساخته می‌شود و با همان شماره دانشجویی می‌تواند وارد شود (رمز = شماره دانشجویی). اگر «افزودن به کلاس» انتخاب کنید یا ستون کد کلاس پر باشد، عضویت کلاس همان لحظه انجام می‌شود." : "Auto-enrollment: students are created active; login with student_no as both username & password. If a class is selected or class_code is filled, they are added to that class instantly."}</div>
         </div>
       ) : (
         <>
@@ -897,7 +897,7 @@ function StudentImportModal({ onClose, onDone }) {
             <button type="button" className="btn btn-ghost btn-sm" onClick={(e)=>{e.preventDefault(); fileRef.current?.click();}}>
               <Icon name="upload" size={14} /> {fa?"انتخاب فایل CSV":"Choose CSV file"}
             </button>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={()=>downloadTemplate(fa?"fa":"en")}>⬇️ {fa?"دانلود قالب CSV":"Download CSV template"}</button>
+            <button type="button" className="btn btn-ghost btn-sm" onClick={()=>downloadTemplate(fa?"fa":"en")}> {fa?"دانلود قالب CSV":"Download CSV template"}</button>
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setText(fa?sampleFa:sampleEn)}>{fa?"نمونه را پر کن":"Fill sample"}</button>
             <input ref={fileRef} type="file" accept=".csv,.txt,text/csv,application/vnd.ms-excel,.xlsx" onChange={onFile} style={{ display: "none" }} />
           </div>
@@ -911,15 +911,15 @@ function StudentImportModal({ onClose, onDone }) {
       {result && (
         <div className="card" style={{ padding: 12, background: "var(--panel2)", borderColor: result.failures?.length?"var(--danger)":"var(--accent)" }}>
           <div style={{ display:"flex", gap:12, flexWrap:"wrap", alignItems:"center", marginBottom:8 }}>
-            <span className="pill pill-active">✅ {fa?"ساخته شد":"Created"}: <b>{result.created}</b></span>
-            <span className="pill" style={{ background: result.failures?.length? "var(--dangerGlow)" : "var(--panel)" }}>❌ {fa?"ناموفق":"Failed"}: <b>{result.failures?.length ?? result.skipped ?? 0}</b></span>
-            {result.enrolled ? <span className="pill" style={{ background:"var(--accentGlow)" }}>🎓 {fa?"عضو کلاس":"Enrolled"}: <b>{result.enrolled}</b></span> : null}
+            <span className="pill pill-active"><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> {fa?"ساخته شد":"Created"}: <b>{result.created}</b></span>
+            <span className="pill" style={{ background: result.failures?.length? "var(--dangerGlow)" : "var(--panel)" }}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /> {fa?"ناموفق":"Failed"}: <b>{result.failures?.length ?? result.skipped ?? 0}</b></span>
+            {result.enrolled ? <span className="pill" style={{ background:"var(--accentGlow)" }}><Icon name="cap" size={14} style={{ verticalAlign: "-2px" }} /> {fa?"عضو کلاس":"Enrolled"}: <b>{result.enrolled}</b></span> : null}
             <span className="small muted">{fa?"کل":"Total"}: {result.total} · {fa?"تکراری":"Duplicates"}: {result.duplicates?.length||0}</span>
             <span className="small muted" style={{ marginInlineStart:"auto" }}>{result.delim ? <>جداکننده: <code>{result.delim==="\t"?"TAB":result.delim}</code> {result.hasHeader? (fa?"(هدر تشخیص داده شد)":"(header detected)") : ""}</> : null}</span>
           </div>
           {result.warnings?.length>0 && (
             <div className="micro-box small mb8" style={{ borderColor:"var(--warn)", background:"var(--warnGlow)" }}>
-              ⚠️ {fa?"هشدارها":"Warnings"}:
+              <Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /> {fa?"هشدارها":"Warnings"}:
               <ul style={{ margin:"6px 0 0", paddingInlineStart:18 }}>{result.warnings.map((w,i)=><li key={i}>{w}</li>)}</ul>
             </div>
           )}
@@ -952,7 +952,7 @@ function StudentImportModal({ onClose, onDone }) {
                   const rows = result.failures.map(f=> [f.line, f.sno||"", `"${(f.name||"").replace(/"/g,'""')}"`, `"${(f.reason_fa||"").replace(/"/g,'""')}"`, `"${(f.reason_en||"").replace(/"/g,'""')}"`, `"${(f.raw||"").replace(/"/g,'""')}"`].join(","));
                   const csv = "\uFEFF" + [header, ...rows].join("\n");
                   const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="failed-rows.csv"; a.click(); URL.revokeObjectURL(url);
-                }}>⬇️ {fa?"دانلود CSV ردیف‌های ناموفق":"Download failed rows CSV"}</button>
+                }}> {fa?"دانلود CSV ردیف‌های ناموفق":"Download failed rows CSV"}</button>
                 <button type="button" className="btn btn-ghost btn-sm" onClick={()=>{
                   const txt = result.failures.map(f=> `${fa?`سطر ${f.line}`:`line ${f.line}`}: ${f.sno} — ${fa?f.reason_fa:f.reason_en}`).join("\n");
                   navigator.clipboard?.writeText(txt);
@@ -990,7 +990,7 @@ function StudentImportModal({ onClose, onDone }) {
             </div>
           )}
           <div className="small muted mt8" style={{ lineHeight:1.7 }}>
-            💡 {fa?"نکته: اگر «بدون دانشگاه» بودید و به کلاس اضافه می‌شوید، دانشگاهِ کلاس به پروفایل‌تان خودکار اضافه می‌شود (ترمیم). برای تغییر دسته‌جمعی دانشگاه، از جدول کاربران → انتخاب چند نفر → «انتساب به دانشگاه» استفاده کنید." : "Tip: if you had no university, adding to a class auto-fills the class's university. Use table → select → Assign to university for bulk moves."}
+            <Icon name="bulb" size={14} style={{ verticalAlign: "-2px" }} /> {fa?"نکته: اگر «بدون دانشگاه» بودید و به کلاس اضافه می‌شوید، دانشگاهِ کلاس به پروفایل‌تان خودکار اضافه می‌شود (ترمیم). برای تغییر دسته‌جمعی دانشگاه، از جدول کاربران → انتخاب چند نفر → «انتساب به دانشگاه» استفاده کنید." : "Tip: if you had no university, adding to a class auto-fills the class's university. Use table → select → Assign to university for bulk moves."}
           </div>
         </div>
       )}
@@ -1093,7 +1093,7 @@ function Cases() {
     api.get("/cases?status=all").then((d) => setCases(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setCases({ __err: true }); });
   };
   useEffect(() => { load(); }, []);
-  if (cases?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (lang === "fa" ? "بارگذاری کیس‌ها شکست خورد" : "Could not load cases")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCases(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (cases?.__err || loadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr || (lang === "fa" ? "بارگذاری کیس‌ها شکست خورد" : "Could not load cases")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCases(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!cases) return <Spinner />;
   const del = async (id) => { if (confirm(t("confirmDelete"))) { await api.del(`/cases/${id}`); load(); } };
   const save = async (data, id) => {
@@ -1415,7 +1415,7 @@ function Flashcards() {
     api.get("/flashcards?status=all").then((d) => setCards(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setCards({ __err: true }); });
   };
   useEffect(() => { load(); }, []);
-  if (cards?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (lang === "fa" ? "بارگذاری فلش‌کارت‌ها شکست خورد" : "Could not load flashcards")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCards(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (cards?.__err || loadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr || (lang === "fa" ? "بارگذاری فلش‌کارت‌ها شکست خورد" : "Could not load flashcards")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCards(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!cards) return <Spinner />;
   const del = async (id) => { if (confirm(t("confirmDelete"))) { await api.del(`/flashcards/${id}`); load(); } };
   const save = async (data, id) => {
@@ -1517,7 +1517,7 @@ function DrawingZoneEditor({ drawing, onChange, lang }) {
       <span className="tag">#{i + 1}</span>
       <input style={{ maxWidth: 120 }} value={z.label || ""} onChange={(e) => setLabel(i, e.target.value)} placeholder={fa ? "شماره برچسب" : "Label #"} />
       <span className="small muted">{Math.round(z.w)}٪ × {Math.round(z.h)}٪</span>
-      <button type="button" className="btn btn-sm btn-danger" onClick={() => remove(i)}>✕</button>
+      <button type="button" className="btn btn-sm btn-danger" onClick={() => remove(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>
     </div>)}
   </div>;
 }
@@ -1840,7 +1840,7 @@ export function CardModal({ card, onClose, onSave }) {
           </div>
           <label className="toggle-row"><span>{lang === "fa" ? "ردیابی روی تصویر مرجع (ترسیم روی اسلاید)" : "Trace on the reference image"}</span>
             <input type="checkbox" checked={f.drawing?.traceReference !== false} onChange={(e)=>setDrawing("traceReference", e.target.checked)} /></label>
-          <label className="toggle-row" title={lang === "fa" ? "پیشنهاد خودکار نمره بر اساس پوشش نواحی و برچسب‌ها؛ فقط پیشنهاد است و تصمیم نهایی با شماست. اگر خاموش باشد، صرفاً بوم نقاشی و تأیید/رد دستی خواهید داشت." : "Advisory coverage/IoU score suggestion; you still decide every point. Off = plain canvas and manual approve/reject only."}><span>🤖 {lang === "fa" ? "دستیار پیشنهاد نمره (تحلیل پوشش/IoU) برای این سؤال" : "Drawing score assist (coverage/IoU) for this question"}</span>
+          <label className="toggle-row" title={lang === "fa" ? "پیشنهاد خودکار نمره بر اساس پوشش نواحی و برچسب‌ها؛ فقط پیشنهاد است و تصمیم نهایی با شماست. اگر خاموش باشد، صرفاً بوم نقاشی و تأیید/رد دستی خواهید داشت." : "Advisory coverage/IoU score suggestion; you still decide every point. Off = plain canvas and manual approve/reject only."}><span><Icon name="ai" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "دستیار پیشنهاد نمره (تحلیل پوشش/IoU) برای این سؤال" : "Drawing score assist (coverage/IoU) for this question"}</span>
             <input type="checkbox" checked={f.drawing?.assistEnabled !== false} onChange={(e)=>setDrawing("assistEnabled", e.target.checked)} /></label>
           <label className="toggle-row"><span>{lang === "fa" ? "شبکه راهنما به‌صورت پیش‌فرض" : "Show grid by default"}</span>
             <input type="checkbox" checked={!!f.drawing?.gridDefault} onChange={(e)=>setDrawing("gridDefault", e.target.checked)} /></label>
@@ -1849,7 +1849,7 @@ export function CardModal({ card, onClose, onSave }) {
             <div className="inline-form mt8" key={i} style={{ alignItems: "center" }}>
               <input dir="rtl" lang="fa" data-content-language="fa" placeholder={lang === "fa" ? "معیار فارسی" : "Criterion FA"} value={(f.drawing?.rubric_fa || [])[i] || ""} onChange={(e)=>setRubric("rubric_fa", i, e.target.value)} />
               <input aria-label="Criterion EN" dir="ltr" lang="en" data-content-language="en" placeholder="Criterion EN" value={(f.drawing?.rubric_en || [])[i] || ""} onChange={(e)=>setRubric("rubric_en", i, e.target.value)} />
-              <button type="button" className="btn btn-sm btn-danger" onClick={()=>delRubric(i)}>✕</button>
+              <button type="button" className="btn btn-sm btn-danger" onClick={()=>delRubric(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>
             </div>
           ))}
           {f.drawing?.assistEnabled !== false && <DrawingZoneEditor drawing={f.drawing} lang={lang} onChange={(zones)=>setDrawing("zones", zones)} />}
@@ -1868,7 +1868,7 @@ export function CardModal({ card, onClose, onSave }) {
           <div className="section-title"><label className="small muted">{t("kfItems")}</label><button type="button" className="btn btn-sm btn-ghost" onClick={addKfItem}>+ {t("add")}</button></div>
           {(f.kf?.items || []).map((it, i) => (
             <div className="card mt8" key={i} style={{ padding: 10, background: "var(--panel2)" }}>
-              <div className="section-title"><b>{lang === "fa" ? `مورد ${i + 1}` : `Item ${i + 1}`}</b>{(f.kf?.items || []).length > 1 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delKfItem(i)}>✕</button>}</div>
+              <div className="section-title"><b>{lang === "fa" ? `مورد ${i + 1}` : `Item ${i + 1}`}</b>{(f.kf?.items || []).length > 1 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delKfItem(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}</div>
               <div className="field"><label>{lang === "fa" ? "نوع این مورد" : "Item type"}</label>
                 <select aria-label={[lang === "fa" ? "نوع این مورد" : "Item type"].join(' ')} value={it.kind || "short"} onChange={(e) => setKfItem(i, "kind", e.target.value)}>
                   <option value="short">{lang === "fa" ? "پاسخ کوتاه" : "Short answer"}</option>
@@ -1926,7 +1926,7 @@ export function CardModal({ card, onClose, onSave }) {
               <input type="number" min="0" max="100" step="0.1" value={p.y} onChange={(e) => setPin(i, "y", Number(e.target.value))} style={{ width: 72 }} />
               <input aria-label="FA" dir="rtl" lang="fa" data-content-language="fa" placeholder="FA" value={p.label_fa || ""} onChange={(e) => setPin(i, "label_fa", e.target.value)} />
               <input aria-label="EN" dir="ltr" lang="en" data-content-language="en" placeholder="EN" value={p.label_en || ""} onChange={(e) => setPin(i, "label_en", e.target.value)} />
-              <button type="button" className="btn btn-sm btn-danger" onClick={() => delPin(i)}>✕</button>
+              <button type="button" className="btn btn-sm btn-danger" onClick={() => delPin(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>
             </div>
           ))}
           <div className="grid grid-2 mt8">
@@ -1997,7 +1997,7 @@ export function CardModal({ card, onClose, onSave }) {
               <span style={{ fontWeight: 800 }}>↔</span>
               <input dir="rtl" lang="fa" data-content-language="fa" style={{ minWidth: 90 }} placeholder={`راست FA`} value={p[2]} onChange={(e) => setPair(i, 2, e.target.value)} />
               <input dir="ltr" lang="en" data-content-language="en" style={{ minWidth: 90 }} placeholder={`Right EN`} value={p[3]} onChange={(e) => setPair(i, 3, e.target.value)} />
-              {f.pairs.length > 2 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delPair(i)}>✕</button>}
+              {f.pairs.length > 2 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delPair(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}
             </div>
           ))}
         </>
@@ -2024,7 +2024,7 @@ export function CardModal({ card, onClose, onSave }) {
                 <option value="B">B</option>
                 <option value="both">{lang === "fa" ? "هر دو" : "both"}</option>
               </select>
-              {(f.features || []).length > 1 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delFeature(i)}>✕</button>}
+              {(f.features || []).length > 1 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delFeature(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}
             </div>
           ))}
         </>
@@ -2041,7 +2041,7 @@ export function CardModal({ card, onClose, onSave }) {
               <span style={{ fontWeight: 800, width: 22 }}>{i + 1}.</span>
               <input placeholder={`FA #${i + 1}`} value={it} onChange={(e) => setItem(i, "items_fa", e.target.value)} />
               <input dir="ltr" lang="en" data-content-language="en" placeholder={`EN #${i + 1}`} value={f.items_en[i] || ""} onChange={(e) => setItem(i, "items_en", e.target.value)} />
-              {f.items_fa.length > 2 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delItem(i)}>✕</button>}
+              {f.items_fa.length > 2 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delItem(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}
             </div>
           ))}
         </>
@@ -2084,7 +2084,7 @@ export function CardModal({ card, onClose, onSave }) {
                 <input type="radio" aria-label={`${t("markCorrect")} ${i+1}`} name="correct" checked={!!o.correct} onChange={() => setCorrect(i)} style={{ width: 18, flexShrink: 0 }} title={t("markCorrect")} />
                 <input dir="rtl" lang="fa" data-content-language="fa" placeholder={`FA #${i + 1}`} value={o.fa} onChange={(e) => setOpt(i, "fa", e.target.value)} />
                 <input dir="ltr" lang="en" data-content-language="en" placeholder={`EN #${i + 1}`} value={o.en} onChange={(e) => setOpt(i, "en", e.target.value)} />
-                {f.options.length > 2 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delOpt(i)}>✕</button>}
+                {f.options.length > 2 && <button type="button" className="btn btn-sm btn-danger" onClick={() => delOpt(i)}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /></button>}
               </div>
               {/* per-option rationale — WHY this option is right/wrong (UWorld-style) */}
               <div className="grid grid-2 mt8" style={{ gap: 8 }}>
@@ -2194,7 +2194,7 @@ function Checklists() {
     api.get("/checklists").then((d) => setLists(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setLists({ __err: true }); });
   };
   useEffect(() => { load(); api.get("/checklists-meta").then(setMeta).catch(() => {}); }, []);
-  if (lists?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری چک‌لیست‌ها شکست خورد" : "Could not load checklists")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setLists(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (lists?.__err || loadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr || (fa ? "بارگذاری چک‌لیست‌ها شکست خورد" : "Could not load checklists")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setLists(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!lists) return <Spinner />;
 
   const addChecklist = async () => {
@@ -2336,7 +2336,7 @@ function ChecklistEditor({ ch, meta = { sections: [], internalHistory: [] }, onS
         <select className="btn btn-sm btn-ghost" defaultValue="" onChange={(e) => { if (e.target.value) { addHistoryForm(e.target.value); e.target.value = ""; } }}
           title={fa ? "افزودن فرم کامل شرح‌حالِ یک تخصص (همه به بخش شرح‌حال)" : "Insert a specialty's full history form"}
           style={{ maxWidth: 220 }}>
-          <option value="">➕ {fa ? "افزودن فرم شرح‌حال…" : "Add history form…"}</option>
+          <option value=""> {fa ? "افزودن فرم شرح‌حال…" : "Add history form…"}</option>
           {forms.map((f) => <option key={f.key} value={f.key}>{fa ? f.fa : f.en} ({f.items?.length})</option>)}
         </select>
         <button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={save}><Icon name="check" size={14} /> {fa ? "ذخیره" : "Save"}</button>
@@ -2435,7 +2435,7 @@ export function AiConfig() {
     api.get("/exam/ai-providers").then((d) => setProviders(normalizeAiProviders(d))).catch(() => setProviders(FALLBACK_AI_PROVIDERS));
   };
   useEffect(() => { loadAi(); }, []);
-  if (cfg?.__err || aiLoadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{aiLoadErr || (fa ? "بارگذاری تنظیمات هوش مصنوعی شکست خورد" : "Could not load AI settings")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCfg(null); loadAi(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (cfg?.__err || aiLoadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{aiLoadErr || (fa ? "بارگذاری تنظیمات هوش مصنوعی شکست خورد" : "Could not load AI settings")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCfg(null); loadAi(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!cfg) return <Spinner />;
   const editCfg = (update) => {
     setTestMsg(""); setTestDetail(null);
@@ -2506,15 +2506,15 @@ export function AiConfig() {
         <div className="card mt16" style={{ background: "var(--panel3, #f7fafd)", borderInlineStart: `4px solid ${testDetail.connected ? "#22a06b" : "#e0a400"}` }}>
           <div style={{ fontWeight: 800, marginBottom: 6 }}>
             {testDetail.connected
-              ? (fa ? "✅ اتصال به API برقرار است — پاسخ زندهٔ بیمار مجازی:" : "✅ Connected to the API — live virtual-patient reply:")
-              : (fa ? "⚠️ از موتور آفلاین (mock) استفاده می‌شود:" : "⚠️ Using the offline (mock) engine:")}
+              ? (fa ? <><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} />{" اتصال به API برقرار است — پاسخ زندهٔ بیمار مجازی:"}</> : <><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} />{" Connected to the API — live virtual-patient reply:"}</>)
+              : (fa ? <><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} />{" از موتور آفلاین (mock) استفاده می‌شود:"}</> : <><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} />{" Using the offline (mock) engine:"}</>)}
           </div>
           {testDetail.connected && (
             <div className="small muted mb8">{fa ? "ارائه‌دهنده:" : "Provider:"} {testDetail.provider || "—"} · {fa ? "مدل:" : "Model:"} {testDetail.model || "—"}</div>
           )}
           <div style={{ background: "var(--panel)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 12px", lineHeight: 1.8 }}>
-            <span className="small muted">🧑‍⚕️ {fa ? "پزشک: سلام، چه مشکلی دارید؟" : "Doctor: Hello, what brings you in?"}</span><br />
-            <span>🤒 {testDetail.sample || testDetail.message || "—"}</span>
+            <span className="small muted"><Icon name="user" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "پزشک: سلام، چه مشکلی دارید؟" : "Doctor: Hello, what brings you in?"}</span><br />
+            <span> {testDetail.sample || testDetail.message || "—"}</span>
           </div>
           {!testDetail.connected && testDetail.message && <div className="small mt8" style={{ color: "#dc2626", fontWeight: 700, lineHeight: 1.6 }}>{fa ? "علت عدم اتصال:" : "Connection issue:"} {testDetail.message}</div>}
         </div>
@@ -2537,7 +2537,7 @@ function Prompts() {
     api.get("/prompts").then(setP).catch((e) => { setLoadErr(String(e.message || e)); setP({ __err: true }); });
   };
   useEffect(() => { loadP(); }, []);
-  if (p?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری پرامپت‌ها شکست خورد" : "Could not load prompts")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setP(null); loadP(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (p?.__err || loadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr || (fa ? "بارگذاری پرامپت‌ها شکست خورد" : "Could not load prompts")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setP(null); loadP(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!p) return <Spinner />;
   const set = (k, v) => setP((s) => ({ ...s, [k]: v }));
   const save = async () => { await api.put("/prompts", p); toast(t("saved")); };
@@ -2594,7 +2594,7 @@ function Reports() {
     api.get("/reports/attempts?research=1").then((d) => setRows(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setRows({ __err: true }); });
   };
   useEffect(() => { load(); }, []);
-  if (rows?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (lang === "fa" ? "بارگذاری گزارش پژوهشی شکست خورد" : "Could not load research reports")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setRows(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (rows?.__err || loadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr || (lang === "fa" ? "بارگذاری گزارش پژوهشی شکست خورد" : "Could not load research reports")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setRows(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!rows) return <Spinner />;
   const exportCsv = async () => {
     const res = await fetch("/api/reports/export.csv?research=1", { credentials: "same-origin", headers: { Authorization: `Bearer ${getToken()}` } });
@@ -3004,7 +3004,7 @@ function ClassManage({ classId, back }) {
 
 
   }, [classId]);
-  if (loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setData(null); setInfo(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button> <button type="button" className="btn btn-ghost mt16" onClick={back}>{fa ? "بازگشت" : "Back"}</button></div>;
+  if (loadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setData(null); setInfo(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button> <button type="button" className="btn btn-ghost mt16" onClick={back}>{fa ? "بازگشت" : "Back"}</button></div>;
   if (!data || !info) return <Spinner />;
   const { class: cl, cases, flashcards = [], members } = data;
   const setF = (k, v) => setInfo((s) => ({ ...s, [k]: v }));
@@ -3093,7 +3093,7 @@ function ClassManage({ classId, back }) {
         </div>
         <div className="grid grid-2" style={{ marginTop: 10 }}>
           <div className="field">
-            <label>🎯 {lang === "fa" ? "فلش‌کارت بدون کسر نمره (راهنما / پاسخ غلط مرحله‌ای)" : "No-penalty flashcards (hints / wrong stage answers)"}</label>
+            <label><Icon name="target" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "فلش‌کارت بدون کسر نمره (راهنما / پاسخ غلط مرحله‌ای)" : "No-penalty flashcards (hints / wrong stage answers)"}</label>
             <select value={info.flashNoPenalty} onChange={(e) => setF("flashNoPenalty", e.target.value)}>
               <option value="inherit">{lang === "fa" ? "پیروی از دانشگاه/پیش‌فرض" : "Inherit (university / global)"}</option>
               <option value="on">{lang === "fa" ? "فعال — هینت و خطا نمره کم نمی‌کند" : "On — hints & mistakes never deduct"}</option>
@@ -3416,7 +3416,7 @@ function ClassGradebook({ classId, back }) {
     setLoadErr("");
     api.get(`/classes/${classId}`).then(setData).catch((e) => { setLoadErr(String(e.message || e)); setData({ __err: true }); });
   }, [classId]);
-  if (data?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری کارنامه شکست خورد" : "Could not load the gradebook")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setData(null); setLoadErr(""); api.get(`/classes/${classId}`).then(setData).catch((e) => { setLoadErr(String(e.message || e)); setData({ __err: true }); }); }}>{fa ? "تلاش دوباره" : "Retry"}</button><button type="button" className="btn btn-ghost mt16" onClick={back}>{fa ? "بازگشت" : "Back"}</button></div>;
+  if (data?.__err || loadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr || (fa ? "بارگذاری کارنامه شکست خورد" : "Could not load the gradebook")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setData(null); setLoadErr(""); api.get(`/classes/${classId}`).then(setData).catch((e) => { setLoadErr(String(e.message || e)); setData({ __err: true }); }); }}>{fa ? "تلاش دوباره" : "Retry"}</button><button type="button" className="btn btn-ghost mt16" onClick={back}>{fa ? "بازگشت" : "Back"}</button></div>;
   if (!data) return <Spinner />;
   const { class: cl, cases = [], flashcards = [], members = [] } = data;
   const avg = members.length ? Math.round(members.reduce((s, m) => s + (m.grade || 0), 0) / members.length) : 0;
@@ -3525,7 +3525,7 @@ function DrawingReviewsPanel({ scope, id, inbox }) {
   };
   return <>
     <div className="small muted mb8">{fa ? "این صفحه هر چند ثانیه تازه می‌شود. نمره نقاشی فقط بعد از تأیید استاد به نمره دانشجو اضافه می‌شود." : "This page auto-refreshes. Drawing points are added only after teacher approval."}</div>
-    {drawErr ? <div className="card empty-state"><div className="ico">⚠️</div><h3>{drawErr}</h3><button type="button" className="btn btn-ghost mt16" onClick={load}>{fa ? "تلاش دوباره" : "Retry"}</button></div> : !rows ? <Spinner /> : rows.length === 0 ? <div className="card empty-state"><div className="ico">🖼️</div><h3>{fa ? "هنوز نقاشی‌ای ثبت نشده است" : "No drawings submitted yet"}</h3></div> : <div className="drawing-review-list">
+    {drawErr ? <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{drawErr}</h3><button type="button" className="btn btn-ghost mt16" onClick={load}>{fa ? "تلاش دوباره" : "Retry"}</button></div> : !rows ? <Spinner /> : rows.length === 0 ? <div className="card empty-state"><div className="ico"><Icon name="image" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{fa ? "هنوز نقاشی‌ای ثبت نشده است" : "No drawings submitted yet"}</h3></div> : <div className="drawing-review-list">
       {rows.map((r) => {
         const key = `${r.attemptId}:${r.answerIndex}`;
         const pending = r.status !== "approved" && r.status !== "rejected";
@@ -3538,7 +3538,7 @@ function DrawingReviewsPanel({ scope, id, inbox }) {
             {Array.isArray(r.zones) && r.zones.length > 0 && <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>{r.zones.map((z, i) => <rect key={i} x={z.x} y={z.y} width={z.w} height={z.h} fill="rgba(37,99,235,.12)" stroke="#2563eb" strokeWidth=".7" vectorEffect="non-scaling-stroke" />)}</svg>}
           </div>}
           {r.assist && <div className="micro-box mt8" style={{ padding: 8 }}>
-            <div className="small muted mb4">🤖 {fa ? "تحلیل پوشش نقشه (صرفاً پیشنهاد — تصمیم با شماست)" : "Mask coverage assist (suggested only — you decide)"}</div>
+            <div className="small muted mb4"><Icon name="ai" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "تحلیل پوشش نقشه (صرفاً پیشنهاد — تصمیم با شماست)" : "Mask coverage assist (suggested only — you decide)"}</div>
             <div className="case-meta">
               {r.assist.basis === "zones" ? <>
                 <span className="tag" title={fa ? "پوشش ناحیه هدف" : "target coverage"}>{fa ? "پوشش" : "Coverage"}: {r.assist.coveragePct}٪</span>
@@ -3556,11 +3556,11 @@ function DrawingReviewsPanel({ scope, id, inbox }) {
             <label className="small muted">{fa ? "نمره برای ثبت:" : "Score to award:"}
               <input type="number" min="0" max={Math.round(r.proposedPoints || 100)} style={{ width: 90, marginInlineStart: 6 }} value={pointsFor(r, key)} onChange={(e) => setScoreOverrides((o) => ({ ...o, [key]: Math.max(0, Math.min(100, Number(e.target.value) || 0)) }))} />
             </label>
-            {r.assist?.suggestedPct != null && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setScoreOverrides((o) => ({ ...o, [key]: r.assist.suggestedPct }))}>🤖 {fa ? `پیشنهاد ${r.assist.suggestedPct}` : `Suggest ${r.assist.suggestedPct}`}</button>}
+            {r.assist?.suggestedPct != null && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setScoreOverrides((o) => ({ ...o, [key]: r.assist.suggestedPct }))}><Icon name="ai" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? `پیشنهاد ${r.assist.suggestedPct}` : `Suggest ${r.assist.suggestedPct}`}</button>}
           </div>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
-            <button type="button" className="btn btn-accent btn-sm" disabled={busy === key || !pending} onClick={() => decide(r, "approved")}>✅ {fa ? "تأیید و ثبت نمره" : "Approve & score"}</button>
-            <button type="button" className="btn btn-danger btn-sm" disabled={busy === key || !pending} onClick={() => decide(r, "rejected")}>✕ {fa ? "رد نقاشی" : "Reject"}</button>
+            <button type="button" className="btn btn-accent btn-sm" disabled={busy === key || !pending} onClick={() => decide(r, "approved")}><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "تأیید و ثبت نمره" : "Approve & score"}</button>
+            <button type="button" className="btn btn-danger btn-sm" disabled={busy === key || !pending} onClick={() => decide(r, "rejected")}><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "رد نقاشی" : "Reject"}</button>
           </div>
         </div>;
       })}
@@ -3603,9 +3603,9 @@ function ClassLiveBoard({ classId, onClose }) {
   const openDetail = async (row) => { setDetailFor(row); setDetail(null); try { setDetail(await api.get(`/classes/${classId}/live-board/${row.user_id}/details`)); } catch (e) { setDetail({ __err: true, message: String(e.message || e), attempts: [] }); } };
   const shell = (content) => full ? <div className="live-board-full">{content}</div> : <Modal title={fa ? "صفحه زنده رقابت کلاس" : "Live classroom board"} onClose={onClose} wide>{content}</Modal>;
   if (!data) return shell(<Spinner />);
-  if (data.__err) return shell(<div className="card empty-state"><div className="ico">⚠️</div><h3>{boardErr || (fa ? "بارگذاری صفحه زنده شکست خورد" : "Live board failed")}</h3><button type="button" className="btn btn-ghost mt16" onClick={load}>{fa ? "تلاش دوباره" : "Retry"}</button></div>);
+  if (data.__err) return shell(<div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{boardErr || (fa ? "بارگذاری صفحه زنده شکست خورد" : "Live board failed")}</h3><button type="button" className="btn btn-ghost mt16" onClick={load}>{fa ? "تلاش دوباره" : "Retry"}</button></div>);
   const cl = data.class || {}, rows = data.ranked || [];
-  const medal = (r) => r === 1 ? "🥇" : r === 2 ? "🥈" : r === 3 ? "🥉" : r;
+  const medal = (r) => (r <= 3 ? <Icon name="medal" size={18} style={{ color: r === 1 ? "#d4a017" : r === 2 ? "#8a949e" : "#b5651d" }} /> : r);
   const content = <div className="live-board">
     <div className="live-board-header">
       <div className="live-board-title"><h2 style={{ margin: 0 }}>{fa ? cl.name_fa : cl.name_en}</h2><div className="small muted">{fa ? "به‌روزرسانی خودکار هر ۵ ثانیه؛ برای دیدن پاسخ‌ها روی نام دانشجو بزنید." : "Auto-refreshes every 5 seconds; click a student name to see answers."} · {(data.updatedAt || "").slice(11,19)}</div></div>
@@ -3654,7 +3654,7 @@ function LiveStudentDetail({ detail, displayName, fa, onClose }) {
   const status = (a) => a.pendingApproval ? (fa ? "در انتظار تأیید" : "Pending approval") : a.solved ? (fa ? "درست" : "Correct") : (fa ? "نادرست/رد" : "Wrong/rejected");
   return <aside className="live-student-detail card">
     <div className="section-title"><h4>{fa ? "پاسخ‌های" : "Answers"} {displayName}</h4><button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>×</button></div>
-    {!detail ? <Spinner /> : detail.__err ? <div className="card empty-state"><div className="ico">⚠️</div><h4>{detail.message || (fa ? "بارگذاری پاسخ‌ها شکست خورد" : "Could not load answers")}</h4></div> : (detail.attempts || []).length === 0 ? <div className="small muted center" style={{padding:12}}>{fa ? "هنوز پاسخی ثبت نشده است." : "No answers yet."}</div> : <div className="live-answer-list">
+    {!detail ? <Spinner /> : detail.__err ? <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h4>{detail.message || (fa ? "بارگذاری پاسخ‌ها شکست خورد" : "Could not load answers")}</h4></div> : (detail.attempts || []).length === 0 ? <div className="small muted center" style={{padding:12}}>{fa ? "هنوز پاسخی ثبت نشده است." : "No answers yet."}</div> : <div className="live-answer-list">
       {(detail.attempts || []).map((att)=><div className="live-attempt" key={`${att.kind}-${att.attemptId}`}>
         <div className="live-attempt-head"><b>{fa ? (att.title_fa || "فلش‌کارت") : (att.title_en || "Flashcard")}</b><span className="tag">{att.score ?? "—"}</span></div>
         {att.kind === "vp" && <div className="small muted">{fa ? "بیمار مجازی/کیس" : "Virtual patient/case"} · {(att.created_at||"").slice(0,16).replace("T"," ")}</div>}
@@ -3790,11 +3790,11 @@ function ConversationDetail({ detail, onBack }) {
       {(detail.transcript?.problemList?.length > 0 || detail.transcript?.ddx?.length > 0 ||
         detail.transcript?.tests?.length > 0 || detail.transcript?.imaging?.length > 0 || detail.transcript?.finalDx) && (
         <div className="small muted mt8">
-          {detail.transcript?.problemList?.length > 0 && <div>📋 {fa ? "پرابلم لیست دانشجو" : "Student's problem list"}: {detail.transcript.problemList.join("؛ ")}</div>}
-          {detail.transcript?.ddx?.length > 0 && <div>🔀 {fa ? "تشخیص‌های افتراقی دانشجو" : "Student's differentials"}: {detail.transcript.ddx.join("؛ ")}</div>}
-          {detail.transcript?.tests?.length > 0 && <div>🧪 {fa ? "آزمایش‌ها" : "Tests"}: {detail.transcript.tests.join("، ")}</div>}
-          {detail.transcript?.imaging?.length > 0 && <div>🩻 {fa ? "تصویربرداری" : "Imaging"}: {detail.transcript.imaging.join("، ")}</div>}
-          {detail.transcript?.finalDx && <div>🎯 {fa ? "تشخیص نهایی دانشجو" : "Student's final Dx"}: {detail.transcript.finalDx}</div>}
+          {detail.transcript?.problemList?.length > 0 && <div><Icon name="list" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "پرابلم لیست دانشجو" : "Student's problem list"}: {detail.transcript.problemList.join("؛ ")}</div>}
+          {detail.transcript?.ddx?.length > 0 && <div> {fa ? "تشخیص‌های افتراقی دانشجو" : "Student's differentials"}: {detail.transcript.ddx.join("؛ ")}</div>}
+          {detail.transcript?.tests?.length > 0 && <div><Icon name="flask" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "آزمایش‌ها" : "Tests"}: {detail.transcript.tests.join("، ")}</div>}
+          {detail.transcript?.imaging?.length > 0 && <div> {fa ? "تصویربرداری" : "Imaging"}: {detail.transcript.imaging.join("، ")}</div>}
+          {detail.transcript?.finalDx && <div><Icon name="target" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "تشخیص نهایی دانشجو" : "Student's final Dx"}: {detail.transcript.finalDx}</div>}
         </div>
       )}
 
@@ -3804,7 +3804,7 @@ function ConversationDetail({ detail, onBack }) {
           <div className="section-title"><h4><Icon name="check" size={15} /> {t("checklist")}</h4></div>
           {detail.eval.results.map((r) => (
             <div className="check-item" key={r.id}>
-              <div className={`status ${r.done ? "st-done" : "st-miss"}`}>{r.done ? "✓" : "✕"}</div>
+              <div className={`status ${r.done ? "st-done" : "st-miss"}`}>{r.done ? <Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> : <Icon name="close" size={14} style={{ verticalAlign: "-2px" }} />}</div>
               <div style={{ flex: 1 }}>{r.label}{r.reason && <div className="small muted">{r.reason}</div>}</div>
               <span className="tag">{t("weight")} {num(r.weight)}</span>
             </div>
@@ -3929,7 +3929,7 @@ function VpConversations() {
         </div>
         <span className="small muted">{fa ? "فایل CSV برای ارائه به اساتید؛ هر ردیف یک رویداد با زمان." : "CSV for the instructors; one timestamped event per row."}</span>
       </div>
-      {rows?.__err || loadErr ? <div className="empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری گفت‌وگوها شکست خورد" : "Could not load conversations")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setRows(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div> : rows == null ? <Spinner /> : rows.length === 0 ? (
+      {rows?.__err || loadErr ? <div className="empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr || (fa ? "بارگذاری گفت‌وگوها شکست خورد" : "Could not load conversations")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setRows(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div> : rows == null ? <Spinner /> : rows.length === 0 ? (
         <div className="small muted center" style={{ padding: 24 }}>{fa ? "هنوز گفت‌وگوی ذخیره‌شده‌ای نیست. ثبت گفت‌وگو را در تنظیمات کلاس روشن بگذارید." : "No saved conversations yet. Keep conversation logging on in the class settings."}</div>
       ) : (
         <div className="table-wrap"><table>
@@ -4216,7 +4216,7 @@ function ExamModal({ exam, onClose, onSave }) {
         <div className="field"><label>{t("examDurationMin")}</label>
           <input type="number" min="1" value={f.duration_min} onChange={(e) => set("duration_min", +e.target.value || 30)} /></div>
       </div>
-      <div className="small muted mt4">📅 {fmtDateLong(jalaliTimeToIso(sched.jy, sched.jm, sched.jd, sched.fromTime), lang)} · {faDigits(sched.fromTime, lang)}–{faDigits(sched.toTime, lang)} · {faDigits(String(f.duration_min), lang)} {t("min")}</div>
+      <div className="small muted mt4"> {fmtDateLong(jalaliTimeToIso(sched.jy, sched.jm, sched.jd, sched.fromTime), lang)} · {faDigits(sched.fromTime, lang)}–{faDigits(sched.toTime, lang)} · {faDigits(String(f.duration_min), lang)} {t("min")}</div>
       <div className="field mt8"><label>{t("examMaxAttempts")}</label>
         <input type="number" min="1" value={f.max_attempts} onChange={(e) => set("max_attempts", +e.target.value || 1)} /></div>
       <div className="field"><label>{t("examLang")}</label>
@@ -4327,7 +4327,7 @@ function ExamManage({ examId, back }) {
   }).catch((e) => setLoadErr(String(e.message || e)));
   };
   useEffect(() => { load(); }, [examId]);
-  if (loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setData(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button><button type="button" className="btn btn-ghost mt16" onClick={back}>{lang === "fa" ? "بازگشت" : "Back"}</button></div>;
+  if (loadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setData(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button><button type="button" className="btn btn-ghost mt16" onClick={back}>{lang === "fa" ? "بازگشت" : "Back"}</button></div>;
   if (!data) return <Spinner />;
 
   const save = async () => {
@@ -4631,7 +4631,7 @@ function AttemptReviewModal({ attemptId, onClose, onSaved }) {
           <div className="small muted mb8">{fa ? "چک‌لیست ارزیابی" : "Checklist"}</div>
           {ev.results.map((r) => (
             <div key={r.id} className="info-row">
-              <span>{r.done ? "✅" : "❌"} {r.label}{r.reason ? ` — ${r.reason}` : ""}</span>
+              <span>{r.done ? <Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> : <Icon name="close" size={14} style={{ verticalAlign: "-2px" }} />} {r.label}{r.reason ? ` — ${r.reason}` : ""}</span>
               <span className="tag">{t("weight")} {r.weight}</span>
             </div>
           ))}
@@ -4802,7 +4802,7 @@ function StudentReportCard({ userId, onClose }) {
                             <td style={{ whiteSpace: "normal", minWidth: 220 }}>{lang === "fa" ? ans.question_fa : ans.question_en}</td>
                             <td style={{ whiteSpace: "normal" }}>{selected}</td>
                             <td style={{ whiteSpace: "normal" }}>{correct}</td>
-                            <td>{ans.solved ? "✅" : "❌"}</td>
+                            <td>{ans.solved ? <Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> : <Icon name="close" size={14} style={{ verticalAlign: "-2px" }} />}</td>
                           </tr>;
                         })}</tbody>
                       </table></div>
@@ -4832,7 +4832,7 @@ function Catalogs() {
     api.get("/catalogs").then((d) => setList(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setList({ __err: true }); });
   };
   useEffect(() => { load(); }, []);
-  if (list?.__err || loadErr) return <><div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (lang === "fa" ? "بارگذاری کاتالوگ‌ها شکست خورد" : "Could not load catalogs")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setList(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div><OrderCatalogAdmin /></>;
+  if (list?.__err || loadErr) return <><div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr || (lang === "fa" ? "بارگذاری کاتالوگ‌ها شکست خورد" : "Could not load catalogs")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setList(null); load(); }}>{lang === "fa" ? "تلاش دوباره" : "Retry"}</button></div><OrderCatalogAdmin /></>;
   if (!list) return <><Spinner /><OrderCatalogAdmin /></>;
   const del = async (id) => { if (confirm(t("confirmDelete"))) { await api.del(`/catalogs/${id}`); load(); } };
   const save = async (data, id) => {
@@ -5087,7 +5087,7 @@ function AdsManager() {
       {/* MASTER SWITCH — one global on/off. While OFF, no user sees any ad. */}
       {master && (
         <div className="card mb16" style={{ display: "flex", alignItems: "center", gap: 16, borderInlineStart: `5px solid ${master.enabled ? "var(--green)" : "var(--flame,#e0533d)"}` }}>
-          <div style={{ fontSize: 34 }}>{master.enabled ? "📣" : "🔕"}</div>
+          <div style={{ fontSize: 34 }}><Icon name="bell" size={30} style={{ opacity: master.enabled ? 1 : 0.35 }} /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 800, fontSize: "1.05rem" }}>{t("adsMaster")} — {master.enabled ? t("adsMasterOn") : t("adsMasterOff")}</div>
             <div className="small muted">{master.enabled ? t("adsMasterHintOn") : t("adsMasterHintOff")}</div>
@@ -5106,7 +5106,7 @@ function AdsManager() {
         <div className="grid grid-3 mb16">
           <div className="card center"><div className="stat-num">{stats.totals?.imp ?? 0}</div><div className="small muted">{t("impressions")}</div></div>
           <div className="card center"><div className="stat-num">{stats.totals?.clk ?? 0}</div><div className="small muted">{t("clicks")}</div></div>
-          <div className="card center"><div className="stat-num">{stats.rewardsPaidGems ?? 0} 💉</div><div className="small muted">{lang === "fa" ? "جم پرداختی (جایزه‌دار)" : "Gems paid (rewarded)"}</div></div>
+          <div className="card center"><div className="stat-num">{stats.rewardsPaidGems ?? 0} </div><div className="small muted">{lang === "fa" ? "جم پرداختی (جایزه‌دار)" : "Gems paid (rewarded)"}</div></div>
         </div>
       )}
 
@@ -5138,7 +5138,7 @@ function AdsManager() {
               <span className="tag"><Icon name="chart" size={12} /> {t("impressions")}: {a.impressions}</span>
               <span className="tag"><Icon name="target" size={12} /> {t("clicks")}: {a.clicks}</span>
               {a.impressions > 0 && <span className="tag">CTR: {Math.round((a.clicks / a.impressions) * 1000) / 10}%</span>}
-              {a.weight > 1 && <span className="tag">⚖ {a.weight}</span>}
+              {a.weight > 1 && <span className="tag"> {a.weight}</span>}
               {a.audience && a.audience !== "all" && <span className="tag">{a.audience === "free" ? t("audFree") : t("audNew")}</span>}
               {a.daily_cap > 0 && <span className="tag">≤{a.daily_cap}/{fa ? "روز" : "day"}</span>}
               <span className="tag" style={{ background: a.active ? "var(--accentGlow)" : "var(--panel3)" }}>{a.active ? (fa ? "● فعال" : "● on") : (fa ? "○ خاموش" : "○ off")}</span>
@@ -5186,7 +5186,7 @@ function AdsManager() {
 
           {/* Scheduling, frequency capping, audience targeting & rotation weight */}
           <div className="divider" />
-          <div className="small muted mb8">🎛️ {t("adSchedulingCap")}</div>
+          <div className="small muted mb8"> {t("adSchedulingCap")}</div>
           <div className="grid grid-2">
             <div className="field"><label>{t("adAudience")}</label>
               <select value={edit.audience || "all"} onChange={(e) => setEdit({ ...edit, audience: e.target.value })}>
@@ -5216,7 +5216,7 @@ function AdsManager() {
             </div>
           )}
           {/* ── Live PREVIEW: accurate learner motion preview (same shell as MotionAd) + legacy flat fallback ── */}
-          <div className="small muted mb8">👁 {lang === "fa" ? "پیش‌نمایش زنده (همان چیزی‌ست که کاربر می‌بیند)" : "Live preview — exactly what learners see"}</div>
+          <div className="small muted mb8"><Icon name="eye" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "پیش‌نمایش زنده (همان چیزی‌ست که کاربر می‌بیند)" : "Live preview — exactly what learners see"}</div>
           {(() => {
             const hexR = (hex, a) => { try { let h = String(hex||"").replace("#","").trim(); if(h.length===3) h=h.split("").map(c=>c+c).join(""); if(h.length!==6) return `rgba(47,127,209,${a})`; return `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${a})`; } catch { return `rgba(47,127,209,${a})`; } };
             const drk = (hex, amt=.28) => { try { let h=String(hex||"").replace("#","").trim(); if(h.length===3) h=h.split("").map(c=>c+c).join(""); if(h.length!==6) return hex; const r=Math.round(parseInt(h.slice(0,2),16)*(1-amt)),g=Math.round(parseInt(h.slice(2,4),16)*(1-amt)),b=Math.round(parseInt(h.slice(4,6),16)*(1-amt)); return `#${r.toString(16).padStart(2,"0")}${g.toString(16).padStart(2,"0")}${b.toString(16).padStart(2,"0")}`; } catch { return hex; } };
@@ -5231,7 +5231,7 @@ function AdsManager() {
             const gold = variantPreview==="between" || (isCustom && /f|e.*b|c.*8/i.test(bg.toLowerCase()));
             return (
               <div className={`motion-ad${!isCustom && variantPreview==="between" ? " motion-ad--gold" : !isCustom && variantPreview==="intro" ? " motion-ad--teal" : ""}${variantPreview==="intro"?" motion-ad--intro":" motion-ad--compact"}`} dir={lang==="fa"?"rtl":"ltr"} style={{ marginBottom: 12 }}>
-                {fmtBadge && <span className="motion-ad__format-badge">{fmtBadge}{edit.format==="rewarded" && edit.reward_gems ? ` · +${edit.reward_gems} 💉` : ""}</span>}
+                {fmtBadge && <span className="motion-ad__format-badge">{fmtBadge}{edit.format==="rewarded" && edit.reward_gems ? ` · +${edit.reward_gems}` : ""}</span>}
                 <span className="motion-ad__tag">{lang==="fa"?"تبلیغ":"Ad"}</span>
                 <div className="motion-ad__bg" aria-hidden="true" style={isCustom ? { background: `radial-gradient(680px 420px at 16% 14%, ${hexR(bg,0.24)}, transparent 60%), radial-gradient(600px 360px at 90% 86%, ${hexR(bg,0.14)}, transparent 64%), linear-gradient(135deg, ${bg} 0%, ${hexR(bg,0.9)} 30%, ${drk(bg,0.22)} 58%, ${drk(bg,0.45)} 100%)`, backgroundSize:"auto,auto,200% 200%" } : undefined} />
                 <div className="motion-ad__grid" aria-hidden="true" />
@@ -5240,14 +5240,14 @@ function AdsManager() {
                 <div className="motion-ad__orb motion-ad__orb--2" aria-hidden="true" />
                 <div className="motion-ad__shine" aria-hidden="true" />
                 <div className="motion-ad__inner">
-                  <div className="motion-ad__media" aria-hidden="true">{edit.image ? <img src={edit.image} alt="" style={{ width:"100%",height:"100%",objectFit:"cover"}} /> : <span>✦</span>}</div>
+                  <div className="motion-ad__media" aria-hidden="true">{edit.image ? <img src={edit.image} alt="" style={{ width:"100%",height:"100%",objectFit:"cover"}} /> : <span></span>}</div>
                   <div className="motion-ad__text">
                     <span className="motion-ad__kicker">{kicker}</span>
                     <h4 className="motion-ad__title motion-ad__title--grad">{tit}</h4>
                     <p className="motion-ad__body">{bod}</p>
                     <div className="motion-ad__bullets">
                       <span className="motion-ad__pill">⏱ {lang==="fa"?"موشن ۱۰ ثانیه":"10s motion"}</span>
-                      <span className="motion-ad__pill">✨ {bg}</span>
+                      <span className="motion-ad__pill"><Icon name="star" size={14} style={{ verticalAlign: "-2px" }} /> {bg}</span>
                       {edit.sponsor && <span className="motion-ad__pill">{edit.sponsor}</span>}
                     </div>
                     <span className={`motion-ad__cta${gold?" motion-ad__cta--gold":""}`} style={{ display:"inline-flex", marginTop:12 }}>{cta} <span aria-hidden="true">→</span></span>
@@ -5760,7 +5760,7 @@ function MascotsAdmin() {
 
   return (
     <div>
-      <div className="section-title"><h3>🎭 {t("mascotsAdmin")}</h3></div>
+      <div className="section-title"><h3> {t("mascotsAdmin")}</h3></div>
       <p className="muted mb16" style={{ maxWidth: 640 }}>
         {fa ? "کاراکترهای مسیر یادگیری را کنترل کن: روشن/خاموش، سرعت حرکت، تصویر، و متن‌های گفتار (هر خط یک جمله؛ کاراکتر بین آن‌ها می‌چرخد)."
             : "Control the learning-path characters: on/off, animation speed, image, and speech lines (one per line; the character rotates through them)."}
@@ -5785,7 +5785,7 @@ function MascotsAdmin() {
 
       {/* Dr. Med */}
       <div className="card mb16">
-        <div className="section-title"><h4>🩺 {fa ? "دکتر مِد (راهنما)" : "Dr. Med (guide)"}</h4></div>
+        <div className="section-title"><h4><Icon name="stethoscope" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "دکتر مِد (راهنما)" : "Dr. Med (guide)"}</h4></div>
         <label style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 700, marginBottom: 12 }}>
           <input type="checkbox" checked={cfg.dr.enabled} onChange={(e) => setCfg({ ...cfg, dr: { ...cfg.dr, enabled: e.target.checked } })} />
           {fa ? "فعال" : "Enabled"}
@@ -5835,7 +5835,7 @@ function MascotsAdmin() {
 
       {/* Microbe */}
       <div className="card mb16">
-        <div className="section-title"><h4>🦠 {fa ? "میکروب (حریف باس)" : "Microbe (boss rival)"}</h4></div>
+        <div className="section-title"><h4> {fa ? "میکروب (حریف باس)" : "Microbe (boss rival)"}</h4></div>
         <label style={{ display: "flex", alignItems: "center", gap: 10, fontWeight: 700, marginBottom: 12 }}>
           <input type="checkbox" checked={cfg.microbe.enabled} onChange={(e) => setCfg({ ...cfg, microbe: { ...cfg.microbe, enabled: e.target.checked } })} />
           {fa ? "فعال" : "Enabled"}
@@ -5925,7 +5925,7 @@ function DxAdmin() {
               </div>
             </div>
             <div className="small muted mt8">{(fa ? c.category_fa : c.category_en)} · {(fa ? c.vignette_fa : c.vignette_en)}</div>
-            <div className="small muted mt8">{fa ? "سرنخ‌ها:" : "Clues:"} {(c.clues || []).length} · {fa ? "گزینه‌ها:" : "Options:"} {(c.options || []).length}{c.scheduled_day ? ` · 📅 ${c.scheduled_day}` : ""}</div>
+            <div className="small muted mt8">{fa ? "سرنخ‌ها:" : "Clues:"} {(c.clues || []).length} · {fa ? "گزینه‌ها:" : "Options:"} {(c.options || []).length}{c.scheduled_day ? ` · ${c.scheduled_day}` : ""}</div>
             <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEdit({ ...c, aliases: (c.aliases || []).join(", ") })}><Icon name="edit" size={13} /> {t("edit")}</button>
               <button type="button" className="btn btn-danger btn-sm" onClick={() => remove(c.id)}><Icon name="trash" size={13} /> {t("delete")}</button>
@@ -6358,9 +6358,9 @@ function RemindersAdmin() {
       </div>
       <div style={{ fontWeight: 800, marginBottom: 8 }}>{fa ? "همین حالا واجد شرایط:" : "Currently eligible:"}</div>
       <div className="grid grid-4 mb16">
-        <KPI n={pv.streak} l={fa ? "🔥 حفظ استریک" : "🔥 Streak save"} c="#e0533d" />
-        <KPI n={pv.goal} l={fa ? "🎯 هدف روزانه" : "🎯 Daily goal"} />
-        <KPI n={pv.winback} l={fa ? "👋 بازگشت" : "👋 Win-back"} c="#8b5cf6" />
+        <KPI n={pv.streak} l={fa ? "حفظ استریک" : "Streak save"} c="#e0533d" />
+        <KPI n={pv.goal} l={fa ? "هدف روزانه" : "Daily goal"} />
+        <KPI n={pv.winback} l={fa ? "بازگشت" : "Win-back"} c="#8b5cf6" />
         <KPI n={pv.eligible} l={fa ? "مجموع قابل‌ارسال" : "Total to send"} c="#12805a" />
       </div>
       <div className="card">
@@ -6375,8 +6375,8 @@ function RemindersAdmin() {
         {pv.eligible === 0 && <div className="small muted mt8">{fa ? "الان کسی واجد شرایط نیست (یا همه امروز یادآور گرفته‌اند)." : "No one is eligible right now."}</div>}
         {result && (
           <div className="note-ok" style={{ marginTop: 12, borderRadius: 8, padding: "8px 12px", background: "#e7f7ef", color: "#12805a" }}>
-            {fa ? `✅ ${result.sent} یادآور ارسال شد` : `✅ Sent ${result.sent} reminders`}
-            {" — "}🔥 {result.byKind.streak} · 🎯 {result.byKind.goal} · 👋 {result.byKind.winback}
+            {fa ? `${result.sent} یادآور ارسال شد` : `Sent ${result.sent} reminders`}
+            {" — "}<Icon name="flame" size={14} style={{ verticalAlign: "-2px" }} /> {result.byKind.streak} · <Icon name="target" size={14} style={{ verticalAlign: "-2px" }} /> {result.byKind.goal} ·  {result.byKind.winback}
           </div>
         )}
       </div>
@@ -6437,7 +6437,7 @@ function VpatientLibrary() {
     api.get(`/admin/vpatient/library?lang=${lang}`).then(setLib).catch((e) => { setLoadErr(String(e.message || e)); setLib({ __err: true }); });
   };
   useEffect(() => { load(); }, [lang]);
-  if (lib?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری کتابخانه شکست خورد" : "Could not load the library")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setLib(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (lib?.__err || loadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr || (fa ? "بارگذاری کتابخانه شکست خورد" : "Could not load the library")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setLib(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!lib) return <div className="card"><div className="skeleton sk-card" /></div>;
 
   const toggle = (set, setter, id) => { const n = new Set(set); n.has(id) ? n.delete(id) : n.add(id); setter(n); };
@@ -6456,14 +6456,14 @@ function VpatientLibrary() {
   return (
     <div>
       <div className="card mb16">
-        <div className="section-title"><h4>📤 {fa ? "ایمپورت از کتابخانهٔ دانشگاهی" : "Import from university library"}</h4></div>
+        <div className="section-title"><h4><Icon name="upload" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "ایمپورت از کتابخانهٔ دانشگاهی" : "Import from university library"}</h4></div>
         <p className="small muted" style={{ marginTop: 0 }}>
           {fa ? "کیس‌ها و کارت‌های بخش دانشگاهی را انتخاب کن تا یک نسخهٔ مستقلِ رقابتی از آن‌ها ساخته شود (اصل دانشگاهی دست‌نخورده می‌ماند). خروجی/ورودی CSV هم در دسترس است."
               : "Select university cases & cards to clone into an independent competitive copy (the university original is untouched). CSV export/import is also available."}
         </p>
         <div className="subtabs mb16" style={{ display: "flex", gap: 8 }}>
-          <button type="button" className={`btn btn-sm ${tab === "cases" ? "btn-primary" : "btn-ghost"}`} onClick={() => setTab("cases")}>🩺 {fa ? "بیماران مجازی" : "Virtual patients"} ({lib.cases.length})</button>
-          <button type="button" className={`btn btn-sm ${tab === "cards" ? "btn-primary" : "btn-ghost"}`} onClick={() => setTab("cards")}>🃏 {fa ? "فلش‌کارت‌ها" : "Flashcards"} ({lib.cards.length})</button>
+          <button type="button" className={`btn btn-sm ${tab === "cases" ? "btn-primary" : "btn-ghost"}`} onClick={() => setTab("cases")}><Icon name="stethoscope" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "بیماران مجازی" : "Virtual patients"} ({lib.cases.length})</button>
+          <button type="button" className={`btn btn-sm ${tab === "cards" ? "btn-primary" : "btn-ghost"}`} onClick={() => setTab("cards")}> {fa ? "فلش‌کارت‌ها" : "Flashcards"} ({lib.cards.length})</button>
         </div>
 
         {tab === "cases" ? (
@@ -6555,7 +6555,7 @@ function VpatientSettings() {
     api.get(`/admin/vpatient/cases?lang=${lang}`).then((d) => setCases(Array.isArray(d.cases) ? d.cases : [])).catch((e) => { setCasesErr(String(e.message || e)); setCases({ __err: true }); });
   };
   useEffect(() => { loadVp(); }, [lang]);
-  if (cfg?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری تنظیمات بیمار مجازی شکست خورد" : "Could not load virtual-patient settings")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCfg(null); loadVp(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (cfg?.__err || loadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr || (fa ? "بارگذاری تنظیمات بیمار مجازی شکست خورد" : "Could not load virtual-patient settings")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCfg(null); loadVp(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!cfg) return <div className="card"><div className="skeleton sk-card" /></div>;
 
   const save = async () => {
@@ -6583,7 +6583,7 @@ function VpatientSettings() {
 
   return (
     <div>
-      <div className="section-title"><h3>🩺 {t("vpatientAdmin")}</h3></div>
+      <div className="section-title"><h3><Icon name="stethoscope" size={14} style={{ verticalAlign: "-2px" }} /> {t("vpatientAdmin")}</h3></div>
       <p className="muted mb16" style={{ maxWidth: 660 }}>
         {fa ? "بیمار مجازی را برای کاربران رقابتی کنترل کن. موتور آن با آزمون‌های دانشگاهی مشترک است (کیس‌ها را از «مدیریت محتوا» بساز). بدون کلید هوش مصنوعی، بیمارِ قطعی (بدون هزینه) کار می‌کند؛ با کلید، چت زندهٔ AI فعال می‌شود."
             : "Control the virtual patient for competitive learners. It shares the engine with university exams (author cases under Content). Without an AI key the deterministic (free) patient is used; with a key, live AI chat is enabled."}
@@ -6591,8 +6591,8 @@ function VpatientSettings() {
 
       {!flagOn && (
         <div className="card mb16" style={{ borderInlineStart: "4px solid var(--warn)", background: "rgba(224,145,46,.1)" }}>
-          {fa ? "⚠️ فلگ کلی «بیمار مجازی» در «کلیدهای ویژگی» خاموش است. حتی اگر اینجا فعال کنی، تا آن فلگ روشن نشود نمایش داده نمی‌شود."
-              : "⚠️ The global 'virtual_patient' flag is OFF in Feature Flags. Even if enabled here, it won't show until that flag is on."}
+          {fa ? <><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} />{" فلگ کلی «بیمار مجازی» در «کلیدهای ویژگی» خاموش است. حتی اگر اینجا فعال کنی، تا آن فلگ روشن نشود نمایش داده نمی‌شود."}</>
+              : <><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} />{" The global 'virtual_patient' flag is OFF in Feature Flags. Even if enabled here, it won't show until that flag is on."}</>}
         </div>
       )}
 
@@ -6615,7 +6615,7 @@ function VpatientSettings() {
 
       {/* ---- Ranking XP (auto-evaluator score → XP) ---- */}
       <div className="card mb16">
-        <div className="section-title"><h4>🏆 {fa ? "امتیاز و رنکینگ" : "Score & ranking"}</h4></div>
+        <div className="section-title"><h4><Icon name="trophy" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "امتیاز و رنکینگ" : "Score & ranking"}</h4></div>
         <p className="small muted" style={{ marginTop: 0 }}>
           {fa ? "ارزیابِ خودکار (هوش مصنوعیِ بیمار مجازی) به عملکرد کاربر یک درصد می‌دهد. آن درصد در «سقف XP» ضرب می‌شود و XP حاصل به رنکینگ کاربر اضافه می‌شود. سیاست «بهترین امتیاز»: تکرار یک کیس فقط اگر بهتر شوی XP بیشتری می‌دهد (قابل تقلب نیست)."
               : "The auto-evaluator (the virtual patient's AI examiner) grades performance as a percentage. That percent × the XP cap = ranking XP added to the learner. Best-score policy: replaying a case only adds XP if you improve (no farming)."}
@@ -6690,7 +6690,7 @@ export function VpatientAiConfig() {
     api.get("/exam/ai-providers").then((d) => setProviders(normalizeAiProviders(d))).catch(() => setProviders(FALLBACK_AI_PROVIDERS));
   };
   useEffect(() => { loadAi(); }, []);
-  if (cfg?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری تنظیمات API شکست خورد" : "Could not load AI settings")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCfg(null); loadAi(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (cfg?.__err || loadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr || (fa ? "بارگذاری تنظیمات API شکست خورد" : "Could not load AI settings")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setCfg(null); loadAi(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!cfg) return <Spinner />;
   const listed = providers.filter((p) => p.key !== "");
   const editCfg = (update) => {
@@ -6761,12 +6761,12 @@ export function VpatientAiConfig() {
         <div className="card mt16" style={{ background: "var(--panel3, #f7fafd)", borderInlineStart: `4px solid ${testDetail.connected ? "#22a06b" : "#e0a400"}` }}>
           <div style={{ fontWeight: 800, marginBottom: 6 }}>
             {testDetail.connected
-              ? (fa ? "✅ اتصال برقرار است — پاسخ زندهٔ بیمار:" : "✅ Connected — live patient reply:")
-              : (fa ? "⚠️ از موتور آفلاین (mock) استفاده می‌شود:" : "⚠️ Using the offline (mock) engine:")}
+              ? (fa ? <><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} />{" اتصال برقرار است — پاسخ زندهٔ بیمار:"}</> : <><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} />{" Connected — live patient reply:"}</>)
+              : (fa ? <><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} />{" از موتور آفلاین (mock) استفاده می‌شود:"}</> : <><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} />{" Using the offline (mock) engine:"}</>)}
           </div>
           <div style={{ background: "var(--panel)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 12px", lineHeight: 1.8 }}>
-            <span className="small muted">🧑‍⚕️ {fa ? "پزشک: سلام، چه مشکلی دارید؟" : "Doctor: Hello, what brings you in?"}</span><br />
-            <span>🤒 {testDetail.sample || "—"}</span>
+            <span className="small muted"><Icon name="user" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "پزشک: سلام، چه مشکلی دارید؟" : "Doctor: Hello, what brings you in?"}</span><br />
+            <span> {testDetail.sample || "—"}</span>
           </div>
           {!testDetail.connected && testDetail.message && (
             <div className="small mt8" style={{ color: "#dc2626", fontWeight: 700, lineHeight: 1.6 }}>
@@ -6796,7 +6796,7 @@ function VpatientPrompts() {
     api.get("/admin/vpatient/prompts").then((d) => setP(d.prompts)).catch((e) => { setLoadErr(String(e.message || e)); setP({ __err: true }); });
   };
   useEffect(() => { loadP(); }, []);
-  if (p?.__err || loadErr) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{loadErr || (fa ? "بارگذاری پرامپت‌ها شکست خورد" : "Could not load prompts")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setP(null); loadP(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
+  if (p?.__err || loadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr || (fa ? "بارگذاری پرامپت‌ها شکست خورد" : "Could not load prompts")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setP(null); loadP(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div>;
   if (!p) return <Spinner />;
   const set = (k, v) => setP((s) => ({ ...s, [k]: v }));
   const save = async () => { const d = await api.put("/admin/vpatient/prompts", { prompts: p }); setP(d.prompts); toast(t("saved")); };
@@ -6871,7 +6871,7 @@ function TwaAdmin() {
 
   return (
     <div>
-      <div className="section-title"><h3>📱 {t("twaAdmin")}</h3></div>
+      <div className="section-title"><h3> {t("twaAdmin")}</h3></div>
       <p className="muted mb16" style={{ maxWidth: 680 }}>
         {fa
           ? "اپ اندروید شما (TWA) همین سایت را داخل یک پوستهٔ اندرویدی واقعی اجرا می‌کند و روی کافه‌بازار/گوگل‌پلی قابل انتشار است. برای اینکه اپ بدون نوار مرورگر باز شود، باید «نام پکیج» و «اثرانگشتِ گواهی امضا (SHA-256)» را اینجا وارد کنی تا فایل تأیید (assetlinks.json) منتشر شود. راهنمای کامل ساخت APK در پوشهٔ docs در فایل «راهنمای-اپ-اندروید.md» است."
@@ -6908,7 +6908,7 @@ function TwaAdmin() {
 
       {/* Live preview of the published file */}
       <div className="card mb16">
-        <div className="section-title"><h4>🔗 {fa ? "پیش‌نمایش فایل تأیید" : "Verification file preview"}</h4></div>
+        <div className="section-title"><h4> {fa ? "پیش‌نمایش فایل تأیید" : "Verification file preview"}</h4></div>
         <div className="small muted mb8">
           {fa ? "این فایل به‌صورت زنده در این آدرس منتشر می‌شود:" : "This file is served live at:"}{" "}
           <code dir="ltr">{appUrl}/.well-known/assetlinks.json</code>
@@ -6920,12 +6920,12 @@ function TwaAdmin() {
               <button type="button" className="btn btn-sm btn-ghost mt8" onClick={copyJson}><Icon name="download" size={14} /> {fa ? "کپی JSON" : "Copy JSON"}</button>
             </>
           : <div className="note-warn" style={{ padding: 12, borderRadius: 10, background: "rgba(224,145,46,.12)", border: "1px solid rgba(224,145,46,.3)" }}>
-              {fa ? "⚠️ هنوز منتشر نشده — «فعال‌سازی» را بزن و حداقل یک اثرانگشت معتبر وارد کن." : "⚠️ Not published yet — enable it and add at least one valid fingerprint."}
+              {fa ? <><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} />{" هنوز منتشر نشده — «فعال‌سازی» را بزن و حداقل یک اثرانگشت معتبر وارد کن."}</> : <><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} />{" Not published yet — enable it and add at least one valid fingerprint."}</>}
             </div>}
       </div>
 
       <div className="card">
-        <div className="section-title"><h4>📖 {fa ? "مراحل ساخت اپ (خلاصه)" : "Build steps (summary)"}</h4></div>
+        <div className="section-title"><h4><Icon name="book" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "مراحل ساخت اپ (خلاصه)" : "Build steps (summary)"}</h4></div>
         <ol style={{ paddingInlineStart: 20, lineHeight: 2 }}>
           <li>{fa ? "سایت را روی دامنهٔ HTTPS خودت مستقر کن (مثلاً medschool.ir)." : "Deploy the site on your HTTPS domain (e.g. medschool.ir)."}</li>
           <li>{fa ? "با Bubblewrap اپ را بساز: " : "Build the app with Bubblewrap: "}<code dir="ltr">npx @bubblewrap/cli init --manifest {appUrl}/manifest.webmanifest</code></li>
@@ -6966,17 +6966,17 @@ function PwaAdmin() {
 
       <div style={{ fontWeight: 800, marginBottom: 8 }}>{fa ? "قیف نصب:" : "Install funnel:"}</div>
       <div className="grid grid-4 mb16">
-        <KPI n={d.funnel.shown} l={fa ? "👀 پیشنهاد نمایش‌داده‌شده" : "👀 Prompt shown"} />
-        <KPI n={d.funnel.accepted} l={fa ? "✅ پذیرفته‌شده" : "✅ Accepted"} c="#12805a" />
-        <KPI n={d.funnel.installed} l={fa ? "📲 نصب‌شده (تأییدشده)" : "📲 Installed (confirmed)"} c="#26527a" />
+        <KPI n={d.funnel.shown} l={fa ? "پیشنهاد نمایش‌داده‌شده" : "Prompt shown"} />
+        <KPI n={d.funnel.accepted} l={fa ? "پذیرفته‌شده" : "Accepted"} c="#12805a" />
+        <KPI n={d.funnel.installed} l={fa ? "نصب‌شده (تأییدشده)" : "Installed (confirmed)"} c="#26527a" />
         <KPI n={d.installRate} sfx="٪" l={fa ? "نرخ تبدیل نصب" : "Install conversion"} c="#8b5cf6" />
       </div>
 
       <div style={{ fontWeight: 800, marginBottom: 8 }}>{fa ? "استفادهٔ واقعی از اپ نصب‌شده:" : "Real installed-app usage:"}</div>
       <div className="grid grid-4 mb16">
-        <KPI n={d.standaloneUsers} l={fa ? "👤 کاربران فعال اپ" : "👤 Active app users"} c="#12805a" />
+        <KPI n={d.standaloneUsers} l={fa ? "کاربران فعال اپ" : "Active app users"} c="#12805a" />
         <KPI n={d.reach} sfx="٪" l={fa ? "پوشش (از کل کاربران)" : "Reach (of all learners)"} />
-        <KPI n={d.standaloneLaunches} l={fa ? "🚀 اجراهای تمام‌صفحه" : "🚀 Standalone launches"} />
+        <KPI n={d.standaloneLaunches} l={fa ? "اجراهای تمام‌صفحه" : "Standalone launches"} />
         <KPI n={d.launches} l={fa ? "بازدید کل" : "Total launches"} />
       </div>
 
@@ -7007,7 +7007,7 @@ function PwaAdmin() {
                 ))}
               </div>
             )}
-          <div className="small muted mt8">🟩 {fa ? "نصب" : "installed"} · ⬜ {fa ? "نمایش پیشنهاد" : "prompt shown"}</div>
+          <div className="small muted mt8"> {fa ? "نصب" : "installed"} · ⬜ {fa ? "نمایش پیشنهاد" : "prompt shown"}</div>
         </div>
       </div>
 
@@ -7064,7 +7064,7 @@ function SeoAdmin() {
 
       <label className="toggle-row"><span><Icon name="check" size={15} /> {fa ? "SEO فعال باشد" : "SEO enabled"}</span>
         <input type="checkbox" checked={cfg.enabled !== false} onChange={(e) => set("enabled", e.target.checked)} /></label>
-      <label className="toggle-row"><span>🚫 {fa ? "به موتورهای جستجو بگو ایندکس نکنند (noindex — برای محیط آزمایشی)" : "Tell search engines not to index (noindex — for staging)"}</span>
+      <label className="toggle-row"><span> {fa ? "به موتورهای جستجو بگو ایندکس نکنند (noindex — برای محیط آزمایشی)" : "Tell search engines not to index (noindex — for staging)"}</span>
         <input type="checkbox" checked={!!cfg.noindex} onChange={(e) => set("noindex", e.target.checked)} /></label>
 
       <div className="card mt16">
@@ -7121,8 +7121,8 @@ function SeoAdmin() {
       <div className="card mt16">
         <div style={{ fontWeight: 800, marginBottom: 8 }}>{fa ? "فایل‌های ساخته‌شدهٔ خودکار" : "Auto-generated files"}</div>
         <div className="kv" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <a className="tag" href="/sitemap.xml" target="_blank" rel="noreferrer">🗺️ sitemap.xml</a>
-          <a className="tag" href="/robots.txt" target="_blank" rel="noreferrer">🤖 robots.txt</a>
+          <a className="tag" href="/sitemap.xml" target="_blank" rel="noreferrer"> sitemap.xml</a>
+          <a className="tag" href="/robots.txt" target="_blank" rel="noreferrer"><Icon name="ai" size={14} style={{ verticalAlign: "-2px" }} /> robots.txt</a>
         </div>
         <div className="small muted mt8">{fa ? "این آدرس‌ها را می‌توانید مستقیماً در Google Search Console ثبت کنید." : "Submit these URLs directly to Google Search Console."}</div>
       </div>
@@ -7146,7 +7146,7 @@ function GoogleClientIdField({ initial }) {
   };
   return (
     <div className="card mt16">
-      <div style={{ fontWeight: 800, marginBottom: 10 }}>🔑 {fa ? "ورود با گوگل (GIS)" : "Google Sign-In (GIS)"}</div>
+      <div style={{ fontWeight: 800, marginBottom: 10 }}><Icon name="key" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "ورود با گوگل (GIS)" : "Google Sign-In (GIS)"}</div>
       <div className="small muted mb8">{fa
         ? "در Google Cloud یک OAuth Client از نوع Web بسازید. Authorized JavaScript origins باید دقیقاً مبدأ سایت باشد (مثلاً https://medschool.ir بدون مسیر). شناسه را اینجا یا در GOOGLE_CLIENT_ID فایل env بگذارید."
         : "Create a Web OAuth client in Google Cloud. Authorized JavaScript origins must be the exact site origin (e.g. https://medschool.ir, no path). Paste the Client ID here or in GOOGLE_CLIENT_ID."}</div>
@@ -7170,7 +7170,7 @@ function SecurityAdmin() {
       <span>{label}</span>
       {val != null
         ? <b>{val}</b>
-        : <span className="tag" style={{ background: on ? "#e7f7ef" : "#fde8e8", color: on ? "#12805a" : "#c0392b" }}>{on ? (fa ? "فعال ✓" : "on ✓") : (fa ? "خاموش" : "off")}</span>}
+        : <span className="tag" style={{ background: on ? "#e7f7ef" : "#fde8e8", color: on ? "#12805a" : "#c0392b" }}>{on ? (fa ? "فعال" : "on") : (fa ? "خاموش" : "off")}</span>}
     </div>
   );
   return (
@@ -7183,7 +7183,7 @@ function SecurityAdmin() {
       </div>
       <GoogleClientIdField initial={d.google_client_id || ""} />
       <div className="card mt16">
-        <div style={{ fontWeight: 800, marginBottom: 10 }}>🛡️ {fa ? "هدرهای امنیتی و محافظت" : "Headers & protection"}</div>
+        <div style={{ fontWeight: 800, marginBottom: 10 }}><Icon name="shield" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "هدرهای امنیتی و محافظت" : "Headers & protection"}</div>
         <Row label={fa ? "محدودیت نرخ درخواست (rate limiting)" : "Rate limiting"} on={d.enabled} />
         <Row label={fa ? "هدرهای امنیتی Helmet" : "Helmet security headers"} on={d.helmet} />
         <Row label={fa ? "اجبار HTTPS (HSTS)" : "Force HTTPS (HSTS)"} on={d.hsts} />
@@ -7197,7 +7197,7 @@ function SecurityAdmin() {
         <div className="small muted">{fa ? "ورودهای موفق شمرده نمی‌شوند، پس کاربران واقعی جریمه نمی‌شوند." : "Successful logins aren't counted, so real users aren't penalized."}</div>
       </div>
       <div className="card mt16">
-        <div style={{ fontWeight: 800, marginBottom: 10 }}>🔐 {fa ? "رمز عبور و محیط" : "Passwords & environment"}</div>
+        <div style={{ fontWeight: 800, marginBottom: 10 }}><Icon name="lock" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "رمز عبور و محیط" : "Passwords & environment"}</div>
         <Row label={fa ? "قدرت رمزنگاری رمز عبور (bcrypt cost)" : "Password hashing strength (bcrypt cost)"} val={d.bcrypt_cost} />
         <Row label={fa ? "الگوریتم توکن (قفل‌شده)" : "Token algorithm (pinned)"} val={d.jwt_algorithm} />
         <Row label={fa ? "انقضای توکن ورود" : "Login token expiry"} val={d.jwt_expiry} />
@@ -7211,12 +7211,12 @@ function SecurityAdmin() {
         <Row label={fa ? "محیط اجرا" : "Runtime environment"} val={d.node_env} />
         {d.node_env !== "production" && (
           <div className="note-ok" style={{ marginTop: 8, borderRadius: 8, padding: "8px 12px", background: "#fff6e5", color: "#9a6a00" }}>
-            {fa ? "⚠️ برای استقرار نهایی، متغیر NODE_ENV را روی production تنظیم کنید تا جزئیات خطا به کاربر نشت نکند." : "⚠️ For production, set NODE_ENV=production so error details aren't leaked to clients."}
+            {fa ? <><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} />{" برای استقرار نهایی، متغیر NODE_ENV را روی production تنظیم کنید تا جزئیات خطا به کاربر نشت نکند."}</> : <><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} />{" For production, set NODE_ENV=production so error details aren't leaked to clients."}</>}
           </div>
         )}
       </div>
       <div className="card mt16">
-        <div style={{ fontWeight: 800, marginBottom: 10 }}>📈 {fa ? "پایش واقعی سرعت و امنیت" : "Real-user speed & security monitoring"}</div>
+        <div style={{ fontWeight: 800, marginBottom: 10 }}><Icon name="chart" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "پایش واقعی سرعت و امنیت" : "Real-user speed & security monitoring"}</div>
         {!rum ? <div className="small muted">{fa ? "هنوز داده‌ای ثبت نشده یا در حال بارگذاری است." : "No data yet or loading."}</div> : (
           <>
             <div className="small muted mb8">{fa ? `داده‌های ${rum.days} روز اخیر · ${rum.total} رکورد سرعت` : `Last ${rum.days} days · ${rum.total} performance records`}</div>
@@ -7261,7 +7261,7 @@ function BlogAdminList({ d, stats: s, fa, t, toast, load, setEditing, KPI }) {
   });
   return (
     <div className="page">
-      <div className="section-title"><h4>📝 {fa ? "وبلاگ و مقالات پزشکی" : "Medical blog"}</h4>
+      <div className="section-title"><h4><Icon name="edit" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "وبلاگ و مقالات پزشکی" : "Medical blog"}</h4>
         <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing("new")}><Icon name="edit" size={14} /> {fa ? "مقالهٔ جدید" : "New post"}</button></div>
       <div className="muted small mb16">
         {fa ? "مقالات آموزشی برای جذب ترافیک از گوگل. هر مقاله به‌طور خودکار در sitemap و با متا تگ و Schema مناسب منتشر می‌شود. برای روشن/خاموش کامل، پرچم «وبلاگ» را در «کلیدهای ویژگی» تنظیم کنید."
@@ -7291,8 +7291,8 @@ function BlogAdminList({ d, stats: s, fa, t, toast, load, setEditing, KPI }) {
           <div key={p.id} className="kv" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 0", borderBottom: "1px solid var(--border)" }}>
             <div style={{ minWidth: 0 }}>
               <div style={{ fontWeight: 700 }}>{fa ? p.title_fa : (p.title_en || p.title_fa)}
-                {p.featured ? " ⭐" : ""} {p.reviewed ? " ✓" : ""}</div>
-              <div className="small muted">/{p.slug} · {p.category} · 👁 {p.views}
+                {p.featured ? "" : ""} {p.reviewed ? "" : ""}</div>
+              <div className="small muted">/{p.slug} · {p.category} · <Icon name="eye" size={14} style={{ verticalAlign: "-2px" }} /> {p.views}
                 {" · "}<span style={{ color: p.published ? "#12805a" : (p.scheduled_at ? "#b8860b" : "#c0392b") }}>
                   {p.published ? (fa ? "منتشرشده" : "published") : (p.scheduled_at ? (fa ? "زمان‌بندی‌شده ⏱️" : "scheduled ⏱️") : (fa ? "پیش‌نویس" : "draft"))}
                 </span></div>
@@ -7503,7 +7503,7 @@ function BlogEditor({ id, categories, onBack }) {
 
   return (
     <div className="page">
-      <div className="section-title"><h4>📝 {id ? (fa ? "ویرایش مقاله" : "Edit post") : (fa ? "مقالهٔ جدید" : "New post")}</h4>
+      <div className="section-title"><h4><Icon name="edit" size={14} style={{ verticalAlign: "-2px" }} /> {id ? (fa ? "ویرایش مقاله" : "Edit post") : (fa ? "مقالهٔ جدید" : "New post")}</h4>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button type="button" className="btn btn-ghost btn-sm" onClick={onBack}><Icon name="chevronRight" size={14} /> {fa ? "بازگشت" : "Back"}</button>
           {id && <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowRevs(true)} title={fa ? "تاریخچهٔ ویرایش‌ها" : "Edit history"}><Icon name="clock" size={14} /> {fa ? "تاریخچه" : "History"}</button>}
@@ -7554,7 +7554,7 @@ function BlogEditor({ id, categories, onBack }) {
                 <select value={f.category} onChange={(e) => { if (e.target.value === "__new__") { setAddingCat(true); set("category", ""); } else set("category", e.target.value); }}>
                   {(categories.length ? categories : ["general"]).map((c) => <option key={c} value={c}>{c}</option>)}
                   {f.category && !categories.includes(f.category) && <option value={f.category}>{f.category}</option>}
-                  <option value="__new__">➕ {fa ? "دستهٔ جدید…" : "New category…"}</option>
+                  <option value="__new__"> {fa ? "دستهٔ جدید…" : "New category…"}</option>
                 </select>
               )}</div>
             <div className="field"><label>{fa ? "نشانی (slug)" : "Slug"}</label>
@@ -7633,7 +7633,7 @@ function BlogEditor({ id, categories, onBack }) {
               <Icon name="ai" size={14} />
               <select disabled={rewBusy} defaultValue="" onChange={(e) => { const m = e.target.value; e.target.value = ""; if (m) rewrite(m); }}
                 title={fa ? "بازنویسی متنِ انتخاب‌شده با هوش مصنوعی" : "Rewrite selection with AI"} style={{ fontSize: ".82rem", padding: "4px 8px" }}>
-                <option value="">{rewBusy ? (fa ? "در حال بازنویسی…" : "Rewriting…") : (fa ? "✨ بازنویسی با AI…" : "✨ AI rewrite…")}</option>
+                <option value="">{rewBusy ? (fa ? "در حال بازنویسی…" : "Rewriting…") : (fa ? <><Icon name="star" size={14} style={{ verticalAlign: "-2px" }} />{" بازنویسی با AI…"}</> : <><Icon name="star" size={14} style={{ verticalAlign: "-2px" }} />{" AI rewrite…"}</>)}</option>
                 <option value="improve">{fa ? "روان‌تر و حرفه‌ای‌تر" : "Improve"}</option>
                 <option value="shorten">{fa ? "کوتاه‌تر کن" : "Shorten"}</option>
                 <option value="expand">{fa ? "بسط بده" : "Expand"}</option>
@@ -7698,11 +7698,11 @@ function BlogEditor({ id, categories, onBack }) {
               onChange={(e) => set("scheduled_at", e.target.value ? new Date(e.target.value).toISOString() : "")} />
             <div className="small muted mt4">{fa ? "اگر تاریخ آینده بگذارید و «پیش‌نویس» ذخیره کنید، مقاله خودکار در آن زمان منتشر می‌شود." : "Set a future time and save as draft — it auto-publishes then."}</div></div>
           <div className="divider" />
-          <label className="toggle-row"><span>✓ {fa ? "بازبینی پزشکی شده" : "Medically reviewed"}</span>
+          <label className="toggle-row"><span><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "بازبینی پزشکی شده" : "Medically reviewed"}</span>
             <input type="checkbox" checked={!!f.reviewed} onChange={(e) => set("reviewed", e.target.checked ? 1 : 0)} /></label>
-          <label className="toggle-row"><span>⭐ {fa ? "مقالهٔ ویژه" : "Featured"}</span>
+          <label className="toggle-row"><span><Icon name="star" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "مقالهٔ ویژه" : "Featured"}</span>
             <input type="checkbox" checked={!!f.featured} onChange={(e) => set("featured", e.target.checked ? 1 : 0)} /></label>
-          <label className="toggle-row"><span>🌐 {fa ? "منتشر شده" : "Published"}</span>
+          <label className="toggle-row"><span><Icon name="globe" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "منتشر شده" : "Published"}</span>
             <input type="checkbox" checked={!!f.published} onChange={(e) => set("published", e.target.checked ? 1 : 0)} /></label>
         </div>
       )}
@@ -7781,14 +7781,14 @@ function CertificatesAdmin() {
   const issue = async () => {
     if (!uname.trim()) return;
     try { const r = await api.post("/admin/certificates/issue", { username: uname.trim(), kind: "program" });
-      if (r.ok) { toast(fa ? "صادر شد 🎓" : "Issued 🎓"); setUname(""); load(); } else toast(fa ? "کاربر یافت نشد یا خطا" : "User not found / error"); }
+      if (r.ok) { toast(fa ? "صادر شد" : "Issued"); setUname(""); load(); } else toast(fa ? "کاربر یافت نشد یا خطا" : "User not found / error"); }
     catch { toast("Error"); }
   };
   const toggle = async (id, revoked) => { await api.post(`/admin/certificates/${id}/revoke`, { revoked }); toast(t("save")); load(); };
   const KPI = ({ n, l }) => (<div className="card" style={{ textAlign: "center" }}><div style={{ fontSize: "1.5rem", fontWeight: 900, color: "var(--primary)" }}>{n}</div><div className="small">{l}</div></div>);
   return (
     <div className="page">
-      <div className="section-title"><h4>🎓 {fa ? "گواهی‌نامه‌های پایان دوره" : "Completion certificates"}</h4></div>
+      <div className="section-title"><h4><Icon name="cap" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "گواهی‌نامه‌های پایان دوره" : "Completion certificates"}</h4></div>
       <div className="muted small mb16">
         {fa ? "گواهی‌نامه‌ها با تکمیل دوره به‌طور خودکار صادر می‌شوند و هرکس می‌تواند از صفحهٔ /verify اصالتشان را استعلام کند. تنظیمات (نام صادرکننده، امضاکننده، آستانه) در «گیمیفیکیشن → گواهی‌نامه» و روشن/خاموش در «کلیدهای ویژگی» است."
              : "Certificates are auto-issued on completion; anyone can confirm them at /verify. Configure issuer/signer/threshold in Gamification → Certificates; toggle via Feature Flags."}
@@ -7864,7 +7864,7 @@ function HealthAlerts({ endpoint = "/admin/analytics/alerts", canEditThresholds 
   const sendDigest = async () => { try { const r = await api.post("/admin/analytics/weekly-digest", {}); toast(`${t("saved")} (${r.sent})`); } catch (e) { toast(e.message); } };
   return (
     <div className="card mb16" style={{ borderInlineStart: `5px solid ${alerts.length ? "var(--flame,#e0533d)" : "var(--green)"}` }}>
-      <div className="section-title"><h4>{alerts.length ? "⚠️" : "✅"} {t("healthAlerts")} {alerts.length > 0 && <span className="tag">{alerts.length}</span>}</h4>
+      <div className="section-title"><h4>{alerts.length ? <Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /> : <Icon name="check" size={14} style={{ verticalAlign: "-2px" }} />} {t("healthAlerts")} {alerts.length > 0 && <span className="tag">{alerts.length}</span>}</h4>
         {canEditThresholds && <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           <button type="button" className="btn btn-ghost btn-sm" onClick={runAlerts}><Icon name="bell" size={13} /> {t("runAlertsNow")}</button>
           <button type="button" className="btn btn-ghost btn-sm" onClick={sendDigest}><Icon name="chart" size={13} /> {t("sendDigestNow")}</button>
@@ -7874,7 +7874,7 @@ function HealthAlerts({ endpoint = "/admin/analytics/alerts", canEditThresholds 
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           {alerts.map((a) => (
             <div key={a.id} className="small" style={{ padding: "6px 10px", borderRadius: 8, background: a.severity === "warn" ? "rgba(224,83,61,.1)" : "rgba(240,180,0,.1)" }}>
-              {a.severity === "warn" ? "🔴" : "🟡"} {fa ? a.fa : a.en}
+              {a.severity === "warn" ? <span style={{ color: "#dc2626" }}>●</span> : <span style={{ color: "#f59e0b" }}>●</span>} {fa ? a.fa : a.en}
             </div>
           ))}
         </div>
@@ -8058,7 +8058,7 @@ function AdAnalytics() {
       {/* eCPM benchmarks (admin-set) */}
       {ecpm && (
         <div className="card mb16">
-          <div className="section-title"><h4>💰 {t("ecpmSettings")}</h4>
+          <div className="section-title"><h4> {t("ecpmSettings")}</h4>
             <button type="button" className="btn btn-primary btn-sm" onClick={saveEcpm}><Icon name="check" size={14} /> {t("save")}</button></div>
           <div className="small muted mb8">{t("ecpmHint")}</div>
           <div className="grid grid-4">
@@ -8124,18 +8124,18 @@ function GrowthAdmin() {
       </div>
       <div className="grid grid-2">
         <div className="card">
-          <div style={{ fontWeight: 800, marginBottom: 8 }}>👑 {fa ? "برترین دعوت‌کنندگان" : "Top referrers"}</div>
+          <div style={{ fontWeight: 800, marginBottom: 8 }}><Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "برترین دعوت‌کنندگان" : "Top referrers"}</div>
           {(!s.topReferrers || s.topReferrers.length === 0) && <div className="small muted">{t("noData")}</div>}
           {(s.topReferrers || []).map((r, i) => (
             <div key={i} className="invite-lb-row">
-              <span className="ilb-rank">{i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : i + 1}</span>
+              <span className="ilb-rank">{i === 0 ? <Icon name="medal" size={14} style={{ verticalAlign: "-2px" }} /> : i === 1 ? <Icon name="medal" size={14} style={{ verticalAlign: "-2px" }} /> : i === 2 ? <Icon name="medal" size={14} style={{ verticalAlign: "-2px" }} /> : i + 1}</span>
               <span className="ilb-name">{r.name}</span>
-              <span className="ilb-count">{r.count} 🎓</span>
+              <span className="ilb-count">{r.count} <Icon name="cap" size={14} style={{ verticalAlign: "-2px" }} /></span>
             </div>
           ))}
         </div>
         <div className="card">
-          <div style={{ fontWeight: 800, marginBottom: 8 }}>📣 {fa ? "کانال‌های اشتراک‌گذاری" : "Share channels"}</div>
+          <div style={{ fontWeight: 800, marginBottom: 8 }}><Icon name="bell" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "کانال‌های اشتراک‌گذاری" : "Share channels"}</div>
           {(!s.byChannel || s.byChannel.length === 0) && <div className="small muted">{t("noData")}</div>}
           {(s.byChannel || []).map((c) => (
             <div key={c.channel} className="invite-lb-row">
@@ -8252,7 +8252,7 @@ function ProductHealth() {
           </div>
         )}
         {d.support.recent.length === 0
-          ? <div className="small muted">{fa ? "تیکت بازی وجود ندارد 🎉" : "No open tickets 🎉"}</div>
+          ? <div className="small muted">{fa ? "تیکت بازی وجود ندارد" : "No open tickets"}</div>
           : d.support.recent.map((tk) => (
             <div key={tk.id} style={{ display: "flex", justifyContent: "space-between", gap: 8, padding: "6px 0", borderTop: "1px solid var(--border)" }}>
               <span style={{ fontWeight: 600 }}>{tk.subject || (fa ? "(بدون موضوع)" : "(no subject)")}</span>
@@ -8285,7 +8285,7 @@ function FsrsOptimizer() {
   };
   const apply = async () => {
     if (!result?.proposed) return;
-    try { await api.post("/admin/fsrs/apply", { params: result.proposed }); toast(fa ? "پارامترها اعمال شد ✅" : "Applied ✅"); load(); setResult(null); }
+    try { await api.post("/admin/fsrs/apply", { params: result.proposed }); toast(fa ? "پارامترها اعمال شد" : "Applied"); load(); setResult(null); }
     catch { toast("Error"); }
   };
 
@@ -8326,7 +8326,7 @@ function FsrsOptimizer() {
           <div style={{ fontWeight: 800, marginBottom: 8 }}>{fa ? "نتیجهٔ بهینه‌سازی" : "Optimization result"}</div>
           <div className="grid grid-2">
             <div className="tag" style={{ padding: 10 }}>{fa ? "log-loss فعلی" : "Current log-loss"}: <b>{result.currentEval.logloss}</b></div>
-            <div className="tag" style={{ padding: 10, background: result.improved ? "#e7f7ef" : undefined }}>{fa ? "log-loss پیشنهادی" : "Proposed log-loss"}: <b>{result.proposedEval.logloss}</b> {result.improved && <span style={{ color: "#12805a" }}>✓ {fa ? "بهتر" : "better"}</span>}</div>
+            <div className="tag" style={{ padding: 10, background: result.improved ? "#e7f7ef" : undefined }}>{fa ? "log-loss پیشنهادی" : "Proposed log-loss"}: <b>{result.proposedEval.logloss}</b> {result.improved && <span style={{ color: "#12805a" }}><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "بهتر" : "better"}</span>}</div>
           </div>
           <div className="small muted mt8">{fa ? "پارامترهای پیشنهادی:" : "Proposed parameters:"}</div>
           <code style={{ display: "block", background: "var(--panel3, #f4f7fb)", borderRadius: 8, padding: 10, fontSize: ".72rem", overflowX: "auto", direction: "ltr", textAlign: "left", marginTop: 4 }}>
@@ -8373,7 +8373,7 @@ function GamificationConfig() {
       <div className="muted small mb16">{lang === "fa" ? "این تنظیمات، مکانیزم‌های انگیزشی سایت را کنترل می‌کنند. هر مقدار را می‌توانید تغییر دهید یا هر مکانیزم را خاموش کنید." : "Control the platform's motivation mechanics. Every value is editable and each mechanic can be turned off."}</div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>❤️ {lang === "fa" ? "قلب‌ها (جان کاربران معمولی)" : "Hearts (lives for free learners)"}</h4></div>
+        <div className="section-title"><h4><Icon name="heart" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "قلب‌ها (جان کاربران معمولی)" : "Hearts (lives for free learners)"}</h4></div>
         <div className="muted small mb8">{lang === "fa" ? "کاربر پریمیوم قلب نامحدود دارد. تغییرات بلافاصله اعمال می‌شود؛ اگر سقف را بالا ببرید، نوار کاربران پر می‌شود." : "Premium learners have unlimited hearts. Changes apply immediately; raising the cap tops everyone up."}</div>
         <div className="grid grid-3 mt8">
           {F(lang === "fa" ? "حداکثر قلب" : "Max hearts", "hearts", "max")}
@@ -8383,7 +8383,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>🎲 {t("streakWager")}</h4></div>
+        <div className="section-title"><h4><Icon name="dice" size={14} style={{ verticalAlign: "-2px" }} /> {t("streakWager")}</h4></div>
         {Toggle(lang === "fa" ? "فعال باشد" : "Enabled", "wager")}
         <div className="grid grid-3 mt8">
           {F(lang === "fa" ? "تعداد روز هدف" : "Target days", "wager", "target_days")}
@@ -8393,7 +8393,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>🏅 {t("monthlyQuest")}</h4></div>
+        <div className="section-title"><h4> {t("monthlyQuest")}</h4></div>
         {Toggle(lang === "fa" ? "فعال باشد" : "Enabled", "monthly")}
         <div className="grid grid-2 mt8">
           {F(lang === "fa" ? "تعداد کوئست ماهانه" : "Quests per month", "monthly", "goal")}
@@ -8402,7 +8402,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>⚡ {t("rampEvent")}</h4></div>
+        <div className="section-title"><h4><Icon name="bolt" size={14} style={{ verticalAlign: "-2px" }} /> {t("rampEvent")}</h4></div>
         {Toggle(lang === "fa" ? "فعال باشد" : "Enabled", "event")}
         <div className="grid grid-2 mt8">
           {F(lang === "fa" ? "عنوان (فا)" : "Title (fa)", "event", "title_fa", "text")}
@@ -8419,7 +8419,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>💫 {t("revivalTitle")}</h4></div>
+        <div className="section-title"><h4> {t("revivalTitle")}</h4></div>
         {Toggle(lang === "fa" ? "فعال باشد" : "Enabled", "revival")}
         <div className="grid grid-2 mt8">
           {F(lang === "fa" ? "حداقل استریک ازدست‌رفته" : "Min lost streak", "revival", "min_streak")}
@@ -8428,7 +8428,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>🎁 {lang === "fa" ? "جایزهٔ تبلیغ ویدیویی" : "Rewarded ad rewards"}</h4></div>
+        <div className="section-title"><h4> {lang === "fa" ? "جایزهٔ تبلیغ ویدیویی" : "Rewarded ad rewards"}</h4></div>
         <div className="grid grid-3 mt8">
           {F(lang === "fa" ? "جم هر تماشا" : "Gems per view", "ads", "rewarded_gems")}
           {F(lang === "fa" ? "سقف روزانه" : "Daily cap", "ads", "daily_reward_cap")}
@@ -8437,7 +8437,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>📊 {lang === "fa" ? "مقایسه با همتایان و امکانات ویژهٔ پرمیوم (دور ۹)" : "Peer benchmark & premium extras (round 9)"}</h4></div>
+        <div className="section-title"><h4><Icon name="chart" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "مقایسه با همتایان و امکانات ویژهٔ پرمیوم (دور ۹)" : "Peer benchmark & premium extras (round 9)"}</h4></div>
         <div className="small muted mb8">{lang === "fa"
           ? "الگو: UWorld / AMBOSS / مدوفست / Duolingo. آمار گزینه‌ها برای همه رایگان است (آموزشی است)؛ صدک، گزارش روزانه، راهنمایی و فلش‌کارت یک‌ضربه‌ای ویژهٔ پرمیوم‌اند. هر قابلیت را می‌توانید جداگانه خاموش کنید."
           : "Modelled on UWorld / AMBOSS / Medofast / Duolingo. Option stats are free for everyone (they teach); percentile, daily report, hints and one-tap flashcards are premium. Each feature can be switched off separately."}</div>
@@ -8450,10 +8450,10 @@ function GamificationConfig() {
           return (
             <>
               {T(fa ? "شناسنامهٔ سؤال (درصد انتخاب هر گزینه + میانگین زمان)" : "Question stats (option pick % + avg time)", "option_stats", fa ? "رایگان" : "free")}
-              {T(fa ? "صدک و مقایسهٔ زمان با همتایان در کارنامهٔ شبیه‌ساز/آزمون‌ساز" : "Percentile & time-vs-peers on exam-sim / custom-test result", "percentile", "👑")}
-              {T(fa ? "گزارش روزانهٔ عملکرد در صفحهٔ اصلی" : "Daily performance report on home", "daily_report", "👑")}
-              {T(fa ? "راهنمایی استاد قبل از پاسخ" : "Pre-answer Attending hint", "hint", fa ? "👑 (کاربر رایگان با جم)" : "👑 (free users pay gems)")}
-              {T(fa ? "ذخیرهٔ یک‌ضربه‌ای سؤال به‌عنوان فلش‌کارت شخصی" : "One-tap save question as personal flashcard", "save_flashcard", "👑")}
+              {T(fa ? "صدک و مقایسهٔ زمان با همتایان در کارنامهٔ شبیه‌ساز/آزمون‌ساز" : "Percentile & time-vs-peers on exam-sim / custom-test result", "percentile", <Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} />)}
+              {T(fa ? "گزارش روزانهٔ عملکرد در صفحهٔ اصلی" : "Daily performance report on home", "daily_report", <Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} />)}
+              {T(fa ? "راهنمایی استاد قبل از پاسخ" : "Pre-answer Attending hint", "hint", fa ? "(کاربر رایگان با جم)" : "(free users pay gems)")}
+              {T(fa ? "ذخیرهٔ یک‌ضربه‌ای سؤال به‌عنوان فلش‌کارت شخصی" : "One-tap save question as personal flashcard", "save_flashcard", <Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} />)}
               {T(fa ? "پرش از واحد (آزمون کوتاه برای باز کردن کل واحد)" : "Jump ahead (short quiz unlocks the whole unit)", "jump_ahead")}
               <label className="toggle-row"><span><Icon name="crown" size={15} /> {fa ? "پرش از واحد فقط برای پرمیوم" : "Jump ahead premium-only"}</span>
                 <input type="checkbox" checked={!!cfg.peer?.jump_premium_only} onChange={(e) => set("peer", "jump_premium_only", e.target.checked)} /></label>
@@ -8475,7 +8475,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>🤝 {lang === "fa" ? "چالش دوستانه" : "Friend Quest"}</h4></div>
+        <div className="section-title"><h4> {lang === "fa" ? "چالش دوستانه" : "Friend Quest"}</h4></div>
         <div className="small muted mb8">{lang === "fa" ? "برای فعال/غیرفعال‌کردن کل سیستم دوستان، به «پرچم‌های قابلیت» بروید." : "To turn the whole friends system on/off, use Feature Flags → Friends."}</div>
         <div className="grid grid-3">
           {F(lang === "fa" ? "هدف XP هفتگی" : "Weekly XP goal", "friends", "quest_goal")}
@@ -8485,7 +8485,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>👑 {lang === "fa" ? "درس‌های افسانه‌ای" : "Legendary levels"}</h4></div>
+        <div className="section-title"><h4><Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "درس‌های افسانه‌ای" : "Legendary levels"}</h4></div>
         {Toggle(lang === "fa" ? "فعال باشد" : "Enabled", "legendary")}
         <div className="grid grid-3 mt8">
           {F(lang === "fa" ? "هزینهٔ جم (رایگان برای پریمیوم)" : "Gem cost (free for premium)", "legendary", "cost_gems")}
@@ -8495,7 +8495,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>💎 {lang === "fa" ? "تورنمنت الماس" : "Diamond Tournament"}</h4></div>
+        <div className="section-title"><h4> {lang === "fa" ? "تورنمنت الماس" : "Diamond Tournament"}</h4></div>
         {Toggle(lang === "fa" ? "فعال باشد" : "Enabled", "tournament")}
         <div className="grid grid-2 mt8">
           {F(lang === "fa" ? "تعداد صعودکننده هر مرحله" : "Advance per stage", "tournament", "advance")}
@@ -8505,7 +8505,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>🧠 {lang === "fa" ? "الگوریتم مرور (FSRS)" : "Review algorithm (FSRS)"}</h4></div>
+        <div className="section-title"><h4><Icon name="brain" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "الگوریتم مرور (FSRS)" : "Review algorithm (FSRS)"}</h4></div>
         <div className="small muted mb8">{lang === "fa" ? "FSRS-۶ مدل حافظهٔ سه‌مؤلفه‌ای (سختی/پایداری/بازیابی) است و نسبت به SM-2 حدود ۲۰ تا ۳۰٪ مرور کمتر برای همان سطح ماندگاری لازم دارد." : "FSRS-6 is a three-component memory model (difficulty/stability/retrievability) needing ~20–30% fewer reviews than SM-2 for the same retention."}</div>
         <div className="field"><label>{lang === "fa" ? "الگوریتم زمان‌بندی" : "Scheduler"}</label>
           <select value={cfg.srs.scheduler} onChange={(e) => set("srs", "scheduler", e.target.value)}>
@@ -8521,7 +8521,7 @@ function GamificationConfig() {
         </div>
         <div className="small muted">{lang === "fa" ? "ماندگاری بالاتر = مرور بیشتر (رابطه غیرخطی؛ نقطهٔ بهینه ۸۵ تا ۹۲٪). ۲۱ پارامتر FSRS با مقادیر پیش‌فرض Anki تنظیم شده و در تنظیمات پیشرفته قابل تغییر است." : "Higher retention = more reviews (nonlinear; sweet spot 85–92%). The 21 FSRS parameters use Anki's defaults and are editable in advanced config."}</div>
 
-        <div className="section-title mt16"><h4>🔄 {lang === "fa" ? "مرور تجمعی در درس (درهم‌آمیزی)" : "Cumulative in-lesson review (interleaving)"}</h4></div>
+        <div className="section-title mt16"><h4><Icon name="refresh" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "مرور تجمعی در درس (درهم‌آمیزی)" : "Cumulative in-lesson review (interleaving)"}</h4></div>
         <div className="small muted mb8">{lang === "fa" ? "هنگام شروع هر درس، چند سوال از درس‌های قبلیِ همان دوره که موعد مرورشان رسیده، به‌صورت درهم‌آمیخته اضافه می‌شود. این کار مبتنی بر شواهد آموزش پزشکی است: تمایز بین بیماری‌های شبیه را تقویت می‌کند و با منحنی فراموشی مبارزه می‌کند. ۰ = خاموش." : "When a lesson starts, a few DUE questions from earlier lessons of the same course are blended in. This is evidence-based for medical education: it strengthens discrimination between similar diseases and fights the forgetting curve. 0 = off."}</div>
         <div className="grid grid-2">
           {F(lang === "fa" ? "حداکثر سوال مرور در هر درس" : "Max review cards per lesson", "srs", "interleave_max")}
@@ -8535,7 +8535,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>🎯 {lang === "fa" ? "کالیبراسیون خودکار دشواری + دکتر مِد" : "Adaptive difficulty + Dr. Med guide"}</h4></div>
+        <div className="section-title"><h4><Icon name="target" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "کالیبراسیون خودکار دشواری + دکتر مِد" : "Adaptive difficulty + Dr. Med guide"}</h4></div>
         {Toggle(lang === "fa" ? "فعال باشد" : "Enabled", "calibration")}
         <div className="small muted mb8">{lang === "fa"
           ? "بر پایهٔ «چارچوب نقطهٔ چالش» (Challenge Point Framework) در آموزش پزشکی: سطح مهارت هر کاربر از دقت و سرعت پاسخ‌هایش تخمین زده می‌شود و کارت‌های هر درس طوری مرتب می‌شوند که کاربر در «منطقهٔ چالش بهینه» بماند (نه خیلی آسان، نه طاقت‌فرسا). راهنمای پزشکی «دکتر مِد» هم بر همین اساس پیام‌های دلگرم‌کننده و تطبیقی می‌دهد. کاملاً بدون هوش مصنوعی. برای خاموش‌کردن کامل، پرچم «کالیبراسیون خودکار» را هم تنظیم کنید."
@@ -8558,7 +8558,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>🎓 {lang === "fa" ? "آزمون Checkpoint بخش (تجمعی)" : "Section Checkpoint exam (cumulative)"}</h4></div>
+        <div className="section-title"><h4><Icon name="cap" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "آزمون Checkpoint بخش (تجمعی)" : "Section Checkpoint exam (cumulative)"}</h4></div>
         {Toggle(lang === "fa" ? "فعال باشد" : "Enabled", "checkpoint")}
         <div className="small muted mb8">{lang === "fa"
           ? "آزمون جامعِ هر بخش (گروه والدِ موضوعات، مثل «دروس داخلی»): سوال‌ها از همهٔ درس‌های آن بخش با هم ترکیب می‌شوند تا مثل آزمون جامع (Shelf) توانایی تمایز بین بیماری‌های مشابه سنجیده شود. مبتنی بر شواهد: آزمون تجمعی، ماندگاری بلندمدت را افزایش می‌دهد. برای خاموش‌کردن کامل، پرچم «آزمون Checkpoint» را هم تنظیم کنید."
@@ -8585,7 +8585,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>🏅 {lang === "fa" ? "نشان‌های تسلط بر مبحث" : "Topic Mastery Badges"}</h4></div>
+        <div className="section-title"><h4> {lang === "fa" ? "نشان‌های تسلط بر مبحث" : "Topic Mastery Badges"}</h4></div>
         {Toggle(lang === "fa" ? "فعال باشد" : "Enabled", "mastery")}
         <div className="small muted mb8">{lang === "fa"
           ? "بر پایهٔ «یادگیری تسلط‌محورِ بلوم» (Bloom's Mastery Learning): کاربر وقتی روی یک مبحث «نشان تسلط» می‌گیرد که هم دقتِ بالا (پیش‌فرض ۹۰٪، معیار کلاسیک) روی کارت‌های آن مبحث داشته باشد و هم حافظه‌اش پایدار باشد (بخشی از کارت‌ها در تکرار فاصله‌دار به بلوغ رسیده باشند) — تا یک نمرهٔ لحظه‌ای/حفظِ موقت نشان ندهد. کاملاً قطعی و بدون هوش مصنوعی. برای خاموش‌کردن کامل، پرچم «نشان‌های تسلط» را هم تنظیم کنید."
@@ -8613,7 +8613,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>🌿 {lang === "fa" ? "حالت آرام (ضدِ فرسودگی)" : "Calm Mode (anti-burnout)"}</h4></div>
+        <div className="section-title"><h4> {lang === "fa" ? "حالت آرام (ضدِ فرسودگی)" : "Calm Mode (anti-burnout)"}</h4></div>
         {Toggle(lang === "fa" ? "فعال باشد" : "Enabled", "calm")}
         <div className="small muted mb8">{lang === "fa"
           ? "فرسودگیِ دانشجوی پزشکی شایع است و «اضطرابِ استریک» و انبوه‌شدنِ صفِ مرور از عواملِ اصلی آن‌اند. «حالت آرام» یک انتخابِ کاربر است که محافظ‌های انسانی را روشن می‌کند: سقفِ روزانهٔ مرور، روزهای استراحتِ بدونِ ازدست‌دادنِ استریک، پنهان‌کردنِ استریک و انصراف از لیگ. این‌ها پیش‌فرض‌هایی هستند که کاربر می‌تواند برای خودش تنظیم کند. قطعی و بدون هوش مصنوعی. برای خاموش‌کردن کامل، پرچم «حالت آرام» را هم تنظیم کنید."
@@ -8632,7 +8632,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>🕶️ {lang === "fa" ? "حالت ناشناس در رتبه‌بندی" : "Anonymous ranking"}</h4></div>
+        <div className="section-title"><h4> {lang === "fa" ? "حالت ناشناس در رتبه‌بندی" : "Anonymous ranking"}</h4></div>
         {Toggle(lang === "fa" ? "فعال باشد" : "Enabled", "anon")}
         <div className="small muted mb8">{lang === "fa"
           ? "پژوهش‌ها نشان می‌دهند نمایشِ نامِ مستعار، اضطرابِ رتبه‌بندی را کم می‌کند و درعین‌حال انگیزهٔ رقابت را حفظ می‌کند (به‌ویژه برای کاربرانِ رتبه‌پایین که «حفظِ آبرو» برایشان مهم است). کاربر با روشن‌کردنِ این حالت، برای دیگران با نامِ مستعار دیده می‌شود ولی رتبه و نامِ واقعیِ خودش را می‌بیند. پایین، «مخزنِ نام‌های مستعار» را که وقتی کاربر نامی انتخاب نکند به‌صورتِ خودکار تخصیص می‌یابد ویرایش کنید (با کاما جدا کنید). برای خاموش‌کردن کامل، پرچمِ «حالت ناشناس در رتبه‌بندی» را هم تنظیم کنید."
@@ -8646,14 +8646,14 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>⚡ {lang === "fa" ? "High-Yield و Learning Radar (AMBOSS)" : "High-Yield & Learning Radar (AMBOSS)"}</h4></div>
-        <div className="small muted mb8">{lang === "fa" ? "High-Yield: دکمهٔ ⚡ در درسنامه که فقط نکتهٔ طلایی + اولین نکته را نشان می‌دهد. Learning Radar: برچسب 🔴 برای کارت‌هایی که قبلاً اشتباه زده شده‌اند." : "High-Yield: ⚡ toggle in micro-lessons showing only the golden point + first bullet. Learning Radar: 🔴 badge for cards previously answered incorrectly."}</div>
+        <div className="section-title"><h4><Icon name="bolt" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "High-Yield و Learning Radar (AMBOSS)" : "High-Yield & Learning Radar (AMBOSS)"}</h4></div>
+        <div className="small muted mb8">{lang === "fa" ? "High-Yield: دکمهٔ در درسنامه که فقط نکتهٔ طلایی + اولین نکته را نشان می‌دهد. Learning Radar: برچسب برای کارت‌هایی که قبلاً اشتباه زده شده‌اند." : "High-Yield: toggle in micro-lessons showing only the golden point + first bullet. Learning Radar: badge for cards previously answered incorrectly."}</div>
         {Toggle(lang === "fa" ? "High-Yield فعال باشد" : "High-Yield enabled", "high_yield")}
         <label className="toggle-row"><span>{lang === "fa" ? "نمایش دکمهٔ High-Yield" : "Show High-Yield toggle"}</span>
           <input type="checkbox" checked={cfg.high_yield?.show_toggle !== false} onChange={(e) => set("high_yield", "show_toggle", e.target.checked)} /></label>
         <label className="toggle-row"><span>{lang === "fa" ? "ذخیرهٔ انتخاب کاربر (localStorage)" : "Persist user choice (localStorage)"}</span>
           <input type="checkbox" checked={cfg.high_yield?.persist_choice !== false} onChange={(e) => set("high_yield", "persist_choice", e.target.checked)} /></label>
-        <div className="section-title mt16"><h4>🔴 {lang === "fa" ? "Learning Radar" : "Learning Radar"}</h4></div>
+        <div className="section-title mt16"><h4><span style={{ color: "#dc2626" }}>●</span> {lang === "fa" ? "Learning Radar" : "Learning Radar"}</h4></div>
         {Toggle(lang === "fa" ? "Learning Radar فعال باشد" : "Learning Radar enabled", "learning_radar")}
         <div className="grid grid-3 mt8">
           {F(lang === "fa" ? "حداقل خطا برای برچسب" : "Min wrong to flag", "learning_radar", "min_wrong")}
@@ -8676,7 +8676,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>🐛 {lang === "fa" ? "سامانهٔ باگیابی تکرارشونده" : "Recurring Bug Hunt"}</h4></div>
+        <div className="section-title"><h4> {lang === "fa" ? "سامانهٔ باگیابی تکرارشونده" : "Recurring Bug Hunt"}</h4></div>
         <div className="small muted mb8">{lang === "fa" ? "اسکن خودکار روزانه برای یافته‌های رایج (لینک شکسته، کارت یتیم، رفرنس ناقص) + گزارش دستی کاربر. گزارش‌ها در پنل ادمین باگیابی تجمیع می‌شوند." : "Daily auto-scan for common findings (broken links, orphan cards, incomplete refs) + manual user reports. Reports are aggregated in the Bug Hunt admin panel."}</div>
         {Toggle(lang === "fa" ? "باگیابی فعال باشد" : "Bug Hunt enabled", "bug_hunt")}
         <div className="grid grid-3 mt8">
@@ -8689,7 +8689,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>🧭 {lang === "fa" ? "آزمون تعیین سطح ورودی" : "Entry placement test"}</h4></div>
+        <div className="section-title"><h4><Icon name="compass" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "آزمون تعیین سطح ورودی" : "Entry placement test"}</h4></div>
         {Toggle(lang === "fa" ? "فعال باشد" : "Enabled", "placement")}
         <div className="small muted mb8">{lang === "fa" ? "یک آزمون کوتاه و کم‌استرس که به کاربرِ آشنا کمک می‌کند از جای درست شروع کند. اختیاری است و کاربر می‌تواند ردش کند. برای خاموش‌کردن کامل، پرچم «آزمون تعیین سطح» را هم تنظیم کنید." : "A short, low-stakes quiz that helps a knowledgeable learner start at the right place. Optional and skippable."}</div>
 
@@ -8749,7 +8749,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mb16">
-        <div className="section-title"><h4>🚀 {lang === "fa" ? "چک‌لیست شروع (آنبوردینگ)" : "Onboarding checklist"}</h4></div>
+        <div className="section-title"><h4> {lang === "fa" ? "چک‌لیست شروع (آنبوردینگ)" : "Onboarding checklist"}</h4></div>
         {Toggle(lang === "fa" ? "فعال باشد" : "Enabled", "onboarding")}
         <div className="small muted mb8">{lang === "fa" ? "چک‌لیست کوتاه برای کاربران تازه؛ با تکمیل کامل، جایزهٔ جم می‌گیرند. برای روشن/خاموش کامل، پرچم «آنبوردینگ» را هم تنظیم کنید." : "A short getting-started checklist for new learners; completing it grants gems. Also toggle the Onboarding feature flag for a full on/off."}</div>
         {F(lang === "fa" ? "جایزهٔ تکمیل (جم)" : "Completion reward (gems)", "onboarding", "reward_gems")}
@@ -8767,7 +8767,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card">
-        <div className="section-title"><h4>🎯 {lang === "fa" ? "تمرین هوشمند نقاط ضعف" : "Smart weak-area practice"}</h4></div>
+        <div className="section-title"><h4><Icon name="target" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "تمرین هوشمند نقاط ضعف" : "Smart weak-area practice"}</h4></div>
         {Toggle(lang === "fa" ? "فعال باشد" : "Enabled", "practice")}
         <div className="small muted mb8">{lang === "fa" ? "برای روشن/خاموش‌کردن کامل، پرچم «هاب تمرین هوشمند» را در «پرچم‌های قابلیت» تنظیم کنید." : "To fully enable/disable, use Feature Flags → Smart practice hub."}</div>
         <div className="grid grid-3 mt8">
@@ -8779,7 +8779,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mt16">
-        <div className="section-title"><h4>📲 {lang === "fa" ? "اپ موبایلی (نصب روی گوشی / PWA)" : "Mobile app (install / PWA)"}</h4></div>
+        <div className="section-title"><h4> {lang === "fa" ? "اپ موبایلی (نصب روی گوشی / PWA)" : "Mobile app (install / PWA)"}</h4></div>
         {Toggle(lang === "fa" ? "فعال باشد" : "Enabled", "pwa")}
         <div className="small muted mb8">{lang === "fa" ? "کنترل تجربهٔ «نصب اپ روی گوشی». برای روشن/خاموش کامل، پرچم «پیشنهاد نصب اپ» را در «پرچم‌های قابلیت» هم تنظیم کنید." : "Control the install-to-home-screen experience. For a full on/off, also set the App-install feature flag."}</div>
         <label className="toggle-row"><span>{lang === "fa" ? "نمایش خودکار پیشنهاد نصب" : "Auto-show install prompt"}</span>
@@ -8794,7 +8794,7 @@ function GamificationConfig() {
       </div>
 
       <div className="card mt16">
-        <div className="section-title"><h4>🎓 {lang === "fa" ? "گواهی‌نامهٔ پایان دوره" : "Completion certificates"}</h4></div>
+        <div className="section-title"><h4><Icon name="cap" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "گواهی‌نامهٔ پایان دوره" : "Completion certificates"}</h4></div>
         {Toggle(lang === "fa" ? "فعال باشد" : "Enabled", "certificates")}
         <div className="small muted mb8">{lang === "fa" ? "برای روشن/خاموش کامل، پرچم «گواهی‌نامه» را هم در «کلیدهای ویژگی» تنظیم کنید." : "For a full on/off, also set the Certificates feature flag."}</div>
         <div className="grid grid-2">
@@ -8977,7 +8977,7 @@ function PlacementReport() {
     } catch (e) { setErr(e.message); }
   };
 
-  if (err) return <div className="card empty-state"><div className="ico">⚠️</div><h3>{err}</h3><button type="button" className="btn btn-ghost mt16" onClick={load}>{t("retry") || (fa ? "تلاش دوباره" : "Retry")}</button></div>;
+  if (err) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{err}</h3><button type="button" className="btn btn-ghost mt16" onClick={load}>{t("retry") || (fa ? "تلاش دوباره" : "Retry")}</button></div>;
   if (!data) return <div className="card"><div className="skeleton" style={{ height: 200 }} /></div>;
 
   const levelName = { beginner: fa ? "مبتدی" : "Beginner", intermediate: fa ? "متوسط" : "Intermediate", advanced: fa ? "پیشرفته" : "Advanced" };
@@ -9004,7 +9004,7 @@ function PlacementReport() {
 
   return (
     <div>
-      <div className="section-title"><h3>🧭 {fa ? "گزارش آزمون تعیین سطح" : "Placement report"}</h3>
+      <div className="section-title"><h3><Icon name="compass" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "گزارش آزمون تعیین سطح" : "Placement report"}</h3>
         <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
           <select className="input-sm" value={range} onChange={(e) => setRange(e.target.value)} style={{ fontSize: ".82rem", padding: "4px 8px" }}
             title={fa ? "بازهٔ زمانی" : "Time range"}>
@@ -9021,7 +9021,7 @@ function PlacementReport() {
         : "Summary of all competitive learners' placement results — see which topics learners arrive weak/strong in."}</div>
 
       {!data.enabled && <div className="card" style={{ background: "rgba(240,180,0,.1)", marginBottom: 16 }}>
-        <div className="small">{fa ? "⚠️ آزمون تعیین سطح در حال حاضر خاموش است (بخش گیمیفیکیشن)." : "⚠️ The placement test is currently disabled (Gamification section)."}</div></div>}
+        <div className="small">{fa ? <><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} />{" آزمون تعیین سطح در حال حاضر خاموش است (بخش گیمیفیکیشن)."}</> : <><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} />{" The placement test is currently disabled (Gamification section)."}</>}</div></div>}
 
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 16 }}>
         <Stat label={fa ? "کل کاربران" : "Total learners"} value={data.totalLearners} />
@@ -9031,7 +9031,7 @@ function PlacementReport() {
       </div>
 
       {data.taken === 0 ? (
-        <div className="card empty-state"><div className="ico">📊</div><h3>{fa ? "هنوز کسی آزمون تعیین سطح را کامل نکرده است." : "No one has completed the placement test yet."}</h3></div>
+        <div className="card empty-state"><div className="ico"><Icon name="chart" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{fa ? "هنوز کسی آزمون تعیین سطح را کامل نکرده است." : "No one has completed the placement test yet."}</h3></div>
       ) : (
         <>
           <div className="card mb16">
@@ -9085,8 +9085,8 @@ function PlacementReport() {
               {data.predictive != null && (
                 <div className="small mt8" style={{ color: data.predictive ? "var(--green)" : "var(--flame)" }}>
                   {data.predictive
-                    ? (fa ? "✅ ترتیب پیشرفت با سطح ورودی هم‌خوان است — آزمون پیش‌بینی خوبی داشته." : "✅ Progress order matches entry level — the test predicts well.")
-                    : (fa ? "⚠️ ترتیب پیشرفت با سطح ورودی کاملاً هم‌خوان نیست (می‌تواند به‌خاطر داده کم یا رفتار کاربران باشد)." : "⚠️ Progress order doesn't fully match entry level (could be low data or learner behavior).")}
+                    ? (fa ? <><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} />{" ترتیب پیشرفت با سطح ورودی هم‌خوان است — آزمون پیش‌بینی خوبی داشته."}</> : <><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} />{" Progress order matches entry level — the test predicts well."}</>)
+                    : (fa ? <><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} />{" ترتیب پیشرفت با سطح ورودی کاملاً هم‌خوان نیست (می‌تواند به‌خاطر داده کم یا رفتار کاربران باشد)."}</> : <><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} />{" Progress order doesn't fully match entry level (could be low data or learner behavior)."}</>)}
                 </div>
               )}
             </div>
@@ -9284,11 +9284,11 @@ function Universities() {
       {isAdmin && defaults && (
         <div className="card mb16" style={{ background: "var(--panel2)" }}>
           <div className="small" style={{ fontWeight: 800, marginBottom: 6 }}>
-            {lang === "fa" ? "⚙️ پیش‌فرض سراسری قابلیت‌های دانشگاهی (برای همه دانشگاه‌ها مگر آن‌که لغو شود)" : "⚙️ Global university defaults (unless overridden per university/class)"}
+            {lang === "fa" ? <><Icon name="settings" size={14} style={{ verticalAlign: "-2px" }} />{" پیش‌فرض سراسری قابلیت‌های دانشگاهی (برای همه دانشگاه‌ها مگر آن‌که لغو شود)"}</> : <><Icon name="settings" size={14} style={{ verticalAlign: "-2px" }} />{" Global university defaults (unless overridden per university/class)"}</>}
           </div>
           <div className="grid grid-2">
             <label className="toggle-row">
-              <span>🎯 {lang === "fa" ? "فلش‌کارت بدون کسر نمره" : "No-penalty flashcards"}</span>
+              <span><Icon name="target" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "فلش‌کارت بدون کسر نمره" : "No-penalty flashcards"}</span>
               <input type="checkbox" checked={!!defaults.flash_no_penalty} onChange={(e) => saveDefaults({ flash_no_penalty: e.target.checked })} />
             </label>
             <label className="toggle-row">
@@ -9296,7 +9296,7 @@ function Universities() {
               <input type="checkbox" checked={!!defaults.flash_allow_back} onChange={(e) => saveDefaults({ flash_allow_back: e.target.checked })} />
             </label>
             <label className="toggle-row">
-              <span>✎ {lang === "fa" ? "پیش‌فرض: تغییر پاسخ تأییدشده" : "Default: change a confirmed answer"}</span>
+              <span> {lang === "fa" ? "پیش‌فرض: تغییر پاسخ تأییدشده" : "Default: change a confirmed answer"}</span>
               <input type="checkbox" checked={!!defaults.flash_allow_change} onChange={(e) => saveDefaults({ flash_allow_change: e.target.checked })} />
             </label>
             <label className="toggle-row">
@@ -9332,7 +9332,7 @@ function Universities() {
               <span className="tag"><Icon name="user" size={12} /> {t("teacher")}: {u.teachers}</span>
               <span className="tag"><Icon name="users" size={12} /> {t("student")}: {u.students}{u.limits_enabled && u.max_students != null ? `/${u.max_students}` : ""}</span>
               <span className="tag" style={{ opacity: .85 }}>
-                📄 {{ trial: lang === "fa" ? "آزمایشی" : "Trial", standard: lang === "fa" ? "استاندارد" : "Standard", enterprise: lang === "fa" ? "سازمانی" : "Enterprise" }[u.license_plan || "standard"]}
+                <Icon name="book" size={14} style={{ verticalAlign: "-2px" }} /> {{ trial: lang === "fa" ? "آزمایشی" : "Trial", standard: lang === "fa" ? "استاندارد" : "Standard", enterprise: lang === "fa" ? "سازمانی" : "Enterprise" }[u.license_plan || "standard"]}
                 {u.license_expires_at ? ` · ${u.license_expires_at}` : ""}
               </span>
               {!!u.limits_enabled && <span className="tag" style={{ color: "var(--warn,#b45309)", borderColor: "var(--warn,#b45309)" }}>{lang === "fa" ? "محدودیت‌ها: فعال" : "limits: on"}</span>}
@@ -9437,7 +9437,7 @@ function UniversityModal({ uni, onClose, onSaved }) {
       {/* ---- Licensing & sales (per-university B2B) ---- */}
       <div className="card mt8" style={{ background: "var(--panel2)" }}>
         <div className="small" style={{ fontWeight: 800, marginBottom: 8 }}>
-          {lang === "fa" ? "📄 لایسنس و فروش سازمانی این دانشگاه" : "📄 Institutional licence & sale"}
+          {lang === "fa" ? <><Icon name="book" size={14} style={{ verticalAlign: "-2px" }} />{" لایسنس و فروش سازمانی این دانشگاه"}</> : <><Icon name="book" size={14} style={{ verticalAlign: "-2px" }} />{" Institutional licence & sale"}</>}
         </div>
         <div className="grid grid-3">
           <div className="field"><label>{lang === "fa" ? "پلن" : "Plan"}</label>
@@ -9502,7 +9502,7 @@ function UniversityModal({ uni, onClose, onSaved }) {
         </div>
 
         <div className="field">
-          <label>🎯 {lang === "fa" ? "فلش‌کارت بدون کسر نمره" : "No-penalty flashcards"}</label>
+          <label><Icon name="target" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? "فلش‌کارت بدون کسر نمره" : "No-penalty flashcards"}</label>
           <select value={f.flash_no_penalty} onChange={(e) => setF({ ...f, flash_no_penalty: e.target.value })}>
             <option value="inherit">{lang === "fa" ? "پیروی از پیش‌فرض سراسری" : "Follow global default"}</option>
             <option value="on">{lang === "fa" ? "فعال برای این دانشگاه" : "On for this university"}</option>
@@ -9560,7 +9560,7 @@ function SiteControl() {
       {/* Maintenance mode */}
       <div className="card mb16" style={m.on ? { borderColor: "var(--danger)" } : {}}>
         <label className="toggle-row" style={{ cursor: "pointer" }}>
-          <span style={{ fontWeight: 800 }}>🛠️ {t("maintenanceMode")}</span>
+          <span style={{ fontWeight: 800 }}> {t("maintenanceMode")}</span>
           <input type="checkbox" checked={!!m.on} onChange={(e) => setM({ ...m, on: e.target.checked })} style={{ width: 20, height: 20 }} />
         </label>
         <div className="small muted mb8">{t("maintenanceHint")}</div>
@@ -9578,13 +9578,13 @@ function SiteControl() {
       {/* Landing promo banner */}
       <div className="card mb16">
         <label className="toggle-row" style={{ cursor: "pointer" }}>
-          <span style={{ fontWeight: 800 }}>📣 {t("landingBanner")}</span>
+          <span style={{ fontWeight: 800 }}><Icon name="bell" size={14} style={{ verticalAlign: "-2px" }} /> {t("landingBanner")}</span>
           <input type="checkbox" checked={!!banner.on} onChange={(e) => setBanner({ ...banner, on: e.target.checked })} style={{ width: 20, height: 20 }} />
         </label>
         <div className="small muted mb8">{t("landingBannerHint")}</div>
         {(banner.text_fa || banner.text_en) && (
           <div className="lp-banner mb8" style={{ background: banner.bg || "#2f7fd1", borderRadius: 10 }}>
-            <span className="lp-banner-text">📣 {lang === "fa" ? banner.text_fa : banner.text_en}</span>
+            <span className="lp-banner-text"><Icon name="bell" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa" ? banner.text_fa : banner.text_en}</span>
             {(banner.cta_fa || banner.cta_en) && <span className="lp-banner-cta">{lang === "fa" ? banner.cta_fa : banner.cta_en} →</span>}
           </div>
         )}
@@ -9605,7 +9605,7 @@ function SiteControl() {
 
       {/* Learning programs (courses) on/off */}
       <div className="card mb16">
-        <div style={{ fontWeight: 800, marginBottom: 4 }}>📚 {t("programsControl")}</div>
+        <div style={{ fontWeight: 800, marginBottom: 4 }}><Icon name="book" size={14} style={{ verticalAlign: "-2px" }} /> {t("programsControl")}</div>
         <div className="small muted mb8">{t("programsControlHint")}</div>
         {programs.map((p) => (
           <label key={p.slug} className="toggle-row" style={{ cursor: "pointer" }}>
@@ -9618,7 +9618,7 @@ function SiteControl() {
       {/* Store on/off */}
       <div className="card">
         <label className="toggle-row" style={{ cursor: "pointer" }}>
-          <span style={{ fontWeight: 800 }}>🛍️ {t("storeToggle")}</span>
+          <span style={{ fontWeight: 800 }}> {t("storeToggle")}</span>
           <input type="checkbox" checked={storeOn} onChange={toggleStore} style={{ width: 20, height: 20 }} />
         </label>
         <div className="small muted">{t("storeToggleHint")}</div>
@@ -9732,7 +9732,7 @@ function ContentManagement() {
             <td>{c.id}</td>
             <td style={{ maxWidth: 280, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.q}</td>
             <td><span className="tag">{t("qt" + c.type.charAt(0).toUpperCase() + c.type.slice(1)) || c.type}</span></td>
-            <td>{c.hasMicro ? "✓" : "—"}</td>
+            <td>{c.hasMicro ? <Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> : "—"}</td>
             <td style={{ textAlign: "end", whiteSpace: "nowrap" }}>
               <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(c)}><Icon name="edit" size={13} /> {t("editMicro")}</button>
               <button type="button" className="btn btn-sm btn-ghost" onClick={() => toggleActive(c)}>{c.active ? <Icon name="lock" size={13} /> : <Icon name="check" size={13} />}</button>
@@ -9853,27 +9853,27 @@ function BackupCard() {
   };
   const snapshot = async () => {
     setBusy(true);
-    try { const r = await api.post("/admin/backup/create", {}); if (r.ok) { toast(fa ? "نسخهٔ پشتیبان ساخته شد ✅" : "Backup created ✅"); load(); } }
+    try { const r = await api.post("/admin/backup/create", {}); if (r.ok) { toast(fa ? "نسخهٔ پشتیبان ساخته شد" : "Backup created"); load(); } }
     catch { toast(fa ? "خطا" : "Failed"); } finally { setBusy(false); }
   };
 
   return (
     <div className="card mb16" style={{ borderInlineStart: "4px solid var(--ok, #22a06b)" }}>
       <div className="section-title" style={{ marginBottom: 8 }}>
-        <h4 style={{ border: "none", padding: 0 }}>🛟 {fa ? "پشتیبان‌گیری از داده‌ها" : "Data backup"}</h4>
+        <h4 style={{ border: "none", padding: 0 }}> {fa ? "پشتیبان‌گیری از داده‌ها" : "Data backup"}</h4>
       </div>
       <div className="small muted mb8">{fa
         ? "همهٔ داده‌های شما (پایگاه‌داده + فایل‌های آپلودی) در پوشهٔ مستقلِ «data» بیرون از کدِ سایت نگه‌داری می‌شود؛ پس هنگام ارتقای سایت، فقط کد را جایگزین کنید و پوشهٔ data را نگه دارید تا داده‌ها از دست نروند. پیش از هر ارتقا، یک نسخهٔ پشتیبان بگیرید."
         : "All your data (database + uploaded files) is stored in a separate 'data' folder OUTSIDE the app code. To upgrade, replace only the code and keep the data folder. Take a backup before any upgrade."}</div>
       {st && (
         <div className="small muted mb8" style={{ lineHeight: 1.9 }}>
-          📁 <b>{fa ? "پوشهٔ داده:" : "Data folder:"}</b> <code style={{ direction: "ltr", unicodeBidi: "embed" }}>{st.dataDir}</code><br />
-          🗄️ {fa ? "حجم پایگاه‌داده:" : "DB size:"} {kb(st.dbSize)} · 🖼️ {fa ? "فایل‌های آپلودی:" : "uploads:"} {st.uploadCount} · 💾 {fa ? "نسخه‌های پشتیبان:" : "snapshots:"} {st.backups?.length || 0}
+           <b>{fa ? "پوشهٔ داده:" : "Data folder:"}</b> <code style={{ direction: "ltr", unicodeBidi: "embed" }}>{st.dataDir}</code><br />
+           {fa ? "حجم پایگاه‌داده:" : "DB size:"} {kb(st.dbSize)} · <Icon name="image" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "فایل‌های آپلودی:" : "uploads:"} {st.uploadCount} ·  {fa ? "نسخه‌های پشتیبان:" : "snapshots:"} {st.backups?.length || 0}
         </div>
       )}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
         <button type="button" className="btn btn-primary btn-sm" onClick={downloadDb}><Icon name="download" size={15} /> {fa ? "دانلود نسخهٔ کامل پایگاه‌داده" : "Download full database"}</button>
-        <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={snapshot}>💾 {fa ? "ساخت نسخهٔ پشتیبان روی سرور" : "Create server snapshot"}</button>
+        <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={snapshot}> {fa ? "ساخت نسخهٔ پشتیبان روی سرور" : "Create server snapshot"}</button>
       </div>
     </div>
   );

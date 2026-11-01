@@ -184,7 +184,7 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
   if (err === "no hearts" || err === "HTTP 402") return <OutOfHearts onProfile={onProfile} onBack={onDone} />;
   if (err === "premium only" || err === "HTTP 403") return (
     <div className="card empty-state">
-      <div className="ico" style={{ fontSize: 48, lineHeight: 1 }}>👑</div>
+      <div className="ico" style={{ fontSize: 48, lineHeight: 1 }}><Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} /></div>
       <h3>{lang === "fa" ? "تمرین بیشتر ویژه اعضای پلاس است" : "Extra practice is for Plus members"}</h3>
       <div className="muted small mt8">{lang === "fa" ? "درس‌های اصلی هر فصل رایگان‌اند؛ با پلاس به سؤال‌های بیشترِ همین فصل، بانک سؤال و قلب نامحدود دسترسی دارید." : "Core lessons are free; Plus unlocks more questions per chapter, the question bank and unlimited hearts."}</div>
       <button type="button" className="btn btn-primary mt16" onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))}>{lang === "fa" ? "مشاهده پلاس" : "See Plus"}</button>
@@ -312,7 +312,7 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
         <div className="pbar" style={{ "--seg": cards.length }} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label={`${idx + 1} / ${cards.length}`}><span style={{ width: `${progress}%` }} /></div>
         {combo >= 2 && <span className="combo-chip" title={t("comboLabel")}><StreakIcon size={15} /> {combo}</span>}
         <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={toggleSound} title={soundOn ? t("soundOff") : t("soundOn")} aria-label={soundOn ? t("soundOff") : t("soundOn")}>
-          {soundOn ? "🔊" : "🔇"}
+          {soundOn ? <Icon name="volume" size={16} /> : <Icon name="volume" size={16} style={{ opacity: 0.4 }} />}
         </button>
         <button type="button"
           className="btn btn-ghost btn-sm icon-btn"
@@ -320,7 +320,7 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
           title={lang === "fa" ? "مقادیر نرمال آزمایشگاهی (کلید L)" : "Normal Lab Values (Key L)"}
           aria-label={lang === "fa" ? "مقادیر نرمال آزمایشگاهی" : "Normal Lab Values"}
         >
-          🧪
+          <Icon name="flask" size={14} style={{ verticalAlign: "-2px" }} />
         </button>
         <div className="stem-zoom-wrap" title={lang === "fa" ? "اندازه متن سناریو" : "Vignette text size"}>
           <button type="button" className="zoom-btn" onClick={() => adjustZoom(-0.08)} aria-label="A-">A-</button>
@@ -339,13 +339,13 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
 
       <div className="small muted" style={{ textAlign: "center", display: "flex", alignItems: "center", justifyContent: "center", gap: 10 }}>
         <span>{idx + 1} {t("of")} {cards.length} · <span className="type-tag">{typeLabel(card.type, lang)}</span>
-          {card.review && <span className="review-tag" title={t("reviewCardHint")}>🔄 {t("reviewCard")}</span>}
+          {card.review && <span className="review-tag" title={t("reviewCardHint")}><Icon name="refresh" size={14} style={{ verticalAlign: "-2px" }} /> {t("reviewCard")}</span>}
           {idx === 0 && <CalibrationChip calibration={data.calibration} />}</span>
         {flag("library") && <SaveCardButton cardId={card.id} />}
       </div>
       {(card.source || card.chapter) && (
         <div className="exam-source-row">
-          {card.source && <span className="exam-source-chip" title={card.source}>📄 {card.source}</span>}
+          {card.source && <span className="exam-source-chip" title={card.source}><Icon name="book" size={14} style={{ verticalAlign: "-2px" }} /> {card.source}</span>}
           {card.chapter && <span className="exam-chapter-chip">{card.chapter}</span>}
         </div>
       )}
@@ -373,7 +373,7 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
               {/* crowd difficulty: how many people got this right */}
               {card.crowd && card.crowd.seen >= 3 && (
                 <span className="crowd-inline" title={t("crowdInsightsHint")}>
-                  👥 {card.crowd.passRate}% {t("crowdPassRate")}
+                  <Icon name="users" size={14} style={{ verticalAlign: "-2px" }} /> {card.crowd.passRate}% {t("crowdPassRate")}
                 </span>
               )}
             </div>
@@ -381,11 +381,11 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
                 gently flag dangerous overconfidence (felt sure but was wrong). */}
             {confidence > 0 && (
               confidence === 3 && !wasCorrect
-                ? <div className="conf-note danger">⚠️ {t("confOverconfident")}</div>
+                ? <div className="conf-note danger"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /> {t("confOverconfident")}</div>
                 : confidence === 1 && wasCorrect
-                  ? <div className="conf-note good">💪 {t("confHumbleWin")}</div>
+                  ? <div className="conf-note good"><Icon name="strength" size={14} style={{ verticalAlign: "-2px" }} /> {t("confHumbleWin")}</div>
                   : confidence === 3 && wasCorrect
-                    ? <div className="conf-note good">🎯 {t("confJustified")}</div>
+                    ? <div className="conf-note good"><Icon name="target" size={14} style={{ verticalAlign: "-2px" }} /> {t("confJustified")}</div>
                     : null
             )}
             {/* corrective feedback: show the correct answer on a miss (research:
@@ -397,10 +397,10 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
                 so a lucky correct answer is still surfaced for review later */}
             <div className="study-signals">
               <button type="button" className={`sig-btn ${flagged ? "on" : ""}`} onClick={() => setSignal("flagged", !flagged)}
-                title={t("flagHint")}>🚩 {t("flagForReview")}</button>
+                title={t("flagHint")}> {t("flagForReview")}</button>
               {wasCorrect && (
                 <button type="button" className={`sig-btn ${guessed ? "on" : ""}`} onClick={() => setSignal("guessed", !guessed)}
-                  title={t("guessHint")}>🤔 {t("iGuessed")}</button>
+                  title={t("guessHint")}> {t("iGuessed")}</button>
               )}
             </div>
           </div>
@@ -430,13 +430,13 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
           {/* visual mnemonic (Sketchy-style) shown when the card carries one */}
           {card.mnemonic && (
             <div className="card mn-inline" style={{ marginTop: 10 }}>
-              <div className="mn-title">🧠 {card.mnemonic.title || t("mnemonics")}</div>
+              <div className="mn-title"><Icon name="brain" size={14} style={{ verticalAlign: "-2px" }} /> {card.mnemonic.title || t("mnemonics")}</div>
               {card.mnemonic.media
                 ? <MediaEmbed media={card.mnemonic.media} className="mn-media" />
                 : card.mnemonic.image ? <img className="mn-img" src={card.mnemonic.image} alt="" /> : null}
               {card.mnemonic.scene && <div className="mn-scene">{card.mnemonic.scene}</div>}
               {card.mnemonic.hooks?.length > 0 && (
-                <ul className="mn-hooks">{card.mnemonic.hooks.map((h, i) => <li key={i}><span className="mn-hook-dot">🔗</span> {h}</li>)}</ul>
+                <ul className="mn-hooks">{card.mnemonic.hooks.map((h, i) => <li key={i}><span className="mn-hook-dot"></span> {h}</li>)}</ul>
               )}
             </div>
           )}
@@ -452,7 +452,7 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
               if (buryBusy) return; setBuryBusy("suspend");
               try { await api.post("/learn/review/suspend", { cardId: card.id }); setBuryMsg(lang === "fa" ? "تعلیق شد — دیگر نمایش داده نمی‌شود" : "Suspended"); setTimeout(() => setBuryMsg(""), 2500); }
               catch (e) { setBuryMsg(e.message || "خطا"); } finally { setBuryBusy(null); }
-            }} title={lang === "fa" ? "تعلیق کامل" : "Suspend"}>🚫 {lang === "fa" ? "تعلیق" : "Suspend"}</button>}
+            }} title={lang === "fa" ? "تعلیق کامل" : "Suspend"}> {lang === "fa" ? "تعلیق" : "Suspend"}</button>}
             {buryMsg && <span className="small muted">{buryMsg}</span>}
             {features.bug_hunt !== false && <BugReportButton cardId={card.id} />}
           </div>
@@ -600,13 +600,13 @@ function LessonResourceBar({ card, premium, lang }) {
           <span>{fa ? "مشاهده در رفرنس" : "View in reference"}</span>
           {refLabel && <span className="small" style={{ fontSize:".68rem", opacity:.85, fontWeight:600 }}>{refLabel}</span>}
         </span>
-        <span className="lesson-res-badge unlimited" style={{ marginInlineStart:"auto" }}>{refCode ? (refPage ? `${fa?"ص":"p."} ${refPage} →` : `${fa?"رفرنس":"ref"} →`) : (fa ? "نامحدود" : "unlimited")} ✓</span>
+        <span className="lesson-res-badge unlimited" style={{ marginInlineStart:"auto" }}>{refCode ? (refPage ? `${fa?"ص":"p."} ${refPage} →` : `${fa?"رفرنس":"ref"} →`) : (fa ? "نامحدود" : "unlimited")} <Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /></span>
       </button>
       <button type="button" className={`lesson-res-btn lesson-res-map ${!premium && used >= limit ? "locked" : ""}`} onClick={() => openMindmap()} title={!premium && used >= limit ? (fa ? "سهم روزانه تمام شد — ارتقا به پلاس" : "Daily limit reached — upgrade") : (fa ? `نقشه ذهنی — ${remaining} باقی‌مانده امروز` : `Mindmap — ${remaining} left today`)}>
         <span className="lesson-res-ico" style={{ background: premium || used < limit ? "linear-gradient(135deg,#10b981,#06b6d4)" : "linear-gradient(135deg,#9ca3af,#6b7280)" }}><Icon name={(!premium && used >= limit) ? "lock" : "brain"} size={14} /></span>
         <span className="lesson-res-label">{fa ? "نقشه ذهنی" : "Mindmap"}</span>
         {premium ? (
-          <span className="lesson-res-badge unlimited">{fa ? "نامحدود" : "unlimited"} ✓</span>
+          <span className="lesson-res-badge unlimited">{fa ? "نامحدود" : "unlimited"} <Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /></span>
         ) : (
           <span className={`lesson-res-badge ${remaining <= 1 ? "danger" : remaining <= 3 ? "warn" : ""}`}>{remaining}/{limit} {fa ? "امروز" : "today"}</span>
         )}
@@ -652,7 +652,7 @@ function OutOfHearts({ onProfile, onBack }) {
       <div className="muted small mt8">{waitTxt}</div>
       <div style={{ display: "flex", gap: 10, justifyContent: "center", marginTop: 18, flexWrap: "wrap" }}>
         <button type="button" className="btn btn-accent" disabled={busy} onClick={refill}><GemIcon size={16} /> {t("refillHearts")} ({cost})</button>
-        <button type="button" className="btn btn-ghost" onClick={() => setShowAd(true)}>🎁 {t("rewardedWatch")}</button>
+        <button type="button" className="btn btn-ghost" onClick={() => setShowAd(true)}> {t("rewardedWatch")}</button>
         <button type="button" className="btn btn-ghost" onClick={onBack}>{t("back")}</button>
       </div>
       {showAd && <RewardedAd format="rewarded" onClose={() => setShowAd(false)} onReward={(p) => onProfile?.(p)} />}
@@ -691,7 +691,7 @@ function Celebrate({ result, betweenAd, onDone, onReplay, onContinueLesson }) {
       {/* Tier promotion — the biggest "level up" moment, shown first */}
       {tierUp && (
         <div className="tierup-celebrate card">
-          <div className="tierup-badge">🏆</div>
+          <div className="tierup-badge"><Icon name="trophy" size={14} style={{ verticalAlign: "-2px" }} /></div>
           <div className="tierup-title">{t("rankUp") || "ارتقای رتبه!"}</div>
           <div className="tierup-tiers">
             <span className="tierup-from">{tierLabel[tierUp.from]?.fa || tierUp.from}</span>
@@ -704,20 +704,20 @@ function Celebrate({ result, betweenAd, onDone, onReplay, onContinueLesson }) {
       {/* Streak update — built into the lesson flow (Duolingo-style) */}
       {s.incremented && (
         <div className="streak-celebrate card">
-          <div className={`streak-flame ${s.usedFreeze ? "frozen" : ""}`}>{s.usedFreeze ? "🧊" : <StreakIcon size={40} />}</div>
+          <div className={`streak-flame ${s.usedFreeze ? "frozen" : ""}`}>{s.usedFreeze ? "" : <StreakIcon size={40} />}</div>
           <div className="streak-count">{result.profile.streak}</div>
           <div className="small muted">{t("dayStreak")}</div>
-          {s.usedFreeze && <div className="small" style={{ color: "var(--sky)", marginTop: 4 }}>❄️ {t("freezeUsedNote")}</div>}
+          {s.usedFreeze && <div className="small" style={{ color: "var(--sky)", marginTop: 4 }}> {t("freezeUsedNote")}</div>}
           {milestone && (
             <div className="streak-society-chest">
-              <div className="ssc-emoji">🎁</div>
+              <div className="ssc-emoji"></div>
               <div style={{ fontWeight: 800 }}>{t("streakSociety")} · {milestone.days} {t("dayStreak")}</div>
               <div className="small">+{milestone.gems} <GemIcon size={13} /> · +{milestone.freezes} <Icon name="ampoule" size={13} /></div>
             </div>
           )}
           {result.premiumTrial && (
             <div className="streak-society-chest premium-trial-chest">
-              <div className="ssc-emoji">👑</div>
+              <div className="ssc-emoji"><Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} /></div>
               <div style={{ fontWeight: 800 }}>{lang === "fa" ? `${result.premiumTrial.days} روز پرمیوم هدیه!` : `${result.premiumTrial.days} free premium days!`}</div>
               <div className="small">{lang === "fa" ? `به‌خاطر استریک ${result.premiumTrial.milestone} روزه — همهٔ امکانات پرمیوم فعال شد.` : `For your ${result.premiumTrial.milestone}-day streak — every premium feature is on.`}</div>
             </div>
@@ -748,7 +748,7 @@ function Celebrate({ result, betweenAd, onDone, onReplay, onContinueLesson }) {
       <LessonInsights report={result.errorReport} srsAdded={result.srsAdded} confidence={result.confidence} newMastery={result.newMastery} />
       {!perfect && (
         <div className="card mt16" style={{ display: "flex", alignItems: "center", gap: 12, borderInlineStart: "4px solid var(--xp)" }}>
-          <span className="node-emoji">🎯</span>
+          <span className="node-emoji"><Icon name="target" size={14} style={{ verticalAlign: "-2px" }} /></span>
           <div style={{ flex: 1, minWidth: 0 }}><div style={{ fontWeight: 800 }}>{t("replayLesson")}</div></div>
           <button type="button" className="btn btn-accent btn-sm" onClick={onReplay}><Icon name="repeat" size={14} /> {t("tryAgain")}</button>
         </div>
@@ -775,7 +775,7 @@ function LessonSummaryBox({ summary, fa }) {
   if (!bullets.length && !loading) return null;
   return (
     <div className="chapter-summary card">
-      <div className="cs-title">📌 {fa ? "خلاصهٔ این درس" : "This lesson in brief"}</div>
+      <div className="cs-title"><Icon name="pin" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "خلاصهٔ این درس" : "This lesson in brief"}</div>
       <ul className="cs-list">
         {bullets.map((b, i) => <li key={i}><Emphasis text={b} /></li>)}
       </ul>

@@ -131,7 +131,7 @@ export default function MindmapBankAdmin() {
       const payload = { ...form, graph_json: JSON.parse(form.graph_json) };
       if (editing) await api.post(`/admin/mindmap-bank`, { ...payload, slug: editing });
       else await api.post("/admin/mindmap-bank", payload);
-      setMsg(isFa ? "ذخیره شد ✓" : "Saved ✓");
+      setMsg(isFa ? "ذخیره شد" : "Saved");
       setTimeout(() => setMsg(""), 2500);
       openEdit(null);
       load();
@@ -148,7 +148,7 @@ export default function MindmapBankAdmin() {
       const row = await api.get(`/admin/mindmap-bank/${slug}`);
       const g = typeof row.graph_json === "string" ? JSON.parse(row.graph_json) : row.graph_json;
       await api.post("/admin/mindmap-bank", { slug: newSlug.toLowerCase().replace(/[^a-z0-9-]/g, "-"), title_fa: row.title_fa + " — کپی", title_en: row.title_en + " (copy)", type: row.type, system: row.system, level: row.level, summary_fa: row.summary_fa, summary_en: row.summary_en, cover_url: row.cover_url, graph_json: g, is_premium: row.is_premium ? 1 : 0, status: row.status });
-      setMsg(isFa ? "کپی شد ✓" : "Duplicated ✓"); setTimeout(() => setMsg(""), 2000); load();
+      setMsg(isFa ? "کپی شد" : "Duplicated"); setTimeout(() => setMsg(""), 2000); load();
     } catch (e) { setMsg(String(e.message || e)); }
   };
   const seed = async () => {
@@ -197,7 +197,7 @@ export default function MindmapBankAdmin() {
         <div className="absolute -left-10 -bottom-10 h-40 w-40 rounded-full bg-white/10 blur-2xl" />
         <div className="relative flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-black">🧠 {isFa ? "بانک مایندمپ — ۳۴۹" : "MindMap Bank — 349"}</h1>
+            <h1 className="text-2xl font-black"><Icon name="brain" size={14} style={{ verticalAlign: "-2px" }} /> {isFa ? "بانک مایندمپ — ۳۴۹" : "MindMap Bank — 349"}</h1>
             <p className="mt-1 text-sm text-violet-100">{isFa ? "تمام دروس + دوزبانه + اتصال دوسویه به بانک سؤال" : "All subjects, bilingual, bidirectional Qbank links"} • {total} {isFa ? "نقشه" : "maps"}</p>
             <div className="mt-3 flex flex-wrap gap-2 text-xs">
               <span className="rounded-full bg-white/20 px-3 py-1 font-bold">Harrison 100</span>
@@ -222,9 +222,9 @@ export default function MindmapBankAdmin() {
           </select>
           <input value={form.title_fa} onChange={e => setForm({ ...form, title_fa: e.target.value })} placeholder="عنوان فارسی" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm" />
           <input value={form.title_en} onChange={e => setForm({ ...form, title_en: e.target.value })} placeholder="Title EN" className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm" />
-          <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className="rounded-xl border px-3 py-2.5 text-sm"><option value="mind">🧠 mind</option><option value="approach">🧭 approach</option></select>
+          <select value={form.type} onChange={e => setForm({ ...form, type: e.target.value })} className="rounded-xl border px-3 py-2.5 text-sm"><option value="mind"> mind</option><option value="approach"> approach</option></select>
           <select value={form.level} onChange={e => setForm({ ...form, level: e.target.value })} className="rounded-xl border px-3 py-2.5 text-sm"><option value="core">core</option><option value="high_yield">high_yield</option><option value="emergency">emergency</option></select>
-          <select value={form.is_premium ? 1 : 0} onChange={e => setForm({ ...form, is_premium: Number(e.target.value) })} className="rounded-xl border px-3 py-2.5 text-sm"><option value={1}>🔒 premium</option><option value={0}>✓ free</option></select>
+          <select value={form.is_premium ? 1 : 0} onChange={e => setForm({ ...form, is_premium: Number(e.target.value) })} className="rounded-xl border px-3 py-2.5 text-sm"><option value={1}> premium</option><option value={0}> free</option></select>
           <input value={form.cover_url} onChange={e => setForm({ ...form, cover_url: e.target.value })} placeholder="/covers/harrison.jpg" className="rounded-xl border px-3 py-2.5 text-sm" />
           <textarea value={form.summary_fa} onChange={e => setForm({ ...form, summary_fa: e.target.value })} placeholder="خلاصه فارسی — رفرنس اختصاصی (مثلاً Nelson 21e)" className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm" rows={2} />
           <textarea value={form.summary_en} onChange={e => setForm({ ...form, summary_en: e.target.value })} placeholder="Summary EN — per Nelson/Williams/Schwartz..." className="sm:col-span-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm" rows={2} />
@@ -239,13 +239,13 @@ export default function MindmapBankAdmin() {
         {/* Bidirectional linking panel */}
         {editing && (
           <div className="mt-6 rounded-2xl border-2 border-sky-200 bg-gradient-to-br from-sky-50 to-indigo-50 p-4">
-            <h4 className="flex items-center gap-2 text-sm font-black text-slate-900"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-600 text-white">🔗</span> {isFa ? "اتصال دوسویه به بانک سؤال" : "Bidirectional Qbank links"} <span className="ms-auto rounded-full bg-white px-3 py-1 text-xs border">{linking.linked.length} {isFa ? "سؤال" : "Qs"}</span></h4>
+            <h4 className="flex items-center gap-2 text-sm font-black text-slate-900"><span className="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-600 text-white"></span> {isFa ? "اتصال دوسویه به بانک سؤال" : "Bidirectional Qbank links"} <span className="ms-auto rounded-full bg-white px-3 py-1 text-xs border">{linking.linked.length} {isFa ? "سؤال" : "Qs"}</span></h4>
             <p className="mt-1 text-xs text-slate-600">{isFa ? "هر اتصال از اینجا، خودکار در ویرایشِ سؤال هم دیده می‌شود و برعکس (یک جدول). " : "Every link here instantly appears when editing that question, and vice versa (single table)."} <span className="font-bold text-sky-700">↔ دوسویه</span></p>
 
             <div className="mt-3 grid gap-2 sm:grid-cols-3">
               <div className="sm:col-span-2 flex gap-2">
                 <input value={linking.search} onChange={e => setLinking(l => ({ ...l, search: e.target.value }))} placeholder={isFa ? "جستجوی سؤال: مثلاً STEMI، پنومونی..." : "Search Q: STEMI, pneumonia..."} className="flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm" />
-                <button onClick={searchQuestions} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white">🔎</button>
+                <button onClick={searchQuestions} className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white"></button>
               </div>
               <select value={linking.node} onChange={e => setLinking(l => ({ ...l, node: e.target.value }))} className="rounded-xl border px-3 py-2.5 text-sm">
                 <option value="">{isFa ? "گره (اختیاری)" : "Node (optional)"}</option>
@@ -264,7 +264,7 @@ export default function MindmapBankAdmin() {
             )}
             <div className="mt-3 flex flex-wrap items-center gap-2">
               <input type="number" min={1} max={99} value={linking.weight} onChange={e => setLinking(l => ({ ...l, weight: e.target.value }))} className="w-20 rounded-xl border px-3 py-2 text-sm" placeholder="weight" />
-              <button disabled={!linking.selectedQ} onClick={doLink} className="rounded-full bg-sky-600 px-5 py-2 text-sm font-black text-white disabled:opacity-40 hover:bg-sky-700">🔗 {isFa ? "اتصال" : "Link"} {linking.selectedQ ? `#${linking.selectedQ}` : ""} ↔</button>
+              <button disabled={!linking.selectedQ} onClick={doLink} className="rounded-full bg-sky-600 px-5 py-2 text-sm font-black text-white disabled:opacity-40 hover:bg-sky-700"><Icon name="link" size={14} style={{ verticalAlign: "-2px" }} /> {isFa ? "اتصال" : "Link"} {linking.selectedQ ? `#${linking.selectedQ}` : ""} ↔</button>
               <span className="text-xs text-slate-500">{isFa ? "وزن کمتر = اول نمایش" : "Lower weight → higher rank"}</span>
             </div>
 
@@ -274,7 +274,7 @@ export default function MindmapBankAdmin() {
                   <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-900 text-xs font-black text-white">#{l.question_id}</span>
                   <span className="flex-1 text-sm line-clamp-2">{l.q || `Q#${l.question_id}`} {l.node_slug ? <span className="rounded-full bg-sky-100 px-2 py-0.5 text-xs text-sky-800">{l.node_slug}</span> : null}</span>
                   <span className="text-xs text-slate-500">w{l.weight}</span>
-                  <button onClick={() => doUnlink(l.question_id)} className="rounded-full bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100">✕ {isFa ? "قطع" : "Unlink"}</button>
+                  <button onClick={() => doUnlink(l.question_id)} className="rounded-full bg-rose-50 px-3 py-1.5 text-xs font-bold text-rose-700 hover:bg-rose-100"><Icon name="close" size={14} style={{ verticalAlign: "-2px" }} /> {isFa ? "قطع" : "Unlink"}</button>
                 </div>
               ))}
             </div>
@@ -286,7 +286,7 @@ export default function MindmapBankAdmin() {
       <div className="mt-6 rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-col gap-3">
           <div className="relative">
-            <span className="absolute inset-y-0 start-3 flex items-center text-slate-400">🔎</span>
+            <span className="absolute inset-y-0 start-3 flex items-center text-slate-400"></span>
             <input value={qInput} onChange={e => setQInput(e.target.value)} placeholder={isFa ? "جستجو: STEMI، نوزاد، جراحی..." : "Search: STEMI, neonate, surgery..."} className="h-11 w-full rounded-2xl border border-slate-200 bg-slate-50 ps-10 pe-10 text-sm focus:border-violet-500 focus:bg-white focus:outline-none" />
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -297,12 +297,12 @@ export default function MindmapBankAdmin() {
             })}
           </div>
           <div className="flex flex-wrap gap-1.5">
-            <button onClick={() => toggle(filterType, setFilterType, "mind")} className={`rounded-full border px-3 py-1 text-xs font-bold ${filterType.includes("mind") ? "bg-indigo-600 text-white" : "bg-white"}`}>🧠 mind</button>
-            <button onClick={() => toggle(filterType, setFilterType, "approach")} className={`rounded-full border px-3 py-1 text-xs font-bold ${filterType.includes("approach") ? "bg-amber-600 text-white" : "bg-white"}`}>🧭 approach</button>
+            <button onClick={() => toggle(filterType, setFilterType, "mind")} className={`rounded-full border px-3 py-1 text-xs font-bold ${filterType.includes("mind") ? "bg-indigo-600 text-white" : "bg-white"}`}><Icon name="brain" size={14} style={{ verticalAlign: "-2px" }} /> mind</button>
+            <button onClick={() => toggle(filterType, setFilterType, "approach")} className={`rounded-full border px-3 py-1 text-xs font-bold ${filterType.includes("approach") ? "bg-amber-600 text-white" : "bg-white"}`}><Icon name="compass" size={14} style={{ verticalAlign: "-2px" }} /> approach</button>
             <button onClick={() => toggle(filterLevel, setFilterLevel, "core")} className={`rounded-full border px-3 py-1 text-xs font-bold ${filterLevel.includes("core") ? "bg-sky-600 text-white" : "bg-white"}`}>core</button>
             <button onClick={() => toggle(filterLevel, setFilterLevel, "high_yield")} className={`rounded-full border px-3 py-1 text-xs font-bold ${filterLevel.includes("high_yield") ? "bg-amber-600 text-white" : "bg-white"}`}>high_yield</button>
-            <button onClick={() => toggle(filterPremium, setFilterPremium, "premium")} className={`rounded-full border px-3 py-1 text-xs font-bold ${filterPremium.includes("premium") ? "bg-slate-900 text-white" : "bg-white"}`}>🔒 premium</button>
-            <button onClick={() => toggle(filterPremium, setFilterPremium, "free")} className={`rounded-full border px-3 py-1 text-xs font-bold ${filterPremium.includes("free") ? "bg-emerald-600 text-white" : "bg-white"}`}>✓ free</button>
+            <button onClick={() => toggle(filterPremium, setFilterPremium, "premium")} className={`rounded-full border px-3 py-1 text-xs font-bold ${filterPremium.includes("premium") ? "bg-slate-900 text-white" : "bg-white"}`}><Icon name="lock" size={14} style={{ verticalAlign: "-2px" }} /> premium</button>
+            <button onClick={() => toggle(filterPremium, setFilterPremium, "free")} className={`rounded-full border px-3 py-1 text-xs font-bold ${filterPremium.includes("free") ? "bg-emerald-600 text-white" : "bg-white"}`}><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> free</button>
           </div>
           <div className="flex items-center justify-between text-xs">
             <span className="font-bold">{total} {isFa ? "نقشه" : "maps"} • {data?.previews ?? 0} {isFa ? "پیش‌نمایش" : "previews"}</span>
@@ -323,7 +323,7 @@ export default function MindmapBankAdmin() {
                 <div key={it.slug} className="group relative overflow-hidden rounded-[20px] border border-slate-200 bg-white p-4 shadow-sm hover:shadow-lg transition">
                   <div className="absolute inset-x-0 top-0 h-1" style={{ background: meta.color }} />
                   <div className="flex gap-3">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl text-white shadow" style={{ background: meta.color }}>{it.type === "approach" ? "🧭" : meta.icon}</div>
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-xl text-white shadow" style={{ background: meta.color }}>{it.type === "approach" ? <Icon name="compass" size={14} style={{ verticalAlign: "-2px" }} /> : meta.icon}</div>
                     <div className="min-w-0 flex-1">
                       <div className="line-clamp-2 text-sm font-black leading-tight">{isFa ? it.title_fa : it.title_en} <span className="font-normal text-slate-400">({it.slug})</span></div>
                       <div className="mt-1 line-clamp-2 text-xs text-slate-600">{isFa ? it.summary_fa : it.summary_en}</div>
@@ -331,14 +331,14 @@ export default function MindmapBankAdmin() {
                         <span className="rounded-full px-2 py-0.5 text-xs font-bold text-white" style={{ background: meta.color }}>{meta.id}</span>
                         <span className="rounded-full border bg-slate-50 px-2 py-0.5 text-xs">{it.level}</span>
                         <span className="rounded-full border bg-slate-50 px-2 py-0.5 text-xs">{it.nodes?.length || 0} nodes</span>
-                        {it.is_premium ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">🔒</span> : <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs">✓</span>}
+                        {it.is_premium ? <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800"><Icon name="lock" size={14} style={{ verticalAlign: "-2px" }} /></span> : <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs"><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /></span>}
                       </div>
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-1.5">
-                    <button onClick={() => openEdit(it.slug)} className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-bold text-white">✏️ {isFa ? "ویرایش + لینک" : "Edit + link"}</button>
-                    <button onClick={() => dup(it.slug)} className="rounded-full border bg-white px-3 py-1.5 text-xs">📋 {isFa ? "کپی" : "Duplicate"}</button>
-                    <button onClick={() => del(it.slug)} className="rounded-full bg-rose-600 px-3 py-1.5 text-xs font-bold text-white">🗑️</button>
+                    <button onClick={() => openEdit(it.slug)} className="rounded-full bg-slate-900 px-3 py-1.5 text-xs font-bold text-white"><Icon name="edit" size={14} style={{ verticalAlign: "-2px" }} /> {isFa ? "ویرایش + لینک" : "Edit + link"}</button>
+                    <button onClick={() => dup(it.slug)} className="rounded-full border bg-white px-3 py-1.5 text-xs"><Icon name="list" size={14} style={{ verticalAlign: "-2px" }} /> {isFa ? "کپی" : "Duplicate"}</button>
+                    <button onClick={() => del(it.slug)} className="rounded-full bg-rose-600 px-3 py-1.5 text-xs font-bold text-white"><Icon name="trash" size={14} style={{ verticalAlign: "-2px" }} /></button>
                   </div>
                 </div>
               );

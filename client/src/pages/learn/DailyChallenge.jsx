@@ -80,7 +80,7 @@ export default function DailyChallenge({ onProfile }) {
           <div className="dx-guesses">
             {d.guesses.map((g, i) => (
               <div key={i} className={`dx-guess ${g.correct ? "ok" : "no"}`}>
-                <span>{g.correct ? "🟩" : "🟥"}</span> {g.text}
+                <span aria-hidden="true" style={{ display: "inline-block", width: 12, height: 12, borderRadius: 3, marginInlineEnd: 4, background: g.correct ? "#16a34a" : "#dc2626" }} /> {g.text}
               </div>
             ))}
           </div>
@@ -127,7 +127,7 @@ export default function DailyChallenge({ onProfile }) {
             <div className="dx-tries small muted" style={{ marginTop: 10, display: "flex", flexWrap: "wrap", gap: 6 }}>
               {d.guesses.map((g, i) => (
                 <span key={i} className="tag" style={{ background: g.correct ? "rgba(34,160,107,.14)" : "rgba(224,84,79,.12)", color: g.correct ? "#178053" : "#c0392b" }}>
-                  {g.correct ? "✓" : "✕"} {g.text}
+                  {g.correct ? <Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> : <Icon name="close" size={14} style={{ verticalAlign: "-2px" }} />} {g.text}
                 </span>
               ))}
             </div>
@@ -138,16 +138,16 @@ export default function DailyChallenge({ onProfile }) {
           <div className="dx-result-head">
             {d.solved
               ? (d.guesses.length === 1
-                  ? <><Icon name="circleCheck" size={22} /> {fa ? "عالی! همان حدس اول زدی 🎯" : "Brilliant! Nailed it first try 🎯"}</>
+                  ? <><Icon name="circleCheck" size={22} /> {fa ? "عالی! همان حدس اول زدی" : "Brilliant! Nailed it first try"}</>
                   : d.guesses.length <= 2
                     ? <><Icon name="circleCheck" size={22} /> {fa ? `آفرین! فقط با ${d.guesses.length} حدس` : `Great! In just ${d.guesses.length} guesses`}</>
                     : <><Icon name="circleCheck" size={22} /> {fa ? `تشخیص دادی — در ${d.guesses.length} حدس` : `Solved — in ${d.guesses.length} guesses`}</>)
-              : <><Icon name="close" size={22} /> {fa ? "این بار نشد — ولی خوب تلاش کردی 💪" : "Not this time — but nice effort 💪"}</>}
+              : <><Icon name="close" size={22} /> {fa ? "این بار نشد — ولی خوب تلاش کردی" : "Not this time — but nice effort"}</>}
           </div>
           {d.awards && (
             <div className="dx-awards">
               +{d.awards.xp} XP{d.awards.gems ? <> · +{d.awards.gems} <GemIcon size={13} /></> : ""}
-              {d.awards.firstTry ? ` · ${fa ? "حدس اول! 🎯" : "First try! 🎯"}` : ""}
+              {d.awards.firstTry ? ` · ${fa ? "حدس اول!" : "First try!"}` : ""}
               {d.awards.effort ? ` · ${fa ? "پاداش تلاش" : "effort reward"}` : ""}
             </div>
           )}
@@ -159,9 +159,9 @@ export default function DailyChallenge({ onProfile }) {
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => { copyShare(d, shareGrid, fa); share("copy"); }}>
                 <Icon name="download" size={14} /> {fa ? "کپی نتیجه" : "Copy result"}
               </button>
-              <button type="button" className="dx-sh tg" title="Telegram" onClick={() => { openShare("telegram", shareTextOf(d, shareGrid, fa)); share("telegram"); }}>✈️</button>
-              <button type="button" className="dx-sh wa" title="WhatsApp" onClick={() => { openShare("whatsapp", shareTextOf(d, shareGrid, fa)); share("whatsapp"); }}>🟢</button>
-              <button type="button" className="dx-sh ig" title="Instagram" onClick={() => { copyShare(d, shareGrid, fa); share("instagram"); }}>📸</button>
+              <button type="button" className="dx-sh tg" title="Telegram" onClick={() => { openShare("telegram", shareTextOf(d, shareGrid, fa)); share("telegram"); }}></button>
+              <button type="button" className="dx-sh wa" title="WhatsApp" onClick={() => { openShare("whatsapp", shareTextOf(d, shareGrid, fa)); share("whatsapp"); }}><span style={{ color: "#16a34a" }}>●</span></button>
+              <button type="button" className="dx-sh ig" title="Instagram" onClick={() => { copyShare(d, shareGrid, fa); share("instagram"); }}></button>
             </div>
           </div>
         </div>

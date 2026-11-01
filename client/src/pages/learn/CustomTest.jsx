@@ -80,7 +80,7 @@ export default function CustomTest({ onProfile, onBack, resumeId = null, onPremi
 
   if (gate) return (
     <div className="page"><div className="card empty-state">
-      <div className="ico" style={{ fontSize: 48 }}>👑</div>
+      <div className="ico" style={{ fontSize: 48 }}><Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} /></div>
       <h3>{fa ? "آزمون‌ساز ویژه اعضای پلاس است" : "The test builder is a Plus feature"}</h3>
       <div className="muted small mt8">{fa ? "با پلاس از کل بانک ۱۱٬۶۰۰ سؤالی، آزمون دلخواه خودت را بساز: مثلاً ۲۰ سؤال تصادفی گوارش یا ۳۰ سؤال دیابت." : "Plus lets you build any test from the 11,600-question bank."}</div>
       <button type="button" className="btn btn-primary mt16" onClick={() => window.dispatchEvent(new CustomEvent("medlab-go", { detail: "premium" }))}>{fa ? "مشاهده پلاس" : "See Plus"}</button>
@@ -101,7 +101,7 @@ export default function CustomTest({ onProfile, onBack, resumeId = null, onPremi
 
   return (
     <div className="page ct-page">
-      <div className="section-title"><h2><Icon name="exam" size={22} /> {fa ? "آزمون‌ساز" : "Create test"} <span className="ct-crown">👑</span></h2></div>
+      <div className="section-title"><h2><Icon name="exam" size={22} /> {fa ? "آزمون‌ساز" : "Create test"} <span className="ct-crown"><Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} /></span></h2></div>
       <div className="muted small mb16">{fa ? "خودت انتخاب کن: کدام مبحث، چند سؤال، به چه شکل. مثلاً «۲۰ سؤال تصادفی گوارش» یا «۳۰ سؤال دیابت»." : "You choose: which topics, how many, and how. e.g. “20 random GI questions”."}</div>
 
       {/* 1) WHAT */}
@@ -194,7 +194,7 @@ export default function CustomTest({ onProfile, onBack, resumeId = null, onPremi
         <div className="ct-step-head"><span className="ct-num">۳</span><b>{fa ? "به چه شکل؟" : "How?"}</b></div>
         <div className="ct-modes">
           <button type="button" className={`ct-mode ${cfg.mode === "tutor" ? "on" : ""}`} onClick={() => setCfg((c) => ({ ...c, mode: "tutor" }))} aria-pressed={cfg.mode === "tutor"}>
-            <div className="ct-mode-ico">🎓</div>
+            <div className="ct-mode-ico"><Icon name="cap" size={14} style={{ verticalAlign: "-2px" }} /></div>
             <div><b>{fa ? "آموزشی" : "Tutor"}</b><div className="small muted">{fa ? "بعد از هر سؤال، پاسخ و پاسخنامه را ببین. بدون زمان." : "Answer + explanation after each question. Untimed."}</div></div>
           </button>
           <button type="button" className={`ct-mode ${cfg.mode === "timed" ? "on" : ""}`} onClick={() => setCfg((c) => ({ ...c, mode: "timed" }))} aria-pressed={cfg.mode === "timed"}>
@@ -228,7 +228,7 @@ export default function CustomTest({ onProfile, onBack, resumeId = null, onPremi
           {history.map((h) => (
             <div key={h.id} className="ct-hist">
               <div>
-                <div className="small"><b>{h.n}</b> {fa ? "سؤال" : "Q"} · {h.mode === "timed" ? "⏱️" : "🎓"} {(h.scope?.pathChapter?.length ? h.scope.pathChapter : h.scope?.topic || []).join("، ") || (fa ? "همهٔ درس‌ها" : "all")}</div>
+                <div className="small"><b>{h.n}</b> {fa ? "سؤال" : "Q"} · {h.mode === "timed" ? "⏱️" : <Icon name="cap" size={14} style={{ verticalAlign: "-2px" }} />} {(h.scope?.pathChapter?.length ? h.scope.pathChapter : h.scope?.topic || []).join("، ") || (fa ? "همهٔ درس‌ها" : "all")}</div>
                 <div className="small muted">{(h.finishedAt || h.startedAt || "").slice(0, 10)}</div>
               </div>
               {h.status === "finished"
@@ -386,9 +386,9 @@ function Runner({ test, setTest, onFinish, onQuit }) {
           title={fa ? "مقادیر نرمال آزمایشگاهی" : "Normal Lab Values"}
           aria-label={fa ? "مقادیر نرمال آزمایشگاهی" : "Normal Lab Values"}
         >
-          🧪
+          <Icon name="flask" size={14} style={{ verticalAlign: "-2px" }} />
         </button>
-        {timed ? <span className={`tag ${remaining < 60 ? "danger-tag" : ""}`} style={{ fontVariantNumeric: "tabular-nums" }}><Icon name="clock" size={13} /> {mmss(remaining)}</span> : <span className="tag">🎓</span>}
+        {timed ? <span className={`tag ${remaining < 60 ? "danger-tag" : ""}`} style={{ fontVariantNumeric: "tabular-nums" }}><Icon name="clock" size={13} /> {mmss(remaining)}</span> : <span className="tag"><Icon name="cap" size={14} style={{ verticalAlign: "-2px" }} /></span>}
         <span className="tag">{idx + 1}/{cards.length}</span>
       </div>
 
@@ -408,7 +408,7 @@ function Runner({ test, setTest, onFinish, onQuit }) {
           const fc = feedback?.card || card; const ok = feedback ? feedback.correct : prev.correct;
           return (
             <div className={`ct-feedback ${ok ? "ok" : "bad"}`}>
-              <b>{ok ? (fa ? "درست ✅" : "Correct ✅") : (fa ? "نادرست ❌" : "Incorrect ❌")}</b>
+              <b>{ok ? (fa ? "درست" : "Correct") : (fa ? "نادرست" : "Incorrect")}</b>
               {fc.optionStats && <OptionStatsBars card={fc} sel={feedback ? sel : prev?.sel} />}
               {fc.explain?.text && <div className="mt8 small">{fc.explain.text}</div>}
               {fc.attending && <div className="attending-tip mt8"><div className="at-text">{fc.attending}</div></div>}
@@ -419,7 +419,7 @@ function Runner({ test, setTest, onFinish, onQuit }) {
       </div>
 
       <div className="lesson-actions" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <button type="button" className={`btn btn-ghost btn-sm ${flag ? "ct-flag-on" : ""}`} onClick={() => setFlag((f) => !f)} aria-pressed={flag} title={fa ? "نشان‌کردن برای مرور" : "Mark for review"}>🚩</button>
+        <button type="button" className={`btn btn-ghost btn-sm ${flag ? "ct-flag-on" : ""}`} onClick={() => setFlag((f) => !f)} aria-pressed={flag} title={fa ? "نشان‌کردن برای مرور" : "Mark for review"}><Icon name="flag" size={15} /></button>
         <button type="button" className="btn btn-ghost" disabled={idx === 0} onClick={() => setIdx(idx - 1)}><Icon name="chevronRight" size={15} /></button>
         {!prev && !checked
           ? <button type="button" className="btn btn-primary" style={{ flex: 1 }} disabled={!canCheck || busy} onClick={submit}>{timed ? (fa ? "ثبت و بعدی" : "Save & next") : t("check")}</button>
@@ -450,7 +450,7 @@ function Result({ test, onAgain, onBack, onPremium }) {
   return (
     <div className="page">
       <div className="card empty-state">
-        <div className="ico" style={{ fontSize: "3rem" }}>{pct >= 60 ? "🎯" : "📚"}</div>
+        <div className="ico" style={{ fontSize: "3rem" }}>{pct >= 60 ? <Icon name="target" size={14} style={{ verticalAlign: "-2px" }} /> : <Icon name="book" size={14} style={{ verticalAlign: "-2px" }} />}</div>
         <h2 style={{ margin: "6px 0" }}>{fa ? "نتیجهٔ آزمون" : "Test result"}</h2>
         <div className="prob-ring" style={{ margin: "12px auto", "--p": pct, "--c": pct >= 60 ? "var(--accent2)" : "var(--danger)" }}>
           <div className="prob-inner"><b style={{ fontSize: "1.7rem" }}>{pct}%</b><div className="small muted">{correct}/{total}</div></div>
@@ -478,7 +478,7 @@ function Result({ test, onAgain, onBack, onPremium }) {
               <button type="button" className="ct-rev-head" onClick={() => setOpen(open === c.id ? null : c.id)} aria-expanded={open === c.id}>
                 <span className="ct-rev-n">{i + 1}</span>
                 <span className="ct-rev-q">{c.q}</span>
-                <span className="ct-rev-mark">{a ? (a.correct ? "✅" : "❌") : "—"}</span>
+                <span className="ct-rev-mark">{a ? (a.correct ? <Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> : <Icon name="close" size={14} style={{ verticalAlign: "-2px" }} />) : "—"}</span>
               </button>
               {open === c.id && (
                 <div className="ct-rev-body">

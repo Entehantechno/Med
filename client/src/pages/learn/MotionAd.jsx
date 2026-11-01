@@ -1,5 +1,6 @@
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
+import Icon from "../../components/Icon.jsx";
 
 /* ──────────────────────────────────────────────────────────
    MOTION AD — bilingual high-end motion-graphic ad card
@@ -164,10 +165,10 @@ export function MotionAd({ ad, variant = "path", onCta }) {
   return (
     <div className={`motion-ad${themeCls}${sizeCls}`} role="group" aria-label={title} dir={fa ? "rtl" : "ltr"}>
       {formatBadge && variant !== "intro" && (
-        <span className="motion-ad__format-badge" aria-hidden="true">{formatBadge}{format === "rewarded" && rewardGems ? ` · +${rewardGems} 💎` : ""}{format === "interstitial" ? ` ${skippable}s` : ""}</span>
+        <span className="motion-ad__format-badge" aria-hidden="true">{formatBadge}{format === "rewarded" && rewardGems ? ` · +${rewardGems}` : ""}{format === "interstitial" ? ` ${skippable}s` : ""}</span>
       )}
       {(format === "rewarded" || format === "prelesson") && variant === "intro" && rewardGems > 0 && (
-        <span className="motion-ad__format-badge motion-ad__format-badge--reward" aria-hidden="true">🎁 +{rewardGems} {fa ? "جم جایزه" : "gems"}{duration ? ` · ${duration}s` : ""}</span>
+        <span className="motion-ad__format-badge motion-ad__format-badge--reward" aria-hidden="true"><Icon name="gift" size={13} style={{ verticalAlign: "-2px" }} /> +{rewardGems} {fa ? "جم جایزه" : "gems"}{duration ? ` · ${duration}s` : ""}</span>
       )}
       {format === "interstitial" && variant === "intro" && (
         <span className="motion-ad__format-badge" aria-hidden="true">{fa ? `قابل رد شدن بعد ${skippable} ثانیه` : `Skippable after ${skippable}s`}</span>
@@ -184,7 +185,7 @@ export function MotionAd({ ad, variant = "path", onCta }) {
       {/* subtle floating contextual badges for premium feel */}
       {variant === "path" && !customBg && (
         <div className="motion-ad__float-badges" aria-hidden="true">
-          <span className="motion-ad__float-badge motion-ad__float-badge--a">✦ FSRS</span>
+          <span className="motion-ad__float-badge motion-ad__float-badge--a"> FSRS</span>
         </div>
       )}
 
@@ -221,7 +222,7 @@ export function MotionAd({ ad, variant = "path", onCta }) {
               <span key={i} className="motion-ad__pill">{p}</span>
             ))}
             {format === "rewarded" && rewardGems > 0 && (
-              <span className="motion-ad__pill motion-ad__pill--reward">💎 {fa ? `${rewardGems} جم` : `${rewardGems} gems`}</span>
+              <span className="motion-ad__pill motion-ad__pill--reward"> {fa ? `${rewardGems} جم` : `${rewardGems} gems`}</span>
             )}
           </div>
 

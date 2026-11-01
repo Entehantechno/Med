@@ -57,7 +57,7 @@ export default function InviteFriends({ onProfile }) {
 
       {/* hero: double-sided reward pitch */}
       <div className="card invite-hero">
-        <div className="invite-hero-emoji">🎁</div>
+        <div className="invite-hero-emoji"></div>
         <div className="invite-hero-text">
           <div className="invite-hero-head">{t("inviteHeadline")}</div>
           <div className="invite-hero-sub">
@@ -82,7 +82,7 @@ export default function InviteFriends({ onProfile }) {
 
       {/* one-click social share (emoji buttons) */}
       <div className="card">
-        <div style={{ fontWeight: 800, marginBottom: 10 }}>📣 {t("inviteShareVia")}</div>
+        <div style={{ fontWeight: 800, marginBottom: 10 }}><Icon name="bell" size={14} style={{ verticalAlign: "-2px" }} /> {t("inviteShareVia")}</div>
         <div className="invite-share-grid">
           {channels.map((c) => (
             <button type="button" key={c.id} className="invite-share-btn" onClick={() => onChannel(c)}>
@@ -96,7 +96,7 @@ export default function InviteFriends({ onProfile }) {
 
       {/* Instagram story card (download + copy caption) */}
       <div className="card">
-        <div style={{ fontWeight: 800, marginBottom: 10 }}>📸 {t("inviteStoryCard")}</div>
+        <div style={{ fontWeight: 800, marginBottom: 10 }}> {t("inviteStoryCard")}</div>
         <div className="small muted mb8">{fa ? "این کارت را ذخیره کن و در استوری اینستاگرامت بگذار تا دوستانت با کد تو ثبت‌نام کنند." : "Save this card and post it to your Instagram story so friends sign up with your code."}</div>
         <StoryCard code={d.code} brand={brand} site={site} fa={fa} onShared={() => track("instagram")} />
       </div>
@@ -104,13 +104,13 @@ export default function InviteFriends({ onProfile }) {
       {/* milestones */}
       {d.milestones?.length > 0 && (
         <div className="card">
-          <div style={{ fontWeight: 800, marginBottom: 10 }}>🏆 {t("inviteMilestones")}</div>
+          <div style={{ fontWeight: 800, marginBottom: 10 }}><Icon name="trophy" size={14} style={{ verticalAlign: "-2px" }} /> {t("inviteMilestones")}</div>
           <div className="invite-milestones">
             {d.milestones.map((m) => (
               <div key={m.count} className={`invite-ms ${m.reached ? "reached" : ""}`}>
                 <div className="ims-count">{fa ? `${m.label}` : m.label}</div>
-                <div className="ims-reward">🎁 {m.gems} <GemIcon size={13} />{m.premium_days ? ` + ${m.premium_days}${fa ? " روز پریمیوم" : "d premium"}` : ""}</div>
-                {m.reached && <div className="ims-check">✓</div>}
+                <div className="ims-reward"><Icon name="gift" size={13} style={{ verticalAlign: "-2px" }} /> {m.gems} <GemIcon size={13} />{m.premium_days ? ` + ${m.premium_days}${fa ? " روز پریمیوم" : "d premium"}` : ""}</div>
+                {m.reached && <div className="ims-check"><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /></div>}
               </div>
             ))}
           </div>
@@ -120,12 +120,12 @@ export default function InviteFriends({ onProfile }) {
       {/* referrer leaderboard */}
       {leaders.length > 0 && (
         <div className="card">
-          <div style={{ fontWeight: 800, marginBottom: 10 }}>👑 {t("inviteTopReferrers")}</div>
+          <div style={{ fontWeight: 800, marginBottom: 10 }}><Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} /> {t("inviteTopReferrers")}</div>
           {leaders.slice(0, 10).map((l) => (
             <div key={l.rank} className="invite-lb-row">
-              <span className="ilb-rank">{l.rank === 1 ? "🥇" : l.rank === 2 ? "🥈" : l.rank === 3 ? "🥉" : l.rank}</span>
+              <span className="ilb-rank">{l.rank === 1 ? <Icon name="medal" size={14} style={{ verticalAlign: "-2px" }} /> : l.rank === 2 ? <Icon name="medal" size={14} style={{ verticalAlign: "-2px" }} /> : l.rank === 3 ? <Icon name="medal" size={14} style={{ verticalAlign: "-2px" }} /> : l.rank}</span>
               <span className="ilb-name">{l.name}{l.province ? ` · ${l.province}` : ""}</span>
-              <span className="ilb-count">{l.count} 🎓</span>
+              <span className="ilb-count">{l.count} <Icon name="cap" size={14} style={{ verticalAlign: "-2px" }} /></span>
             </div>
           ))}
         </div>

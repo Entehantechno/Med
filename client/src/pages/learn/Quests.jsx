@@ -81,12 +81,12 @@ export default function Quests({ onProfile }) {
       {/* Streak Revival — free comeback for a lost streak (shown only when eligible) */}
       {flag("streak_revival") && revival?.eligible && (
         <div className="card mb16 revival-card">
-          <div className="section-title"><h4>💫 {t("revivalTitle")}</h4></div>
+          <div className="section-title"><h4> {t("revivalTitle")}</h4></div>
           <p className="small muted">{t("revivalHint").replace("{n}", revival.lostStreak)}</p>
           <div className="pbar sm mb8"><span style={{ width: `${Math.round((revival.lessonsDone / revival.lessonsRequired) * 100)}%` }} /></div>
           <div className="small muted mb8">{revival.lessonsDone}/{revival.lessonsRequired} {t("lessonsDone")}</div>
           {revival.ready
-            ? <button type="button" className="btn btn-accent btn-block" disabled={busy === "revival"} onClick={claimRevival}>💫 {t("revivalClaim")}</button>
+            ? <button type="button" className="btn btn-accent btn-block" disabled={busy === "revival"} onClick={claimRevival}> {t("revivalClaim")}</button>
             : <span className="tag">{t("revivalDoLessons")}</span>}
         </div>
       )}
@@ -123,7 +123,7 @@ export default function Quests({ onProfile }) {
                 <div className="pbar sm"><span style={{ width: `${pct}%` }} /></div>
               </div>
               <div className="quest-reward">
-                {q.claimed ? <span className="tag done">✓</span>
+                {q.claimed ? <span className="tag done"><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /></span>
                   : q.done ? <button type="button" className="btn btn-accent btn-sm" disabled={busy === "q" + q.id} onClick={() => claim(q.id)}>
                       <GemIcon size={14} /> +{q.reward_gems}</button>
                   : <span className="tag"><GemIcon size={14} /> {q.reward_gems}</span>}
@@ -141,10 +141,10 @@ export default function Quests({ onProfile }) {
           <div className="small muted mb8">{t("monthlyHint").replace("{n}", monthly.goal)}</div>
           <div className="pbar mb8"><span style={{ width: `${Math.min(100, Math.round((monthly.progress / monthly.goal) * 100))}%` }} /></div>
           {monthly.claimed
-            ? <span className="tag done">✓ {t("claimed")}</span>
+            ? <span className="tag done"><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> {t("claimed")}</span>
             : monthly.complete
-              ? <button type="button" className="btn btn-accent btn-block" disabled={busy === "monthly"} onClick={claimMonthly}>🏅 {t("claimBadge")} · <GemIcon size={14} /> +{monthly.reward_gems}</button>
-              : <span className="tag">🏅 {t("monthlyReward")}: <GemIcon size={14} /> +{monthly.reward_gems}</span>}
+              ? <button type="button" className="btn btn-accent btn-block" disabled={busy === "monthly"} onClick={claimMonthly}> {t("claimBadge")} · <GemIcon size={14} /> +{monthly.reward_gems}</button>
+              : <span className="tag"> {t("monthlyReward")}: <GemIcon size={14} /> +{monthly.reward_gems}</span>}
           {badges.length > 0 && (
             <div className="badge-shelf mt16">
               <div className="small muted mb8">{t("myBadges")}</div>
@@ -164,7 +164,7 @@ export default function Quests({ onProfile }) {
       {/* Streak Wager — stake gems, commit to N days, double back */}
       {flag("streak_wager") && wager?.enabled && (
         <div className="card mb16 wager-card">
-          <div className="section-title"><h4>🎲 {t("streakWager")}</h4></div>
+          <div className="section-title"><h4><Icon name="dice" size={14} style={{ verticalAlign: "-2px" }} /> {t("streakWager")}</h4></div>
           {wager.active ? (
             <>
               <div className="small muted mb8">{t("wagerActive").replace("{n}", wager.target_days)}</div>
@@ -175,7 +175,7 @@ export default function Quests({ onProfile }) {
             <>
               <div className="small muted mb8">{t("wagerHint").replace("{d}", wager.target_days).replace("{s}", wager.stake).replace("{r}", wager.reward)}</div>
               <button type="button" className="btn btn-primary btn-block" disabled={busy === "wager"} onClick={placeWager}>
-                🎲 {t("placeWager")} · <GemIcon size={14} /> {wager.stake}
+                <Icon name="dice" size={14} style={{ verticalAlign: "-2px" }} /> {t("placeWager")} · <GemIcon size={14} /> {wager.stake}
               </button>
             </>
           )}
@@ -189,7 +189,7 @@ export default function Quests({ onProfile }) {
         <div className="chests">
           {chests.map((c) => (
             <div key={c.slug} className={`chest ${c.opened ? "opened" : c.available ? "ready" : "locked"}`}>
-              <div className="chest-ico">{c.opened ? "✅" : c.available ? "🎁" : "🔒"}</div>
+              <div className="chest-ico">{c.opened ? <Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> : c.available ? <Icon name="gift" size={14} style={{ verticalAlign: "-2px" }} /> : <Icon name="lock" size={14} style={{ verticalAlign: "-2px" }} />}</div>
               <div style={{ fontWeight: 700 }}>{c.name}</div>
               <div className="small muted">{c.from}:00–{c.to}:00</div>
               {c.opened ? <span className="tag done">{t("opened")}</span>
@@ -218,7 +218,7 @@ export default function Quests({ onProfile }) {
             ))}
           </div>
           {shop.xp_boost_until && new Date(shop.xp_boost_until) > new Date() &&
-            <div className="micro-box small mt8" style={{ padding: "10px 14px" }}>⚡ {t("xpBoostActive")}</div>}
+            <div className="micro-box small mt8" style={{ padding: "10px 14px" }}><Icon name="bolt" size={14} style={{ verticalAlign: "-2px" }} /> {t("xpBoostActive")}</div>}
         </div>
       )}
 
@@ -252,14 +252,14 @@ export default function Quests({ onProfile }) {
               const isNext = !reached && streak.status.nextMilestone === m.days;
               return (
                 <div key={m.days} className={`society-tier ${reached ? "reached" : ""} ${isNext ? "next" : ""}`}>
-                  <div className="st-days">{reached ? "✅" : isNext ? "🎁" : "🔒"} {m.days}</div>
+                  <div className="st-days">{reached ? <Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> : isNext ? <Icon name="gift" size={14} style={{ verticalAlign: "-2px" }} /> : <Icon name="lock" size={14} style={{ verticalAlign: "-2px" }} />} {m.days}</div>
                   <div className="small muted">+{m.gems} <GemIcon size={12} /> +{m.freezes} <Icon name="ampoule" size={12} /></div>
                 </div>
               );
             })}
           </div>
           {streak.status.nextMilestone && (
-            <div className="small muted mt8">🎯 {streak.status.toNext} {t("daysToMilestone")}</div>
+            <div className="small muted mt8"><Icon name="target" size={14} style={{ verticalAlign: "-2px" }} /> {streak.status.toNext} {t("daysToMilestone")}</div>
           )}
         </div>
       )}
@@ -284,7 +284,7 @@ function StreakGrid({ days }) {
   }
   return (
     <div className="streak-grid">
-      {cells.map((c) => <div key={c.key} className={`sc ${c.active ? (c.frozen ? "frozen" : "on") : ""}`} title={c.frozen ? c.key + " ❄️" : c.key}>{c.frozen ? "❄️" : ""}</div>)}
+      {cells.map((c) => <div key={c.key} className={`sc ${c.active ? (c.frozen ? "frozen" : "on") : ""}`} title={c.frozen ? c.key + " ❄️" : c.key}>{c.frozen ? "❄" : ""}</div>)}
     </div>
   );
 }

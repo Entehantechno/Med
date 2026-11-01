@@ -2,6 +2,7 @@ import { sanitizeHtml } from "../../lib/safe-html.js";
 import { useApp } from "../../context.jsx";
 import { useEffect, useState } from "react";
 import { api } from "../../api.js";
+import Icon from "../../components/Icon.jsx";
 
 /* ──────────────────────────────────────────────────────────────
    PREMIUM BANNERS — bilingual high-end motion upsell
@@ -162,7 +163,7 @@ export function PremiumBanner({ variant = "inline", onGhost, priceNote, offNote 
       <div className="premium-banner__shine" aria-hidden="true" />
 
       <div className="premium-banner__inner">
-        <div className="premium-banner__icon" aria-hidden="true">👑</div>
+        <div className="premium-banner__icon" aria-hidden="true"><Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} /></div>
 
         <div className="premium-banner__text">
           <span className="premium-banner__kicker">{c.kicker}</span>
@@ -186,7 +187,7 @@ export function PremiumBanner({ variant = "inline", onGhost, priceNote, offNote 
 
         <div className="premium-banner__actions">
           <button type="button" className="premium-banner__cta" onClick={goPremium}>
-            {c.cta} <span aria-hidden="true">✦</span>
+            {c.cta} <span aria-hidden="true"></span>
           </button>
           {c.ghost && (
             <button type="button" className="premium-banner__ghost" onClick={onGhost || (() => {})}>
