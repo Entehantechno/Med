@@ -153,7 +153,7 @@ export default function Admin({ home }) {
   ];
   const competitiveSections = [
     { title: t("navGroupPeople"), items: [["learnerMgmt", "users", "learn.users"], ["placementReport", "compass", "learn.view"], ["certificatesAdmin", "medal", "learn.users"], ["premiumAccounts", "crown", "learn.users"]] },
-    { title: t("navGroupContent"), items: [["learnCards", "flask", "learn.content"], ["competitiveReferences", "book", "learn.content"], ["contentStats", "chart", "learn.content"], ["mediaLibrary", "image", "learn.content"], ["pathManager", "book", "learn.content"], ["mindmapBank", "book", "learn.content"], ["mascotsAdmin", "star", "learn.content"], ["dxAdmin", "target", "learn.content"], ["blogAdmin", "book", "learn.content"], ["communityMod", "users", "learn.content"]] },
+    { title: t("navGroupContent"), items: [["learnCards", "flask", "learn.content"], ["competitiveReferences", "book", "learn.content"], ["contentStats", "chart", "learn.content"], ["mediaLibrary", "image", "learn.content"], ["pathManager", "book", "learn.content"], ["mindmapBank", "book", "learn.content"], ["vpatientAdmin", "stethoscope", "learn.settings"], ["mascotsAdmin", "star", "learn.content"], ["dxAdmin", "target", "learn.content"], ["blogAdmin", "book", "learn.content"], ["communityMod", "users", "learn.content"]] },
     { title: t("navGroupMarketing"), items: [["adsMgmt", "image", "learn.ads"], ["storeManager", "store", "store.manage"], ["pricingEditor", "crown", "learn.settings"], ["groupPurchase", "users", "learn.settings"], ["payments", "crown", "learn.settings"]] },
     { title: t("navGroupSupport"), items: [["supportInbox", "chat", "learn.support"], ["helpCenter", "book", "learn.content"]] },
     { title: t("navGroupSystem"), items: [["remindersAdmin", "clock", "learn.settings"], ["pwaAdmin", "download", "learn.view"], ["twaAdmin", "download", "learn.settings"], ["seoAdmin", "settings", "learn.settings"], ["gamification", "bolt", "learn.settings"], ["fsrsOptimizer", "brain", "learn.settings"], ["bugHunt", "bug", "learn.settings"]] },
@@ -367,6 +367,7 @@ export default function Admin({ home }) {
             {tab === "communityMod" && <LazyAdminChunk><CommunityModeration /></LazyAdminChunk>}
             {tab === "pathManager" && <LazyAdminChunk><PathManager /></LazyAdminChunk>}
             {tab === "mindmapBank" && <LazyAdminChunk><MindmapBankAdmin /></LazyAdminChunk>}
+            {tab === "vpatientAdmin" && <VpatientAdmin />}
             {tab === "mascotsAdmin" && <MascotsAdmin />}
             {tab === "roleEditor" && <LazyAdminChunk><RoleEditor /></LazyAdminChunk>}
             {tab === "storeManager" && <LazyAdminChunk><StoreManager /></LazyAdminChunk>}

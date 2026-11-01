@@ -9946,13 +9946,14 @@ describe("corrected keys and rebuilt stems stay honest", () => {
   });
 });
 
-describe("competitive virtual patient stays retired (R49)", () => {
-  it("admin config and AI endpoints answer 410 university_only", async () => {
+describe("competitive virtual patient admin screens (R72 revival)", () => {
+  it("admin config, prompts and AI endpoints answer for admins", async () => {
     const atk = await token("admin");
     const get = await request(app).get("/api/admin/vpatient").set("Authorization", `Bearer ${atk}`);
-    expect(get.status).toBe(410);
-    expect(get.body.error).toBe("university_only");
-    const put = await request(app).put("/api/admin/vpatient").set("Authorization", `Bearer ${atk}`).send({ premium_only: false });
-    expect(put.status).toBe(410);
+    expect(get.status).toBe(200);
+    expect(get.body).toHaveProperty("config");
+    const prompts = await request(app).get("/api/admin/vpatient/prompts").set("Authorization", `Bearer ${atk}`);
+    expect(prompts.status).toBe(200);
+    expect(prompts.body).toHaveProperty("prompts");
   });
 });
