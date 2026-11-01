@@ -1,42 +1,33 @@
-/* arak-students-provision.js — idempotent, INSERT-ONLY provisioning of the
-   Arak University of Medical Sciences student roster (server/src/data/arak-students.json).
-   Adds only students whose student number does not exist yet. Never updates,
-   moves, deactivates or deletes an existing account. */
+/* arak-students-provision.js — boot-time, INSERT-ONLY import of the Arak University
+   roster, from an OPTIONAL file in the persistent data folder:
+
+       DATA_DIR/rosters/ARAK-STUDENTS-IMPORT.csv   (override: ARAK_ROSTER_FILE)
+
+   R71: the roster is no longer bundled in the code. If the file is missing this is a
+   no-op. If it is present, students whose student number does not exist yet are
+   added. Nothing is ever updated, moved or deleted. The same file can be imported
+   by hand with `node src/import-students.js <file> --university ARAK --apply`. */
 import fs from "fs";
 import path from "path";
-import { fileURLToPath } from "url";
-import { db, persistNow } from "../db.js";
-import { hashPasswordSync } from "./password.js";
+import { DATA_DIR } from "./paths.js";
+import { readRosterFile, importStudents } from "./student-roster.js";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROSTER_FILE = path.join(__dirname, "..", "data", "arak-students.json");
+export const ARAK_ROSTER_FILE = process.env.ARAK_ROSTER_FILE
+  || path.join(DATA_DIR, "rosters", "ARAK-STUDENTS-IMPORT.csv");
 
 export function ensureArakStudents() {
-  const result = { universityId: null, inserted: 0, existing: 0, invalid: 0, skippedOtherUniversity: 0 };
-  const uni = db.prepare("SELECT id FROM universities WHERE code='ARAK' AND retired_at IS NULL ORDER BY id LIMIT 1").get();
-  if (!uni) return { ...result, skipped: "no_arak_university" };
-  result.universityId = uni.id;
+  const base = { universityId: null, inserted: 0, existing: 0, invalid: 0, skippedOtherUniversity: 0 };
+  if (!fs.existsSync(ARAK_ROSTER_FILE)) return { ...base, skipped: "no_roster_file" };
   let roster;
-  try { roster = JSON.parse(fs.readFileSync(ROSTER_FILE, "utf8")); }
-  catch (e) { return { ...result, skipped: "roster_unreadable:" + (e?.message || e) }; }
-  if (!Array.isArray(roster)) return { ...result, skipped: "roster_invalid" };
-  const findByNo = db.prepare("SELECT id, university_id FROM users WHERE student_no=?");
-  const findByUsername = db.prepare("SELECT id FROM users WHERE username=?");
-  const insert = db.prepare("INSERT INTO users (username,password_hash,name_fa,name_en,student_no,role,status,university_id) VALUES (?,?,?,?,?,'student','active',?)");
-  const seen = new Set();
-  db.transaction(() => {
-    for (const s of roster) {
-      const no = String(s?.student_no ?? "").trim().replace(/\u200c/g, "");
-      const name = String(s?.name_fa ?? "").trim();
-      if (!/^\d{8,16}$/.test(no) || !name || seen.has(no)) { result.invalid++; continue; }
-      seen.add(no);
-      const existing = findByNo.get(no);
-      if (existing) { if (Number(existing.university_id) === Number(uni.id)) result.existing++; else result.skippedOtherUniversity++; continue; }
-      if (findByUsername.get(no)) { result.skippedOtherUniversity++; continue; }
-      insert.run(no, hashPasswordSync(no), name, String(s?.name_en || name).trim() || name, no, uni.id);
-      result.inserted++;
-    }
-  })();
-  if (result.inserted) persistNow({ throwOnError: false });
-  return result;
+  try { roster = readRosterFile(ARAK_ROSTER_FILE); }
+  catch (e) { return { ...base, skipped: "roster_unreadable:" + (e?.message || e) }; }
+  const r = importStudents(roster.rows, { universityCode: "ARAK", apply: true });
+  return {
+    universityId: r.universityId,
+    inserted: r.inserted,
+    existing: r.existing,
+    invalid: roster.problems.length,
+    skippedOtherUniversity: r.skippedOtherUniversity,
+    ...(r.skipped ? { skipped: r.skipped } : {}),
+  };
 }

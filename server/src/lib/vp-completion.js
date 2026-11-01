@@ -1,5 +1,4 @@
 // Process-local mutual exclusion: separate students never share a lock.
-// sql.js deployments must use one writer process per DATA_DIR.
 const active = new Set();
 const key = (userId, caseId) => `${Number(userId)}:${Number(caseId)}`;
 export function completionBusy(userId, caseId) { return active.has(key(userId, caseId)); }

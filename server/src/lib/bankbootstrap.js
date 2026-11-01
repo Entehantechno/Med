@@ -157,7 +157,7 @@ export async function ensureQuestionBanks() {
   let inserted = 0, skipped = 0, failed = 0;
   const subjects = new Set();
 
-  // sql.js is fully synchronous, so a 60 s first-run import would block the
+  // The SQLite calls are synchronous, so a long first-run import would block the
   // event loop and the "preparing…" placeholder page (index.js) could not be
   // served — Passenger/cPanel then reports the app as dead. Yield between
   // parts so pending HTTP requests are answered in the gaps.

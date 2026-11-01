@@ -5,9 +5,9 @@
    writes it to DATA_DIR/ADMIN-PASSWORD-RESET.txt (mode 0600). Existing sessions
    of the admin are signed out.
 
-   IMPORTANT: stop the website first (cPanel → Setup Node.js App → Stop). A
-   running server keeps the database in memory and would overwrite this change.
-   Start the website again after the reset.
+   The website can keep running (R71: the database is SQLite in WAL mode and the
+   server reads the committed state). Restarting it afterwards is still recommended
+   so that the existing sessions of the admin are closed.
 
    Usage (inside the server folder):   npm run reset-admin-password -- --confirm
 

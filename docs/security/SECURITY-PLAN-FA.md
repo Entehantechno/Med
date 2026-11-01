@@ -1,7 +1,7 @@
 # برنامه امنیتی Med School (نسخه R70)
 
 > تاریخ: ۱۰ آبان ۱۴۰۵ (۲۰۲۶-۱۱-۰۱)
-> دامنه: API (`server/`)، کلاینت (`client/`)، پایگاه داده SQLite (sql.js)، بسته‌های وابسته، تنظیمات محیط، و مخزن Git.
+> دامنه: API (`server/`)، کلاینت (`client/`)، پایگاه داده SQLite (better-sqlite3 از R71)، بسته‌های وابسته، تنظیمات محیط، و مخزن Git.
 > گزارش اجرا: `docs/rounds/APP-ROUND70-REPORT.md`
 
 ---

@@ -13,7 +13,7 @@
    • Re-optimizing periodically (monthly / when reviews double) is enough — this
      is an admin-triggered batch job, never per-review.
 
-   Implementation note: the sql.js/WASM runtime can't run PyTorch/scipy, so we
+   Implementation note: the Node.js runtime can't run PyTorch/scipy, so we
    use a dependency-free COORDINATE-DESCENT hill-climb with shrinking steps and
    a couple of random restarts. It reuses the exact scheduler math in fsrs.js so
    the fitted params behave identically at review time. It's deterministic given

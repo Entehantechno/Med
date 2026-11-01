@@ -1,6 +1,7 @@
 /* ================================================================
    index.js — Server launcher
    ================================================================ */
+import "./lib/node-version.js"; // must stay first: refuses Node < 22.14 before the native addon loads
 import "./load-env.js";
 import { initDb, reloadDb, initSchema, db, persistNow, snapshotDb } from "./db.js";
 import { createApp } from "./app.js";
@@ -101,7 +102,7 @@ async function main() {
   const provisioning = installBundledDemo({dbPath:DB_PATH,dataDir:DATA_DIR,bundleDir:path.resolve(__dirname,'../../demo-database')});
   if(provisioning.installed) console.warn('Demo database installed in the persistent DATA_DIR. Demo accounts use the shipped demo password — change it right after first login.');
   console.log('[database]',DB_PATH);
-  await initDb();                 // load the WASM SQLite engine first
+  await initDb();                 // open the SQLite database (WAL) first
   initSchema();                   // ensure all tables exist before we query them
   // R70: environment audit + seal legacy plaintext provider keys (idempotent).
   try {

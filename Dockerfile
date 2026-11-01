@@ -6,7 +6,7 @@
 # ================================================================
 
 # ---- Stage 1: build client ----
-FROM node:20-slim AS client-build
+FROM node:22-slim AS client-build
 WORKDIR /app/client
 COPY client/package*.json ./
 # `npm ci` installs exactly the lockfile versions (reproducible, faster than npm install).
@@ -15,13 +15,21 @@ COPY client/ ./
 RUN npm run build
 
 # ---- Stage 2: server runtime ----
-# Pure-JS SQLite (sql.js) — no native build tools needed.
-FROM node:20-slim AS runtime
+# SQLite through better-sqlite3 13 (native addon, R71). The tag floats to the latest
+# 22.x, which is >= 22.14 (needed for the Node-API 10 prebuilt binaries). The prebuilt
+# binary ships inside the package; the compiler toolchain below is only a fallback
+# and is removed in the same layer.
+FROM node:22-slim AS runtime
 ENV NODE_ENV=production \
     PORT=4000
 WORKDIR /app/server
 COPY server/package*.json ./
-RUN npm ci --omit=dev --no-audit --no-fund && npm cache clean --force
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 make g++ \
+ && npm ci --omit=dev --no-audit --no-fund \
+ && apt-get purge -y --auto-remove python3 make g++ \
+ && rm -rf /var/lib/apt/lists/* \
+ && npm cache clean --force
 COPY server/ ./
 # bring in the built client so the server can serve it
 COPY --from=client-build /app/client/dist /app/client/dist

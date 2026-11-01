@@ -70,6 +70,18 @@ execFileSync("zip", ["-q", "-X", "-9", out, "-@"], {
   input: files.join("\n") + "\n",
   maxBuffer: 80 * 1024 * 1024,
 });
+// R71: the student roster is not in the code. It ships as a CSV at the ZIP root
+// for the import tool (`npm run import-students -- ../ARAK-STUDENTS-IMPORT.csv --university ARAK`).
+const ROSTER_SRC = "data/students/ARAK-STUDENTS-IMPORT.csv";
+if (existsSync(ROSTER_SRC)) {
+  const tmp = mkdtempSync(path.join(os.tmpdir(), "med-roster-"));
+  copyFileSync(ROSTER_SRC, path.join(tmp, "ARAK-STUDENTS-IMPORT.csv"));
+  execFileSync("zip", ["-q", "-X", path.resolve(out), "ARAK-STUDENTS-IMPORT.csv"], { cwd: tmp });
+  rmSync(tmp, { recursive: true, force: true });
+  files.push("ARAK-STUDENTS-IMPORT.csv");
+} else {
+  console.warn(`WARNING: ${ROSTER_SRC} not found; the ZIP has no student roster.`);
+}
 if (existsSync(".env.ready")) {
   const tmp = mkdtempSync(path.join(os.tmpdir(), "med-env-"));
   copyFileSync(".env.ready", path.join(tmp, ".env"));

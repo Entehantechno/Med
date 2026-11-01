@@ -551,9 +551,8 @@ export function curateOfficialPath({ force = false } = {}) {
     }
   });
   tx();
-  // setSetting() persistNow()s, and a rawDb.export() while a sql.js
-  // transaction is open drops the transaction, so the version stamp (and the
-  // file flush) must happen AFTER tx() commits.
+  // The version stamp is written after tx() commits, so a failure inside the
+  // transaction cannot leave a stamp that claims the curation finished.
   setSetting("path_curator_version", CURATOR_VERSION);
   persistNow();
   return { ok: true, version: CURATOR_VERSION, stages: stagesCreated, pathCards, premiumCards, bankOnlyCards, topicsCovered, demoRetired };

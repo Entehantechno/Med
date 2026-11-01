@@ -17,7 +17,7 @@ try {
   BUILTIN_SUBJECTS = {};   // no client sources present → skip built-in catalog seeding
 }
 
-await initDb();      // load WASM SQLite engine (top-level await, ESM)
+await initDb();      // open the SQLite database (top-level await, ESM)
 initSchema();
 
 /* SAFETY GUARD — protect real data.

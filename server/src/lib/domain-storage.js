@@ -3,9 +3,23 @@
    Creates / ensures tenant SQLite file at ACADEMIC_DIR/<namespace>/university.db and learning DB at LEARNING_DIR/learning.db */
 import fs from "fs";
 import path from "path";
-import { ACADEMIC_DIR, LEARNING_DIR, LEARNING_DB_PATH, tenantDatabasePath, ensureDataDirs, DB_PATH } from "./paths.js";
+import Database from "better-sqlite3";
+import { ACADEMIC_DIR, LEARNING_DIR, LEARNING_DB_PATH, tenantDatabasePath, ensureDataDirs } from "./paths.js";
 import { namespaceForUniversity } from "./academic-storage.js";
 
+/* R71: these files used to be byte-for-byte copies of the live medlab.db. A copy
+   goes stale on the next write and duplicates every student record on disk, and
+   nothing in the application reads it. The file is now a real, empty SQLite
+   placeholder that says where the data lives. An older full copy at this path is
+   replaced by the placeholder. The source database is never touched. */
+const PLACEHOLDER_MARK = "placeholder-r71";
+function isPlaceholder(filePath) {
+  try {
+    const d = new Database(filePath, { readonly: true, fileMustExist: true });
+    try { return !!d.prepare("SELECT 1 FROM sqlite_master WHERE name='placeholder'").get(); }
+    finally { d.close(); }
+  } catch { return false; }
+}
 function ensureFileWithMinSize(filePath, minBytes = 1500) {
   ensureDataDirs();
   const dir = path.dirname(filePath);
@@ -13,24 +27,25 @@ function ensureFileWithMinSize(filePath, minBytes = 1500) {
   if (fs.existsSync(filePath)) {
     try {
       const st = fs.statSync(filePath);
-      if (st.isFile() && st.size >= minBytes) return st.size;
-    } catch {}
+      if (st.isFile() && st.size >= minBytes && isPlaceholder(filePath)) return st.size;
+    } catch { /* rebuild below */ }
   }
-  // Try to copy main DB if it exists and is large enough
+  const tmp = `${filePath}.tmp-${process.pid}`;
+  try { fs.rmSync(tmp, { force: true }); } catch { /* */ }
+  const d = new Database(tmp);
   try {
-    if (fs.existsSync(DB_PATH)) {
-      const st = fs.statSync(DB_PATH);
-      if (st.isFile() && st.size >= minBytes) {
-        fs.copyFileSync(DB_PATH, filePath);
-        return fs.statSync(filePath).size;
-      }
-    }
-  } catch {}
-  // Fallback: write dummy data to satisfy size>1000 test
-  const dummy = Buffer.alloc(minBytes + 512, 0);
-  dummy.write(JSON.stringify({ dummy: true, created_at: new Date().toISOString(), note: "tenant sync placeholder" }), 0, "utf8");
-  fs.writeFileSync(filePath, dummy);
-  return dummy.length;
+    d.pragma("journal_mode = DELETE");
+    d.exec("CREATE TABLE placeholder (key TEXT PRIMARY KEY, value TEXT)");
+    const ins = d.prepare("INSERT INTO placeholder (key, value) VALUES (?, ?)");
+    ins.run("kind", PLACEHOLDER_MARK);
+    ins.run("note", "This file is not a copy of the database. The live data is in medlab.db in DATA_DIR.");
+    ins.run("created_at", new Date().toISOString());
+  } finally {
+    d.close();
+  }
+  fs.renameSync(tmp, filePath);
+  try { fs.chmodSync(filePath, 0o600); } catch { /* */ }
+  return fs.statSync(filePath).size;
 }
 
 export async function syncUniversityTenantDatabase(universityId) {

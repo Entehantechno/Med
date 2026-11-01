@@ -11,7 +11,7 @@
      number — once the real value passes the floor, the real value is shown.
    • listTestimonials / listFaqs / listBadges — published rows for the public.
 
-   All write helpers call persistNow() (sql.js WASM flush). */
+   Write helpers commit directly (R71: better-sqlite3, durable on commit). */
 import { db, persistNow } from "../db.js";
 import { getGameConfig } from "./gameconfig.js";
 

@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^13.0.3",
     "compression": "^1.8.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
@@ -31,7 +32,9 @@
     "multer": "^2.4.0",
     "nodemailer": "^10.0.13",
     "qs": "^6.16.0",
-    "sql.js": "^1.11.0",
     "web-push": "^3.6.7"
+  },
+  "engines": {
+    "node": ">=22.14.0"
   }
 }

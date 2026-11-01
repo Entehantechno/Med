@@ -141,9 +141,10 @@ describe('10-student pilot isolation and completion safety',()=>{
  });
  it('does not acknowledge durable success on disk failure; retry persists one result without regrading',async()=>{
   const sid=await start();const log=vi.spyOn(console,'error').mockImplementation(()=>{});
-  const rename=vi.spyOn(fs,'renameSync').mockImplementation(()=>{throw new Error('synthetic disk failure');});
+  // R71: a real write failure. SQLite refuses every write while query_only is on (reads still work).
+  db.pragma('query_only = ON');
   const failed=await submit(0,sid);
-  rename.mockRestore();log.mockRestore();
+  db.pragma('query_only = OFF');log.mockRestore();
   expect(failed.status).toBe(500);
   const calls=fetch.mock.calls.length;
   const recovered=await submit(0,sid);expect(recovered.status).toBe(200);expect(count()).toBe(1);
@@ -240,9 +241,9 @@ describe('10-student pilot isolation and completion safety',()=>{
  it('does not acknowledge an abandoned-session save when the disk write failed',async()=>{
   const sid=await start();const events=body(0,sid).events;
   const quiet=vi.spyOn(console,'error').mockImplementation(()=>{});
-  const disk=vi.spyOn(fs,'renameSync').mockImplementation(()=>{throw new Error('synthetic disk failure');});
+  db.pragma('query_only = ON');   // R71: real write failure (see the test above)
   const r=await request(app).post('/api/exam/session-abandon').set(A(0)).send({sessionId:sid,events});
-  disk.mockRestore();quiet.mockRestore();expect(r.status).toBe(500);
+  db.pragma('query_only = OFF');quiet.mockRestore();expect(r.status).toBe(500);
   expect((await request(app).post('/api/exam/session-abandon').set(A(0)).send({sessionId:sid,events})).status).toBe(200);
   const resumed=await request(app).post('/api/exam/session-start').set(A(0)).send({caseId:1,classId});
   expect(resumed.body.events.length).toBe(1);

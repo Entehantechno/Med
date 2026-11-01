@@ -20,7 +20,17 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-echo  [OK] Node.js found.
+for /f "delims=" %%v in ('node -p "process.versions.node"') do set NODE_VER=%%v
+echo  [OK] Node.js %NODE_VER% found.
+REM R71: the database engine (better-sqlite3 13) needs Node.js 22.14+, 23.6+ or 24.x.
+node -e "const v=process.versions.node.split('.').map(Number);process.exit((v[0]>=24||(v[0]===23&&v[1]>=6)||(v[0]===22&&v[1]>=14))?0:1)"
+if errorlevel 1 (
+  echo  [ERROR] Node.js %NODE_VER% is too old. MED School needs Node.js 22.14 or newer.
+  echo  Install the current LTS from:  https://nodejs.org/
+  echo.
+  pause
+  exit /b 1
+)
 echo.
 
 REM ---- 2) Install server packages (first run only) ----

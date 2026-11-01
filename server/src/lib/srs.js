@@ -171,8 +171,7 @@ export function unsuspendAll(userId) {
 export function lapseWrongCards(userId, answers = []) {
   let added = 0;
   // NOTE: review() persists internally, so we must NOT wrap this in a db
-  // transaction — doing so would clash with the sql.js commit and throw
-  // "cannot commit - no transaction is active".
+  // transaction, so each review commits on its own.
   for (const a of answers) {
     const cid = parseInt(a?.cardId, 10);
     if (!cid || a.correct) continue;

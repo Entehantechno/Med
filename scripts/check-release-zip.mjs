@@ -518,6 +518,30 @@ for (const check of featureChecks) {
   }
 }
 
+// R71: SQLite engine (better-sqlite3, Node >= 22) and the student roster file.
+{
+  const pkgRaw = readEntry("server/package.json");
+  if (pkgRaw) {
+    let pkg = {};
+    try { pkg = JSON.parse(pkgRaw); } catch { errors.push("server/package.json is not valid JSON."); }
+    if (!pkg.dependencies?.["better-sqlite3"]) errors.push("server/package.json does not depend on better-sqlite3 (the R71 database engine).");
+    if (pkg.dependencies?.["sql.js"]) errors.push("server/package.json still depends on sql.js (retired in R71).");
+    if (!pkg.engines?.node) errors.push("server/package.json has no engines.node (better-sqlite3 13 needs Node >= 22.14).");
+    else if (!/22\.14/.test(pkg.engines.node)) errors.push(`server/package.json engines.node is "${pkg.engines.node}"; it must require >= 22.14.0 (Node-API 10 binaries).`);
+  }
+  if (has("server/src/data/arak-students.json")) {
+    errors.push("The student roster must not ship inside the code (server/src/data/arak-students.json). It is delivered as ARAK-STUDENTS-IMPORT.csv.");
+  }
+  if (!has("ARAK-STUDENTS-IMPORT.csv")) {
+    errors.push("Missing ARAK-STUDENTS-IMPORT.csv at ZIP root (student roster for the import tool).");
+  } else {
+    const rosterRows = readEntry("ARAK-STUDENTS-IMPORT.csv").split(/\r?\n/).filter((l) => /^\uFEFF?\d{8,16},/.test(l)).length;
+    if (rosterRows < 80) errors.push(`ARAK-STUDENTS-IMPORT.csv has ${rosterRows} student rows; expected at least 80.`);
+  }
+  const dockerfile = readEntry("Dockerfile");
+  if (dockerfile && !/^FROM node:22/m.test(dockerfile)) errors.push("Dockerfile does not start from a Node 22 image (better-sqlite3 13 requires Node >= 22.14).");
+}
+
 const sizeMb = statSync(zipPath).size / 1024 / 1024;
 if (errors.length) {
   console.error(`❌ Release ZIP check failed for ${path.basename(zipPath)} (${sizeMb.toFixed(1)} MB):`);

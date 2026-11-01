@@ -21,6 +21,9 @@ export function installBundledDemo({dbPath, dataDir, bundleDir}) {
         try{fs.copyFileSync(path.join(uploads,entry.name),path.join(dataDir,'uploads',entry.name),fs.constants.COPYFILE_EXCL);}catch(e){if(e.code!=='EEXIST')throw e;}
       }
     }
+    // R71: an orphaned -wal/-shm left by a deleted database must not be replayed
+    // onto the new file. Set it aside (kept, not deleted).
+    for(const suffix of ['-wal','-shm']){const f=dbPath+suffix;if(fs.existsSync(f)){try{fs.renameSync(f,`${dbPath}.orphan-${Date.now()}${suffix}`);}catch{}}}
     try{fs.linkSync(temp,dbPath);}catch(e){if(e.code==='EEXIST')return {installed:false,reason:'existing_database'};throw e;}
     return {installed:true};
   }finally{try{fs.unlinkSync(temp);}catch{}}

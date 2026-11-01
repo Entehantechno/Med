@@ -28,7 +28,7 @@
 ## گام ۳ — ساختِ اپلیکیشن Node.js
 ۱. در cPanel در کادرِ جستجوی بالا تایپ کن `node` → **Setup Node.js App** را باز کن → **Create Application**.
 ۲. مقادیر را این‌طور بگذار:
-   - **Node.js version:** `20` (یا بالاترین نسخهٔ موجود)
+   - **Node.js version:** `22` با نسخهٔ ۲۲.۱۴ یا بالاتر (یا `24`). نسخهٔ ۲۰ دیگر پشتیبانی نمی‌شود.
    - **Application mode:** `Production`
    - **Application root:** `medschool`
    - **Application URL:** دامنه‌ات را انتخاب کن

@@ -32,7 +32,7 @@
 ## گام ۳: اپ Node.js را بساز
 ۱. cPanel → **Setup Node.js App** → **Create Application**.
 ۲. مقادیر:
-   - **Node.js version:** جدیدترین نسخهٔ ۱۸ یا بالاتر (مثلاً 20).
+   - **Node.js version:** نسخهٔ ۲۲.۱۴ یا بالاتر (مثلاً 22 یا 24). نسخه‌های ۲۰ و ۲۲.۰–۲۲.۱۳ پشتیبانی نمی‌شوند.
    - **Application mode:** `Production`
    - **Application root:** مسیر پوشه‌ای که اکسترکت کردی (مثلاً `medschool`).
    - **Application URL:** دامنه‌ات را انتخاب کن.

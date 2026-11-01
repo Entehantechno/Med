@@ -2,6 +2,8 @@ import {db} from '../db.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import bcrypt from 'bcryptjs';
+import {readRosterFile} from './student-roster.js';
+import {ARAK_ROSTER_FILE} from './arak-students-provision.js';
 import {fileURLToPath} from 'node:url';
 const __dirname=path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export function seedDemoStudents(){
@@ -13,11 +15,9 @@ export function seedDemoStudents(){
       try {
         const cnt = db.prepare("SELECT COUNT(*) c FROM users WHERE role='student' AND university_id=?").get(arakUni.id).c;
         if (cnt < 80) { // threshold: if less than 80, we need to seed
+          // R71: the roster is an optional file in DATA_DIR (see arak-students-provision.js).
           let list = [];
-          try {
-            const jPath = path.join(__dirname, "data", "arak-students.json");
-            if (fs.existsSync(jPath)) list = JSON.parse(fs.readFileSync(jPath, "utf8"));
-          } catch {}
+          try { list = readRosterFile(ARAK_ROSTER_FILE).rows; } catch { list = []; }
           if (list && list.length) {
             const findByNo = db.prepare("SELECT id FROM users WHERE student_no=? OR username=?");
             const ins = db.prepare("INSERT OR IGNORE INTO users (username,password_hash,name_fa,name_en,student_no,role,status,university_id) VALUES (?,?,?,?,?,?,?,?)");

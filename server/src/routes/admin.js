@@ -320,14 +320,13 @@ r.get("/backup/status", ...P("learn.settings"), async (req, res) => {
 // Create a timestamped snapshot of the DB inside DATA_DIR/backups.
 r.post("/backup/create", ...P("learn.settings"), async (req, res) => {
   const fs = await import("fs");
-  const { BACKUPS_DIR, DB_PATH } = await import("../lib/paths.js");
-  const { persistNow } = await import("../db.js");
+  const { BACKUPS_DIR } = await import("../lib/paths.js");
+  const { createSnapshot } = await import("../db.js");
   try {
-    persistNow();   // flush the in-memory DB to disk first
-    const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-    const name = `medlab-backup-${stamp}.db`;
-    fs.mkdirSync(BACKUPS_DIR, { recursive: true });
-    fs.copyFileSync(DB_PATH, path.join(BACKUPS_DIR, name));
+    // R71: a consistent snapshot through the live connection (VACUUM INTO, WAL
+    // content included, verified). Replaces a file copy, which can miss committed
+    // pages that are still in the -wal file.
+    const name = path.basename(createSnapshot(BACKUPS_DIR, "medlab-backup"));
 
     /* Prune old manual backups.
 
@@ -357,16 +356,21 @@ r.post("/backup/create", ...P("learn.settings"), async (req, res) => {
   } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
 });
 
-// Download the current database file as an attachment.
+// Download a consistent snapshot of the database as an attachment. The snapshot is
+// a temporary file in backups/tmp-download and is removed once the transfer ends.
 r.get("/backup/download", ...P("learn.settings"), async (req, res) => {
-  const { DB_PATH } = await import("../lib/paths.js");
-  const { persistNow } = await import("../db.js");
+  const fs = await import("fs");
+  const { BACKUPS_DIR } = await import("../lib/paths.js");
+  const { createSnapshot } = await import("../db.js");
+  const dir = path.join(BACKUPS_DIR, "tmp-download");
+  const removeTmp = () => { try { fs.rmSync(dir, { recursive: true, force: true }); } catch { /* */ } };
   try {
-    persistNow();
+    removeTmp();                       // leftovers from an interrupted earlier download
+    const file = createSnapshot(dir, "medlab-backup");
     const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
     audit(req, "backup.download", "backup:download", {});
-    res.download(DB_PATH, `medlab-backup-${stamp}.db`);
-  } catch (e) { res.status(500).json({ ok: false, error: String(e.message || e) }); }
+    res.download(file, `medlab-backup-${stamp}.db`, () => removeTmp());
+  } catch (e) { removeTmp(); res.status(500).json({ ok: false, error: String(e.message || e) }); }
 });
 
 // Landing promo banner
@@ -2757,7 +2761,7 @@ function officialExistingFingerprints() {
   return set;
 }
 /* Compiling a parameterised prepared statement on every one of 11k+ questions
- * is seconds-per-file on sql.js. Load the card tombstone keys once per import
+ * is slow when repeated per file. Load the card tombstone keys once per import
  * pass and test membership in memory. */
 function cardTombstoneSet() {
   const set = new Set();
@@ -3302,8 +3306,7 @@ export function commitOfficialImport(body = {}, actor = null) {
   // full table rescan.
   for (const item of preview.plan) if (item.fingerprint) officialExistingCache?.add(item.fingerprint);
   // Nothing changed (idempotent warm-boot pass over an already-imported part):
-  // skip the table scans and, crucially, the sql.js disk export entirely —
-  // that is what made every server restart churn for over a minute.
+  // skip the table scans (the whole-file rewrite of the old engine is gone; R71).
   if (!inserted) {
     return { ok: true, inserted: 0, attached: 0, skipped, revived: 0, purged: 0, counters: preview.counters };
   }

@@ -1,12 +1,24 @@
 /* ================================================================
-   db.js — Pure-JS SQLite via sql.js (WebAssembly).
-   No native compilation, no Python, no build tools required.
-   Exposes a small better-sqlite3-compatible synchronous API so the
-   rest of the codebase is unchanged:
-     db.prepare(sql).get(...args) / .all(...args) / .run(...args)
-     db.exec(sql), db.pragma(...), db.transaction(fn)
+   db.js — SQLite through better-sqlite3 (R71; replaces the sql.js engine).
+
+   Why (full research in docs/research/DATABASE-RESEARCH-FA.md):
+   • sql.js held the whole database in WASM memory and rewrote the entire file on
+     every flush. The cost grew with the database (~125 MB in production), blocked
+     the event loop, and writes made in the flush window were lost on a hard kill.
+   • better-sqlite3 opens the same SQLite file in place. In WAL mode with
+     synchronous=FULL every COMMIT is on disk when the call returns, the page
+     cache is bounded (DB_CACHE_KIB, 16 MB), and a crash loses nothing that was
+     acknowledged.
+   • The file format is unchanged: a database written by sql.js opens as-is. The
+     first start of R71 takes a verified snapshot into backups/pre-upgrade-r71-*.db
+     before any migration runs, then records PRAGMA user_version = 71.
+
+   The exported API is unchanged: db.prepare().get/all/run, db.exec, db.pragma,
+   db.transaction, durableTransaction, onDbReady, initDb, reloadDb, snapshotDb.
+   persist / persistNow / markDirty remain as no-ops so existing call sites keep
+   working: a commit is already durable when the call that made it returns.
    ================================================================ */
-import initSqlJs from "sql.js";
+import Database from "better-sqlite3";
 import { ensureContentIdentity, universityOnlyCases } from "./lib/content-identity.js";
 import fs from "fs";
 import path from "path";
@@ -23,427 +35,361 @@ import { migrateR64 } from "./lib/r64-migration.js";
 import bcrypt from "bcryptjs";
 ensureDataDirs();
 
-// sql.js ships its wasm inside node_modules; locate it for the loader.
-// Works whether deps are installed in server/node_modules (dev) OR in the app
-// root's node_modules (cPanel "Run NPM Install" installs at the app root).
-function wasmPath() {
-  const candidates = [
-    path.join(__dirname, "..", "node_modules", "sql.js", "dist", "sql-wasm.wasm"),        // server/node_modules
-    path.join(__dirname, "..", "..", "node_modules", "sql.js", "dist", "sql-wasm.wasm"),   // app-root/node_modules (cPanel)
-  ];
-  for (const p of candidates) { try { if (fs.existsSync(p)) return p; } catch { /* */ } }
-  return candidates[0]; // sensible default
+/** Schema/engine generation stored in PRAGMA user_version. A database below this
+ *  value is upgraded in place, after a verified snapshot. */
+export const DB_ENGINE_VERSION = 71;
+const BUSY_TIMEOUT_MS = 5000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const CACHE_KIB = Math.max(2000, Math.min(262144, Number(process.env.DB_CACHE_KIB) || 16000));
+const SYNC_MODE = String(process.env.DB_SYNCHRONOUS || "full").toLowerCase() === "normal" ? "NORMAL" : "FULL";
+
+let rawDb = null;          // the open better-sqlite3 connection
+let backupTimer = null;   // periodic snapshot check (see initDb)
+let schemaReady = false;   // initSchema() is expensive; run it once per open connection
+
+export class DbUnreadableError extends Error {
+  constructor(message) { super(message); this.name = "DbUnreadableError"; }
 }
 
-let SQL = null;      // the sql.js module
-let rawDb = null;    // the underlying sql.js Database
-let saveTimer = null;
-let schemaReady = false;  // initSchema() is expensive; run it once per loaded DB
+/* Connection settings. WAL gives readers that do not block the writer and a
+   COMMIT that is one sequential append; synchronous=FULL makes that append durable
+   before COMMIT returns (SQLite: "FULL is ACID in WAL mode"). */
+function configureConnection(conn) {
+  conn.pragma("journal_mode = WAL");
+  conn.pragma(`synchronous = ${SYNC_MODE}`);
+  conn.pragma("foreign_keys = ON");
+  conn.pragma("trusted_schema = OFF");        // schema is not trusted to run arbitrary functions
+  conn.pragma("secure_delete = FAST");        // overwrite deleted personal data pages
+  conn.pragma(`cache_size = -${CACHE_KIB}`);
+  conn.pragma("temp_store = MEMORY");
+  conn.pragma("journal_size_limit = 67108864");
+  return conn;
+}
 
-/* ---------------------------------------------------------------------------
-   Persistence model (sql.js keeps the whole DB in WASM memory)
-   ---------------------------------------------------------------------------
-   The only way to write sql.js to disk is `export()` = a full image copy
-   (~80 MB with the shipped question bank, ~200 ms). Two things made this
-   expensive on a 1 GB shared host:
-     • `persistNow()` was called from 260+ places, often several times per
-       request, and each call exported EVEN WHEN NOTHING HAD CHANGED (e.g. a
-       migration pass that altered zero rows) — so every boot / admin click
-       paid 200 ms CPU + a transient 80 MB buffer;
-     • the export buffer is allocated outside the V8 heap, and V8 does not
-       hurry to release "external" memory → RSS climbed to 350-450 MB and
-       stayed there, which is exactly the range where cPanel/LVE kills a
-       process.
-   Now: a dirty flag is set by every write path (`run`, `exec`, transactions)
-   and `persistNow()` exports only when dirty; the buffer is dropped right
-   after the write. Debounced writes coalesce as before. */
-let dirty = false;
-export function markDirty() { dirty = true; }
-
-/* R56 — write-behind flush. A full export costs O(database size) and blocks the
-   event loop; on the production-size DB (~125 MB) one export can take hundreds of
-   ms, and the legacy path ran one per write request. Plain persistNow() therefore
-   only schedules a flush: one export per FLUSH_DELAY_MS at most, coalescing bursts.
-   The timer is NOT pushed back on each write (that starved the disk under steady
-   load), so a dirty write is never older than FLUSH_DELAY_MS. Synchronous, durable
-   writes stay explicit: persistNow({force|throwOnError}) and durableTransaction()
-   (patient/exam records), plus the process-exit flush. DB_FLUSH_DELAY_MS tunes it. */
-const FLUSH_DELAY_MS = Math.max(0, Math.min(60000, Number(process.env.DB_FLUSH_DELAY_MS) || 1500));
-function scheduleFlush() {
-  if (saveTimer) return;                // already scheduled — do not postpone it
-  saveTimer = setTimeout(() => { saveTimer = null; flushNow({}); }, FLUSH_DELAY_MS);
-  if (saveTimer.unref) saveTimer.unref();
-}
-function persist() {
-  dirty = true;
-  scheduleFlush();
-}
-function persistNow({ force = false, throwOnError = false } = {}) {
-  if (!force && !throwOnError) { if (dirty) scheduleFlush(); return; }
-  flushNow({ force, throwOnError });
-}
-function flushNow({ force = false, throwOnError = false } = {}) {
+/* Integrity check of a database FILE without changing it (read-only handle).
+   Returns "ok" or "corrupt"; throws DbUnreadableError for I/O or permission
+   problems, which are NOT corruption and must never trigger a restore. */
+const SQLITE_FORMAT_ERR = /file is not a database|not a database|malformed/i;
+function checkFile(file) {
+  let conn;
   try {
-    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }   // this flush covers it
-    if (!rawDb) return;
-    if (!dirty && !force && fs.existsSync(DB_PATH)) return;   // nothing new to write
-    // Atomic save: write the whole image to a sibling temp file, fsync it, then
-    // rename over the live file. A crash / power cut / disk-full in the middle
-    // of a plain writeFileSync(DB_PATH) leaves a truncated, unloadable
-    // medlab.db — the entire site's data. rename() is atomic on POSIX and on
-    // NTFS within one volume, so the live file is always either the old or the
-    // new complete image, never a partial one.
-    //
-    // The tmp name carries the PID: the first-boot seed runs in a CHILD process
-    // that shares DB_PATH, and a shared "...medlab.db.tmp" used to be stolen by
-    // whichever process renamed first — the loser saw ENOENT on rename and, in
-    // the worst interleave, a stale pre-seed export could land AFTER the child's
-    // seeded image. Per-process tmp names make concurrent exports race-free
-    // (last complete writer wins, and the parent's reloadDb() then discards its
-    // stale image).
-    let buf = rawDb.export();           // Uint8Array over a fresh copy
-    const tmp = `${DB_PATH}.tmp-${process.pid}`;
-    const fd = fs.openSync(tmp, "w");
-    try {
-      let offset = 0;
-      while (offset < buf.length) {
-        const written = fs.writeSync(fd, buf, offset, buf.length - offset, offset);
-        if (!Number.isInteger(written) || written <= 0 || written > buf.length - offset) throw new Error("database_write_no_progress");
-        offset += written;
-      }
-      fs.fsyncSync(fd);
-    }
-    finally { fs.closeSync(fd); }
-    buf = null;
-    fs.renameSync(tmp, DB_PATH);
-    dirty = false;
+    conn = new Database(file, { readonly: true, fileMustExist: true, timeout: BUSY_TIMEOUT_MS });
   } catch (e) {
-    // Never crash a request because the flush failed, but do not stay silent:
-    // an operator must know the disk is full / read-only before data is lost.
-    try { fs.unlinkSync(`${DB_PATH}.tmp-${process.pid}`); } catch { /* best effort temp cleanup */ }
-    console.error("[db] persist failed:", e?.message || e);
-    if (throwOnError) throw new Error("database_persistence_failed");
+    if (SQLITE_FORMAT_ERR.test(String(e?.message || e))) return "corrupt";
+    throw new DbUnreadableError(`database_open_failed: ${e?.message || e}`);
   }
-}
-
-// Explicit synchronous authoring boundary. The existing transaction API keeps
-// its legacy behavior; callers opt in where a success response promises a saved
-// patient. Flush earlier writes first, then recover the last good disk image if
-// committing the new image fails. No full backup copy is allocated on success.
-export function durableTransaction(fn) {
-  persistNow({ throwOnError: true });
-  let committed = false;
-  rawDb.exec("BEGIN");
   try {
-    const result = fn();
-    if (result && typeof result.then === "function") throw new Error("durable_transaction_must_be_synchronous");
-    rawDb.exec("COMMIT");
-    committed = true;
-    dirty = true;
-    persistNow({ throwOnError: true });
-    return result;
-  } catch (error) {
-    if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
-    if (committed) {
-      const restored = tryOpenDbFileSafe(DB_PATH);
-      if (!restored) {
-        rawDb.close(); rawDb = null; schemaReady = false; dirty = false;
-        throw new Error("database_recovery_failed");
-      }
-      rawDb.close();
-      rawDb = restored;
-      rawDb.exec("PRAGMA foreign_keys = ON;");
-    } else {
-      try { rawDb.exec("ROLLBACK"); } catch { /* preserve original error */ }
-    }
-    dirty = false;
-    throw error;
+    const row = conn.pragma("quick_check", { simple: true });
+    return String(row).trim().toLowerCase() === "ok" ? "ok" : "corrupt";
+  } catch (e) {
+    if (SQLITE_FORMAT_ERR.test(String(e?.message || e))) return "corrupt";
+    throw new DbUnreadableError(`quick_check_failed: ${e?.message || e}`);
+  } finally {
+    try { conn.close(); } catch { /* */ }
   }
 }
-
-// Durability: flush any pending write synchronously when the process exits, so a
-// restart (e.g. after a code change) never loses a recently-saved record.
-let flushed = false;
-function flushOnExit() {
-  if (flushed) return; flushed = true;
-  flushNow({});
+function checkFileSafe(file) {
+  try { return checkFile(file); } catch { return "unreadable"; }
 }
-process.on("exit", flushOnExit);
-process.on("SIGINT", () => { flushOnExit(); process.exit(0); });
-process.on("SIGTERM", () => { flushOnExit(); process.exit(0); });
 
-// Statement wrapper mimicking better-sqlite3's prepared statement.
+/* Consistent snapshot of the OPEN database, WAL content included. VACUUM INTO
+   reads through the connection, so it is correct while the site is serving
+   traffic; a plain file copy of a WAL-mode database is not (committed pages may
+   still be in the -wal file). The result is verified before it is returned. */
+function writeSnapshot(dest) {
+  if (!rawDb) throw new Error("database_not_open");
+  if (fs.existsSync(dest)) throw new Error("snapshot_destination_exists");
+  rawDb.prepare("VACUUM INTO ?").run(dest);
+  if (checkFile(dest) !== "ok") {
+    try { fs.rmSync(dest, { force: true }); } catch { /* */ }
+    throw new Error("snapshot_verification_failed");
+  }
+  try { fs.chmodSync(dest, 0o600); } catch { /* */ }
+  return dest;
+}
+export function createSnapshot(dir = BACKUPS_DIR, prefix = "medlab") {
+  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  let dest = path.join(dir, `${prefix}-${stamp}.db`);
+  for (let n = 1; fs.existsSync(dest); n++) dest = path.join(dir, `${prefix}-${stamp}-${n}.db`);
+  return writeSnapshot(dest);
+}
+
+function listBackups(dir, re) {
+  return fs.readdirSync(dir)
+    .filter((f) => re.test(f))
+    .map((f) => { try { return { f, t: fs.statSync(path.join(dir, f)).mtimeMs }; } catch { return null; } })
+    .filter(Boolean)
+    .sort((a, b) => b.t - a.t);
+}
+function pruneBackups(dir, re, keep) {
+  try {
+    for (const { f } of listBackups(dir, re).slice(keep)) {
+      try { fs.unlinkSync(path.join(dir, f)); } catch { /* */ }
+    }
+  } catch { /* */ }
+}
+
+/* ---- statement wrapper (better-sqlite3 semantics, sql.js-tolerant) ---- */
+
+// Booleans bind as 0/1 and undefined as NULL; better-sqlite3 accepts neither.
+function bindValue(v) {
+  if (v === undefined) return null;
+  if (typeof v === "boolean") return v ? 1 : 0;
+  return v;
+}
+function isPlainObject(x) {
+  return x !== null && typeof x === "object" && Object.getPrototypeOf(x) === Object.prototype;
+}
+function bindArgs(args) {
+  if (args.length === 1 && Array.isArray(args[0])) return args[0].map(bindValue);
+  if (args.length === 1 && isPlainObject(args[0])) {
+    const named = {};
+    for (const k of Object.keys(args[0])) named[k] = bindValue(args[0][k]);
+    return [named];
+  }
+  return args.map(bindValue);
+}
+
 class Statement {
-  constructor(sql) { this.sql = sql; }
-  _bindRun(args) {
-    const stmt = rawDb.prepare(this.sql);
-    try { stmt.bind(normalizeArgs(args)); stmt.step(); }
-    finally { stmt.free(); }
+  constructor(sql) { this.sql = sql; this._conn = null; this._stmt = null; }
+  // Prepared once per connection; re-prepared after a reload.
+  _s() {
+    if (!rawDb) throw new Error("database_not_open");
+    if (this._conn !== rawDb) { this._stmt = rawDb.prepare(this.sql); this._conn = rawDb; }
+    return this._stmt;
   }
   get(...args) {
-    const stmt = rawDb.prepare(this.sql);
-    try {
-      stmt.bind(normalizeArgs(args));
-      if (stmt.step()) return stmt.getAsObject();
-      return undefined;
-    } finally { stmt.free(); }
+    const s = this._s(); const p = bindArgs(args);
+    if (!s.reader) { s.run(...p); return undefined; }
+    return s.get(...p);
   }
   all(...args) {
-    const stmt = rawDb.prepare(this.sql);
-    const rows = [];
-    try {
-      stmt.bind(normalizeArgs(args));
-      while (stmt.step()) rows.push(stmt.getAsObject());
-    } finally { stmt.free(); }
-    return rows;
+    const s = this._s(); const p = bindArgs(args);
+    if (!s.reader) { s.run(...p); return []; }
+    return s.all(...p);
   }
   run(...args) {
-    this._bindRun(args);
-    const changes = rawDb.getRowsModified();
-    // last inserted id
-    let lastInsertRowid = 0;
-    const r = rawDb.exec("SELECT last_insert_rowid() AS id");
-    if (r[0] && r[0].values[0]) lastInsertRowid = r[0].values[0][0];
-    persist();
-    return { changes, lastInsertRowid };
+    const s = this._s(); const p = bindArgs(args);
+    if (s.reader) { s.all(...p); return { changes: 0, lastInsertRowid: 0 }; }
+    const info = s.run(...p);
+    return { changes: info.changes, lastInsertRowid: info.lastInsertRowid };
   }
 }
 
-// sql.js wants positional args as an array; support (a,b,c) and ([a,b,c]).
-// Unlike better-sqlite3, sql.js rejects `undefined`, so coerce it to null.
-// Also coerce booleans to 0/1 for SQLite compatibility.
-function normalizeArgs(args) {
-  let arr = (args.length === 1 && Array.isArray(args[0])) ? args[0] : args;
-  return Array.from(arr).map((v) => {
-    if (v === undefined) return null;
-    if (typeof v === "boolean") return v ? 1 : 0;
-    return v;
-  });
-}
-
-function totalChanges() {
-  try { const r = rawDb.exec("SELECT total_changes() AS n"); return r[0]?.values?.[0]?.[0] ?? 0; } catch { return 0; }
-}
-/* DDL does not bump total_changes(). Compare a cheap schema signature before
-   and after, so a real ALTER/CREATE persists while an idempotent
-   "CREATE TABLE IF NOT EXISTS" pass over an up-to-date database does not. */
-function schemaSig() {
-  try { const r = rawDb.exec("SELECT COUNT(*), COALESCE(SUM(LENGTH(sql)),0) FROM sqlite_master"); return String(r[0]?.values?.[0]); } catch { return ""; }
-}
+// Statement objects are cached by SQL text (bounded; cleared when it overflows).
+// Each one re-prepares itself only when the connection is replaced by reloadDb().
+const statementCache = new Map();
+const STATEMENT_CACHE_MAX = 1000;
 
 export const db = {
-  prepare(sql) { return new Statement(sql); },
+  prepare(sql) {
+    let s = statementCache.get(sql);
+    if (!s) {
+      if (statementCache.size >= STATEMENT_CACHE_MAX) statementCache.clear();
+      s = new Statement(sql);
+      statementCache.set(sql, s);
+    }
+    return s;
+  },
   exec(sql) {
-    const isDdl = /\b(ALTER|CREATE|DROP)\s/i.test(sql);
-    const before = totalChanges();
-    const sigBefore = isDdl ? schemaSig() : null;
+    if (!rawDb) throw new Error("database_not_open");
     rawDb.exec(sql);
-    // Read-only pragmas / idempotent "CREATE TABLE IF NOT EXISTS" passes that
-    // changed nothing must not schedule an 80 MB export.
-    if (totalChanges() !== before || (isDdl && schemaSig() !== sigBefore)) persist();
     return this;
   },
   pragma(str) {
-    // Support "foreign_keys = ON" / "journal_mode = WAL" style (best-effort).
-    try { rawDb.exec("PRAGMA " + str + ";"); } catch (e) {}
+    try { if (rawDb) rawDb.pragma(str); } catch { /* best-effort, as before */ }
   },
+  // Nested calls become savepoints automatically; a throw rolls the work back.
   transaction(fn) {
-    // Returns a callable that runs fn inside BEGIN/COMMIT (rollback on error).
     return (...args) => {
-      rawDb.exec("BEGIN");
-      try {
-        const out = fn(...args);
-        rawDb.exec("COMMIT");
-        dirty = true;
-        persistNow();
-        return out;
-      } catch (e) {
-        try { rawDb.exec("ROLLBACK"); } catch (_) {}
-        throw e;
-      }
+      if (!rawDb) throw new Error("database_not_open");
+      return rawDb.transaction(fn)(...args);
     };
   },
 };
 
-// Must be called (and awaited) once before using `db`.
-/* R55: schema helpers must run once the database is open. Modules used to run
-   `db.exec(CREATE TABLE …)` at import time, before initDb() had set rawDb, so the
-   call threw and a `catch {}` hid it (mindmap tables were never created → HTTP 500
-   on /api/learn/mindmap-bank). Register such work here instead; it runs right after
-   initDb() opens the database. Registering after the DB is open runs immediately. */
+/* Synchronous, durable write boundary. The commit is on disk when this returns
+   (WAL + synchronous=FULL); a failure rolls the whole block back and throws. */
+export function durableTransaction(fn) {
+  if (!rawDb) throw new Error("database_not_open");
+  return rawDb.transaction(fn)();
+}
+
+// No-ops kept for the ~60 existing call sites. Every write is already durable.
+export function markDirty() { /* durable on commit */ }
+function persist() { /* durable on commit */ }
+function persistNow() { /* durable on commit */ }
+
 const readyHooks = [];
 export function onDbReady(fn) {
   if (rawDb) { fn(); return; }
   readyHooks.push(fn);
 }
 
-export async function initDb() {
-  if (rawDb) return;
-  SQL = await initSqlJs({ locateFile: () => wasmPath() });
-  // Remove orphan temp exports left by crashed/killed processes (see persistNow
-  // — tmp names carry the PID; a dead PID's tmp never gets renamed).
+/* Checkpoint the WAL into the main file and close. Called on process exit and by
+   reloadDb(). The checkpoint is best-effort; the WAL survives a crash anyway. */
+export function closeDatabase() {
+  if (!rawDb) return;
+  const conn = rawDb;
+  rawDb = null;
+  schemaReady = false;
   try {
-    for (const f of fs.readdirSync(path.dirname(DB_PATH))) {
+    if (String(conn.pragma("journal_mode", { simple: true })).toLowerCase() === "wal") conn.pragma("wal_checkpoint(TRUNCATE)");
+  } catch (e) { console.error("[db] checkpoint on close failed:", e?.message || e); }
+  try { conn.close(); } catch { /* */ }
+}
+let closedOnExit = false;
+function closeOnExit() {
+  if (closedOnExit) return;
+  closedOnExit = true;
+  closeDatabase();
+}
+process.on("exit", closeOnExit);
+process.on("SIGINT", () => { closeOnExit(); process.exit(0); });
+process.on("SIGTERM", () => { closeOnExit(); process.exit(0); });
+
+/* Load-time validation with verified-backup fallback. Returns
+   { restoredFrom, quarantined }. A DEFINITIVELY corrupt file is replaced by the
+   newest verified backup and kept as .corrupt-* for forensics. An unreadable file
+   throws and is never touched. A corrupt file with no valid backup also throws:
+   an empty database must never be created over real data. */
+export function loadImageWithFallback(dbPath, { log = console.error, backupsDir = BACKUPS_DIR } = {}) {
+  if (!fs.existsSync(dbPath)) {
+    // A WAL with no main file cannot belong to anything that will be opened; keep it aside.
+    for (const suffix of ["-wal", "-shm"]) {
+      const f = dbPath + suffix;
+      if (fs.existsSync(f)) { try { fs.renameSync(f, `${dbPath}.orphan-${Date.now()}${suffix}`); } catch { /* */ } }
+    }
+  }
+  if (fs.existsSync(dbPath)) {
+    if (checkFile(dbPath) === "ok") return { restoredFrom: null, quarantined: false };
+    log(`[db] ❌ ${path.basename(dbPath)} failed the integrity check — attempting automatic restore from backups/`);
+  }
+  let candidates = [];
+  try {
+    candidates = listBackups(backupsDir, /^(medlab|pre-upgrade-r\d+)-.*\.db$/)
+      .slice(0, 5)
+      .map((x) => path.join(backupsDir, x.f));
+  } catch { /* no backups dir */ }
+  for (const cand of candidates) {
+    if (checkFileSafe(cand) !== "ok") {
+      log(`[db] backup ${path.basename(cand)} also fails validation; trying older…`);
+      continue;
+    }
+    let quarantined = false;
+    if (fs.existsSync(dbPath)) {
+      quarantineDatabaseFiles(dbPath);
+      quarantined = true;
+    }
+    const tmp = `${dbPath}.restore-${process.pid}`;
+    fs.copyFileSync(cand, tmp);
+    fs.renameSync(tmp, dbPath);
+    log(`[db] ✓ automatically restored database from backup ${path.basename(cand)}`);
+    return { restoredFrom: cand, quarantined };
+  }
+  if (fs.existsSync(dbPath)) {
+    throw new Error(`database_corrupt_no_valid_backup: ${dbPath} is damaged and no verified backup exists. The file was NOT modified. Restore it manually, then start again.`);
+  }
+  return { restoredFrom: null, quarantined: false };
+}
+// Moves the main file and its WAL/SHM sidecars aside. Nothing is deleted: a WAL
+// may hold committed pages that are still worth recovering by hand.
+function quarantineDatabaseFiles(dbPath) {
+  const stamp = Date.now();
+  for (const suffix of ["", "-wal", "-shm"]) {
+    const src = dbPath + suffix;
+    if (fs.existsSync(src)) {
+      try { fs.renameSync(src, `${dbPath}.corrupt-${stamp}${suffix}`); } catch { /* */ }
+    }
+  }
+}
+
+// Automatic snapshots are named medlab-<ISO timestamp>.db. Manual ones
+// (medlab-backup-*.db, admin route) have their own retention and are never pruned here.
+const AUTO_BACKUP_RE = /^medlab-\d{4}-\d{2}-\d{2}T[^/]*\.db$/;
+// Daily snapshot (at most one per 24 h unless forced) with retention of the newest 3.
+export function snapshotDb({ keep = 3, force = false } = {}) { return autoBackup(keep, force); }
+function autoBackup(keep = 3, force = false) {
+  if (!rawDb) return;
+  try { fs.mkdirSync(BACKUPS_DIR, { recursive: true, mode: 0o700 }); } catch { /* */ }
+  try {
+    const existing = listBackups(BACKUPS_DIR, AUTO_BACKUP_RE);
+    // On cPanel, Passenger restarts can be frequent. Back up at most daily so
+    // startup stays fast and small hosting disks are not filled by boot copies.
+    if (!force && existing[0] && Date.now() - existing[0].t < DAY_MS) return;
+  } catch { /* */ }
+  try {
+    createSnapshot(BACKUPS_DIR, "medlab");
+  } catch (e) {
+    console.error("[db] backup failed:", e?.message || e);
+    return;
+  }
+  pruneBackups(BACKUPS_DIR, AUTO_BACKUP_RE, keep);
+}
+
+/* Before the first R71 start on an existing database: keep a verified copy of
+   the sql.js-era file. If the snapshot fails, startup stops and nothing is
+   migrated. A brand-new database (no tables) has nothing to protect. */
+function snapshotBeforeUpgrade() {
+  const version = Number(rawDb.pragma("user_version", { simple: true })) || 0;
+  if (version >= DB_ENGINE_VERSION) return null;
+  const tables = Number(rawDb.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table'").get().n) || 0;
+  if (tables === 0) return null;
+  const file = createSnapshot(BACKUPS_DIR, `pre-upgrade-r${DB_ENGINE_VERSION}`);
+  pruneBackups(BACKUPS_DIR, /^pre-upgrade-r\d+-.*\.db$/, 5);
+  console.log(`[db] upgrade: verified snapshot saved to backups/${path.basename(file)} (user_version ${version} → ${DB_ENGINE_VERSION})`);
+  return file;
+}
+
+function markEngineVersion() {
+  rawDb.pragma(`user_version = ${DB_ENGINE_VERSION}`);
+}
+
+// Temp files left behind by the retired sql.js flush (medlab.db.tmp-<pid>).
+function cleanupLegacyTempFiles() {
+  try {
+    const dir = path.dirname(DB_PATH);
+    for (const f of fs.readdirSync(dir)) {
       if (f.startsWith(path.basename(DB_PATH) + ".tmp-")) {
-        const pid = Number(f.split("-").pop());
-        if (!pid || pid === process.pid || !isProcessAlive(pid)) {
-          try { fs.unlinkSync(path.join(path.dirname(DB_PATH), f)); } catch (_) {}
-        }
+        try { fs.unlinkSync(path.join(dir, f)); } catch { /* */ }
       }
     }
-  } catch (_) { /* best-effort */ }
-  loadFromDisk();
-  // Upgrade safety: snapshot the EXISTING database before any migrations run,
-  // so a bad upgrade can always be rolled back. No-op on a brand-new DB.
+  } catch { /* best-effort */ }
+}
+
+export async function initDb() {
+  if (rawDb) return;
+  ensureDataDirs();
+  cleanupLegacyTempFiles();
+  loadImageWithFallback(DB_PATH);       // validates; may restore; throws if unsafe
+  // Snapshot BEFORE the file is switched to WAL, so a failed upgrade leaves the
+  // original file exactly as it was. The probe connection is in rollback mode.
+  rawDb = new Database(DB_PATH, { timeout: BUSY_TIMEOUT_MS });
+  schemaReady = false;
+  try {
+    snapshotBeforeUpgrade();
+  } catch (e) {
+    closeDatabase();
+    throw new Error(`upgrade_snapshot_failed: ${e?.message || e}. Startup stopped; the database was not migrated.`);
+  }
+  try { configureConnection(rawDb); } catch (e) { closeDatabase(); throw e; }
   try { autoBackup(); } catch { /* best-effort, never block startup */ }
+  // A long-running process must also keep taking snapshots. autoBackup() itself
+  // keeps the 24 h cadence, so checking every 6 h is cheap.
+  if (!backupTimer) {
+    backupTimer = setInterval(() => { try { autoBackup(); } catch { /* */ } }, 6 * 60 * 60 * 1000);
+    if (backupTimer.unref) backupTimer.unref();
+  }
   for (const fn of readyHooks.splice(0)) {
     try { fn(); } catch (e) { console.error("[db] ready hook failed:", e && e.message ? e.message : e); }
   }
 }
 
-/* Copy the current medlab.db into DATA_DIR/backups with a timestamp, and keep
-   only the most recent backups. Runs once per server start (before migrations).
-   Skips when the DB file doesn't exist yet (first run) or is empty. */
-export function snapshotDb({ keep = 3, force = false } = {}) { return autoBackup(keep, force); }
-function autoBackup(keep = 3, force = false) {
-  if (!fs.existsSync(DB_PATH)) return;
-  const stat = fs.statSync(DB_PATH);
-  if (!stat.size) return;
-  const BACKUPS_DIR = path.join(path.dirname(DB_PATH), "backups");
-  try { fs.mkdirSync(BACKUPS_DIR, { recursive: true }); } catch { /* */ }
-  try {
-    const existing = fs.readdirSync(BACKUPS_DIR)
-      .filter((f) => /^medlab-.*\.db$/.test(f))
-      .map((f) => ({ f, t: fs.statSync(path.join(BACKUPS_DIR, f)).mtimeMs }))
-      .sort((a, b) => b.t - a.t);
-    // On cPanel, Passenger restarts can be frequent. Back up at most daily so
-    // startup stays fast and small hosting disks are not filled by boot copies.
-    // (force bypasses the cadence — used for the explicit post-seed snapshot.)
-    if (!force && existing[0] && Date.now() - existing[0].t < 24 * 60 * 60 * 1000) return;
-  } catch { /* */ }
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const dest = path.join(BACKUPS_DIR, `medlab-${stamp}.db`);
-  try { fs.copyFileSync(DB_PATH, dest); } catch { return; }
-  try {
-    const files = fs.readdirSync(BACKUPS_DIR)
-      .filter((f) => /^medlab-.*\.db$/.test(f))
-      .map((f) => ({ f, t: fs.statSync(path.join(BACKUPS_DIR, f)).mtimeMs }))
-      .sort((a, b) => b.t - a.t);
-    for (const { f } of files.slice(keep)) { try { fs.unlinkSync(path.join(BACKUPS_DIR, f)); } catch { /* */ } }
-  } catch { /* */ }
-}
-
-// Force-reload the database from disk (e.g. after a seed subprocess wrote it).
+// Re-open after another process changed the file (e.g. the seed child).
 export async function reloadDb() {
-  if (!SQL) SQL = await initSqlJs({ locateFile: () => wasmPath() });
-  if (rawDb) { try { rawDb.close(); } catch (e) { /* */ } rawDb = null; }
-  schemaReady = false;
-  loadFromDisk();
-}
-
-/* Try to open a database FILE and validate its structure. Returns a live
-   sql.js Database when healthy, or null when the bytes are definitively NOT a
-   healthy SQLite image (non-SQLite bytes, malformed pages, failed quick_check).
-   Any other failure (permission/IO error, allocation failure on a constrained
-   host, unexpected exception) is NOT corruption: it throws DbUnreadableError so
-   the caller stops and leaves the file untouched. Treating a transient read or
-   memory error as corruption used to quarantine the live database and roll
-   back to an older backup, or overwrite it with an empty database. */
-export class DbUnreadableError extends Error {
-  constructor(message) { super(message); this.name = "DbUnreadableError"; }
-}
-const SQLITE_FORMAT_ERR = /file is not a database|not a database|malformed/i;
-function tryOpenDbFile(file) {
-  let buf;
-  try { buf = fs.readFileSync(file); }
-  catch (e) { throw new DbUnreadableError(`database_unreadable: ${e.code || e.message}`); }
-  let db = null;
-  try {
-    db = new SQL.Database(buf);      // throws on non-SQLite bytes
-  } catch (e) {
-    buf = null;
-    if (SQLITE_FORMAT_ERR.test(String(e?.message || e))) return null;
-    throw new DbUnreadableError(`database_open_failed: ${e?.message || e}`);
-  }
-  buf = null;                        // release the Node-side copy promptly
-  let msg;
-  try {
-    const rows = db.exec("PRAGMA quick_check;");
-    msg = rows?.[0]?.values?.[0]?.[0];
-  } catch (e) {
-    try { db.close(); } catch (_) {}
-    if (SQLITE_FORMAT_ERR.test(String(e?.message || e))) return null;
-    throw new DbUnreadableError(`quick_check_failed: ${e?.message || e}`);
-  }
-  if (String(msg).trim().toLowerCase() !== "ok") {
-    try { db.close(); } catch (_) {}
-    return null;
-  }
-  return db;
-}
-// For backup candidates and recovery paths: any failure means "not usable".
-function tryOpenDbFileSafe(file) {
-  try { return tryOpenDbFile(file); } catch (_) { return null; }
-}
-
-/* Load a DB image with verified backup fallback. Returns
-   { db, restoredFrom, quarantined }. Only a DEFINITIVELY corrupt file is
-   replaced by a verified backup (and kept as .corrupt-* for forensics).
-   Unreadable files throw and are never touched. A corrupt file with no valid
-   backup also throws: starting an empty database over real data is refused. */
-export function loadImageWithFallback(dbPath, { log = console.error, backupsDir = BACKUPS_DIR } = {}) {
-  if (fs.existsSync(dbPath)) {
-    const ok = tryOpenDbFile(dbPath);   // may throw DbUnreadableError (file left as-is)
-    if (ok) return { db: ok, restoredFrom: null, quarantined: false };
-    log(`[db] ❌ ${path.basename(dbPath)} failed the integrity check — attempting automatic restore from backups/`);
-  }
-  // Look for recent verified backups (newest first).
-  let candidates = [];
-  try {
-    candidates = fs.readdirSync(backupsDir)
-      .filter((f) => /^medlab-.*\.db$/.test(f))
-      .map((f) => ({ f, t: fs.statSync(path.join(backupsDir, f)).mtimeMs }))
-      .sort((a, b) => b.t - a.t)
-      .map((x) => path.join(backupsDir, x.f));
-  } catch (_) { /* no backups dir */ }
-  for (const cand of candidates.slice(0, 3)) {
-    const restored = tryOpenDbFileSafe(cand);
-    if (restored) {
-      let quarantined = false;
-      if (fs.existsSync(dbPath)) {
-        // Keep the corrupt file for forensics — never silently destroy data.
-        try { fs.renameSync(dbPath, `${dbPath}.corrupt-${Date.now()}`); quarantined = true; } catch (_) {}
-      }
-      log(`[db] ✓ automatically restored database from backup ${path.basename(cand)}`);
-      return { db: restored, restoredFrom: cand, quarantined };
-    }
-    log(`[db] backup ${path.basename(cand)} also fails validation; trying older…`);
-  }
-  if (fs.existsSync(dbPath)) {
-    // Refuse to continue: an empty database must never be written over the existing file.
-    throw new Error(`database_corrupt_no_valid_backup: ${dbPath} is damaged and no verified backup exists. The file was NOT modified. Restore it manually, then start again.`);
-  }
-  return { db: null, restoredFrom: null, quarantined: false };
-}
-
-function loadFromDisk() {
-  // sql.js copies the image into its own WASM heap; the scoped buffer inside
-  // tryOpenDbFile releases the Node-side copy (~80 MB for a full question
-  // bank) promptly instead of lingering until the next major GC.
-  const res = loadImageWithFallback(DB_PATH);
-  if (res.db) {
-    rawDb = res.db;
-    if (res.restoredFrom) {
-      dirty = true;
-      persistNow({ force: true });    // write the restored image over the (quarantined) corrupt file
-    } else {
-      dirty = false;                  // in-memory image == file on disk
-    }
-  } else {
-    rawDb = new SQL.Database();
-    dirty = false;
-  }
-  rawDb.exec("PRAGMA foreign_keys = ON;");
+  closeDatabase();
+  await initDb();
 }
 
 export function initSchema() {
@@ -2514,9 +2460,8 @@ export function initSchema() {
     WHEN json_valid(NEW.data_json) AND json_extract(NEW.data_json,'$.track')='learn'
     BEGIN SELECT RAISE(ABORT, 'virtual_patient_university_only'); END;`);
 
-  persistNow();
+  markEngineVersion();
 }
 
-function isProcessAlive(pid) { try { process.kill(pid, 0); return true; } catch (_) { return false; } }
 
 export { persist, persistNow };

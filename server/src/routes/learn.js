@@ -1886,8 +1886,7 @@ r.get("/notes/:cardId", ...learner, flagGate("notes"), (req, res) => {
 r.put("/notes/:cardId", ...learner, flagGate("notes"), (req, res) => {
   const cardId = parseInt(req.params.cardId, 10);
   if (!Number.isInteger(cardId) || cardId <= 0) return res.status(400).json({ error: "invalid_card" });
-  // Free-text with a ceiling: the whole DB lives in memory (sql.js), so an
-  // unbounded note (body limit is 2 MB per request) is a cheap way to bloat it.
+  // Free-text with a ceiling: an unbounded note (body limit is 2 MB per request) is a cheap way to bloat it.
   const note = String(req.body?.note ?? "").slice(0, 5000);
   const highlight = req.body?.highlight ? 1 : 0;
   db.prepare(`INSERT INTO user_notes (user_id, card_id, note, highlight, updated_at)
