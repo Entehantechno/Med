@@ -1,7 +1,6 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
-import PasswordReset from "./pages/PasswordReset.jsx";
 import { AppProvider } from "./context.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 // Self-hosted fonts (bundled by Vite) — works offline / no external CDN:
@@ -22,7 +21,6 @@ import "./mobile-learn.css";
 import "./scroll-unlock.css";
 // R72 UI/UX pass (ui-ux-pro-max review): audit-driven fixes only. Loaded last.
 import "./ui-pro-max.css";
-import { initRum } from "./lib/rum.js";
 import { safeLocal } from "./lib/storage.js";
 import { initSwUpdate } from "./lib/sw-update.js";
 import { installKeyboardCssVars } from "./lib/keyboard-viewport.js";
@@ -38,19 +36,21 @@ try {
 } catch (_) { /* ignore */ }
 
 // R70: /reset-password is a standalone page (no app shell, no session needed).
+const PasswordReset = lazy(() => import("./pages/PasswordReset.jsx"));
 const RootScreen = typeof window !== "undefined" && window.location.pathname === "/reset-password" ? PasswordReset : App;
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <ErrorBoundary>
       <AppProvider>
-        <RootScreen />
+        <Suspense fallback={null}>
+          <RootScreen />
+        </Suspense>
       </AppProvider>
     </ErrorBoundary>
   </React.StrictMode>
 );
 
-initRum();
 // R54: publish --kb-top/--kb-h/--kb-inset + html.kb-up so every fixed/sticky
 // text surface (modal sheets, support chat, exam composer) clears the keyboard.
 installKeyboardCssVars();
@@ -59,6 +59,9 @@ const runWhenIdle = (fn, timeout = 3000) => {
   if ("requestIdleCallback" in window) window.requestIdleCallback(fn, { timeout });
   else window.setTimeout(fn, 1200);
 };
+
+// RUM is non-critical: load it only once the browser is idle (keeps it out of the entry bundle).
+runWhenIdle(() => { import("./lib/rum.js").then((m) => m.initRum()).catch(() => {}); });
 
 /* Register the service worker for PWA/offline shell + push (best-effort).
    It is intentionally delayed until after first paint/idle so it never competes

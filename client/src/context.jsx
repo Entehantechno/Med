@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
 import { I18N_LITE } from "./i18n-lite.js";
 import { api, getToken, setToken } from "./api.js";
-import { isSoundOn, setSoundOn } from "./lib/feedback.js";
+import { isSoundOn, setSoundOn } from "./lib/sound-pref.js";
 import { safeLocal, safeSession } from "./lib/storage.js";
 import { clearLessonCache } from "./lib/lesson-cache.js";
 

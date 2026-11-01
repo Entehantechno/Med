@@ -88,8 +88,14 @@ export function initRum() {
     } catch { return null; }
   };
 
+  // initRum runs when idle, which can be after the load event. Run load-time
+  // work immediately in that case so TTFB/FCP and the post-load flush still fire.
+  const whenLoaded = (fn) => (document.readyState === "complete"
+    ? fn()
+    : window.addEventListener("load", fn, { once: true }));
+
   // TTFB + FCP after the browser has populated navigation/paint entries.
-  window.addEventListener("load", () => {
+  whenLoaded(() => {
     setTimeout(() => {
       try {
         const nav = performance.getEntriesByType("navigation")[0];
@@ -98,7 +104,7 @@ export function initRum() {
         if (fcp) sendMetric("FCP", fcp.startTime);
       } catch { /* */ }
     }, 0);
-  }, { once: true });
+  });
 
   let lcp = null;
   po("largest-contentful-paint", (entries) => { lcp = entries[entries.length - 1] || lcp; });
@@ -128,5 +134,5 @@ export function initRum() {
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flush(); });
   window.addEventListener("pagehide", flush, { once: true });
   // Also send once shortly after load so short sessions are captured.
-  window.addEventListener("load", () => setTimeout(flush, 3500), { once: true });
+  whenLoaded(() => setTimeout(flush, 3500));
 }

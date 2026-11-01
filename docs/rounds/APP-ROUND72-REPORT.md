@@ -118,6 +118,22 @@
 
 **بودجه:** CSS کل ۶۵.۹۹۸ KB (سقف ۶۶ KB)؛ بدون تغییر نسبت به ۲ه.
 
+## ۲ز. مرحلهٔ ۲ز — کاهش JS ورودی (رفع شکست بودجه)
+
+**مشکل:** `npm run perf:budget` با خروجی 1 تمام می‌شد، چون JS ورودی ۲۷.۰۱ KB بود و سقف ۲۵ KB است. سقف‌ها تغییر نکردند.
+
+**تغییرات (بدون بالا بردن سقف):**
+- `PasswordReset` فقط روی `/reset-password` لود می‌شود (lazy).
+- کنترل صدا (`isSoundOn`/`setSoundOn`) به `lib/sound-pref.js` منتقل شد؛ موتور صوتی `feedback.js` دیگر در ورودی نیست.
+- RUM (`lib/rum.js`) بعد از idle لود می‌شود. `initRum` اگر بعد از رویداد load اجرا شود، هنوز TTFB/FCP و flush را ارسال می‌کند.
+- `vite.config.js`: `modulePreload` فقط React را برای HTML نگه می‌دارد. DOMPurify (حدود ۱۱ KB gz) دیگر روی صفحهٔ اول preload نمی‌شود.
+
+**نتیجه:** JS ورودی ۲۳.۴۳ KB (سقف ۲۵)؛ `perf:budget` پاس شد. CSS کل ۶۵.۹۹۸ KB (سقف ۶۶)، بدون تغییر.
+
+**تست:** vitest ۲۶ فایل و ۱۳۳ تست پاس؛ build بدون خطا؛ مرورگر: landing و `/reset-password` در ۳۷۵ پیکسل بدون خطای صفحه و بدون overflow افقی؛ Browse با آیکن‌های جدید بدون خطا.
+
+**یادداشت فونت:** `font-display: swap` از قبل در CSS فونت‌های fontsource وجود داشت (بررسی `dist`). نیازی به تغییر نیست.
+
 ## ۳. باقی‌مانده (برای دور بعد)
 
 - **حذف اموجی از صفحات دیگر:** `Admin.jsx` (۲۴۹)، `learn/Mindmap.jsx` (۹۴)، `admin/MindmapBankAdmin.jsx` (۷۱)، `learn/Lesson.jsx`، `MotionAd`، `PremiumBanner`، `Quests`، `DailyChallenge`.

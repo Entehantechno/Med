@@ -19,14 +19,8 @@
      buzz(pattern)  — navigator.vibrate wrapper (mobile only, best-effort)
 */
 
-const KEY = "medlab_sound";
-
-export function isSoundOn() {
-  try { return localStorage.getItem(KEY) !== "0"; } catch { return true; }
-}
-export function setSoundOn(on) {
-  try { localStorage.setItem(KEY, on ? "1" : "0"); } catch { /* */ }
-}
+import { isSoundOn, setSoundOn } from "./sound-pref.js";
+export { isSoundOn, setSoundOn };
 
 let _ctx = null;
 function ctx() {

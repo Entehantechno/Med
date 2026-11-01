@@ -34,6 +34,15 @@ export default defineConfig(({ command }) => ({
     // default minifier — fast and effective.
     minify: "esbuild",
     cssCodeSplit: true,
+    // First paint needs only React (and the entry). Keep lazy-route chunks such as
+    // DOMPurify out of the HTML <link rel="modulepreload"> list so visitors on slow
+    // links are not charged for code that a page may never use.
+    modulePreload: {
+      resolveDependencies(_filename, deps, { hostType }) {
+        if (hostType !== "html") return deps;
+        return deps.filter((d) => /\/react-vendor-/.test(d));
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks(id) {
