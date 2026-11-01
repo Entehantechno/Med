@@ -28,7 +28,9 @@ globalThis.fetch=async(url,init)=>{
  for(const [name,enc] of Object.entries(encoders)){
   const content=body.messages.reduce((n,m)=>n+enc.encode(m.content).length,0);
   const overhead=3+body.messages.reduce((n,m)=>n+3+enc.encode(m.role).length,0);
-  row.tokens[name]={inputContent:content,estimatedChatOverhead:overhead,input:content+overhead,output:enc.encode(sample).length};
+  // R69: the part of the input a multi-turn cache can reuse = everything before the final user turn.
+  const prefix=body.messages.slice(0,-1).reduce((n,m)=>n+enc.encode(m.content).length,0);
+  row.tokens[name]={inputContent:content,estimatedChatOverhead:overhead,input:content+overhead,output:enc.encode(sample).length,prefix};
  }
  active.calls.push(row);
  return {ok:true,status:200,json:async()=>({choices:[{message:{content:sample}}]})};
@@ -81,7 +83,7 @@ try{
   for(const row of active.calls){
    active.stageTotals[row.stage]||={requests:0,o200k_base:{input:0,output:0},cl100k_base:{input:0,output:0}};
    const dest=active.stageTotals[row.stage];dest.requests++;
-   for(const name of Object.keys(encoders))for(const side of ['input','output'])dest[name][side]+=row.tokens[name][side];
+   for(const name of Object.keys(encoders)){for(const side of ['input','output'])dest[name][side]+=row.tokens[name][side];dest[name].prefixInput=(dest[name].prefixInput||0)+row.tokens[name].prefix;}
   }
   active.total=Object.fromEntries(Object.keys(encoders).map(name=>[name,{input:active.calls.reduce((n,r)=>n+r.tokens[name].input,0),output:active.calls.reduce((n,r)=>n+r.tokens[name].output,0)}]));
  }

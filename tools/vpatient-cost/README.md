@@ -33,3 +33,6 @@ Do not set DATA_DIR to a production database directory. By default the meter iso
 - Raw traces/runtime data and dependencies are intentionally excluded from deployment archives; compact reproducible results and tool source are included.
 
 See `docs/vpatient-ai-cost-report-fa.md` for Persian analysis, official quota/pricing sources, test outcomes and unresolved clinical risks.
+
+## R69 addition
+- `stageTotals.<stage>.<tokenizer>.prefixInput` = input tokens that come before the final user turn. These are the tokens a multi-turn prompt cache can reuse. Cache discounts (write 1.25x, read 0.1–0.5x) are NOT counted in the meter; model them separately (see docs/rounds/APP-ROUND69-REPORT.md).

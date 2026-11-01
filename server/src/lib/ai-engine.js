@@ -4,6 +4,7 @@ export function replyLanguageInstruction(lang){return `Reply in the user's inter
    If an API key is configured (settings.ai.apiKey) the real provider
    is called; otherwise the deterministic mock engine is used.
    ================================================================ */
+import { recordAiUsage } from "./ai-usage.js";
 import { applyRubric, normalizeRubric } from "./grading-rubric.js";
 import { normalExamLine, normalStudyText } from "./normal-findings.js";
 import { routingSettings, effectiveRouting, routeCompletion, providerFailure } from "./ai-routing.js";
@@ -184,6 +185,11 @@ export function resolveAiConfig(stored = {}) {
   });
 }
 
+// R69: provider 400/422 texts that mean "the prompt itself is too big" (retrying cannot help)
+// and texts that mean "this model rejects the max_tokens parameter" (retry without it once).
+const CONTEXT_LIMIT_RE = /context[ _-]?(length|window)|maximum context|too many tokens|prompt is too long|input is too long|reduce the length|exceeds? the (model'?s )?(maximum|max|context)/i;
+const MAX_TOKENS_PARAM_RE = /max_tokens|max_completion_tokens|max_output_tokens/i;
+
 /* ---------------- REAL PROVIDER CALL ---------------- */
 // Uses OpenAI-compatible Chat Completions API (works for OpenAI, OpenRouter,
 // Groq, DeepSeek, Mistral, Together, Ollama, LM Studio, and many others).
@@ -225,6 +231,35 @@ async function callSingleLLM(aiCfg, messages, opts = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), opts.timeoutMs || 45_000);
 
+  // R69 token/cost controls (all OpenRouter-only except max_tokens):
+  //  • max_tokens: a per-stage output ceiling (opts.maxTokens). Normal replies are
+  //    far below it; it only stops a runaway/looping reply from being billed. It is
+  //    set GENEROUSLY on purpose: on OpenRouter the cap also counts reasoning tokens
+  //    of thinking models (e.g. Gemini 2.5), and a tight cap would return an empty
+  //    answer and drop the student to the mock engine.
+  //  • session_id: a hashed, opaque per-encounter key (opts.sessionKey) that keeps
+  //    one conversation on the same upstream provider so its prompt cache hits.
+  //  • cache_control: Anthropic-on-OpenRouter top-level automatic caching, only for
+  //    multi-turn patient calls (opts.promptCache). Writes cost 1.25x, reads 0.1x,
+  //    so single-shot scoring/lesson calls must NOT carry it.
+  const onOpenRouter = isOpenRouterCfg(aiCfg, base);
+  // Ops switch: VP_PROMPT_CACHE=0 turns the Anthropic marker off (a write costs 1.25x,
+  // so a patient who pauses over 5 minutes between turns makes caching a net loss).
+  const cacheableModel = onOpenRouter && /^anthropic\//i.test(model) && process.env.VP_PROMPT_CACHE !== "0";
+  const buildBody = (msgs, withJsonMode, withMaxTokens) => ({
+    model,
+    messages: msgs,
+    temperature: opts.temperature ?? 0.4,
+    // Prioritize speed only within explicitly free OpenRouter models. Paid
+    // provider ordering/pricing and the admin's model list are unchanged.
+    ...(onOpenRouter && (model.endsWith(":free") || model === "openrouter/free")
+      ? { provider: { sort: opts.workload === "evaluation" ? "throughput" : "latency" } } : {}),
+    ...(withJsonMode && opts.jsonMode ? { response_format: { type: "json_object" } } : {}),
+    ...(withMaxTokens && opts.maxTokens ? { max_tokens: Math.floor(opts.maxTokens) } : {}),
+    ...(onOpenRouter && opts.sessionKey ? { session_id: String(opts.sessionKey).slice(0, 256) } : {}),
+    ...(cacheableModel && opts.promptCache ? { cache_control: { type: "ephemeral" } } : {}),
+  });
+  let dropMaxTokens = false;   // set once a provider rejects the max_tokens parameter
   const doFetch = (targetUrl, withJsonMode, msgs) => fetch(targetUrl, {
     redirect: "error",
     method: "POST",
@@ -234,16 +269,7 @@ async function callSingleLLM(aiCfg, messages, opts = {}) {
       Authorization: `Bearer ${cleanApiKey}`,
       ...extraHeaders,
     },
-    body: JSON.stringify({
-      model,
-      messages: msgs,
-      temperature: opts.temperature ?? 0.4,
-      // Prioritize speed only within explicitly free OpenRouter models. Paid
-      // provider ordering/pricing and the admin's model list are unchanged.
-      ...(isOpenRouterCfg(aiCfg, base) && (model.endsWith(":free") || model === "openrouter/free")
-        ? { provider: { sort: opts.workload === "evaluation" ? "throughput" : "latency" } } : {}),
-      ...(withJsonMode && opts.jsonMode ? { response_format: { type: "json_object" } } : {}),
-    }),
+    body: JSON.stringify(buildBody(msgs, withJsonMode, !dropMaxTokens)),
   });
 
   // Convert system messages into a user message prefix if an upstream proxy rejects "role: system"
@@ -279,17 +305,36 @@ async function callSingleLLM(aiCfg, messages, opts = {}) {
       }
     }
 
+    // R69: read the 400/422 body (on a clone) before deciding to retry. Each retry
+    // resends the WHOLE prompt, so a retry that cannot succeed is pure cost:
+    //  • "context too long" → fail now, do not resend;
+    //  • "max_tokens not supported" → resend ONCE without the cap;
+    //  • otherwise keep the original fallbacks (json-mode off, system merged).
+    const isBadRequest = (r) => !r.ok && (r.status === 400 || r.status === 422);
+    // A failure to read the error body is never allowed to change the retry path.
+    const detailOf = async (r) => {
+      if (!isBadRequest(r)) return "";
+      try { return await (typeof r.clone === "function" ? r.clone() : r).text(); } catch { return ""; }
+    };
+    let detail = await detailOf(res);
+    if (isBadRequest(res) && opts.maxTokens && !CONTEXT_LIMIT_RE.test(detail) && MAX_TOKENS_PARAM_RE.test(detail)) {
+      dropMaxTokens = true;
+      try { res = await doFetch(curUrl, true, messages); } catch { /* keep original */ }
+      detail = await detailOf(res);
+    }
+
     // Providers that don't support response_format:json_object or fail when it's present:
     // Retry cleanly without response_format if jsonMode was enabled and request failed.
-    if (!res.ok && opts.jsonMode && (res.status === 400 || res.status === 422)) {
+    if (isBadRequest(res) && opts.jsonMode && !CONTEXT_LIMIT_RE.test(detail)) {
       try {
         const retryRes = await doFetch(curUrl, false, messages);
         res = retryRes; // Preserve terminal failures; never retry a stale 400/422.
       } catch { /* keep original */ }
+      detail = await detailOf(res);
     }
 
     // Some upstream proxies don't support role: "system" and return 400/422
-    if (!res.ok && (res.status === 400 || res.status === 422)) {
+    if (isBadRequest(res) && !CONTEXT_LIMIT_RE.test(detail)) {
       try {
         const retrySys = await doFetch(curUrl, false, mergeSystemMessage(messages));
         res = retrySys;
@@ -334,6 +379,10 @@ async function callSingleLLM(aiCfg, messages, opts = {}) {
     const msg = json.choices?.[0]?.message;
     if (msg?.refusal || json.choices?.[0]?.finish_reason === "content_filter") throw providerFailure(403);
     aiCfg.actualModel = String(json.model || model).slice(0, 200);
+    // R69: count-only usage meter (no prompt/reply text). Never throws.
+    if (opts.stage && json.usage) {
+      recordAiUsage({ stage: opts.stage, provider: aiCfg.provider, model: aiCfg.actualModel, usage: json.usage });
+    }
     // Only the final answer is safe to expose. Reasoning may contain hidden
     // chart facts or scratchpad text and is not a substitute for a completion.
     const content = msg?.content ?? json.choices?.[0]?.text;
@@ -368,12 +417,23 @@ export function sanitizeCaseForPatient(caseData) {
     // Expected differentials are the teacher's answer key — never let the
     // patient LLM recite them as if they were the patient's own words.
     ddx_fa, ddx_en,
+    // R69 leak fix: emergency cases stored the RESULTS as text (labs_fa "تروپونین بالا…",
+    // imaging_fa "ECG: صعود ST") and image labels ("ECG — ST elevation"). Those reached
+    // the patient prompt and let it recite the diagnosis. Lab/imaging answers come from
+    // the responder, which reads the full case (see labImagingResult), not this view.
+    labs_fa, labs_en, imaging_fa, imaging_en, images,
     ...safe
   } = caseData || {};
   // The patient may KNOW its own history/PMH/meds/allergies/family, but never
   // the final diagnosis, teaching objectives, exam findings, or raw
   // lab/imaging results.
-  return safe;
+  const out = { ...safe };
+  // Titles end with the diagnosis: "Chest Pain in a 58-Year-Old Man — Emergency (Acute
+  // Coronary Syndrome)". Keep only the presentation before the dash.
+  for (const k of ["title_fa", "title_en"]) {
+    if (typeof out[k] === "string") out[k] = out[k].split(/\s+[—–-]\s+/)[0].trim();
+  }
+  return out;
 }
 
 /* ---------------- (1c) EXAM-REQUEST DETECTION (teacher role) ----------------
@@ -885,7 +945,7 @@ async function patientReplyCore({ caseData, userText, history = [], lang, prompt
           msgs.push({ role: m.role === "student" ? "user" : "assistant", content: m.text });
         }
         msgs.push({ role: "user", content: userText });
-        const out = await callRealLLM(aiCfg, msgs, { temperature: 0.4 });
+        const out = await callRealLLM(aiCfg, msgs, { temperature: 0.4, stage: "teacher", maxTokens: 2048, sessionKey: opts.sessionKey });
         if (out) {
           const clean = redactDiagnosis(out.trim(), caseData, lang);
           // R65 output guard: a reply that volunteers another system falls back to
@@ -958,7 +1018,7 @@ async function patientReplyCore({ caseData, userText, history = [], lang, prompt
         msgs.push({ role: m.role === "student" ? "user" : "assistant", content: m.text });
       }
       msgs.push({ role: "user", content: userText });
-      const out = await callRealLLM(aiCfg, msgs, { temperature: 0.5 });
+      const out = await callRealLLM(aiCfg, msgs, { temperature: 0.5, stage: opts.stage || "patient", maxTokens: 2048, sessionKey: opts.sessionKey, promptCache: true });
       if (violatesPatientRole(out)) throw new Error("AI patient role violation");
       if (out && deflectsExamRequest(out)) {
         // The model deflected an exam request to nobody. Hand it to the attending.
@@ -1103,7 +1163,7 @@ export async function translateReportBundle({ bundle, from, to, aiCfg }) {
     out = await callRealLLM(aiCfg, [
       { role: "system", content: sys },
       { role: "user", content: JSON.stringify(bundle) },
-    ], { temperature: 0.1, jsonMode: true, workload: "evaluation", timeoutMs: 40_000, totalTimeoutMs: 45_000 });
+    ], { temperature: 0.1, jsonMode: true, workload: "evaluation", timeoutMs: 40_000, totalTimeoutMs: 45_000, stage: "translate" });
   } catch (e) {
     return { ok: false, reason: "ai_error", detail: String(e?.message || e).slice(0, 200) };
   }
@@ -1133,7 +1193,7 @@ export async function translateLessonBatch({ items, from, to, aiCfg }) {
     out = await callRealLLM(aiCfg, [
       { role: "system", content: sys },
       { role: "user", content: JSON.stringify(items) },
-    ], { temperature: 0.1, jsonMode: true, workload: "evaluation", timeoutMs: 40_000, totalTimeoutMs: 45_000 });
+    ], { temperature: 0.1, jsonMode: true, workload: "evaluation", timeoutMs: 40_000, totalTimeoutMs: 45_000, stage: "translate" });
   } catch (e) {
     return { ok: false, reason: "ai_error", detail: String(e?.message || e).slice(0, 200), results: {}, failed: ids };
   }
@@ -1164,7 +1224,7 @@ export async function translateNoteText({ text, from, to, aiCfg }) {
     out = await callRealLLM(aiCfg, [
       { role: "system", content: sys },
       { role: "user", content: String(text || "") },
-    ], { temperature: 0.1, workload: "evaluation", timeoutMs: 30_000, totalTimeoutMs: 35_000 });
+    ], { temperature: 0.1, workload: "evaluation", timeoutMs: 30_000, totalTimeoutMs: 35_000, stage: "translate" });
   } catch (e) {
     return { ok: false, reason: "ai_error", detail: String(e?.message || e).slice(0, 200) };
   }
@@ -1185,7 +1245,7 @@ export async function studyNote({ daysLeft, weakest, minutesPerDay, lang, aiCfg 
     const out = await callRealLLM(aiCfg, [
       { role: "system", content: sys },
       { role: "user", content: user },
-    ], { temperature: 0.6 });
+    ], { temperature: 0.6, stage: "study" });
     return out ? out.trim() : null;
   } catch (e) {
     return null; // fall back to template
@@ -1212,7 +1272,7 @@ export async function generateBlogDraft({ topic, lang = "fa", aiCfg } = {}) {
     const out = await callRealLLM(aiCfg, [
       { role: "system", content: sys },
       { role: "user", content: user },
-    ], { temperature: 0.6, jsonMode: true });
+    ], { temperature: 0.6, jsonMode: true, stage: "blog" });
     const parsed = parseLooseJson(out);
     if (!parsed || !parsed.body_markdown) return { ok: false, reason: "bad_output" };
     return {
@@ -1253,7 +1313,7 @@ export async function rewriteText({ text, mode = "improve", lang = "fa", aiCfg }
     const out = await callRealLLM(aiCfg, [
       { role: "system", content: sys },
       { role: "user", content: user },
-    ], { temperature: 0.5 });
+    ], { temperature: 0.5, stage: "rewrite" });
     const clean = String(out || "").trim().replace(/^["'`]+|["'`]+$/g, "");
     if (!clean) return { ok: false, reason: "bad_output" };
     return { ok: true, text: clean };
@@ -1709,7 +1769,7 @@ export async function scoreChecklistWithLLM({ base, caseData, checklist, session
     const out = await callRealLLM(aiCfg, [
       { role: "system", content: sys },
       { role: "user", content: user },
-    ], { temperature: 0.1, jsonMode: true, workload: "evaluation", timeoutMs: 40_000, totalTimeoutMs: 45_000 });
+    ], { temperature: 0.1, jsonMode: true, workload: "evaluation", timeoutMs: 40_000, totalTimeoutMs: 45_000, stage: "scoring", maxTokens: Math.min(8000, 2000 + 200 * items.length) });
     const parsed = parseLooseJson(out);
     const expectedIds = new Set(items.map(it => it.id));
     if (expectedIds.size !== items.length || !Array.isArray(parsed?.items)) {
@@ -1838,7 +1898,7 @@ export async function enrichEvaluationWithLLM({ base, caseData, session, lang, p
     const out = await callRealLLM(aiCfg, [
       { role: "system", content: governedSystem },
       { role: "user", content: user },
-    ], { temperature: 0.3, jsonMode: true, workload: "evaluation", timeoutMs: 40_000, totalTimeoutMs: 45_000 });
+    ], { temperature: 0.3, jsonMode: true, workload: "evaluation", timeoutMs: 40_000, totalTimeoutMs: 45_000, stage: "lesson", maxTokens: 8000 });
     const parsed = parseLooseJson(out);
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Invalid feedback response");
     for (const key of ["strengths", "weaknesses", "missed", "commonMistakes"]) {

@@ -1100,6 +1100,15 @@ r.get("/vpatient/ai", ...P("learn.settings"), async (req, res) => {
     res.status(500).json({ error: "vpatient_ai_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
 });
+/* R69: token/cache meter. Counts only (stage, provider, model, token numbers). Full-admin only. */
+r.get("/ai-usage", ...admin, async (req, res) => {
+  try {
+    const { aiUsageSummary } = await import("../lib/ai-usage.js");
+    res.json(aiUsageSummary({ days: req.query?.days }));
+  } catch (e) {
+    res.status(500).json({ error: "ai_usage_failed", message: String(e.message || e).slice(0, 200) });
+  }
+});
 r.put("/vpatient/ai", ...P("learn.settings"), async (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "admin only" });
   const { saveVpatientAi } = await import("../lib/vpatient.js");
@@ -1124,7 +1133,7 @@ r.post("/vpatient/ai-test", ...P("learn.settings"), async (req, res) => {
         : { chief_en: "chest pain", history_en: "pressure-like pain for an hour, radiating to left arm" },
       userText: lang === "fa" ? "سلام، چه مشکلی دارید؟" : "Hello, what brings you in today?",
       lang, prompts: getVpatientPromptsEffective(), aiCfg,
-    }, { throwOnError: true });   // surface the REAL provider error to the admin
+    }, { throwOnError: true, stage: "test" });   // surface the REAL provider error to the admin
     const ok = result.source === "llm";
     setVpatientAiConnected(ok);
     res.json({ connected: ok, mode: result.source, provider: aiCfg.lastRoute?.provider || aiCfg.provider || "", model: aiCfg.lastRoute?.model || aiCfg.model || "", route: aiCfg.lastRoute || null, sample: result.text || "" });

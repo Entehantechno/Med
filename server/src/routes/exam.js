@@ -6,6 +6,7 @@ import { acquireCompletion, completionBusy, publicEvaluation } from "../lib/vp-c
    All AI logic lives server-side; prompts pulled from DB.
    ================================================================ */
 import { Router } from "express";
+import { createHash } from "node:crypto";
 import { effectiveFlashNoPenalty, effectiveFlashAllowChange } from "../lib/orglimits.js";
 import { db, persistNow, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
@@ -226,6 +227,13 @@ function clampDuration(raw) {
   const n = Number(raw);
   if (!Number.isFinite(n) || n < 0) return 0;
   return Math.min(MAX_SESSION_SEC, Math.round(n));
+}
+
+/* R69: opaque, non-reversible key that pins one encounter to one upstream provider
+   (OpenRouter session_id → prompt-cache hits across turns). Hashed so no user id,
+   encounter id or case id is sent to the provider. */
+function encounterRouteKey(req, caseId) {
+  return createHash("sha256").update(`vp|${req.user?.id || ""}|${req.body?.sessionId || ""}|${caseId || ""}`).digest("hex").slice(0, 48);
 }
 
 const r = Router();
@@ -530,7 +538,7 @@ r.post("/patient-reply", authRequired, async (req, res) => {
     // decides the honorific («آقای دکتر» / «خانم دکتر» / «دکتر»).
     const seed = `${req.body?.sessionId || "none"}|${caseId}`;
     const result = await patientReply({ caseData, userText: text, history, lang, prompts, aiCfg },
-      { seed, student: db.prepare("SELECT name_fa, name_en FROM users WHERE id=?").get(req.user.id) || {} });
+      { seed, sessionKey: encounterRouteKey(req, caseId), student: db.prepare("SELECT name_fa, name_en FROM users WHERE id=?").get(req.user.id) || {} });
     if (!canDeliver()) return;
     if (!String(result?.text || "").trim()) {
       return res.status(502).json({ error: "empty_reply", stage: "chat" });
@@ -1105,7 +1113,7 @@ r.post("/ai-test", authRequired, requireRole("admin", "teacher"), async (req, re
         : { chief_en: "chest pain", history_en: "pressure-like pain for an hour, radiating to left arm" },
       userText: lang === "fa" ? "سلام، چه مشکلی دارید؟" : "Hello, what brings you in today?",
       lang, prompts: loadPrompts(), aiCfg,
-    }, { throwOnError: true });   // surface the REAL provider error to the admin
+    }, { throwOnError: true, stage: "test" });   // surface the REAL provider error to the admin
     const ok = result.source === "llm";
     const cur = getSetting("ai", {});
     db.prepare("UPDATE settings SET value=? WHERE key='ai'").run(JSON.stringify({ ...cur, connected: ok }));
