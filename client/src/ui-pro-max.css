@@ -11,8 +11,6 @@
 .lp-icon-btn,
 .pw-toggle,
 .login-modal-close {
-  min-width: 44px;
-  min-height: 44px;
   width: 44px;
   height: 44px;
   box-sizing: border-box;
@@ -20,18 +18,8 @@
 
 /* Inline text links inside forms (e.g. "forgot password?") get a 44px tap band
    without changing the text size: the padding is transparent. */
-.login-forgot {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-}
+.login-forgot{min-height:44px}
 
-/* 2. Numbers in stat cards use tabular figures so counters do not
-      shift width while they animate. */
-.stat-card .num,
-.stat-card .num * {
-  font-variant-numeric: tabular-nums;
-}
 
 /* 3. Header controls reach 44px tall (name, language, theme, logout). */
 .topbar .btn{min-height:44px}
@@ -40,6 +28,6 @@
    the inner side gives a 44px touch area. The global mobile rule
    (mobile-learn.css) forces buttons to 44px wide, so min-width is reset. */
 .support-fab.docked{min-width:0}
-.support-fab.docked::before{content:"";position:absolute;top:0;bottom:0;width:22px}
+.support-fab.docked::before{content:"";position:absolute;inset-block:0;width:22px}
 [dir=rtl] .support-fab.docked:not(.side-start)::before,[dir=ltr] .support-fab.docked.side-start::before{left:100%}
 [dir=ltr] .support-fab.docked:not(.side-start)::before,[dir=rtl] .support-fab.docked.side-start::before{right:100%}

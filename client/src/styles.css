@@ -1138,8 +1138,6 @@ th[style*="cursor: pointer"]:hover .dt-sort,th[style*="cursor:pointer"]:hover .d
 .trend-bar{width:70%;min-height:4px;background:var(--grad-primary);border-radius:8px 8px 0 0;position:relative;display:flex;justify-content:center;transition:height .3s}
 .trend-acc{position:absolute;top:-18px;font-size:.65rem;font-weight:800;color:var(--muted)}
 
-.weak-row{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--border)}
-.weak-row:last-child{border-bottom:none}
 .tag.danger{background:rgba(227,93,106,.16);color:var(--flame)}
 
 .note-body{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;white-space:pre-wrap}
@@ -1996,10 +1994,7 @@ th[style*="cursor: pointer"]:hover .dt-sort,th[style*="cursor:pointer"]:hover .d
   .learn-tabbar button.active{color:var(--primary);background:rgba(47,127,209,.08)}
   .learn-tabbar button svg{flex:none}
   .has-mobile-tabbar .learn-shell{padding-bottom:88px}
-  .has-mobile-tabbar .support-fab{bottom:calc(78px + env(safe-area-inset-bottom))}
   .has-mobile-tabbar .support-panel{bottom:calc(78px + env(safe-area-inset-bottom));max-height:calc(100vh - 160px)}
-  .has-mobile-tabbar .pwa-install{bottom:calc(86px + env(safe-area-inset-bottom))}
-  .has-mobile-tabbar .toast{bottom:calc(86px + env(safe-area-inset-bottom))}
   .lesson-cta{position:sticky;bottom:calc(68px + env(safe-area-inset-bottom));z-index:20;
     background:linear-gradient(180deg,transparent,var(--bg) 28%);padding-top:10px;padding-bottom:4px}
   .lesson-cta .btn{min-height:48px;font-size:1rem}
