@@ -3,6 +3,7 @@ import {sharedAcademic} from '../lib/academic-sharing.js';
 import { assignmentInput } from '../lib/assignment-input.js';
 import { validateCase, normalizeCaseAge } from "../lib/case-validation.js";
 import { routingSettings } from "../lib/ai-routing.js";
+import { openConfigSecrets, serializeSettings, maskConfigSecrets, isMaskedSecret, preserveMaskedKeys } from "../lib/secret-store.js";
 /* ================================================================
    content.js — Cases, flashcards, checklists, users, prompts,
    settings CRUD (with content versioning on cases & flashcards).
@@ -1441,21 +1442,21 @@ export function getSetting(key, fallback) {
   const cached = settingMemo.get(key);
   if (cached && cached.raw === row.value) return cached.value;
   try {
-    const parsed = JSON.parse(row.value);
+    const parsed = openConfigSecrets(JSON.parse(row.value));
     settingMemo.set(key, { raw: row.value, value: parsed });
     return parsed;
   } catch { settingMemo.delete(key); return fallback; }
 }
 export function setSetting(key, obj) {
   db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
-    .run(key, JSON.stringify(obj));
+    .run(key, serializeSettings(obj));
   persistNow();
   return obj;
 }
 function saveSettings(entries) {
   durableTransaction(() => {
     const up = db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value");
-    for (const [key, value] of entries) up.run(key, JSON.stringify(value));
+    for (const [key, value] of entries) up.run(key, serializeSettings(value));
   });
 }
 function isPersistenceError(error) {
@@ -1484,10 +1485,10 @@ r.get("/settings/:key", authRequired, (req, res) => {
   }
   if (key === "ai") {
     const raw = getSetting("ai", {});
-    return res.json({ ...resolveAiConfig({ ...raw, routingEnabled: false }), ...routingSettings(raw) });
+    return res.json(maskConfigSecrets({ ...resolveAiConfig({ ...raw, routingEnabled: false }), ...routingSettings(raw) }));
   }
   const s = getSetting(key, {});
-  res.json(s);
+  res.json(maskConfigSecrets(s));
   } catch (e) {
     res.status(500).json({ error: "settings_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
@@ -1502,7 +1503,7 @@ r.put("/settings/:key", authRequired, (req, res, next) => {
   if (key === "ai") {
     const prev = getSetting("ai", {}) || {};
     const incoming = body && typeof body === "object" ? body : {};
-    const keepKey = !incoming.clearApiKey && !String(incoming.apiKey || "").trim();
+    const keepKey = !incoming.clearApiKey && (!String(incoming.apiKey || "").trim() || isMaskedSecret(String(incoming.apiKey).trim()));
     body = {
       ...routingSettings(incoming, prev),
       provider: String(incoming.provider ?? prev.provider ?? "").trim(),
@@ -1513,7 +1514,7 @@ r.put("/settings/:key", authRequired, (req, res, next) => {
     };
   }
   saveSettings([[key, body]]);
-  res.json({ ok: true, ...(key === "vp_grading" ? body : {}) });
+  res.json({ ok: true, ...(key === "vp_grading" ? maskConfigSecrets(body) : {}) });
   } catch (e) {
     if (isPersistenceError(e)) return next(e);
     res.status(String(e.message).startsWith("AI routing:") ? 400 : 500).json({ error: "settings_save_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });

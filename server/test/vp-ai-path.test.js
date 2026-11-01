@@ -119,7 +119,11 @@ describe("admin AI settings + exam/ai-test", () => {
     expect(wipe.status).toBe(200);
     const got = await request(app).get("/api/settings/ai").set(A(tk));
     expect(got.status).toBe(200);
-    expect(got.body.apiKey).toBe("sk-keep-me");
+    // R70: the admin GET only ever shows the mask; the stored key must still be the original.
+    expect(got.body.apiKey).toBe("••••p-me");
+    expect(JSON.stringify(got.body)).not.toContain("sk-keep-me");
+    const { getSetting } = await import("../src/routes/content.js");
+    expect(getSetting("ai", {}).apiKey).toBe("sk-keep-me");
   });
 
   it("teachers can list providers (needed by the AI config dropdown)", async () => {

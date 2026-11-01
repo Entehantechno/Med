@@ -35,7 +35,9 @@ export async function sendVerificationEmail(to, token, lang = "fa") {
   const t = await getTransport();
   if (!t) {
     // no SMTP → log for the operator, signal not-sent so signup can proceed
-    console.log(`✉️  [dev] Email verification link for ${to}: ${link}`);
+    // R70: the link carries a live token. Print it only outside production.
+    if (process.env.NODE_ENV !== "production") console.log(`✉️  [dev] Email verification link for ${to}: ${link}`);
+    else console.log("✉️  verification e-mail not sent (SMTP not configured)");
     return { sent: false, link };
   }
   const fa = lang !== "en";
@@ -53,7 +55,37 @@ export async function sendVerificationEmail(to, token, lang = "fa") {
     await t.sendMail({ from: MAIL_FROM, to, subject, html });
     return { sent: true, link };
   } catch (e) {
-    console.log(`✉️  Email send failed (${e.message}); link: ${link}`);
+    console.log(`✉️  Email send failed (${e.message})`); // R70: no token in logs
     return { sent: false, link };
+  }
+}
+
+/* R70: password-reset e-mail. The link is valid for 30 minutes and single-use
+   (enforced by routes/auth.js). Returns { sent }. */
+export async function sendPasswordResetEmail(to, token, lang = "fa") {
+  const link = `${APP_URL}/reset-password?token=${encodeURIComponent(token)}`;
+  const t = await getTransport();
+  if (!t) {
+    if (process.env.NODE_ENV !== "production") console.log(`✉️  [dev] Password reset link for ${to}: ${link}`);
+    else console.log("✉️  password reset e-mail not sent (SMTP not configured)");
+    return { sent: false };
+  }
+  const fa = lang !== "en";
+  const subject = fa ? "بازیابی رمز عبور — MED School" : "Reset your password — MED School";
+  const html = fa
+    ? `<div dir="rtl" style="font-family:Tahoma,sans-serif"><h2>بازیابی رمز عبور</h2>
+       <p>برای تعیین رمز عبور جدید روی دکمه زیر بزنید. این لینک ۳۰ دقیقه اعتبار دارد و یک بار قابل استفاده است.</p>
+       <p><a href="${link}" style="background:#26527a;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none">تعیین رمز جدید</a></p>
+       <p style="color:#888;font-size:12px">اگر شما درخواست نداده‌اید، این ایمیل را نادیده بگیرید؛ رمز شما تغییر نمی‌کند.</p></div>`
+    : `<div style="font-family:sans-serif"><h2>Reset your password</h2>
+       <p>Click below to choose a new password. The link expires in 30 minutes and works once.</p>
+       <p><a href="${link}" style="background:#26527a;color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none">Choose a new password</a></p>
+       <p style="color:#888;font-size:12px">If you did not ask for this, ignore this e-mail; your password will not change.</p></div>`;
+  try {
+    await t.sendMail({ from: MAIL_FROM, to, subject, html });
+    return { sent: true };
+  } catch (e) {
+    console.log(`✉️  Password reset e-mail failed (${e.message})`);
+    return { sent: false };
   }
 }

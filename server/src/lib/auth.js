@@ -4,6 +4,7 @@
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { db } from "../db.js";
+import { secureCookies } from "./hardening.js";
 
 // JWT signing secret. In production a strong secret MUST be provided; falling
 // back to a public default would let anyone forge tokens. We refuse to boot
@@ -23,18 +24,22 @@ if (process.env.NODE_ENV === "production" && (!process.env.JWT_SECRET || WEAK_SE
 export const JWT_ISS = "medschool";
 export const JWT_AUD = "medschool-api";
 
-export function signToken(user) {
+export function signToken(user, opts = {}) {
+  const payload = {
+    id: user.id,
+    role: user.role,
+    username: user.username,
+    university_id: user.university_id ?? null,
+    ver: Number(user.token_ver) || 1,
+    jti: crypto.randomBytes(16).toString("hex"),
+  };
+  // R70: impersonation tokens name the administrator who issued them (`imp`)
+  // so every action taken through them is traceable.
+  if (opts.actorId) payload.imp = Number(opts.actorId);
   return jwt.sign(
-    {
-      id: user.id,
-      role: user.role,
-      username: user.username,
-      university_id: user.university_id ?? null,
-      ver: Number(user.token_ver) || 1,
-      jti: crypto.randomBytes(16).toString("hex"),
-    },
+    payload,
     SECRET,
-    { expiresIn: "12h", algorithm: "HS256", issuer: JWT_ISS, audience: JWT_AUD }
+    { expiresIn: opts.expiresIn || "12h", algorithm: "HS256", issuer: JWT_ISS, audience: JWT_AUD }
   );
 }
 
@@ -98,7 +103,7 @@ export function verifiedUserIdFromRequest(req) {
 }
 
 export function setAuthCookie(res, token) {
-  const secure = process.env.NODE_ENV === "production";
+  const secure = secureCookies(); // R70: Secure whenever the site is HTTPS-only
   res.cookie("medlab_token", token, {
     httpOnly: true,
     secure,
@@ -108,7 +113,7 @@ export function setAuthCookie(res, token) {
   });
 }
 export function clearAuthCookie(res) {
-  res.clearCookie("medlab_token", { path: "/", sameSite: "lax", secure: process.env.NODE_ENV === "production" });
+  res.clearCookie("medlab_token", { path: "/", sameSite: "lax", secure: secureCookies() });
 }
 
 function attachUser(token) {

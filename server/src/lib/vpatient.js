@@ -1,3 +1,4 @@
+import { openConfigSecrets, serializeSettings, isMaskedSecret } from "./secret-store.js";
 import { routingSettings } from "./ai-routing.js";
 /* vpatient.js — Virtual Patient for the COMPETITIVE (learner) side.
 
@@ -195,7 +196,7 @@ const PROMPT_KEYS = [
 
 function readJson(key, fallback) {
   const row = db.prepare("SELECT value FROM settings WHERE key=?").get(key);
-  try { return row ? JSON.parse(row.value) : fallback; } catch { return fallback; }
+  try { return row ? openConfigSecrets(JSON.parse(row.value)) : fallback; } catch { return fallback; }
 }
 
 /* The RAW separate AI config (what the admin typed; may have empty fields). */
@@ -224,7 +225,8 @@ export function getVpatientAiEffective() {
 
 export function saveVpatientAi(input) {
   const prev = getVpatientAiRaw();
-  const keepKey = !input?.clearApiKey && !String(input?.apiKey || "").trim();
+  const incomingKey = String(input?.apiKey || "").trim();
+  const keepKey = !input?.clearApiKey && (!incomingKey || isMaskedSecret(incomingKey));
   const cfg = {
     ...routingSettings(input, prev),
     provider: String(input?.provider || "").trim(),
@@ -234,7 +236,7 @@ export function saveVpatientAi(input) {
     connected: false,
   };
   db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
-    .run(AI_KEY, JSON.stringify(cfg));
+    .run(AI_KEY, serializeSettings(cfg));
   persistNow();
   return cfg;
 }

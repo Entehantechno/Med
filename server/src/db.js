@@ -1082,6 +1082,18 @@ export function initSchema() {
     created_at TEXT DEFAULT (datetime('now'))
   );
 
+  -- R70: password-reset links. Only a SHA-256 of the token is stored; a link
+  -- expires after 30 minutes and is single-use (used_at).
+  CREATE TABLE IF NOT EXISTS password_resets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE,
+    created_at TEXT DEFAULT (datetime('now')),
+    expires_at TEXT NOT NULL,
+    used_at TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets(user_id);
+
   /* =====================================================================
      NEW DUOLINGO-2026 GAMIFICATION & AD MECHANICS
      ===================================================================== */

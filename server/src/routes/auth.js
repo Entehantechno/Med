@@ -5,7 +5,7 @@ import { db, persistNow } from "../db.js";
 import { signToken, authRequired, authOptional, setAuthCookie, clearAuthCookie, bumpTokenVer, revokeJti } from "../lib/auth.js";
 import { permsFor } from "../lib/rbac.js";
 import { isEnabled } from "../lib/flags.js";
-import { sendVerificationEmail, mailConfigured, APP_URL } from "../lib/mailer.js";
+import { sendVerificationEmail, sendPasswordResetEmail, mailConfigured, APP_URL } from "../lib/mailer.js";
 import { verifyGoogleToken, googleConfigured, googleClientId } from "../lib/google.js";
 import { passwordPwned } from "../lib/security.js";
 import { hashPassword, verifyPassword, needsRehash } from "../lib/password.js";
@@ -126,6 +126,13 @@ async function loginRoute(req, res) {
 }
 // Express 4 does not catch promise rejections: an uncaught error here used to
 // crash the whole server process. Answer 500 instead and keep serving everyone.
+// R70: an impersonation session (admin "view as user", 30 min) may read and use the
+// account, but may not change credentials, profile identity, or sign out other sessions.
+function noImpersonation(req, res, next) {
+  if (req.user && req.user.imp) return res.status(403).json({ error: "impersonation_forbidden" });
+  next();
+}
+
 r.post("/login", validateBody(loginSchema), (req, res) => {
   loginRoute(req, res).catch((e) => {
     console.error("[auth] login failed:", e?.stack || e);
@@ -204,11 +211,62 @@ r.get("/verify", (req, res) => {
   // issued before this hardening still verify once.
   const row = db.prepare("SELECT * FROM email_verifications WHERE token=?").get(hashed)
     || db.prepare("SELECT * FROM email_verifications WHERE token=?").get(raw);
-  if (!row) return res.status(400).send("<h3>لینک نامعتبر یا منقضی است / Invalid or expired link</h3>");
+  // R70: verification links expire after 48 hours (they previously never expired).
+  const fresh = row && db.prepare("SELECT 1 AS ok WHERE datetime(?) >= datetime('now','-48 hours')").get(row.created_at);
+  if (!row || !fresh) return res.status(400).send("<h3>لینک نامعتبر یا منقضی است / Invalid or expired link</h3>");
   db.prepare("UPDATE users SET email_verified=1 WHERE id=?").run(row.user_id);
   db.prepare("DELETE FROM email_verifications WHERE user_id=?").run(row.user_id);
   persistNow();
   res.redirect("/?verified=1");
+});
+
+/* ---------- R70: password reset (forgot → e-mail link → reset) ----------
+   • /forgot always answers the same way, so it cannot be used to discover
+     which e-mails or usernames exist.
+   • The link token is 32 random bytes; only its SHA-256 is stored.
+   • A link expires after 30 minutes and works once. Requesting a new link
+     invalidates the older ones. A successful reset signs out every session. */
+const RESET_TTL_MINUTES = 30;
+const RESET_GENERIC = { ok: true, message: "If an account matches, a reset link has been sent." };
+const resetHash = (raw) => crypto.createHash("sha256").update(String(raw)).digest("hex");
+
+r.post("/forgot", async (req, res) => {
+  const ident = String(req.body?.email || req.body?.username || "").trim().toLowerCase().slice(0, 200);
+  if (!ident) return res.json(RESET_GENERIC);
+  const u = db.prepare("SELECT id, email, status FROM users WHERE (lower(email)=? OR lower(username)=?) AND email IS NOT NULL LIMIT 1").get(ident, ident);
+  if (u && u.email && String(u.status || "active") === "active") {
+    db.prepare("DELETE FROM password_resets WHERE user_id=? AND used_at IS NULL").run(u.id);
+    const raw = crypto.randomBytes(32).toString("base64url");
+    db.prepare("INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?,?, datetime('now', ?))")
+      .run(u.id, resetHash(raw), `+${RESET_TTL_MINUTES} minutes`);
+    persistNow();
+    const lang = req.body?.lang === "en" ? "en" : "fa";
+    sendPasswordResetEmail(u.email, raw, lang).catch(() => {});
+  }
+  return res.json(RESET_GENERIC);
+});
+
+r.post("/reset", async (req, res, next) => {
+  try {
+    const raw = String(req.body?.token || "").slice(0, 200);
+    const newPassword = req.body?.password ?? req.body?.newPassword;
+    if (!raw) return res.status(400).json({ error: "invalid_or_expired_token" });
+    const row = db.prepare("SELECT * FROM password_resets WHERE token_hash=? AND used_at IS NULL AND datetime(expires_at) > datetime('now')").get(resetHash(raw));
+    if (!row) return res.status(400).json({ error: "invalid_or_expired_token" });
+    const rejected = passwordRejected(newPassword);
+    if (rejected) return res.status(400).json(passwordErrorBody(rejected));
+    if (await passwordPwned(toAsciiDigits(String(newPassword)))) return res.status(400).json({ error: "weak password" });
+    const newHash = await hashPassword(toAsciiDigits(String(newPassword)).slice(0, MAX_PASSWORD));
+    // Claim the link atomically before changing the password, so two parallel
+    // submissions of the same link cannot both succeed.
+    const claim = db.prepare("UPDATE password_resets SET used_at=datetime('now') WHERE id=? AND used_at IS NULL").run(row.id);
+    if (!claim.changes) return res.status(400).json({ error: "invalid_or_expired_token" });
+    const nextVer = bumpTokenVer(row.user_id);
+    db.prepare("UPDATE users SET password_hash=?, token_ver=?, email_verified=1 WHERE id=?").run(newHash, nextVer, row.user_id);
+    db.prepare("DELETE FROM password_resets WHERE user_id=? AND used_at IS NULL").run(row.user_id);
+    persistNow();
+    res.json({ ok: true });
+  } catch (e) { next(e); }
 });
 
 // Google Sign-In: verify the ID token, then log in or create a learner account.
@@ -263,7 +321,7 @@ r.post("/logout", authOptional, (req, res) => {
 
 // ASVS 3.3.4 — terminate every other device after re-auth is not required here
 // because the caller already holds a live session; bumping token_ver kills all JWTs.
-r.post("/logout-all", authRequired, (req, res) => {
+r.post("/logout-all", authRequired, noImpersonation, (req, res) => {
   if (req.user?.jti) revokeJti(req.user.jti, req.user.id, req.user.exp);
   bumpTokenVer(req.user.id);
   clearAuthCookie(res);
@@ -286,7 +344,7 @@ r.get("/me", authRequired, (req, res) => {
 // Self-service profile edit: optional fields + identity-display preferences.
 // Users can set a nickname and toggle anonymous mode (show nickname instead of
 // real name in rankings/competition). Real name is the default (anon_mode=0).
-r.put("/me", authRequired, (req, res) => {
+r.put("/me", authRequired, noImpersonation, (req, res) => {
   const u = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
   if (!u) return res.status(404).json({ error: "not found" });
   const b = req.body || {};
@@ -315,7 +373,7 @@ const changePwSchema = {
   currentPassword: s.str({ min: 1, max: 128, trim: false }),
   newPassword: s.str({ min: 1, max: 128, trim: false }),
 };
-r.put("/password", authRequired, validateBody(changePwSchema), async (req, res, next) => {
+r.put("/password", authRequired, noImpersonation, validateBody(changePwSchema), async (req, res, next) => {
   try {
     const { currentPassword, newPassword } = req.body || {};
     const rejected = passwordRejected(newPassword);

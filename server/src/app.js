@@ -37,7 +37,7 @@ import questionnaireRoutes from "./routes/questionnaires.js";
 import tutorRoutes from "./routes/tutor.js";
 import researchRoutes from "./routes/research.js";
 import { authRequired, authOptional } from "./lib/auth.js";
-import { buildHelmet, permissionsPolicy, apiLimiter, authLimiter, errorHandler, jsonReviver } from "./lib/security.js";
+import { buildHelmet, permissionsPolicy, apiLimiter, authLimiter, forgotLimiter, errorHandler, jsonReviver } from "./lib/security.js";
 import { ensureFlags } from "./lib/flags.js";
 import { setRolePermOverrides } from "./lib/rbac.js";
 import { db as _db } from "./db.js";
@@ -45,6 +45,7 @@ import { hostAliases } from "./lib/publicurl.js";
 import { renderMetaTags, routeNameForPath, renderBlogPostMeta, renderRobotsTxt, renderSitemapXml } from "./lib/seo.js";
 import { pwaClientConfig, recordPwaEvent } from "./lib/pwa.js";
 import { renderAssetLinks } from "./lib/twa.js";
+import { httpsRedirect, adminIpAllowlist } from "./lib/hardening.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -136,9 +137,12 @@ function recordSuspiciousInput(req, hit) {
 }
 function recordSecurityEvent(req, res) {
   const kind = securityKind(res.statusCode);
-  if (!kind || !req.path.startsWith("/api")) return;
+  // R70: req.path is relative inside sub-routers (e.g. "/login" under /api/auth),
+  // so the test must use the full URL; otherwise login failures were never logged.
+  const full = String(req.originalUrl || req.url || "").split("?")[0];
+  if (!kind || !full.startsWith("/api")) return;
   // Avoid noisy logging of monitoring itself unless it is being rate-limited.
-  if (req.path.startsWith("/api/rum") && kind !== "rate_limited") return;
+  if (full.startsWith("/api/rum") && kind !== "rate_limited") return;
   try {
     _db.prepare(`INSERT INTO security_events (user_id, kind, status, method, path, ip, user_agent, detail)
       VALUES (?,?,?,?,?,?,?,?)`).run(
@@ -192,6 +196,10 @@ function recordRumMetric(req, body) {
 
 export function createApp() {
   const app = express();
+  // R70: force HTTPS in production (FORCE_HTTPS=1 to force elsewhere, =0 to
+  // disable). Behind a proxy the client's scheme comes from X-Forwarded-Proto
+  // (trust proxy below). /api/health stays plain so uptime monitors work.
+  app.use(httpsRedirect());
   // Behind a reverse proxy (Caddy/Nginx) so req.protocol / secure cookies and
   // the express-rate-limit key use the REAL client address. The proxy hop
   // count is deployment-specific (one proxy = 1; behind Cloudflare+proxy = 2;
@@ -328,6 +336,13 @@ export function createApp() {
     for (const o of corsOrigins) {
       try { allowedHosts.add(new URL(o).hostname.toLowerCase()); } catch { /* */ }
     }
+    // R70: Fetch Metadata. A cookie-authenticated request that the browser marks
+    // as cross-site (or same-site from a sibling subdomain) is refused even if
+    // Origin was stripped by a privacy extension.
+    const fetchSite = String(req.headers["sec-fetch-site"] || "").toLowerCase();
+    if ((fetchSite === "cross-site" || fetchSite === "same-site") && !hasBearer) {
+      return res.status(403).json({ error: "bad_origin" });
+    }
     if (!src) {
       // Cookie-only browser posts without Origin/Referer are classic CSRF.
       // Bearer API clients and the test suite are allowed through.
@@ -355,6 +370,8 @@ export function createApp() {
   app.use("/api/auth/password", authLimiter());
   app.use("/api/auth/google", authLimiter());
   app.use("/api/auth/logout-all", authLimiter());
+  app.use("/api/auth/forgot", forgotLimiter()); // R70: password-reset request (every call counts)
+  app.use("/api/auth/reset", authLimiter());    // R70: password-reset submit
 
   app.get("/api/health", (req, res) => res.json({ ok: true, time: new Date().toISOString() }));
 
@@ -431,7 +448,7 @@ export function createApp() {
   app.use("/api/learn", learnRoutes);
   app.use("/api/challenge", challengeRoutes);
   app.use("/api/ads", adsAdminRoutes);
-  app.use("/api/admin", adminRoutes);
+  app.use("/api/admin", adminIpAllowlist(), adminRoutes);
   app.use("/api/universities", universityRoutes);
   app.use("/api/site-content", siteContentRoutes);
   app.use("/api/pay", paymentRoutes);

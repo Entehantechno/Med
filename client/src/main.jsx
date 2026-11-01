@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
+import PasswordReset from "./pages/PasswordReset.jsx";
 import { AppProvider } from "./context.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 // Self-hosted fonts (bundled by Vite) — works offline / no external CDN:
@@ -34,11 +35,14 @@ try {
   document.documentElement.setAttribute("data-theme", th);
 } catch (_) { /* ignore */ }
 
+// R70: /reset-password is a standalone page (no app shell, no session needed).
+const RootScreen = typeof window !== "undefined" && window.location.pathname === "/reset-password" ? PasswordReset : App;
+
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <ErrorBoundary>
       <AppProvider>
-        <App />
+        <RootScreen />
       </AppProvider>
     </ErrorBoundary>
   </React.StrictMode>

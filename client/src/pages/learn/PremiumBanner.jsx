@@ -1,3 +1,4 @@
+import { sanitizeHtml } from "../../lib/safe-html.js";
 import { useApp } from "../../context.jsx";
 import { useEffect, useState } from "react";
 import { api } from "../../api.js";
@@ -166,7 +167,7 @@ export function PremiumBanner({ variant = "inline", onGhost, priceNote, offNote 
         <div className="premium-banner__text">
           <span className="premium-banner__kicker">{c.kicker}</span>
           {/* title contains <em> for gradient accent */}
-          <h4 className="premium-banner__title" dangerouslySetInnerHTML={{ __html: c.title }} />
+          <h4 className="premium-banner__title" dangerouslySetInnerHTML={{ __html: sanitizeHtml(c.title) }} />
           <p className="premium-banner__body">{c.body}</p>
 
           {c.pills?.length > 0 && (

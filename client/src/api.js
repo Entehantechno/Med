@@ -110,5 +110,6 @@ export const api = {
   login: (username, password) => req("POST", "/auth/login", { username, password }),
   register: (payload) => req("POST", "/auth/register", payload),
   me: () => req("GET", "/auth/me"),
-  csvUrl: () => `/api/reports/export.csv?token=${getToken()}`,
+  // R70: no token in the URL (URLs end up in logs and history). The session cookie is sent for this same-origin link.
+  csvUrl: () => `/api/reports/export.csv`,
 };

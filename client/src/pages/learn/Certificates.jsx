@@ -1,3 +1,4 @@
+import { sanitizeHtml } from "../../lib/safe-html.js";
 import { useState, useEffect } from "react";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
@@ -102,7 +103,7 @@ function QrBox({ serial, size = 96 }) {
   const c = size / cells;
   for (let y = 0; y < cells; y++) for (let x = 0; x < cells; x++) if (on(x, y)) rects.push(`<rect x="${(x * c).toFixed(1)}" y="${(y * c).toFixed(1)}" width="${c.toFixed(1)}" height="${c.toFixed(1)}" fill="#0f1730"/>`);
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><rect width="${size}" height="${size}" fill="#fff"/>${rects.join("")}</svg>`;
-  return <div className="cert-qr" title={verifyUrl(serial)} dangerouslySetInnerHTML={{ __html: svg }} />;
+  return <div className="cert-qr" title={verifyUrl(serial)} dangerouslySetInnerHTML={{ __html: sanitizeHtml(svg, { svg: true }) }} />;
 }
 
 function CertificateView({ cert, onBack }) {

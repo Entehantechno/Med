@@ -13,6 +13,8 @@ export default defineConfig({
     environment: "node",
     include: ["test/**/*.test.js"],
     testTimeout: 20000,
+    // R70: the seed (`seed.js --force`) takes ~9-10 s on a slow box; the default 10 s hook timeout was flaky.
+    hookTimeout: 60000,
     fileParallelism: false, // shared SQLite/app
     // The suite fires many requests from one "IP"; disable rate limiting by
     // default. The dedicated security test flips this env per-request to verify

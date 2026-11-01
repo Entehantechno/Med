@@ -1,3 +1,4 @@
+import { isMaskedSecret } from './secret-store.js';
 import { createHash } from 'node:crypto';
 
 // Process-local circuit breakers. No keys, prompts or provider error bodies in diagnostics.
@@ -24,7 +25,9 @@ export function routingSettings(input = {}, previous = {}) {
     boolean(r.clearApiKey, 'clearApiKey');
     const old = (previous.routes || []).find(x => x.id === id);
     const sameDestination = old && text(r.provider, 80) === text(old.provider, 80) && text(r.baseUrl) === text(old.baseUrl);
-    const incomingKey = text(r.apiKey, 4096);
+    const rawKey = text(r.apiKey, 4096);
+    // A masked value ("••••abcd") from the admin UI means "keep the stored key".
+    const incomingKey = isMaskedSecret(rawKey) ? '' : rawKey;
     const apiKey = r.clearApiKey ? '' : (incomingKey || (sameDestination ? text(old.apiKey, 4096) : ''));
 
     const cooldown = Number(r.cooldownSeconds ?? 60);

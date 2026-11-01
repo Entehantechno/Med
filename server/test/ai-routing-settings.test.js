@@ -1,3 +1,4 @@
+import { getSetting } from '../src/routes/content.js';
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
 import { execSync } from 'node:child_process';
 import request from 'supertest';
@@ -19,11 +20,11 @@ describe('AI routing configuration API',()=>{
   it(`persists order and keys with explicit per-row clear at ${path}`,async()=>{
    expect((await request(app).put(path).set(auth(admin)).send(config())).status).toBe(200);
    const get=await request(app).get(path).set(auth(admin));const saved=get.body.config||get.body;
-   expect(saved.routes.map(r=>r.id)).toEqual(['free','paid']);expect(saved.apiKey).toBe('synthetic-legacy');
+   expect(saved.routes.map(r=>r.id)).toEqual(['free','paid']);expect(saved.apiKey).toBe('••••gacy');expect(getSetting('ai',{}).apiKey).toBe('synthetic-legacy');
    const edited={...saved,routes:[{...saved.routes[1],apiKey:''},{...saved.routes[0],apiKey:'',clearApiKey:true}]};
    expect((await request(app).put(path).set(auth(admin)).send(edited)).status).toBe(200);
    const r=await request(app).get(path).set(auth(admin));const c=r.body.config||r.body;
-   expect(c.routes.map(r=>r.apiKey)).toEqual(['synthetic-paid','']);
+   expect(c.routes.map(r=>r.apiKey)).toEqual(['••••paid','']);expect(getSetting('ai',{}).routes.find(x=>x.id==='paid').apiKey).toBe('synthetic-paid');
    const invalid={...c,routes:[route('same'),route('same')]};expect((await request(app).put(path).set(auth(admin)).send(invalid)).status).toBe(400);
   });
   it(`rejects malformed activation without changing saved configuration at ${path}`,async()=>{
@@ -34,7 +35,7 @@ describe('AI routing configuration API',()=>{
     {...config(),routes:null},
    ]) expect((await request(app).put(path).set(auth(admin)).send(invalid)).status).toBe(400);
    const r=await request(app).get(path).set(auth(admin));
-   expect((r.body.config||r.body).routes[0].apiKey).toBe('synthetic-free');
+   expect((r.body.config||r.body).routes[0].apiKey).toBe('••••free');expect(getSetting('ai',{}).routes[0].apiKey).toBe('synthetic-free');
   });
   it(`invalidates old connection success after editing settings at ${path}`,async()=>{
    const key=path.includes('vpatient')?'ai_vpatient':'ai';

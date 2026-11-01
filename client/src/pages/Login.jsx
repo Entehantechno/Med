@@ -201,7 +201,7 @@ export default function Login({ initialMode = "login", onBackHome, asModal = fal
                 {mode === "login" && (
                   <div className="small mt8" style={{ textAlign: "end" }}>
                     <button type="button" className="btn btn-ghost btn-sm" style={{ padding: "2px 6px", fontSize: ".82rem" }}
-                      onClick={() => window.dispatchEvent(new CustomEvent("medlab-toast", { detail: fa ? "برای بازیابی رمز با مدیر (پشتیبانی) تماس بگیرید." : "Contact support to reset your password." }))}>
+                      onClick={() => window.location.assign("/reset-password")}>
                       {fa ? "فراموشی رمز؟" : "Forgot password?"}
                     </button>
                   </div>

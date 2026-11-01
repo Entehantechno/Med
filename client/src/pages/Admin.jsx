@@ -1,4 +1,5 @@
 import UniversitySelect from '../components/UniversitySelect.jsx';
+import { sanitizeHtml } from "../lib/safe-html.js";
 import {sortUniversities,matchesUniversity} from '../lib/university-order.js';
 import StepwiseEditor from '../components/StepwiseEditor.jsx';
 import {normalizeStep} from '../lib/step-authoring.js';
@@ -7648,7 +7649,7 @@ function BlogEditor({ id, categories, onBack }) {
               style={{ fontFamily: "inherit", lineHeight: 1.8 }} />
             <div className="blog-content blog-preview-pane" style={{ padding: 14, border: "1px solid var(--border)", borderRadius: 10, background: "var(--card)", maxHeight: 460, overflow: "auto" }}
               dir={bodyLang === "fa" ? "rtl" : "ltr"}
-              dangerouslySetInnerHTML={{ __html: previewHtml || `<p class="muted">${fa ? "پیش‌نمایش زنده اینجا نمایش داده می‌شود…" : "Live preview appears here…"}</p>` }} />
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(previewHtml || `<p class="muted">${fa ? "پیش‌نمایش زنده اینجا نمایش داده می‌شود…" : "Live preview appears here…"}</p>`) }} />
           </div>
         </div>
       </>)}

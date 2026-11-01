@@ -59,6 +59,7 @@ import {
   seedMindmapBank, listMindmaps as adminListMindmaps,
 } from "../lib/mindmapBank.js";
 import { isLearnContent } from "../lib/content-track.js";
+import { SECRET_BEARING_SETTINGS, maskStoredSettingValue, maskConfigSecrets, openConfigSecrets, serializeSettings, preserveMaskedKeys, redactForAudit } from "../lib/secret-store.js";
 
 const r = Router();
 // Retired competitive feature. Do not allow old clients to re-enable/import it.
@@ -245,13 +246,23 @@ r.put("/pricing", ...admin, (req, res) => {
 /* ============ GLOBAL SETTINGS ============ */
 r.get("/settings", ...P("learn.settings"), (req, res) => {
   const rows = db.prepare("SELECT key, value FROM settings").all();
-  const map = Object.fromEntries(rows.map((x) => [x.key, x.value]));
+  // R70: provider keys are never returned in full, even to admins.
+  const map = Object.fromEntries(rows.map((x) => [x.key, maskStoredSettingValue(x.value)]));
   res.json({ settings: map });
 });
 r.put("/settings/:key", ...P("learn.settings"), (req, res) => {
-  const value = String(req.body?.value ?? "");
+  let value = String(req.body?.value ?? "");
+  const secretBearing = SECRET_BEARING_SETTINGS.includes(req.params.key);
+  if (secretBearing) {
+    // R70: provider configs are sealed at rest; a masked apiKey keeps the stored one.
+    let next;
+    try { next = JSON.parse(value); } catch { return res.status(400).json({ error: "invalid_settings_json" }); }
+    let prev = {};
+    try { prev = openConfigSecrets(JSON.parse(db.prepare("SELECT value FROM settings WHERE key=?").get(req.params.key)?.value || "{}")) || {}; } catch { prev = {}; }
+    value = serializeSettings(preserveMaskedKeys(next, prev));
+  }
   db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(req.params.key, value);
-  audit(req, "settings.change", `settings:${req.params.key}`, { value });
+  audit(req, "settings.change", `settings:${req.params.key}`, secretBearing ? redactForAudit(value) : { value });
   persistNow();
   res.json({ ok: true });
 });
@@ -1095,7 +1106,7 @@ r.get("/vpatient/ai", ...P("learn.settings"), async (req, res) => {
   if (req.user.role !== "admin") return res.status(403).json({ error: "admin only" });
   try {
   const { getVpatientAiRaw } = await import("../lib/vpatient.js");
-  res.json({ config: getVpatientAiRaw() });
+  res.json({ config: maskConfigSecrets(getVpatientAiRaw()) });
   } catch (e) {
     res.status(500).json({ error: "vpatient_ai_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }
@@ -1116,7 +1127,7 @@ r.put("/vpatient/ai", ...P("learn.settings"), async (req, res) => {
   try { saved = saveVpatientAi(req.body || {}); }
   catch (e) { return res.status(400).json({ error: "invalid_ai_configuration", message: String(e.message) }); }
   audit(req, "vpatient.ai", "vpatient_ai", {});
-  res.json({ config: saved });
+  res.json({ config: maskConfigSecrets(saved) });
 });
 /* Live connection test using the SEPARATE (effective) config + prompts. */
 r.post("/vpatient/ai-test", ...P("learn.settings"), async (req, res) => {
@@ -1630,9 +1641,11 @@ r.post("/users/:id/impersonate", ...P("learn.users.impersonate"), (req, res) => 
   if (!staffMaySeeUser(req.user, u) || (req.user.role !== "admin" && u.role !== "learner")) {
     return res.status(403).json({ error: "university_only", stage: "access" });
   }
-  const token = signToken({ id: u.id, role: u.role, username: u.username });
-  audit(req, "user.impersonate", `users:${u.id}`, { username: u.username });
-  res.json({ token, user: { id: u.id, username: u.username, role: u.role, name_fa: u.name_fa, name_en: u.name_en } });
+  // R70: 30-minute token, bound to the stored user version (so a password change
+  // ends it) and tagged with the acting administrator.
+  const token = signToken(u, { expiresIn: "30m", actorId: req.user.id });
+  audit(req, "user.impersonate", `users:${u.id}`, { username: u.username, ttl_minutes: 30 });
+  res.json({ token, expires_in: 1800, user: { id: u.id, username: u.username, role: u.role, name_fa: u.name_fa, name_en: u.name_en } });
 });
 
 // delete a single user (granular; blocks self + last admin)

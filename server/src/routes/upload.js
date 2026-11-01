@@ -5,6 +5,7 @@
    ================================================================ */
 import { Router } from "express";
 import multer from "multer";
+import crypto from "crypto";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
@@ -26,7 +27,7 @@ const storage = multer.diskStorage({
   destination: uploadDestination,
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname).toLowerCase();
-    const safe = "img_" + Date.now() + "_" + Math.round(Math.random() * 1e6) + ext;
+    const safe = "img_" + crypto.randomBytes(12).toString("hex") + ext;  // R70: unguessable
     cb(null, safe);
   },
 });
@@ -77,7 +78,7 @@ const videoUpload = multer({
     destination: uploadDestination,
     filename: (req, file, cb) => {
       const ext = path.extname(file.originalname).toLowerCase();
-      cb(null, "vid_" + Date.now() + "_" + Math.round(Math.random() * 1e6) + ext);
+      cb(null, "vid_" + crypto.randomBytes(12).toString("hex") + ext);  // R70: unguessable
     },
   }),
   limits: { fileSize: 500 * 1024 * 1024 }, // 500 MB

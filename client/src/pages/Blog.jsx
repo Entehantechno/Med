@@ -1,3 +1,4 @@
+import { sanitizeHtml } from "../lib/safe-html.js";
 import { useState, useEffect } from "react";
 import { useApp } from "../context.jsx";
 import { api } from "../api.js";
@@ -185,7 +186,7 @@ function BlogPost({ slug, onBack, onOpen, onGetStarted, onSignIn }) {
         </nav>
       )}
 
-      <div className="blog-content" dangerouslySetInnerHTML={{ __html: p.body_html }} />
+      <div className="blog-content" dangerouslySetInnerHTML={{ __html: sanitizeHtml(p.body_html) }} />
 
       {p.related && p.related.length > 0 && (
         <div className="blog-related">

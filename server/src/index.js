@@ -103,6 +103,14 @@ async function main() {
   console.log('[database]',DB_PATH);
   await initDb();                 // load the WASM SQLite engine first
   initSchema();                   // ensure all tables exist before we query them
+  // R70: environment audit + seal legacy plaintext provider keys (idempotent).
+  try {
+    const { checkEnvironment, logEnvironmentFindings } = await import("./lib/hardening.js");
+    logEnvironmentFindings(checkEnvironment());
+    const { migrateLegacySecrets } = await import("./lib/secret-store.js");
+    const sealed = migrateLegacySecrets(db);
+    if (sealed.migrated) { persistNow(); console.log(`[secret-store] sealed ${sealed.migrated} stored provider key(s)`); }
+  } catch (e) { console.error("[security-boot]", e?.message || e); }
   setTimeout(() => { warnIfDefaultAdminPassword().catch(() => {}); }, 5000);
 
   // FIRST-RUN ONLY seeding: if the database has no users, load the demo/content

@@ -190,6 +190,17 @@ export function authLimiter() {
   return (req, res, next) => perAccount(req, res, (err) => (err ? next(err) : perIp(req, res, next)));
 }
 
+/* R70: password-reset requests send e-mail, so they are limited on EVERY
+   request (authLimiter only counts failures and would never throttle these).
+   Per IP + identifier: 5 per hour. Per IP: 30 per hour. */
+export function forgotLimiter() {
+  const message = { error: "too_many_requests", message_fa: "درخواست‌های بازیابی رمز زیاد است. یک ساعت بعد دوباره تلاش کنید.", message_en: "Too many reset requests. Try again in an hour." };
+  const common = { windowMs: 60 * 60 * 1000, standardHeaders: true, legacyHeaders: false, skip: () => !cfg().enabled, message };
+  const perIdent = rateLimit({ ...common, limit: 5, keyGenerator: (req) => `fg|${req.ip}|${String(req.body?.email || req.body?.username || "").trim().toLowerCase().slice(0, 100)}` });
+  const perIp = rateLimit({ ...common, limit: 30, keyGenerator: (req) => `fgip|${req.ip}` });
+  return (req, res, next) => perIdent(req, res, (err) => (err ? next(err) : perIp(req, res, next)));
+}
+
 /* Central error handler — logs full detail server-side, returns a generic
    message to the client (never leaks stack traces in production). */
 export function errorHandler(err, req, res, next) {
