@@ -223,7 +223,7 @@ export default function Browse() {
             <span className="browse-stat-pill muted">{fa ? "از" : "of"} {data.bankTotal.toLocaleString(fa ? "fa-IR" : "en-US")} {fa ? "کل بانک" : "total"}</span>
           )}
           {active > 0 && <span className="browse-stat-pill accent">{active} {fa ? "فیلتر فعال" : "active filters"}</span>}
-          {ranked && <span className="browse-stat-pill" style={{ background: "#fef3c7", color: "#92400e", borderColor: "#fde68a" }}>✨ {fa ? "مرتبط‌ترین" : "ranked"}</span>}
+          {ranked && <span className="browse-stat-pill" style={{ background: "#fef3c7", color: "#92400e", borderColor: "#fde68a" }}><Icon name="star" size={12} style={{ verticalAlign: "-1px" }} /> {fa ? "مرتبط‌ترین" : "ranked"}</span>}
         </div>
       </div>
 
@@ -261,14 +261,14 @@ export default function Browse() {
           <button type="button" className="browse-quick-more" onClick={()=>setShowFil(true)}><Icon name="settings" size={12} /> {fa?"همهٔ فیلترها":"All filters"} {activeChips.length?`· ${activeChips.length}`:""}</button>
         </div>
         <div className="browse-quick-row">
-          <span className="browse-quick-label">🔨 {fa?"سختی":"Hammers"}</span>
+          <span className="browse-quick-label"><Icon name="bolt" size={12} style={{ verticalAlign: "-2px" }} /> {fa?"سختی":"Difficulty"}</span>
           <div className="browse-quick-chips">
             {["easy","medium","hard"].map(lvl=>{
               const on = (fil.difficulty||[]).includes(lvl);
-              const map = { easy:{ fa:"آسان", en:"Easy", h:"🔨", c:"#10b981", bg:"#ecfdf5", bd:"#a7f3d0" }, medium:{ fa:"متوسط", en:"Medium", h:"🔨🔨", c:"#f59e0b", bg:"#fffbeb", bd:"#fde68a" }, hard:{ fa:"سخت", en:"Hard", h:"🔨🔨🔨", c:"#ef4444", bg:"#fef2f2", bd:"#fecaca" } }[lvl];
+              const map = { easy:{ fa:"آسان", en:"Easy", h:1, c:"#10b981", bg:"#ecfdf5", bd:"#a7f3d0" }, medium:{ fa:"متوسط", en:"Medium", h:2, c:"#f59e0b", bg:"#fffbeb", bd:"#fde68a" }, hard:{ fa:"سخت", en:"Hard", h:3, c:"#ef4444", bg:"#fef2f2", bd:"#fecaca" } }[lvl];
               return (
                 <button key={lvl} type="button" onClick={()=>toggle("difficulty", lvl)} className={`browse-quick-chip browse-quick-hammer ${on?"on":""}`} style={on?{ background: map.c, color:"#fff", borderColor: map.c, boxShadow:`0 6px 14px ${map.c}33` }:{ background: map.bg, color: map.c, borderColor: map.bd }}>
-                  <span>{map.h}</span> {fa?map.fa:map.en} <span className="bqc-count" style={{ background: on?"rgba(255,255,255,.22)":"#fff", color: on?"#fff":map.c, border:`1px solid ${on?"rgba(255,255,255,.4)":map.bd}` }}>{(facets.difficulty||[]).find(x=>x.value===lvl)?.count ?? ""}</span>
+                  <span aria-hidden="true" style={{ display: "inline-flex", gap: 1 }}>{Array.from({ length: map.h }, (_, i) => <Icon key={i} name="bolt" size={11} />)}</span> {fa?map.fa:map.en} <span className="bqc-count" style={{ background: on?"rgba(255,255,255,.22)":"#fff", color: on?"#fff":map.c, border:`1px solid ${on?"rgba(255,255,255,.4)":map.bd}` }}>{(facets.difficulty||[]).find(x=>x.value===lvl)?.count ?? ""}</span>
                 </button>
               );
             })}
@@ -371,7 +371,7 @@ export default function Browse() {
         <div className="browse-premium-gate-new">
           <div className="browse-premium-glow" aria-hidden="true" />
           <div style={{ position: "relative", display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
-            <span style={{ width: 48, height: 48, borderRadius: 14, background: "linear-gradient(135deg,#f59e0b,#f97316)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 22, flex: "none", boxShadow: "0 8px 20px rgba(245,158,11,.35)" }}>👑</span>
+            <span style={{ width: 48, height: 48, borderRadius: 14, background: "linear-gradient(135deg,#f59e0b,#f97316)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 22, flex: "none", boxShadow: "0 8px 20px rgba(245,158,11,.35)" }}><Icon name="crown" size={22} /></span>
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ fontWeight: 900, fontSize: "1rem" }}>{t("browsePremiumTitle")}</div>
               <p className="muted small" style={{ margin: "4px 0 0", lineHeight: 1.7 }}>{t("browsePremiumBody")}</p>
@@ -442,7 +442,7 @@ export default function Browse() {
                   {c.examType && <span className="chip chip-examtype">{vLabel("examType", c.examType)}</span>}
                   {c.exam && <span className="chip chip-exam" dir="auto">{c.exam}</span>}
                   {c.difficulty && <span className={`chip chip-diff chip-diff-${c.difficulty}`}>{vLabel("difficulty", c.difficulty)}</span>}
-                  {c.keyless && <span className="chip chip-keyless" title={t("keylessTitle")}>🔑 {t("keylessBadge")}</span>}
+                  {c.keyless && <span className="chip chip-keyless" title={t("keylessTitle")}><Icon name="key" size={11} style={{ verticalAlign: "-1px" }} /> {t("keylessBadge")}</span>}
                   {c.style && <span className="chip chip-soft">{vLabel("style", c.style)}</span>}
                   {c.saved && <span className="chip chip-soft" title={fa ? "ذخیره‌شده" : "saved"}>★</span>}
                   {c.attempted && <span className="chip chip-done"><Icon name="check" size={11} /> {fa ? "حل‌شده" : "done"}</span>}
@@ -496,7 +496,7 @@ function BrowseCard({ id, onClose }) {
     <Modal onClose={onClose} title={t("browseStudy")} wide>
       {err === "premium" ? (
         <div className="browse-preview-premium">
-          <div style={{ fontSize: 44, lineHeight: 1, marginBottom: 10 }}>👑</div>
+          <div style={{ fontSize: 44, lineHeight: 1, marginBottom: 10 }}><Icon name="crown" size={44} /></div>
           <div style={{ fontWeight: 900, fontSize: "1.05rem" }}>{t("browsePremiumTitle")}</div>
           <p className="muted small" style={{ margin: "8px 0 16px", lineHeight: 1.8, maxWidth: 420, marginInline: "auto" }}>{t("browsePremiumBody")}</p>
           <div style={{ display: "flex", gap: 8, justifyContent: "center", flexWrap: "wrap" }}>
@@ -508,7 +508,7 @@ function BrowseCard({ id, onClose }) {
         </div>
       ) : err ? (
         <div className="card empty-state">
-          <div className="ico">⚠️</div>
+          <div className="ico"><Icon name="warn" size={36} /></div>
           <h3>{err === "notfound" ? (fa ? "سؤال یافت نشد" : "Not found") : err}</h3>
           <button type="button" className="btn btn-ghost mt16" onClick={onClose}>{t("close") || (fa ? "بستن" : "Close")}</button>
         </div>
@@ -521,7 +521,7 @@ function BrowseCard({ id, onClose }) {
           <Body card={card} checked={checked} sel={sel} setSel={setSel} isCorrect={checked && Body.judge?.(card, { sel })} />
           {keyless && (
             <div className="explain-box mt12" style={{ background: "rgba(213,160,27,.10)", borderColor: "#fde68a" }}>
-              <b>🔑 {t("keylessTitle")}</b>
+              <b><Icon name="key" size={14} style={{ verticalAlign: "-2px" }} /> {t("keylessTitle")}</b>
               <Emphasis as="p" text={t("keylessNotice")} />
             </div>
           )}

@@ -587,7 +587,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
               onCommit={isCur ? hotspotClick : undefined}
             />
             {st.fb === "bad" && <div className="ddle-banner bad">{t("incorrect")}</div>}
-            {st.fb === "ok" && <div className="ddle-banner ok">✓ {t("correct")}</div>}
+            {st.fb === "ok" && <div className="ddle-banner ok"><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> {t("correct")}</div>}
           </>
         ) : c.type && c.type !== "mcq" && c.type !== "image" ? (
           <ExamOtherType
@@ -641,7 +641,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
 
           {/* Status banner */}
           {st.fb === "bad" && <div className="ddle-banner bad">{t("incorrect")}</div>}
-          {st.fb === "ok" && <div className="ddle-banner ok">✓ {t("correct")}</div>}
+          {st.fb === "ok" && <div className="ddle-banner ok"><Icon name="check" size={14} style={{ verticalAlign: "-2px" }} /> {t("correct")}</div>}
           {st.revealed && settings.showCorrect && (
             <div className="ddle-banner bad">{t("correctAnswerWas")} <b>{(() => { const cc = (st.correctIndex != null ? (c.options || [])[st.correctIndex] : null) || (c.options || []).find((o) => o.correct); return cc ? (lang === "fa" ? cc.fa : cc.en) : "—"; })()}</b></div>
           )}
@@ -712,9 +712,9 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
           )}
           {inExam && noPenaltyCfg && (
             <div className="ddle-banner ok" style={{ marginBottom: 12 }}>
-              {lang === "fa"
-                ? "🎯 حالت «بدون کسر نمره» فعال است: استفاده از راهنما (هینت) و پاسخ اشتباه در مرحله‌های سؤال، از نمره شما کم نمی‌کند."
-                : "🎯 No-penalty mode is on: using hints and wrong stage attempts will not reduce your score."}
+              <Icon name="target" size={14} style={{ verticalAlign: "-2px" }} /> {lang === "fa"
+                ? "حالت «بدون کسر نمره» فعال است: استفاده از راهنما (هینت) و پاسخ اشتباه در مرحله‌های سؤال، از نمره شما کم نمی‌کند."
+                : "No-penalty mode is on: using hints and wrong stage attempts will not reduce your score."}
             </div>
           )}
           {gradeErr && <div className="err-banner mb16"><Icon name="warn" size={16} /> {lang === "fa" ? "نمره‌دهی این سؤال شکست خورد" : "Grading this question failed"}: {gradeErr}</div>}
@@ -821,9 +821,9 @@ function Summary({ cards, results, totalHints, onRestart, onPick, home, examId, 
           </div>
           {(examId || noPenalty) && (
             <div className="small muted mt8">
-              {noPenalty
-                ? (lang === "fa" ? "🎯 حالت بدون کسر نمره — هینت و تلاش‌های اشتباه مرحله‌ای بدون کسر لحاظ شد." : "🎯 No-penalty mode — hints and wrong stage attempts were not deducted.")
-                : (lang === "fa" ? "ℹ️ هر هینت بخشی از امتیاز آن کارت را کسر کرد." : "ℹ️ Each hint deducted part of that card's points.")}
+              <Icon name={noPenalty ? "target" : "bulb"} size={14} style={{ verticalAlign: "-2px" }} /> {noPenalty
+                ? (lang === "fa" ? "حالت بدون کسر نمره — هینت و تلاش‌های اشتباه مرحله‌ای بدون کسر لحاظ شد." : "No-penalty mode — hints and wrong stage attempts were not deducted.")
+                : (lang === "fa" ? "هر هینت بخشی از امتیاز آن کارت را کسر کرد." : "Each hint deducted part of that card's points.")}
             </div>
           )}
 

@@ -5228,7 +5228,7 @@ function AdsManager() {
             const bod = (lang==="fa"? edit.body_fa: edit.body_en) || (lang==="fa"?"متن تبلیغ اینجا — جذاب، کوتاه، متمرکز بر فایده.":"Ad body here — benefit-focused, short, punchy.");
             const cta = (lang==="fa"? edit.cta_fa: edit.cta_en) || (lang==="fa"?"ادامه":"Continue");
             const kicker = edit.sponsor ? `${lang==="fa"?"حمایت‌شده":"Sponsored"} · ${edit.sponsor}` : lang==="fa"?"پیش‌نمایش مسیر":"Path preview";
-            const fmtBadge = edit.format==="rewarded" ? (lang==="fa"?"🎁 جایزه‌دار":"🎁 Rewarded") : edit.format==="interstitial" ? (lang==="fa"?"قابل رد شدن":"Skippable") : edit.format==="sponsored" ? (lang==="fa"?"اسپانسری":"Sponsored") : edit.format==="prelesson" ? (lang==="fa"?"اسپانسر پیش‌درس":"Pre-lesson") : null;
+            const fmtBadge = edit.format==="rewarded" ? (lang==="fa"?"جایزه‌دار":"Rewarded") : edit.format==="interstitial" ? (lang==="fa"?"قابل رد شدن":"Skippable") : edit.format==="sponsored" ? (lang==="fa"?"اسپانسری":"Sponsored") : edit.format==="prelesson" ? (lang==="fa"?"اسپانسر پیش‌درس":"Pre-lesson") : null;
             const gold = variantPreview==="between" || (isCustom && /f|e.*b|c.*8/i.test(bg.toLowerCase()));
             return (
               <div className={`motion-ad${!isCustom && variantPreview==="between" ? " motion-ad--gold" : !isCustom && variantPreview==="intro" ? " motion-ad--teal" : ""}${variantPreview==="intro"?" motion-ad--intro":" motion-ad--compact"}`} dir={lang==="fa"?"rtl":"ltr"} style={{ marginBottom: 12 }}>
@@ -5326,7 +5326,7 @@ function SupportInbox() {
 
   if (!data) return <Spinner />;
   const s = data.stats || {};
-  const catLabel = (c) => (SUPPORT_CAT[c] ? `${SUPPORT_CAT[c].emoji} ${lang === "fa" ? SUPPORT_CAT[c].fa : SUPPORT_CAT[c].en}` : c);
+  const catLabel = (c) => (SUPPORT_CAT[c] ? (lang === "fa" ? SUPPORT_CAT[c].fa : SUPPORT_CAT[c].en) : c);
   const statusPill = (st) => st === "resolved" ? "active" : st === "answered" ? "medium" : "danger";
 
   return (
@@ -6953,8 +6953,8 @@ function PwaAdmin() {
       <div className="small">{l}</div>
     </div>
   );
-  const platLabel = (p) => ({ android: "🤖 اندروید", ios: "🍎 آیفون", desktop: "💻 دسکتاپ", other: "سایر" }[p] || p);
-  const platLabelEn = (p) => ({ android: "🤖 Android", ios: "🍎 iOS", desktop: "💻 Desktop", other: "Other" }[p] || p);
+  const platLabel = (p) => ({ android: "اندروید", ios: "آیفون", desktop: "دسکتاپ", other: "سایر" }[p] || p);
+  const platLabelEn = (p) => ({ android: "Android", ios: "iOS", desktop: "Desktop", other: "Other" }[p] || p);
   const maxTrend = Math.max(1, ...d.trend.map((x) => Math.max(x.shown, x.installed)));
   return (
     <div className="page">
