@@ -2020,3 +2020,8 @@ th[style*="cursor: pointer"]:hover .dt-sort,th[style*="cursor:pointer"]:hover .d
 @media(min-width:841px){
   .learn-tabbar,.learn-more-overlay{display:none !important}
 }
+
+/* Native buttons that replace clickable blocks (u-tap): look like the block they
+   replaced, keep the keyboard focus ring. :where() keeps the element's own class in charge. */
+:where(.u-tap){appearance:none;background:none;border:0;padding:0;margin:0;font:inherit;color:inherit;text-align:inherit;display:block;width:100%;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+:where(.u-tap):focus-visible{outline:2px solid var(--primary);outline-offset:2px;border-radius:6px}

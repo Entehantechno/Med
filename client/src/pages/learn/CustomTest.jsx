@@ -426,11 +426,11 @@ function Runner({ test, setTest, onFinish, onQuit }) {
           ? <button type="button" className="btn btn-primary" style={{ flex: 1 }} disabled={!canCheck || busy} onClick={submit}>{timed ? (fa ? "ثبت و بعدی" : "Save & next") : t("check")}</button>
           : idx + 1 < cards.length
             ? <button type="button" className="btn btn-primary" style={{ flex: 1 }} onClick={() => setIdx(idx + 1)}>{t("nextQ")} <Icon name="chevronLeft" size={15} /></button>
-            : <button type="button" className="btn btn-accent" style={{ flex: 1 }} disabled={busy} onClick={() => finish(false)}><Icon name="check" size={15} /> {busy ? (fa ? "در حال ثبت نهایی..." : "Finishing...") : (fa ? "پایان آزمون" : "Finish")}</button>}
+            : <button type="button" className="btn btn-accent" style={{ flex: 1 }} disabled={busy} onClick={() => finish(false)}><Icon name="check" size={15} /> {busy ? (fa ? "در حال ثبت نهایی…" : "Finishing…") : (fa ? "پایان آزمون" : "Finish")}</button>}
         {answered < cards.length && (prev || checked) && idx + 1 >= cards.length && null}
       </div>
       {answered >= cards.length && idx + 1 < cards.length && (
-        <button type="button" className="btn btn-accent btn-block mt8" disabled={busy} onClick={() => finish(false)}>{busy ? (fa ? "در حال ثبت نهایی..." : "Finishing...") : (fa ? "همه پاسخ داده شد — پایان آزمون" : "All answered — finish")}</button>
+        <button type="button" className="btn btn-accent btn-block mt8" disabled={busy} onClick={() => finish(false)}>{busy ? (fa ? "در حال ثبت نهایی…" : "Finishing…") : (fa ? "همه پاسخ داده شد — پایان آزمون" : "All answered — finish")}</button>
       )}
       <div className="muted small center mt8">{t("answered")}: {answered}/{cards.length}</div>
       <LabValuesModal isOpen={showLabModal} onClose={() => setShowLabModal(false)} lang={lang} />

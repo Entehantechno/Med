@@ -561,10 +561,10 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
 
         {/* Optional image in the question */}
         {c.imageUrl && !cIsHotspot && (
-          <div className="ddle-img zoomable-img" title={lang === "fa" ? "برای بزرگ‌نمایی کلیک کنید" : "Click to zoom"} onClick={() => setZoomSrc(c.imageUrl)}>
+          <button type="button" className="ddle-img zoomable-img u-tap" title={lang === "fa" ? "برای بزرگ‌نمایی کلیک کنید" : "Click to zoom"} aria-label={lang === "fa" ? "بزرگ‌نمایی تصویر سؤال" : "Zoom the question image"} onClick={() => setZoomSrc(c.imageUrl)}>
             <img loading="lazy" decoding="async" src={c.imageUrl} alt="" />
             <span className="zoom-badge"><Icon name="search" size={14} /> {lang === "fa" ? "بزرگ‌نمایی" : "Zoom"}</span>
-          </div>
+          </button>
         )}
 
         {/* HINTS at the top — each in its own light-blue box (as in the reference) */}
@@ -574,7 +574,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
           return (
             <div className="ddle-question ddle-hint" key={i}>
               <span className="ddle-hint-label">{t("hint")} {i + 1}:</span> {cHintText(h)}
-              {img && <div className="hint-img zoomable-img" onClick={() => setZoomSrc(img)}><img loading="lazy" decoding="async" src={img} alt="" /><span className="zoom-badge"><Icon name="search" size={14} /></span></div>}
+              {img && <button type="button" className="hint-img zoomable-img u-tap" aria-label={lang === "fa" ? "بزرگ‌نمایی تصویر راهنما" : "Zoom the hint image"} onClick={() => setZoomSrc(img)}><img loading="lazy" decoding="async" src={img} alt="" /><span className="zoom-badge"><Icon name="search" size={14} /></span></button>}
             </div>
           );
         })}

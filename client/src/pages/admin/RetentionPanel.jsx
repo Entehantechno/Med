@@ -17,8 +17,8 @@ const CAT = {
   },
   academic_items: {
     fa: "کلاس‌ها و آزمون‌های بایگانی‌شده (همراه نمره‌ها)", en: "Archived classes and exams (with grades)",
-    noteFa: "فقط کلاس یا آزمونی که بایگانی (غیرفعال) شده و دوره‌اش گذشته. نمره‌ها، گفت‌وگوها، فهرست اعضا و فرم‌ها با آن پاک می‌شوند و بازگشتی ندارد. کلاس با آزمون فعال یا پژوهشی هرگز پاک نمی‌شود.",
-    noteEn: "Only a class or exam that is archived (inactive) and past its period. Its grades, chats, roster and forms are deleted with it, for good. A class used by an active exam or linked to research is never deleted.",
+    noteFa: "فقط کلاس یا آزمونی که بایگانی (غیرفعال) شده و دوره‌اش گذشته. نمره‌ها، گفت‌وگوها، فهرست اعضا و فرم‌ها با آن پاک می‌شوند و بازگشتی ندارد. کلاس با آزمون فعال یا پژوهشی هرگز پاک نمی‌شود. «نگه‌داری بازرسی» هر حذفی را متوقف می‌کند.",
+    noteEn: "Only a class or exam that is archived (inactive) and past its period. Its grades, chats, roster and forms are deleted with it, for good. A class used by an active exam or linked to research is never deleted. An inspection hold stops every deletion of it.",
   },
   tutor_chats: {
     fa: "پیام‌های مربی هوشمند", en: "AI tutor messages",
@@ -40,6 +40,7 @@ const REASON = {
   used_by_active_exam: ["آزمون فعال از آن استفاده می‌کند", "An active exam uses it"],
   grading_in_progress: ["ارزیابی در جریان است", "Grading is in progress"],
   not_found: ["یافت نشد", "Not found"],
+  inspection_hold: ["درخواست بازرسی باز است", "An inspection request is open"],
 };
 
 const bytes = (n, fa) => {
@@ -201,7 +202,8 @@ export default function RetentionPanel() {
     });
   };
 
-  const archivedPicked = (kind) => items[kind].filter((r) => !r.active && picked[kind].has(r.id));
+  const archivedPicked = (kind) => items[kind].filter((r) => !r.active && !r.inspection_hold && picked[kind].has(r.id));
+  const pickedRows = (kind) => items[kind].filter((r) => picked[kind].has(r.id));
 
   // Deletes archived classes or exams with their grades. Counts come from the impact endpoint first.
   const deleteItems = async (kind, ids) => {
@@ -246,6 +248,34 @@ export default function RetentionPanel() {
       ],
       label: fa ? "برای همیشه پاک کن" : "Delete for good", danger: true,
       run: () => deleteItems(kind, ids),
+    });
+  };
+
+  // Opens or releases the inspection hold. Releasing lets retention delete the item again, so it asks first.
+  const setHold = async (kind, ids, hold) => {
+    setBusy(true);
+    try {
+      await api.put("/admin/retention/items/hold", { kind, ids, hold, confirm: true });
+      toast(hold ? (fa ? "نگه‌داری بازرسی گذاشته شد." : "Inspection hold placed.")
+        : (fa ? "نگه‌داری بازرسی برداشته شد." : "Inspection hold released."));
+      setPicked((p) => ({ ...p, [kind]: new Set() }));
+      setConfirm(null);
+      await Promise.all([loadItems(kind), load()]);
+    } catch { toast(fa ? "به‌روزرسانی انجام نشد." : "Update failed."); }
+    finally { setBusy(false); }
+  };
+
+  const askHold = (kind, rows, hold) => {
+    const ids = rows.map((r) => r.id).slice(0, 100);
+    if (!ids.length) return;
+    if (hold) { setHold(kind, ids, true); return; }
+    setConfirm({
+      title: fa ? "برداشتن نگه‌داری بازرسی" : "Release the inspection hold",
+      lines: [
+        fa ? `${num(ids.length)} مورد دوباره قابل حذف می‌شود.` : `${ids.length} item(s) become deletable again.`,
+        fa ? "این کار را فقط وقتی انجام دهید که درخواست بازرسی بسته شده باشد." : "Do this only after the inspection request is closed.",
+      ],
+      label: fa ? "برداشتن" : "Release", danger: true, run: () => setHold(kind, ids, false),
     });
   };
 
@@ -346,6 +376,9 @@ export default function RetentionPanel() {
               <PeriodSelect value={bulkPeriod[kind]} presets={presets} fa={fa} inherit label={fa ? "دوره گروهی" : "Bulk period"}
                 onChange={(v) => setBulkPeriod((b) => ({ ...b, [kind]: v }))} />
               <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => askBulk(kind)}>{fa ? "اعمال روی انتخاب‌ها" : "Apply to selected"}</button>
+              <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => askHold(kind, pickedRows(kind), true)}>
+                {fa ? "گذاشتن نگه‌داری بازرسی" : "Place inspection hold"}
+              </button>
               {archivedPicked(kind).length > 0 && (
                 <button type="button" className="btn btn-danger btn-sm" disabled={busy} onClick={() => askDeleteItems(kind, archivedPicked(kind))}>
                   {fa ? `حذف ${num(archivedPicked(kind).length)} بایگانی‌شده همراه نمره‌ها…` : `Delete ${archivedPicked(kind).length} archived with grades…`}
@@ -359,6 +392,7 @@ export default function RetentionPanel() {
                 <th><input type="checkbox" aria-label={fa ? "انتخاب همه" : "Select all"} checked={picked[kind].size === items[kind].length && items[kind].length > 0} onChange={() => toggleAll(kind)} /></th>
                 <th>{fa ? "نام" : "Name"}</th>
                 <th>{fa ? "وضعیت" : "Status"}</th>
+                <th>{fa ? "نگه‌داری بازرسی" : "Inspection hold"}</th>
                 <th>{fa ? "گفت‌وگوهای پایان‌یافته" : "Finished chats"}</th>
                 <th>{fa ? "نمره‌ها" : "Grades"}</th>
                 <th>{fa ? "دوره" : "Period"}</th>
@@ -369,6 +403,11 @@ export default function RetentionPanel() {
                   <td><input type="checkbox" aria-label={`${fa ? "انتخاب" : "Select"} ${r.name_fa || r.name_en || r.id}`} checked={picked[kind].has(r.id)} onChange={() => togglePick(kind, r.id)} /></td>
                   <td>{fa ? r.name_fa || r.name_en : r.name_en || r.name_fa}{r.code ? <span className="tag" style={{ marginInlineStart: 6 }}>{r.code}</span> : null}</td>
                   <td><span className={`pill ${r.active ? "pill-active" : "pill-inactive"}`}>{r.active ? (fa ? "فعال" : "Active") : (fa ? "بایگانی" : "Archived")}</span></td>
+                  <td>
+                    <input type="checkbox" checked={!!r.inspection_hold} disabled={busy}
+                      aria-label={`${fa ? "نگه‌داری بازرسی برای" : "Inspection hold for"} ${(fa ? r.name_fa || r.name_en : r.name_en || r.name_fa) || r.id}`}
+                      onChange={() => askHold(kind, [r], !r.inspection_hold)} />
+                  </td>
                   <td>{num(r.chats)}</td>
                   <td>{num(r.attempts)}</td>
                   <td>
@@ -379,7 +418,9 @@ export default function RetentionPanel() {
                       }} />
                   </td>
                   <td>
-                    {!r.active && !r.study_id ? (
+                    {r.inspection_hold ? (
+                      <span className="pill pill-hard">{fa ? REASON.inspection_hold[0] : REASON.inspection_hold[1]}</span>
+                    ) : !r.active && !r.study_id ? (
                       <button type="button" className="btn btn-danger btn-sm" disabled={busy} onClick={() => askDeleteItems(kind, [r])}>
                         {fa ? "حذف همراه نمره‌ها…" : "Delete with grades…"}
                       </button>

@@ -99,13 +99,13 @@ function RefModal({ data, onClose, onSave }){
             <div className="field"><label>Short title</label><input value={f.short_title} onChange={e=>set("short_title",e.target.value)} /></div>
             <div className="field"><label>Publisher</label><input value={f.publisher} onChange={e=>set("publisher",e.target.value)} /></div>
             <div className="field"><label>Edition</label><input value={f.edition} onChange={e=>set("edition",e.target.value)} placeholder="22e" /></div>
-            <div className="field"><label>Source URL (لینک ناشر) *</label><input value={f.source_url} onChange={e=>set("source_url",e.target.value)} placeholder="https://accessmedicine..." /></div>
+            <div className="field"><label>Source URL (لینک ناشر) *</label><input value={f.source_url} onChange={e=>set("source_url",e.target.value)} placeholder="https://accessmedicine…" /></div>
             <div className="field" style={{gridColumn:"1 / -1"}}><label>Cover URL (مسیر کاور)</label><input value={f.cover_url} onChange={e=>set("cover_url",e.target.value)} placeholder="/covers/harrison-22e.jpg" /></div>
             <div className="field" style={{gridColumn:"1 / -1"}}><label>{fa ? "فایل PDF مرجع (اختیاری — برای ارجاع سوالات)" : "Reference PDF (optional — for question citation)"} </label>
               <div style={{display:"flex", gap:8, alignItems:"center"}}>
                 <input value={f.pdf_url} onChange={e=>set("pdf_url",e.target.value)} placeholder="/pdfs/harrison-22e-sample.pdf یا /uploads/pdf_..." style={{flex:1}} />
                 <label className="btn btn-ghost btn-sm" style={{whiteSpace:"nowrap", cursor: pdfBusy? "wait":"pointer"}}>
-                  {pdfBusy ? (fa?"در حال بارگذاری...":"Uploading...") : (fa?"انتخاب PDF":"Choose PDF")}
+                  {pdfBusy ? (fa?"در حال بارگذاری…":"Uploading…") : (fa?"انتخاب PDF":"Choose PDF")}
                   <input type="file" accept="application/pdf" onChange={onPdfFile} style={{display:"none"}} disabled={pdfBusy} />
                 </label>
               </div>

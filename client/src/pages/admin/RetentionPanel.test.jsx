@@ -37,7 +37,8 @@ const BASE = {
 const CLASSES = [
   { id: 7, name_en: 'Clinical A', name_fa: 'بالینی الف', code: 'CA1', retention_days: null, chats: 12, active: 1, attempts: 30, study_id: null },
   { id: 8, name_en: 'Clinical B', name_fa: 'بالینی ب', code: 'CB2', retention_days: 180, chats: 4, active: 1, attempts: 9, study_id: null },
-  { id: 9, name_en: 'Old Module', name_fa: 'واحد قدیمی', code: 'OM0', retention_days: null, chats: 2, active: 0, attempts: 5, study_id: null },
+  { id: 9, name_en: 'Old Module', name_fa: 'واحد قدیمی', code: 'OM0', retention_days: null, chats: 2, active: 0, attempts: 5, study_id: null, inspection_hold: 0 },
+  { id: 10, name_en: 'Held Module', name_fa: 'واحد نگه‌داشته', code: 'HM0', retention_days: 30, chats: 1, active: 0, attempts: 3, study_id: null, inspection_hold: 1 },
 ];
 const IMPACT = { 9: { kind: 'class', id: 9, blocked: null, attempts: 5, chats: 2, members: 3, responses: 1 } };
 
@@ -102,19 +103,20 @@ describe('RetentionPanel', () => {
     render(<RetentionPanel />);
     await screen.findByText('Clinical A');
     fireEvent.click(screen.getByRole('checkbox', { name: 'Select all' }));
-    expect(screen.getByText('3 selected')).toBeTruthy();
+    expect(screen.getByText('4 selected')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Apply to selected' }));
     const dialog = await screen.findByRole('dialog', { name: 'Set retention period' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Apply' }));
-    await waitFor(() => expect(mocks.put).toHaveBeenCalledWith('/admin/retention/items', expect.objectContaining({ kind: 'class', ids: [7, 8, 9] })));
+    await waitFor(() => expect(mocks.put).toHaveBeenCalledWith('/admin/retention/items', expect.objectContaining({ kind: 'class', ids: [7, 8, 9, 10] })));
   });
 
   it('shows status and grades, and offers the delete only for archived classes', async () => {
     render(<RetentionPanel />);
     await screen.findByText('Old Module');
-    expect(screen.getByText('Archived')).toBeTruthy();
+    expect(screen.getAllByText('Archived')).toHaveLength(2);
     expect(screen.getAllByRole('button', { name: 'Delete with grades…' })).toHaveLength(1);
     expect(screen.getAllByText('Archive it first')).toHaveLength(2);
+    expect(screen.getByText('An inspection request is open')).toBeTruthy();
   });
 
   it('shows the impact counts before deleting an archived class, and needs confirmation', async () => {
@@ -152,5 +154,34 @@ describe('RetentionPanel', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Delete archived class or exam for good' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Delete for good' }));
     await waitFor(() => expect(mocks.post).toHaveBeenCalledWith('/admin/retention/items/delete', { kind: 'class', ids: [9], confirm: true }));
+  });
+
+  it('places an inspection hold on one row at once, without a confirmation', async () => {
+    render(<RetentionPanel />);
+    await screen.findByText('Old Module');
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Inspection hold for Old Module' }));
+    await waitFor(() => expect(mocks.put).toHaveBeenCalledWith('/admin/retention/items/hold', { kind: 'class', ids: [9], hold: true, confirm: true }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('releasing a hold asks first, and a held row cannot be deleted', async () => {
+    render(<RetentionPanel />);
+    await screen.findByText('Held Module');
+    const box = screen.getByRole('checkbox', { name: 'Inspection hold for Held Module' });
+    expect(box.checked).toBe(true);
+    fireEvent.click(box);
+    const dialog = await screen.findByRole('dialog', { name: 'Release the inspection hold' });
+    expect(mocks.put).not.toHaveBeenCalledWith('/admin/retention/items/hold', expect.anything());
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Release' }));
+    await waitFor(() => expect(mocks.put).toHaveBeenCalledWith('/admin/retention/items/hold', { kind: 'class', ids: [10], hold: false, confirm: true }));
+  });
+
+  it('the bulk hold covers every selected row, and archived delete skips held rows', async () => {
+    render(<RetentionPanel />);
+    await screen.findByText('Held Module');
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select all' }));
+    expect(screen.getByRole('button', { name: /Delete 1 archived with grades/ })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Place inspection hold' }));
+    await waitFor(() => expect(mocks.put).toHaveBeenCalledWith('/admin/retention/items/hold', { kind: 'class', ids: [7, 8, 9, 10], hold: true, confirm: true }));
   });
 });

@@ -100,7 +100,8 @@ export function savePolicy(input, { confirmed = false, req = null } = {}) {
 
 /* A purge needs a settled, graded encounter outside research. */
 const VP_SETTLED = `s.finished_at IS NOT NULL AND s.attempt_id IS NOT NULL AND s.study_id IS NULL
-  AND s.review_required=0 AND s.purged_ms IS NULL`;
+  AND s.review_required=0 AND s.purged_ms IS NULL
+  AND COALESCE(c.inspection_hold,0)=0 AND COALESCE(e.inspection_hold,0)=0`;
 const VP_PERIOD = "COALESCE(c.retention_days, e.retention_days, ?)";
 const VP_FROM = `FROM vp_sessions s LEFT JOIN classes c ON c.id=s.class_id LEFT JOIN exams e ON e.id=s.exam_id`;
 const VP_DUE = `${VP_SETTLED} AND ${VP_PERIOD} > 0 AND julianday(s.finished_at) < julianday('now') - ${VP_PERIOD}`;
@@ -158,10 +159,21 @@ function academicIdsDue(days) {
 }
 
 /* Why this item must not be deleted now, or null when it may be. */
+/* Held when the item, or anything of it that is shared with the other kind, is under an open inspection request. */
+const HOLD_SQL = {
+  class: `SELECT 1 FROM classes WHERE id=? AND inspection_hold=1
+    UNION SELECT 1 FROM attempts a JOIN exams x ON x.id=a.exam_id WHERE a.class_id=? AND x.inspection_hold=1
+    UNION SELECT 1 FROM vp_sessions s JOIN exams x ON x.id=s.exam_id WHERE s.class_id=? AND x.inspection_hold=1 LIMIT 1`,
+  exam: `SELECT 1 FROM exams WHERE id=? AND inspection_hold=1
+    UNION SELECT 1 FROM attempts a JOIN classes x ON x.id=a.class_id WHERE a.exam_id=? AND x.inspection_hold=1
+    UNION SELECT 1 FROM vp_sessions s JOIN classes x ON x.id=s.class_id WHERE s.exam_id=? AND x.inspection_hold=1 LIMIT 1`,
+};
+
 export function blockReason(kind, id, now = Date.now()) {
   const table = kind === "exam" ? "exams" : "classes";
   const row = db.prepare(`SELECT id, active, study_id FROM ${table} WHERE id=?`).get(id);
   if (!row) return "not_found";
+  if (db.prepare(HOLD_SQL[kind === "exam" ? "exam" : "class"]).get(id, id, id)) return "inspection_hold";
   if (row.active !== 0) return "not_archived";
   if (row.study_id != null) return "research_linked";
   if (kind === "class") {
@@ -313,7 +325,9 @@ export function purgeVpAttempts(attemptIds, req = null, now = Date.now()) {
   if (!ids.length) return { sessions: 0, events: 0, transcripts: 0 };
   const marks = ids.map(() => "?").join(",");
   const sessionIds = db.prepare(`SELECT s.id FROM vp_sessions s JOIN attempts a ON a.id=s.attempt_id
-    WHERE a.type='vp' AND a.id IN (${marks}) AND s.finished_at IS NOT NULL AND s.study_id IS NULL AND s.purged_ms IS NULL`)
+    LEFT JOIN classes c ON c.id=s.class_id LEFT JOIN exams e ON e.id=s.exam_id
+    WHERE a.type='vp' AND a.id IN (${marks}) AND s.finished_at IS NOT NULL AND s.study_id IS NULL AND s.purged_ms IS NULL
+      AND COALESCE(c.inspection_hold,0)=0 AND COALESCE(e.inspection_hold,0)=0`)
     .all(...ids).map((r) => r.id);
   const counts = purgeVpIds(sessionIds, now);
   audit(req, "vp_chat.purge", "attempts", { attempts: ids.length, ...counts });
@@ -393,12 +407,12 @@ export function compactDatabase() {
 export function listItemPeriods(kind, limit = 500) {
   if (kind === "exam") {
     return db.prepare(`SELECT e.id, e.title_fa AS name_fa, e.title_en AS name_en, NULL AS code,
-        e.active, e.retention_days, e.study_id,
+        e.active, e.retention_days, e.study_id, e.inspection_hold,
         (SELECT COUNT(*) FROM vp_sessions s WHERE s.exam_id=e.id AND s.finished_at IS NOT NULL AND s.purged_ms IS NULL) AS chats,
         (SELECT COUNT(*) FROM attempts a WHERE a.exam_id=e.id) AS attempts
       FROM exams e ORDER BY e.id DESC LIMIT ?`).all(limit);
   }
-  return db.prepare(`SELECT c.id, c.name_fa, c.name_en, c.code, c.active, c.retention_days, c.study_id,
+  return db.prepare(`SELECT c.id, c.name_fa, c.name_en, c.code, c.active, c.retention_days, c.study_id, c.inspection_hold,
       (SELECT COUNT(*) FROM vp_sessions s WHERE s.class_id=c.id AND s.finished_at IS NOT NULL AND s.purged_ms IS NULL) AS chats,
       (SELECT COUNT(*) FROM attempts a WHERE a.class_id=c.id) AS attempts
     FROM classes c ORDER BY c.id DESC LIMIT ?`).all(limit);
@@ -414,6 +428,20 @@ export function setItemPeriods(kind, ids, days, req = null) {
   const marks = list.map(() => "?").join(",");
   const changed = durableTransaction(() => db.prepare(`UPDATE ${table} SET retention_days=? WHERE id IN (${marks})`).run(d, ...list).changes);
   audit(req, "retention.items", `${table}:${list.length}`, { kind, days: d, count: changed });
+  return { changed };
+}
+
+/* Opens (hold = true) or releases (hold = false) the inspection hold on chosen classes or exams.
+   While held, nothing of the item is deleted by any path. Audited with counts only. */
+export function setInspectionHold(kind, ids, hold, req = null) {
+  const list = [...new Set((ids || []).map(Number).filter((n) => Number.isInteger(n) && n > 0))].slice(0, 500);
+  if (!list.length) return { changed: 0 };
+  const table = kind === "exam" ? "exams" : "classes";
+  const marks = list.map(() => "?").join(",");
+  const flag = hold ? 1 : 0;
+  const changed = durableTransaction(() => db.prepare(`UPDATE ${table} SET inspection_hold=? WHERE id IN (${marks}) AND inspection_hold<>?`)
+    .run(flag, ...list, flag).changes);
+  audit(req, hold ? "inspection.hold" : "inspection.release", `${table}:${list.length}`, { kind, count: changed });
   return { changed };
 }
 

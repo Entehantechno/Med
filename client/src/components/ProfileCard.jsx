@@ -70,7 +70,7 @@ export default function ProfileCard() {
 
       <div className="calm-field" style={{ marginTop: 10 }}>
         <label>{t("phone")} ({t("optional")})</label>
-        <input type="tel" dir="ltr" value={f.phone} maxLength={32} disabled={busy}
+        <input type="tel" dir="ltr" inputMode="tel" autoComplete="tel" name="phone" value={f.phone} maxLength={32} disabled={busy}
           placeholder="09xxxxxxxxx" onChange={(e) => set("phone", e.target.value)} />
       </div>
 

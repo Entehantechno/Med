@@ -178,7 +178,8 @@ function ExamDetail({ examId, go, back, home }) {
 
         {data.use_flashcards && (data.flashcard_ids || []).length > 0 && (
           <div style={{ display: "flex", justifyContent: "flex-start", marginTop: 16 }}>
-            <div className="card mod-card"
+            <div className="card mod-card" role="button" tabIndex={flashExhausted ? -1 : 0} aria-disabled={flashExhausted || undefined}
+              onKeyDown={(e) => { if (!flashExhausted && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); e.currentTarget.click(); } }}
               onClick={() => !flashExhausted && go("flashcards", { examId, flashcardIds: data.flashcard_ids || [], examDuration: data.duration_min, shuffle: data.shuffle, antiCheat: data.anti_cheat, competition: data.competition, allowBack: !!data.flashAllowBack, allowChange: !!data.flashAllowChange, showCorrect: data.show_correct, showHints: data.show_hints, noPenalty: !!data.flashNoPenalty })}
               style={{ width: "100%", maxWidth: 400, ...(flashExhausted ? { opacity: .5, cursor: "not-allowed" } : {}) }}>
               <div className="mod-ico" style={{ background: "var(--grad-green)" }}><Icon name="flask" size={30} /></div>

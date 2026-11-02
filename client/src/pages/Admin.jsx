@@ -1933,7 +1933,8 @@ export function CardModal({ card, onClose, onSave }) {
           <div className="small muted mb8">{lang === "fa" ? "پازل نام‌گذاری تصویر (بافت‌شناسی / آناتومی / رادیولوژی): روی ساختارها پین بزنید و برچسب درست را بنویسید. دانشجو برچسب‌های درهم را به شماره‌ها وصل می‌کند. تطبیق جفت‌ها نوع جداگانه‌ای است." : "Image-label puzzle (histology / anatomy / CXR): drop pins on structures and type the correct labels. The learner assigns shuffled labels to numbered pins. Pair-matching is a separate type."}</div>
           <ImageUpload value={f.puzzle?.imageUrl || f.imageUrl} onChange={(v) => { setPuzzle("imageUrl", v); set("imageUrl", v); }} label={lang === "fa" ? "تصویر پازل" : "Puzzle image"} />
           {(f.puzzle?.imageUrl || f.imageUrl) && (
-            <div className="hotspot-admin-preview" onClick={(e) => {
+            <button type="button" className="hotspot-admin-preview u-tap" aria-label={lang === "fa" ? "افزودن پین با کلیک روی تصویر" : "Add a pin by clicking the image"} onClick={(e) => {
+              if (e.detail === 0) return; // keyboard activation has no pointer position: use the add button
               const r = e.currentTarget.getBoundingClientRect();
               addPin({ x: Math.round(((e.clientX - r.left) / r.width) * 1000) / 10, y: Math.round(((e.clientY - r.top) / r.height) * 1000) / 10 });
             }}>
@@ -1941,7 +1942,7 @@ export function CardModal({ card, onClose, onSave }) {
               {((f.puzzle || {}).pins || []).map((p, i) => (
                 <span key={i} className="label-pin admin" style={{ left: `${p.x}%`, top: `${p.y}%` }}>{i + 1}</span>
               ))}
-            </div>
+            </button>
           )}
           <div className="small muted mt8 mb8">{t("puzzleClickHint")}</div>
           <div className="section-title"><label className="small muted">{t("puzzlePins")}</label>

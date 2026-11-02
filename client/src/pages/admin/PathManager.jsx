@@ -100,7 +100,10 @@ export default function PathManager() {
             </div>
             <button type="button" className="btn btn-sm btn-ghost" onClick={(e) => { e.stopPropagation(); setTopicEdit(topic); }} title={t("edit")}><Icon name="edit" size={13} /></button>
             <button type="button" className="btn btn-sm btn-danger" onClick={(e) => { e.stopPropagation(); delTopic(topic.id); }} title={t("delete")}><Icon name="trash" size={13} /></button>
-            <Icon name={open[topic.id] ? "chevronUp" : "chevronDown"} size={16} />
+            <button type="button" className="btn btn-sm btn-ghost" aria-expanded={!!open[topic.id]} aria-label={lang === "fa" ? "باز یا بسته کردن این بخش" : "Expand or collapse this topic"}
+              onClick={(e) => { e.stopPropagation(); setOpen((s) => ({ ...s, [topic.id]: !s[topic.id] })); }}>
+              <Icon name={open[topic.id] ? "chevronUp" : "chevronDown"} size={16} />
+            </button>
           </div>
 
           {open[topic.id] && (
@@ -161,13 +164,13 @@ function OfficialQuestionImportModal({ program, onClose, onImported }) {
       "chapter_fa": "سکته مغزی",
       "chapter_en": "Stroke",
       "question_no": 1,
-      "question_fa": "متن سؤال مجاز/رسمی را اینجا وارد کنید...",
-      "question_en": "English translation goes here...",
+      "question_fa": "متن سؤال مجاز/رسمی را اینجا وارد کنید…",
+      "question_en": "English translation goes here…",
       "options_fa": ["گزینه ۱", "گزینه ۲", "گزینه ۳", "گزینه ۴"],
       "options_en": ["Option 1", "Option 2", "Option 3", "Option 4"],
       "correct_index": 0,
-      "explanation_fa": "پاسخ تشریحی تألیفی بر اساس رفرنس...",
-      "explanation_en": "Original explanation based on references...",
+      "explanation_fa": "پاسخ تشریحی تألیفی بر اساس رفرنس…",
+      "explanation_en": "Original explanation based on references…",
       "hints_fa": ["هینت ۱"],
       "hints_en": ["Hint 1"],
       "difficulty": "medium"
@@ -320,7 +323,7 @@ function EditBankCardModal({ card, onClose, onSaved }) {
   };
 
   return (
-    <Modal title={`${lang === "fa" ? "ویرایش سؤال در بانک" : "Edit Question in Bank"} #${card.id}`} onClose={onClose} onSave={save} saveText={saving ? (lang === "fa" ? "در حال ذخیره..." : "Saving...") : undefined}>
+    <Modal title={`${lang === "fa" ? "ویرایش سؤال در بانک" : "Edit Question in Bank"} #${card.id}`} onClose={onClose} onSave={save} saveText={saving ? (lang === "fa" ? "در حال ذخیره…" : "Saving…") : undefined}>
       <div className="field">
         <label>{lang === "fa" ? "متن سؤال (فارسی)" : "Question text (FA)"}</label>
         <textarea rows={3} value={f.q_fa} onChange={(e) => setF((s) => ({ ...s, q_fa: e.target.value }))} dir="rtl" />
@@ -354,7 +357,7 @@ function EditBankCardModal({ card, onClose, onSaved }) {
               style={{ width: "100%", fontSize: "0.85rem" }}
               value={o.why_fa || ""}
               onChange={(e) => setOpt(i, "why_fa", e.target.value)}
-              placeholder={lang === "fa" ? "دلیل رد یا تأیید این گزینه (بالینی)..." : "Rationale for this option..."}
+              placeholder={lang === "fa" ? "دلیل رد یا تأیید این گزینه (بالینی)…" : "Rationale for this option…"}
               dir="rtl"
             />
           </div>
@@ -409,10 +412,10 @@ function CardsModal({ node, onClose, onSaved }) {
             {list.map((c) => (
               <div key={c.id} className="toggle-row" style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 6px" }}>
                 <input type="checkbox" checked={sel.includes(c.id)} onChange={() => toggle(c.id)} style={{ width: 18, height: 18, flexShrink: 0 }} />
-                <span style={{ flex: 1, minWidth: 0, cursor: "pointer" }} onClick={() => toggle(c.id)}>
+                <button type="button" className="u-tap" style={{ flex: 1, minWidth: 0 }} onClick={() => toggle(c.id)}>
                   <span className="tag" style={{ marginInlineEnd: 6 }}>{t(c.type)}</span>
                   {c.q}
-                </span>
+                </button>
                 <button
                   type="button"
                   className="btn btn-xs btn-ghost"
@@ -421,7 +424,7 @@ function CardsModal({ node, onClose, onSaved }) {
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); openCardEditor(c.id); }}
                   disabled={loadingCardId === c.id}
                 >
-                  <Icon name="edit" size={12} /> {loadingCardId === c.id ? (lang === "fa" ? "..." : "...") : (lang === "fa" ? "ویرایش در بانک" : "Edit in Bank")}
+                  <Icon name="edit" size={12} /> {loadingCardId === c.id ? "…" : (lang === "fa" ? "ویرایش در بانک" : "Edit in Bank")}
                 </button>
               </div>
             ))}

@@ -38,7 +38,7 @@ import { recordPassword, revealPassword } from "../lib/password-vault.js";
 import {
   CATEGORIES, MIN_DAYS, MAX_DAYS, PRESET_DAYS, readPolicy, savePolicy, previewPurge, purgeCategory,
   purgeVpAttempts, storageInfo, compactDatabase, listItemPeriods, setItemPeriods, cleanDays, lastRunMs,
-  academicImpact, blockReason, deleteAcademicNow,
+  academicImpact, blockReason, deleteAcademicNow, setInspectionHold,
 } from "../lib/retention.js";
 import { cardFacets, buildFacetIndex, matchFacets, sortCards } from "../lib/cardfacets.js";
 import { recordCardChange, recordImport, listRevisions, revisionSummary } from "../lib/cardhistory.js";
@@ -1107,6 +1107,14 @@ r.get("/retention/items/impact", ...admin, (req, res) => {
   const id = Number(req.query.id);
   if (!Number.isInteger(id) || id <= 0) return retentionFail(res, "bad_retention_request");
   res.json({ kind, id, blocked: blockReason(kind, id) || null, ...academicImpact(kind, id) });
+});
+/* Opens or releases the inspection hold. Releasing lets retention delete the item again, so it needs confirm. */
+r.put("/retention/items/hold", ...admin, (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids : [];
+  const hold = req.body?.hold === true;
+  if (!ids.length || typeof req.body?.hold !== "boolean") return retentionFail(res, "bad_retention_request");
+  if (!hold && req.body?.confirm !== true) return retentionFail(res, "confirmation_required");
+  res.json({ ok: true, ...setInspectionHold(req.body?.kind === "exam" ? "exam" : "class", ids, hold, req) });
 });
 /* Deletes chosen ARCHIVED classes or exams, with their grades. Blocked items are reported, not deleted. */
 r.post("/retention/items/delete", ...admin, (req, res) => {

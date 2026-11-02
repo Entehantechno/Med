@@ -574,11 +574,11 @@ function PuzzleQuestion({ card, lang, showCorrect, checked, setChecked, onGraded
     <div className="label-pin-assign">
       {pins.map((p, i) => {
         const lab = bank.find((b) => b.id === assign[i]);
-        return <div className={`label-pin-row ${activePin === i && !checked ? "on" : ""}`} key={i} onClick={() => !checked && setActivePin(i)}>
+        return <button type="button" className={`label-pin-row u-tap ${activePin === i && !checked ? "on" : ""}`} key={i} disabled={checked} onClick={() => setActivePin(i)}>
           <span className={`label-pin static ${checked ? (pinOk(i) ? "ok" : "bad") : ""}`}>{i + 1}</span>
           <span className="label-pin-slot">{lab ? lab.text : (fa ? "—" : "—")}</span>
           {checked && showCorrect && !pinOk(i) && <span className="small" style={{ color: "var(--danger)" }}>{fa ? (p.label_fa || p.label_en) : (p.label_en || p.label_fa)}</span>}
-        </div>;
+        </button>;
       })}
     </div>
     {!checked && <div className="label-pin-bank">{bank.map((b) => (

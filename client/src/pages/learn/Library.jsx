@@ -72,11 +72,12 @@ export default function Library() {
       {data.categories.length === 0 && <div className="card empty-state"><div className="ico"><Icon name="book" size={40} /></div><h3>{t("noData")}</h3></div>}
       {data.categories.map((cat) => (
         <div className="card mb8" key={cat.name}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}
+          <button type="button" className="u-tap" aria-expanded={openCat === cat.name}
+            style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}
             onClick={() => setOpenCat(openCat === cat.name ? null : cat.name)}>
             <strong>{cat.name} <span className="small muted">({cat.count})</span></strong>
             <Icon name={openCat === cat.name ? "chevronUp" : "chevronDown"} size={16} />
-          </div>
+          </button>
           {openCat === cat.name && <div className="mt8">{cat.cards.map((c) => <LibCard key={c.id} card={c} />)}</div>}
         </div>
       ))}

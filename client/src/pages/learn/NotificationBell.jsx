@@ -44,7 +44,8 @@ export function NotificationBell({ onNavigate }) {
           </div>
           {data.items.length === 0 && <div className="muted small" style={{ padding: 20, textAlign: "center" }}>{t("noNotif")}</div>}
           {data.items.map((n) => (
-            <div key={n.id} className={`notif-item ${n.seen ? "" : "unseen"}`}
+            <div key={n.id} className={`notif-item ${n.seen ? "" : "unseen"}`} role="button" tabIndex={0}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(false); if (n.link) onNavigate?.(n.link); } }}
               onClick={() => { setOpen(false); if (n.link) onNavigate?.(n.link); }}>
               <div className="notif-ico"><Icon name={n.icon || "clock"} size={18} /></div>
               <div style={{ minWidth: 0 }}>

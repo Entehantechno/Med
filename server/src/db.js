@@ -38,7 +38,7 @@ ensureDataDirs();
 
 /** Schema/engine generation stored in PRAGMA user_version. A database below this
  *  value is upgraded in place, after a verified snapshot. */
-export const DB_ENGINE_VERSION = 73;
+export const DB_ENGINE_VERSION = 74;
 const BUSY_TIMEOUT_MS = 5000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const CACHE_KIB = Math.max(2000, Math.min(262144, Number(process.env.DB_CACHE_KIB) || 16000));
@@ -2269,6 +2269,10 @@ export function initSchema() {
   if (!colsNamed("classes").includes("retention_days")) db.exec("ALTER TABLE classes ADD COLUMN retention_days INTEGER");
   if (!colsNamed("exams").includes("retention_days")) db.exec("ALTER TABLE exams ADD COLUMN retention_days INTEGER");
   if (!colsNamed("vp_sessions").includes("purged_ms")) db.exec("ALTER TABLE vp_sessions ADD COLUMN purged_ms INTEGER");
+  // R84: inspection_hold = 1 while a records inspection request is open (FERPA 34 CFR 99.10(e)).
+  // Nothing of a held class or exam is deleted by any retention path until the hold is released.
+  if (!colsNamed("classes").includes("inspection_hold")) db.exec("ALTER TABLE classes ADD COLUMN inspection_hold INTEGER NOT NULL DEFAULT 0");
+  if (!colsNamed("exams").includes("inspection_hold")) db.exec("ALTER TABLE exams ADD COLUMN inspection_hold INTEGER NOT NULL DEFAULT 0");
   db.exec("CREATE INDEX IF NOT EXISTS idx_tutor_chats_created ON tutor_chats(created_at)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_security_created ON security_events(created_at)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_rum_created ON rum_vitals(created_at)");

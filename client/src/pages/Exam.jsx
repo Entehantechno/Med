@@ -859,7 +859,7 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
                 )
               ))}
               {typing && <div className="msg msg-patient msg-typing">{typingKind === "order"
-                ? (lang === "fa" ? "در حال دریافت نتیجهٔ آزمایش/تصویر..." : "Fetching the lab / imaging result...")
+                ? (lang === "fa" ? "در حال دریافت نتیجهٔ آزمایش/تصویر…" : "Fetching the lab / imaging result…")
                 : t("aiThinking")}</div>}
               <div ref={chatEnd} />
             </div>

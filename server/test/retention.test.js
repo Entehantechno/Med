@@ -320,4 +320,61 @@ describe("archived classes and exams", () => {
     expect(rows.length).toBeGreaterThan(0);
     for (const r of rows) expect(String(r.detail)).not.toContain(MARK);
   });
+  /* FERPA 34 CFR 99.10(e): while an inspection request is open, nothing of the item is deleted. */
+  it("an inspection hold keeps a class, its chats and its grades until it is released", async () => {
+    const c = archivedClass({ tag: "held", retention: 30 });
+    const tk = admin.token;
+    const on = await request(app).put("/api/admin/retention/items/hold").set(A(tk)).send({ kind: "class", ids: [c.id], hold: true });
+    expect(on.status).toBe(200);
+    expect(on.body.changed).toBe(1);
+    expect(blockReason("class", c.id)).toBe("inspection_hold");
+    await runAutomaticRetention();
+    expect(exists("classes", c.id)).toBe(true);
+    expect(exists("attempts", c.att)).toBe(true);
+    expect(db.prepare("SELECT purged_ms FROM vp_sessions WHERE id=?").get(c.sid).purged_ms).toBeNull();
+    const del = await request(app).post("/api/admin/retention/items/delete").set(A(tk)).send({ kind: "class", ids: [c.id], confirm: true });
+    expect(del.body.items).toBe(0);
+    expect(del.body.skipped).toEqual([{ kind: "class", id: c.id, reason: "inspection_hold" }]);
+    const off = await request(app).put("/api/admin/retention/items/hold").set(A(tk)).send({ kind: "class", ids: [c.id], hold: false });
+    expect(off.status).toBe(409);
+    await request(app).put("/api/admin/retention/items/hold").set(A(tk)).send({ kind: "class", ids: [c.id], hold: false, confirm: true });
+    expect(blockReason("class", c.id)).toBeNull();
+    await runAutomaticRetention();
+    expect(exists("classes", c.id)).toBe(false);
+    expect(exists("vp_sessions", c.sid)).toBe(false);
+    expect(exists("attempts", c.att)).toBe(false);
+  });
+
+  it("a held exam also protects an archived class whose attempts belong to it", async () => {
+    const cls = archivedClass({ tag: "linked" });
+    const ex = db.prepare("INSERT INTO exams (title_en, active, ends_at, owner_id, university_id, created_at, inspection_hold) VALUES ('Held exam', 0, datetime('now','-400 days'), ?, ?, datetime('now','-400 days'), 1)")
+      .run(teacher.id, teacher.university_id).lastInsertRowid;
+    db.prepare(`UPDATE attempts SET exam_id=? WHERE id=?`).run(ex, cls.att);
+    expect(blockReason("class", cls.id)).toBe("inspection_hold");
+    expect(blockReason("exam", ex)).toBe("inspection_hold");
+    await runAutomaticRetention();
+    expect(exists("classes", cls.id)).toBe(true);
+    expect(exists("exams", ex)).toBe(true);
+  });
+
+  it("a manual purge of a held class's chat is refused, and holds are audited without chat text", async () => {
+    const c = archivedClass({ tag: "manual", active: 1, retention: 0 });
+    await request(app).put("/api/admin/retention/items/hold").set(A(admin.token)).send({ kind: "class", ids: [c.id], hold: true });
+    const { purgeVpAttempts } = await import("../src/lib/retention.js");
+    const out = purgeVpAttempts([c.att]);
+    expect(out.sessions).toBe(0);
+    expect(db.prepare("SELECT purged_ms FROM vp_sessions WHERE id=?").get(c.sid).purged_ms).toBeNull();
+    const rows = db.prepare("SELECT detail FROM audit_log WHERE action IN ('inspection.hold','inspection.release')").all();
+    expect(rows.length).toBeGreaterThan(0);
+    for (const r of rows) expect(String(r.detail)).not.toContain(MARK);
+    await request(app).put("/api/admin/retention/items/hold").set(A(admin.token)).send({ kind: "class", ids: [c.id], hold: false, confirm: true });
+  });
+
+  it("the hold is admin only", async () => {
+    const c = archivedClass({ tag: "authz" });
+    const teacherTk = (await login("teacher")).body.token;
+    const res = await request(app).put("/api/admin/retention/items/hold").set(A(teacherTk)).send({ kind: "class", ids: [c.id], hold: true });
+    expect([401, 403]).toContain(res.status);
+    expect(blockReason("class", c.id)).toBeNull();
+  });
 });

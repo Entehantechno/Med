@@ -568,7 +568,7 @@ export default function Mindmap({ onBack }) {
                       <input
                         value={qInput}
                         onChange={e => setQInput(e.target.value)}
-                        placeholder={lang === "fa" ? "جستجو: STEMI، آسم، هیپرکالمی، اپروچ..." : "Search: STEMI, asthma, hyperkalemia..."}
+                        placeholder={lang === "fa" ? "جستجو: STEMI، آسم، هیپرکالمی، اپروچ…" : "Search: STEMI, asthma, hyperkalemia…"}
                         className="h-12 w-full rounded-2xl border border-slate-200 bg-slate-50 ps-10 pe-10 text-sm font-medium placeholder:text-slate-400 focus:border-sky-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-500/10"
                       />
                       {qInput && (
