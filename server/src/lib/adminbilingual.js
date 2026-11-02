@@ -1,7 +1,7 @@
 /* Structural admin changes are language-agnostic: one path, one bank.
    Deleting a lesson in the FA panel must not let the next bank import
    recreate it when the admin later opens the EN panel (or after a restart). */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 
 export function fillPair(fa, en) {
   const a = String(fa ?? "").trim();
@@ -73,8 +73,3 @@ export function cardIsTombstoned(idOrFingerprint) {
   return isTombstoned("card", String(idOrFingerprint || ""));
 }
 
-export function persistAdminDeleted() {
-  persistNow();
-}
-
-export { keyOf };

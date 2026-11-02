@@ -16,11 +16,6 @@ export function crowdForCard(cardId) {
   return { seen: st.seen, passRate: pct, key, avgSec };
 }
 
-// attach crowd difficulty to a batch of serialized cards (mutates copies)
-export function withCrowd(cards) {
-  return cards.map((c) => ({ ...c, crowd: crowdForCard(c.id) }));
-}
-
 /* The hardest questions overall (lowest pass rate), min sample size so a single
    wrong answer doesn't dominate. Grouped with their topic for context. */
 export function hardestQuestions(lang = "fa", { minSeen = 3, limit = 20, program = null } = {}) {

@@ -39,7 +39,7 @@ export function sectionLabel(section, lang = "fa") {
   return section;
 }
 
-export function sectionEmoji(section) {
+function sectionEmoji(section) {
   return SECTION_EMOJI[section] || "📋";
 }
 

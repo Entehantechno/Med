@@ -138,7 +138,7 @@ export function placementStatus(userId, lang = "fa") {
    We pick the weakest answered topic as the primary "start here" (biggest
    learning opportunity), and surface the learner's strengths for encouragement.
    Pure/deterministic — no AI, no cost. */
-export function buildRecommendation(result, lang = "fa") {
+function buildRecommendation(result, lang = "fa") {
   const fa = lang === "fa";
   const perTopic = (result?.perTopic || []).filter((t) => t.answered > 0 || t.accuracy != null);
   if (!perTopic.length) return null;
@@ -174,7 +174,6 @@ export function buildRecommendation(result, lang = "fa") {
     title, body,
   };
 }
-
 
 /* Grade a submitted placement. body.answers = [{ topicSlug, correct }].
    Computes per-topic accuracy + an overall level, stores the result, and

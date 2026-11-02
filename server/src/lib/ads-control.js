@@ -59,7 +59,7 @@ function weightedPick(ads) {
 }
 
 // Record one impression (for stats + frequency capping).
-export function recordImpression(adId, userId) {
+function recordImpression(adId, userId) {
   db.prepare("UPDATE ads SET impressions=impressions+1 WHERE id=?").run(adId);
   if (userId) {
     db.prepare(`INSERT INTO ad_impressions (ad_id,user_id,day,count) VALUES (?,?,?,1)

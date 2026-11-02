@@ -10,12 +10,11 @@ import { serializeMedia } from "./medialib.js";
 import { stripCrossRefs, dedupeGolden, examSourceLabel } from "./lessontext.js";
 import { pickSchematic } from "./schematics.js";
 
-
 function pick(d, base, lang) {
   return lang === "fa" ? (d[`${base}_fa`] ?? d[`${base}_en`] ?? "") : (d[`${base}_en`] ?? d[`${base}_fa`] ?? "");
 }
 
-export function serializeMicro(d, lang, cardId = null) {
+function serializeMicro(d, lang, cardId = null) {
   const m = d.micro;
   if (!m) {
     // fall back to legacy explain/hints so old cards still show a mini lesson
@@ -102,7 +101,7 @@ export function serializeMicro(d, lang, cardId = null) {
 /* Dedicated answer explanation ("پاسخنامه") — shown AFTER the learner answers.
    Text + optional media. Distinct from the درسنامه (which is a mini-lesson);
    this is the "why the answer is what it is" block, and can be a video. */
-export function serializeExplain(d, lang) {
+function serializeExplain(d, lang) {
   const e = d.explain;
   if (!e) return null;
   const text = stripCrossRefs(lang === "fa" ? (e.text_fa || e.text_en) : (e.text_en || e.text_fa));
@@ -113,7 +112,7 @@ export function serializeExplain(d, lang) {
 
 /* Sketchy-style visual mnemonic: an image + a memorable scene and the hooks
    that link scene elements to facts. Authored by teachers/admins; no AI. */
-export function serializeMnemonic(d, lang) {
+function serializeMnemonic(d, lang) {
   const m = d.mnemonic;
   if (!m) return null;
   const scene = lang === "fa" ? (m.scene_fa || m.scene_en) : (m.scene_en || m.scene_fa);

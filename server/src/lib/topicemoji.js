@@ -6,7 +6,7 @@
    added — see the AGA/Unicode proposal). So گوارش (GI) intentionally has an
    EMPTY emoji and falls back to a hand-drawn "stomach" SVG icon (icon:"stomach")
    which the client renders. This is the closest to a real stomach possible. */
-export const TOPIC_EMOJI = {
+const TOPIC_EMOJI = {
   // --- pre-internship & residency (clinical) ---
   gi: "",          // stomach — no emoji exists → renders the "stomach" SVG icon
   pulmo: "🫁",     // lungs

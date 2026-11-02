@@ -369,11 +369,20 @@ function deepMerge(base, over) {
   return out;
 }
 
+// Read on almost every learner request (80 call sites, and once per ranking row).
+// The row is still read each time, so a save from any process is seen at once;
+// the JSON parse and deep merge run only when the stored text actually changed.
+// Callers only read the result (checked), so the parsed object is shared safely.
+let gameConfigMemo = { raw: null, parsed: DEFAULT_GAME_CONFIG };
 export function getGameConfig() {
   const row = db.prepare("SELECT value FROM settings WHERE key=?").get(GAME_CONFIG_KEY);
   if (!row) return DEFAULT_GAME_CONFIG;
-  try { return deepMerge(DEFAULT_GAME_CONFIG, JSON.parse(row.value)); }
-  catch { return DEFAULT_GAME_CONFIG; }
+  if (row.value === gameConfigMemo.raw) return gameConfigMemo.parsed;
+  let parsed;
+  try { parsed = deepMerge(DEFAULT_GAME_CONFIG, JSON.parse(row.value)); }
+  catch { parsed = DEFAULT_GAME_CONFIG; }
+  gameConfigMemo = { raw: row.value, parsed };
+  return parsed;
 }
 
 export function saveGameConfig(cfg) {

@@ -111,7 +111,7 @@ r.get("/profile", ...learner, (req, res) => {
 r.get("/home", ...learner, (req, res) => {
   const lang = L(req);
   const p = getProfile(req.user.id);
-  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tehran" });
+  const today = tehranDay();
   const todayXp = db.prepare("SELECT COALESCE(SUM(amount),0) AS s FROM xp_events WHERE user_id=? AND day=?").get(req.user.id, today).s;
   const program = activeProgramFor(req.user.id);
   // scope node counts to the learner's active program's topics

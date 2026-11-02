@@ -28,7 +28,7 @@ export function boolSetting(key, dflt = false) {
 /* ---------- tri-state flag resolution ---------- */
 const tri = (v) => (v === 1 || v === 0) ? !!v : null; // NULL/undefined → inherit
 
-export function universityRow(id) {
+function universityRow(id) {
   if (!id) return null;
   try { return db.prepare("SELECT * FROM universities WHERE id=?").get(id) || null; } catch { return null; }
 }
@@ -68,7 +68,7 @@ export function effectiveLiveBoardSpeed(cls = null, universityId = null) {
 }
 
 /* ---------- student-count cap ---------- */
-export function studentCount(uniId) {
+function studentCount(uniId) {
   if (!uniId) return 0;
   return db.prepare("SELECT COUNT(*) c FROM users WHERE role='student' AND university_id=?").get(uniId).c;
 }
@@ -88,7 +88,7 @@ export function monthPeriod(d = new Date()) {
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
-export function usageRow(uniId, period = monthPeriod()) {
+function usageRow(uniId, period = monthPeriod()) {
   if (!uniId) return null;
   db.prepare("INSERT OR IGNORE INTO university_usage (university_id,period) VALUES (?,?)").run(uniId, period);
   return db.prepare("SELECT * FROM university_usage WHERE university_id=? AND period=?").get(uniId, period);
@@ -100,41 +100,6 @@ export function vpUsage(uniId, period = monthPeriod()) {
   return { period: r.period, vp_msgs: r.vp_msgs || 0, vp_tokens: r.vp_tokens || 0, vp_sessions: r.vp_sessions || 0 };
 }
 
-/** Which university pays for a VP interaction: the class/exam owner first,
-    then the caller's own university (learners without org → unbilled). */
-export function resolveVpUniversity({ classId = null, examId = null, userId = null } = {}) {
-  try {
-    if (classId) {
-      const r = db.prepare("SELECT university_id FROM classes WHERE id=?").get(classId);
-      if (r?.university_id) return r.university_id;
-    }
-    if (examId) {
-      const r = db.prepare("SELECT university_id FROM exams WHERE id=?").get(examId);
-      if (r?.university_id) return r.university_id;
-    }
-    if (userId) {
-      const r = db.prepare("SELECT university_id FROM users WHERE id=?").get(userId);
-      if (r?.university_id) return r.university_id;
-    }
-  } catch { /* */ }
-  return null;
-}
-
-/** null when a VP chat message is allowed; {kind:'messages'|'tokens',...} when a cap is hit. */
-export function checkVpAllowance(uniId) {
-  if (!uniId) return null;
-  const u = universityRow(uniId);
-  if (!u || !u.limits_enabled) return null;
-  const use = vpUsage(uniId);
-  if (u.max_vp_msgs_month != null && use.vp_msgs >= u.max_vp_msgs_month) {
-    return { kind: "messages", max: u.max_vp_msgs_month, used: use.vp_msgs, period: use.period };
-  }
-  if (u.max_vp_tokens_month != null && use.vp_tokens >= u.max_vp_tokens_month) {
-    return { kind: "tokens", max: u.max_vp_tokens_month, used: use.vp_tokens, period: use.period };
-  }
-  return null;
-}
-
 /** Rough token estimate for mixed fa/en text (≈3.2 chars/token, floor 1). */
 export function estimateTokens(...texts) {
   let chars = 0;
@@ -143,19 +108,6 @@ export function estimateTokens(...texts) {
     chars += typeof t === "string" ? t.length : JSON.stringify(t).length;
   }
   return Math.max(1, Math.ceil(chars / 3.2));
-}
-
-export function bumpUsage(uniId, { msgs = 0, tokens = 0, sessions = 0 } = {}) {
-  if (!uniId) return;
-  try {
-    usageRow(uniId);
-    db.prepare(
-      `UPDATE university_usage
-          SET vp_msgs = vp_msgs + ?, vp_tokens = vp_tokens + ?, vp_sessions = vp_sessions + ?,
-              updated_at = datetime('now')
-        WHERE university_id = ? AND period = ?`
-    ).run(Math.round(msgs), Math.round(tokens), Math.round(sessions), uniId, monthPeriod());
-  } catch { /* metering must never break the clinical flow */ }
 }
 
 /* ---------- normalization for admin input ---------- */

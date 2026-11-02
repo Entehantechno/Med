@@ -26,4 +26,3 @@ export function releaseLease(name) {
   db.prepare("DELETE FROM job_leases WHERE name = ? AND holder = ?").run(name, HOLDER);
 }
 
-export const leaseHolder = HOLDER;

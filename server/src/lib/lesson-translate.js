@@ -17,7 +17,7 @@
 
 import { createHash } from "node:crypto";
 
-export const MICRO_KEYS = ["lead", "golden", "points", "options", "source"];
+const MICRO_KEYS = ["lead", "golden", "points", "options", "source"];
 const LIST_KEYS = new Set(["points", "options"]);
 
 export const otherLang = (lang) => (lang === "fa" ? "en" : "fa");
@@ -93,17 +93,6 @@ export function pickMicroTranslation(source, t) {
   for (const k of Object.keys(source)) {
     if (LIST_KEYS.has(k)) out[k] = t[k].map(txt);
     else out[k] = txt(t[k]).trim();
-  }
-  return out;
-}
-
-/* Apply a validated translation to the raw micro object for language `to`.
-   Authored text in `to` is never overwritten. */
-export function applyMicroTranslation(m, to, translated, fields) {
-  const out = { ...m };
-  for (const k of fields) {
-    if (translated[k] === undefined) continue;
-    out[`${k}_${to}`] = translated[k];
   }
   return out;
 }

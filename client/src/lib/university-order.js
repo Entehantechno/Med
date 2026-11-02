@@ -1,4 +1,4 @@
-export const universitySearchText=v=>String(v??'').normalize('NFKC').toLocaleLowerCase().replace(/ي/g,'ی').replace(/ك/g,'ک').replace(/[\u064b-\u065f\u0670]/g,'').replace(/[\u200c\s]+/g,' ').trim();
+const universitySearchText=v=>String(v??'').normalize('NFKC').toLocaleLowerCase().replace(/ي/g,'ی').replace(/ك/g,'ک').replace(/[\u064b-\u065f\u0670]/g,'').replace(/[\u200c\s]+/g,' ').trim();
 export function universityName(u,lang='fa'){return (lang==='en'?u.name_en:u.name_fa)||u.name_fa||u.name_en||u.name||u.code||String(u.id);}
 export function sortUniversities(rows,lang='fa'){
  const compare=new Intl.Collator(lang==='en'?'en':'fa',{sensitivity:'base',numeric:true}).compare;

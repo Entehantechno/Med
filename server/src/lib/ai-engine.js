@@ -1,4 +1,4 @@
-export function replyLanguageInstruction(lang){return `Reply in the user's interface language (${lang==='fa'?'Persian':'English'}) unless the user explicitly requests another response language. Honor that language request without changing your patient/teacher role or clinical facts. The chart's source language does not determine the reply language; translate its known facts accurately, never invent missing information.`;}
+function replyLanguageInstruction(lang){return `Reply in the user's interface language (${lang==='fa'?'Persian':'English'}) unless the user explicitly requests another response language. Honor that language request without changing your patient/teacher role or clinical facts. The chart's source language does not determine the reply language; translate its known facts accurately, never invent missing information.`;}
 /* ================================================================
    ai-engine.js — Real-ready AI engine with checklist-based fallback.
    If an API key is configured (settings.ai.apiKey) the real provider
@@ -23,7 +23,7 @@ function containsAny(text, keys) {
 /* Defensive normaliser for the student's problem-list / differential fields:
    the client always sends arrays, but a tampered client might send a string —
    coerce instead of throwing (which would 500 the whole evaluation). */
-export const asLines = (v) => (Array.isArray(v) ? v
+const asLines = (v) => (Array.isArray(v) ? v
   : (typeof v === "string" && v.trim() ? v.split(/\n|;/).map((s) => s.trim()).filter(Boolean) : []));
 /* Same idea for the transcript: only object entries with a role survive. */
 export const asMessages = (v) => (Array.isArray(v) ? v.filter((m) => m && typeof m === "object") : []);
@@ -54,7 +54,7 @@ const pick = (obj, base, lang) => [obj[`${base}_${lang}`],obj[`${base}_${lang===
 
    Iranian providers (GapGPT, AvalAI, MetisAI, Liara) sit first after "off"
    so an admin in Iran can pick them without a VPN / international card. */
-export const AI_PROVIDERS = {
+const AI_PROVIDERS = {
   "": { label: "— (mock / no key) —", base: "", group: "off", hint: "" },
   "GapGPT": {
     label: "GapGPT (گپ‌جی‌پی‌تی)",
@@ -459,7 +459,7 @@ function staffExamRequest(n) {
 const EXAM_VITAL_TERM = /^(?:vitals?|vital signs?|علائم حیاتی|ویتال(?:[\u200c ]?ساین)?ها?|blood pressure|فشار خون|bp|pulse|نبض|heart rate|temperature|دما|respiratory rate|oxygen saturation|spo2)$/;
 const EXAM_SYSTEM_TERM = /^(?:heart|قلب|lungs?|ریه(?:[\u200c ]?ها)?|chest|سینه|قفسه سینه|abdomen|abdominal|شکم|neck|گردن|skin|پوست|neuro(?:logical)?|عصبی|reflexes|رفلکس|legs?|پاها|اندام[\u200c ]?ها|اندام)$/;
 /* R65: a single exam term on its own ("شکم", "heart", "علائم حیاتی"). */
-export function isBareExamTerm(text) {
+function isBareExamTerm(text) {
   const core = norm(text).replace(/^(?:please|لطفا|لطفاً)\s+/, "").replace(/\s+(?:please|لطفا|لطفاً)$/, "")
     .replace(/[\s.!?؟،,]+$/, "").trim();
   return EXAM_VITAL_TERM.test(core) || EXAM_SYSTEM_TERM.test(core);
@@ -543,7 +543,7 @@ export function detectAuscultation(userText) {
 /* Resolve the recorded auscultation recordings for this case, filtered to the
    organs the student asked for (or all available ones when the organ is
    unspecified). Returns [{ kind, url, label_fa, label_en }]. */
-export function pickAuscultationSounds(caseData, organs) {
+function pickAuscultationSounds(caseData, organs) {
   const all = [];
   if (caseData?.lungSound) all.push({ kind: "lung", url: caseData.lungSound,
     label_fa: "صدای سمع ریه", label_en: "Lung auscultation" });
@@ -667,12 +667,12 @@ export function detectExamScope(userText) {
   const full = (bare || FULL_EXAM_RE.test(n)) && !onlyVitals && systems.filter((k) => k !== "vitals").length === 0;
   return { systems, full, vitals: systems.includes("vitals") };
 }
-export function examSystemLabel(key, lang) {
+function examSystemLabel(key, lang) {
   const s = EXAM_SYSTEMS.find((x) => x.key === key);
   return s ? (lang === "fa" ? s.fa : s.en) : key;
 }
 /* The attending's "which exam exactly?" question (deterministic). */
-export function askWhichExam(lang) {
+function askWhichExam(lang) {
   const list = EXAM_SYSTEMS.map((s) => (lang === "fa" ? s.fa : s.en)).join(lang === "fa" ? "، " : ", ");
   return lang === "fa"
     ? `استاد نظارت: در این ایستگاه «معاینهٔ کامل» انجام نمی‌دهیم؛ دقیقاً کدام معاینه را می‌خواهی؟ هر بار یک سیستم یا یک مانور را نام ببر (مثلاً: ${list}).`
@@ -688,7 +688,7 @@ export function requestedExamKeys(scope, organs = []) {
 }
 /* "Which one first?" question. Lists only the examinations the student named,
    and reports none of them. */
-export function askOneExamFirst(lang, labels) {
+function askOneExamFirst(lang, labels) {
   const list = [...new Set(labels.filter(Boolean))].join(lang === "fa" ? "، " : ", ");
   return lang === "fa"
     ? `استاد نظارت: هر بار فقط یک معاینه را گزارش می‌کنم. کدام‌یک را اول می‌خواهی: ${list}؟`
@@ -2009,7 +2009,6 @@ function buildMicro({ caseData, missed = [], lang = "fa", results = [], scope = 
     return out + practice;
   }
 }
-
 
 // Deterministic remediation: no invented case findings, doses or citations.
 // Only failed criteria in the learner's actual grading role become exercises.

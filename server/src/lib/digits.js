@@ -12,7 +12,7 @@ export function toAsciiDigits(s) {
     .replace(/[٠-٩]/g, (d) => String(AR.indexOf(d)));
 }
 
-export function hasNonAsciiDigits(s) {
+function hasNonAsciiDigits(s) {
   return /[۰-۹٠-٩]/.test(String(s ?? ""));
 }
 

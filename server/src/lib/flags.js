@@ -88,11 +88,22 @@ export function ensureFlags() {
 export function allFlags() {
   return db.prepare("SELECT * FROM feature_flags ORDER BY key").all();
 }
+// Flags are checked per ranking row (rankDisplayName) and per feature gate, so
+// the lookup is cached for a few seconds. setFlag clears it at once in this
+// process; another process picks a change up within FLAG_TTL_MS.
+const FLAG_TTL_MS = 5000;
+const flagCache = new Map();
 export function isEnabled(key) {
+  const hit = flagCache.get(key);
+  const now = Date.now();
+  if (hit && now - hit.at < FLAG_TTL_MS) return hit.on;
   const row = db.prepare("SELECT enabled FROM feature_flags WHERE key=?").get(key);
-  return row ? !!row.enabled : true; // default on if unknown
+  const on = row ? !!row.enabled : true; // default on if unknown
+  flagCache.set(key, { on, at: now });
+  return on;
 }
 export function setFlag(key, enabled) {
+  flagCache.delete(key);
   db.prepare("INSERT INTO feature_flags (key, enabled, updated_at) VALUES (?,?,datetime('now')) ON CONFLICT(key) DO UPDATE SET enabled=excluded.enabled, updated_at=datetime('now')")
     .run(key, enabled ? 1 : 0);
   persistNow();

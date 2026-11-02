@@ -24,7 +24,7 @@ import { db, persistNow, durableTransaction } from "../db.js";
 import { parseReferenceSnapshot, snapshotForCaseRow } from "./reference-governance.js";
 
 /* Event vocabulary. Anything outside this list is dropped. */
-export const EVENT_KINDS = new Set([
+const EVENT_KINDS = new Set([
   "student_msg", "patient_msg", "teacher_msg", "lab_order", "lab_result",
   "imaging_order", "imaging_result", "ddx_add", "ddx_remove", "final_dx",
   "problem_list", "exam_request", "auscultation",
@@ -241,7 +241,7 @@ export function finishSession({ sessionId, userId, events, durationSec, attemptI
 }
 
 /* Read back a session's log (teacher/admin only — enforced by the caller). */
-export function sessionLog(sessionId) {
+function sessionLog(sessionId) {
   const s = getSession(sessionId);
   if (!s) return null;
   const events = s.logging_enabled

@@ -49,17 +49,6 @@ export function mediaUrlFor(req, filename) {
   return `/uploads/${safe}`;
 }
 
-export function mediaLocation(req, filename) {
-  if (!filename) return "";
-  const safe = String(filename).split("/").pop() || filename;
-  const uid = req?.user?.university_id;
-  if (uid) {
-    const ns = namespaceForUniversity(uid);
-    return path.join(ACADEMIC_DIR, ns, "media", safe);
-  }
-  return path.join(UPLOADS_DIR, safe);
-}
-
 // Publication grants teachers access only to the exact assets referenced by an
 // active published resource in the asset's own university, never its directory.
 function sharedTeachingAsset(req,ns,name){

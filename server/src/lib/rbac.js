@@ -31,7 +31,7 @@ export const PERMISSIONS = {
 };
 
 // role → list of permission keys. "*" means all (admin).
-export const ROLE_PERMS = {
+const ROLE_PERMS = {
   admin: ["*"],
   // mid-level: content manager works only in the learner universe, content only
   content_manager: ["learn.view", "learn.content"],
@@ -43,8 +43,6 @@ export const ROLE_PERMS = {
   student: [],
   learner: [],
 };
-
-export const ADMIN_ROLES = ["admin", "content_manager", "support"];
 
 // Roles whose permissions an admin may edit from the UI (admin stays all-powerful).
 export const EDITABLE_ROLES = ["content_manager", "support", "teacher", "learner", "student"];

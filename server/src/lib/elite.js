@@ -7,7 +7,7 @@
        Diamond-tier learners — quarterfinal → semifinal → final, top N advance,
        finals podium earns gems + an XP boost + a Champion badge. */
 import { db, persistNow } from "../db.js";
-import { getProfile, awardXp, isoWeekKey, tehranDay } from "./gamify.js";
+import { getProfile, awardXp, isoWeekKey } from "./gamify.js";
 import { getGameConfig } from "./gameconfig.js";
 
 /* ============================ LEGENDARY ============================ */
@@ -80,7 +80,7 @@ export function legendaryCount(userId) {
 /* ============================ DIAMOND TOURNAMENT ============================ */
 
 const STAGES = ["quarterfinal", "semifinal", "final"];
-export const STAGE_LABEL = {
+const STAGE_LABEL = {
   quarterfinal: { fa: "یک‌چهارم نهایی", en: "Quarterfinal" },
   semifinal: { fa: "نیمه‌نهایی", en: "Semifinal" },
   final: { fa: "فینال", en: "Final" },

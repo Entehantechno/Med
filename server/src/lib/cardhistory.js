@@ -34,7 +34,7 @@ function same(a, b) {
 }
 
 /** Which learner-visible fields differ between two card payloads. */
-export function changedFields(before = {}, after = {}) {
+function changedFields(before = {}, after = {}) {
   const out = [];
   for (const f of CONTENT_FIELDS) {
     if (!same(before?.[f], after?.[f])) out.push(f);

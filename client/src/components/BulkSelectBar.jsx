@@ -1,18 +1,3 @@
-/* Bulk selection tools for pick lists (cases, flashcards, students).
-   - select every item currently shown (respects the search box)
-   - invert the shown items
-   - clear everything
-   - pick a whole group at once (e.g. all patients of one university) */
-export function groupsBy(items, labelFn, idFn) {
-  const map = new Map();
-  for (const it of items || []) {
-    const key = String(labelFn(it) ?? "");
-    if (!key) continue;
-    if (!map.has(key)) map.set(key, { key, label: key, ids: [] });
-    map.get(key).ids.push(idFn(it));
-  }
-  return [...map.values()].sort((a, b) => a.label.localeCompare(b.label));
-}
 
 export default function BulkSelectBar({ lang = "fa", shownIds = [], selectedIds = [], onChange, groups = [], extra = null }) {
   const fa = lang === "fa";

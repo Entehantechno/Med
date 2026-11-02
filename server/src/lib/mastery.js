@@ -31,7 +31,7 @@ function topicCardIds(topicId) {
 }
 
 /* Compute a learner's mastery status for ONE topic (no side-effects). */
-export function topicMastery(userId, topicId) {
+function topicMastery(userId, topicId) {
   const c = cfg();
   const cardIds = topicCardIds(topicId);
   if (cardIds.length === 0) {
@@ -83,7 +83,7 @@ export function topicMastery(userId, topicId) {
 
 /* Grant (idempotently) a mastery badge + one-time reward when newly earned.
    Returns the badge row if this call is the one that awarded it, else null. */
-export function grantMasteryIfEarned(userId, topicId) {
+function grantMasteryIfEarned(userId, topicId) {
   const c = cfg();
   if (c.enabled === false) return null;
   const already = db.prepare("SELECT id FROM mastery_badges WHERE user_id=? AND topic_id=?").get(userId, topicId);

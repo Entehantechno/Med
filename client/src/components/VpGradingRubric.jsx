@@ -4,7 +4,7 @@ import { api } from "../api.js";
 import { Spinner, useToast } from "./UI.jsx";
 import Icon from "./Icon.jsx";
 
-export const VP_SECTIONS = [
+const VP_SECTIONS = [
   { key: "history", fa: "شرح‌حال", en: "History-taking" },
   { key: "exam", fa: "معاینه فیزیکی", en: "Physical exam" },
   { key: "problem_list", fa: "پرابلم لیست", en: "Problem list" },
@@ -17,7 +17,7 @@ export const VP_SECTIONS = [
 
 const EXTERN_DEFAULT = ["history", "exam", "problem_list", "ddx"];
 
-export function emptyRubric() {
+function emptyRubric() {
   const internW = {};
   const internSecs = VP_SECTIONS.map((s) => s.key);
   for (const k of internSecs) internW[k] = 1;

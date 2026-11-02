@@ -15,12 +15,12 @@
 */
 
 import { db, persistNow, onDbReady } from "../db.js";
-import { isEnabled } from "./flags.js";
+import "./flags.js";
 
 export const MINDMAP_SYSTEMS = ["cardio","pulmo","gastro","nephro","endo","neuro","heme","rheum","infect","emergency","peds","obgyn","surgery","path","pharm","radio","ent","uro","ortho","psych","derm","ophth","stats","ethics","immuno","nutrition","genetics","anatomy","physio","biochem","histology","embryo","micro","biophys","physics","other"];
-export const MINDMAP_TYPES = ["mind","approach"];
-export const MINDMAP_LEVELS = ["core","high_yield","emergency"];
-export const MINDMAP_BRANCHES = ["definition","etiology","patho","clinical","workup","treatment","complication","ddx","start","question","action"];
+const MINDMAP_TYPES = ["mind","approach"];
+const MINDMAP_LEVELS = ["core","high_yield","emergency"];
+const MINDMAP_BRANCHES = ["definition","etiology","patho","clinical","workup","treatment","complication","ddx","start","question","action"];
 export const MINDMAP_FREE_DAILY_LIMIT = 5; // competitive: free gets 5 maps/day, premium unlimited
 
 // --- daily limit helpers (free tier) ---
@@ -410,7 +410,7 @@ export function importCSV(csv) {
 }
 
 // Ensure tables (R55: run by ensureMindmapSchema once the DB is open)
-export function ensureMindmapSchema() {
+function ensureMindmapSchema() {
   db.exec(`CREATE TABLE IF NOT EXISTS mindmap_daily_views (user_id INTEGER NOT NULL, day TEXT NOT NULL, cnt INTEGER DEFAULT 0, PRIMARY KEY (user_id, day))`);
   db.exec(`
     CREATE TABLE IF NOT EXISTS mindmap_bank (

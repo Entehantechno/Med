@@ -6,6 +6,7 @@
 import { db, persistNow } from "../db.js";
 import { isEnabled } from "./flags.js";
 import { getGameConfig } from "./gameconfig.js";
+import { tehranDay } from "./tehran-time.js";
 
 /* Is the Premium PROGRAM switched on at all? When the admin turns the `premium`
    feature flag OFF, we want ZERO trace of premium for users: no upsell, no
@@ -17,7 +18,7 @@ export function premiumProgramOn() {
   return isEnabled("premium");
 }
 
-export const TIERS = ["bronze", "silver", "gold", "sapphire", "ruby", "diamond"];
+const TIERS = ["bronze", "silver", "gold", "sapphire", "ruby", "diamond"];
 export const TIER_LABEL = {
   bronze:  { fa: "برنز",   en: "Bronze" },
   silver:  { fa: "نقره",   en: "Silver" },
@@ -32,7 +33,7 @@ export function maxHearts() {
   const v = Number(getGameConfig()?.hearts?.max);
   return Number.isFinite(v) && v >= 1 ? Math.min(999, Math.floor(v)) : 30;
 }
-export function heartRefillMinutes() {
+function heartRefillMinutes() {
   const v = Number(getGameConfig()?.hearts?.refill_minutes);
   return Number.isFinite(v) && v >= 1 ? Math.min(24 * 60, Math.floor(v)) : 30;
 }
@@ -41,16 +42,12 @@ export function heartRefillGems() {
   return Number.isFinite(v) && v >= 0 ? Math.floor(v) : 50;
 }
 
-export const ROOM_SIZE = 30;            // learners per league room
-export const PROMOTE = 7;               // top N promote
-export const RELEGATE = 5;              // bottom N relegate (except bronze)
+const ROOM_SIZE = 30;            // learners per league room
+const PROMOTE = 7;               // top N promote
+const RELEGATE = 5;              // bottom N relegate (except bronze)
 
 /* ---------- date helpers (Tehran) ---------- */
-export function tehranDay(d = new Date()) {
-  // YYYY-MM-DD in Asia/Tehran
-  const parts = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tehran", year: "numeric", month: "2-digit", day: "2-digit" }).format(d);
-  return parts; // en-CA gives YYYY-MM-DD
-}
+export { tehranDay };
 export function isoWeekKey(d = new Date()) {
   // ISO week from the Tehran calendar date (same clock as tehranDay / streaks).
   const [y, m, dd] = tehranDay(d).split("-").map(Number);
@@ -228,7 +225,7 @@ export const STREAK_SOCIETY = [
   { days: 180, gems: 700, freezes: 3 },
   { days: 365, gems: 1500, freezes: 3 },
 ];
-export function checkStreakSociety(userId, streak, currentTier) {
+function checkStreakSociety(userId, streak, currentTier) {
   // Grant EVERY crossed milestone (a 0→7 jump still pays the day-3 chest).
   const due = STREAK_SOCIETY.filter((m) => streak >= m.days && m.days > (currentTier || 0));
   if (!due.length) return null;
@@ -274,7 +271,7 @@ export function refillHearts(userId, cost = 0) {
 }
 
 /* ---------- leagues ---------- */
-export function ensureLeague(userId) {
+function ensureLeague(userId) {
   const p = getProfile(userId);
   const wk = isoWeekKey();
   // already a member this week?

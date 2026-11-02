@@ -4,13 +4,13 @@
    confidence proxy (a slow correct answer signals weaker recall than a fast
    one). Also powers the learner's performance dashboard, weak-spot detection
    and the "Mistakes" practice hub. */
-import { db, persist, persistNow } from "../db.js";
+import { db, persist } from "../db.js";
 import { tehranDay } from "./gamify.js";
 
 /* Record a single card answer (called once per question in a lesson/review).
    `flagged` = learner marked it to revisit; `guessed` = learner admitted a guess
    (so a correct-but-guessed answer is still surfaced for review). */
-export function recordCardAnswer(userId, { cardId, nodeId = null, correct, responseMs = 0, flagged = false, guessed = false, confidence = 0, sel = null, hintUsed = false }) {
+function recordCardAnswer(userId, { cardId, nodeId = null, correct, responseMs = 0, flagged = false, guessed = false, confidence = 0, sel = null, hintUsed = false }) {
   if (!cardId) return;
   const c = correct ? 1 : 0;
   const conf = [0, 1, 2, 3].includes(confidence | 0) ? (confidence | 0) : 0;

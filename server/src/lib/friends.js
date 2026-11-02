@@ -34,10 +34,10 @@ export function unfollow(userId, targetId) {
   persistNow();
   return { ok: true };
 }
-export function isFollowing(userId, targetId) {
+function isFollowing(userId, targetId) {
   return !!db.prepare("SELECT 1 FROM follows WHERE follower_id=? AND followee_id=?").get(userId, targetId);
 }
-export function isMutual(a, b) {
+function isMutual(a, b) {
   return isFollowing(a, b) && isFollowing(b, a);
 }
 function ensureFriendStreak(a, b) {

@@ -4,20 +4,20 @@
 import crypto from "node:crypto";
 import { db } from "../db.js";
 
-export const REFERENCE_RIGHTS = new Set([
+const REFERENCE_RIGHTS = new Set([
   "metadata_only",
   "licensed_excerpt",
   "open_license",
   "public_domain",
   "blocked",
 ]);
-export const POLICY_STATUSES = new Set([
+const POLICY_STATUSES = new Set([
   "draft",
   "approved",
   "retired",
   "blocked",
 ]);
-export const CONTENT_MODES = new Set([
+const CONTENT_MODES = new Set([
   "teacher_authored",
   "licensed_excerpt",
   "open_content",
@@ -52,7 +52,7 @@ function canonical(v) {
 const hash = (v) =>
   crypto.createHash("sha256").update(canonical(v)).digest("hex");
 
-export function sealReferenceSnapshot(snapshot) {
+function sealReferenceSnapshot(snapshot) {
   const { sha256: _ignore, ...body } =
     snapshot && typeof snapshot === "object" ? snapshot : {};
   return { ...body, sha256: hash(body) };
@@ -179,9 +179,6 @@ export function policyReadiness(p) {
     en: "Ready for source-aware microlearning.",
   };
 }
-export function isPolicyReady(p) {
-  return policyReadiness(p).ready;
-}
 export function publicPolicy(p, { includeTeachingBasis = true } = {}) {
   if (!p) return null;
   const ref = p.reference_id
@@ -298,10 +295,6 @@ export function normalizePolicyInput(v = {}) {
     active: v.active === false || v.active === 0 ? 0 : 1,
   };
 }
-export function policyBelongsToUniversity(policyId, universityId) {
-  const p = policyRow(policyId);
-  return !!p && Number(p.university_id) === Number(universityId);
-}
 export function referenceSnapshotForPolicy(policyLike) {
   const p =
     policyLike &&
@@ -400,24 +393,6 @@ export function publicReferenceSnapshot(v) {
     readiness: s.readiness || policyReadiness(null),
     sha256: s.sha256 || "",
   };
-}
-/* One-time additive migration for legacy cases. It never changes a nonempty
-   snapshot, so policy edits remain non-retroactive. */
-export function backfillCaseReferenceSnapshots() {
-  const rows = db
-    .prepare(
-      "SELECT id,reference_policy_id,reference_snapshot_json FROM cases WHERE reference_policy_id IS NOT NULL AND (reference_snapshot_json IS NULL OR reference_snapshot_json='')",
-    )
-    .all();
-  const put = db.prepare(
-    "UPDATE cases SET reference_snapshot_json=? WHERE id=? AND (reference_snapshot_json IS NULL OR reference_snapshot_json='')",
-  );
-  for (const row of rows)
-    put.run(
-      JSON.stringify(referenceSnapshotForPolicy(row.reference_policy_id)),
-      row.id,
-    );
-  return rows.length;
 }
 function citation(s, lang) {
   const r = s.canonical_reference || {};

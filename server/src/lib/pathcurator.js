@@ -167,9 +167,9 @@ const NODE_MIN = 4;   // chapters with fewer cards fold into a subject review no
    questions, at least one full node) and the remainder becomes locked
    «تمرین بیشتر 👑» premium nodes placed right after the chapter on the path.
    Premium learners open them; free learners are sent to the premium page. */
-export const FREE_SHARE = 0.5;
-export const PREMIUM_TITLE_FA = "تمرین بیشتر 👑";
-export const PREMIUM_TITLE_EN = "Extra practice 👑";
+const FREE_SHARE = 0.5;
+const PREMIUM_TITLE_FA = "تمرین بیشتر 👑";
+const PREMIUM_TITLE_EN = "Extra practice 👑";
 /* Concept-aware split. The FREE core must teach EVERY sub-topic of the
    chapter: cards are grouped by the syllabus keyword that placed them (their
    sub-topic) and the free set takes at least one card of every group, then

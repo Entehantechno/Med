@@ -14,6 +14,13 @@ async function lib() {
   if (!hw) hw = await import("hash-wasm");
   return hw;
 }
+// Legacy bcrypt (pure JS, cost 12) is ~250 ms of CPU per check; it used to run on
+// the main thread at every first login of a pre-argon2 account.
+let bc = null;
+async function bcryptLib() {
+  if (!bc) bc = (await import("bcryptjs")).default;
+  return bc;
+}
 
 parentPort.on("message", async (msg) => {
   try {
@@ -28,6 +35,8 @@ parentPort.on("message", async (msg) => {
       });
     } else if (msg.op === "verify") {
       result = !!(await m.argon2Verify({ password: msg.password, hash: msg.hash }));
+    } else if (msg.op === "bcrypt-verify") {
+      result = !!(await (await bcryptLib()).compare(msg.password, msg.hash));
     } else {
       throw new Error("unknown_op");
     }

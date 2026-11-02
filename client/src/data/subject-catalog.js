@@ -2,7 +2,7 @@
    The teacher picks a subject; the option list auto-fills from the catalog,
    and the teacher only needs to mark the correct answer. */
 
-export const HISTOLOGY = [
+const HISTOLOGY = [
   { fa: "اپیتلیوم سنگفرشی ساده", en: "Simple squamous epithelium" },
   { fa: "اپیتلیوم مکعبی ساده", en: "Simple cuboidal epithelium" },
   { fa: "اپیتلیوم استوانه‌ای ساده", en: "Simple columnar epithelium" },
@@ -31,7 +31,7 @@ export const HISTOLOGY = [
   { fa: "غده اندوکرین", en: "Endocrine gland" },
 ];
 
-export const ANATOMY = [
+const ANATOMY = [
   { fa: "استخوان ران (فمور)", en: "Femur" }, { fa: "استخوان بازو (هومروس)", en: "Humerus" },
   { fa: "استخوان درشت‌نی (تیبیا)", en: "Tibia" }, { fa: "استخوان نازک‌نی (فیبولا)", en: "Fibula" },
   { fa: "زند زبرین (رادیوس)", en: "Radius" }, { fa: "زند زیرین (اولنا)", en: "Ulna" },
@@ -43,7 +43,7 @@ export const ANATOMY = [
   { fa: "شریان آئورت", en: "Aorta" }, { fa: "ورید اجوف فوقانی", en: "Superior vena cava" },
 ];
 
-export const PATHOLOGY = [
+const PATHOLOGY = [
   { fa: "آدنوکارسینوما", en: "Adenocarcinoma" }, { fa: "کارسینوم سلول سنگفرشی", en: "Squamous cell carcinoma" },
   { fa: "کارسینوم سلول بازال", en: "Basal cell carcinoma" }, { fa: "لنفوم", en: "Lymphoma" },
   { fa: "ملانوما", en: "Melanoma" }, { fa: "سارکوم", en: "Sarcoma" },
@@ -55,7 +55,7 @@ export const PATHOLOGY = [
   { fa: "گرانولوم", en: "Granuloma" }, { fa: "آمیلوئیدوز", en: "Amyloidosis" },
 ];
 
-export const MICROBIOLOGY = [
+const MICROBIOLOGY = [
   { fa: "استافیلوکوکوس اورئوس", en: "Staphylococcus aureus" },
   { fa: "استرپتوکوکوس پیوژنز", en: "Streptococcus pyogenes" },
   { fa: "استرپتوکوکوس پنومونیه", en: "Streptococcus pneumoniae" },
@@ -67,7 +67,7 @@ export const MICROBIOLOGY = [
   { fa: "کاندیدا آلبیکنس", en: "Candida albicans" }, { fa: "ویروس آنفلوانزا", en: "Influenza virus" },
 ];
 
-export const PHARMACOLOGY = [
+const PHARMACOLOGY = [
   { fa: "آسپرین", en: "Aspirin" }, { fa: "وارفارین", en: "Warfarin" }, { fa: "متوپرولول", en: "Metoprolol" },
   { fa: "آتنولول", en: "Atenolol" }, { fa: "لیزینوپریل", en: "Lisinopril" }, { fa: "لوزارتان", en: "Losartan" },
   { fa: "آملودیپین", en: "Amlodipine" }, { fa: "فوروزماید", en: "Furosemide" }, { fa: "دیگوکسین", en: "Digoxin" },

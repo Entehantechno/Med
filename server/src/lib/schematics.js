@@ -44,14 +44,14 @@ export const BITEMPORAL = eyePair({
 });
 
 /** Right homonymous hemianopia — both right halves (left tract / radiation / occipital). */
-export const HOMONYMOUS_RIGHT = eyePair({
+const HOMONYMOUS_RIGHT = eyePair({
   leftFill: [true, false],
   rightFill: [false, true],
   caption: "Right homonymous hemianopia",
 });
 
 /** Left monocular (left optic nerve) — whole left eye dark. */
-export const LEFT_OPTIC_NERVE = eyePair({
+const LEFT_OPTIC_NERVE = eyePair({
   leftFill: [true, true],
   rightFill: [false, false],
   caption: "Left monocular field loss",

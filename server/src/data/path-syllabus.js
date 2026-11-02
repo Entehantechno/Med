@@ -18,7 +18,7 @@
 const T = (slug, fa, en, kw) => ({ slug, fa, en, kw });
 
 /* ---------------- Internal medicine sub-specialties ---------------- */
-export const CARDIO = [
+const CARDIO = [
   T("acs", "سندرم کرونری حاد و آنژین", "Acute coronary syndrome & angina", ["stemi", "nstemi", "myocardial infarction", "\\bacs\\b", "angina", "troponin", "st.elevation", "st elevation", "chest pain", "coronary", "thrombolytic", "streptokinase", "pci", "reperfusion", "درد قفسه", "انفارکتوس", "آنژین", "کرونر", "سکته قلبی"]),
   T("hf", "نارسایی قلب و کاردیومیوپاتی", "Heart failure & cardiomyopathy", ["heart failure", "\\bhf\\b", "ejection fraction", "\\bbnp\\b", "cardiomyopathy", "orthopnea", "pulmonary edema", "dilated", "hypertrophic", "restrictive", "نارسایی قلب", "کاردیومیوپاتی", "ادم ریه", "کسر جهشی"]),
   T("arrhythmia", "آریتمی‌ها و اختلالات هدایتی", "Arrhythmias & conduction", ["atrial fibrillation", "\\baf\\b", "flutter", "\\bsvt\\b", "tachycardia", "bradycardia", "av block", "heart block", "wpw", "wolff", "ventricular tachycardia", "\\bvt\\b", "torsade", "qt", "pacemaker", "cardioversion", "adenosine", "amiodarone", "palpitation", "فیبریلاسیون", "آریتمی", "تاکی‌کاردی", "تاکیکاردی", "برادیکاردی", "بلوک", "تپش قلب", "ضربان ساز"]),
@@ -34,7 +34,7 @@ export const CARDIO = [
   T("ecg", "تفسیر نوار قلب و تست‌های تشخیصی", "ECG interpretation & cardiac testing", ["\\becg\\b", "\\bekg\\b", "electrocardiogram", "stress test", "echocardiograph", "holter", "lead", "نوار قلب", "اکوکاردیوگرافی", "تست ورزش"]),
 ];
 
-export const PULMO = [
+const PULMO = [
   T("asthma", "آسم", "Asthma", ["asthma", "bronchospasm", "salbutamol", "albuterol", "inhaled corticosteroid", "wheez", "آسم", "ویزینگ", "سالبوتامول"]),
   T("copd", "بیماری انسدادی مزمن ریه", "COPD", ["copd", "emphysema", "chronic bronchitis", "fev1/fvc", "tiotropium", "انسدادی مزمن", "آمفیزم", "برونشیت مزمن"]),
   T("pneumonia", "پنومونی و عفونت‌های تنفسی", "Pneumonia & respiratory infections", ["pneumonia", "consolidation", "sputum", "\\bcap\\b", "aspiration", "legionella", "mycoplasma", "bronchiectasis", "lung abscess", "پنومونی", "خلط", "برونشکتازی", "آبسه ریه"]),
@@ -70,7 +70,7 @@ export const GI = [
   T("abd-pain", "درد شکم و اورژانس‌های گوارشی داخلی", "Abdominal pain & medical GI emergencies", ["abdominal pain", "mesenteric ischemia", "ileus", "obstruction", "toxic megacolon", "clostridium difficile", "c. difficile", "درد شکم", "ایسکمی مزانتر", "ایلئوس", "مگاکولون", "کلستریدیوم"]),
 ];
 
-export const NEPHRO = [
+const NEPHRO = [
   T("aki", "آسیب حاد کلیه", "Acute kidney injury", ["acute kidney injury", "\\baki\\b", "acute renal failure", "prerenal", "acute tubular necrosis", "\\batn\\b", "contrast", "rhabdomyolysis", "fena", "آسیب حاد کلیه", "نارسایی حاد کلیه", "پره‌رنال", "نکروز حاد توبولی", "رابدومیولیز"]),
   T("ckd", "بیماری مزمن کلیه و دیالیز", "Chronic kidney disease & dialysis", ["chronic kidney", "\\bckd\\b", "\\besrd\\b", "dialysis", "\\bgfr\\b", "erythropoietin", "renal osteodystrophy", "uremi", "transplant", "مزمن کلیه", "دیالیز", "اورمی", "پیوند کلیه"]),
   T("glomerular", "بیماری‌های گلومرولی: نفریتیک و نفروتیک", "Glomerular disease: nephritic & nephrotic", ["nephrotic", "nephritic", "glomerulonephritis", "proteinuria", "minimal change", "membranous", "\\bfsgs\\b", "iga nephropathy", "post-streptococcal", "goodpasture", "rpgn", "crescent", "نفروتیک", "نفریتیک", "گلومرولونفریت", "پروتئینوری", "مینیمال چنج", "ممبرانو", "برگر"]),
@@ -86,7 +86,7 @@ export const NEPHRO = [
   T("myeloma", "کلیه در بیماری‌های سیستمیک: دیابت، میلوم، لوپوس", "Kidney in systemic disease: diabetes, myeloma, lupus", ["diabetic nephropathy", "myeloma", "lupus nephritis", "amyloid", "نفروپاتی دیابتی", "میلوم", "نفریت لوپوسی", "آمیلوئید"]),
 ];
 
-export const HEME = [
+const HEME = [
   T("anemia-iron", "کم‌خونی فقر آهن و میکروسیتیک", "Iron-deficiency & microcytic anemia", ["iron deficiency", "microcytic", "ferritin", "\\btibc\\b", "\\bmcv\\b", "hypochromic", "فقر آهن", "میکروسیتیک", "فریتین", "هیپوکروم"]),
   T("thalassemia", "تالاسمی و هموگلوبینوپاتی‌ها", "Thalassemia & hemoglobinopathies", ["thalass", "sickle", "hemoglobin electrophoresis", "hba2", "hbf", "تالاسمی", "داسی", "الکتروفورز هموگلوبین"]),
   T("anemia-macro", "کم‌خونی مگالوبلاستیک و ماکروسیتیک", "Megaloblastic & macrocytic anemia", ["megaloblastic", "macrocytic", "b12", "cobalamin", "folate", "folic", "pernicious", "intrinsic factor", "مگالوبلاستیک", "ماکروسیتیک", "ب۱۲", "فولات", "پرنیشیوز"]),
@@ -104,7 +104,7 @@ export const HEME = [
   T("onc-emerg", "اورژانس‌های انکولوژی", "Oncologic emergencies", ["superior vena cava", "spinal cord compression", "febrile neutropenia", "hypercalcemia of malignancy", "tumor lysis", "نوتروپنی تب‌دار", "فشار طناب نخاعی", "ورید اجوف فوقانی"]),
 ];
 
-export const ENDO = [
+const ENDO = [
   T("dm", "دیابت: تشخیص و درمان", "Diabetes mellitus: diagnosis & treatment", ["diabetes mellitus", "type 2 diabetes", "type 1 diabetes", "hba1c", "metformin", "insulin", "sulfonylurea", "glp-1", "sglt2", "fasting glucose", "دیابت", "متفورمین", "انسولین", "قند خون", "هموگلوبین a1c"]),
   T("dm-acute", "عوارض حاد دیابت: DKA و HHS", "Acute diabetic complications: DKA & HHS", ["ketoacidosis", "\\bdka\\b", "hyperosmolar", "\\bhhs\\b", "hypoglycemia", "کتواسیدوز", "هیپراسمولار", "هیپوگلیسمی"]),
   T("dm-chronic", "عوارض مزمن دیابت", "Chronic diabetic complications", ["diabetic nephropathy", "retinopathy", "neuropathy", "diabetic foot", "microalbumin", "نفروپاتی", "رتینوپاتی", "نوروپاتی", "پای دیابتی", "میکروآلبومین"]),
@@ -122,7 +122,7 @@ export const ENDO = [
   T("men", "نئوپلازی‌های متعدد اندوکرین و تومورهای نورواندوکرین", "MEN syndromes & neuroendocrine tumours", ["multiple endocrine", "\\bmen\\s?[12]", "carcinoid", "insulinoma", "gastrinoma", "neuroendocrine", "نئوپلازی متعدد", "کارسینوئید", "انسولینوما", "گاسترینوما"]),
 ];
 
-export const RHEUM = [
+const RHEUM = [
   T("ra", "آرتریت روماتوئید", "Rheumatoid arthritis", ["rheumatoid", "anti-ccp", "rheumatoid factor", "methotrexate", "dmard", "روماتوئید", "متوترکسات"]),
   T("sle", "لوپوس اریتماتوی سیستمیک", "Systemic lupus erythematosus", ["lupus", "\\bsle\\b", "anti-dsdna", "antinuclear", "\\bana\\b", "anti-smith", "hydroxychloroquine", "لوپوس", "آنتی‌بادی ضد هسته"]),
   T("aps", "سندرم آنتی‌فسفولیپید و واسکولیت‌ها", "Antiphospholipid syndrome & vasculitis", ["antiphospholipid", "vasculitis", "giant cell", "temporal arteritis", "takayasu", "polyarteritis", "wegener", "granulomatosis", "\\banca\\b", "henoch", "behcet", "kawasaki", "polymyalgia", "آنتی‌فسفولیپید", "واسکولیت", "آرتریت تمپورال", "تاکایاسو", "پلی‌آرتریت", "وگنر", "بهجت", "پلی‌میالژی"]),
@@ -138,7 +138,7 @@ export const RHEUM = [
 ];
 
 /* ---------------- Other subjects ---------------- */
-export const PEDS = [
+const PEDS = [
   T("neonate", "نوزادان: ارزیابی، زردی و مشکلات شایع", "Neonatology: assessment, jaundice & common problems", ["neonat", "newborn", "apgar", "term infant", "preterm", "premature", "jaundice", "bilirubin", "kernicterus", "phototherapy", "respiratory distress syndrome", "surfactant", "necrotizing enterocolitis", "hypoglycemia in", "meconium", "نوزاد", "آپگار", "نارس", "زردی", "بیلی‌روبین", "فتوتراپی", "کرنیکتروس", "سورفاکتانت", "مکونیوم"]),
   T("growth", "رشد و تکامل", "Growth & development", ["developmental milestone", "milestone", "growth chart", "failure to thrive", "short stature", "head circumference", "weight gain", "sits without", "walks", "words", "تکامل", "رشد", "قد کوتاه", "دور سر", "اختلال رشد", "وزن‌گیری"]),
   T("nutrition-peds", "تغذیه شیرخوار، شیر مادر و کمبودها", "Infant nutrition, breastfeeding & deficiencies", ["breastfeed", "breast milk", "formula", "complementary", "weaning", "vitamin d", "rickets", "iron supplement", "malnutrition", "marasmus", "kwashiorkor", "شیر مادر", "شیرخوار", "غذای کمکی", "راشیتیسم", "سوءتغذیه", "ماراسموس", "کواشیورکور", "قطره آهن"]),
@@ -160,7 +160,7 @@ export const PEDS = [
   T("derm-peds", "پوست و بیماری‌های شایع سرپایی کودکان", "Pediatric dermatology & common outpatient problems", ["diaper", "atopic dermatitis", "eczema", "impetigo", "scabies", "lice", "seborrheic", "hemangioma", "birthmark", "ادرار سوختگی", "درماتیت", "اگزما", "زرد زخم", "گال", "شپش", "همانژیوم"]),
 ];
 
-export const OBGYN = [
+const OBGYN = [
   T("physio", "فیزیولوژی بارداری و مراقبت‌های پیش از زایمان", "Pregnancy physiology & prenatal care", ["prenatal", "antenatal", "physiologic change", "gestational age", "naegele", "first visit", "folic acid", "prenatal screening", "nuchal", "quad screen", "amniocentesis", "chorionic villus", "مراقبت بارداری", "تغییرات فیزیولوژیک", "سن حاملگی", "اسید فولیک", "غربالگری", "آمنیوسنتز"]),
   T("early-preg", "خون‌ریزی سه‌ماهه اول: سقط، حاملگی خارج رحمی، مول", "First-trimester bleeding: abortion, ectopic, molar pregnancy", ["abortion", "miscarriage", "ectopic", "molar", "hydatidiform", "gestational trophoblastic", "choriocarcinoma", "beta-hcg", "threatened", "incomplete", "missed", "سقط", "خارج رحمی", "نابجا", "مول", "تروفوبلاستیک", "کوریوکارسینوم"]),
   T("htn-preg", "پرفشاری خون در بارداری و پره‌اکلامپسی", "Hypertension in pregnancy & preeclampsia", ["preeclampsia", "eclampsia", "hellp", "gestational hypertension", "magnesium sulfate", "chronic hypertension in", "پره‌اکلامپسی", "اکلامپسی", "هلپ", "سولفات منیزیم", "فشار خون بارداری"]),
@@ -233,7 +233,7 @@ export const PATH = [
   T("cns-path", "پاتولوژی سیستم عصبی", "Neuropathology", ["glioblastoma", "astrocytoma", "meningioma", "medulloblastoma", "schwannoma", "neurofibroma", "alzheimer", "parkinson", "huntington", "multiple sclerosis", "demyelinat", "meningitis", "encephalitis", "hydrocephalus", "cerebral infarct", "hemorrhage", "epidural", "subdural", "prion", "گلیوبلاستوم", "آستروسیتوم", "مننژیوم", "مدولوبلاستوم", "شوانوم", "نوروفیبروم", "آلزایمر", "پارکینسون", "هانتینگتون", "مولتیپل اسکلروزیس", "دمیلینه", "مننژیت", "انسفالیت", "هیدروسفالی", "انفارکت مغزی", "پریون"]),
 ];
 
-export const PHARM = [
+const PHARM = [
   T("general", "فارماکوکینتیک و فارماکودینامیک", "Pharmacokinetics & pharmacodynamics", ["pharmacokinetic", "half-life", "half life", "volume of distribution", "clearance", "bioavailability", "first-pass", "first pass", "loading dose", "maintenance dose", "steady state", "zero-order", "first-order", "cyp", "enzyme induc", "enzyme inhibit", "agonist", "antagonist", "potency", "efficacy", "therapeutic index", "receptor", "نیمه‌عمر", "حجم توزیع", "کلیرانس", "فراهمی زیستی", "عبور اول", "دوز بارگیری", "حالت پایدار", "آگونیست", "آنتاگونیست", "شاخص درمانی", "گیرنده", "القاکننده", "مهارکننده آنزیم"]),
   T("ans", "داروهای سیستم عصبی خودکار", "Autonomic drugs", ["cholinergic", "anticholinergic", "muscarinic", "nicotinic", "atropine", "neostigmine", "physostigmine", "adrenergic", "alpha", "beta", "epinephrine", "norepinephrine", "phenylephrine", "clonidine", "propranolol", "prazosin", "کولینرژیک", "آنتی‌کولینرژیک", "موسکارینی", "نیکوتینی", "آتروپین", "نئوستیگمین", "آدرنرژیک", "اپی‌نفرین", "فنیل‌افرین", "کلونیدین", "پروپرانولول", "پرازوسین"]),
   T("cv-pharm", "داروهای قلبی‌عروقی", "Cardiovascular drugs", ["antihypertensive", "ace inhibitor", "captopril", "enalapril", "losartan", "amlodipine", "nifedipine", "verapamil", "diltiazem", "hydralazine", "nitroprusside", "nitrate", "nitroglycerin", "digoxin", "antiarrhythmic", "amiodarone", "lidocaine", "adenosine", "statin", "atorvastatin", "fibrate", "ezetimibe", "heart failure drug", "ضدفشار خون", "مهارکننده ace", "کاپتوپریل", "انالاپریل", "لوزارتان", "آملودیپین", "نیفدیپین", "وراپامیل", "دیلتیازم", "هیدرالازین", "نیتروپروساید", "نیترات", "نیتروگلیسیرین", "دیگوکسین", "ضدآریتمی", "آمیودارون", "لیدوکائین", "آدنوزین", "استاتین", "آتورواستاتین", "فیبرات"]),
@@ -252,7 +252,7 @@ export const PHARM = [
   T("tox-pharm", "سم‌شناسی، تداخلات و داروها در بارداری", "Toxicology, interactions & drugs in pregnancy", ["antidote", "poisoning", "overdose", "toxicity", "teratogen", "pregnancy category", "drug interaction", "adverse effect", "grapefruit", "thalidomide", "isotretinoin", "پادزهر", "مسمومیت", "اوردوز", "سمیت", "تراتوژن", "تداخل دارویی", "عارضه", "گریپ‌فروت", "تالیدومید", "ایزوترتینوئین"]),
 ];
 
-export const RADIO = [
+const RADIO = [
   T("physics", "فیزیک پرتو، حفاظت و کنتراست", "Imaging physics, radiation safety & contrast", ["radiation dose", "ionizing", "radiation protection", "alara", "contrast", "gadolinium", "iodinated", "nephrogenic", "anaphylactoid", "pregnan.{0,20}(x-ray|ct|radiation)", "msv", "dose", "دوز پرتو", "یونیزان", "حفاظت", "کنتراست", "گادولینیوم", "یددار", "بارداری"]),
   T("modality", "انتخاب روش تصویربرداری", "Choosing the imaging modality", ["modality of choice", "best imaging", "initial imaging", "first imaging", "investigation of choice", "most appropriate imaging", "\\bmri\\b", "ultrasound", "\\bct\\b", "روش انتخابی", "بهترین روش", "اولین اقدام تصویربرداری", "ام‌آر‌آی", "سونوگرافی", "سی‌تی"]),
   T("chest-xr", "رادیوگرافی قفسه سینه", "Chest radiography", ["chest x-ray", "chest radiograph", "\\bcxr\\b", "silhouette", "air bronchogram", "consolidation", "atelectasis", "pleural effusion", "pneumothorax", "cardiomegaly", "kerley", "hilar", "mediastinal widening", "coin lesion", "cavit", "عکس قفسه سینه", "رادیوگرافی سینه", "علامت سیلوئت", "برونکوگرام هوایی", "کانسالیدیشن", "آتلکتازی", "پلورال افیوژن", "پنوموتوراکس", "کاردیومگالی", "کرلی", "ناف ریه", "مدیاستن", "ضایعه سکه‌ای", "حفره"]),
@@ -287,7 +287,7 @@ export const ENT = [
   T("facial-trauma", "ترومای صورت و شکستگی‌های فک و صورت", "Facial trauma & maxillofacial fractures", ["mandib", "le fort", "zygoma", "orbital floor", "blowout", "temporal bone fracture", "csf otorrhea", "csf rhinorrhea", "battle sign", "فک", "لوفورت", "زیگوما", "کف اوربیت", "بلواوت", "شکستگی استخوان تمپورال", "اتوره", "رینوره", "علامت بتل"]),
 ];
 
-export const URO = [
+const URO = [
   T("symptoms", "علائم ادراری و ارزیابی اورولوژیک", "Urologic symptoms & evaluation", ["lower urinary tract symptoms", "luts", "frequency", "urgency", "nocturia", "dysuria", "urinary retention", "post-void", "uroflow", "urodynamic", "cystoscopy", "علائم ادراری", "تکرر", "فوریت", "شب‌ادراری", "سوزش ادرار", "احتباس ادرار", "باقی‌مانده", "اوروفلومتری", "یورودینامیک", "سیستوسکوپی"]),
   T("uti-uro", "عفونت‌های ادراری و پروستاتیت", "Urinary tract infection & prostatitis", ["urinary tract infection", "\\buti\\b", "cystitis", "pyelonephritis", "prostatitis", "epididymitis", "orchitis", "fournier", "urosepsis", "emphysematous", "renal abscess", "perinephric", "عفونت ادراری", "سیستیت", "پیلونفریت", "پروستاتیت", "اپیدیدیمیت", "اورکیت", "فورنیه", "اوروسپسیس", "آمفیزماتو", "آبسه کلیه", "پری‌نفریک"]),
   T("stones-uro", "سنگ‌های ادراری و کولیک کلیوی", "Urolithiasis & renal colic", ["stone", "calculus", "lithiasis", "renal colic", "eswl", "lithotripsy", "ureteroscopy", "pcnl", "percutaneous nephro", "calcium oxalate", "uric acid", "struvite", "staghorn", "cystine", "hypercalciuria", "سنگ", "کولیک", "سنگ‌شکنی", "یورتروسکوپی", "نفرولیتوتومی", "اگزالات کلسیم", "اسید اوریک", "استرووایت", "شاخ گوزنی", "سیستین", "هیپرکلسیوری"]),
@@ -304,7 +304,7 @@ export const URO = [
   T("andrology", "ناباروری مردان و اختلال نعوظ", "Male infertility & erectile dysfunction", ["male infertility", "semen analysis", "azoospermia", "oligospermia", "varicocele", "erectile dysfunction", "impotence", "sildenafil", "phosphodiesterase", "priapism", "peyronie", "premature ejaculation", "vasectomy", "ناباروری مرد", "آنالیز مایع منی", "آزواسپرمی", "الیگواسپرمی", "اختلال نعوظ", "ناتوانی جنسی", "سیلدنافیل", "پریاپیسم", "پیرونی", "انزال زودرس", "وازکتومی"]),
 ];
 
-export const INFECT = [
+const INFECT = [
   T("fever", "تب با منشأ ناشناخته و اصول عفونی", "Fever of unknown origin & principles", ["fever of unknown", "\\bfuo\\b", "fever", "sepsis", "septic shock", "blood culture", "empiric", "تب با منشأ", "تب", "سپسیس", "شوک سپتیک", "کشت خون", "تجربی"]),
   T("resp-inf", "عفونت‌های تنفسی: پنومونی، آنفلوانزا، سل", "Respiratory infections: pneumonia, influenza, TB", ["pneumonia", "influenza", "covid", "tubercul", "pertussis", "diphtheria", "پنومونی", "آنفلوانزا", "کووید", "سل", "سیاه‌سرفه", "دیفتری"]),
   T("cns-inf", "مننژیت و انسفالیت", "Meningitis & encephalitis", ["meningitis", "encephalitis", "csf", "lumbar puncture", "brain abscess", "مننژیت", "انسفالیت", "مایع مغزی نخاعی", "پونکسیون کمری", "آبسه مغزی"]),
@@ -317,7 +317,7 @@ export const INFECT = [
   T("vaccine-adult", "واکسیناسیون بزرگسالان و پیشگیری", "Adult immunization & prophylaxis", ["vaccine", "immunization", "post-exposure", "prophylaxis", "traveler", "واکسن", "ایمن‌سازی", "پس از تماس", "پروفیلاکسی", "مسافر"]),
 ];
 
-export const NEURO = [
+const NEURO = [
   T("stroke", "سکته مغزی و حوادث عروقی مغز", "Stroke & cerebrovascular disease", ["stroke", "ischemic", "hemorrhag", "\\btia\\b", "transient ischemic", "tpa", "thrombolysis", "middle cerebral", "lacunar", "carotid", "subarachnoid", "aneurysm", "سکته مغزی", "ایسکمیک", "خون‌ریزی مغزی", "حمله ایسکمیک گذرا", "ترومبولیز", "شریان مغزی میانی", "لاکونار", "کاروتید", "زیرعنکبوتیه", "آنوریسم"]),
   T("headache", "سردرد: میگرن، تنشی، خوشه‌ای", "Headache: migraine, tension, cluster", ["migraine", "headache", "tension-type", "cluster", "trigeminal", "idiopathic intracranial", "pseudotumor", "temporal arteritis", "thunderclap", "میگرن", "سردرد", "تنشی", "خوشه‌ای", "سه‌قلو", "پرفشاری داخل جمجمه", "سودوتومور", "آرتریت تمپورال", "رعدآسا"]),
   T("epilepsy", "صرع و تشنج", "Epilepsy & seizures", ["seizure", "epilep", "status epilepticus", "absence", "tonic-clonic", "focal", "phenytoin", "valproate", "carbamazepine", "levetiracetam", "eeg", "تشنج", "صرع", "استاتوس", "آبسانس", "تونیک کلونیک", "فوکال", "فنی‌توئین", "والپروات", "کاربامازپین", "نوار مغز"]),
@@ -331,7 +331,7 @@ export const NEURO = [
   T("infection-neuro", "عفونت‌های سیستم عصبی و تومورها", "CNS infections & tumours", ["meningitis", "encephalitis", "brain abscess", "brain tumor", "glioma", "meningioma", "metastasis", "مننژیت", "انسفالیت", "آبسه مغزی", "تومور مغز", "گلیوم", "مننژیوم", "متاستاز"]),
 ];
 
-export const ORTHO = [
+const ORTHO = [
   T("fracture-general", "اصول شکستگی‌ها و عوارض", "Fracture principles & complications", ["fracture healing", "nonunion", "malunion", "compartment syndrome", "fat embolism", "open fracture", "gustilo", "cast", "reduction", "fixation", "complex regional", "ترمیم شکستگی", "جوش نخوردن", "بدجوش‌خوردگی", "سندرم کمپارتمان", "آمبولی چربی", "شکستگی باز", "گچ", "جااندازی", "فیکساسیون"]),
   T("upper-limb", "شکستگی‌ها و آسیب‌های اندام فوقانی", "Upper-limb fractures & injuries", ["clavicle", "shoulder dislocation", "humer", "supracondylar", "elbow", "radial head", "monteggia", "galeazzi", "colles", "smith", "scaphoid", "boxer", "wrist", "rotator cuff", "nursemaid", "ترقوه", "دررفتگی شانه", "بازو", "سوپراکندیلار", "آرنج", "سر رادیوس", "مونتژیا", "گالئازی", "کالیس", "اسمیت", "اسکافوئید", "بوکسور", "مچ", "روتاتور کاف", "پرستار"]),
   T("lower-limb", "شکستگی‌ها و آسیب‌های اندام تحتانی", "Lower-limb fractures & injuries", ["hip fracture", "femoral neck", "intertrochanteric", "femur", "hip dislocation", "patella", "tibia", "ankle", "weber", "calcaneus", "lisfranc", "achilles", "metatarsal", "شکستگی هیپ", "گردن فمور", "اینترتروکانتریک", "فمور", "دررفتگی هیپ", "کشکک", "تیبیا", "مچ پا", "پاشنه", "لیسفرانک", "آشیل", "متاتارس"]),
@@ -344,7 +344,7 @@ export const ORTHO = [
   T("degenerative", "استئوآرتریت، آرتروپلاستی و بیماری‌های دژنراتیو", "Osteoarthritis, arthroplasty & degenerative disease", ["osteoarthritis", "arthroplasty", "joint replacement", "avascular necrosis", "osteonecrosis", "frozen shoulder", "plantar fasciitis", "hallux valgus", "bunion", "استئوآرتریت", "آرتروپلاستی", "تعویض مفصل", "نکروز آواسکولار", "استئونکروز", "شانه یخ‌زده", "فاشئیت کف پا", "هالوکس والگوس"]),
 ];
 
-export const PSYCH = [
+const PSYCH = [
   T("mood", "اختلالات خلقی: افسردگی و دوقطبی", "Mood disorders: depression & bipolar", ["depress", "major depressive", "dysthymi", "bipolar", "mania", "manic", "hypomani", "lithium", "suicid", "postpartum", "افسردگی", "دیس‌تایمی", "دوقطبی", "مانیا", "شیدایی", "هیپومانیا", "لیتیوم", "خودکشی", "پس از زایمان"]),
   T("psychosis", "اسکیزوفرنی و اختلالات سایکوتیک", "Schizophrenia & psychotic disorders", ["schizophren", "psychosis", "psychotic", "delusion", "hallucination", "antipsychotic", "schizoaffective", "brief psychotic", "اسکیزوفرنی", "سایکوز", "روان‌پریشی", "هذیان", "توهم", "ضدجنون", "اسکیزوافکتیو"]),
   T("anxiety", "اختلالات اضطرابی، وسواس و PTSD", "Anxiety, OCD & PTSD", ["anxiety", "panic", "phobia", "generalized anxiety", "obsessive", "\\bocd\\b", "compulsive", "post-traumatic", "ptsd", "acute stress", "adjustment", "اضطراب", "پانیک", "هراس", "فوبیا", "وسواس", "پس از سانحه", "استرس حاد", "انطباقی"]),
@@ -357,7 +357,7 @@ export const PSYCH = [
   T("emergency-psych", "اورژانس‌های روان‌پزشکی و درمان‌ها", "Psychiatric emergencies & treatments", ["suicide", "agitation", "restraint", "neuroleptic malignant", "serotonin syndrome", "electroconvulsive", "\\bect\\b", "psychotherapy", "cognitive behavioral", "\\bcbt\\b", "lithium toxicity", "خودکشی", "بی‌قراری", "مهار", "نورولپتیک بدخیم", "سندرم سروتونین", "الکتروشوک", "روان‌درمانی", "شناختی رفتاری", "مسمومیت با لیتیوم"]),
 ];
 
-export const DERM = [
+const DERM = [
   T("eczema", "درماتیت‌ها و اگزما", "Dermatitis & eczema", ["atopic", "eczema", "dermatitis", "contact", "seborrheic", "nummular", "dyshidrotic", "diaper", "lichen simplex", "آتوپیک", "اگزما", "درماتیت", "تماسی", "سبورئیک", "سکه‌ای", "دیس‌هیدروتیک", "پوشک", "لیکن سیمپلکس"]),
   T("papulosquamous", "پسوریازیس و بیماری‌های پاپولواسکوآموس", "Psoriasis & papulosquamous disease", ["psoriasis", "lichen planus", "pityriasis rosea", "pityriasis versicolor", "herald patch", "koebner", "auspitz", "پسوریازیس", "لیکن پلان", "پیتریازیس روزه", "لکه پیشتاز", "کوبنر", "آسپیتز"]),
   T("acne", "آکنه، روزاسه و بیماری‌های مو و ناخن", "Acne, rosacea, hair & nail disorders", ["acne", "rosacea", "isotretinoin", "alopecia", "hair loss", "androgenetic", "telogen", "tinea capitis", "nail", "onychomycosis", "paronychia", "hidradenitis", "آکنه", "جوش", "روزاسه", "ایزوترتینوئین", "ریزش مو", "آلوپسی", "آندروژنتیک", "تلوژن", "کچلی", "ناخن", "اونیکومایکوز", "پارونیشی", "هیدرآدنیت"]),
@@ -367,7 +367,7 @@ export const DERM = [
   T("pigment-systemic", "اختلالات رنگدانه و تظاهرات پوستی بیماری‌های سیستمیک", "Pigmentary disorders & cutaneous signs of systemic disease", ["vitiligo", "melasma", "albinism", "hyperpigment", "hypopigment", "erythema nodosum", "pyoderma", "acanthosis nigricans", "xanthoma", "lupus", "dermatomyositis", "scleroderma", "porphyria", "ویتیلیگو", "برص", "ملاسما", "آلبینیسم", "پررنگ", "کم‌رنگ", "اریتم ندوزوم", "پیودرما", "آکانتوز نیگریکانس", "گزانتوم", "لوپوس", "درماتومیوزیت", "اسکلرودرمی", "پورفیری"]),
 ];
 
-export const OPHTH = [
+const OPHTH = [
   T("red-eye", "چشم قرمز: کونژنکتیویت، کراتیت، یووئیت", "Red eye: conjunctivitis, keratitis, uveitis", ["conjunctivitis", "red eye", "keratitis", "corneal ulcer", "uveitis", "iritis", "episcleritis", "scleritis", "trachoma", "dendritic", "herpes", "contact lens", "کونژنکتیویت", "چشم قرمز", "کراتیت", "زخم قرنیه", "یووئیت", "ایریت", "اپی‌اسکلریت", "اسکلریت", "تراخم", "دندریتیک", "هرپس", "لنز تماسی"]),
   T("glaucoma", "گلوکوم", "Glaucoma", ["glaucoma", "intraocular pressure", "angle-closure", "open-angle", "cup", "optic disc", "timolol", "pilocarpine", "acetazolamide", "گلوکوم", "آب سیاه", "فشار داخل چشم", "زاویه بسته", "زاویه باز", "کاپ", "دیسک اپتیک", "تیمولول", "پیلوکارپین", "استازولامید"]),
   T("cataract-lens", "کاتاراکت و عیوب انکساری", "Cataract & refractive errors", ["cataract", "lens", "myopia", "hyperopia", "astigmatism", "presbyopia", "refractive", "amblyopia", "leukocoria", "کاتاراکت", "آب مروارید", "عدسی", "نزدیک‌بینی", "دوربینی", "آستیگماتیسم", "پیرچشمی", "انکساری", "تنبلی چشم", "لکوکوری"]),
@@ -378,7 +378,7 @@ export const OPHTH = [
   T("strabismus", "استرابیسم و چشم‌پزشکی کودکان", "Strabismus & pediatric ophthalmology", ["strabismus", "esotropia", "exotropia", "amblyopia", "cover test", "leukocoria", "retinoblastoma", "congenital cataract", "ophthalmia neonatorum", "استرابیسم", "انحراف چشم", "ازوتروپی", "اگزوتروپی", "تنبلی چشم", "تست پوشش", "لکوکوری", "رتینوبلاستوم", "کاتاراکت مادرزادی", "افتالمی نوزادی"]),
 ];
 
-export const STATS = [
+const STATS = [
   T("study-design", "طراحی مطالعات", "Study designs", ["cohort", "case-control", "cross-sectional", "randomized", "clinical trial", "ecological", "case series", "case report", "observational", "experimental", "prospective", "retrospective", "کوهورت", "هم‌گروهی", "مورد-شاهدی", "مقطعی", "تصادفی", "کارآزمایی", "اکولوژیک", "سری موارد", "گزارش مورد", "مشاهده‌ای", "تجربی", "آینده‌نگر", "گذشته‌نگر"]),
   T("measures", "شاخص‌های اپیدمیولوژیک: بروز، شیوع، خطر", "Epidemiologic measures: incidence, prevalence, risk", ["incidence", "prevalence", "relative risk", "odds ratio", "attributable", "number needed", "\\bnnt\\b", "mortality rate", "case fatality", "attack rate", "بروز", "شیوع", "خطر نسبی", "نسبت شانس", "منتسب", "تعداد لازم", "میزان مرگ", "کشندگی", "میزان حمله"]),
   T("diagnostic", "تست‌های تشخیصی: حساسیت، ویژگی، ارزش اخباری", "Diagnostic tests: sensitivity, specificity, predictive values", ["sensitivity", "specificity", "predictive value", "likelihood ratio", "\\broc\\b", "cut-off", "false positive", "false negative", "screening", "gold standard", "حساسیت", "ویژگی", "ارزش اخباری", "نسبت درست‌نمایی", "نقطه برش", "مثبت کاذب", "منفی کاذب", "غربالگری", "استاندارد طلایی"]),
@@ -387,45 +387,40 @@ export const STATS = [
   T("public-health", "بهداشت عمومی، پیشگیری و اپیدمیولوژی بیماری‌ها", "Public health, prevention & disease epidemiology", ["primary prevention", "secondary prevention", "tertiary", "herd immunity", "epidemic", "endemic", "pandemic", "outbreak", "surveillance", "incubation", "reproductive number", "quarantine", "پیشگیری اولیه", "ثانویه", "ثالثیه", "ایمنی گله‌ای", "اپیدمی", "همه‌گیری", "آندمیک", "پاندمی", "طغیان", "مراقبت", "کمون", "قرنطینه"]),
 ];
 
-export const ETHICS = [
+const ETHICS = [
   T("consent", "رضایت آگاهانه و خودمختاری بیمار", "Informed consent & autonomy", ["informed consent", "autonomy", "capacity", "competence", "refus", "minor", "guardian", "surrogate", "advance directive", "رضایت آگاهانه", "خودمختاری", "ظرفیت", "صلاحیت", "امتناع", "صغیر", "قیم", "ولی", "وصیت"]),
   T("confidentiality", "رازداری و حقیقت‌گویی", "Confidentiality & truth-telling", ["confidential", "privacy", "disclos", "truth", "breaking bad news", "duty to warn", "رازداری", "محرمانه", "حریم", "افشا", "حقیقت", "خبر بد", "هشدار"]),
   T("end-of-life", "پایان زندگی، اتانازی و تخصیص منابع", "End of life, euthanasia & resource allocation", ["end of life", "euthanasia", "palliative", "do not resuscitate", "dnr", "futile", "brain death", "organ donation", "allocation", "justice", "پایان زندگی", "اتانازی", "تسکینی", "عدم احیا", "بیهوده", "مرگ مغزی", "اهدای عضو", "تخصیص", "عدالت"]),
   T("professionalism", "حرفه‌ای‌گری، خطای پزشکی و تعارض منافع", "Professionalism, medical error & conflict of interest", ["professional", "medical error", "malpractice", "negligence", "conflict of interest", "gift", "boundary", "impaired", "colleague", "research ethics", "حرفه‌ای", "خطای پزشکی", "قصور", "سهل‌انگاری", "تعارض منافع", "هدیه", "مرز", "همکار", "اخلاق پژوهش"]),
 ];
 
-export const IMMUNO = [
+const IMMUNO = [
   T("innate-adaptive", "ایمنی ذاتی و اکتسابی، سلول‌ها و آنتی‌بادی‌ها", "Innate & adaptive immunity, cells & antibodies", ["innate", "adaptive", "t cell", "b cell", "antibody", "immunoglobulin", "igg", "iga", "igm", "ige", "complement", "mhc", "hla", "antigen presenting", "cytokine", "ذاتی", "اکتسابی", "سلول t", "سلول b", "آنتی‌بادی", "ایمونوگلوبولین", "کمپلمان", "آنتی‌ژن", "سیتوکین"]),
   T("hypersensitivity", "واکنش‌های حساسیتی و آلرژی", "Hypersensitivity & allergy", ["hypersensitivity", "anaphyla", "allerg", "type i", "type ii", "type iii", "type iv", "arthus", "serum sickness", "delayed", "حساسیت", "آنافیلاکسی", "آلرژی", "نوع i", "آرتوس", "بیماری سرم", "تأخیری"]),
   T("immunodeficiency", "نقص‌های ایمنی", "Immunodeficiencies", ["immunodeficiency", "scid", "digeorge", "bruton", "agammaglobulin", "common variable", "chronic granulomatous", "wiskott", "ataxia", "complement deficiency", "hiv", "نقص ایمنی", "دی‌جورج", "بروتون", "آگاماگلوبولینمی", "متغیر شایع", "گرانولوماتوز مزمن", "ویسکوت", "آتاکسی", "کمبود کمپلمان"]),
   T("autoimmunity-transplant", "خودایمنی، پیوند و ایمونولوژی تومور", "Autoimmunity, transplantation & tumour immunology", ["autoimmun", "tolerance", "transplant", "rejection", "graft-versus-host", "tumor immun", "vaccine", "خودایمنی", "تحمل", "پیوند", "رد", "پیوند علیه میزبان", "ایمنی تومور", "واکسن"]),
 ];
 
-export const NUTRITION = [
+const NUTRITION = [
   T("macro", "درشت‌مغذی‌ها و نیازهای انرژی", "Macronutrients & energy requirements", ["calorie", "energy", "protein", "carbohydrate", "fat", "fiber", "\\bbmi\\b", "obesity", "کالری", "انرژی", "پروتئین", "کربوهیدرات", "چربی", "فیبر", "چاقی"]),
   T("micro", "ویتامین‌ها و ریزمغذی‌ها", "Vitamins & micronutrients", ["vitamin", "thiamine", "niacin", "riboflavin", "pyridoxine", "folate", "b12", "scurvy", "rickets", "iron", "zinc", "iodine", "selenium", "ویتامین", "تیامین", "نیاسین", "فولات", "اسکوروی", "راشیتیسم", "آهن", "روی", "ید", "سلنیوم"]),
   T("clinical-nutrition", "تغذیه بالینی، سوءتغذیه و تغذیه بیمارستانی", "Clinical nutrition, malnutrition & hospital feeding", ["malnutrition", "enteral", "parenteral", "refeeding", "kwashiorkor", "marasmus", "diet", "سوءتغذیه", "روده‌ای", "وریدی", "ریفیدینگ", "کواشیورکور", "ماراسموس", "رژیم"]),
 ];
 
-export const GENETICS = [
+const GENETICS = [
   T("mendelian", "الگوهای توارث مندلی", "Mendelian inheritance", ["autosomal dominant", "autosomal recessive", "x-linked", "pedigree", "carrier", "penetrance", "expressivity", "anticipation", "imprinting", "mitochondrial", "اتوزومال غالب", "اتوزومال مغلوب", "وابسته به x", "شجره", "ناقل", "نفوذ", "بیان", "پیش‌بینی", "نقش‌پذیری", "میتوکندری"]),
   T("chromosomal", "اختلالات کروموزومی", "Chromosomal disorders", ["trisomy", "down", "edward", "patau", "turner", "klinefelter", "karyotype", "translocation", "deletion", "mosaic", "تریزومی", "داون", "ادوارد", "پاتو", "ترنر", "کلاین‌فلتر", "کاریوتیپ", "جابجایی", "حذف", "موزائیک"]),
   T("molecular", "ژنتیک مولکولی، غربالگری و مشاوره", "Molecular genetics, screening & counselling", ["mutation", "pcr", "sequencing", "genetic counsel", "prenatal diagnosis", "screening", "hardy-weinberg", "risk", "جهش", "توالی‌یابی", "مشاوره ژنتیک", "تشخیص پیش از تولد", "غربالگری", "هاردی-واینبرگ", "خطر"]),
 ];
 
-export const PHYSICS = [
+const PHYSICS = [
   T("radiation", "پرتوها و حفاظت پرتویی", "Radiation & radiation protection", ["x-ray", "radiation", "ionizing", "dose", "gray", "sievert", "half-life", "radioactive", "shielding", "پرتو", "اشعه", "یونیزان", "دوز", "گری", "سیورت", "نیمه‌عمر", "رادیواکتیو", "حفاظ"]),
   T("imaging-physics", "فیزیک تصویربرداری: سونوگرافی، MRI، CT", "Imaging physics: ultrasound, MRI, CT", ["ultrasound", "doppler", "piezo", "frequency", "\\bmri\\b", "magnetic", "t1", "t2", "hounsfield", "\\bct\\b", "سونوگرافی", "داپلر", "پیزو", "فرکانس", "مغناطیس", "هانسفیلد", "سی‌تی"]),
   T("laser-electricity", "لیزر، الکتریسیته و بیوفیزیک", "Laser, electricity & biophysics", ["laser", "electric", "defibrillat", "pressure", "flow", "optics", "lens", "لیزر", "الکتریک", "دفیبریلاتور", "فشار", "جریان", "نور", "عدسی"]),
 ];
 
-/* Basic-science topics that also exist on the path (seed topics). */
-export const BASIC_GENERIC = [
-  T("core", "مباحث اصلی", "Core concepts", []),
-];
-
 /* ---------------- subject → syllabus ---------------- */
-export const SUBJECT_SYLLABUS = {
+const SUBJECT_SYLLABUS = {
   cardio: CARDIO, pulmo: PULMO, gi: GI, nephro: NEPHRO, heme: HEME, endo: ENDO, rheum: RHEUM,
   peds: PEDS, obgyn: OBGYN, surgery: SURGERY, path: PATH, pharm: PHARM, radio: RADIO, ent: ENT,
   uro: URO, infect: INFECT, neuro: NEURO, ortho: ORTHO, psych: PSYCH, derm: DERM, ophth: OPHTH,
@@ -488,10 +483,4 @@ function buildMerged(slug) {
 export function syllabusFor(slug) {
   if (!mergedCache.has(slug)) mergedCache.set(slug, buildMerged(slug));
   return mergedCache.get(slug);
-}
-/* Subject → merged syllabus map (same shape as SUBJECT_SYLLABUS, used by analysis/tests). */
-export function allSyllabi() {
-  const out = {};
-  for (const k of Object.keys(SUBJECT_SYLLABUS)) out[k] = syllabusFor(k);
-  return out;
 }

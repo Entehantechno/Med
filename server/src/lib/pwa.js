@@ -13,13 +13,10 @@
 */
 import { db, persistNow } from "../db.js";
 import { getGameConfig } from "./gameconfig.js";
+import { tehranDay } from "./tehran-time.js";
 
 const VALID = new Set(["prompt_shown", "accepted", "dismissed", "installed", "launch"]);
 const PLATFORMS = new Set(["android", "ios", "desktop", "other"]);
-
-function tehranDay() {
-  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tehran" });
-}
 
 /* Record a single funnel event (best-effort; never throws to the caller). */
 export function recordPwaEvent({ userId = null, event, platform = "other", standalone = false }) {

@@ -7,7 +7,7 @@
 const TRUE = new Set(["1", "true", "yes", "on"]);
 const FALSE = new Set(["0", "false", "no", "off"]);
 
-export function isProduction(env = process.env) { return env.NODE_ENV === "production"; }
+function isProduction(env = process.env) { return env.NODE_ENV === "production"; }
 
 /* HTTPS is enforced in production unless FORCE_HTTPS=0. FORCE_HTTPS=1 forces it
    in any environment (useful for staging). */
@@ -24,7 +24,7 @@ export function secureCookies(env = process.env) { return forceHttpsEnabled(env)
 const HOST_RE = /^[a-z0-9.-]+(:\d{1,5})?$/i;
 /* Host used for the redirect. Prefer APP_URL so a spoofed Host header cannot
    turn the redirect into an open redirect. */
-export function redirectHost(reqHost, env = process.env) {
+function redirectHost(reqHost, env = process.env) {
   try {
     if (env.APP_URL) return new URL(env.APP_URL).host;
   } catch { /* fall through */ }
@@ -42,13 +42,13 @@ export function httpsRedirect() {
   };
 }
 
-export function normalizeIp(ip) {
+function normalizeIp(ip) {
   return String(ip || "").replace(/^::ffff:/i, "").trim();
 }
 
 /* ADMIN_IP_ALLOWLIST=1.2.3.4,5.6.7.8 — when set, /api/admin is reachable only
    from these addresses. Empty (default) = no restriction. */
-export function adminAllowlist(env = process.env) {
+function adminAllowlist(env = process.env) {
   return String(env.ADMIN_IP_ALLOWLIST || "").split(",").map((s) => normalizeIp(s)).filter(Boolean);
 }
 export function adminIpAllowlist() {

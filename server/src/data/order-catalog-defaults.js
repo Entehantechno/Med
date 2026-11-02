@@ -114,7 +114,7 @@ function nrmOrder(s) {
     .replace(/[ًٌٍَُِّْ]/g, "").replace(/\s+/g, " ").trim();
 }
 
-export function orderItemMatchesQuery(item, query) {
+function orderItemMatchesQuery(item, query) {
   const nq = nrmOrder(query);
   if (!nq) return false;
   const names = [item?.fa, item?.en, item?.name_fa, item?.name_en, ...(item?.aliases || [])].filter(Boolean);

@@ -73,7 +73,7 @@ export function signupTrend(days = 14) {
 }
 
 /* Premium / monetization rollup for learners. */
-export function premiumRollup() {
+function premiumRollup() {
   const learners = db.prepare("SELECT COUNT(*) c FROM learner_profiles").get().c;
   const premium = db.prepare("SELECT COUNT(*) c FROM learner_profiles WHERE premium=1").get().c;
   const convPct = learners ? Math.round((premium / learners) * 1000) / 10 : 0;
@@ -81,7 +81,7 @@ export function premiumRollup() {
 }
 
 /* Engagement rollups: lessons completed, avg stars, streaks, review load. */
-export function engagementRollup() {
+function engagementRollup() {
   const nodesDone = db.prepare("SELECT COUNT(*) c FROM node_progress WHERE completed_at IS NOT NULL").get().c;
   const avgStars = db.prepare("SELECT COALESCE(AVG(stars),0) a FROM node_progress WHERE completed_at IS NOT NULL").get().a;
   const activeStreaks = db.prepare("SELECT COUNT(*) c FROM learner_profiles WHERE streak > 0").get().c;

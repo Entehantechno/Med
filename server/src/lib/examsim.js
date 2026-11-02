@@ -10,7 +10,7 @@
        s3 = time pressure factor (finishing comfortably in time is a good sign)
    - The blended score is mapped through a logistic curve centred on the pass
      mark so that being just above 50% gives ~50% probability and climbs fast. */
-import { db, persist, persistNow } from "../db.js";
+import { db, persist } from "../db.js";
 import { awardXp, getProfile } from "./gamify.js";
 
 const PASS_MARK = 50; // percent — pre-internship passing threshold
@@ -21,7 +21,7 @@ import { cardIsKeyless } from "./cardfacets.js";
 // to a program (Duolingo-style course). Free learners draw from the curated
 // path nodes only; PREMIUM learners draw from the full question bank (path +
 // premium-only cards), which is the paid benefit promised on the upgrade page.
-export function pickSimCards(topicSlugs, n, program = null, { premium = false } = {}) {
+function pickSimCards(topicSlugs, n, program = null, { premium = false } = {}) {
   let ids = [];
   const topicIdsForSlugs = (slugs) => {
     const placeholders = slugs.map(() => "?").join(",");
@@ -94,7 +94,7 @@ function logistic(scorePct, centre = PASS_MARK, steepness = 0.12) {
 }
 
 // Estimate pass probability. Returns {prob, breakdown}
-export function estimatePassProbability(userId, correct, total, timeMs, durationS) {
+function estimatePassProbability(userId, correct, total, timeMs, durationS) {
   const simAcc = total ? (correct / total) * 100 : 0;
   const all = db.prepare("SELECT COUNT(*) n, SUM(correct) c FROM card_attempts WHERE user_id=?").get(userId);
   const trackAcc = all && all.n ? (all.c / all.n) * 100 : simAcc; // no history → trust this sim
@@ -165,4 +165,4 @@ export function simHistory(userId, limit = 10) {
   }));
 }
 
-export { PASS_MARK, getProfile };
+export { getProfile };

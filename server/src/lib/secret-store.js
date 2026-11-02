@@ -17,7 +17,7 @@
 import crypto from "crypto";
 
 export const SEALED_PREFIX = "enc:v1:";
-export const MASK_PREFIX = "••••";
+const MASK_PREFIX = "••••";
 /** Settings keys whose JSON value may carry apiKey fields. */
 export const SECRET_BEARING_SETTINGS = ["ai", "vpatient_ai", "blog_image_ai"];
 
@@ -50,7 +50,7 @@ function encKey() {
 }
 
 /** True when sealing is possible (a key source exists). */
-export function sealingAvailable() { return !!encKey(); }
+function sealingAvailable() { return !!encKey(); }
 
 export function sealSecret(plain) {
   const v = String(plain ?? "");
@@ -113,12 +113,6 @@ export const sealConfigSecrets = (obj) => mapApiKeys(obj, sealSecret);
 export const openConfigSecrets = (obj) => mapApiKeys(obj, openSecret);
 export const maskConfigSecrets = (obj) => mapApiKeys(obj, (v) => maskSecret(openSecret(v)));
 
-/* Parse a stored settings JSON string into internal (decrypted) form. */
-export function parseStoredSettings(raw, fallback) {
-  if (raw == null) return fallback;
-  try { return openConfigSecrets(JSON.parse(raw)); } catch { return fallback; }
-}
-
 /* Serialise an internal settings object for storage (sealed). */
 export function serializeSettings(obj) {
   return JSON.stringify(sealConfigSecrets(obj));
@@ -147,9 +141,6 @@ export function migrateLegacySecrets(db) {
   }
   return { migrated };
 }
-
-/* Test helper: forget the cached key so env changes take effect. */
-export function _resetSecretStoreForTests() { cachedKey = null; cachedKeySource = ""; warnedMissing = false; }
 
 /* When the admin UI sends back a masked or empty apiKey, keep the stored one.
    Matches the top-level apiKey and routes[] entries by id. */

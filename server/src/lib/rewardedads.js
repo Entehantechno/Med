@@ -15,7 +15,7 @@ import { getGameConfig } from "./gameconfig.js";
 import { adsGloballyOn } from "./ads-control.js";
 
 // map an ads row → the client-facing shape (localized)
-export function shapeAd(a, lang) {
+function shapeAd(a, lang) {
   return {
     id: a.id,
     format: a.format || "banner",

@@ -16,14 +16,11 @@
 import { db } from "../db.js";
 import { getGameConfig } from "./gameconfig.js";
 import { notify } from "./notify.js";
+import { tehranDay, tehranHour } from "./tehran-time.js";
 
 function tehranNow() {
-  // {day: 'YYYY-MM-DD', hour: 0..23}
-  const s = new Date().toLocaleString("en-US", { timeZone: "Asia/Tehran", hour12: false, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit" });
-  // s like "07/11/2026, 18" → normalize
-  const d = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tehran" });
-  const hour = parseInt(new Date().toLocaleString("en-US", { timeZone: "Asia/Tehran", hour12: false, hour: "2-digit" }).replace(/[^0-9]/g, ""), 10) % 24;
-  return { day: d, hour };
+  // {day: 'YYYY-MM-DD', hour: 0..23} in Tehran
+  return { day: tehranDay(), hour: tehranHour() };
 }
 function daysBetween(a, b) {
   if (!a || !b) return 999;
@@ -83,7 +80,7 @@ function pick(kind, userId, day) {
 const fill = (s, streak) => s.replace("{streak}", streak);
 
 /* Decide which single reminder (if any) a learner should get right now. */
-export function planFor(userId, cfg, now) {
+function planFor(userId, cfg, now) {
   const p = db.prepare("SELECT streak, last_active, daily_goal FROM learner_profiles WHERE user_id=?").get(userId);
   if (!p) return null;
   const gap = daysBetween(p.last_active, now.day); // 0 = active today

@@ -80,7 +80,7 @@ function hash(s) {
   return h >>> 0;
 }
 
-export function patientSex(caseData) {
+function patientSex(caseData) {
   const v = String(caseData?.sex || "").trim().toLowerCase();
   if (v === "male" || v === "m" || v === "مرد") return "male";
   if (v === "female" || v === "f" || v === "زن" || v === "خانم") return "female";

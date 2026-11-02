@@ -10,7 +10,7 @@
    - Expired rows are finalized by lib/timed-expiry.js, without the student. */
 import { db, durableTransaction } from "../db.js";
 
-export const MAX_PROGRESS_BYTES = 1024 * 1024;   // 1 MB stored snapshot
+const MAX_PROGRESS_BYTES = 1024 * 1024;   // 1 MB stored snapshot
 const MAX_ITEMS = 2000;                          // per list, bounded
 const MAX_ITEM_CHARS = 20000;                    // per item, bounded
 
@@ -96,7 +96,7 @@ function boundedList(v) {
   return out;
 }
 
-export function sanitizeVpProgress(input) {
+function sanitizeVpProgress(input) {
   const p = input && typeof input === "object" ? input : {};
   const { events, ...rest } = p;
   const session = {};

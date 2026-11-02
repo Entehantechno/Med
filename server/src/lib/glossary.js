@@ -1,7 +1,7 @@
 /* Compact clickable glossary for hard medical words in lessons.
    Keys are matched case-insensitively; longer phrases first. */
 
-export const GLOSSARY = [
+const GLOSSARY = [
   { k: ["همی‌آنوپی بای‌تمپورال", "bitemporal hemianopia"], fa: "از دست رفتن نیمهٔ گیجگاهی میدان بینایی هر دو چشم. تقریباً همیشه یعنی ضایعه در کیاسمای بینایی (مثلاً آدنوم هیپوفیز).", en: "Loss of both temporal visual fields. Almost always a chiasmal lesion (e.g. pituitary adenoma)." },
   { k: ["همی‌آنوپی هومونیموس", "homonymous hemianopia"], fa: "از دست رفتن نیمهٔ هم‌نام میدان هر دو چشم (هر دو راست یا هر دو چپ). ضایعه پشت کیاسما است.", en: "Same-sided field loss in both eyes. The lesion is behind the chiasm." },
   { k: ["کیاسما", "optic chiasm", "chiasm"], fa: "محل تقاطع فیبرهای نازال عصب بینایی. ضایعهٔ مرکز آن همی‌آنوپی بای‌تمپورال می‌دهد.", en: "Crossing of nasal optic-nerve fibres. A central lesion causes bitemporal hemianopia." },

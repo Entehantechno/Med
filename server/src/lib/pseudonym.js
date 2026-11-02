@@ -34,9 +34,3 @@ export function pseudonymFor(userId, scope = "general") {
   return crypto.createHmac(ALGO, keyFor(scope)).update(String(id)).digest("hex").slice(0, 16);
 }
 
-/* A per-study participant code: the same person always gets the same code
-   inside one study, but the code differs across studies (no cross-study join).
-   Useful for the research export. */
-export function participantCode(userId, studyId) {
-  return pseudonymFor(userId, `study:${Number(studyId) || 0}`);
-}

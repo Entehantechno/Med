@@ -19,7 +19,6 @@ function shuffle(arr) {
   return a;
 }
 
-
 /* MCQ */
 export function MCQ({ card, checked, sel, setSel, isCorrect, glossary }) {
   const { lang, t } = useApp();
@@ -116,7 +115,7 @@ MCQ.canCheck = (st) => st.sel != null;
 MCQ.judge = (card, st) => !!card.options[st.sel]?.correct;
 
 /* True / False */
-export function TrueFalse({ card, checked, sel, setSel }) {
+function TrueFalse({ card, checked, sel, setSel }) {
   const { t, lang } = useApp();
   const opts = [{ v: true, label: lang === "fa" ? "درست" : "True" }, { v: false, label: lang === "fa" ? "نادرست" : "False" }];
   return (
@@ -291,7 +290,7 @@ Compare.judge = (card, st) => {
   return card.features.length > 0 && card.features.every((f) => a[f.id] === f.belongs);
 };
 
-export function UnsupportedType() {
+function UnsupportedType() {
   const { lang } = useApp();
   return (
     <div className="small muted" style={{ padding: "8px 0" }}>

@@ -1,5 +1,5 @@
 /* CSV encoding: lossless interchange by default; spreadsheet reports opt in. */
-export function csvCell(value) {
+function csvCell(value) {
   const text = value == null ? "" : String(value);
   return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
 }

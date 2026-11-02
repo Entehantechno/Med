@@ -24,7 +24,7 @@ export function forgetting(elapsedDays, stability, w) {
 }
 
 /* Interval (days) to reach `retention` for a card of stability S. */
-export function intervalForRetention(stability, retention, w) {
+function intervalForRetention(stability, retention, w) {
   const decay = decayOf(w), factor = factorOf(w);
   const days = (stability / factor) * (Math.pow(retention, 1 / decay) - 1);
   return days;

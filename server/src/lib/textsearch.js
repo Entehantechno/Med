@@ -91,7 +91,7 @@ export function parseQuery(raw) {
 
 /* Score one document. `doc` = { hay (normalised stem+title), extra (normalised
    options/chapter text, weaker), facets? }. Returns 0 when it does not match. */
-export function scoreDoc(doc, pq) {
+function scoreDoc(doc, pq) {
   const hay = doc.hay || "", extra = doc.extra || "";
   let score = 0;
   for (const ph of pq.phrases) {
@@ -116,7 +116,7 @@ export function scoreDoc(doc, pq) {
 
 /* Does the doc satisfy the field: filters? `facets` is the caller's facet
    object; values are compared after normalisation, substring semantics. */
-export function matchFields(facets, pq) {
+function matchFields(facets, pq) {
   const keys = Object.keys(pq.fields);
   if (!keys.length) return true;
   const f = facets || {};

@@ -20,7 +20,7 @@ function esc(s) {
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
-export function slugify(s) {
+function slugify(s) {
   return String(s || "")
     .trim().toLowerCase()
     .replace(/['"]/g, "")
@@ -238,39 +238,6 @@ export function getPost(slug, lang = "fa", { countView = true } = {}) {
     related,
     title_fa: r.title_fa, title_en: r.title_en, // for lang toggle on client if needed
   };
-}
-
-/* Slugs of published posts (for sitemap). */
-export function publishedSlugs() {
-  return db.prepare("SELECT slug, updated_at, published_at, created_at FROM blog_posts WHERE published=1 ORDER BY id DESC").all();
-}
-
-/* Article + FAQ JSON-LD for a post (SEO rich results). */
-export function postJsonLd(slug, lang = "fa", siteUrl = "https://medschool.ir") {
-  const r = db.prepare("SELECT * FROM blog_posts WHERE slug=? AND published=1").get(slug);
-  if (!r) return null;
-  const base = String(siteUrl).replace(/\/+$/, "");
-  const node = {
-    "@context": "https://schema.org",
-    "@type": ["Article", "MedicalWebPage"],
-    headline: L(r, "title", lang),
-    description: L(r, "excerpt", lang),
-    inLanguage: lang === "en" ? "en-US" : "fa-IR",
-    datePublished: r.published_at || r.created_at,
-    dateModified: r.updated_at || r.published_at || r.created_at,
-    mainEntityOfPage: `${base}/blog/${r.slug}`,
-    url: `${base}/blog/${r.slug}`,
-  };
-  if (r.cover) node.image = /^https?:/i.test(r.cover) ? r.cover : base + r.cover;
-  if (r.author_name) {
-    node.author = { "@type": "Person", name: r.author_name };
-    if (r.author_credentials) node.author.jobTitle = r.author_credentials;
-  }
-  if (r.reviewed && r.author_name) {
-    node.reviewedBy = { "@type": "Person", name: r.author_name, jobTitle: r.author_credentials || undefined };
-  }
-  node.publisher = { "@type": "Organization", name: "MED School", url: base };
-  return node;
 }
 
 /* ------------------------------------------------------------- admin CRUD -- */

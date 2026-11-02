@@ -23,6 +23,13 @@ if (process.env.NODE_ENV === "production" && (!process.env.JWT_SECRET || WEAK_SE
 
 export const JWT_ISS = "medschool";
 export const JWT_AUD = "medschool-api";
+// Built once. jsonwebtoken probes a string secret with createPublicKey() on every
+// verify (it throws for an HMAC secret, then falls back to createSecretKey). That
+// probe was ~6% of CPU on the learner mix. A KeyObject skips the probe; the HMAC
+// key bytes are identical, so existing tokens keep verifying.
+const SECRET_KEY = crypto.createSecretKey(Buffer.from(SECRET));
+const VERIFY_OPTS = { algorithms: ["HS256"], issuer: JWT_ISS, audience: JWT_AUD };
+const VERIFIED_ID = Symbol("verifiedUserId");
 
 export function signToken(user, opts = {}) {
   const payload = {
@@ -92,11 +99,18 @@ function tokenFromRequest(req) {
 /* R56: the account a request is signed in as, for rate-limit keying only (no DB
    read). Only a token that verifies against SECRET counts — a forged or expired
    token returns null, so the caller falls back to the per-IP bucket. */
+// Memoised per request: the anonymous and per-account limiters ask for the same
+// answer three times on one request, and each ask used to re-verify the JWT.
 export function verifiedUserIdFromRequest(req) {
-  const token = tokenFromRequest(req);
+  if (req && req[VERIFIED_ID] !== undefined) return req[VERIFIED_ID];
+  const id = verifyUserId(tokenFromRequest(req));
+  if (req) req[VERIFIED_ID] = id;
+  return id;
+}
+function verifyUserId(token) {
   if (!token) return null;
   try {
-    const p = jwt.verify(token, SECRET, { algorithms: ["HS256"], issuer: JWT_ISS, audience: JWT_AUD });
+    const p = jwt.verify(token, SECRET_KEY, VERIFY_OPTS);
     const id = Number(p && p.id);
     return Number.isFinite(id) && id > 0 ? id : null;
   } catch { return null; }
@@ -117,7 +131,7 @@ export function clearAuthCookie(res) {
 }
 
 function attachUser(token) {
-  const payload = jwt.verify(token, SECRET, { algorithms: ["HS256"], issuer: JWT_ISS, audience: JWT_AUD });
+  const payload = jwt.verify(token, SECRET_KEY, VERIFY_OPTS);
   // Server-side revocation: password change / admin reset bumps token_ver.
   try {
     const row = db.prepare("SELECT token_ver, status, role, university_id FROM users WHERE id=?").get(payload.id);

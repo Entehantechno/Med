@@ -74,7 +74,7 @@ export function adAnalytics() {
 /* Daily ad time series (impressions/clicks + estimated revenue). Uses the
    per-user impression ledger (ad_impressions.day) + ad_views for clicks proxy.
    Since raw clicks aren't dated per-day, we chart impressions & rewarded views. */
-export function adTrend(days = 14) {
+function adTrend(days = 14) {
   const ecpm = getEcpm();
   const from = daysAgo(days - 1);
   const impByDay = {};

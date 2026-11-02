@@ -6,6 +6,7 @@
    All state is per-user in SQLite; days/weeks use the Tehran timezone helpers. */
 import { db, persistNow } from "../db.js";
 import { getProfile, tehranDay, maxHearts } from "./gamify.js";
+import { tehranHour } from "./tehran-time.js";
 
 /* ---------------- Daily goal ---------------- */
 // Duolingo-style calibrated goals: user picks a target they can actually hit.
@@ -129,7 +130,7 @@ export function claimQuest(userId, questId) {
 // Early Bird (05:00–12:00) and Night Owl (18:00–24:00) in Tehran time.
 export function getChests(userId) {
   const day = tehranDay();
-  const hour = Number(new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Tehran", hour: "2-digit", hour12: false }).format(new Date()));
+  const hour = tehranHour();
   const defs = [
     { slug: "earlybird", fa: "صندوق سحرخیز", en: "Early Bird Chest", from: 5, to: 12, gems: 30 },
     { slug: "nightowl", fa: "صندوق شب‌زنده‌دار", en: "Night Owl Chest", from: 18, to: 24, gems: 30 },
@@ -152,10 +153,6 @@ export function openChest(userId, slug) {
   return { ok: true, gems: c.gems, profile: getProfile(userId) };
 }
 
-/* ---------------- Streak calendar + personal records ---------------- */
-export function logStreakDay(userId) {
-  db.prepare("INSERT OR IGNORE INTO streak_days (user_id, day) VALUES (?,?)").run(userId, tehranDay());
-}
 export function streakCalendar(userId, days = 30) {
   // returns [{day, frozen}] — frozen days render as a snowflake vs a checkmark
   const rows = db.prepare("SELECT day, frozen FROM streak_days WHERE user_id=? ORDER BY day DESC LIMIT ?").all(userId, days);

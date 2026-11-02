@@ -3,7 +3,7 @@ import {sharedAcademic} from '../lib/academic-sharing.js';
 import { assignmentInput } from '../lib/assignment-input.js';
 import { validateCase, normalizeCaseAge } from "../lib/case-validation.js";
 import { routingSettings } from "../lib/ai-routing.js";
-import { openConfigSecrets, serializeSettings, maskConfigSecrets, isMaskedSecret, preserveMaskedKeys } from "../lib/secret-store.js";
+import { openConfigSecrets, serializeSettings, maskConfigSecrets, isMaskedSecret } from "../lib/secret-store.js";
 /* ================================================================
    content.js — Cases, flashcards, checklists, users, prompts,
    settings CRUD (with content versioning on cases & flashcards).
@@ -20,7 +20,7 @@ import { normalizeRubric } from "../lib/grading-rubric.js";
 import { resolveAiConfig } from "../lib/ai-engine.js";
 import { DEFAULT_LAB_TESTS, DEFAULT_IMAGING, DEFAULT_PARACLINIC, cleanOrderList } from "../data/order-catalog-defaults.js";
 import { studentSafeFlashcard, gradeFlashcard } from "../lib/flashcard-grade.js";
-import { studentMaySeeFlashcard, studentFlashcardAccess, caseInLiveExam, studentRevealAllowed } from "../lib/live-exam-content.js";
+import { studentMaySeeFlashcard, studentFlashcardAccess, studentRevealAllowed } from "../lib/live-exam-content.js";
 import { sqlInList } from "../lib/http-cache.js";
 import { isLearnContent, caseIsLearn } from "../lib/content-track.js";
 import { policyRow, policyReadiness, referenceSnapshotForPolicy, publicReferenceSnapshot, sanitizeReferenceIds } from "../lib/reference-governance.js";
@@ -121,7 +121,7 @@ function caseIdsForUniversity(ids, universityId) {
 
 /* ---------------- Exam access helpers ---------------- */
 // Returns the set of case_ids a student is allowed to access.
-export function assignedCaseIds(userId) {
+function assignedCaseIds(userId) {
   const rows = db.prepare(
     "SELECT case_id FROM exam_assignments WHERE user_id=? AND active=1"
   ).all(userId);

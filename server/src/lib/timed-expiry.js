@@ -11,7 +11,7 @@ import exam, { evaluateRoute } from "../routes/exam.js";
 import classes from "../routes/classes.js";
 import { readFlashProgress, closeFlashProgress, SAVE_GRACE_MS } from "./timed-session.js";
 
-export const MAX_TRIES = 5;
+const MAX_TRIES = 5;
 const BATCH = 20;
 
 /* The final handler of a route, looked up on the router itself. */
@@ -25,7 +25,7 @@ function handlerFor(router, method, path) {
 }
 
 /* Invoke an Express handler with a synthetic request and capture its response. */
-export function callHandler(handler, req) {
+function callHandler(handler, req) {
   return new Promise((resolve) => {
     let settled = false;
     const done = (status, body) => { if (!settled) { settled = true; resolve({ status, body }); } };
@@ -144,7 +144,7 @@ export async function expireFlashProgress(now = Date.now()) {
   return out;
 }
 
-export async function runTimedExpiry(now = Date.now()) {
+async function runTimedExpiry(now = Date.now()) {
   const vp = await expireVpSessions(now);
   const flash = await expireFlashProgress(now);
   return { vp, flash };

@@ -4,7 +4,7 @@ import Icon from "./Icon.jsx";
 import { useScrollLock } from "../utils/useScrollLock.js";
 import { normFa } from "./SearchBox.jsx";
 
-export const LAB_CATEGORIES = [
+const LAB_CATEGORIES = [
   { id: "all", fa: "همه مقادیر", en: "All Values" },
   { id: "heme", fa: "خون و هماتولوژی", en: "Hematology & CBC" },
   { id: "chem", fa: "الکترولیت و ABG", en: "Electrolytes & ABG" },
@@ -14,7 +14,7 @@ export const LAB_CATEGORIES = [
   { id: "endocrine", fa: "غدد و چربی", en: "Endocrine & Lipids" },
 ];
 
-export const LAB_DATA = [
+const LAB_DATA = [
   // --- Hematology & CBC ---
   { cat: "heme", nameFa: "گلبول‌های سفید (WBC)", nameEn: "White Blood Cells", abbr: "WBC", ref: "4,500 – 11,000 /µL", pearlFa: "نوتروفیل ۵۰–۷۰٪، لنفوسیت ۲۰–۴۰٪", pearlEn: "Neutrophils 50-70%, Lymphocytes 20-40%" },
   { cat: "heme", nameFa: "هموگلوبین (Hb)", nameEn: "Hemoglobin", abbr: "Hb", ref: "مردان: 13.5 – 17.5 g/dL | زنان: 12.0 – 15.5 g/dL", pearlFa: "کم‌خونی در مردان < 13.5 و در زنان < 12.0", pearlEn: "Anemia: < 13.5 (male), < 12.0 (female)" },

@@ -9,9 +9,8 @@ import { db, persistNow } from "../db.js";
 import { getGameConfig } from "./gameconfig.js";
 import { schedule as fsrsSchedule, previewIntervals } from "./fsrs.js";
 
-export function tehranDay(d = new Date()) {
-  return new Date(d).toLocaleDateString("en-CA", { timeZone: "Asia/Tehran" });
-}
+import { tehranDay } from "./tehran-time.js";
+export { tehranDay };
 function addDays(dayStr, n) {
   const d = new Date(dayStr + "T00:00:00Z");
   d.setUTCDate(d.getUTCDate() + n);
@@ -24,7 +23,7 @@ function daysBetween(a, b) {
 // our callers use grade 0..3 (wrong/hard/good/easy) → FSRS uses 1..4 (Again/Hard/Good/Easy)
 function toFsrsGrade(g) { return Math.min(4, Math.max(1, (g | 0) + 1)); }
 
-export function getState(userId, cardId) {
+function getState(userId, cardId) {
   return db.prepare("SELECT * FROM srs_state WHERE user_id=? AND card_id=?").get(userId, cardId);
 }
 
@@ -154,11 +153,6 @@ export function unsuspendCard(userId, cardId) {
   db.prepare("UPDATE srs_state SET suspended=0, buried_until=NULL WHERE user_id=? AND card_id=?").run(userId, cardId);
   persistNow();
   return { suspended: false };
-}
-export function unsuspendAll(userId) {
-  db.prepare("UPDATE srs_state SET suspended=0, buried_until=NULL WHERE user_id=? AND suspended=1").run(userId);
-  persistNow();
-  return { ok: true };
 }
 
 /* Ensure a card is tracked (called when a learner first sees it in a lesson). */

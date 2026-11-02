@@ -2,6 +2,7 @@
    Web Push is best-effort: if the `web-push` package or VAPID keys are missing, it
    silently degrades to in-app only, so the app still runs on a bare local install. */
 import { db, persistNow } from "../db.js";
+import { tehranDay } from "./tehran-time.js";
 
 let webpush = null;
 let vapidReady = false;
@@ -56,8 +57,8 @@ export async function notify(userId, n) {
 /* Streak reminder logic: for each active learner who practiced yesterday but not
    today, remind them to keep the streak. Idempotent per day (checks last reminder). */
 export async function runStreakReminders() {
-  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tehran" });
-  const yesterday = new Date(Date.now() - 86400000).toLocaleDateString("en-CA", { timeZone: "Asia/Tehran" });
+  const today = tehranDay();
+  const yesterday = tehranDay(Date.now() - 86400000);
   const rows = db.prepare(`
     SELECT lp.user_id, lp.streak, lp.last_active FROM learner_profiles lp
     JOIN users u ON u.id = lp.user_id

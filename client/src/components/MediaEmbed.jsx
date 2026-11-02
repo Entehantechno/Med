@@ -1,5 +1,5 @@
 import { useApp } from "../context.jsx";
-import Icon from "./Icon.jsx";
+import "./Icon.jsx";
 
 /* ---------------------------------------------------------------------------
    MediaEmbed — renders a serialized media descriptor from the server:
@@ -55,13 +55,3 @@ export default function MediaEmbed({ media, className = "" }) {
   );
 }
 
-/* A tiny inline "has media" badge for lists/editors. */
-export function MediaBadge({ media }) {
-  const { lang } = useApp();
-  if (!media) return null;
-  const label = media.kind === "video" ? (lang === "fa" ? "ویدیو" : "Video")
-    : media.kind === "embed" ? (media.provider === "aparat" ? "آپارات" : "یوتیوب")
-    : (lang === "fa" ? "تصویر" : "Image");
-  const icon = media.kind === "image" ? "image" : "play";
-  return <span className="media-badge"><Icon name={icon} size={11} /> {label}</span>;
-}

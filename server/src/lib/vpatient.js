@@ -22,6 +22,7 @@ import { awardXp } from "./gamify.js";
 import { resolveAiConfig } from "./ai-engine.js";
 import { liveExamCaseIdSet } from "./live-exam-content.js";
 import { isLearnContent } from "./content-track.js";
+import { tehranDay } from "./tehran-time.js";
 
 const KEY = "vpatient";
 
@@ -52,7 +53,7 @@ export function getVpatientConfig() {
 
 /* The XP cap for a case: the case's own `xp_max` (set by admin in the case data)
    falls back to the global default. */
-export function caseXpMax(caseData) {
+function caseXpMax(caseData) {
   const own = Number(caseData?.xp_max);
   if (Number.isFinite(own) && own >= 0) return Math.round(own);
   return getVpatientConfig().default_xp_max;
@@ -72,11 +73,6 @@ export function saveVpatientConfig(input) {
     .run(KEY, JSON.stringify(cfg));
   persistNow();
   return cfg;
-}
-
-/* Whether the feature is live at all (feature flag AND admin switch). */
-export function vpatientLive() {
-  return false;
 }
 
 /* Access check for a given learner profile. Returns { ok, reason }.
@@ -125,7 +121,7 @@ export function caseOfTheDay() {
     .filter((r) => !reserved.has(r.id) && isLearnContent(r.data_json))
     .map((r) => r.id);
   if (!ids.length) return null;
-  const day = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tehran" });
+  const day = tehranDay();
   let h = 0;
   for (let i = 0; i < day.length; i++) h = (h * 31 + day.charCodeAt(i)) >>> 0;
   return ids[h % ids.length];

@@ -7,7 +7,7 @@ import {db,durableTransaction} from '../db.js';
 import {EMERGENCY_TEN} from '../data/vp-emergency-ten.js';
 import {DEFAULT_LAB_TESTS,DEFAULT_IMAGING,DEFAULT_PARACLINIC,cleanOrderList,cleanOrderItem} from '../data/order-catalog-defaults.js';
 const rubricNames={1:'ACS Checklist',2:'Abdominal Pain Checklist',3:'History-taking & communication'};
-export function emergencyChecklist(sourceId){
+function emergencyChecklist(sourceId){
  const definition=EMERGENCY_RUBRICS[sourceId];
  const row=db.prepare('SELECT id FROM checklists WHERE owner_id IS NULL AND name_en=? ORDER BY id LIMIT 1').get(definition?.name_en || rubricNames[sourceId]);
  if(!row && definition)return Number(db.prepare('INSERT INTO checklists(name_fa,name_en,items_json) VALUES (?,?,?)').run(definition.name_fa,definition.name_en,JSON.stringify(definition.items)).lastInsertRowid);

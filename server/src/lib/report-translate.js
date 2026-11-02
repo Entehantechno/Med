@@ -77,27 +77,6 @@ export function validateTranslatedBundle(source, translated) {
   return true;
 }
 
-/* Return a copy of the public evaluation with the translated text in place of
-   the source text. Everything that is not part of the bundle (scores, ids,
-   xpReward, meta, flags) is kept exactly as it was. */
-export function applyTranslatedBundle(ev, translated) {
-  const out = { ...ev };
-  if (translated.microlearning !== undefined) out.microlearning = translated.microlearning;
-  if (translated.suggestion !== undefined) out.suggestion = translated.suggestion;
-  for (const k of LIST_KEYS) if (translated[k] !== undefined) out[k] = translated[k];
-  if (Array.isArray(translated.results) && Array.isArray(ev.results)) {
-    out.results = ev.results.map((r, i) => ({ ...r, label: translated.results[i].label, reason: r?.reason ? translated.results[i].reason : r?.reason }));
-  }
-  if (Array.isArray(translated.sectionLabels) && ev.sectionScores?.sections) {
-    out.sectionScores = { ...ev.sectionScores, sections: ev.sectionScores.sections.map((s, i) => ({ ...s, label: translated.sectionLabels[i] })) };
-  }
-  if (translated.orderReview && ev.orderReview) {
-    out.orderReview = { ...ev.orderReview };
-    for (const k of ORDER_KEYS) if (translated.orderReview[k] !== undefined) out.orderReview[k] = translated.orderReview[k];
-  }
-  return out;
-}
-
 /* Per-user translation budget. In-memory is deliberate: it stops a runaway
    client from burning AI tokens; it is not a billing record. */
 const buckets = new Map();

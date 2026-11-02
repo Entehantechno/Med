@@ -107,7 +107,7 @@ export function studyContextForCase(user, caseId) {
   return {};
 }
 
-export function consentRow(userId, studyId) {
+function consentRow(userId, studyId) {
   if (!userId || !studyId) return null;
   return db.prepare("SELECT * FROM research_consents WHERE study_id=? AND user_id=?").get(studyId, userId) || null;
 }

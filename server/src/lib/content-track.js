@@ -1,7 +1,7 @@
 import { db } from "../db.js";
 
 /** Competitive vs university content. Missing/`uni` track = university. */
-export function contentTrack(dataJson) {
+function contentTrack(dataJson) {
   try {
     const d = typeof dataJson === "string" ? JSON.parse(dataJson) : (dataJson || {});
     return d.track === "learn" ? "learn" : "university";
@@ -20,8 +20,3 @@ export function caseIsLearn(caseId) {
   return isLearnContent(row.data_json);
 }
 
-export function flashIsLearn(cardId) {
-  const row = db.prepare("SELECT data_json FROM flashcards WHERE id=?").get(cardId);
-  if (!row) return false;
-  return isLearnContent(row.data_json);
-}

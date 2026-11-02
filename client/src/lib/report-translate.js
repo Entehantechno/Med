@@ -14,7 +14,7 @@ const str = (v) => (typeof v === "string" ? v : "");
 const arrOfStr = (v) => (Array.isArray(v) ? v.map(str) : []);
 
 /* Source bundle from the public report (the same fields the server extracts). */
-export function reportBundleOf(ev) {
+function reportBundleOf(ev) {
   if (!ev || typeof ev !== "object") return {};
   const b = {};
   if (str(ev.microlearning).trim()) b.microlearning = str(ev.microlearning);
@@ -72,7 +72,7 @@ async function sha256Hex(text) {
   return `fnv${(h1 >>> 0).toString(16)}${(h2 >>> 0).toString(16)}${text.length}`;
 }
 
-export function reportCacheKey(attemptId, from, to, bundleHash) {
+function reportCacheKey(attemptId, from, to, bundleHash) {
   return `vpreport:v1:${attemptId}:${from}>${to}:${bundleHash}`;
 }
 

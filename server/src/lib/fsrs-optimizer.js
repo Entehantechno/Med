@@ -22,7 +22,7 @@ import { db } from "../db.js";
 import { forgetting, schedule } from "./fsrs.js";
 import { DEFAULT_GAME_CONFIG } from "./gameconfig.js";
 
-export const MIN_REVIEWS_TO_OPTIMIZE = 400; // lowered vs Anki's ~1000 so smaller
+const MIN_REVIEWS_TO_OPTIMIZE = 400; // lowered vs Anki's ~1000 so smaller
 // deployments can still benefit; below this we keep defaults and say so.
 
 /* Reasonable bounds for each of the 21 weights (mirrors py-fsrs clamp ranges).
@@ -59,7 +59,7 @@ export function loadTrainingItems({ userId = null, limitCards = 5000 } = {}) {
   return items;
 }
 
-export function reviewCount(userId = null) {
+function reviewCount(userId = null) {
   const where = userId ? "WHERE user_id = ?" : "";
   const r = db.prepare(`SELECT COUNT(*) c FROM srs_review_log ${where}`).get(...(userId ? [userId] : []));
   return r ? r.c : 0;

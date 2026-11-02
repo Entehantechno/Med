@@ -241,13 +241,3 @@ export function MotionAd({ ad, variant = "path", onCta }) {
   );
 }
 
-/* Curated path ad — always available even without admin ads */
-export function CuratedPathAd({ onCta }) {
-  return <MotionAd variant="path" onCta={onCta} />;
-}
-export function CuratedIntroAd({ onCta }) {
-  return <MotionAd variant="intro" onCta={onCta} />;
-}
-export function CuratedBetweenAd({ onCta }) {
-  return <MotionAd variant="between" onCta={onCta} />;
-}

@@ -33,7 +33,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 import { DB_PATH, BACKUPS_DIR, ensureDataDirs } from "./lib/paths.js";
 import { migrateR63 } from "./lib/r63-migration.js";
 import { migrateR64 } from "./lib/r64-migration.js";
-import bcrypt from "bcryptjs";
+import "bcryptjs";
 ensureDataDirs();
 
 /** Schema/engine generation stored in PRAGMA user_version. A database below this
@@ -48,7 +48,7 @@ let rawDb = null;          // the open better-sqlite3 connection
 let backupTimer = null;   // periodic snapshot check (see initDb)
 let schemaReady = false;   // initSchema() is expensive; run it once per open connection
 
-export class DbUnreadableError extends Error {
+class DbUnreadableError extends Error {
   constructor(message) { super(message); this.name = "DbUnreadableError"; }
 }
 
@@ -236,8 +236,6 @@ export function durableTransaction(fn) {
   return rawDb.transaction(fn)();
 }
 
-// No-ops kept for the ~60 existing call sites. Every write is already durable.
-export function markDirty() { /* durable on commit */ }
 function persist() { /* durable on commit */ }
 function persistNow() { /* durable on commit */ }
 
@@ -2104,7 +2102,6 @@ export function initSchema() {
     if (r.migrated) console.log(`[db] users table migrated: ${r.rows} rows, ${r.columnsKept} columns kept${r.columnsLost.length ? ", lost: " + r.columnsLost.join(",") : ""}`);
   } catch (e) { console.error("[db] users role migration skipped (rolled back):", e?.message || e); }
 
-
   // --- Restored optional modules: questionnaires / Dr Tutor / research / external ads ---
   const classColsRestored = db.prepare("PRAGMA table_info(classes)").all().map((c) => c.name);
   if (!classColsRestored.includes("tutor_enabled")) db.exec("ALTER TABLE classes ADD COLUMN tutor_enabled INTEGER DEFAULT 0");
@@ -2521,6 +2518,5 @@ export function initSchema() {
 
   markEngineVersion();
 }
-
 
 export { persist, persistNow };

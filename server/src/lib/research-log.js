@@ -29,7 +29,3 @@ export function studyIdForClass(classId) {
   if (!classId) return null;
   return db.prepare("SELECT study_id FROM classes WHERE id=?").get(Number(classId))?.study_id || null;
 }
-export function studyIdForExam(examId) {
-  if (!examId) return null;
-  return db.prepare("SELECT study_id FROM exams WHERE id=?").get(Number(examId))?.study_id || null;
-}

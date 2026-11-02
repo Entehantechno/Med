@@ -63,7 +63,7 @@ function labRange(query) {
 }
 
 /* A plausible normal value inside the range (mid-point), formatted to the table precision. */
-export function normalLabText(query, lang = "fa") {
+function normalLabText(query, lang = "fa") {
   const r = labRange(query);
   if (!r) return null;
   const mid = (r.low + r.high) / 2;

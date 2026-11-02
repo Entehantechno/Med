@@ -50,7 +50,7 @@ function totalStudyHours(userId) {
 
 /* -------------------------------------------------- eligibility (program) --- */
 /* Progress (0..100) of the learner's ACTIVE program path. */
-export function programProgress(userId) {
+function programProgress(userId) {
   const prog = activeProgramFor(userId); // program key or null
   const total = db.prepare(`
     SELECT COUNT(*) c FROM path_nodes pn
@@ -67,7 +67,7 @@ export function programProgress(userId) {
 }
 
 /* -------------------------------------------------- eligibility (course) ---- */
-export function courseProgress(userId, courseId) {
+function courseProgress(userId, courseId) {
   const enrolled = !!db.prepare("SELECT 1 FROM course_enrollments WHERE user_id=? AND course_id=?").get(userId, courseId);
   const total = db.prepare("SELECT COUNT(*) c FROM course_lessons WHERE course_id=?").get(courseId).c || 0;
   // We don't track per-lesson watching yet; enrollment is the honest signal.

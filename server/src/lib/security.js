@@ -24,9 +24,9 @@ let forgotMountSeq = 0;
 
 /* Google Identity Services (button + One Tap / FedCM). Without these hosts
    Helmet blocks https://accounts.google.com/gsi/client and the GIS XHR. */
-export const GIS_SCRIPT = ["https://accounts.google.com"];
-export const GIS_CONNECT = ["https://accounts.google.com", "https://oauth2.googleapis.com", "https://www.googleapis.com"];
-export const GIS_FRAME = ["https://accounts.google.com"];
+const GIS_SCRIPT = ["https://accounts.google.com"];
+const GIS_CONNECT = ["https://accounts.google.com", "https://oauth2.googleapis.com", "https://www.googleapis.com"];
+const GIS_FRAME = ["https://accounts.google.com"];
 
 /* ---- Helmet with a Content-Security-Policy tuned for MED School ---- */
 export function buildHelmet() {

@@ -70,21 +70,6 @@ export function dedupeGolden(lead, golden) {
   return { lead: L, golden: G };
 }
 
-export function cleanMicroFields(m = {}) {
-  const out = { ...m };
-  for (const k of ["lead_fa", "lead_en", "golden_fa", "golden_en", "source_fa", "source_en"]) {
-    if (out[k]) out[k] = stripCrossRefs(out[k]);
-  }
-  const fa = dedupeGolden(out.lead_fa, out.golden_fa);
-  const en = dedupeGolden(out.lead_en, out.golden_en);
-  out.lead_fa = fa.lead; out.golden_fa = fa.golden;
-  out.lead_en = en.lead; out.golden_en = en.golden;
-  for (const k of ["points_fa", "points_en", "options_fa", "options_en"]) {
-    if (Array.isArray(out[k])) out[k] = out[k].map((p) => stripCrossRefs(p)).filter(Boolean);
-  }
-  return out;
-}
-
 const MONTH_FA = {
   "01": "فروردین", "02": "اردیبهشت", "03": "خرداد", "04": "تیر",
   "05": "مرداد", "06": "شهریور", "07": "مهر", "08": "آبان",
@@ -130,6 +115,3 @@ export function examSourceLabel(d = {}, lang = "fa") {
   return `${typeFa} ${when}`;
 }
 
-export function cardTopicSlug(d = {}, fallback = "") {
-  return d.topic || d.source_meta?.subject_track_slug || fallback || "";
-}

@@ -195,9 +195,9 @@ export async function verifyPassword(pw, hash) {
     });
   }
   // bcrypt (legacy / fallback). bcrypt itself caps at 72 bytes; the longer
-  // slice is compared against what bcrypt stored, same as before. The async
-  // compare yields between rounds, so a legacy login does not freeze the server.
-  return bcrypt.compare(password, hash);
+  // slice is compared against what bcrypt stored, same as before. Runs in the
+  // worker pool when it is on, so a legacy login does not burn main-thread CPU.
+  return argonOp({ op: "bcrypt-verify", password, hash }, () => bcrypt.compare(password, hash));
 }
 
 /* True when the stored hash should be upgraded (bcrypt and argon2id

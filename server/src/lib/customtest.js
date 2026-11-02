@@ -22,11 +22,11 @@ import { recordAnswers } from "./analytics.js";
 import { matchFacets, buildFacetIndex } from "./cardfacets.js";
 import { syllabusFor } from "../data/path-syllabus.js";
 
-export const MAX_N = 100;
-export const PRESET_SIZES = [10, 20, 30, 40, 60];
+const MAX_N = 100;
+const PRESET_SIZES = [10, 20, 30, 40, 60];
 
 /* ---------- learner question status (UWorld "question mode") ---------- */
-export function learnerStatus(userId) {
+function learnerStatus(userId) {
   const rows = db.prepare(`
     SELECT card_id,
            SUM(correct) AS ok, COUNT(*) AS n,

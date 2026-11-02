@@ -51,7 +51,7 @@ function tone(freq, start, dur, { type = "sine", gain = 0.14 } = {}) {
 }
 
 /* Light haptic (mobile only). pattern is ms or an array of ms. */
-export function buzz(pattern = 12) {
+function buzz(pattern = 12) {
   try { if (navigator.vibrate) navigator.vibrate(pattern); } catch { /* */ }
 }
 
@@ -117,7 +117,7 @@ export function playLevelUp() {
 }
 
 /* STREAK MILESTONE: a warm bell strike + gentle upward shimmer (fire vibe). */
-export function playStreak() {
+function playStreak() {
   if (!isSoundOn()) return;
   tone(587.33, 0, 0.5, { type: "sine", gain: 0.13 });     // D5 bell body
   tone(880, 0.02, 0.32, { type: "triangle", gain: 0.08 });// bright partial
@@ -127,7 +127,7 @@ export function playStreak() {
 }
 
 /* ACHIEVEMENT UNLOCKED: a bright two-bell "ta-da" with a sparkle. */
-export function playAchievement() {
+function playAchievement() {
   if (!isSoundOn()) return;
   tone(659.25, 0, 0.2, { type: "triangle", gain: 0.13 });  // E5
   tone(987.77, 0.12, 0.34, { type: "triangle", gain: 0.13 }); // B5

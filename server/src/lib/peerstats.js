@@ -120,7 +120,7 @@ export function dailyReport(userId, lang = "fa") {
 }
 
 /* ---------- 4. pre-answer hint (AMBOSS Attending Tip) ---------- */
-export function hintFor(cardRow, lang = "fa") {
+function hintFor(cardRow, lang = "fa") {
   let d = {}; try { d = JSON.parse(cardRow.data_json || "{}"); } catch { d = {}; }
   const att = lang === "fa" ? (d.attending_fa || d.attending_en) : (d.attending_en || d.attending_fa);
   if (att) return att;

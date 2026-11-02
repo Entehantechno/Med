@@ -7,11 +7,8 @@
 import { db, persistNow } from "../db.js";
 import { getProfile, tehranDay, awardXp } from "./gamify.js";
 import { getGameConfig } from "./gameconfig.js";
+import { tehranMonth } from "./tehran-time.js";
 
-/* ---------- date helpers ---------- */
-export function tehranMonth(d = new Date()) {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Tehran", year: "numeric", month: "2-digit" }).format(d); // YYYY-MM
-}
 function daysBetween(a, b) {
   return Math.round((new Date(b + "T00:00:00Z") - new Date(a + "T00:00:00Z")) / 86400000);
 }

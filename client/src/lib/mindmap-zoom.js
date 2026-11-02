@@ -1,8 +1,8 @@
 // Mind-map zoom preference: remembered per browser. Pure helpers so the rules
 // (clamp, bad stored values, storage failures) can be unit-tested.
 export const ZOOM_KEY = "medlab_mindmap_zoom";
-export const ZOOM_MIN = 0.6;
-export const ZOOM_MAX = 1.6;
+const ZOOM_MIN = 0.6;
+const ZOOM_MAX = 1.6;
 
 export function clampZoom(v) {
   return Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Number.isFinite(v) ? v : 1));

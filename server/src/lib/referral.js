@@ -39,7 +39,7 @@ export function ensureCode(userId) {
   return code;
 }
 
-export function userByCode(code) {
+function userByCode(code) {
   if (!code) return null;
   const c = String(code).trim().toUpperCase();
   return db.prepare("SELECT user_id FROM learner_profiles WHERE referral_code=?").get(c);

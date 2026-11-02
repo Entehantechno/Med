@@ -36,13 +36,6 @@ export const TOPICS = [
   { slug: "physics",   name_fa: "فیزیک پزشکی",       name_en: "Medical Physics",  parent: "floating", budget: 5, color: "#2f7fd1", icon: "chart" },
 ];
 
-export const PARENTS = {
-  internal: { name_fa: "دروس داخلی", name_en: "Internal Medicine" },
-  major:    { name_fa: "دروس ماژور", name_en: "Major Subjects" },
-  minor:    { name_fa: "دروس مینور", name_en: "Minor Subjects" },
-  floating: { name_fa: "دروس شناور", name_en: "Floating Subjects" },
-};
-
 /* A pool of sample pre-internship style MCQ flashcards per topic.
    Each: { q_fa, q_en, options:[{fa,en,correct}], explain_fa, explain_en }.
    Kept concise but medically representative for demo/seed purposes. */
@@ -1955,7 +1948,6 @@ export const SAMPLE_QUESTIONS = {
     }
   ]
 };
-
 
 export const BASIC_TOPICS = [
   { slug: "anatomy",   name_fa: "آناتومی",        name_en: "Anatomy",        parent: "basic", budget: 20, color: "#e0568a", icon: "patient" },

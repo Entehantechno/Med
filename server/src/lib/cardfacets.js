@@ -34,7 +34,7 @@ export function toLatinDigits(s) {
 }
 
 /** Persian month name → 1..12, so sittings sort chronologically. */
-export const MONTH_ORDER = {
+const MONTH_ORDER = {
   فروردین: 1, اردیبهشت: 2, خرداد: 3, تیر: 4, مرداد: 5, شهریور: 6,
   مهر: 7, آبان: 8, آذر: 9, دی: 10, بهمن: 11, اسفند: 12,
 };
@@ -79,7 +79,7 @@ export function cardIsBankOnly(d = {}) {
 }
 
 /** Where did this card come from? Drives the "hide demo content" switch. */
-export function cardOrigin(d) {
+function cardOrigin(d) {
   if (d?.source_meta?.kind === "past_exam_import") return "official_exam";
   if (d?.content_origin === "demo_seed") return "demo_seed";
   return "authored";

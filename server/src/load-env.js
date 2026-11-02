@@ -33,7 +33,7 @@ dotenv.config({ path: ENV_FILE });
 if (fs.existsSync(SERVER_ENV)) dotenv.config({ path: SERVER_ENV, override: false });
 
 /* Secrets that must never be accepted: the defaults from older docs/zips. */
-export const KNOWN_WEAK_SECRETS = [
+const KNOWN_WEAK_SECRETS = [
   "dev-secret", "change-me-in-production", "change-this-secret-in-production",
   "change-this-to-a-long-random-string",
   // shipped in every zip up to v67 — public, therefore useless
@@ -43,7 +43,7 @@ export const KNOWN_WEAK_SECRETS = [
 /* SHA-256 of secrets that were published inside the R41 and R42 zips (.env was
    packed by mistake). Stored as hashes so the values never appear in source.
    A host whose .env still carries one of them gets a fresh secret on start. */
-export const KNOWN_LEAKED_SECRET_SHA256 = [
+const KNOWN_LEAKED_SECRET_SHA256 = [
   "439c6339804d02181ea6d4051d52befe378618268547db2f989bb8d14e2abf85",
 ];
 

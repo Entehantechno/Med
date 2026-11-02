@@ -9,7 +9,7 @@
    `programs` (falls back to the built-in list). */
 import { db } from "../db.js";
 
-export const DEFAULT_PROGRAMS = [
+const DEFAULT_PROGRAMS = [
   { slug: "preint", fa: "پره‌انترنی و دستیاری", en: "Pre-internship & Residency", emoji: "🩺", active: true, ord: 0 },
   { slug: "basic",  fa: "علوم پایه",            en: "Basic Sciences",            emoji: "🔬", active: true, ord: 1 },
 ];

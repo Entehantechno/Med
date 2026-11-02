@@ -78,15 +78,8 @@ function tehranOffsetMinutes(date) {
   return Math.round((asUTC - date.getTime()) / 60000);
 }
 
-// ISO/UTC string  ->  "YYYY-MM-DDTHH:MM" showing Tehran wall-clock (for the picker).
-export function isoToTehranInput(iso) {
-  const d = toDate(iso); if (!d) return "";
-  const p = tehranParts(d);
-  return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
-}
-
 // Picker value "YYYY-MM-DDTHH:MM" (Tehran wall-clock)  ->  true UTC ISO string.
-export function tehranInputToIso(v) {
+function tehranInputToIso(v) {
   if (!v) return null;
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(v);
   if (!m) return null;
@@ -97,16 +90,6 @@ export function tehranInputToIso(v) {
   return new Date(guessUTC - off * 60000).toISOString();
 }
 
-// A friendly Shamsi preview for whatever is currently in the picker (or ISO).
-// Accepts either a picker value or an ISO string.
-export function tehranInputPreview(v, lang = "fa") {
-  if (!v) return "";
-  // picker value has no timezone → treat its wall-clock as Tehran directly
-  const iso = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v) && !/[Zz]|[+\-]\d{2}:\d{2}$/.test(v)
-    ? tehranInputToIso(v) : v;
-  return fmtDateTime(iso, lang);
-}
-
 /* ---- Jalali (Shamsi) calendar conversion (no dependency) --------------------
    Standard algorithm (Birashk-family, matches Intl's Persian calendar). Used by
    the exam scheduler so teachers pick a Shamsi date directly — no Gregorian
@@ -114,7 +97,7 @@ export function tehranInputPreview(v, lang = "fa") {
 function div(a, b) { return Math.floor(a / b); }
 
 // Gregorian (y,m,d) -> Jalali [jy, jm, jd]   (m,d are 1-based)
-export function toJalali(gy, gm, gd) {
+function toJalali(gy, gm, gd) {
   const g_d_m = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
   let gy2 = gm > 2 ? gy + 1 : gy;
   let days = 355666 + 365 * gy + div(gy2 + 3, 4) - div(gy2 + 99, 100) + div(gy2 + 399, 400) + gd + g_d_m[gm - 1];

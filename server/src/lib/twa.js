@@ -46,7 +46,7 @@ export function saveTwaConfig(input) {
 
 /* Accept an array OR a newline/comma-separated string of fingerprints, clean
    them to the canonical uppercase colon-hex form, and drop anything invalid. */
-export function normalizeFingerprints(v) {
+function normalizeFingerprints(v) {
   let arr = [];
   if (Array.isArray(v)) arr = v;
   else if (typeof v === "string") arr = v.split(/[\n,]+/);

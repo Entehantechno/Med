@@ -23,9 +23,9 @@ import {
   SECTIONS, SECTION_KEYS, EXTERN_SCOPE, scoreForScope, computeSectionScores,
 } from "./history-sections.js";
 
-export const RUBRIC_VERSION = 1;
+const RUBRIC_VERSION = 1;
 
-export function defaultRoleSpec(role) {
+function defaultRoleSpec(role) {
   if (role === "extern") {
     const sectionWeights = {};
     for (const k of EXTERN_SCOPE) sectionWeights[k] = 1;
@@ -46,7 +46,7 @@ export function defaultRubric() {
   };
 }
 
-export function normalizeRoleSpec(raw, role = "intern") {
+function normalizeRoleSpec(raw, role = "intern") {
   const base = defaultRoleSpec(role === "extern" ? "extern" : "intern");
   if (!raw || typeof raw !== "object") return base;
   const incoming = Array.isArray(raw.sections)
@@ -89,10 +89,6 @@ export function parseClassRubric(classRow) {
   if (!parsed || typeof parsed !== "object") return null;
   if (!(parsed.roles || parsed.extern || parsed.intern)) return null;
   return normalizeRubric(parsed);
-}
-
-export function resolveRubric(classRow, globalRaw) {
-  return parseClassRubric(classRow) || normalizeRubric(globalRaw);
 }
 
 /* Weighted % over a role's included sections. */
@@ -145,7 +141,7 @@ export function applyRubric(results, rubric, lang = "fa") {
   };
 }
 
-export function sameSectionSet(a = [], b = []) {
+function sameSectionSet(a = [], b = []) {
   return a.length === b.length && a.every((x) => b.includes(x));
 }
 

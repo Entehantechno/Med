@@ -10,6 +10,7 @@
    path recovers when the user closes the bank page before the redirect. */
 import { db, persistNow } from "../db.js";
 import { getProfile, maxHearts, stackPremiumUntil } from "./gamify.js";
+import { tehranDay } from "./tehran-time.js";
 
 /** SQLite expression that compares JS ISO timestamps with datetime('now'). */
 export function premiumUntilExpr(col = "premium_until") {
@@ -76,7 +77,7 @@ export function claimTransactionPaid(txId, refId) {
  * Idempotent fulfill: claim the tx, then grant days. A replay of a paid
  * authority never stacks extra time.
  */
-export function fulfillPaidSubscription(tx, { refId, days }) {
+function fulfillPaidSubscription(tx, { refId, days }) {
   const claimed = claimTransactionPaid(tx.id, refId);
   if (!claimed) return { ok: true, already: true, profile: getProfile(tx.user_id) };
   const profile = applyPremiumDays(tx.user_id, days, { source: "payment" });
@@ -124,7 +125,7 @@ export function maybeNudgePremiumRenewal(p) {
   const left = daysLeftPremium(p.premium_until);
   if (!(left >= 1 && left <= 3)) return;
   try {
-    const day = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tehran" });
+    const day = tehranDay();
     const already = db.prepare(
       "SELECT 1 FROM notifications WHERE user_id=? AND kind='premium' AND date(created_at,'+3 hours','+30 minutes')=date(?)"
     ).get(p.user_id, day);

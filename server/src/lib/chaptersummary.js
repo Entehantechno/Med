@@ -63,10 +63,6 @@ export function bulletsOf(items) {
   return out.slice(0, 12);
 }
 
-export function summaryFromCards(cards, lang = "fa") {
-  return bulletsOf(summaryItemsFromCards(cards, lang));
-}
-
 export function lessonSummary(nodeId, lang = "fa") {
   const node = db.prepare("SELECT * FROM path_nodes WHERE id=?").get(nodeId);
   if (!node) return null;
@@ -89,7 +85,7 @@ export function lessonSummary(nodeId, lang = "fa") {
   };
 }
 
-export function topicSummaries(topicId, lang = "fa") {
+function topicSummaries(topicId, lang = "fa") {
   const topic = db.prepare("SELECT * FROM topics WHERE id=? AND active=1").get(topicId);
   if (!topic) return null;
   const nodes = db.prepare("SELECT * FROM path_nodes WHERE topic_id=? AND active=1 ORDER BY ord, id").all(topicId);

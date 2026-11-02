@@ -87,7 +87,7 @@ export function listTestimonials({ publishedOnly = true } = {}) {
   const where = publishedOnly ? "WHERE published=1" : "";
   return db.prepare(`SELECT * FROM testimonials ${where} ORDER BY featured DESC, ord ASC, id ASC`).all();
 }
-export function serializeTestimonial(t, lang = "fa") {
+function serializeTestimonial(t, lang = "fa") {
   const fa = lang !== "en";
   return {
     id: t.id,
@@ -134,7 +134,7 @@ export function listFaqs({ publishedOnly = true } = {}) {
   const where = publishedOnly ? "WHERE published=1" : "";
   return db.prepare(`SELECT * FROM landing_faqs ${where} ORDER BY ord ASC, id ASC`).all();
 }
-export function serializeFaq(f, lang = "fa") {
+function serializeFaq(f, lang = "fa") {
   const fa = lang !== "en";
   return {
     id: f.id,
@@ -169,7 +169,7 @@ export function listBadges({ publishedOnly = true } = {}) {
   const where = publishedOnly ? "WHERE published=1" : "";
   return db.prepare(`SELECT * FROM trust_badges ${where} ORDER BY ord ASC, id ASC`).all();
 }
-export function serializeBadge(b, lang = "fa") {
+function serializeBadge(b, lang = "fa") {
   const fa = lang !== "en";
   return { id: b.id, icon: b.icon || "check", label: (fa ? b.label_fa : b.label_en) || b.label_fa || b.label_en || "" };
 }
