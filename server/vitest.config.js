@@ -21,6 +21,13 @@ export default defineConfig({
     // the limiter actually engages.
     // Legacy/offline regressions explicitly exercise diagnostic mode; the
     // vp-required-ai suite separately enables and tests the production default.
-    env: { DISABLE_RATE_LIMIT: "1", VP_REQUIRE_AI_EVALUATION: "0", DATA_DIR: testDataDir },
+    // JWT_SECRET: the API-key sealing key is derived from it. A fixed test-only value keeps
+    // the suite independent of the machine's environment (never used outside tests).
+    env: {
+      DISABLE_RATE_LIMIT: "1",
+      VP_REQUIRE_AI_EVALUATION: "0",
+      DATA_DIR: testDataDir,
+      JWT_SECRET: process.env.JWT_SECRET || "vitest-only-secret-not-for-production-0123456789",
+    },
   },
 });

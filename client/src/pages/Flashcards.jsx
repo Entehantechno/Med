@@ -1,9 +1,10 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { markBusy } from "../lib/sw-update.js";
 import { useApp } from "../context.jsx";
 import { api, loadFailKind, loadFailText, getToken } from "../api.js";
 import { TopBar, Spinner } from "../components/UI.jsx";
 import { biField } from "../lib/bifield.js";
+import { facetCounts, normalizeSearch, sortBy } from "../lib/catalog-filter.js";
 import SearchAnswer from "../components/SearchAnswer.jsx";
 import Leaderboard from "../components/Leaderboard.jsx";
 import { useAntiCheat } from "../utils/antiCheat.js";
@@ -741,43 +742,122 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
 }
 
 
-function DeckPicker({ allCards, onStart, home, embedded = false }) {
+const catOf = (c, lang) => biField(c, "category", lang);
+const courseOf = (c, lang) => biField(c, "course", lang) || "—";
+
+/* Deck chooser: decks are the courses; a category chip narrows them, search matches
+   course or category names, and "practice" runs exactly the decks on screen. */
+export function DeckPicker({ allCards, onStart, home, embedded = false }) {
   const { t, lang } = useApp();
-  // group by course
-  const courses = {};
-  allCards.forEach((c) => {
-    const key = biField(c, "course", lang) || "—";
-    (courses[key] = courses[key] || []).push(c);
-  });
-  const entries = Object.entries(courses);
+  const fa = lang === "fa";
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("");
+  const [sort, setSort] = useState("title");
+
+  const categories = useMemo(() => facetCounts(allCards, (c) => catOf(c, lang)), [allCards, lang]);
+  const inCategory = useMemo(
+    () => (category ? allCards.filter((c) => catOf(c, lang) === category) : allCards),
+    [allCards, category, lang],
+  );
+  const decks = useMemo(() => {
+    const groups = new Map();
+    for (const c of inCategory) {
+      const key = courseOf(c, lang);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(c);
+    }
+    const needle = normalizeSearch(query);
+    let list = [...groups].map(([course, cards]) => ({
+      course,
+      cards,
+      cats: [...new Set(cards.map((c) => catOf(c, lang)).filter(Boolean))],
+    }));
+    if (needle) list = list.filter((d) => normalizeSearch([d.course, ...d.cats].join(" ")).includes(needle));
+    return sortBy(list, sort, { title: (d) => d.course, count: (d) => d.cards.length });
+  }, [inCategory, query, sort, lang]);
+
+  const shown = useMemo(() => decks.flatMap((d) => d.cards), [decks]);
+  const filtered = Boolean(query.trim() || category);
+  const resetFilters = () => { setQuery(""); setCategory(""); };
 
   return flashChrome(embedded, home, (
-      <div className="container">
-        <div className="section-title">
-          <h2><Icon name="flask" size={16} /> {t("flashTitle")}</h2>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
+    <div className="container">
+      <div className="section-title">
+        <h2><Icon name="flask" size={16} /> {t("flashTitle")}</h2>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
+      </div>
+      <div className="card mb16" style={{ textAlign: "center" }}>
+        <div className="mod-ico" style={{ margin: "0 auto 12px", background: "var(--grad-primary)" }}><Icon name="catalog" size={30} /></div>
+        <h3>{t("pickDeck")}</h3>
+        <p className="muted small">{t("pickDeckDesc")}</p>
+        <button type="button" className="btn btn-primary mt16" disabled={!shown.length} onClick={() => onStart(shown)}>
+          ▶ {filtered ? (fa ? `تمرین نتایج نمایش‌داده‌شده (${shown.length.toLocaleString("fa-IR")})` : `Practise shown (${shown.length})`)
+            : `${t("practiceAll")} (${allCards.length})`}
+        </button>
+      </div>
+
+      <div className="case-toolbar" style={{ display: "grid", gap: 10, marginBottom: 14 }}>
+        <div className="search-input-wrap">
+          <span className="search-ico"><Icon name="search" size={16} /></span>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder={fa ? "جست‌وجوی درس یا دسته…" : "Search course or category…"}
+            aria-label={fa ? "جست‌وجوی دسته‌ها" : "Search decks"}
+            autoComplete="off"
+          />
         </div>
-        <div className="card mb16" style={{ textAlign: "center" }}>
-          <div className="mod-ico" style={{ margin: "0 auto 12px", background: "var(--grad-primary)" }}><Icon name="catalog" size={30} /></div>
-          <h3>{t("pickDeck")}</h3>
-          <p className="muted small">{t("pickDeckDesc")}</p>
-          <button type="button" className="btn btn-primary mt16" onClick={() => onStart(allCards)}>▶ {t("practiceAll")} ({allCards.length})</button>
+        {categories.length > 1 && (
+          <div className="seg" role="radiogroup" aria-label={fa ? "فیلتر دسته‌بندی" : "Category filter"} style={{ flexWrap: "wrap" }}>
+            <button type="button" role="radio" aria-checked={!category} className={!category ? "on" : ""} onClick={() => setCategory("")}>
+              {fa ? "همه" : "All"} ({allCards.length})
+            </button>
+            {categories.map((c) => (
+              <button key={c.value} type="button" role="radio" aria-checked={category === c.value}
+                className={category === c.value ? "on" : ""} onClick={() => setCategory(c.value)}>
+                {c.value} ({c.count})
+              </button>
+            ))}
+          </div>
+        )}
+        <div className="seg seg-new" role="radiogroup" aria-label={fa ? "مرتب‌سازی دسته‌ها" : "Sort decks"}>
+          <button type="button" role="radio" aria-checked={sort === "title"} className={sort === "title" ? "on" : ""} onClick={() => setSort("title")}>{fa ? "نام درس" : "Course"}</button>
+          <button type="button" role="radio" aria-checked={sort === "count"} className={sort === "count" ? "on" : ""} onClick={() => setSort("count")}>{fa ? "بیشترین کارت" : "Most cards"}</button>
         </div>
+        {filtered && (
+          <div className="muted small" role="status" aria-live="polite">
+            {fa ? `${decks.length.toLocaleString("fa-IR")} دسته` : `${decks.length} decks`}
+          </div>
+        )}
+      </div>
+
+      {decks.length === 0 && allCards.length > 0 ? (
+        <div className="card center" style={{ padding: 32 }} role="status">
+          <div style={{ fontWeight: 800 }}>{fa ? "دسته‌ای با این فیلتر پیدا نشد." : "No deck matches these filters."}</div>
+          <button type="button" className="btn btn-ghost mt16" onClick={resetFilters}>{fa ? "پاک‌کردن فیلترها" : "Clear filters"}</button>
+        </div>
+      ) : (
         <div className="grid grid-2">
-          {entries.map(([course, deck]) => (
-            <div className="card mod-card" key={course} onClick={() => onStart(deck)}>
+          {decks.map((d) => (
+            <div className="card mod-card" key={d.course} role="button" tabIndex={0}
+              aria-label={`${d.course} — ${d.cards.length} ${t("totalCards")}`}
+              onClick={() => onStart(d.cards)}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onStart(d.cards); } }}>
               <div className="mod-ico" style={{ background: "var(--grad-purple)" }}><Icon name="book" size={30} /></div>
-              <h3>{course}</h3>
-              <p>{deck.length} {t("totalCards")}</p>
+              <h3>{d.course}</h3>
+              <p>{d.cards.length} {t("totalCards")}</p>
               <div className="case-meta mt8">
-                {[...new Set(deck.map((c) => biField(c, "category", lang)))].slice(0, 3).map((cat, i) => (
-                  <span className="tag" key={i}>{cat}</span>
+                {d.cats.slice(0, 3).map((cat) => (
+                  <span className="tag" key={cat}>{cat}</span>
                 ))}
+                {d.cats.length > 3 && <span className="tag">+{d.cats.length - 3}</span>}
               </div>
             </div>
           ))}
         </div>
-      </div>
+      )}
+    </div>
   ));
 }
 

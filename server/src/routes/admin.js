@@ -2747,9 +2747,6 @@ function existingFingerprintSet() {
   if (!officialExistingCache) officialExistingCache = officialExistingFingerprints();
   return officialExistingCache;
 }
-export function resetOfficialImportCaches() {
-  officialExistingCache = null;
-}
 function officialSlug(s) { return String(s || "official").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 48) || "official"; }
 
 /* One canonical exam-type vocabulary. Shipped banks used both "preinternship"

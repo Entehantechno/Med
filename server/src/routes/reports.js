@@ -9,7 +9,7 @@ import { isLearnContent, caseIsLearn } from "../lib/content-track.js";
 
 const r = Router();
 
-const attemptsQuery = `
+const attemptsSelect = `
   SELECT a.*, u.name_fa AS student_fa, u.name_en AS student_en, u.student_no AS student_no,
          u.university_id AS student_university_id, u.role AS student_role,
          c.data_json AS case_json,
@@ -19,8 +19,8 @@ const attemptsQuery = `
   LEFT JOIN users u ON u.id = a.user_id
   LEFT JOIN cases c ON c.id = a.case_id
   LEFT JOIN exams e ON e.id = a.exam_id
-  LEFT JOIN classes cl ON cl.id = a.class_id
-  ORDER BY a.created_at DESC`;
+  LEFT JOIN classes cl ON cl.id = a.class_id`;
+const attemptsQuery = `${attemptsSelect} ORDER BY a.created_at DESC`;
 
 function currentUniversityId(user) {
   if (!user?.id) return null;
@@ -114,7 +114,19 @@ function filterRows(rows, q = {}) {
 }
 const J = (s, d) => { try { return s ? JSON.parse(s) : d; } catch { return d; } };
 
-/* Dashboard summary */
+/* Dashboard summary. Everything is computed in SQL: the attempts table grows with the
+   user base, so the dashboard must not load it into memory. Admin sees every attempt; a
+   teacher sees only attempts in their own classes or exams (the same rule as
+   teacherScope/inScope, expressed as a WHERE clause). */
+function attemptScopeSql(user) {
+  if (user.role === "admin") return { where: "1=1", args: [] };
+  const uni = currentUniversityId(user) || 1;
+  return {
+    where: `(a.class_id IN (SELECT id FROM classes WHERE owner_id=? AND COALESCE(university_id,1)=?)
+          OR a.exam_id IN (SELECT id FROM exams WHERE owner_id=? AND COALESCE(university_id,1)=?))`,
+    args: [user.id, uni, user.id, uni],
+  };
+}
 r.get("/summary", authRequired, requireRole("teacher", "admin"), (req, res) => {
   try {
   const uni = req.user.role === "teacher" ? currentUniversityId(req.user) : null;
@@ -133,16 +145,37 @@ r.get("/summary", authRequired, requireRole("teacher", "admin"), (req, res) => {
     : db.prepare("SELECT COUNT(*) n FROM users WHERE role='student'").get().n;
   const cases = countUniBank("cases", uni);
   const cards = countUniBank("flashcards", uni);
-  const scoped = scopedAttemptRows(req.user);
-  const attempts = scoped.length;
   const exams = req.user.role === "teacher"
     ? db.prepare("SELECT COUNT(*) n FROM exams WHERE active=1 AND owner_id=? AND COALESCE(university_id,1)=?").get(req.user.id, uni || 1).n
     : uni
     ? db.prepare("SELECT COUNT(*) n FROM exams WHERE active=1 AND COALESCE(university_id,1)=?").get(uni).n
     : db.prepare("SELECT COUNT(*) n FROM exams WHERE active=1").get().n;
-  const avg = scoped.length ? scoped.reduce((s, a) => s + Number(a.score || 0), 0) / scoped.length : 0;
-  const recent = scoped.slice(0, 6);
-  res.json({ students, cases, cards, attempts, exams, avgScore: Math.round(avg), recent });
+
+  const scope = attemptScopeSql(req.user);
+  const agg = db.prepare(`
+    SELECT COUNT(*) n,
+           COALESCE(AVG(COALESCE(a.score,0)), 0) avg,
+           COALESCE(SUM(CASE WHEN a.type='vp' THEN 1 ELSE 0 END), 0) vp,
+           COALESCE(SUM(CASE WHEN a.type='flash' THEN 1 ELSE 0 END), 0) fl,
+           COALESCE(SUM(CASE WHEN COALESCE(a.score,0) < 60 THEN 1 ELSE 0 END), 0) b0,
+           COALESCE(SUM(CASE WHEN COALESCE(a.score,0) >= 60 AND COALESCE(a.score,0) < 75 THEN 1 ELSE 0 END), 0) b1,
+           COALESCE(SUM(CASE WHEN COALESCE(a.score,0) >= 75 AND COALESCE(a.score,0) < 90 THEN 1 ELSE 0 END), 0) b2,
+           COALESCE(SUM(CASE WHEN COALESCE(a.score,0) >= 90 THEN 1 ELSE 0 END), 0) b3
+      FROM attempts a WHERE ${scope.where}`).get(...scope.args);
+  // Last 12 scores, oldest first (the trend line).
+  const trend = db.prepare(`SELECT a.score FROM attempts a WHERE ${scope.where} ORDER BY a.created_at DESC, a.id DESC LIMIT 12`)
+    .all(...scope.args).map((x) => x.score).reverse();
+  const recent = db.prepare(`${attemptsSelect} WHERE ${scope.where} ORDER BY a.created_at DESC, a.id DESC LIMIT 6`)
+    .all(...scope.args).map(mapRow);
+  res.json({
+    students, cases, cards, exams,
+    attempts: agg.n,
+    avgScore: Math.round(agg.avg),
+    byType: { vp: agg.vp, flash: agg.fl },
+    buckets: [agg.b0, agg.b1, agg.b2, agg.b3],
+    trend,
+    recent,
+  });
   } catch (e) {
     res.status(500).json({ error: "summary_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }

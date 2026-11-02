@@ -25,6 +25,7 @@ import AudioUpload from "../components/AudioUpload.jsx";
 import MediaLibraryPicker from "../components/MediaLibraryPicker.jsx";
 import { BarChart, LineChart, Donut, RadarChart } from "../components/Charts.jsx";
 import { biField } from "../lib/bifield.js";
+import { facetCounts } from "../lib/catalog-filter.js";
 import { fmtDate, fmtDateTime, fmtDuration, todayJalali, jalaliTimeToIso, isoToJalaliParts, fmtDateLong } from "../utils/date.js";
 import { SUBJECTS } from "../data/subject-catalog.js";
 import SearchAnswer from "../components/SearchAnswer.jsx";
@@ -390,34 +391,24 @@ export default function Admin({ home }) {
 }
 
 /* ---- Dashboard ---- */
-function Dashboard() {
+export function Dashboard() {
   const { t, lang } = useApp();
+  const fa = lang === "fa";
+  // One request: the server computes every number and the charts' series in SQL.
   const [s, setS] = useState(null);
-  const [attempts, setAttempts] = useState(null);
   const [loadErr, setLoadErr] = useState("");
   useEffect(() => {
     setLoadErr("");
     api.get("/reports/summary").then(setS).catch((e) => { setLoadErr(String(e.message || e)); setS({ __err: true }); });
-    api.get("/reports/attempts").then((d) => setAttempts(Array.isArray(d) ? d : [])).catch((e) => { setLoadErr(String(e.message || e)); setAttempts({ __err: true }); });
   }, []);
-  if (s?.__err || attempts?.__err || loadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr || (lang === "fa" ? "بارگذاری داشبورد شکست خورد" : "Could not load the dashboard")}</h3></div>;
-  if (!s || !attempts) return (<><div className="grid grid-4">{[0,1,2,3].map(i=><div className="card" key={i}><div className="skeleton sk-card"/></div>)}</div><div className="mt16"><SkeletonTable rows={4} /></div></>);
+  if (s?.__err || loadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr || (fa ? "بارگذاری داشبورد شکست خورد" : "Could not load the dashboard")}</h3></div>;
+  if (!s) return (<><div className="grid grid-4">{[0,1,2,3].map(i=><div className="card" key={i}><div className="skeleton sk-card"/></div>)}</div><div className="mt16"><SkeletonTable rows={4} /></div></>);
 
-  // chronological order for the trend line
-  const chrono = [...attempts].reverse();
-  const trend = chrono.map((a) => a.score).slice(-12);
-  // score distribution buckets
   const buckets = [
-    { label: "0–59", value: 0 }, { label: "60–74", value: 0 },
-    { label: "75–89", value: 0 }, { label: "90–100", value: 0 },
+    { label: "0–59", value: s.buckets[0] }, { label: "60–74", value: s.buckets[1] },
+    { label: "75–89", value: s.buckets[2] }, { label: "90–100", value: s.buckets[3] },
   ];
-  attempts.forEach((a) => {
-    const sc = a.score || 0;
-    if (sc < 60) buckets[0].value++; else if (sc < 75) buckets[1].value++;
-    else if (sc < 90) buckets[2].value++; else buckets[3].value++;
-  });
-  const vp = attempts.filter((a) => a.type === "vp").length;
-  const fl = attempts.filter((a) => a.type === "flash").length;
+  const trend = s.trend || [];
 
   return (
     <>
@@ -431,14 +422,17 @@ function Dashboard() {
       <div className="grid grid-2 mt16" style={{ alignItems: "start" }}>
         <div className="card chart-card">
           <h4 className="mb8"><Icon name="chart" size={16} /> {t("scoreTrend")}</h4>
-          <div className="small muted mb8">{t("last7")}</div>
-          <LineChart values={trend.length >= 2 ? trend : [0, 0]} />
+          {/* The line plots the last 12 attempts, so the caption says exactly that. */}
+          <div className="small muted mb8">{fa ? "۱۲ آزمون اخیر" : "Last 12 attempts"}</div>
+          {trend.length >= 2
+            ? <LineChart values={trend} />
+            : <div className="muted small" style={{ padding: "24px 0", textAlign: "center" }}>{fa ? "هنوز آزمون کافی برای نمودار ثبت نشده است." : "Not enough attempts to draw the trend yet."}</div>}
         </div>
         <div className="card chart-card">
           <h4 className="mb8"><Icon name="pie" size={16} /> {t("activityByType")}</h4>
           <Donut parts={[
-            { label: t("vpExams"), value: vp, color: "var(--primary)" },
-            { label: t("flashPractice"), value: fl, color: "var(--accent)" },
+            { label: t("vpExams"), value: s.byType.vp, color: "var(--primary)" },
+            { label: t("flashPractice"), value: s.byType.flash, color: "var(--accent)" },
           ]} />
         </div>
       </div>
@@ -449,9 +443,10 @@ function Dashboard() {
       </div>
 
       <div className="card mt16"><h4 className="mb8"><Icon name="clock" size={16} /> {t("recentActivity")}</h4>
+        {(s.recent || []).length === 0 && <div className="muted small">{fa ? "هنوز فعالیتی ثبت نشده است." : "No activity recorded yet."}</div>}
         {(s.recent || []).map((a) => (
           <div className="info-row" key={a.id}>
-            <span>{lang === "fa" ? a.student_fa : a.student_en} — {lang === "fa" ? a.case_fa : a.case_en}</span>
+            <span>{fa ? a.student_fa : a.student_en} — {fa ? a.case_fa : a.case_en}</span>
             <span><b>{a.score}</b> · {fmtDateTime(a.created_at, lang)}</span>
           </div>
         ))}
@@ -1087,6 +1082,8 @@ function Cases() {
   const [cases, setCases] = useState(null);
   const [editing, setEditing] = useState(null);
   const [status, setStatus] = useState("active");
+  const [specialty, setSpecialty] = useState("");
+  const [difficulty, setDifficulty] = useState("");
   const toast = useToast();
   const [loadErr, setLoadErr] = useState("");
   const load = () => {
@@ -1101,6 +1098,7 @@ function Cases() {
     if (id) await api.put(`/cases/${id}`, data); else await api.post("/cases", data);
     setEditing(null); toast(t("saved")); load();
   };
+  const caseSpecialties = facetCounts(cases, (c) => biField(c, "specialty", lang));
   return (
     <div className="card">
       <div className="section-title"><h4>{t("cases")}</h4>
@@ -1109,11 +1107,23 @@ function Cases() {
           <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newCase")}</button>
         </div></div>
       <div className="small muted mb16"><Icon name="bookmark" size={16} /> {t("versionNote")}</div>
-      <label className="small">{lang === 'fa' ? 'فیلتر وضعیت' : 'Status filter'} <select value={status} onChange={e=>setStatus(e.target.value)}>
-        <option value="active">{lang === 'fa' ? 'فعال' : 'Active'}</option><option value="inactive">{lang === 'fa' ? 'غیرفعال / بایگانی' : 'Inactive / archived'}</option><option value="all">{lang === 'fa' ? 'همه' : 'All'}</option>
-      </select></label>
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+        <label className="small">{lang === 'fa' ? 'فیلتر وضعیت' : 'Status filter'} <select value={status} onChange={e=>setStatus(e.target.value)}>
+          <option value="active">{lang === 'fa' ? 'فعال' : 'Active'}</option><option value="inactive">{lang === 'fa' ? 'غیرفعال / بایگانی' : 'Inactive / archived'}</option><option value="all">{lang === 'fa' ? 'همه' : 'All'}</option>
+        </select></label>
+        <label className="small">{t("specialty")} <select value={specialty} onChange={e=>setSpecialty(e.target.value)}>
+          <option value="">{lang === 'fa' ? 'همه تخصص‌ها' : 'All specialties'}</option>
+          {caseSpecialties.map((sp) => <option key={sp.value} value={sp.value}>{sp.value} ({sp.count})</option>)}
+        </select></label>
+        <label className="small">{t("difficulty")} <select value={difficulty} onChange={e=>setDifficulty(e.target.value)}>
+          <option value="">{lang === 'fa' ? 'همه سطوح' : 'All levels'}</option>
+          {["easy", "medium", "hard"].map((d) => <option key={d} value={d}>{t(d)}</option>)}
+        </select></label>
+      </div>
       <DataTable
-        rows={cases.filter(c => status === "all" || (status === "active" ? !!c.active : !c.active))} exportable
+        rows={cases.filter(c => (status === "all" || (status === "active" ? !!c.active : !c.active))
+          && (!specialty || biField(c, "specialty", lang) === specialty)
+          && (!difficulty || c.difficulty === difficulty))} exportable
         storageKey="admin-cases"
         defaultHiddenColumns={["university_id", "updated_at"]}
         initialSort={{ key: "title", dir: "asc" }}
@@ -1409,6 +1419,7 @@ function Flashcards() {
   const [cards, setCards] = useState(null);
   const [editing, setEditing] = useState(null);
   const [status, setStatus] = useState("active");
+  const [category, setCategory] = useState("");
   const toast = useToast();
   const [loadErr, setLoadErr] = useState("");
   const load = () => {
@@ -1423,6 +1434,7 @@ function Flashcards() {
     if (id) await api.put(`/flashcards/${id}`, data); else await api.post("/flashcards", data);
     setEditing(null); toast(t("saved")); load();
   };
+  const cardCategories = facetCounts(cards, (c) => biField(c, "category", lang));
   return (
     <div className="card">
       <div className="section-title"><h4>{t("flashcards")}</h4>
@@ -1431,11 +1443,18 @@ function Flashcards() {
           <button type="button" className="btn btn-primary btn-sm" onClick={() => setEditing({})}>+ {t("newFlashcard")}</button>
         </div></div>
       <div className="small muted mb16"><Icon name="bookmark" size={16} /> {t("versionNote")}</div>
-      <label className="small">{lang === 'fa' ? 'فیلتر وضعیت' : 'Status filter'} <select value={status} onChange={e=>setStatus(e.target.value)}>
-        <option value="active">{lang === 'fa' ? 'فعال' : 'Active'}</option><option value="inactive">{lang === 'fa' ? 'غیرفعال / بایگانی' : 'Inactive / archived'}</option><option value="all">{lang === 'fa' ? 'همه' : 'All'}</option>
-      </select></label>
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+        <label className="small">{lang === 'fa' ? 'فیلتر وضعیت' : 'Status filter'} <select value={status} onChange={e=>setStatus(e.target.value)}>
+          <option value="active">{lang === 'fa' ? 'فعال' : 'Active'}</option><option value="inactive">{lang === 'fa' ? 'غیرفعال / بایگانی' : 'Inactive / archived'}</option><option value="all">{lang === 'fa' ? 'همه' : 'All'}</option>
+        </select></label>
+        <label className="small">{t("category")} <select value={category} onChange={e=>setCategory(e.target.value)}>
+          <option value="">{lang === 'fa' ? 'همه دسته‌ها' : 'All categories'}</option>
+          {cardCategories.map((c) => <option key={c.value} value={c.value}>{c.value} ({c.count})</option>)}
+        </select></label>
+      </div>
       <DataTable
-        rows={cards.filter(c => status === "all" || (status === "active" ? !!c.active : !c.active))} exportable
+        rows={cards.filter(c => (status === "all" || (status === "active" ? !!c.active : !c.active))
+          && (!category || biField(c, "category", lang) === category))} exportable
         storageKey="admin-cards"
         defaultHiddenColumns={["university_id", "updated_at"]}
         initialSort={{ key: "title", dir: "asc" }}

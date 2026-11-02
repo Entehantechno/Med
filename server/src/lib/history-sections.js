@@ -275,14 +275,6 @@ export const HISTORY_FORMS = [
   { key: "peds",     fa: "اطفال",        en: "Pediatrics",     template: PEDS_HISTORY_TEMPLATE,   prefix: "pd" },
   { key: "psych",    fa: "روان‌پزشکی",   en: "Psychiatry",     template: PSYCH_HISTORY_TEMPLATE,  prefix: "ps" },
 ];
-export const HISTORY_FORM_KEYS = HISTORY_FORMS.map((f) => f.key);
-
-export function historyFormLabel(key, lang = "fa") {
-  const f = HISTORY_FORMS.find((x) => x.key === key);
-  if (!f) return key || "";
-  return lang === "fa" ? f.fa : f.en;
-}
-
 /* Build ready-to-store checklist items for a given form key. Every item is
    section='history' with a stable, prefixed id. Falls back to internal. */
 export function buildHistoryItems(formKey = "internal") {
