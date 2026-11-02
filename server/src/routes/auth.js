@@ -169,7 +169,7 @@ r.post("/register", signupGate, validateBody(registerSchema), async (req, res) =
   const badPw = passwordRejected(password);
   if (badPw) return res.status(400).json({ error: "weak password" });
   if (await passwordPwned(toAsciiDigits(String(password)))) return res.status(400).json({ error: "weak password" });
-  const exists = db.prepare("SELECT id FROM users WHERE lower(email)=? OR username=?").get(mail, mail);
+  const exists = db.prepare("SELECT id FROM users WHERE lower(email)=? UNION SELECT id FROM users WHERE username=? LIMIT 1").get(mail, mail);
   if (exists) return res.status(409).json({ error: "email taken" });
 
   const name = name_fa || name_en || mail.split("@")[0];
@@ -235,7 +235,7 @@ const resetHash = (raw) => crypto.createHash("sha256").update(String(raw)).diges
 r.post("/forgot", async (req, res) => {
   const ident = String(req.body?.email || req.body?.username || "").trim().toLowerCase().slice(0, 200);
   if (!ident) return res.json(RESET_GENERIC);
-  const u = db.prepare("SELECT id, email, status FROM users WHERE (lower(email)=? OR lower(username)=?) AND email IS NOT NULL LIMIT 1").get(ident, ident);
+  const u = db.prepare("WITH c(id) AS (SELECT id FROM users WHERE lower(email)=? UNION SELECT id FROM users WHERE lower(username)=?) SELECT u.id, u.email, u.status FROM c JOIN users u ON u.id = c.id WHERE u.email IS NOT NULL LIMIT 1").get(ident, ident);
   if (u && u.email && String(u.status || "active") === "active") {
     db.prepare("DELETE FROM password_resets WHERE user_id=? AND used_at IS NULL").run(u.id);
     const raw = crypto.randomBytes(32).toString("base64url");
