@@ -6,6 +6,7 @@ import Icon from "../components/Icon.jsx";
 import GoogleButton from "../components/GoogleButton.jsx";
 import { PROVINCES } from "../data/provinces.js";
 import { warm } from "../lib/routes-prefetch.js";
+import { mapAuthError } from "../lib/auth-errors.js";
 import { useKeyboardInset } from "../lib/keyboard-viewport.js";
 
 function LoginModalShell({ onBackHome, children }) {
@@ -62,19 +63,6 @@ export default function Login({ initialMode = "login", onBackHome, asModal = fal
 
   const fa = lang === "fa";
 
-  const mapAuthError = (m) => {
-    if (m === "email taken") return fa ? "این ایمیل قبلاً ثبت شده است" : "This email is already registered";
-    if (m === "invalid email") return fa ? "ایمیل نامعتبر است" : "Invalid email";
-    if (m === "weak password") return fa ? "رمز عبور خیلی کوتاه است یا قبلاً لو رفته. در سایت زنده حداقل ۸ نویسه بگذارید." : "Password is too short or appeared in a breach (8+ characters in production).";
-    if (m === "signup disabled") return fa ? "ثبت‌نام جدید فعلاً بسته است. اگر حساب دارید، با گوگل یا ایمیل وارد شوید." : "New sign-up is closed. Existing accounts can still sign in.";
-    if (m === "email exists unverified") return fa ? "این ایمیل با رمز ثبت شده و هنوز تأیید نشده. اول ایمیل را تأیید کنید، بعد گوگل را وصل کنید." : "This email is already registered and unverified — confirm the mailbox before linking Google.";
-    if (m === "google not configured") return fa ? "ورود با گوگل روی این سرور تنظیم نشده است." : "Google sign-in is not configured on this server.";
-    if (m === "too_many_attempts") return fa ? "تلاش‌های ورود بیش از حد. کمی بعد دوباره تلاش کنید." : "Too many login attempts. Try again later.";
-    // Server/network failures are NOT a wrong password: say so instead of "invalid username or password".
-    if (m === "auth_unavailable" || m === "server_error" || m === "network" || m === "timeout" || m === "bad_response" || /^HTTP 5\d\d$/.test(String(m)))
-      return fa ? "سرویس ورود موقتاً در دسترس نیست. کمی بعد دوباره تلاش کنید." : "Sign-in is temporarily unavailable. Please try again shortly.";
-    return "";
-  };
 
   const submit = async () => {
     setErr(""); setNotice("");
@@ -105,7 +93,7 @@ export default function Login({ initialMode = "login", onBackHome, asModal = fal
         if (emailSent) setNotice(fa ? "ایمیل تأیید برایتان ارسال شد. صندوق ورودی را بررسی کنید." : "A verification email was sent — check your inbox.");
       }
     } catch (e) {
-      const mapped = mapAuthError(e.message);
+      const mapped = mapAuthError(e.message, fa);
       if (mode === "login") setErr(mapped || t("loginError"));
       else setErr(mapped || (fa ? "ثبت‌نام ناموفق بود" : "Sign-up failed"));
     } finally { setBusy(false); }
@@ -115,7 +103,7 @@ export default function Login({ initialMode = "login", onBackHome, asModal = fal
     setErr(""); setBusy(true);
     warm("studentHome"); warm("learnApp");
     try { await googleLogin(credential, { nonce, program, province }); }
-    catch (e) { setErr(mapAuthError(e.message) || (fa ? "ورود با گوگل ناموفق بود" : "Google sign-in failed")); }
+    catch (e) { setErr(mapAuthError(e.message, fa) || (fa ? "ورود با گوگل ناموفق بود" : "Google sign-in failed")); }
     finally { setBusy(false); }
   };
 

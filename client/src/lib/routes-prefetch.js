@@ -17,6 +17,7 @@ export const routeChunks = {
   blog: () => import("../pages/Blog.jsx"),
   store: () => import("../pages/PublicStore.jsx"),
   verify: () => import("../pages/VerifyCertificate.jsx"),
+  vp: () => import("../pages/VirtualPatientPage.jsx"),
   studentHome: () => import("../pages/StudentHome.jsx"),
   caseList: () => import("../pages/CaseList.jsx"),
   exam: () => import("../pages/Exam.jsx"),

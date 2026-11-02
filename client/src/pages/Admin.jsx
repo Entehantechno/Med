@@ -51,6 +51,7 @@ import { safeLocal } from "../lib/storage.js";
 // faster after login. The visible UI of each section is unchanged; only when a
 // user opens that section do we download its code.
 const PathManager = lazy(() => import("./admin/PathManager.jsx"));
+const VpPageEditor = lazy(() => import("./admin/VpPageEditor.jsx"));
 const MindmapBankAdmin = lazy(() => import("./admin/MindmapBankAdmin.jsx"));
 const RoleEditor = lazy(() => import("./admin/RoleEditor.jsx"));
 const StoreManager = lazy(() => import("./admin/StoreManager.jsx"));
@@ -149,7 +150,7 @@ export default function Admin({ home }) {
     { title: t("navGroupOverview"), items: [["dashboard", "dashboard", "uni.view"], ["reports", "chart", "uni.reports"]] },
     { title: t("navGroupTeaching"), items: [["classes", "class", "uni.classes"], ["vpConversations", "chat", "uni.classes"], ["classResults", "chart", "uni.classes"], ["drawingReviews", "image", "uni.classes"], ["vpGrading", "target", "uni.content"], ["exams", "exam", "uni.exams"], ["results", "trophy", "uni.exams"], ["researchAdmin", "book", "uni.classes"]] },
     { title: t("navGroupPeople"), items: [["users", "users", "uni.users"], ["universities", "class", "uni.users"]] },
-    { title: t("navGroupContent"), items: [["cases", "patient", "uni.content"], ["flashcards", "flask", "uni.content"], ["catalogs", "catalog", "uni.content"], ["checklists", "check", "uni.content"], ["questionnairesAdmin", "check", "uni.content"], ["aiConfig", "ai", "uni.ai"]] },
+    { title: t("navGroupContent"), items: [["cases", "patient", "uni.content"], ["flashcards", "flask", "uni.content"], ["catalogs", "catalog", "uni.content"], ["checklists", "check", "uni.content"], ["vpPage", "patient", "uni.content"], ["questionnairesAdmin", "check", "uni.content"], ["aiConfig", "ai", "uni.ai"]] },
   ];
   const competitiveSections = [
     { title: t("navGroupPeople"), items: [["learnerMgmt", "users", "learn.users"], ["placementReport", "compass", "learn.view"], ["certificatesAdmin", "medal", "learn.users"], ["premiumAccounts", "crown", "learn.users"]] },
@@ -328,6 +329,7 @@ export default function Admin({ home }) {
             {tab === "flashcards" && <Flashcards />}
             {tab === "catalogs" && <Catalogs />}
             {tab === "checklists" && <Checklists />}
+            {tab === "vpPage" && <LazyAdminChunk><VpPageEditor /></LazyAdminChunk>}
             {tab === "vpGrading" && <VpGradingPanel />}
             {tab === "questionnairesAdmin" && <QuestionnairesAdmin />}
             {tab === "aiConfig" && <AiSection />}

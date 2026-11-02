@@ -12,6 +12,7 @@ const Login = lazy(routeChunks.login);
 const Blog = lazy(routeChunks.blog);
 const PublicStore = lazy(routeChunks.store);
 const VerifyCertificate = lazy(routeChunks.verify);
+const VirtualPatientPage = lazy(routeChunks.vp);
 const StudentHome = lazy(routeChunks.studentHome);
 const CaseList = lazy(routeChunks.caseList);
 const Exam = lazy(routeChunks.exam);
@@ -118,7 +119,7 @@ function AppInner() {
     if (typeof window === "undefined") return;
     if (user && !["student", "learner"].includes(user.role)) {
       if (!/^\/admin(\/|$)/.test(window.location.pathname)) window.history.replaceState({}, "", "/admin");
-    } else if (user && /^\/admin(\/|$)/.test(window.location.pathname)) {
+    } else if (user && /^\/(admin|vp)(\/|$)/i.test(window.location.pathname)) {
       window.history.replaceState({}, "", "/");
     }
   }, [user]);
@@ -144,6 +145,11 @@ function AppInner() {
 
   if (!user) {
     const adminPath = typeof window !== "undefined" && /^\/admin(\/|$)/.test(window.location.pathname);
+    // /VP is the public virtual-patient page with a student-number sign-in. It is
+    // shown only to logged-out visitors; a successful sign-in moves to the app.
+    if (typeof window !== "undefined" && /^\/vp(\/|$)/i.test(window.location.pathname)) {
+      return (<><ConnectionBanner /><Suspense fallback={<Spinner />}><VirtualPatientPage /></Suspense><Toast msg={toast} /></>);
+    }
     if (adminPath && authView === "login") {
       return (<><ConnectionBanner /><Login initialMode="login" onBackHome={() => { window.history.pushState({}, "", "/"); setAuthView("landing"); }} /><Toast msg={toast} /></>);
     }

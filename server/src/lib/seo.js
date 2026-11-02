@@ -55,6 +55,9 @@ export const DEFAULT_SEO = {
     verify:   { title_fa: "اعتبارسنجی گواهی", title_en: "Certificate verification",
                 description_fa: "اعتبارسنجی گواهی‌های آموزشی MED School.",
                 description_en: "Verify MED School educational certificates." },
+    vp:       { title_fa: "بیمار مجازی", title_en: "Virtual patient",
+                description_fa: "بیمار مجازی MED School: گفت‌وگو، معاینه و تشخیص بالینی روی پرونده‌های واقعی‌نما. ورود با شماره دانشجویی.",
+                description_en: "MED School virtual patient: talk, examine and diagnose on realistic clinical cases. Sign in with your student number." },
     login:    { title_fa: "ورود", title_en: "Sign in", noindex: true },
     signup:   { title_fa: "ثبت‌نام", title_en: "Sign up" },
   },
@@ -357,10 +360,10 @@ function postJsonLdInternal(r, lang, cfg) {
 
 /* Map an incoming request path to a known client route name (best-effort). */
 export function routeNameForPath(reqPath = "/") {
-  const p = String(reqPath).split("?")[0].replace(/\/+$/, "") || "/";
+  const p = String(reqPath).split("?")[0].replace(/\/+$/, "").toLowerCase() || "/";
   const map = {
     "/": "home", "/features": "features", "/pricing": "pricing",
-    "/login": "login", "/signup": "signup", "/blog": "blog", "/store": "store", "/verify": "verify", "/admin": "login",
+    "/login": "login", "/signup": "signup", "/blog": "blog", "/store": "store", "/verify": "verify", "/vp": "vp", "/admin": "login",
   };
   return map[p] || "home";
 }

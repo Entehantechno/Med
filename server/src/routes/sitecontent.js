@@ -7,6 +7,7 @@
 import { Router } from "express";
 import { db } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
+import { getVpPage } from "../lib/vp-page.js";
 
 const r = Router();
 const KEY = "site_content";
@@ -136,6 +137,16 @@ r.put("/mascots", authRequired, requireRole("admin"), (req, res) => {
 r.delete("/mascots", authRequired, requireRole("admin"), (req, res) => {
   db.prepare("DELETE FROM settings WHERE key=?").run("mascots");
   res.json({ ok: true, mascots: defaultMascots() });
+});
+
+/* ----------------------------------------------------------------
+   PUBLIC /VP virtual-patient page copy. Anyone can read it; it is normalized
+   on read so a stored value can never break the page. Written from admin
+   (uni.content) at /api/admin/vp-page.
+   ---------------------------------------------------------------- */
+r.get("/vp-page", (req, res) => {
+  res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+  res.json({ config: getVpPage() });
 });
 
 /* ----------------------------------------------------------------

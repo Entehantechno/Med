@@ -33,6 +33,7 @@ import {
   listBadges, createBadge, updateBadge, deleteBadge,
 } from "../lib/landing.js";
 import { productHealth } from "../lib/producthealth.js";
+import { getVpPage, saveVpPage, DEFAULT_VP_PAGE, VP_PAGE_LIMITS } from "../lib/vp-page.js";
 import { cardFacets, buildFacetIndex, matchFacets, sortCards } from "../lib/cardfacets.js";
 import { recordCardChange, recordImport, listRevisions, revisionSummary } from "../lib/cardhistory.js";
 import { analyzeFsrs, loadTrainingItems, optimizeParams, evaluateParams } from "../lib/fsrs-optimizer.js";
@@ -1026,6 +1027,17 @@ r.put("/twa", ...P("learn.settings"), async (req, res) => {
   const saved = saveTwaConfig(req.body?.config || {});
   audit(req, "twa.update", "twa", {});
   res.json({ config: saved, assetlinks: renderAssetLinks() });
+});
+
+/* ============ Virtual patient page (/VP, university content) ============
+   Public copy, login text and FAQ of the /VP landing page. Perm uni.content. */
+r.get("/vp-page", ...P("uni.content"), (req, res) => {
+  res.json({ config: getVpPage(), defaults: DEFAULT_VP_PAGE, limits: VP_PAGE_LIMITS });
+});
+r.put("/vp-page", ...P("uni.content"), (req, res) => {
+  const config = saveVpPage(req.body?.config || {});
+  audit(req, "vp_page.update", "vp_page", { enabled: config.enabled });
+  res.json({ config });
 });
 
 /* ============ Virtual Patient (competitive side) ============
