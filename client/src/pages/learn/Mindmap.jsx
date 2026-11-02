@@ -4,6 +4,7 @@ import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
 import { safeLocal } from "../../lib/storage.js";
+import { readStoredZoom, saveZoom } from "../../lib/mindmap-zoom.js";
 import { Glyph } from "../../components/Glyph.jsx";
 
 /* MindMap Bank — 349 maps, premium + attractive UI
@@ -74,21 +75,11 @@ function branchStyle(b) {
   return m[b] || { bg: "#f1f5f9", fg: "#334155", icon: "•", label: b };
 }
 
-const ZOOM_KEY = "medlab_mindmap_zoom";
-const clampZoom = (v) => Math.min(1.6, Math.max(0.6, Number.isFinite(v) ? v : 1));
-function readStoredZoom() {
-  try {
-    const raw = safeLocal.getItem(ZOOM_KEY);
-    if (raw == null || raw === "") return 1;
-    const n = Number(raw);
-    return Number.isFinite(n) && n > 0 ? clampZoom(n) : 1;
-  } catch { return 1; }
-}
 /* Hoisted to module scope so its zoom state survives parent re-renders (it used to remount on every render). */
 const GraphView = ({ data, structure="radial", pitch=false, pitchIdx=0, setPitchIdx=()=>{}, zen=false, hovered, setHovered, lang, openQuestionsFor, setDetail }) => {
   // Zoom is remembered per browser (clamped on read, so a bad stored value cannot break the view).
-  const [zoom, setZoom] = useState(readStoredZoom);
-  useEffect(() => { try { safeLocal.setItem(ZOOM_KEY, String(zoom)); } catch { /* storage full or blocked: zoom still works */ } }, [zoom]);
+  const [zoom, setZoom] = useState(() => readStoredZoom(safeLocal));
+  useEffect(() => { saveZoom(safeLocal, zoom); }, [zoom]);
   // Pitch (presentation) mode — XMind Pitch inspired: one node per slide
   if (pitch && data && !data.locked) {
     const nodes = data.nodes || [];
