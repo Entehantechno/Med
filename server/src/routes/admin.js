@@ -3042,11 +3042,11 @@ function reviveNodesWithCards() {
 }
 // Explicit uncertainty takes precedence over a stale numeric answer index.
 // Share this policy between normalization and path placement.
-function officialQuestionIsKeyless(q) {
+export function officialQuestionIsKeyless(q) {
   return q.keyless === true || q.correct_index === null ||
     q.key_source === "low-confidence" || q.key_source === "multi-answer";
 }
-function normalizeOfficialQuestion(q, meta = {}) {
+export function normalizeOfficialQuestion(q, meta = {}) {
   const faOpts = Array.isArray(q.options_fa) ? q.options_fa : [];
   const enOpts = Array.isArray(q.options_en) ? q.options_en : [];
   const keyless = officialQuestionIsKeyless(q);
