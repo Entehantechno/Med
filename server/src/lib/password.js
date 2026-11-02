@@ -17,8 +17,7 @@ import { Worker } from "node:worker_threads";
 
 /* ---- argon2 worker pool -------------------------------------------------
    HASH_WORKERS sets the pool size (0 = hash on the main thread, the old way).
-   Default: the CPU count, at most 4 (the event loop shares cores with the workers;
-   the OS scheduler handles that, and a hash never blocks the loop). Workers are unref'd so they never keep the process alive. If a worker
+   Default: CPU count minus one, between 1 and 4 (the event loop keeps one core). Workers are unref'd so they never keep the process alive. If a worker
    cannot start, jobs fall back to the in-thread path below. */
 const WORKER_URL = new URL("./password-worker.js", import.meta.url);
 function poolSize() {
@@ -27,8 +26,11 @@ function poolSize() {
     const n = Number(env);
     return Number.isInteger(n) && n >= 0 ? Math.min(n, 8) : 0;
   }
+  // One core is left for the event loop. Measured on 2 cores (login storm, 20
+  // connections): 1 worker 15.4 req/s p95 1.4 s; 2 workers 11.7 req/s p95 1.8 s;
+  // in-thread 11.8 req/s p95 3.0 s. More workers than free cores only adds contention.
   const cores = (typeof os.availableParallelism === "function" ? os.availableParallelism() : os.cpus().length) || 1;
-  return Math.max(1, Math.min(4, cores));
+  return Math.max(1, Math.min(4, cores - 1));
 }
 const pool = { size: poolSize(), slots: [], queue: [], disabled: false };
 
