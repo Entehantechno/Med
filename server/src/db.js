@@ -151,6 +151,18 @@ function bindArgs(args) {
   return args.map(bindValue);
 }
 
+// Opt-in slow-statement log: DB_SLOW_MS=50 prints every statement at or above 50 ms
+// (SQL text trimmed). Off by default, so the hot path only pays one comparison.
+const SLOW_MS = Number(process.env.DB_SLOW_MS) || 0;
+function timedStatement(sql, fn) {
+  if (!SLOW_MS) return fn();
+  const t0 = performance.now();
+  try { return fn(); } finally {
+    const ms = performance.now() - t0;
+    if (ms >= SLOW_MS) console.warn(`[db-slow] ${ms.toFixed(1)}ms ${sql.replace(/\s+/g, " ").slice(0, 160)}`);
+  }
+}
+
 class Statement {
   constructor(sql) { this.sql = sql; this._conn = null; this._stmt = null; }
   // Prepared once per connection; re-prepared after a reload.
@@ -162,12 +174,12 @@ class Statement {
   get(...args) {
     const s = this._s(); const p = bindArgs(args);
     if (!s.reader) { s.run(...p); return undefined; }
-    return s.get(...p);
+    return timedStatement(this.sql, () => s.get(...p));
   }
   all(...args) {
     const s = this._s(); const p = bindArgs(args);
     if (!s.reader) { s.run(...p); return []; }
-    return s.all(...p);
+    return timedStatement(this.sql, () => s.all(...p));
   }
   run(...args) {
     const s = this._s(); const p = bindArgs(args);
@@ -2340,6 +2352,23 @@ export function initSchema() {
     );
     CREATE INDEX IF NOT EXISTS idx_promotion_case ON case_promotion_requests(case_id, status);
     CREATE INDEX IF NOT EXISTS idx_promotion_uni ON case_promotion_requests(university_id, status);
+  `);
+
+  // Content version: every write to the learning catalog (flashcards, path nodes,
+  // topics) bumps one counter row, so read caches keyed on it are never stale even
+  // when the write comes from an admin screen, a script or raw SQL. Idempotent.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS catalog_versions (name TEXT PRIMARY KEY, v INTEGER NOT NULL DEFAULT 0);
+    INSERT OR IGNORE INTO catalog_versions (name, v) VALUES ('content', 0);
+    CREATE TRIGGER IF NOT EXISTS trg_flashcards_ver_ins AFTER INSERT ON flashcards BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+    CREATE TRIGGER IF NOT EXISTS trg_flashcards_ver_upd AFTER UPDATE ON flashcards BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+    CREATE TRIGGER IF NOT EXISTS trg_flashcards_ver_del AFTER DELETE ON flashcards BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+    CREATE TRIGGER IF NOT EXISTS trg_path_nodes_ver_ins AFTER INSERT ON path_nodes BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+    CREATE TRIGGER IF NOT EXISTS trg_path_nodes_ver_upd AFTER UPDATE ON path_nodes BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+    CREATE TRIGGER IF NOT EXISTS trg_path_nodes_ver_del AFTER DELETE ON path_nodes BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+    CREATE TRIGGER IF NOT EXISTS trg_topics_ver_ins AFTER INSERT ON topics BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+    CREATE TRIGGER IF NOT EXISTS trg_topics_ver_upd AFTER UPDATE ON topics BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+    CREATE TRIGGER IF NOT EXISTS trg_topics_ver_del AFTER DELETE ON topics BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
   `);
 
   // Hot-path indexes for dashboards, exam results, class membership, learner

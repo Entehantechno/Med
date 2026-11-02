@@ -19,6 +19,7 @@ import { recordAnswers, performanceDashboard, mistakeCardIds, flaggedCardIds, di
 import { emojiForTopic } from "../lib/topicemoji.js";
 import { serializeCard } from "../lib/cardserialize.js";
 import { glossaryPayload } from "../lib/glossary.js";
+import { cachedByContent } from "../lib/catalog-cache.js";
 import { lessonSummary, programSummaries } from "../lib/chaptersummary.js";
 import { cardFacets, buildFacetIndex, matchFacets, sortCards, fullYear, cardIsBankOnly } from "../lib/cardfacets.js";
 import { notify, vapidPublicKey, pushConfigured } from "../lib/notify.js";
@@ -163,12 +164,16 @@ r.post("/program", ...learner, (req, res) => {
 r.get("/path", ...learner, (req, res) => {
   const lang = L(req);
   const program = activeProgramFor(req.user.id);
-  const topics = db.prepare("SELECT * FROM topics WHERE active=1 AND program=? ORDER BY ord, id").all(program);
-  const nodes = db.prepare("SELECT * FROM path_nodes WHERE active=1 ORDER BY topic_id, ord, id").all();
+  // Catalog reads are cached per content version (lib/catalog-cache.js): a busy day
+  // re-read the same path nodes and ~12k card ids on every map request.
+  const topics = cachedByContent(`topics:${program}`, () => db.prepare("SELECT * FROM topics WHERE active=1 AND program=? ORDER BY ord, id").all(program));
+  const { nodes, activeCards } = cachedByContent("path-catalog", () => ({
+    nodes: db.prepare("SELECT * FROM path_nodes WHERE active=1 ORDER BY topic_id, ord, id").all(),
+    activeCards: new Set(db.prepare("SELECT id FROM flashcards WHERE active=1").all().map((r) => r.id)),
+  }));
   const prog = db.prepare("SELECT node_id, stars, completed_at, legendary FROM node_progress WHERE user_id=?").all(req.user.id);
   const pmap = Object.fromEntries(prog.map((x) => [x.node_id, x]));
   const isPremium = !!getProfile(req.user.id).premium_effective;
-  const activeCards = new Set(db.prepare("SELECT id FROM flashcards WHERE active=1").all().map((r) => r.id));
   const byTopic = {};
   for (const n of nodes) {
     const ids = parseCardIds(n.card_ids);

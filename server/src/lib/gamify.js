@@ -380,23 +380,47 @@ export function setAnonSettings(userId, patch = {}, lang = "fa") {
   return getAnonSettings(userId, lang);
 }
 
+// Leaderboard snapshot: the country ranking used to sort every learner profile on
+// every request (top list + rank count + total). It is now rebuilt at most every
+// RANK_TTL_MS, and a user's rank is a binary search over the sorted XP list.
+// XP on the board can therefore lag by up to RANK_TTL_MS, which is fine for a ranking.
+const RANK_TTL_MS = 30_000;
+const RANK_TOP = 200;
+let rankSnap = null;
+function learnerRankSnapshot(now = Date.now()) {
+  if (rankSnap && now - rankSnap.at < RANK_TTL_MS) return rankSnap;
+  const top = db.prepare(`
+    SELECT u.id, u.name_fa, u.name_en, lp.xp, lp.streak, lp.tier, lp.province, lp.anon_mode, lp.alias
+    FROM learner_profiles lp JOIN users u ON u.id = lp.user_id
+    WHERE u.role='learner' AND u.status='active'
+    ORDER BY lp.xp DESC, u.id ASC LIMIT ?`).all(RANK_TOP);
+  const xps = db.prepare(`
+    SELECT lp.xp FROM learner_profiles lp JOIN users u ON u.id = lp.user_id
+    WHERE u.role='learner' AND u.status='active' ORDER BY lp.xp DESC`).all().map((r) => r.xp);
+  rankSnap = { at: now, top, xps };
+  return rankSnap;
+}
+/* How many values in a descending array are strictly greater than x. */
+function countGreater(desc, x) {
+  let lo = 0, hi = desc.length;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (desc[mid] > x) lo = mid + 1; else hi = mid; }
+  return lo;
+}
+
 export function countryRanking(userId, lang = "fa", limit = 100) {
-  const rows = db.prepare(`
+  const snap = learnerRankSnapshot();
+  const source = limit <= RANK_TOP ? snap.top.slice(0, limit) : db.prepare(`
     SELECT u.id, u.name_fa, u.name_en, lp.xp, lp.streak, lp.tier, lp.province, lp.anon_mode, lp.alias
     FROM learner_profiles lp JOIN users u ON u.id = lp.user_id
     WHERE u.role='learner' AND u.status='active'
     ORDER BY lp.xp DESC, u.id ASC LIMIT ?`).all(limit);
-  const list = rows.map((r, i) => ({
+  const list = source.map((r, i) => ({
     rank: i + 1, user_id: r.id, xp: r.xp, streak: r.streak, tier: r.tier, province: r.province || "",
     name: rankDisplayName(r, userId, lang), anon: !!r.anon_mode && r.id !== userId,
   }));
-  const meRow = db.prepare(`
-    SELECT COUNT(*)+1 AS rank FROM learner_profiles lp JOIN users u ON u.id=lp.user_id
-    WHERE u.role='learner' AND u.status='active' AND lp.xp > (SELECT xp FROM learner_profiles WHERE user_id=?)`).get(userId);
-  const total = db.prepare(`
-    SELECT COUNT(*) AS n FROM learner_profiles lp JOIN users u ON u.id=lp.user_id
-    WHERE u.role='learner' AND u.status='active'`).get()?.n || list.length;
-  return { list, myRank: meRow?.rank || null, total, me: userId };
+  const me = db.prepare("SELECT xp FROM learner_profiles WHERE user_id=?").get(userId);
+  const myRank = me ? countGreater(snap.xps, me.xp) + 1 : null;
+  return { list, myRank, total: snap.xps.length || list.length, me: userId };
 }
 
 /* Province ranking: rank learners within the current user's own province. */
