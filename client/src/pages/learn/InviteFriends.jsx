@@ -162,7 +162,7 @@ function StoryCard({ code, brand, site, fa, onShared }) {
   };
   return (
     <div className="story-card-wrap">
-      <img className="story-card-img" src={dataUrl} alt="story card" />
+      <img loading="lazy" decoding="async" className="story-card-img" src={dataUrl} alt="story card" />
       <button type="button" className="btn btn-accent" onClick={download}><Icon name="download" size={15} /> {fa ? "ذخیرهٔ کارت استوری" : "Save story card"}</button>
     </div>
   );

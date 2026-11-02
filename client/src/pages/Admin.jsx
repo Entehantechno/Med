@@ -1937,7 +1937,7 @@ export function CardModal({ card, onClose, onSave }) {
               const r = e.currentTarget.getBoundingClientRect();
               addPin({ x: Math.round(((e.clientX - r.left) / r.width) * 1000) / 10, y: Math.round(((e.clientY - r.top) / r.height) * 1000) / 10 });
             }}>
-              <img src={f.puzzle?.imageUrl || f.imageUrl} alt="" />
+              <img loading="lazy" decoding="async" src={f.puzzle?.imageUrl || f.imageUrl} alt="" />
               {((f.puzzle || {}).pins || []).map((p, i) => (
                 <span key={i} className="label-pin admin" style={{ left: `${p.x}%`, top: `${p.y}%` }}>{i + 1}</span>
               ))}
@@ -3561,7 +3561,7 @@ function DrawingReviewsPanel({ scope, id, inbox }) {
           {(r.class_fa || r.class_en || r.code) && <div className="small muted mb8">{fa ? r.class_fa : r.class_en} {r.code ? <span className="tag">{r.code}</span> : null}</div>}
           <div className="small muted mb8">{fa ? r.question_fa : r.question_en}</div>
           {r.drawing?.preview && <div style={{ position: "relative" }}>
-            <img className="drawing-review-img" src={r.drawing.preview} alt="drawing submission" />
+            <img loading="lazy" decoding="async" className="drawing-review-img" src={r.drawing.preview} alt="drawing submission" />
             {Array.isArray(r.zones) && r.zones.length > 0 && <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ position: "absolute", inset: 0, width: "100%", height: "100%", pointerEvents: "none" }}>{r.zones.map((z, i) => <rect key={i} x={z.x} y={z.y} width={z.w} height={z.h} fill="rgba(37,99,235,.12)" stroke="#2563eb" strokeWidth=".7" vectorEffect="non-scaling-stroke" />)}</svg>}
           </div>}
           {r.assist && <div className="micro-box mt8" style={{ padding: 8 }}>
@@ -3690,7 +3690,7 @@ function LiveStudentDetail({ detail, displayName, fa, onClose }) {
           <div className="small muted">{fa ? "نوع" : "Type"}: {a.type || "mcq"} · {status(a)} · {fa ? "امتیاز" : "Points"}: {Math.round(a.points || 0)}{a.proposedPoints ? ` / ${fa ? "پیشنهادی" : "proposed"}: ${Math.round(a.proposedPoints)}` : ""}</div>
           <div className="small">{fa ? "پاسخ:" : "Answer:"} {answerText(a)}</div>
           {a.correct && <div className="small muted">{fa ? "پاسخ درست:" : "Correct:"} {fa ? a.correct.fa : a.correct.en}</div>}
-          {a.drawing?.preview && <img className="live-answer-drawing" src={a.drawing.preview} alt="drawing" />}
+          {a.drawing?.preview && <img loading="lazy" decoding="async" className="live-answer-drawing" src={a.drawing.preview} alt="drawing" />}
           {a.drawing?.approval && <div className="small muted">{fa ? "وضعیت بررسی:" : "Review:"} {a.drawing.approval.status}</div>}
         </div>)}
       </div>)}
@@ -5341,7 +5341,7 @@ function AdsManager() {
                 <div className="motion-ad__orb motion-ad__orb--2" aria-hidden="true" />
                 <div className="motion-ad__shine" aria-hidden="true" />
                 <div className="motion-ad__inner">
-                  <div className="motion-ad__media" aria-hidden="true">{edit.image ? <img src={edit.image} alt="" style={{ width:"100%",height:"100%",objectFit:"cover"}} /> : <span></span>}</div>
+                  <div className="motion-ad__media" aria-hidden="true">{edit.image ? <img loading="lazy" decoding="async" src={edit.image} alt="" style={{ width:"100%",height:"100%",objectFit:"cover"}} /> : <span></span>}</div>
                   <div className="motion-ad__text">
                     <span className="motion-ad__kicker">{kicker}</span>
                     <h4 className="motion-ad__title motion-ad__title--grad">{tit}</h4>
@@ -5908,7 +5908,7 @@ function MascotsAdmin() {
               <div key={i} style={{ position: "relative", width: 92, height: 92, borderRadius: 12,
                 border: "1px solid var(--border2)", background: "var(--bg2)", overflow: "hidden",
                 display: "grid", placeItems: "center" }}>
-                <img src={g} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                <img loading="lazy" decoding="async" src={g} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                 <button type="button" className="btn btn-sm btn-danger" title={fa ? "حذف" : "Remove"}
                   style={{ position: "absolute", top: 2, insetInlineEnd: 2, padding: "0 7px", lineHeight: 1.6 }}
                   onClick={() => setCfg({ ...cfg, dr: { ...cfg.dr, guides: cfg.dr.guides.filter((_, j) => j !== i) } })}>×</button>

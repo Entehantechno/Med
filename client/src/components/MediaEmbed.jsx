@@ -4,7 +4,7 @@ import "./Icon.jsx";
 /* ---------------------------------------------------------------------------
    MediaEmbed — renders a serialized media descriptor from the server:
      { kind: "image" | "video" | "embed", url, caption, provider?, poster? }
-   - image : <img> (uploaded or external https)
+   - image : <img loading="lazy" decoding="async"> (uploaded or external https)
    - video : native <video> player (uploaded mp4/webm)
    - embed : responsive 16:9 <iframe> for Aparat / YouTube (already normalized
              to a safe player URL server-side; CSP frame-src allows only these)

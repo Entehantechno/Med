@@ -27,7 +27,7 @@ export default function Mnemonics({ onBack }) {
             <div key={it.id} className="card mn-card">
               <div className="mn-title">{it.mnemonic.title || it.q}</div>
               {it.mnemonic.image
-                ? <img className="mn-img" src={it.mnemonic.image} alt="" />
+                ? <img loading="lazy" decoding="async" className="mn-img" src={it.mnemonic.image} alt="" />
                 : <div className="mn-img mn-placeholder">🎨</div>}
               {it.mnemonic.scene && <div className="mn-scene">{it.mnemonic.scene}</div>}
               {it.mnemonic.hooks?.length > 0 && (

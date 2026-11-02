@@ -354,7 +354,7 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
         <HighlightableStem text={card.q} highlights={card.highlights} className="lesson-q" style={{ fontSize: `${stemZoom * 1.35}rem`, lineHeight: 1.75 }} />
         {card.media
           ? <MediaEmbed media={card.media} className="lesson-media" />
-          : card.image && <img src={card.image} alt={card.imageAlt || (lang === "fa" ? "طرح آموزشی سؤال" : "Teaching figure")} className="ddle-img" style={{ maxHeight: 220, margin: "0 auto 16px", display: "block", borderRadius: 12 }} />}
+          : card.image && <img loading="lazy" decoding="async" src={card.image} alt={card.imageAlt || (lang === "fa" ? "طرح آموزشی سؤال" : "Teaching figure")} className="ddle-img" style={{ maxHeight: 220, margin: "0 auto 16px", display: "block", borderRadius: 12 }} />}
         <Type card={card} checked={checked} sel={sel} setSel={setSel} isCorrect={wasCorrect} glossary={data.glossary} />
         {/* Resource bar: reference unlimited + mindmap limited — competitive path */}
         <LessonResourceBar card={card} premium={premium} lang={lang} />
@@ -432,7 +432,7 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
               <div className="mn-title"><Icon name="brain" size={14} style={{ verticalAlign: "-2px" }} /> {card.mnemonic.title || t("mnemonics")}</div>
               {card.mnemonic.media
                 ? <MediaEmbed media={card.mnemonic.media} className="mn-media" />
-                : card.mnemonic.image ? <img className="mn-img" src={card.mnemonic.image} alt="" /> : null}
+                : card.mnemonic.image ? <img loading="lazy" decoding="async" className="mn-img" src={card.mnemonic.image} alt="" /> : null}
               {card.mnemonic.scene && <div className="mn-scene">{card.mnemonic.scene}</div>}
               {card.mnemonic.hooks?.length > 0 && (
                 <ul className="mn-hooks">{card.mnemonic.hooks.map((h, i) => <li key={i}><span className="mn-hook-dot"></span> {h}</li>)}</ul>

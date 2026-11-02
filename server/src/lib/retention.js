@@ -1,9 +1,10 @@
 /* ================================================================
-   retention.js — how long stored chats and logs are kept, and how they are deleted.
+   retention.js — how long stored chats, logs and archived classes or exams are
+   kept, and how they are deleted.
 
-   Nothing is deleted automatically unless an admin has set a period for that
-   category. The default policy keeps every chat and log (rum_vitals keeps its
-   long-standing 45 days: it is monitoring data, not learner content).
+   Nothing is deleted automatically unless an admin turns a period on. The
+   defaults keep everything (rum_vitals keeps its long-standing 45 days: it is
+   monitoring data, not learner content).
 
    Categories and what a purge removes:
    - vp_chats: a FINISHED and GRADED virtual-patient encounter. Its event log,
@@ -12,13 +13,19 @@
      the evaluation (درسنامه) and the reference snapshot stay. An encounter that
      is still open, not yet graded, in staff review, or linked to a research
      study is never touched.
+   - academic_items: an ARCHIVED class or exam (active = 0) whose last activity
+     is older than its period. Removing it removes its roster, cases, flashcard
+     settings, VP chats, questionnaire forms and responses, AND its grades
+     (attempts). Nothing of this is kept. It is blocked while the item is linked
+     to research, while a still-active exam uses it, or while a grading job runs.
    - tutor_chats: AI tutor messages (rows).
    - security_events: sign-in and permission events (they hold IP and path).
    - rum_vitals: page performance samples.
 
-   Scope per class and exam: classes.retention_days and exams.retention_days
-   override the vp_chats period for their encounters. NULL = inherit, 0 = keep,
-   N = days. A class value wins over an exam value, and an exam over the policy.
+   Periods: the global policy per category, plus per class and per exam
+   overrides (classes.retention_days, exams.retention_days): NULL = inherit,
+   0 = keep, N = days. For a VP chat the class period wins, then the exam period,
+   then the global one. A class or exam uses its own period, then the global one.
 
    Automatic runs happen at most once a day, in one process at a time (job
    lease), in batches, each batch one transaction. Each run writes one audit row
@@ -30,13 +37,16 @@ import { DB_PATH } from "./paths.js";
 import { makeLeases } from "./leases.js";
 import { audit } from "./audit.js";
 
-export const CATEGORIES = ["vp_chats", "tutor_chats", "security_events", "rum_vitals"];
+export const CATEGORIES = ["vp_chats", "academic_items", "tutor_chats", "security_events", "rum_vitals"];
+/* Categories whose per-item overrides apply even when the global period is off. */
+const OVERRIDABLE = new Set(["vp_chats", "academic_items"]);
 export const MIN_DAYS = 30;
 export const MAX_DAYS = 3650;
 export const PRESET_DAYS = [0, 90, 180, 365, 730];
-export const DEFAULT_POLICY = { vp_chats: 0, tutor_chats: 0, security_events: 0, rum_vitals: 45 };
+const DEFAULT_POLICY = { vp_chats: 0, academic_items: 0, tutor_chats: 0, security_events: 0, rum_vitals: 45 };
 
 const BATCH = 200;
+const ACADEMIC_BATCH = 20;
 const DAY_MS = 24 * 60 * 60 * 1000;   // the automatic run waits at least this long
 const LAST_RUN_KEY = "retention_last_run_ms";
 const POLICY_KEY = "retention_policy";
@@ -86,7 +96,9 @@ export function savePolicy(input, { confirmed = false, req = null } = {}) {
   return { policy: next };
 }
 
-/* SQL shared by the VP rules. A purge needs a settled, graded encounter outside research. */
+/* ---------- virtual-patient chats ---------- */
+
+/* A purge needs a settled, graded encounter outside research. */
 const VP_SETTLED = `s.finished_at IS NOT NULL AND s.attempt_id IS NOT NULL AND s.study_id IS NULL
   AND s.review_required=0 AND s.purged_ms IS NULL`;
 const VP_PERIOD = "COALESCE(c.retention_days, e.retention_days, ?)";
@@ -124,11 +136,108 @@ function purgeVpIds(ids, now) {
   return counts;
 }
 
-const TABLE_RULE = {
-  tutor_chats: { table: "tutor_chats", col: "created_at" },
-  security_events: { table: "security_events", col: "created_at" },
-  rum_vitals: { table: "rum_vitals", col: "created_at" },
-};
+/* ---------- archived classes and exams (with their grades) ---------- */
+
+/* Last activity as julian days: the item's own date, or its newest attempt. */
+const CLASS_LAST = `MAX(julianday(c.created_at), COALESCE((SELECT MAX(julianday(a.created_at)) FROM attempts a WHERE a.class_id=c.id), 0))`;
+const EXAM_LAST = `MAX(COALESCE(julianday(e.ends_at), julianday(e.created_at), 0), COALESCE((SELECT MAX(julianday(a.created_at)) FROM attempts a WHERE a.exam_id=e.id), 0))`;
+/* A class is still in use while one of its attempts or chats belongs to an active exam. */
+const CLASS_USED_BY_ACTIVE_EXAM = `(EXISTS (SELECT 1 FROM attempts a JOIN exams x ON x.id=a.exam_id WHERE a.class_id=c.id AND x.active=1)
+  OR EXISTS (SELECT 1 FROM vp_sessions s JOIN exams x ON x.id=s.exam_id WHERE s.class_id=c.id AND x.active=1))`;
+
+/* Archived, not research-linked, old enough. Blocked items are filtered again in JS. */
+function academicIdsDue(days) {
+  const cls = db.prepare(`SELECT c.id FROM classes c
+    WHERE c.active=0 AND c.study_id IS NULL AND COALESCE(c.retention_days, ?) > 0
+      AND ${CLASS_LAST} < julianday('now') - COALESCE(c.retention_days, ?)
+      AND NOT ${CLASS_USED_BY_ACTIVE_EXAM}`).all(days, days).map((r) => ({ kind: "class", id: r.id }));
+  const exm = db.prepare(`SELECT e.id FROM exams e
+    WHERE e.active=0 AND e.study_id IS NULL AND COALESCE(e.retention_days, ?) > 0
+      AND ${EXAM_LAST} < julianday('now') - COALESCE(e.retention_days, ?)`).all(days, days).map((r) => ({ kind: "exam", id: r.id }));
+  return [...cls, ...exm];
+}
+
+/* Why this item must not be deleted now, or null when it may be. */
+export function blockReason(kind, id, now = Date.now()) {
+  const table = kind === "exam" ? "exams" : "classes";
+  const row = db.prepare(`SELECT id, active, study_id FROM ${table} WHERE id=?`).get(id);
+  if (!row) return "not_found";
+  if (row.active !== 0) return "not_archived";
+  if (row.study_id != null) return "research_linked";
+  if (kind === "class") {
+    const used = db.prepare(`SELECT 1 FROM classes c WHERE c.id=? AND ${CLASS_USED_BY_ACTIVE_EXAM} LIMIT 1`).get(id);
+    if (used) return "used_by_active_exam";
+  }
+  const col = kind === "exam" ? "exam_id" : "class_id";
+  const leased = db.prepare(`SELECT 1 FROM vp_sessions WHERE ${col}=? AND grading_lease_until > ? LIMIT 1`).get(id, now);
+  if (leased) return "grading_in_progress";
+  return null;
+}
+
+/* Counts of what deleting this item would remove. Read-only. */
+export function academicImpact(kind, id) {
+  if (kind === "exam") {
+    return {
+      attempts: db.prepare("SELECT COUNT(*) n FROM attempts WHERE exam_id=?").get(id).n,
+      chats: db.prepare("SELECT COUNT(*) n FROM vp_sessions WHERE exam_id=?").get(id).n,
+      members: db.prepare("SELECT COUNT(*) n FROM exam_participants WHERE exam_id=?").get(id).n,
+      responses: db.prepare(`SELECT COUNT(*) n FROM questionnaire_responses WHERE form_id IN (SELECT id FROM questionnaire_forms WHERE exam_id=?)`).get(id).n,
+    };
+  }
+  return {
+    attempts: db.prepare("SELECT COUNT(*) n FROM attempts WHERE class_id=?").get(id).n,
+    chats: db.prepare("SELECT COUNT(*) n FROM vp_sessions WHERE class_id=?").get(id).n,
+    members: db.prepare("SELECT COUNT(*) n FROM class_members WHERE class_id=?").get(id).n,
+    responses: db.prepare(`SELECT COUNT(*) n FROM questionnaire_responses WHERE form_id IN (SELECT id FROM questionnaire_forms WHERE class_id=?)`).get(id).n,
+  };
+}
+
+/* Deletes one archived item and everything that belongs to it, in ONE transaction:
+   a crash leaves either the whole item or none of it. Returns the row counts. */
+function deleteAcademicItem(kind, id) {
+  const sid = kind === "exam" ? "exam_id" : "class_id";
+  const formIds = `SELECT id FROM questionnaire_forms WHERE ${sid}=?`;
+  return durableTransaction(() => {
+    const run = (sql, ...args) => db.prepare(sql).run(...args).changes;
+    const counts = { attempts: 0, chats: 0, members: 0, responses: 0 };
+    counts.chats = db.prepare(`SELECT COUNT(*) n FROM vp_sessions WHERE ${sid}=?`).get(id).n;
+    counts.responses = run(`DELETE FROM questionnaire_responses WHERE form_id IN (${formIds})`, id);
+    run(`DELETE FROM questionnaire_forms WHERE ${sid}=?`, id);
+    run(`DELETE FROM vp_session_events WHERE session_id IN (SELECT id FROM vp_sessions WHERE ${sid}=?)`, id);
+    run(`DELETE FROM vp_sessions WHERE ${sid}=?`, id);
+    counts.attempts = run(`DELETE FROM attempts WHERE ${sid}=?`, id);
+    if (kind === "exam") {
+      counts.members = run("DELETE FROM exam_participants WHERE exam_id=?", id);
+      run("DELETE FROM exams WHERE id=?", id);
+    } else {
+      counts.members = run("DELETE FROM class_members WHERE class_id=?", id);
+      for (const t of ["class_cases", "class_flashcards", "class_flashcard_attempts", "class_flash_submissions"]) {
+        run(`DELETE FROM ${t} WHERE class_id=?`, id);
+      }
+      run("DELETE FROM classes WHERE id=?", id);
+    }
+    return counts;
+  });
+}
+
+/* Deletes the given archived items, skipping any that is blocked. Returns counts and skips. */
+function purgeAcademic(items, req = null, now = Date.now()) {
+  const total = { items: 0, attempts: 0, chats: 0, members: 0, responses: 0 };
+  const skipped = [];
+  for (let i = 0; i < items.length; i += ACADEMIC_BATCH) {
+    for (const { kind, id } of items.slice(i, i + ACADEMIC_BATCH)) {
+      const why = blockReason(kind, id, now);
+      if (why) { skipped.push({ kind, id, reason: why }); continue; }
+      const c = deleteAcademicItem(kind, id);
+      total.items += 1;
+      for (const k of Object.keys(c)) total[k] += c[k];
+    }
+  }
+  if (total.items) audit(req, "academic.purge", "classes_exams", { ...total, ids: items.map((x) => `${x.kind}:${x.id}`).slice(0, 100) });
+  return { ...total, skipped };
+}
+
+/* ---------- counts for the admin ---------- */
 
 function previewTable(category, days) {
   const r = TABLE_RULE[category];
@@ -136,19 +245,35 @@ function previewTable(category, days) {
   return { rows: row?.n || 0 };
 }
 
+const TABLE_RULE = {
+  tutor_chats: { table: "tutor_chats", col: "created_at" },
+  security_events: { table: "security_events", col: "created_at" },
+  rum_vitals: { table: "rum_vitals", col: "created_at" },
+};
+
 /* Count what a purge with this period would remove. Read-only. */
 export function previewPurge(category, days) {
   if (!CATEGORIES.includes(category)) return null;
   const d = cleanDays(days);
   if (d === undefined || d === null) return null;
   if (category === "vp_chats") return { category, days: d, ...vpPreview(d) };
+  if (category === "academic_items") {
+    const due = academicIdsDue(d).filter((x) => !blockReason(x.kind, x.id));
+    const totals = { classes: 0, exams: 0, attempts: 0, chats: 0, members: 0, responses: 0 };
+    for (const x of due) {
+      x.kind === "exam" ? totals.exams++ : totals.classes++;
+      const c = academicImpact(x.kind, x.id);
+      for (const k of Object.keys(c)) totals[k] += c[k];
+    }
+    return { category, days: d, ...totals };
+  }
   if (d === 0) return { category, days: d, rows: 0 };
   return { category, days: d, ...previewTable(category, d) };
 }
 
-/* Deletes everything of one category older than `days` (vp_chats: class and exam
-   overrides still apply). Returns counts. Runs in batches so a large table never
-   holds the write lock for long. */
+/* Deletes everything of one category older than `days` (the per-item periods still
+   apply). Returns counts. Runs in batches so a large table never holds the write
+   lock for long. */
 export async function purgeCategory(category, days, now = Date.now()) {
   const d = cleanDays(days);
   if (!CATEGORIES.includes(category) || d === undefined || d === null) throw new Error("bad_retention_request");
@@ -164,6 +289,11 @@ export async function purgeCategory(category, days, now = Date.now()) {
     }
     return total;
   }
+  if (category === "academic_items") {
+    const due = academicIdsDue(d);
+    const out = purgeAcademic(due, null, now);
+    return { items: out.items, attempts: out.attempts, chats: out.chats, members: out.members, responses: out.responses, skipped: out.skipped.length };
+  }
   if (d === 0) return total;
   const r = TABLE_RULE[category];
   for (let guard = 0; guard < 100000; guard++) {
@@ -177,7 +307,7 @@ export async function purgeCategory(category, days, now = Date.now()) {
   return total;
 }
 
-/* Manual purge of chosen encounters (by attempt id). Overrides do not apply: the admin chose them. */
+/* Manual purge of chosen encounters (by attempt id). Periods do not apply: the admin chose them. */
 export function purgeVpAttempts(attemptIds, req = null, now = Date.now()) {
   const ids = [...new Set((attemptIds || []).map(Number).filter((n) => Number.isInteger(n) && n > 0))].slice(0, 500);
   if (!ids.length) return { sessions: 0, events: 0, transcripts: 0 };
@@ -190,12 +320,12 @@ export function purgeVpAttempts(attemptIds, req = null, now = Date.now()) {
   return counts;
 }
 
-/* Each category runs with the policy period. vp_chats always runs, because a class
-   or exam can keep its own period even when the global one is off. */
+/* Each category runs with the policy period. Overridable categories always run,
+   because one class or exam can keep its own period while the global one is off. */
 export async function runAutomaticRetention({ now = Date.now(), policy = readPolicy() } = {}) {
   const counts = {};
   for (const c of CATEGORIES) {
-    if (c !== "vp_chats" && policy[c] === 0) continue;
+    if (!OVERRIDABLE.has(c) && policy[c] === 0) continue;
     counts[c] = await purgeCategory(c, policy[c], now);
   }
   const info = storageInfo();
@@ -259,15 +389,19 @@ export function compactDatabase() {
   return { before, after };
 }
 
-/* Per-class and per-exam periods. kind is "class" or "exam". */
+/* Per-class and per-exam periods and state. kind is "class" or "exam". */
 export function listItemPeriods(kind, limit = 500) {
-  const table = kind === "exam" ? "exams" : "classes";
-  const nameCol = kind === "exam" ? "title_fa" : "name_fa";
-  const fk = kind === "exam" ? "exam_id" : "class_id";
-  return db.prepare(`SELECT t.id, t.${nameCol} AS name_fa, ${kind === "exam" ? "t.title_en" : "t.name_en"} AS name_en,
-      ${kind === "exam" ? "NULL" : "t.code"} AS code, t.retention_days,
-      (SELECT COUNT(*) FROM vp_sessions s WHERE s.${fk}=t.id AND s.purged_ms IS NULL AND s.finished_at IS NOT NULL) AS chats
-    FROM ${table} t ORDER BY t.id DESC LIMIT ?`).all(limit);
+  if (kind === "exam") {
+    return db.prepare(`SELECT e.id, e.title_fa AS name_fa, e.title_en AS name_en, NULL AS code,
+        e.active, e.retention_days, e.study_id,
+        (SELECT COUNT(*) FROM vp_sessions s WHERE s.exam_id=e.id AND s.finished_at IS NOT NULL AND s.purged_ms IS NULL) AS chats,
+        (SELECT COUNT(*) FROM attempts a WHERE a.exam_id=e.id) AS attempts
+      FROM exams e ORDER BY e.id DESC LIMIT ?`).all(limit);
+  }
+  return db.prepare(`SELECT c.id, c.name_fa, c.name_en, c.code, c.active, c.retention_days, c.study_id,
+      (SELECT COUNT(*) FROM vp_sessions s WHERE s.class_id=c.id AND s.finished_at IS NOT NULL AND s.purged_ms IS NULL) AS chats,
+      (SELECT COUNT(*) FROM attempts a WHERE a.class_id=c.id) AS attempts
+    FROM classes c ORDER BY c.id DESC LIMIT ?`).all(limit);
 }
 
 /* Sets the period for chosen classes or exams. days: null = inherit, 0 = keep, N = days. */
@@ -281,4 +415,11 @@ export function setItemPeriods(kind, ids, days, req = null) {
   const changed = durableTransaction(() => db.prepare(`UPDATE ${table} SET retention_days=? WHERE id IN (${marks})`).run(d, ...list).changes);
   audit(req, "retention.items", `${table}:${list.length}`, { kind, days: d, count: changed });
   return { changed };
+}
+
+/* Admin deletes chosen archived classes or exams now (periods do not apply). Blocked items are reported. */
+export function deleteAcademicNow(kind, ids, req = null) {
+  const k = kind === "exam" ? "exam" : "class";
+  const list = [...new Set((ids || []).map(Number).filter((n) => Number.isInteger(n) && n > 0))].slice(0, 100);
+  return purgeAcademic(list.map((id) => ({ kind: k, id })), req);
 }

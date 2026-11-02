@@ -42,7 +42,7 @@ export default function ImageUpload({ value, onChange, label, compact = false })
           background: "var(--bg2)", overflow: "hidden", display: "grid", placeItems: "center", flexShrink: 0,
         }}>
           {value
-            ? <img src={value} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ? <img loading="lazy" decoding="async" src={value} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
             : <span style={{ opacity: .4 }}><Icon name="image" size={30} /></span>}
         </div>
         <div style={{ flex: 1, minWidth: 160 }}>

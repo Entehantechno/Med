@@ -15,6 +15,11 @@ const CAT = {
     noteFa: "متن گفت‌وگو و لاگ رویدادها پس از پایان و نمره‌دهی پاک می‌شود. نمره، ارزیابی و درسنامه می‌مانند. گفت‌وگوی باز، در بررسی، یا پژوهشی هرگز پاک نمی‌شود.",
     noteEn: "Chat text and event log go after the encounter is finished and graded. Grade, evaluation and lesson stay. Open, in-review and research chats are never removed.",
   },
+  academic_items: {
+    fa: "کلاس‌ها و آزمون‌های بایگانی‌شده (همراه نمره‌ها)", en: "Archived classes and exams (with grades)",
+    noteFa: "فقط کلاس یا آزمونی که بایگانی (غیرفعال) شده و دوره‌اش گذشته. نمره‌ها، گفت‌وگوها، فهرست اعضا و فرم‌ها با آن پاک می‌شوند و بازگشتی ندارد. کلاس با آزمون فعال یا پژوهشی هرگز پاک نمی‌شود.",
+    noteEn: "Only a class or exam that is archived (inactive) and past its period. Its grades, chats, roster and forms are deleted with it, for good. A class used by an active exam or linked to research is never deleted.",
+  },
   tutor_chats: {
     fa: "پیام‌های مربی هوشمند", en: "AI tutor messages",
     noteFa: "پیام‌های دانشجو و پاسخ مربی هوشمند.", noteEn: "Student messages and AI tutor replies.",
@@ -27,6 +32,14 @@ const CAT = {
     fa: "سنجش کارایی صفحه", en: "Page performance samples",
     noteFa: "داده‌های پایش کارایی؛ پیش‌فرض ۴۵ روز (رفتار قبلی).", noteEn: "Performance monitoring; default 45 days (previous behaviour).",
   },
+};
+
+const REASON = {
+  not_archived: ["ابتدا بایگانی کنید", "Archive it first"],
+  research_linked: ["به پژوهش متصل است", "Linked to research"],
+  used_by_active_exam: ["آزمون فعال از آن استفاده می‌کند", "An active exam uses it"],
+  grading_in_progress: ["ارزیابی در جریان است", "Grading is in progress"],
+  not_found: ["یافت نشد", "Not found"],
 };
 
 const bytes = (n, fa) => {
@@ -106,7 +119,8 @@ export default function RetentionPanel() {
         setConfirm({
           title: fa ? "فعال‌سازی حذف خودکار" : "Turn on automatic deletion",
           lines: [fa ? `برای ${names} حذف خودکار روشن می‌شود. داده‌های قدیمی‌تر از دوره انتخابی، هر روز و بدون بازگشت پاک خواهند شد.`
-            : `Automatic deletion turns on for ${names}. Data older than the chosen period is removed every day, with no way back.`],
+            : `Automatic deletion turns on for ${names}. Data older than the chosen period is removed every day, with no way back.`,
+            ...(e.data.categories.includes("academic_items") ? [fa ? "کلاس‌ها و آزمون‌های بایگانی‌شده همراه نمره‌هایشان پاک می‌شوند. اگر نمی‌خواهید نمره‌ها پاک شوند، این گزینه را روشن نکنید." : "Archived classes and exams are deleted together with their grades. Do not turn this on if grades must stay."] : [])],
           label: fa ? "روشن کن و ذخیره" : "Turn on and save",
           danger: true,
           run: () => savePolicy(true),
@@ -184,6 +198,54 @@ export default function RetentionPanel() {
         : `Period ${p === null ? "global default" : p === 0 ? "keep" : `${p} days`} is set for ${n} items.`,
         fa ? "با انتخاب «پیش‌فرض سراسری» دوره‌ی این مورد برداشته می‌شود." : "Choosing the global default removes this item's own period."],
       label: fa ? "اعمال کن" : "Apply", danger: p !== 0 && p !== null, run: () => bulkSet(kind),
+    });
+  };
+
+  const archivedPicked = (kind) => items[kind].filter((r) => !r.active && picked[kind].has(r.id));
+
+  // Deletes archived classes or exams with their grades. Counts come from the impact endpoint first.
+  const deleteItems = async (kind, ids) => {
+    setBusy(true);
+    try {
+      const r = await api.post("/admin/retention/items/delete", { kind, ids, confirm: true });
+      const kept = r.skipped?.length || 0;
+      toast(fa ? `${num(r.items)} مورد پاک شد${kept ? `؛ ${num(kept)} مورد به‌دلیل قاعده‌ها پاک نشد` : ""}.`
+        : `${r.items} deleted${kept ? `; ${kept} kept by the rules` : ""}.`);
+      setPicked((p) => ({ ...p, [kind]: new Set() }));
+      setConfirm(null);
+      await Promise.all([loadItems(kind), load()]);
+    } catch { toast(fa ? "حذف انجام نشد." : "Delete failed."); }
+    finally { setBusy(false); }
+  };
+
+  const askDeleteItems = async (kind, rows) => {
+    const ids = rows.map((r) => r.id).slice(0, 100);
+    if (!ids.length) return;
+    setBusy(true);
+    let t;
+    try {
+      const all = await Promise.all(ids.map((id) => api.get(`/admin/retention/items/impact?kind=${kind}&id=${id}`)));
+      t = all.reduce((acc, x) => {
+        if (x.blocked) { acc.blocked += 1; return acc; }
+        acc.items += 1; acc.attempts += x.attempts; acc.chats += x.chats; acc.members += x.members; acc.responses += x.responses;
+        return acc;
+      }, { items: 0, blocked: 0, attempts: 0, chats: 0, members: 0, responses: 0 });
+    } catch {
+      toast(fa ? "بررسی انجام نشد." : "Check failed.");
+      return;
+    } finally { setBusy(false); }
+    setConfirm({
+      title: fa ? "حذف دائمی کلاس یا آزمون بایگانی‌شده" : "Delete archived class or exam for good",
+      lines: [
+        fa ? `${num(t.items)} مورد با همه نمره‌ها و گفت‌وگوهایشان برای همیشه پاک می‌شود. این کار قابل برگشت نیست.`
+          : `${t.items} item(s) will be deleted for good, with all their grades and chats. This cannot be undone.`,
+        fa ? `نمره‌ها: ${num(t.attempts)} · گفت‌وگوها: ${num(t.chats)} · اعضا: ${num(t.members)} · پاسخ فرم‌ها: ${num(t.responses)}`
+          : `Grades: ${t.attempts} · chats: ${t.chats} · members: ${t.members} · form answers: ${t.responses}`,
+        ...(t.blocked ? [fa ? `${num(t.blocked)} مورد به‌دلیل پژوهش، آزمون فعال یا بایگانی‌نبودن پاک نمی‌شود.`
+          : `${t.blocked} item(s) are kept: linked to research, used by an active exam, or not archived.`] : []),
+      ],
+      label: fa ? "برای همیشه پاک کن" : "Delete for good", danger: true,
+      run: () => deleteItems(kind, ids),
     });
   };
 
@@ -284,6 +346,11 @@ export default function RetentionPanel() {
               <PeriodSelect value={bulkPeriod[kind]} presets={presets} fa={fa} inherit label={fa ? "دوره گروهی" : "Bulk period"}
                 onChange={(v) => setBulkPeriod((b) => ({ ...b, [kind]: v }))} />
               <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => askBulk(kind)}>{fa ? "اعمال روی انتخاب‌ها" : "Apply to selected"}</button>
+              {archivedPicked(kind).length > 0 && (
+                <button type="button" className="btn btn-danger btn-sm" disabled={busy} onClick={() => askDeleteItems(kind, archivedPicked(kind))}>
+                  {fa ? `حذف ${num(archivedPicked(kind).length)} بایگانی‌شده همراه نمره‌ها…` : `Delete ${archivedPicked(kind).length} archived with grades…`}
+                </button>
+              )}
             </div>
           )}
           {items[kind].length === 0 ? <p className="small muted">{fa ? "موردی نیست." : "Nothing here."}</p> : (
@@ -291,20 +358,35 @@ export default function RetentionPanel() {
               <thead><tr>
                 <th><input type="checkbox" aria-label={fa ? "انتخاب همه" : "Select all"} checked={picked[kind].size === items[kind].length && items[kind].length > 0} onChange={() => toggleAll(kind)} /></th>
                 <th>{fa ? "نام" : "Name"}</th>
+                <th>{fa ? "وضعیت" : "Status"}</th>
                 <th>{fa ? "گفت‌وگوهای پایان‌یافته" : "Finished chats"}</th>
+                <th>{fa ? "نمره‌ها" : "Grades"}</th>
                 <th>{fa ? "دوره" : "Period"}</th>
+                <th>{fa ? "حذف" : "Delete"}</th>
               </tr></thead>
               <tbody>{items[kind].map((r) => (
                 <tr key={r.id}>
                   <td><input type="checkbox" aria-label={`${fa ? "انتخاب" : "Select"} ${r.name_fa || r.name_en || r.id}`} checked={picked[kind].has(r.id)} onChange={() => togglePick(kind, r.id)} /></td>
                   <td>{fa ? r.name_fa || r.name_en : r.name_en || r.name_fa}{r.code ? <span className="tag" style={{ marginInlineStart: 6 }}>{r.code}</span> : null}</td>
+                  <td><span className={`pill ${r.active ? "pill-active" : "pill-inactive"}`}>{r.active ? (fa ? "فعال" : "Active") : (fa ? "بایگانی" : "Archived")}</span></td>
                   <td>{num(r.chats)}</td>
+                  <td>{num(r.attempts)}</td>
                   <td>
                     <PeriodSelect value={r.retention_days} presets={presets} fa={fa} inherit label={`${fa ? "دوره" : "Period"} ${r.name_fa || r.name_en || r.id}`}
                       onChange={async (v) => {
                         try { await api.put("/admin/retention/items", { kind, ids: [r.id], days: v }); await loadItems(kind); }
                         catch { toast(fa ? "ذخیره نشد." : "Not saved."); }
                       }} />
+                  </td>
+                  <td>
+                    {!r.active && !r.study_id ? (
+                      <button type="button" className="btn btn-danger btn-sm" disabled={busy} onClick={() => askDeleteItems(kind, [r])}>
+                        {fa ? "حذف همراه نمره‌ها…" : "Delete with grades…"}
+                      </button>
+                    ) : (
+                      <span className="small muted">{r.study_id ? (fa ? REASON.research_linked[0] : REASON.research_linked[1])
+                        : (fa ? REASON.not_archived[0] : REASON.not_archived[1])}</span>
+                    )}
                   </td>
                 </tr>
               ))}</tbody>

@@ -126,7 +126,7 @@ export default function Placement({ onProfile, onBack }) {
         <div className="small muted center">🧭 {t("placementTitle")} · <span className="tag small">{aCard.topicName}</span>
           {" · "}<span className={`tag small diff-${aCard.difficulty}`} title={t("placementAdaptiveHint")}>{diffLabel}</span></div>
         <div className="lesson-q">{aCard.q}</div>
-        {aCard.image && <img src={aCard.image} alt="" className="ddle-img" style={{ maxHeight: 200, margin: "0 auto 16px", display: "block" }} />}
+        {aCard.image && <img loading="lazy" decoding="async" src={aCard.image} alt="" className="ddle-img" style={{ maxHeight: 200, margin: "0 auto 16px", display: "block" }} />}
         <Type card={aCard} checked={checked} sel={sel} setSel={setSel} isCorrect={wasCorrect} />
         {checked && (
           <div className={`lesson-fb ${wasCorrect ? "ok" : "bad"}`}>
@@ -170,7 +170,7 @@ export default function Placement({ onProfile, onBack }) {
       </div>
       <div className="small muted center">🧭 {t("placementTitle")} · <span className="tag small">{card.topicName}</span></div>
       <div className="lesson-q">{card.q}</div>
-      {card.image && <img src={card.image} alt="" className="ddle-img" style={{ maxHeight: 200, margin: "0 auto 16px", display: "block" }} />}
+      {card.image && <img loading="lazy" decoding="async" src={card.image} alt="" className="ddle-img" style={{ maxHeight: 200, margin: "0 auto 16px", display: "block" }} />}
       <Type card={card} checked={checked} sel={sel} setSel={setSel} isCorrect={wasCorrect} />
       {checked && (
         <div className={`lesson-fb ${wasCorrect ? "ok" : "bad"}`}>

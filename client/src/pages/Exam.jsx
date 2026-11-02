@@ -837,7 +837,7 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
                 ) : m.role === "lab" ? (
                   <div key={i} className="msg msg-lab" style={{ alignSelf: "center", background: "var(--panel2, #eef3f9)", border: "1px dashed var(--border)", borderRadius: 12, maxWidth: "92%", textAlign: "start" }}>
                     <div>{m.text}</div>
-                    {m.imageUrl && <a href={m.imageUrl} target="_blank" rel="noreferrer"><img src={m.imageUrl} alt="" style={{ width: "100%", borderRadius: 8, marginTop: 8, border: "1px solid var(--border)" }} /></a>}
+                    {m.imageUrl && <a href={m.imageUrl} target="_blank" rel="noreferrer"><img loading="lazy" decoding="async" src={m.imageUrl} alt="" style={{ width: "100%", borderRadius: 8, marginTop: 8, border: "1px solid var(--border)" }} /></a>}
                   </div>
                 ) : (
                   <div key={i} className={`msg msg-${m.role === "student" ? "student" : (m.role === "teacher" || m.mode === "exam" ? "teacher" : "patient")}`}>

@@ -8,7 +8,7 @@ import { execSync } from "child_process";
 import request from "supertest";
 import { initDb, db } from "../src/db.js";
 import { createApp } from "../src/app.js";
-import { readPolicy, savePolicy, previewPurge, runAutomaticRetention, purgeCategory, compactDatabase, storageInfo } from "../src/lib/retention.js";
+import { readPolicy, savePolicy, previewPurge, runAutomaticRetention, purgeCategory, compactDatabase, storageInfo, blockReason } from "../src/lib/retention.js";
 
 let app, admin, teacher, learner, caseId;
 const login = (u, p = "demo") => request(app).post("/api/auth/login").send({ username: u, password: p });
@@ -49,7 +49,7 @@ beforeAll(async () => {
 describe("defaults and policy", () => {
   it("keeps every chat and log until an admin sets a period (rum keeps its 45 days)", () => {
     const p = readPolicy();
-    expect(p).toEqual({ vp_chats: 0, tutor_chats: 0, security_events: 0, rum_vitals: 45 });
+    expect(p).toEqual({ vp_chats: 0, academic_items: 0, tutor_chats: 0, security_events: 0, rum_vitals: 45 });
   });
 
   it("refuses to enable a category without confirmation (409), and accepts it with confirmation", async () => {
@@ -209,5 +209,115 @@ describe("class and exam periods in bulk", () => {
     expect(bad.status).toBe(400);
     const denied = await request(app).get("/api/admin/retention").set(A((await login("teacher")).body.token));
     expect([401, 403]).toContain(denied.status);
+  });
+});
+
+/* Archived classes and exams: deleted only when archived, old enough, not research-linked,
+   not used by an active exam, not mid-grading. Deleting removes their grades too. */
+describe("archived classes and exams", () => {
+  const archivedClass = ({ days = 400, retention = null, studyId = null, active = 0, tag = "x" } = {}) => {
+    const id = db.prepare(`INSERT INTO classes(name_en,name_fa,code,owner_id,university_id,max_attempts,log_transcript,active,study_id,retention_days,created_at)
+      VALUES (?,?,?,?,?,100,1,?,?,?,datetime('now', ?))`)
+      .run(`Arc ${tag}`, `arc ${tag}`, `arc-${tag}-${Math.random().toString(36).slice(2, 8)}`, teacher.id, teacher.university_id, active, studyId, retention, `-${days} days`).lastInsertRowid;
+    db.prepare("INSERT INTO class_members(class_id,user_id) VALUES (?,?)").run(id, learner.id);
+    const att = db.prepare(`INSERT INTO attempts (user_id,type,case_id,class_id,score,transcript_json,eval_json,created_at)
+      VALUES (?, 'vp', ?, ?, 91, ?, '{"ok":true}', datetime('now', ?))`).run(learner.id, caseId, id, `{"m":"${MARK}"}`, `-${days} days`).lastInsertRowid;
+    const sid = db.prepare(`INSERT INTO vp_sessions (user_id,case_id,class_id,logging_enabled,started_at,started_ms,finished_at,attempt_id,progress_json)
+      VALUES (?,?,?,1,datetime('now', ?),0,datetime('now', ?),?,?)`).run(learner.id, caseId, id, `-${days + 1} days`, `-${days} days`, att, `{"m":"${MARK}"}`).lastInsertRowid;
+    db.prepare("INSERT INTO vp_session_events (session_id,seq,at_ms,kind,payload_json) VALUES (?,1,1,'student_msg',?)").run(sid, `{"text":"${MARK}"}`);
+    const form = db.prepare("INSERT INTO questionnaire_forms (class_id, created_by) VALUES (?, ?)").run(id, teacher.id).lastInsertRowid;
+    db.prepare("INSERT INTO questionnaire_responses (form_id, user_id, answers_json) VALUES (?,?,?)").run(form, learner.id, `{"a":"${MARK}"}`);
+    return { id, att, sid, form };
+  };
+  const exists = (table, id) => !!db.prepare(`SELECT 1 FROM ${table} WHERE id=?`).get(id);
+
+  it("an archived class with no period of its own is kept while the global period is off", async () => {
+    const c = archivedClass({ tag: "keep" });
+    await runAutomaticRetention();
+    expect(exists("classes", c.id)).toBe(true);
+  });
+
+  it("an explicit keep (0) on the class beats an enabled global period", async () => {
+    const kept = archivedClass({ tag: "pin", retention: 0 });
+    const inherits = archivedClass({ tag: "inh" });
+    await request(app).put("/api/admin/retention").set(A(admin.token)).send({ policy: { academic_items: 365 }, confirm: true });
+    await runAutomaticRetention();
+    expect(exists("classes", kept.id)).toBe(true);
+    expect(exists("classes", inherits.id)).toBe(false);
+    await request(app).put("/api/admin/retention").set(A(admin.token)).send({ policy: { academic_items: 0 } });
+  });
+
+  it("an archived class with its own period is deleted with its grades, chats, roster and forms; other grades stay", async () => {
+    const other = db.prepare(`INSERT INTO attempts (user_id,type,case_id,score,transcript_json,created_at) VALUES (?, 'vp', ?, 40, NULL, datetime('now','-400 days'))`).run(learner.id, caseId).lastInsertRowid;
+    const c = archivedClass({ tag: "gone", retention: 365 });
+    const out = await runAutomaticRetention();
+    expect(out.academic_items.items).toBeGreaterThanOrEqual(1);
+    expect(exists("classes", c.id)).toBe(false);
+    expect(exists("attempts", c.att)).toBe(false);
+    expect(exists("vp_sessions", c.sid)).toBe(false);
+    expect(exists("questionnaire_forms", c.form)).toBe(false);
+    expect(db.prepare("SELECT COUNT(*) n FROM class_members WHERE class_id=?").get(c.id).n).toBe(0);
+    expect(db.prepare("SELECT COUNT(*) n FROM questionnaire_responses WHERE form_id=?").get(c.form).n).toBe(0);
+    expect(exists("attempts", other)).toBe(true);
+  });
+
+  it("an active class is never deleted, even with a period", async () => {
+    const c = archivedClass({ tag: "live", retention: 30, active: 1 });
+    await runAutomaticRetention();
+    expect(exists("classes", c.id)).toBe(true);
+  });
+
+  it("research-linked and active-exam classes are blocked, and the admin sees why", async () => {
+    const research = archivedClass({ tag: "study", retention: 30, studyId: 4242 });
+    const used = archivedClass({ tag: "used", retention: 30 });
+    const exam = db.prepare("INSERT INTO exams (title_en, active, owner_id, university_id, created_at) VALUES ('Live exam', 1, ?, ?, datetime('now'))").run(teacher.id, teacher.university_id).lastInsertRowid;
+    db.prepare(`INSERT INTO attempts (user_id,type,case_id,class_id,exam_id,score,created_at) VALUES (?, 'vp', ?, ?, ?, 10, datetime('now','-400 days'))`).run(learner.id, caseId, used.id, exam);
+    expect(blockReason("class", research.id)).toBe("research_linked");
+    expect(blockReason("class", used.id)).toBe("used_by_active_exam");
+    await runAutomaticRetention();
+    expect(exists("classes", research.id)).toBe(true);
+    expect(exists("classes", used.id)).toBe(true);
+    const tk = admin.token;
+    const del = await request(app).post("/api/admin/retention/items/delete").set(A(tk)).send({ kind: "class", ids: [research.id, used.id], confirm: true });
+    expect(del.status).toBe(200);
+    expect(del.body.items).toBe(0);
+    expect(del.body.skipped.map((x) => x.reason).sort()).toEqual(["research_linked", "used_by_active_exam"]);
+  });
+
+  it("an archived exam with a period is deleted with its attempts and participants", async () => {
+    const ex = db.prepare("INSERT INTO exams (title_en, active, ends_at, owner_id, university_id, retention_days, created_at) VALUES ('Old exam', 0, datetime('now','-400 days'), ?, ?, 365, datetime('now','-400 days'))").run(teacher.id, teacher.university_id).lastInsertRowid;
+    db.prepare("INSERT INTO exam_participants (exam_id, user_id) VALUES (?, ?)").run(ex, learner.id);
+    const at = db.prepare(`INSERT INTO attempts (user_id,type,case_id,exam_id,score,transcript_json,created_at) VALUES (?, 'exam', ?, ?, 62, '{"answers":[1]}', datetime('now','-400 days'))`).run(learner.id, caseId, ex).lastInsertRowid;
+    await runAutomaticRetention();
+    expect(exists("exams", ex)).toBe(false);
+    expect(exists("attempts", at)).toBe(false);
+    expect(db.prepare("SELECT COUNT(*) n FROM exam_participants WHERE exam_id=?").get(ex).n).toBe(0);
+  });
+
+  it("the impact preview counts exactly what the delete removes, and deletion needs confirmation", async () => {
+    const c = archivedClass({ tag: "impact" });
+    const tk = admin.token;
+    const imp = await request(app).get(`/api/admin/retention/items/impact?kind=class&id=${c.id}`).set(A(tk));
+    expect(imp.status).toBe(200);
+    expect(imp.body.blocked).toBeNull();
+    expect(imp.body.attempts).toBe(1);
+    expect(imp.body.chats).toBe(1);
+    expect(imp.body.members).toBe(1);
+    expect(imp.body.responses).toBe(1);
+    expect((await request(app).post("/api/admin/retention/items/delete").set(A(tk)).send({ kind: "class", ids: [c.id] })).status).toBe(409);
+    const done = await request(app).post("/api/admin/retention/items/delete").set(A(tk)).send({ kind: "class", ids: [c.id], confirm: true });
+    expect(done.body.items).toBe(1);
+    expect(done.body.attempts).toBe(imp.body.attempts);
+    expect(done.body.chats).toBe(imp.body.chats);
+    expect(exists("classes", c.id)).toBe(false);
+  });
+
+  it("admin only; the audit row holds counts and no chat text", async () => {
+    const teacherTk = (await login("teacher")).body.token;
+    const denied = await request(app).post("/api/admin/retention/items/delete").set(A(teacherTk)).send({ kind: "class", ids: [1], confirm: true });
+    expect([401, 403]).toContain(denied.status);
+    const rows = db.prepare("SELECT detail FROM audit_log WHERE action='academic.purge'").all();
+    expect(rows.length).toBeGreaterThan(0);
+    for (const r of rows) expect(String(r.detail)).not.toContain(MARK);
   });
 });

@@ -153,7 +153,7 @@ export default function Practice({ onProfile, onBack }) {
         {idx + 1} {t("of")} {cards.length} · <span className="tag small"><Glyph value={src.emoji} /> {lang === "fa" ? src.fa : src.en}</span>
       </div>
       <div className="lesson-q">{card.q}</div>
-      {card.image && <img src={card.image} alt="" className="ddle-img" style={{ maxHeight: 200, margin: "0 auto 16px", display: "block" }} />}
+      {card.image && <img loading="lazy" decoding="async" src={card.image} alt="" className="ddle-img" style={{ maxHeight: 200, margin: "0 auto 16px", display: "block" }} />}
       <Type card={card} checked={checked} sel={sel} setSel={setSel} isCorrect={wasCorrect} />
       {checked && (
         <>

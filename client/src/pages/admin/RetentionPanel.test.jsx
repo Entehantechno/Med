@@ -23,11 +23,11 @@ vi.mock('../../components/UI.jsx', () => ({
 import RetentionPanel from './RetentionPanel.jsx';
 
 const BASE = {
-  policy: { vp_chats: 0, tutor_chats: 0, security_events: 0, rum_vitals: 45 },
+  policy: { vp_chats: 0, academic_items: 0, tutor_chats: 0, security_events: 0, rum_vitals: 45 },
   due: {
-    vp_chats: { sessions: 3, events: 40 }, tutor_chats: { rows: 0 }, security_events: { rows: 0 }, rum_vitals: { rows: 2 },
+    vp_chats: { sessions: 3, events: 40 }, academic_items: { rows: 0 }, tutor_chats: { rows: 0 }, security_events: { rows: 0 }, rum_vitals: { rows: 2 },
   },
-  categories: ['vp_chats', 'tutor_chats', 'security_events', 'rum_vitals'],
+  categories: ['vp_chats', 'academic_items', 'tutor_chats', 'security_events', 'rum_vitals'],
   presets: [0, 90, 180, 365, 730],
   minDays: 30,
   maxDays: 3650,
@@ -35,15 +35,19 @@ const BASE = {
   storage: { fileBytes: 2097152, freeBytes: 524288, autoVacuum: 'none', pageSize: 4096, pageCount: 512, freePages: 128 },
 };
 const CLASSES = [
-  { id: 7, name_en: 'Clinical A', name_fa: 'بالینی الف', code: 'CA1', retention_days: null, chats: 12 },
-  { id: 8, name_en: 'Clinical B', name_fa: 'بالینی ب', code: 'CB2', retention_days: 180, chats: 4 },
+  { id: 7, name_en: 'Clinical A', name_fa: 'بالینی الف', code: 'CA1', retention_days: null, chats: 12, active: 1, attempts: 30, study_id: null },
+  { id: 8, name_en: 'Clinical B', name_fa: 'بالینی ب', code: 'CB2', retention_days: 180, chats: 4, active: 1, attempts: 9, study_id: null },
+  { id: 9, name_en: 'Old Module', name_fa: 'واحد قدیمی', code: 'OM0', retention_days: null, chats: 2, active: 0, attempts: 5, study_id: null },
 ];
+const IMPACT = { 9: { kind: 'class', id: 9, blocked: null, attempts: 5, chats: 2, members: 3, responses: 1 } };
 
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.get.mockImplementation((path) => {
     if (path === '/admin/retention/items?kind=class') return Promise.resolve({ kind: 'class', rows: CLASSES });
     if (path === '/admin/retention/items?kind=exam') return Promise.resolve({ kind: 'exam', rows: [] });
+    const m = /items\/impact\?kind=(\w+)&id=(\d+)/.exec(path);
+    if (m) return Promise.resolve(IMPACT[m[2]] || { kind: m[1], id: Number(m[2]), blocked: 'not_archived', attempts: 0, chats: 0, members: 0, responses: 0 });
     return Promise.resolve(BASE);
   });
   mocks.put.mockResolvedValue({ policy: BASE.policy });
@@ -98,10 +102,55 @@ describe('RetentionPanel', () => {
     render(<RetentionPanel />);
     await screen.findByText('Clinical A');
     fireEvent.click(screen.getByRole('checkbox', { name: 'Select all' }));
-    expect(screen.getByText('2 selected')).toBeTruthy();
+    expect(screen.getByText('3 selected')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Apply to selected' }));
     const dialog = await screen.findByRole('dialog', { name: 'Set retention period' });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Apply' }));
-    await waitFor(() => expect(mocks.put).toHaveBeenCalledWith('/admin/retention/items', expect.objectContaining({ kind: 'class', ids: [7, 8] })));
+    await waitFor(() => expect(mocks.put).toHaveBeenCalledWith('/admin/retention/items', expect.objectContaining({ kind: 'class', ids: [7, 8, 9] })));
+  });
+
+  it('shows status and grades, and offers the delete only for archived classes', async () => {
+    render(<RetentionPanel />);
+    await screen.findByText('Old Module');
+    expect(screen.getByText('Archived')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: 'Delete with grades…' })).toHaveLength(1);
+    expect(screen.getAllByText('Archive it first')).toHaveLength(2);
+  });
+
+  it('shows the impact counts before deleting an archived class, and needs confirmation', async () => {
+    render(<RetentionPanel />);
+    await screen.findByText('Old Module');
+    fireEvent.click(screen.getByRole('button', { name: 'Delete with grades…' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Delete archived class or exam for good' });
+    expect(within(dialog).getByText(/Grades: 5 · chats: 2 · members: 3 · form answers: 1/)).toBeTruthy();
+    expect(within(dialog).getByText(/cannot be undone/)).toBeTruthy();
+    expect(mocks.post).not.toHaveBeenCalledWith('/admin/retention/items/delete', expect.anything());
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Delete for good' }));
+    await waitFor(() => expect(mocks.post).toHaveBeenCalledWith('/admin/retention/items/delete', { kind: 'class', ids: [9], confirm: true }));
+  });
+
+  it('tells the admin when a selected item is kept by the rules, and does not count it', async () => {
+    IMPACT[9] = { ...IMPACT[9], blocked: 'used_by_active_exam' };
+    try {
+      render(<RetentionPanel />);
+      await screen.findByText('Old Module');
+      fireEvent.click(screen.getByRole('button', { name: 'Delete with grades…' }));
+      const dialog = await screen.findByRole('dialog', { name: 'Delete archived class or exam for good' });
+      expect(within(dialog).getByText(/1 item\(s\) are kept/)).toBeTruthy();
+      expect(within(dialog).getByText(/^0 item\(s\) will be deleted/)).toBeTruthy();
+    } finally {
+      IMPACT[9] = { kind: 'class', id: 9, blocked: null, attempts: 5, chats: 2, members: 3, responses: 1 };
+    }
+  });
+
+  it('bulk delete sends only the selected archived items', async () => {
+    mocks.post.mockResolvedValue({ items: 1, attempts: 5, chats: 2, members: 3, responses: 1, skipped: [] });
+    render(<RetentionPanel />);
+    await screen.findByText('Old Module');
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select all' }));
+    fireEvent.click(screen.getByRole('button', { name: /Delete 1 archived with grades/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'Delete archived class or exam for good' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Delete for good' }));
+    await waitFor(() => expect(mocks.post).toHaveBeenCalledWith('/admin/retention/items/delete', { kind: 'class', ids: [9], confirm: true }));
   });
 });

@@ -139,7 +139,7 @@ export default function Review({ onProfile, go }) {
       <div className="lesson-wrap">
         <div className="pbar mb16"><span style={{ width: `${Math.round((idx / cards.length) * 100)}%` }} /></div>
         <div className="lesson-q">{card.q}</div>
-        {card.image && <img src={card.image} alt="" style={{ maxHeight: 180, display: "block", margin: "0 auto 14px", borderRadius: 12 }} />}
+        {card.image && <img loading="lazy" decoding="async" src={card.image} alt="" style={{ maxHeight: 180, display: "block", margin: "0 auto 14px", borderRadius: 12 }} />}
 
         {/* show the card content; in review we reveal the answer + micro */}
         <Type card={card} checked={revealed} sel={reviewAnswer(card)} setSel={() => {}} />

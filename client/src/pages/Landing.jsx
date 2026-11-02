@@ -345,7 +345,7 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
 
 /* ---- Testimonial avatar: uploaded photo, else colored initials ---- */
 function Avatar({ name, photo }) {
-  if (photo) return <img className="lp-avatar" src={photo} alt={name || ""} />;
+  if (photo) return <img loading="lazy" decoding="async" className="lp-avatar" src={photo} alt={name || ""} />;
   const initials = (name || "?")
     .trim().split(/\s+/).slice(0, 2).map((w) => w[0] || "").join("").toUpperCase() || "?";
   // deterministic color from the name so each person keeps a stable hue

@@ -562,7 +562,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
         {/* Optional image in the question */}
         {c.imageUrl && !cIsHotspot && (
           <div className="ddle-img zoomable-img" title={lang === "fa" ? "برای بزرگ‌نمایی کلیک کنید" : "Click to zoom"} onClick={() => setZoomSrc(c.imageUrl)}>
-            <img src={c.imageUrl} alt="" />
+            <img loading="lazy" decoding="async" src={c.imageUrl} alt="" />
             <span className="zoom-badge"><Icon name="search" size={14} /> {lang === "fa" ? "بزرگ‌نمایی" : "Zoom"}</span>
           </div>
         )}
@@ -574,7 +574,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
           return (
             <div className="ddle-question ddle-hint" key={i}>
               <span className="ddle-hint-label">{t("hint")} {i + 1}:</span> {cHintText(h)}
-              {img && <div className="hint-img zoomable-img" onClick={() => setZoomSrc(img)}><img src={img} alt="" /><span className="zoom-badge"><Icon name="search" size={14} /></span></div>}
+              {img && <div className="hint-img zoomable-img" onClick={() => setZoomSrc(img)}><img loading="lazy" decoding="async" src={img} alt="" /><span className="zoom-badge"><Icon name="search" size={14} /></span></div>}
             </div>
           );
         })}
@@ -619,7 +619,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
                   <button type="button" key={i} className={cls} disabled={!isCur || dn || isTried} aria-pressed={st.picked === i} onClick={() => pick(i)}>
                     <span className="mc-letter">{letters[i]}</span>
                     <span className="mc-opt-body">
-                      {opt.imageUrl && <img className="mc-opt-img" src={opt.imageUrl} alt="" />}
+                      {opt.imageUrl && <img loading="lazy" decoding="async" className="mc-opt-img" src={opt.imageUrl} alt="" />}
                       <span>{lang === "fa" ? opt.fa : opt.en}</span>
                     </span>
                   </button>
@@ -734,7 +734,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
       {zoomSrc && (
         <div className="img-zoom-back" onClick={() => setZoomSrc(null)}>
           <button type="button" className="img-zoom-close" onClick={() => setZoomSrc(null)}>×</button>
-          <img src={zoomSrc} alt="" onClick={(e) => e.stopPropagation()} />
+          <img loading="lazy" decoding="async" src={zoomSrc} alt="" onClick={(e) => e.stopPropagation()} />
         </div>
       )}
       </>

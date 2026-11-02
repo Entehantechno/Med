@@ -373,7 +373,7 @@ function DrawingQuestion({ card, lang, checked, setChecked, onGraded, hints, sho
   return <div className="drawing-q pro-drawing">
     <div className="ddle-question ddle-hint"><b>{fa ? "تکلیف نقاشی:" : "Drawing task:"}</b> {prompt}</div>
     <LocalHints hints={hints} showHints={showHints && !checked} fa={fa} />
-    {drawing.referenceImageUrl && !drawing.traceReference && <div className="drawing-ref"><img src={drawing.referenceImageUrl} alt="" /></div>}
+    {drawing.referenceImageUrl && !drawing.traceReference && <div className="drawing-ref"><img loading="lazy" decoding="async" src={drawing.referenceImageUrl} alt="" /></div>}
     <div className="drawing-toolbar">
       {tools.map(([id, lab]) => <button key={id} type="button" className={`chip-btn ${brush.tool === id ? "on" : ""}`} onClick={() => setBrush((b) => ({ ...b, tool: id }))} disabled={checked}>{lab}</button>)}
       {["#111827", "#2563eb", "#dc2626", "#16a34a", "#f59e0b", "#ffffff"].map((c) => <button key={c} type="button" aria-label={c} className={`draw-color ${brush.color === c ? "on" : ""}`} style={{ background: c }} onClick={() => setBrush((b) => ({ ...b, color: c, tool: b.tool === "eraser" ? "pen" : b.tool }))} disabled={checked} />)}
@@ -426,7 +426,7 @@ function StepwiseQuestion({ card, lang, showCorrect, checked, setChecked, onGrad
     finally { setBusy(false); }
   };
   return <div className="stepwise-q">
-    {mediaUrl && <div className="stepwise-media" style={{ marginBottom: 14, borderRadius: 12, overflow: "hidden", border: "1px solid var(--border)" }}><img src={mediaUrl} alt="" style={{ width: "100%", display: "block", maxHeight: 320, objectFit: "contain", background: "#fff" }} /></div>}
+    {mediaUrl && <div className="stepwise-media" style={{ marginBottom: 14, borderRadius: 12, overflow: "hidden", border: "1px solid var(--border)" }}><img loading="lazy" decoding="async" src={mediaUrl} alt="" style={{ width: "100%", display: "block", maxHeight: 320, objectFit: "contain", background: "#fff" }} /></div>}
     <LocalHints hints={hints} showHints={showHints && !checked} fa={fa} />
     {steps.length === 0 ? <div className="ddle-banner bad">{fa ? "برای این سؤال مرحله‌ای هنوز مرحله‌ای ثبت نشده است." : "No steps are configured for this stepwise question."}</div> : steps.map((s, i) => {
       const res = stepResults?.[i];
@@ -562,7 +562,7 @@ function PuzzleQuestion({ card, lang, showCorrect, checked, setChecked, onGraded
     <div className="small muted">{fa ? "یک شماره را انتخاب کنید، بعد برچسب درست را از فهرست بزنید." : "Select a numbered pin, then tap the matching label."}</div>
     {img ? (
       <div className="label-puzzle-img">
-        <img src={img} alt="" />
+        <img loading="lazy" decoding="async" src={img} alt="" />
         {pins.map((p, i) => {
           let cls = "label-pin";
           if (activePin === i && !checked) cls += " on";

@@ -38,6 +38,7 @@ import { recordPassword, revealPassword } from "../lib/password-vault.js";
 import {
   CATEGORIES, MIN_DAYS, MAX_DAYS, PRESET_DAYS, readPolicy, savePolicy, previewPurge, purgeCategory,
   purgeVpAttempts, storageInfo, compactDatabase, listItemPeriods, setItemPeriods, cleanDays, lastRunMs,
+  academicImpact, blockReason, deleteAcademicNow,
 } from "../lib/retention.js";
 import { cardFacets, buildFacetIndex, matchFacets, sortCards } from "../lib/cardfacets.js";
 import { recordCardChange, recordImport, listRevisions, revisionSummary } from "../lib/cardhistory.js";
@@ -1099,6 +1100,24 @@ r.put("/retention/items", ...admin, (req, res) => {
   const out = setItemPeriods(kind, req.body?.ids, req.body?.days, req);
   if (out.error) return retentionFail(res, out.error);
   res.json(out);
+});
+/* What deleting one archived class or exam would remove (counts only). */
+r.get("/retention/items/impact", ...admin, (req, res) => {
+  const kind = req.query.kind === "exam" ? "exam" : "class";
+  const id = Number(req.query.id);
+  if (!Number.isInteger(id) || id <= 0) return retentionFail(res, "bad_retention_request");
+  res.json({ kind, id, blocked: blockReason(kind, id) || null, ...academicImpact(kind, id) });
+});
+/* Deletes chosen ARCHIVED classes or exams, with their grades. Blocked items are reported, not deleted. */
+r.post("/retention/items/delete", ...admin, (req, res) => {
+  const ids = Array.isArray(req.body?.ids) ? req.body.ids : [];
+  if (!ids.length) return retentionFail(res, "bad_retention_request");
+  if (req.body?.confirm !== true) return retentionFail(res, "confirmation_required");
+  try {
+    res.json({ ok: true, ...deleteAcademicNow(req.body?.kind === "exam" ? "exam" : "class", ids, req) });
+  } catch (e) {
+    res.status(500).json({ error: "delete_failed", message: String(e.message || e).slice(0, 200) });
+  }
 });
 r.post("/retention/compact", ...admin, (req, res) => {
   try {
