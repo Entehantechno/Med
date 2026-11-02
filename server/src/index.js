@@ -6,7 +6,7 @@ import "./load-env.js";
 import { initDb, reloadDb, initSchema, db, persistNow, snapshotDb } from "./db.js";
 import { createApp } from "./app.js";
 import { runStreakReminders } from "./lib/notify.js";
-import { execFile } from "child_process";
+import { execFile, fork } from "child_process";
 import path from "path";
 import { fileURLToPath } from "url";
 // Safety net: Express 4 does not catch async errors. Log them instead of exiting,
@@ -78,7 +78,34 @@ server.on("error", (err) => {
   }
   setTimeout(() => process.exit(1), 500);
 });
-server.listen(PORT, () => console.log(`🎓 MED School listening on http://localhost:${PORT} (preparing…)`));
+// WEB_CONCURRENCY > 1 runs extra HTTP worker processes that share the port (SO_REUSEPORT).
+// Default 1 = the single-process server it has always been.
+const WORKERS = Math.max(1, Math.min(8, Number(process.env.WEB_CONCURRENCY) || 1));
+const CLUSTERED = WORKERS > 1;
+server.listen(CLUSTERED ? { port: PORT, reusePort: true } : PORT, () => console.log(`🎓 MED School listening on http://localhost:${PORT} (preparing…)`));
+
+/* Starts the extra workers (primary only, after the database is ready). A worker that
+   exits is replaced with a short backoff. Workers stop when this process stops. */
+function startWorkers(count) {
+  const workerFile = path.join(__dirname, "worker.js");
+  const children = new Set();
+  let stopping = false;
+  const spawnOne = (attempt = 0) => {
+    const child = fork(workerFile, [], { env: { ...process.env, MED_ROLE: "worker" }, stdio: "inherit" });
+    children.add(child);
+    child.on("exit", (code) => {
+      children.delete(child);
+      if (stopping) return;
+      const wait = Math.min(30_000, 1000 * 2 ** Math.min(attempt, 5));
+      console.error(`[cluster] worker ${child.pid} exited (code ${code}); restarting in ${wait} ms`);
+      setTimeout(() => spawnOne(attempt + 1), wait).unref();
+    });
+  };
+  for (let i = 0; i < count; i++) spawnOne();
+  const stop = () => { stopping = true; for (const c of children) c.kill("SIGTERM"); };
+  process.once("exit", stop);
+  console.log(`🧩 cluster: ${count + 1} processes share port ${PORT} (WEB_CONCURRENCY=${WORKERS})`);
+}
 
 async function main() {
   bootState.phase = "database";
@@ -229,9 +256,13 @@ async function main() {
     try { const m = await import("./routes/learn.js"); m.prewarmLearnCaches?.(); } catch { /* best-effort */ }
   }, 50);
   console.log(`🎓 MED School API ready on http://localhost:${PORT} (boot ${((Date.now() - bootState.startedAt) / 1000).toFixed(1)} s)`);
+  if (CLUSTERED) startWorkers(WORKERS - 1);
 
   // Streak-reminder scheduler: check hourly for learners who risk losing a streak.
   const tick = async () => {
+    // Hourly jobs (streak reminders, admin digests, bug-hunt scan) run in one process only.
+    const { tryLease } = await import("./lib/leases.js");
+    if (!tryLease("hourly-tick", 50 * 60 * 1000)) return;
     try { const n = await runStreakReminders(); if (n) console.log(`🔔 sent ${n} streak reminders`); } catch (e) { /* */ }
     // Admin analytics scheduler: daily health-alert notifications + weekly digest
     // (self-gated by per-day/per-week de-dup tags, so it's safe to call hourly).

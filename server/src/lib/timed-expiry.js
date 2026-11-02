@@ -5,6 +5,7 @@
    case limit. The same handlers as the HTTP routes are called, so the business logic
    is not copied. Failures are counted (expiry_attempts) and retried up to MAX_TRIES,
    never silently dropped. */
+import { tryLease } from "./leases.js";
 import { db } from "../db.js";
 import exam, { evaluateRoute } from "../routes/exam.js";
 import classes from "../routes/classes.js";
@@ -154,7 +155,11 @@ export function startTimedExpiry(intervalMs = 30_000) {
   const timer = setInterval(async () => {
     if (running) return;
     running = true;
-    try { await runTimedExpiry(); }
+    try {
+      // One process settles expired sessions at a time (lease ttl < interval, so a crashed holder is replaced).
+      if (!tryLease("timed-expiry", intervalMs - 5_000)) return;
+      await runTimedExpiry();
+    }
     catch (e) { console.error("timed-expiry:", e?.message || e); }
     finally { running = false; }
   }, intervalMs);

@@ -25,6 +25,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { migrateUsersRoleCheck } from "./lib/users-role-migrate.js";
 import { regroupDefaultItems } from "./lib/checklist-facets.js";
+import { tryLease } from "./lib/leases.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Persistent data (DB + uploads + backups) lives OUTSIDE the code in DATA_DIR
@@ -49,6 +50,13 @@ let schemaReady = false;   // initSchema() is expensive; run it once per open co
 
 export class DbUnreadableError extends Error {
   constructor(message) { super(message); this.name = "DbUnreadableError"; }
+}
+
+/* Several worker processes share this database: only the one holding the lease
+   writes the scheduled snapshot (a backup per process would duplicate work). */
+function autoBackupLeased() {
+  if (!tryLease("auto-backup", 5 * 60 * 60 * 1000)) return;
+  autoBackup();
 }
 
 /* Connection settings. WAL gives readers that do not block the writer and a
@@ -370,9 +378,18 @@ function cleanupLegacyTempFiles() {
   } catch { /* best-effort */ }
 }
 
-export async function initDb() {
+export async function initDb(opts = {}) {
   if (rawDb) return;
   ensureDataDirs();
+  if (opts.worker) {
+    // Worker process (WEB_CONCURRENCY > 1): the primary already validated, migrated,
+    // snapshotted and seeded this file. A worker only opens its own connection, so
+    // schema, seed and backup work runs exactly once per host.
+    rawDb = new Database(DB_PATH, { timeout: BUSY_TIMEOUT_MS });
+    try { configureConnection(rawDb); } catch (e) { closeDatabase(); throw e; }
+    schemaReady = true;
+    return;
+  }
   cleanupLegacyTempFiles();
   loadImageWithFallback(DB_PATH);       // validates; may restore; throws if unsafe
   // Snapshot BEFORE the file is switched to WAL, so a failed upgrade leaves the
@@ -386,11 +403,11 @@ export async function initDb() {
     throw new Error(`upgrade_snapshot_failed: ${e?.message || e}. Startup stopped; the database was not migrated.`);
   }
   try { configureConnection(rawDb); } catch (e) { closeDatabase(); throw e; }
-  try { autoBackup(); } catch { /* best-effort, never block startup */ }
+  try { autoBackupLeased(); } catch { /* best-effort, never block startup */ }
   // A long-running process must also keep taking snapshots. autoBackup() itself
   // keeps the 24 h cadence, so checking every 6 h is cheap.
   if (!backupTimer) {
-    backupTimer = setInterval(() => { try { autoBackup(); } catch { /* */ } }, 6 * 60 * 60 * 1000);
+    backupTimer = setInterval(() => { try { autoBackupLeased(); } catch { /* */ } }, 6 * 60 * 60 * 1000);
     if (backupTimer.unref) backupTimer.unref();
   }
   for (const fn of readyHooks.splice(0)) {
@@ -2369,6 +2386,17 @@ export function initSchema() {
     CREATE TRIGGER IF NOT EXISTS trg_topics_ver_ins AFTER INSERT ON topics BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
     CREATE TRIGGER IF NOT EXISTS trg_topics_ver_upd AFTER UPDATE ON topics BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
     CREATE TRIGGER IF NOT EXISTS trg_topics_ver_del AFTER DELETE ON topics BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+  `);
+
+  // Shared, multi-process state (R73b). Several worker processes on one host read and
+  // write these tables, so the counters are in SQLite, not in each process's memory.
+  //  • rate_hits: request counters for the auth limiters (lib/shared-store.js)
+  //  • login_throttle: per-account failed-login backoff (routes/auth.js)
+  //  • job_leases: one process runs each scheduled job (lib/leases.js)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS rate_hits (key TEXT PRIMARY KEY, hits INTEGER NOT NULL, reset_at INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS login_throttle (key TEXT PRIMARY KEY, n INTEGER NOT NULL, until INTEGER NOT NULL DEFAULT 0, updated INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS job_leases (name TEXT PRIMARY KEY, holder TEXT NOT NULL, expires_at INTEGER NOT NULL);
   `);
 
   // Hot-path indexes for dashboards, exam results, class membership, learner

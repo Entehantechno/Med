@@ -51,22 +51,31 @@ export function passwordErrorBody(reason) {
 export { minPasswordLen };
 
 // Temporary per-account backoff (ASVS 6.1.1: do NOT permanently lock — that is a DoS).
-const fails = new Map();
+// Kept in the shared database, not in memory, so every worker process sees the same
+// failures: an attacker cannot spread guesses across processes to get N× the budget.
 function failKey(id) { return String(id || "").trim().toLowerCase(); }
 export function loginBlocked(id) {
   if (process.env.DISABLE_RATE_LIMIT === "1") return false;
-  const e = fails.get(failKey(id));
+  const e = db.prepare("SELECT until FROM login_throttle WHERE key = ?").get(failKey(id));
   return !!(e && e.until && Date.now() < e.until);
 }
+let throttleWrites = 0;
 function noteLoginFail(id) {
   if (process.env.DISABLE_RATE_LIMIT === "1") return;
   const k = failKey(id);
-  const e = fails.get(k) || { n: 0, until: 0 };
-  e.n += 1;
-  if (e.n >= 10) e.until = Date.now() + Math.min(15 * 60 * 1000, 20 * 1000 * (2 ** Math.min(6, e.n - 10)));
-  fails.set(k, e);
+  const now = Date.now();
+  // n counts failures; the backoff starts at the 10th and doubles, capped at 15 minutes.
+  const prev = db.prepare("SELECT n FROM login_throttle WHERE key = ?").get(k);
+  const n = (prev ? prev.n : 0) + 1;
+  const until = n >= 10 ? now + Math.min(15 * 60 * 1000, 20 * 1000 * (2 ** Math.min(6, n - 10))) : 0;
+  db.prepare(
+    `INSERT INTO login_throttle (key, n, until, updated) VALUES (?, ?, ?, ?)
+     ON CONFLICT(key) DO UPDATE SET n = excluded.n, until = excluded.until, updated = excluded.updated`
+  ).run(k, n, until, now);
+  // Prune entries nobody has touched for a day (keeps the table small on a busy host).
+  if (++throttleWrites % 200 === 0) db.prepare("DELETE FROM login_throttle WHERE updated < ? AND until < ?").run(now - 24 * 3600 * 1000, now);
 }
-function noteLoginOk(id) { fails.delete(failKey(id)); }
+function noteLoginOk(id) { db.prepare("DELETE FROM login_throttle WHERE key = ?").run(failKey(id)); }
 
 function createLearnerProfile(id, province = "", program = "preint") {
   const prog = (program === "basic" || program === "preint") ? program : "preint";
