@@ -7,7 +7,7 @@ import Icon from "../components/Icon.jsx";
 import { passwordErrorText } from "../lib/password-errors.js";
 
 export default function Profile({ home }) {
-  const { t, user, lang, logoutAll } = useApp();
+  const { t, user, lang, logoutAll, setUser } = useApp();
   const [cur, setCur] = useState("");
   const [np, setNp] = useState("");
   const [np2, setNp2] = useState("");
@@ -25,6 +25,7 @@ export default function Profile({ home }) {
     try {
       await api.put("/auth/password", { currentPassword: cur, newPassword: np });
       setMsg(t("passwordChanged")); setCur(""); setNp(""); setNp2("");
+      setUser((u) => (u ? { ...u, initial_password: false } : u));   // the nudge goes away at once
     } catch (e) { setErr(passwordErrorText(e, t)); }
   };
 

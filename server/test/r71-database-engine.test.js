@@ -146,7 +146,7 @@ describe("R71 upgrade of an existing (sql.js-era) database", () => {
     `);
     expect(r.status, r.stderr).toBe(0);
     const backups = fs.readdirSync(path.join(dir, "backups"));
-    expect(backups.some((f) => /^pre-upgrade-r71-/.test(f))).toBe(true);
+    expect(backups.some((f) => f.startsWith(`pre-upgrade-r${DB_ENGINE_VERSION}-`))).toBe(true);
     const ro = openRo(file);
     try {
       expect(ro.prepare("SELECT COUNT(*) n FROM users").get().n).toBe(users);

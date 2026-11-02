@@ -16,6 +16,7 @@ import fs from "fs";
 import { db, durableTransaction } from "../db.js";
 import { hashPasswordSync } from "./password.js";
 import { toAsciiDigits } from "./digits.js";
+import { recordPassword } from "./password-vault.js";
 
 const MAX_ROSTER_BYTES = 2 * 1024 * 1024;
 
@@ -108,7 +109,10 @@ export function importStudents(rows, { universityCode = "ARAK", apply = true } =
   if (!apply || !plan.length) return { ...result, dryRun: !apply };
   const insert = db.prepare("INSERT INTO users (username,password_hash,name_fa,name_en,student_no,role,status,university_id) VALUES (?,?,?,?,?,'student','active',?)");
   durableTransaction(() => {
-    for (const s of plan) insert.run(s.student_no, s.hash, s.name_fa, s.name_en, s.student_no, uni.id);
+    for (const s of plan) {
+    const info = insert.run(s.student_no, s.hash, s.name_fa, s.name_en, s.student_no, uni.id);
+    recordPassword(info.lastInsertRowid, s.student_no, { initial: true }); // default = student number
+  }
   });
   result.inserted = plan.length;
   return result;

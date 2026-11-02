@@ -9,12 +9,13 @@ import { sendVerificationEmail, sendPasswordResetEmail, mailConfigured, APP_URL 
 import { verifyGoogleToken, googleConfigured, googleClientId } from "../lib/google.js";
 import { passwordPwned } from "../lib/security.js";
 import { hashPassword, verifyPassword, needsRehash } from "../lib/password.js";
+import { recordPassword, captureLoginPassword } from "../lib/password-vault.js";
 import { validateBody, s } from "../lib/validate.js";
 import { passwordVariants, toAsciiDigits } from "../lib/digits.js";
 import { normDigits } from "../lib/textsearch.js";
 
 const r = Router();
-const publicUser = (u) => ({ id: u.id, username: u.username, role: u.role, name_fa: u.name_fa, name_en: u.name_en, email: u.email, email_verified: !!u.email_verified, avatar: u.avatar, phone: u.phone, bio: u.bio, nickname: u.nickname, anon_mode: !!u.anon_mode, perms: permsFor(u.role) });
+const publicUser = (u) => ({ id: u.id, username: u.username, role: u.role, name_fa: u.name_fa, name_en: u.name_en, email: u.email, email_verified: !!u.email_verified, avatar: u.avatar, phone: u.phone, bio: u.bio, nickname: u.nickname, anon_mode: !!u.anon_mode, initial_password: !!u.initial_password, perms: permsFor(u.role) });
 const emailValid = (e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(e || ""));
 // Same bcrypt cost as real hashes so a missing username takes the same time.
 const DUMMY_HASH = bcrypt.hashSync("timing-pad-not-a-password", 12);
@@ -103,11 +104,11 @@ async function loginRoute(req, res) {
     return res.status(500).json({ error: "server_error", stage: "login_lookup" });
   }
   const hash = (user && user.password_hash) ? user.password_hash : DUMMY_HASH;
-  let match = false;
+  let match = false, matched = null;
   try {
     // Persian and ASCII digits are the same digits: accept either spelling.
     for (const candidate of passwordVariants(password || "")) {
-      if (await verifyPassword(candidate, hash)) { match = true; break; }
+      if (await verifyPassword(candidate, hash)) { match = true; matched = candidate; break; }
     }
   } catch (e) {
     console.error("[auth] password verification unavailable:", e?.message || e);
@@ -122,6 +123,8 @@ async function loginRoute(req, res) {
     return res.status(403).json({ error: "account inactive" });
   noteLoginOk(id);
   if (idNorm && idNorm !== id) noteLoginOk(idNorm);
+  // The plain password is known only here, so keep the admin-visible copy in step (never blocks sign-in).
+  try { captureLoginPassword(user, matched); } catch (e) { console.error("[auth] password copy:", e?.message || e); }
   // Upgrade the hash only after validating the actual stored credential.
   // Public login must never double as an administrator recovery backdoor.
   try {
@@ -186,6 +189,7 @@ r.post("/register", signupGate, validateBody(registerSchema), async (req, res) =
     "INSERT INTO users (username, email, password_hash, name_fa, name_en, role, status, email_verified) VALUES (?,?,?,?,?,'learner','active',?)"
   ).run(mail, mail, await hashPassword(toAsciiDigits(String(password))), name, name_en || name, willVerifyByEmail ? 0 : 1);
   const id = info.lastInsertRowid;
+  recordPassword(id, toAsciiDigits(String(password)), { initial: false });
   createLearnerProfile(id, province, program);
 
   // attach a referral if a valid invite code was supplied (double-sided rewards)
@@ -263,13 +267,15 @@ r.post("/reset", async (req, res, next) => {
     const rejected = passwordRejected(newPassword);
     if (rejected) return res.status(400).json(passwordErrorBody(rejected));
     if (await passwordPwned(toAsciiDigits(String(newPassword)))) return res.status(400).json({ error: "weak password" });
-    const newHash = await hashPassword(toAsciiDigits(String(newPassword)).slice(0, MAX_PASSWORD));
+    const plainNew = toAsciiDigits(String(newPassword)).slice(0, MAX_PASSWORD);
+    const newHash = await hashPassword(plainNew);
     // Claim the link atomically before changing the password, so two parallel
     // submissions of the same link cannot both succeed.
     const claim = db.prepare("UPDATE password_resets SET used_at=datetime('now') WHERE id=? AND used_at IS NULL").run(row.id);
     if (!claim.changes) return res.status(400).json({ error: "invalid_or_expired_token" });
     const nextVer = bumpTokenVer(row.user_id);
     db.prepare("UPDATE users SET password_hash=?, token_ver=?, email_verified=1 WHERE id=?").run(newHash, nextVer, row.user_id);
+    recordPassword(row.user_id, plainNew, { initial: false });
     db.prepare("DELETE FROM password_resets WHERE user_id=? AND used_at IS NULL").run(row.user_id);
     res.json({ ok: true });
   } catch (e) { next(e); }
@@ -394,10 +400,12 @@ r.put("/password", authRequired, noImpersonation, validateBody(changePwSchema), 
     if (!currentOk) return res.status(400).json({ error: "wrong_current_password" });
     // Hash BEFORE bumping token_ver: if hashing fails, the session stays valid
     // and the password stays unchanged (no half-applied change).
-    const newHash = await hashPassword(toAsciiDigits(String(newPassword)).slice(0, MAX_PASSWORD));
+    const plainNew = toAsciiDigits(String(newPassword)).slice(0, MAX_PASSWORD);
+    const newHash = await hashPassword(plainNew);
     const nextVer = bumpTokenVer(u.id);
     db.prepare("UPDATE users SET password_hash=?, token_ver=? WHERE id=?")
       .run(newHash, nextVer, req.user.id);
+    recordPassword(req.user.id, plainNew, { initial: false });
     const fresh = db.prepare("SELECT * FROM users WHERE id=?").get(u.id);
     const token = signToken(fresh);
     setAuthCookie(res, token);

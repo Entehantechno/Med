@@ -11,7 +11,7 @@
      acknowledged.
    • The file format is unchanged: a database written by sql.js opens as-is. The
      first start of R71 takes a verified snapshot into backups/pre-upgrade-r71-*.db
-     before any migration runs, then records PRAGMA user_version = 71.
+     before any migration runs, then records PRAGMA user_version = 72.
 
    The exported API is unchanged: db.prepare().get/all/run, db.exec, db.pragma,
    db.transaction, durableTransaction, onDbReady, initDb, reloadDb, snapshotDb.
@@ -38,7 +38,7 @@ ensureDataDirs();
 
 /** Schema/engine generation stored in PRAGMA user_version. A database below this
  *  value is upgraded in place, after a verified snapshot. */
-export const DB_ENGINE_VERSION = 71;
+export const DB_ENGINE_VERSION = 72;
 const BUSY_TIMEOUT_MS = 5000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const CACHE_KIB = Math.max(2000, Math.min(262144, Number(process.env.DB_CACHE_KIB) || 16000));
@@ -2278,6 +2278,18 @@ export function initSchema() {
   }
   if (!db.prepare("PRAGMA table_info(attempts)").all().some(c => c.name === "reference_snapshot_json")) {
     db.exec("ALTER TABLE attempts ADD COLUMN reference_snapshot_json TEXT");
+  }
+
+  /* ---- R80: encrypted password copy + first-login prompt --------------------
+     password_enc: the current password sealed with the settings key, so an
+     administrator can show or hand over a user's password. Never returned to a
+     client; the reveal re-checks it against password_hash.
+     initial_password: 1 while the password was set by staff (or is the student
+     number) and the user has not chosen their own yet. */
+  {
+    const ucols = db.prepare("PRAGMA table_info(users)").all().map((c) => c.name);
+    if (!ucols.includes("password_enc")) db.exec("ALTER TABLE users ADD COLUMN password_enc TEXT");
+    if (!ucols.includes("initial_password")) db.exec("ALTER TABLE users ADD COLUMN initial_password INTEGER NOT NULL DEFAULT 0");
   }
 
   /* ---- Phase 4: protocol instruments seeded as editable templates ----------

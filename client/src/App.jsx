@@ -29,6 +29,7 @@ const DrTutorChat = lazy(routeChunks.drTutor);
 const QuestionnairePrompt = lazy(routeChunks.questionnaire);
 import { api } from "./api.js";
 import { safeSession } from "./lib/storage.js";
+import PasswordNudge from "./components/PasswordNudge.jsx";
 
 /* A lightweight, full-screen fallback shown while a lazy route chunk loads.
    Kept minimal to avoid layout shift; it inherits the theme background. */
@@ -204,7 +205,7 @@ function AppInner() {
     : user.role === "learner"
     ? <Suspense fallback={null}><QuestionnairePrompt contextType="general" contextId={null} /><DrTutorChat contextType="general" contextId={null} /></Suspense>
     : null;
-  return <><ConnectionBanner />{ImpBanner}{page}{studentTools}<Suspense fallback={null}><SupportWidget /></Suspense><Suspense fallback={null}><InstallPrompt /></Suspense><Toast msg={toast} /></>;
+  return <><ConnectionBanner />{ImpBanner}{route.name !== "profile" && <PasswordNudge />}{page}{studentTools}<Suspense fallback={null}><SupportWidget /></Suspense><Suspense fallback={null}><InstallPrompt /></Suspense><Toast msg={toast} /></>;
 }
 
 function ImpersonationBanner() {

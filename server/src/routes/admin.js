@@ -34,6 +34,7 @@ import {
 } from "../lib/landing.js";
 import { productHealth } from "../lib/producthealth.js";
 import { getVpPage, saveVpPage, DEFAULT_VP_PAGE, VP_PAGE_LIMITS } from "../lib/vp-page.js";
+import { recordPassword, revealPassword } from "../lib/password-vault.js";
 import { cardFacets, buildFacetIndex, matchFacets, sortCards } from "../lib/cardfacets.js";
 import { recordCardChange, recordImport, listRevisions, revisionSummary } from "../lib/cardhistory.js";
 import { analyzeFsrs, loadTrainingItems, optimizeParams, evaluateParams } from "../lib/fsrs-optimizer.js";
@@ -1440,7 +1441,7 @@ r.get("/users", ...P(PU), (req, res) => {
 
 // detailed single-user operational view
 r.get("/users/:id", ...P(PU), (req, res) => {
-  const u = db.prepare("SELECT id, username, name_fa, name_en, role, status, student_no, university_id, created_at FROM users WHERE id=?").get(req.params.id);
+  const u = db.prepare("SELECT id, username, name_fa, name_en, role, status, student_no, university_id, created_at, initial_password FROM users WHERE id=?").get(req.params.id);
   if (!u) return res.status(404).json({ error: "not found" });
   if (req.user.role === "teacher" && (u.university_id !== currentUniversityId(req.user) || !["student","teacher"].includes(u.role))) return res.status(403).json({ error: "wrong_university" });
   if (!staffMaySeeUser(req.user, u)) return res.status(403).json({ error: "university_only", stage: "access" });
@@ -1495,6 +1496,8 @@ r.post("/users", ...P(PU), async (req, res) => {
   }
   const info = db.prepare("INSERT INTO users (username,email,password_hash,name_fa,name_en,student_no,role,status,university_id,phone,bio,nickname,email_verified) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,1)")
     .run(uname, b.email || null, await hashPassword(String(b.password)), b.name_fa || uname, b.name_en || uname, b.student_no || null, b.role, b.status || "active", uni, b.phone || null, b.bio || null, b.nickname || null);
+  // Staff chose this password, so the user is prompted to pick their own.
+  recordPassword(info.lastInsertRowid, String(b.password), { initial: true });
   if (b.role === "learner")
     db.prepare("INSERT OR IGNORE INTO learner_profiles (user_id, week_key, hearts, hearts_updated, province) VALUES (?,?,?,?,?)")
       .run(info.lastInsertRowid, "", 5, new Date().toISOString(), b.province || "");
@@ -1569,8 +1572,24 @@ r.post("/users/:id/password", ...P(PU), async (req, res, next) => {
     const hash = await hashPassword(pw);
     const nextVer = bumpTokenVer(u.id);
     db.prepare("UPDATE users SET password_hash=?, token_ver=? WHERE id=?").run(hash, nextVer, u.id);
+    recordPassword(u.id, pw, { initial: true });
     audit(req, "user.password_reset", `users:${u.id}`, {});
     res.json({ ok: true });
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Full admin only: the user's current password, if the encrypted copy is present and
+// still matches the hash. Every reveal is audited (the password itself is never logged).
+r.get("/users/:id/credentials", ...admin, async (req, res, next) => {
+  try {
+    const u = db.prepare("SELECT id FROM users WHERE id=?").get(req.params.id);
+    if (!u) return res.status(404).json({ error: "not found" });
+    const view = await revealPassword(u.id);
+    audit(req, "user.password_view", `users:${u.id}`, { available: view.available, stale: view.stale });
+    res.setHeader("Cache-Control", "no-store");
+    res.json(view);
   } catch (e) {
     next(e);
   }
@@ -3699,7 +3718,7 @@ r.get("/export/:table", ...P("learn.data"), (req, res) => {
   // Credentials never leave the server — a data export is for analysis, and
   // the "Export data" permission is also held by support/content staff.
   if (table === "users") {
-    rows = rows.map(({ password_hash, token_ver, google_id, ...rest }) => rest);
+    rows = rows.map(({ password_hash, password_enc, token_ver, google_id, ...rest }) => rest);
   }
   audit(req, "data.export", table, { rows: rows.length });
   res.setHeader("Content-Disposition", `attachment; filename="${table}.json"`);

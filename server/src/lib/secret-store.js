@@ -50,7 +50,7 @@ function encKey() {
 }
 
 /** True when sealing is possible (a key source exists). */
-function sealingAvailable() { return !!encKey(); }
+export function sealingAvailable() { return !!encKey(); }
 
 export function sealSecret(plain) {
   const v = String(plain ?? "");

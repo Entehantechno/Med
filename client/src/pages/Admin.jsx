@@ -46,6 +46,7 @@ import ErrorBoundary from "../components/ErrorBoundary.jsx";
 import VirtualList from "../components/VirtualList.jsx";
 import HotspotEditor from "../components/HotspotEditor.jsx";
 import { safeLocal } from "../lib/storage.js";
+import PasswordCard from "../components/PasswordCard.jsx";
 
 // Heavy admin sections are lazy-loaded so the initial admin panel appears much
 // faster after login. The visible UI of each section is unchanged; only when a
@@ -9146,7 +9147,7 @@ function PlacementReport() {
 }
 
 function UserDetail({ id, onBack }) {
-  const { t, lang } = useApp();
+  const { t, lang, user: me } = useApp();
   const toast = useToast();
   const [d, setD] = useState(null);
   const [xp, setXp] = useState(""); const [gems, setGems] = useState(""); const [streak, setStreak] = useState("");
@@ -9155,7 +9156,6 @@ function UserDetail({ id, onBack }) {
   if (!d) return <Spinner />;
   const u = d.user;
   const saveLearner = async (extra = {}) => { await api.post(`/admin/users/${id}/learner`, { xp: +xp, gems: +gems, streak: +streak, ...extra }); toast(t("saved")); load(); };
-  const resetPw = async () => { const pw = prompt(t("resetPass")); if (!pw) return; try { await api.post(`/admin/users/${id}/password`, { password: pw }); toast(t("saved")); } catch (e) { toast(passwordErrorText(e, t)); } };
   const resetPlacement = async () => { if (confirm(t("resetPlacementConfirm"))) { try { await api.post(`/admin/users/${id}/reset-placement`, {}); toast(t("saved")); load(); } catch (e) { toast(e.message); } } };
 
   return (
@@ -9167,7 +9167,6 @@ function UserDetail({ id, onBack }) {
           <div className="small muted">{t("username")}</div><div style={{ fontWeight: 700, marginBottom: 8 }}>{u.username}</div>
           <div className="case-meta"><span className="tag">{t(u.role)}</span><span className="tag">{u.status}</span>{u.student_no && <span className="tag">{u.student_no}</span>}</div>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <button type="button" className="btn btn-ghost btn-sm mt16" onClick={resetPw}><Icon name="key" size={13} /> {t("resetPass")}</button>
             {u.role === "learner" && <button type="button" className="btn btn-ghost btn-sm mt16" onClick={resetPlacement}><Icon name="compass" size={13} /> {t("resetPlacement")}</button>}
           </div>
         </div>
@@ -9175,6 +9174,9 @@ function UserDetail({ id, onBack }) {
           <div className="small muted mb8">{t("systemStats")}</div>
           <div className="case-meta"><span className="tag">{t("totalActivities")}: {d.stats.attempts}</span><span className="tag">{t("completed")}: {d.stats.nodes}</span><span className="tag">{t("myCards")}: {d.stats.cards}</span></div>
         </div>
+      </div>
+      <div className="mb16">
+        <PasswordCard userId={u.id} initial={!!u.initial_password} canReveal={me?.role === "admin"} onSaved={load} />
       </div>
       {d.profile && (
         <div className="card">

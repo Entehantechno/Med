@@ -70,8 +70,8 @@ export const DEFAULT_VP_PAGE = {
   access: {
     title: bi("پیش‌نیاز: ثبت‌نام دانشجو در دانشگاه", "Requirement: student registration at your university"),
     body: bi(
-      "بیمار مجازی برای دانشجویان دانشگاه‌های همکار است. دانشجو باید پیش از ورود، توسط دانشگاه ثبت‌نام شده باشد؛ آموزش دانشگاه یا مدرس درس این کار را انجام می‌دهد. اگر حساب ندارید، از آموزش دانشگاه خود بخواهید آن را بسازد، سپس با شماره دانشجویی و رمز عبور وارد شوید.",
-      "The virtual patient is for students of partner universities. A student must be registered by their university before signing in. The education office or course instructor does this. If you do not have an account, ask your education office to create one, then sign in with your student number and password.",
+      "بیمار مجازی برای دانشجویان دانشگاه‌های همکار است. دانشجو باید پیش از ورود، توسط دانشگاه ثبت‌نام شده باشد؛ آموزش دانشگاه یا مدرس درس این کار را انجام می‌دهد. اگر حساب ندارید، از آموزش دانشگاه خود بخواهید آن را بسازد. رمز اولیه‌ای را که دانشگاه تعیین کرده، پس از نخستین ورود عوض کنید.",
+      "The virtual patient is for students of partner universities. A student must be registered by their university before signing in. The education office or course instructor does this. If you do not have an account, ask your education office to create one. Change the initial password your university gave you after your first sign-in.",
     ),
   },
   closed: bi("این صفحه فعلاً در دسترس نیست.", "This page is not available right now."),

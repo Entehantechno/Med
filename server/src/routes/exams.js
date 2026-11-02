@@ -15,6 +15,7 @@ import { normDigits } from "../lib/textsearch.js";
 import { checkStudentLimit, effectiveFlashNoPenalty, effectiveFlashAllowBack, effectiveFlashAllowChange, triInput } from "../lib/orglimits.js";
 import { sendPrivateJson, sqlInList } from "../lib/http-cache.js";
 import { itemCredit } from "../lib/history-sections.js";
+import { recordPassword } from "../lib/password-vault.js";
 
 
 // robust student_no splitter: comma, semicolon, whitespace, Persian comma/semicolon, slash, pipe, colon
@@ -76,6 +77,7 @@ function createStudentForUniversity({ sno, name = "", universityId }) {
   if (checkStudentLimit(universityId, 1)) return null;
   const info = db.prepare("INSERT INTO users (username,password_hash,name_fa,name_en,student_no,role,status,university_id) VALUES (?,?,?,?,?,'student','active',?)")
     .run(sn, hashPasswordSync(sn), name || sn, name || sn, sn, universityId);
+  recordPassword(info.lastInsertRowid, sn, { initial: true }); // the default password is the student number
   return { id: info.lastInsertRowid, username: sn, student_no: sn, name_fa: name || sn, name_en: name || sn, university_id: universityId };
 }
 function canManageExam(user, ex) {

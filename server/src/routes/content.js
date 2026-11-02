@@ -24,6 +24,7 @@ import { studentMaySeeFlashcard, studentFlashcardAccess, studentRevealAllowed } 
 import { sqlInList } from "../lib/http-cache.js";
 import { isLearnContent, caseIsLearn } from "../lib/content-track.js";
 import { policyRow, policyReadiness, referenceSnapshotForPolicy, publicReferenceSnapshot, sanitizeReferenceIds } from "../lib/reference-governance.js";
+import { recordPassword } from "../lib/password-vault.js";
 
 const r = Router();
 r.use('/cases', authRequired, (req, res, next) => {
@@ -1044,6 +1045,7 @@ r.post("/users", authRequired, requireRole("teacher", "admin"), async (req, res,
     const info = db.prepare(
       "INSERT INTO users (username,password_hash,name_fa,name_en,student_no,role,status,university_id) VALUES (?,?,?,?,?,?, 'active',?)"
     ).run(uname, pwdHash, name_fa, name_en, role === "student" ? uname : null, role, university_id);
+    recordPassword(info.lastInsertRowid, pwd, { initial: true });
     const uid = info.lastInsertRowid;
     if (role === "student" && Array.isArray(caseIds)) {
       const ins = db.prepare(
@@ -1318,6 +1320,7 @@ r.post("/users/import", authRequired, requireRole("teacher", "admin"), (req, res
         // if still null and teacher, it's already teacher's uni; if admin and no uni, keep null but warn
         try {
           const info = insUser.run(sno, hashPasswordSync(sno), fullName, fullName, sno, email, finalUni);
+          recordPassword(info.lastInsertRowid, sno, { initial: true }); // default = student number
           uid = info.lastInsertRowid;
           created++;
         } catch (e) {
@@ -1366,7 +1369,8 @@ r.put("/users/:id/password", authRequired, requireRole("teacher", "admin"), asyn
   if (!target) return res.status(404).json({ error: "not found", stage: "access" });
   if (!canManageStudentAccount(req.user, target)) return res.status(403).json({ error: "wrong_university", stage: "access" });
   try {
-    const hash = await hashPassword(toAsciiDigits(String(password)));
+    const plainNew = toAsciiDigits(String(password));
+    const hash = await hashPassword(plainNew);
     durableTransaction(() => {
       // Hashing yields: both the caller's authorization and target membership
       // can change before the write. Use current state, not the earlier row.
@@ -1379,6 +1383,7 @@ r.put("/users/:id/password", authRequired, requireRole("teacher", "admin"), asyn
         throw Object.assign(new Error("wrong_university"), {status:403});
       }
       db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(hash, liveTarget.id);
+      recordPassword(liveTarget.id, plainNew, { initial: true });
       bumpTokenVer(liveTarget.id);
     });
     res.json({ ok: true });
