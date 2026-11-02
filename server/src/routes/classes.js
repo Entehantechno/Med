@@ -4,7 +4,7 @@ import {academicCopy,academicContentTransaction} from '../lib/academic-sharing.j
    enrolls students. Students take the class cases to earn a class
    grade (replacing the traditional logbook).
    ================================================================ */
-import { closeFlashProgress, expiredFlashRun, lastActivitySql, IDLE_LIMIT_MS } from "../lib/timed-session.js";
+import { closeFlashProgress, expiredFlashRun } from "../lib/timed-session.js";
 import { Router } from "express";
 import { safeFilename, spreadsheetCell } from "../lib/csv.js";
 import crypto from "crypto";
@@ -297,10 +297,9 @@ r.get("/conversations", authRequired, requireRole("teacher", "admin"), (req, res
         WHERE s.attempt_id IS NULL
           AND (s.finished_at IS NOT NULL
                OR s.finish_requested_ms IS NOT NULL OR s.review_required=1 OR s.expiry_attempts>0
-               OR (s.deadline_ms IS NOT NULL AND s.deadline_ms < ?)
-               OR (s.deadline_ms IS NULL AND ${lastActivitySql("s.")} + ${IDLE_LIMIT_MS} < ?)) ${scopeSql}
+               OR (s.deadline_ms IS NOT NULL AND s.deadline_ms < ?)) ${scopeSql}
         ORDER BY s.id DESC LIMIT 200`
-    ).all(Date.now(), Date.now(), ...scopeArgs).map((row) => {
+    ).all(Date.now(), ...scopeArgs).map((row) => {
       let title_fa = "", title_en = "";
       try { const cd = row.data_json ? JSON.parse(row.data_json) : {}; title_fa = cd.title_fa || ""; title_en = cd.title_en || ""; } catch { /* */ }
       return {

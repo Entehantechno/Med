@@ -7,7 +7,7 @@ import { makeLeases } from "./leases.js";
 import { db } from "../db.js";
 import exam, { evaluateRoute } from "../routes/exam.js";
 import classes from "../routes/classes.js";
-import { readFlashProgress, closeFlashProgress, readVpProgress, SAVE_GRACE_MS, IDLE_LIMIT_MS, lastActivitySql } from "./timed-session.js";
+import { readFlashProgress, closeFlashProgress, readVpProgress, SAVE_GRACE_MS } from "./timed-session.js";
 import { preserveEncounterLog } from "./vplogging.js";
 import { recordGradingFailure } from "./vp-grading.js";
 
@@ -104,12 +104,11 @@ export async function expireVpSessions(now = Date.now()) {
   const rows = db.prepare(
     `SELECT * FROM vp_sessions
       WHERE finished_at IS NULL AND attempt_id IS NULL AND review_required=0
-        AND (finish_requested_ms IS NOT NULL OR (deadline_ms IS NOT NULL AND deadline_ms < ?)
-             OR (deadline_ms IS NULL AND ${lastActivitySql()} + ${IDLE_LIMIT_MS} < ?))
+        AND (finish_requested_ms IS NOT NULL OR (deadline_ms IS NOT NULL AND deadline_ms < ?))
         AND (next_try_ms IS NULL OR next_try_ms <= ?)
         AND (grading_lease_until IS NULL OR grading_lease_until < ?)
-      ORDER BY COALESCE(finish_requested_ms, deadline_ms, progress_ms, started_ms, 0) LIMIT ?`
-  ).all(now - SAVE_GRACE_MS, now - SAVE_GRACE_MS, now, now, BATCH);
+      ORDER BY COALESCE(finish_requested_ms, deadline_ms) LIMIT ?`
+  ).all(now - SAVE_GRACE_MS, now, now, BATCH);
   const out = { finalized: 0, failed: 0, deferred: 0 };
   for (const row of rows) {
     const r = await gradeOpenEncounter(row);
