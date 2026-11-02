@@ -35,6 +35,14 @@ function refusalMessage(e, t, lang, stage) {
   const reason = e?.data?.reason;
   const st = stage || e?.data?.stage;
   const prefix = st ? (lang === "fa" ? `«${stageTitle(st, lang)}» — ` : `[${stageTitle(st, lang)}] `) : "";
+  if (e?.data?.error === "under_staff_review") {
+    return lang === "fa" ? e.data.message_fa : e.data.message_en;
+  }
+  if (e?.data?.error === "finish_requested") {
+    return lang === "fa"
+      ? "این گفتگو پایان یافته و در صف ارزیابی است. نتیجه پس از ارزیابی در کارنامه‌تان ظاهر می‌شود."
+      : "This conversation has ended and is queued for evaluation. The result appears in your record once graded.";
+  }
   if (e?.data?.error === "evaluation_in_progress") {
     return prefix + (lang === "fa" ? "ارزیابی هنوز در حال انجام است. کمی صبر کنید و دوباره پایان و ارزیابی را بزنید؛ نتیجهٔ قبلی دوباره نمره‌دهی نمی‌شود." : "Evaluation is still running. Wait briefly and retry Finish to retrieve the result without grading again.");
   }
@@ -127,7 +135,9 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
   const { t, lang, user } = useApp();
   const [caseData, setCaseData] = useState(null);
   const [settings, setSettings] = useState({ duration: 15 });
-  const [phase, setPhase] = useState("exam"); // exam | evaluating | report
+  const [phase, setPhase] = useState("exam"); // exam | evaluating | queued | report
+  // Set when the finish is stored but grading continues on the server (R82).
+  const [queued, setQueued] = useState(null);
   const [messages, setMessages] = useState([]);
   const [typing, setTyping] = useState(false);
   const [typingKind, setTypingKind] = useState("chat");
@@ -272,7 +282,7 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
     examSnapRef.current = { messages: [], tests: [], imaging: [], paraclinic: [], ddx: [], finalDx: "", problemList: "" };
     setTyping(false);
     setMessages([]); setTests([]); setParaclinic([]); setRequestedImages([]); setImaging([]); setDdx([]); setFinalDx(""); setProblemList("");
-    setPhase("exam"); setEvalRes(null); setTimeLeft(null); setError(""); setResumed(false);
+    setPhase("exam"); setEvalRes(null); setTimeLeft(null); setError(""); setResumed(false); setQueued(null);
     sessionIdRef.current = null; eventsRef.current = [];
     finishingRef.current = false; sendingRef.current = false; autoFinishTried.current = false;
     (async () => {
@@ -627,6 +637,12 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
       }
     } catch (e) {
       if (generation !== encounterGeneration.current) return;
+      // The finish is stored and the server keeps grading without this page. The chat stays locked.
+      if (e?.data?.queued) {
+        setQueued({ fa: e.data.message_fa, en: e.data.message_en });
+        setPhase("queued");
+        return;
+      }
       const stage = e?.data?.stage || (e?.status === 401 ? "auth" : "evaluate");
       setError(refusalMessage(e, t, lang, stage));
       setPhase("exam");
@@ -669,6 +685,22 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
           </div>
         </div>
       </div>
+    ));
+  }
+
+  if (phase === "queued" && queued) {
+    const fa = lang === "fa";
+    return examChrome(embedded, home, (
+      <div className="center-screen"><div className="card" style={{ maxWidth: 520, textAlign: fa ? "right" : "left" }}>
+        <h3><Icon name="warn" size={18} /> {fa ? "گفتگو در صف ارزیابی است" : "Conversation queued for evaluation"}</h3>
+        <div className="small mt12">{fa ? queued.fa : queued.en}</div>
+        <div className="row gap8 mt12" style={{ flexWrap: "wrap" }}>
+          <button type="button" className="btn btn-primary" onClick={() => { finishingRef.current = false; setQueued(null); finish(); }}>
+            {fa ? "ارسال مجدد برای ارزیابی" : "Send for evaluation again"}
+          </button>
+          <button type="button" className="btn btn-ghost" onClick={leaveExam}>{fa ? "بازگشت" : "Back"}</button>
+        </div>
+      </div></div>
     ));
   }
 

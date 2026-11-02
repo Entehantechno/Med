@@ -1,1 +1,1 @@
-2026.11.02-r81-vp-chat-retention
+2026.11.02-r82-vp-lifecycle

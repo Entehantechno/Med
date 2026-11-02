@@ -2250,8 +2250,18 @@ export function initSchema() {
     if (!vpCols.has("progress_ms")) db.exec("ALTER TABLE vp_sessions ADD COLUMN progress_ms INTEGER");
     if (!vpCols.has("expiry_attempts")) db.exec("ALTER TABLE vp_sessions ADD COLUMN expiry_attempts INTEGER NOT NULL DEFAULT 0");
     if (!vpCols.has("expiry_error")) db.exec("ALTER TABLE vp_sessions ADD COLUMN expiry_error TEXT");
+    // R82 grading state (see lib/vp-grading.js): finish request, claim lease, retry time,
+    // staff-review flag, and the AI draft kept durable until the attempt is written.
+    if (!vpCols.has("finish_requested_ms")) db.exec("ALTER TABLE vp_sessions ADD COLUMN finish_requested_ms INTEGER");
+    if (!vpCols.has("grading_lease_until")) db.exec("ALTER TABLE vp_sessions ADD COLUMN grading_lease_until INTEGER");
+    if (!vpCols.has("next_try_ms")) db.exec("ALTER TABLE vp_sessions ADD COLUMN next_try_ms INTEGER");
+    if (!vpCols.has("review_required")) db.exec("ALTER TABLE vp_sessions ADD COLUMN review_required INTEGER NOT NULL DEFAULT 0");
+    if (!vpCols.has("grading_draft_json")) db.exec("ALTER TABLE vp_sessions ADD COLUMN grading_draft_json TEXT");
   }
   db.exec("CREATE INDEX IF NOT EXISTS idx_vp_sessions_open ON vp_sessions(finished_at, deadline_ms)");
+  // R82: the 30-second sweeper reads only unsettled encounters. A partial index keeps it small.
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_vp_sessions_unsettled ON vp_sessions(COALESCE(finish_requested_ms, deadline_ms))
+    WHERE finished_at IS NULL AND attempt_id IS NULL AND review_required=0`);
   // R64: flashcard runs resume from saved progress. Plain (non-unique) index on purpose:
   // an expired, unfinalized row must never block a new run.
   db.exec(`CREATE TABLE IF NOT EXISTS flash_progress (

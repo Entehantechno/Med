@@ -140,4 +140,13 @@ describe('completion waits for encounter interactions',()=>{
   expect(screen.getByRole('button',{name:/finishExam/}).disabled).toBe(false);
  });
 
+ it('a finish stored for server-side grading locks the chat and says it is queued',async()=>{
+  const normal=api.post.getMockImplementation();
+  api.post.mockImplementation(async(...args)=>{if(args[0]==='/exam/evaluate')throw Object.assign(new Error('unavailable'),{status:503,data:{error:'ai_evaluation_unavailable',aiStage:'lesson',queued:true,message_en:'Your conversation is saved and queued for evaluation.'}});return normal(...args);});
+  await open();fireEvent.click(screen.getByRole('button',{name:/finishExam/}));
+  await screen.findByText(/saved and queued for evaluation/);
+  expect(screen.queryByPlaceholderText('typeMessage')).toBeNull();
+  expect(screen.getByRole('button',{name:/Send for evaluation again/})).toBeTruthy();
+ });
+
 });

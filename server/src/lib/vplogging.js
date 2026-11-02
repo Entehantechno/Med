@@ -251,7 +251,8 @@ export function finishSession({ sessionId, userId, events, durationSec, attemptI
   const dur = Number.isFinite(Number(durationSec)) && Number(durationSec) > 0
     ? Math.min(6 * 3600, Math.round(Number(durationSec))) : 0;
   db.prepare(
-    `UPDATE vp_sessions SET finished_at=datetime('now'), attempt_id=?, duration_sec=?, event_count=? WHERE id=?`
+    `UPDATE vp_sessions SET finished_at=datetime('now'), attempt_id=?, duration_sec=?, event_count=?,
+            grading_draft_json=NULL, grading_lease_until=NULL, next_try_ms=NULL WHERE id=?`
   ).run(attemptId ? Number(attemptId) : null, dur, stored, s.id);
 
   return { stored, loggingEnabled: !!s.logging_enabled, dropped };

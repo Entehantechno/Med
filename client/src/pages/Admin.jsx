@@ -3959,18 +3959,23 @@ function VpConversations() {
       </div>
       {unsettled.length > 0 && (
         <div className="card mb16" role="region" aria-labelledby="vp-unsettled-title">
-          <h4 id="vp-unsettled-title" className="mb8"><Icon name="warn" size={14} /> {fa ? `گفت‌وگوهای ثبت‌نشده (${unsettled.length.toLocaleString("fa-IR")})` : `Unscored conversations (${unsettled.length})`}</h4>
-          <span className="small muted">{fa ? "نمرهٔ این گفت‌وگوها ثبت نشده، اما متن آن‌ها در لاگ نگه داشته شده است." : "These were not graded, but their conversation is kept in the log."}</span>
+          <h4 id="vp-unsettled-title" className="mb8"><Icon name="warn" size={14} /> {fa ? `گفت‌وگوهای در انتظار ارزیابی (${unsettled.length.toLocaleString("fa-IR")})` : `Conversations awaiting evaluation (${unsettled.length})`}</h4>
+          <span className="small muted">{fa ? "این گفت‌وگوها پایان یافته یا زمانشان تمام شده و سرور در حال ارزیابی خودکار آن‌هاست. وضعیت «بررسی» یعنی نیاز به تصمیم مدیر دارد؛ گفت‌وگو در هر دو حالت حفظ شده است." : "These conversations ended and the server is grading them automatically. \"Review\" needs a staff decision; the conversation is kept in both cases."}</span>
           <div className="table-wrap mt8"><table>
-            <thead><tr><th>{fa ? "دانشجو" : "Student"}</th><th>{fa ? "کلاس" : "Class"}</th><th>{fa ? "کیس" : "Case"}</th><th>{fa ? "تاریخ" : "Started"}</th><th>{fa ? "پیام‌های ثبت‌شده" : "Logged events"}</th><th>{fa ? "وضعیت" : "Status"}</th></tr></thead>
+            <thead><tr><th>{fa ? "دانشجو" : "Student"}</th><th>{fa ? "کلاس" : "Class"}</th><th>{fa ? "کیس" : "Case"}</th><th>{fa ? "شروع" : "Started"}</th><th>{fa ? "وضعیت" : "Status"}</th><th>{fa ? "پیام‌های لاگ" : "Logged events"}</th></tr></thead>
             <tbody>{unsettled.map((u) => (
               <tr key={u.session_id}>
                 <td>{u.name_fa || u.name_en || u.student_no || "—"}</td>
                 <td>{u.class_fa || u.class_en || u.code || "—"}</td>
                 <td>{(fa ? u.title_fa : u.title_en) || u.title_fa || u.title_en || `#${u.case_id}`}</td>
                 <td className="small">{String(u.started_at || "").slice(0, 16)}</td>
-                <td>{Number(u.events || 0).toLocaleString(fa ? "fa-IR" : "en-US")}</td>
-                <td className="small">{u.closed ? (fa ? "بسته‌شده" : "Closed") : (fa ? "در انتظار ثبت" : "Pending")}{u.error ? ` · ${u.error}` : ""}</td>
+                <td className="small">
+                  {u.status === "closed" ? (fa ? "بسته‌شده بدون نمره" : "Closed without grade") : u.status === "review" ? (fa ? "بررسی مدیر" : "Staff review") : (fa ? "در صف ارزیابی" : "Queued")}
+                  {u.status !== "closed" && (u.finish_requested ? (fa ? " · دانشجو پایان داده" : " · student finished") : (fa ? " · زمان تمام شده" : " · time ran out"))}
+                  {u.next_try_ms && u.status === "queued" ? ` · ${fa ? "تلاش بعدی" : "next try"} ${new Date(u.next_try_ms).toLocaleTimeString(fa ? "fa-IR" : "en-US", { hour: "2-digit", minute: "2-digit" })}` : ""}
+                  {u.error ? ` · ${u.error}` : ""}
+                </td>
+                <td>{u.events == null ? (fa ? "لاگ خاموش" : "logging off") : Number(u.events).toLocaleString(fa ? "fa-IR" : "en-US")}</td>
               </tr>
             ))}</tbody>
           </table></div>

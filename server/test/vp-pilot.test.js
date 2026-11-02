@@ -7,7 +7,7 @@ import {db,initDb} from '../src/db.js';
 import {createApp} from '../src/app.js';
 import {signToken} from '../src/lib/auth.js';
 import {setSetting} from '../src/routes/content.js';
-let app,users=[],classId;
+let app,users=[],classId,template_;
 const A=i=>({Authorization:`Bearer ${users[i].token}`});
 const count=()=>db.prepare('SELECT COUNT(*) n FROM attempts WHERE class_id=?').get(classId).n;
 const start=async(i=0,caseId=1)=>(await request(app).post('/api/exam/session-start').set(A(i)).send({caseId,classId})).body.sessionId;
@@ -26,12 +26,19 @@ function provider(delay=0){
 beforeAll(async()=>{
  execSync('node src/seed.js --force',{stdio:'ignore'});await initDb();app=createApp();
  const template=db.prepare("SELECT * FROM users WHERE username='40012345'").get();
+ template_=template;
+});
+// Each test gets its own ten students: an encounter that is still queued for grading blocks
+// that student's next start (R81), so a shared pool would make tests depend on each other.
+function freshStudents(){
+ users=[];
  for(let i=0;i<10;i++){
-  const id=db.prepare("INSERT INTO users(username,password_hash,role,name_en,university_id) VALUES (?,?,'student',?,?)").run(`pilot-${i}`,template.password_hash,`Pilot ${i}`,template.university_id).lastInsertRowid;
+  const id=db.prepare("INSERT INTO users(username,password_hash,role,name_en,university_id) VALUES (?,?,'student',?,?)").run(`pilot-${Date.now()}-${i}-${Math.random()}`,template_.password_hash,`Pilot ${i}`,template_.university_id).lastInsertRowid;
   const u=db.prepare('SELECT * FROM users WHERE id=?').get(id);users.push({...u,token:signToken(u)});
  }
-});
+}
 beforeEach(()=>{
+ freshStudents();
  vi.stubEnv('VP_REQUIRE_AI_EVALUATION','1');vi.stubEnv('AI_API_KEY','');
  setSetting('ai',{provider:'OpenRouter',model:'synthetic/model',apiKey:'synthetic-only'});setSetting('ai_vpatient',{});setSetting('exam',{showAiAnalysis:true,showMicro:true});
  const teacher=db.prepare("SELECT id,university_id FROM users WHERE username='teacher'").get();
@@ -146,9 +153,9 @@ describe('10-student pilot isolation and completion safety',()=>{
   const failed=await submit(0,sid);
   db.pragma('query_only = OFF');log.mockRestore();
   expect(failed.status).toBe(500);
-  const calls=fetch.mock.calls.length;
   const recovered=await submit(0,sid);expect(recovered.status).toBe(200);expect(count()).toBe(1);
-  expect(fetch.mock.calls.length).toBe(calls);
+  // One grading run in total (checklist + lesson), however many times the write was retried.
+  expect(fetch.mock.calls.length).toBe(2);
  });
 
  it('retries a lost session-start response without opening another session',async()=>{

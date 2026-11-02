@@ -279,11 +279,14 @@ r.get("/conversations", authRequired, requireRole("teacher", "admin"), (req, res
         WHERE a.type='vp' ${scopeSql}
         ORDER BY a.id DESC LIMIT ? OFFSET ?`
     ).all(...scopeArgs, limit, offset);
-  /* Encounters that were never graded (grading failed past the expiry) but whose chat
-     was kept as a log. They have no attempt, so they are listed here, not lost. */
+  /* Encounters waiting for grading (the student finished, or the time ran out), under staff
+     review, or closed without a grade by an earlier release. Listed whether or not the class
+     logs, so no chat is silently left out. */
   const unsettled = db.prepare(
-      `SELECT s.id, s.user_id, s.case_id, s.class_id, s.exam_id, s.started_at, s.event_count,
-              s.expiry_attempts, s.expiry_error, s.finished_at,
+      `SELECT s.id, s.user_id, s.case_id, s.class_id, s.exam_id, s.started_at, s.logging_enabled,
+              s.event_count, s.expiry_attempts, s.expiry_error, s.next_try_ms, s.review_required,
+              s.finish_requested_ms, s.grading_draft_json IS NOT NULL AS has_draft,
+              (SELECT COUNT(*) FROM vp_session_events e WHERE e.session_id = s.id) AS logged_events,
               u.name_fa, u.name_en, u.student_no,
               c.name_fa AS class_fa, c.name_en AS class_en, c.code,
               cs.data_json
@@ -291,15 +294,23 @@ r.get("/conversations", authRequired, requireRole("teacher", "admin"), (req, res
          LEFT JOIN classes c ON c.id = s.class_id
          LEFT JOIN users u ON u.id = s.user_id
          LEFT JOIN cases cs ON cs.id = s.case_id
-        WHERE s.attempt_id IS NULL AND s.logging_enabled=1 AND s.expiry_attempts>0 ${scopeSql}
+        WHERE s.attempt_id IS NULL
+          AND (s.finished_at IS NOT NULL
+               OR s.finish_requested_ms IS NOT NULL OR s.review_required=1 OR s.expiry_attempts>0
+               OR (s.deadline_ms IS NOT NULL AND s.deadline_ms < ?)) ${scopeSql}
         ORDER BY s.id DESC LIMIT 200`
-    ).all(...scopeArgs).map((row) => {
+    ).all(Date.now(), ...scopeArgs).map((row) => {
       let title_fa = "", title_en = "";
       try { const cd = row.data_json ? JSON.parse(row.data_json) : {}; title_fa = cd.title_fa || ""; title_en = cd.title_en || ""; } catch { /* */ }
       return {
         session_id: row.id, user_id: row.user_id, case_id: row.case_id, class_id: row.class_id, exam_id: row.exam_id,
-        started_at: row.started_at, events: row.event_count || 0, closed: !!row.finished_at,
-        error: row.expiry_error || "", tries: row.expiry_attempts,
+        started_at: row.started_at, logging: !!row.logging_enabled,
+        events: row.logging_enabled ? (row.logged_events || 0) : null,
+        // "closed": closed by an earlier release without a grade. The chat is still kept.
+        status: row.finished_at ? "closed" : row.review_required ? "review" : "queued",
+        finish_requested: !!row.finish_requested_ms, next_try_ms: row.next_try_ms ?? null,
+        has_draft: !!row.has_draft, tries: row.expiry_attempts,
+        error: row.expiry_error || "",
         name_fa: row.name_fa, name_en: row.name_en, student_no: row.student_no,
         class_fa: row.class_fa, class_en: row.class_en, code: row.code, title_fa, title_en,
       };

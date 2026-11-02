@@ -118,15 +118,26 @@ describe("R64 grace window and quick return after expiry", () => {
     expect((await save(sessionId, "LATE-2-MARK")).status).toBe(409);
   });
 
-  it("a return after expiry, before any sweep, settles the old encounter as it stood and opens a new one", async () => {
+  it("a return after expiry is held while the old encounter is graded in the background, then a fresh one opens", async () => {
+    // Earlier tests may leave expired encounters pending; the server grades them first, as its sweep would.
+    db.prepare("UPDATE vp_sessions SET next_try_ms=NULL WHERE user_id=? AND finished_at IS NULL").run(student.id);
+    await expireVpSessions();
     const old = await start();
     expect((await save(old.sessionId, "BEFORE-EXPIRY-MARK")).status).toBe(200);
     expireNow(old.sessionId);
-    const fresh = await start();
-    expect(fresh.sessionId).not.toBe(old.sessionId);
-    expect(fresh.resumed).toBeFalsy();
+    // R82: the return does not grade inline; the old chat is graded in the background.
+    const held = await request(app).post("/api/exam/session-start").set(A()).send({ caseId: 1, classId });
+    expect(held.status).toBe(409);
+    expect(held.body.error).toBe("evaluation_in_progress");
+    const deadline = Date.now() + 8000;
+    // Earlier tests may leave their own expired encounters pending; the gate holds until all of them are graded.
+    const pendingLeft = () => db.prepare("SELECT COUNT(*) n FROM vp_sessions WHERE user_id=? AND finished_at IS NULL AND attempt_id IS NULL AND review_required=0").get(student.id).n;
+    while (pendingLeft() > 0 && Date.now() < deadline) await new Promise((r) => setTimeout(r, 50));
     const row = sessionRow(old.sessionId);
     expect(row.attempt_id).toBeTruthy();
     expect(transcriptOf(row.attempt_id)).toContain("BEFORE-EXPIRY-MARK");
+    const fresh = await start();
+    expect(fresh.sessionId).not.toBe(old.sessionId);
+    expect(fresh.resumed).toBeFalsy();
   });
 });

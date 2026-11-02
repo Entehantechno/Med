@@ -1,5 +1,5 @@
 import { sealEncounter, readEncounter } from "../lib/vp-encounter.js";
-import { evaluationFingerprint, retryScoreGet, retryScorePut, retryScoreDrop } from "../lib/vp-evaluation-retry.js";
+import { evaluationFingerprint, claimGrading, releaseGrading, markFinishRequested, recordGradingFailure, failureKind, accessRevoked, readDraft, writeDraft } from "../lib/vp-grading.js";
 import { acquireCompletion, completionBusy, publicEvaluation } from "../lib/vp-completion.js";
 /* ================================================================
    exam.js — Virtual patient chat + evaluation + flashcard submit.
@@ -23,8 +23,8 @@ import { scoreSubmittedAnswers, gradeSubmittedDeck, gradeSubmittedDeckDetailed, 
 import { getVpatientConfig, awardVpatientXp, getVpatientAiEffective, getVpatientPromptsEffective, vpatientAccess } from "../lib/vpatient.js";
 import { isEnabled } from "../lib/flags.js";
 import { audit } from "../lib/audit.js";
-import { startSession, getSession, finishSession, loggingEnabledFor, serverElapsedSec, invalidStartRequestId } from "../lib/vplogging.js";
-import { limitSecFor, deadlineOf, isExpired, savesOpen, expiredFlashRun, remainingSec, findOpenVpSession, findExpiredOpenVp, findOpenFlashSession, findExpiredOpenFlash, flashRemaining, readVpProgress, saveVpProgress, readFlashProgress, saveFlashProgress, closeFlashProgress } from "../lib/timed-session.js";
+import { startSession, getSession, finishSession, loggingEnabledFor, serverElapsedSec, invalidStartRequestId, preserveEncounterLog } from "../lib/vplogging.js";
+import { limitSecFor, deadlineOf, isExpired, savesOpen, expiredFlashRun, remainingSec, findOpenVpSession, findGradingPending, findOpenFlashSession, findExpiredOpenFlash, flashRemaining, readVpProgress, saveVpProgress, readFlashProgress, saveFlashProgress, closeFlashProgress } from "../lib/timed-session.js";
 import { normalizeRubric, parseClassRubric } from "../lib/grading-rubric.js";
 import { parseReferenceSnapshot, referenceSnapshotForPolicy, referencePromptContract, decorateMicrolearning, publicReferenceSnapshot, selectedReferenceSnapshot } from "../lib/reference-governance.js";
 
@@ -351,11 +351,15 @@ r.post("/session-start", authRequired, async (req, res) => {
   // as it stood first. A quick return therefore never opens a second attempt.
   // A previous encounter that is still being settled blocks a new one: starting over it
   // used to orphan its saved chat. Once its retries are spent it is closed (kept as a log).
-  const stale = findExpiredOpenVp({ userId: req.user.id, caseId: caseData.id, classId: ownerClassId, examId: ownerExamId, studyId, lang });
-  if (stale) {
-    const { settleExpiredEncounter } = await import("../lib/timed-expiry.js");
-    const settled = await settleExpiredEncounter(stale);
-    if (settled.status === "pending") return res.status(409).json({
+  // A finished or timed-out encounter that is not graded yet blocks a new one. Grading
+  // runs in the background (never held open for this request), so the student retries.
+  const pending = findGradingPending({ userId: req.user.id, caseId: caseData.id, classId: ownerClassId, examId: ownerExamId, studyId, lang });
+  if (pending) {
+    if (pending.next_try_ms == null || Number(pending.next_try_ms) <= Date.now()) {
+      const { kickGrading } = await import("../lib/timed-expiry.js");
+      kickGrading(pending);
+    }
+    return res.status(409).json({
       error: "evaluation_in_progress", stage: "session", retryable: true,
       message_fa: "جلسهٔ قبلی هنوز ثبت نهایی نشده است؛ چند لحظه بعد دوباره تلاش کنید. گفتگوی شما ذخیره شده است.",
       message_en: "Your previous encounter is still being recorded. Try again shortly; your conversation is saved.",
@@ -418,9 +422,10 @@ r.post("/session-abandon", authRequired, (req, res) => {
   const owned = getSession(sessionId);
   if (!owned) return res.status(404).json({ error: "session_not_found", stage: "session" });
   if (Number(owned.user_id) !== Number(req.user.id)) return res.status(403).json({ error: "not_your_session", stage: "session" });
-  if (owned.finished_at) return res.json({ ok: true, resumable: false, stored: 0 });
   // A grading run in progress owns this encounter: leaving must not race it.
   if (completionBusy(req.user.id, owned.case_id)) return res.status(409).json({ error: "evaluation_in_progress", stage: "session", retryable: true });
+  // Finished, or finish requested: the server grades it without the student. Nothing to keep open.
+  if (owned.finished_at || owned.finish_requested_ms) return res.json({ ok: true, resumable: false, stored: 0 });
   const consent = assertConsent(req.user, { classId: owned.class_id, examId: owned.exam_id });
   if (!consent.ok) return denyAccess(res, { ...consent, allowed: false }, "session");
   const study = studyForContext({ classId: owned.class_id, examId: owned.exam_id });
@@ -449,6 +454,7 @@ r.put("/session-progress", authRequired, (req, res) => {
   if (!owned) return res.status(404).json({ error: "session_not_found", stage: "session" });
   if (Number(owned.user_id) !== Number(req.user.id)) return res.status(403).json({ error: "not_your_session", stage: "session" });
   if (owned.finished_at) return res.status(409).json({ error: "session_closed", stage: "session" });
+  if (owned.finish_requested_ms) return res.status(409).json({ error: "finish_requested", stage: "session", retryable: false });
   if (completionBusy(req.user.id, owned.case_id)) return res.status(409).json({ error: "evaluation_in_progress", stage: "session", retryable: true });
   if (!savesOpen(owned)) return res.status(409).json({ error: "session_expired", stage: "session", remainingSec: 0 });
   const study = studyForContext({ classId: owned.class_id, examId: owned.exam_id });
@@ -523,6 +529,8 @@ function interactionContext(req, res, stage) {
     res.status(409).json({ error: "session_context_mismatch", stage }); return null;
   }
   if (session.finished_at) { res.status(409).json({ error: "session_closed", stage }); return null; }
+  // Finish was pressed: the transcript is frozen and waiting for grading. No more turns.
+  if (session.finish_requested_ms) { res.status(409).json({ error: "finish_requested", stage, retryable: false }); return null; }
   if (isExpired(session)) { res.status(409).json({ error: "session_expired", stage, remainingSec: 0 }); return null; }
   const context = { classId: session.class_id, examId: session.exam_id };
   if (Number(session.study_id || 0) !== Number(studyForContext(context)?.id || 0)) {
@@ -610,9 +618,67 @@ r.post("/order", authRequired, async (req, res) => {
 });
 
 /* ---- Finish exam -> evaluate + store attempt ---- */
-/* Grades one encounter. Shared by POST /evaluate and by the expiry sweeper
-   (lib/timed-expiry.js), so an expired encounter is judged by the same code. */
+/* The student's finish (POST /evaluate) and the background grader (lib/timed-expiry.js)
+   both come through here. An open encounter is frozen at the student's finish, claimed by
+   one run at a time, and a failed run is kept for retry: the chat is never closed by a
+   failure, and the student does not have to stay on the page. */
+const isDurableScore = (r) => r?.source === "llm" && !r?.scoreFallback;
+
+function captureResponse(res, outcome) {
+  const status = res.status.bind(res);
+  res.status = (code) => { outcome.status = code; return status(code); };
+  const json = res.json.bind(res);
+  res.json = (body) => { outcome.body = body; return json(body); };
+  return res;
+}
+
 async function evaluateRoute(req, res) {
+  const session = req.body?.sessionId ? getSession(req.body.sessionId) : null;
+  const open = !!session && !session.finished_at && Number(session.user_id) === Number(req.user.id);
+  if (!open) return gradeEncounter(req, res);
+  const now = Date.now();
+  if (session.review_required) return res.status(409).json({
+    error: "under_staff_review", stage: "evaluate", retryable: false,
+    message_fa: "این گفتگو برای بررسی مدیر ارسال شده است. گفتگوی شما حفظ شده و نیازی به ارسال دوباره نیست.",
+    message_en: "This conversation was sent to staff for review. It is kept on record; no need to resend.",
+  });
+  if (!req.systemGrading) {
+    // The student's finish (or retry of it). While the time is open, the snapshot they send is the
+    // one graded; after the deadline the snapshot kept at the first finish is frozen and graded.
+    const body = req.body?.session && typeof req.body.session === "object" ? req.body.session : null;
+    if (body && savesOpen(session, now)) {
+      const events = session.logging_enabled && Array.isArray(req.body.events) ? req.body.events : null;
+      const saved = saveVpProgress(session.id, events ? { ...body, events } : body);
+      if (!saved.ok) return res.status(413).json({ error: saved.error, stage: "evaluate" });
+    }
+    if (!session.finish_requested_ms) markFinishRequested(session.id, now);
+  }
+  const token = claimGrading(session.id, now);
+  if (!token) return res.status(409).json({
+    error: "evaluation_in_progress", stage: "evaluate", retryable: true,
+    message_fa: "ارزیابی این برخورد هنوز در حال انجام است؛ کمی صبر کنید و دوباره دریافت نتیجه را امتحان کنید.",
+    message_en: "This encounter is still being evaluated. Wait briefly, then retry to retrieve the result.",
+  });
+  const outcome = { status: 200, body: null };
+  try {
+    await gradeEncounter(req, captureResponse(res, outcome));
+  } finally {
+    releaseGrading(session.id, token);
+    if (outcome.status >= 400) {
+      const error = outcome.body?.error || `status_${outcome.status}`;
+      const kind = failureKind(outcome.status, outcome.body?.error);
+      if (kind !== "busy") {
+        const fresh = getSession(session.id);
+        if (fresh && !fresh.finished_at && !accessRevoked(outcome.status, outcome.body?.error)) {
+          preserveEncounterLog(fresh, readVpProgress(fresh).events);
+        }
+        recordGradingFailure(session.id, { error, kind });
+      }
+    }
+  }
+}
+
+async function gradeEncounter(req, res) {
   let releaseCompletion;
   const acceptedAt = Date.now();
   try {
@@ -658,10 +724,13 @@ async function evaluateRoute(req, res) {
     message_fa: "ارزیابی این برخورد هنوز در حال انجام است؛ کمی صبر کنید و دوباره دریافت نتیجه را امتحان کنید.",
     message_en: "This encounter is still being evaluated. Wait briefly, then retry to retrieve the result."
   });
-  // R64: after the deadline the attempt is judged on the snapshot saved while the
-  // student was still working, with the server-side time limit (client body ignored).
-  const storedSnapshot = vpSession && !vpSession.finished_at && isExpired(vpSession) ? readVpProgress(vpSession) : null;
-  if (storedSnapshot) { events = storedSnapshot.events; durationSec = vpSession.limit_sec || durationSec; }
+  // The saved snapshot is the graded record: frozen at the student's finish, or the last
+  // autosave when the time ran out. After the deadline the server's time limit applies.
+  const storedSnapshot = vpSession && !vpSession.finished_at ? readVpProgress(vpSession) : null;
+  if (storedSnapshot) {
+    events = storedSnapshot.events;
+    if (isExpired(vpSession)) durationSec = vpSession.limit_sec || durationSec;
+  }
   const session = storedSnapshot ? storedSnapshot.session
     : ((req.body?.session && typeof req.body.session === "object") ? req.body.session : {});
   const pinned = vpSession ? encounterOrDeny(res, vpSession, "evaluate") : null;
@@ -735,26 +804,32 @@ async function evaluateRoute(req, res) {
     return res.status(503).json({
     failureCode, elapsedMs: Math.max(0, Date.now() - acceptedAt),
     error: "ai_evaluation_unavailable", stage: "evaluate", aiStage,
-    retryable: true, attemptStored: false,
-    message_fa: "ارزیابی هوش مصنوعی کامل نشد؛ نمره نهایی ثبت نشده و فرصتی کسر نشده است. پس از رفع مشکل دوباره ارزیابی کنید.",
-    message_en: "AI evaluation is incomplete. No final grade was saved or attempt consumed. Retry after the issue is resolved.",
+    retryable: true, attemptStored: false, queued: !!vpSession,
+    message_fa: vpSession
+      ? "گفتگوی شما ذخیره شد و در صف ارزیابی قرار گرفت. سیستم بدون نیاز به حضور شما ارزیابی را ادامه می‌دهد و نتیجه در کارنامه‌تان ظاهر می‌شود."
+      : "ارزیابی هوش مصنوعی کامل نشد؛ نمره نهایی ثبت نشده و فرصتی کسر نشده است. پس از رفع مشکل دوباره ارزیابی کنید.",
+    message_en: vpSession
+      ? "Your conversation is saved and queued for evaluation. The system finishes it without you; the result appears in your record."
+      : "AI evaluation is incomplete. No final grade was saved or attempt consumed. Retry after the issue is resolved.",
   });
   };
   if (requireAi && !aiCfg?.apiKey) return aiUnavailable("configuration");
 
-  // Bind the ephemeral retry checkpoint to the owned session and every input
+  // Bind the stored draft to the owned session and every input
   // affecting judgment. A changed encounter, rubric, model or key re-grades.
   const fingerprint = evaluationFingerprint({ user: req.user.id, ver: req.user.ver, role: req.user.role,
     sessionId, caseData, checklist, session, lang, gradingScope, gradingRubric,
     classId, examId, studyId: acceptedStudyId, aiCfg, prompts });
   const scoringStartedAt = Date.now();
-  const cached = vpSession ? retryScoreGet(sessionId, req.user.id, fingerprint) : null;
+  const draft = vpSession ? readDraft(vpSession) : null;
+  const cached = draft && draft.fingerprint === fingerprint ? draft : null;
   let evalResult = cached?.result || evaluate({ caseData, checklist, session, lang, scope: gradingScope, rubric: gradingRubric });
   if (!cached) evalResult = await scoreChecklistWithLLM({ base: evalResult, caseData, checklist, session, lang, aiCfg });
-  if (!recheckEvaluationAccess()) { retryScoreDrop(sessionId, req.user.id); return; }
+  if (!recheckEvaluationAccess()) return;
   const scoringRoute = cached?.scoringRoute || (aiCfg.lastRoute ? { ...aiCfg.lastRoute } : null);
   if (requireAi && (evalResult.source !== "llm" || evalResult.scoreFallback)) return aiUnavailable("checklist", evalResult.scoreFallback);
-  if (!cached && vpSession) retryScorePut(sessionId, req.user.id, fingerprint, { result: evalResult, scoringRoute });
+  // AI output is kept as soon as it exists, so a retry never pays for it twice.
+  if (!cached && vpSession && isDurableScore(evalResult)) writeDraft(vpSession.id, { fingerprint, result: evalResult, scoringRoute });
   const checklistMs = Math.max(0, Date.now() - scoringStartedAt);
   const lessonStartedAt = Date.now();
   // 3) Enrich the qualitative feedback + personalized micro-lesson with the LLM.
@@ -768,13 +843,13 @@ async function evaluateRoute(req, res) {
       referenceSnapshot, referenceContract,
     });
     if (requireAi && (evalResult.feedbackSource !== "llm" || evalResult.feedbackFallback)) return aiUnavailable("lesson", evalResult.feedbackFallback);
-    if (vpSession && evalResult.feedbackSource === "llm" && !evalResult.feedbackFallback) {
-      // Stored before any mutation below; retryScorePut clones the value.
-      retryScorePut(sessionId, req.user.id, fingerprint, { result: cached?.result || checklistResult, scoringRoute, enriched: evalResult });
+    const checklistDurable = isDurableScore(cached?.result || checklistResult);
+    if (vpSession && checklistDurable && evalResult.feedbackSource === "llm" && !evalResult.feedbackFallback) {
+      writeDraft(vpSession.id, { fingerprint, result: cached?.result || checklistResult, scoringRoute, enriched: evalResult });
     }
   }
   if (requireAi && (evalResult.feedbackSource !== "llm" || evalResult.feedbackFallback)) return aiUnavailable("lesson", evalResult.feedbackFallback);
-  if (!recheckEvaluationAccess()) { retryScoreDrop(sessionId, req.user.id); return; }
+  if (!recheckEvaluationAccess()) return;
   evalResult.microlearning = decorateMicrolearning(evalResult.microlearning, referenceSnapshot, lang);
   evalResult.reference = publicReferenceSnapshot(referenceSnapshot);
   const latestSettings = getSetting("exam", {});
@@ -937,7 +1012,6 @@ async function evaluateRoute(req, res) {
     }
   }
 
-  retryScoreDrop(sessionId, req.user.id);
   res.json({ attemptId: info.lastInsertRowid, ...out });
   } catch (e) {
     res.status(500).json({ error: "evaluate_failed", stage: "evaluate", message: String(e.message || e).slice(0, 200) });

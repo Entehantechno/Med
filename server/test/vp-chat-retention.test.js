@@ -1,4 +1,5 @@
 // A virtual-patient chat must never disappear because grading failed.
+// (The full lifecycle, including retries, staff review and leaving, is in vp-lifecycle.test.js.)
 // Before the fix, an expired encounter whose settlement failed stayed open, and the next
 // start opened a NEW encounter: the saved chat vanished from the student's view, and no
 // interaction log was written for the teacher.
@@ -8,7 +9,7 @@ import request from "supertest";
 import { db, initDb } from "../src/db.js";
 import { createApp } from "../src/app.js";
 import { signToken } from "../src/lib/auth.js";
-import { expireVpSessions, MAX_SETTLE_TRIES } from "../src/lib/timed-expiry.js";
+import { expireVpSessions } from "../src/lib/timed-expiry.js";
 
 let app, student, teacher;
 const A = () => ({ Authorization: `Bearer ${student.token}` });
@@ -67,67 +68,5 @@ describe("virtual-patient chat survives a failed settlement", () => {
     expect(again.body.retryable).toBe(true);
     const open = db.prepare("SELECT COUNT(*) n FROM vp_sessions WHERE user_id=? AND class_id=? AND finished_at IS NULL").get(student.id, classId).n;
     expect(open).toBe(1);
-  });
-
-  it("closes an encounter once its retries are spent, keeping the log", async () => {
-    const classId = newClass("b");
-    db.prepare("INSERT INTO class_members(class_id,user_id) VALUES (?,?)").run(classId, student.id);
-    db.prepare("INSERT INTO class_cases(class_id,case_id) VALUES (?,?)").run(classId, 1);
-    const first = (await start(classId)).body;
-    expect((await save(first.sessionId, "LOG-ME")).status).toBe(200);
-    expire(first.sessionId, MAX_SETTLE_TRIES - 1);
-    await expireVpSessions();                                      // the last allowed try fails
-    const r = row(first.sessionId);
-    expect(r.finished_at).toBeTruthy();                            // closed: no longer an open orphan
-    expect(r.attempt_id).toBeNull();                               // unscored, but kept
-    expect(logCount(first.sessionId)).toBe(1);
-    // After closing, the student may start a fresh encounter in the same class.
-    expect((await start(classId)).status).toBe(200);
-  });
-
-  it("grades later without duplicating the log when the provider recovers", async () => {
-    const classId = newClass("c");
-    db.prepare("INSERT INTO class_members(class_id,user_id) VALUES (?,?)").run(classId, student.id);
-    db.prepare("INSERT INTO class_cases(class_id,case_id) VALUES (?,?)").run(classId, 1);
-    const first = (await start(classId)).body;
-    expect((await save(first.sessionId, "LATER-OK")).status).toBe(200);
-    expire(first.sessionId);
-    await expireVpSessions();                                     // provider down: preserved, not graded
-    expect(logCount(first.sessionId)).toBe(1);
-
-    vi.stubEnv("VP_REQUIRE_AI_EVALUATION", "0");                  // provider back
-    const sweep = await expireVpSessions();
-    expect(sweep.finalized).toBeGreaterThanOrEqual(1);
-    const r = row(first.sessionId);
-    expect(r.attempt_id).toBeTruthy();
-    expect(r.finished_at).toBeTruthy();
-    expect(logCount(first.sessionId)).toBe(1);                    // replaced, not appended
-  });
-
-  it("lists an unsettled chat in the teacher inbox and records attempt deletions", async () => {
-    const classId = newClass("d");
-    db.prepare("INSERT INTO class_members(class_id,user_id) VALUES (?,?)").run(classId, student.id);
-    db.prepare("INSERT INTO class_cases(class_id,case_id) VALUES (?,?)").run(classId, 1);
-    const first = (await start(classId)).body;
-    expect((await save(first.sessionId, "INBOX-ME")).status).toBe(200);
-    expire(first.sessionId);
-    await expireVpSessions();
-
-    const teacherRow = db.prepare("SELECT * FROM users WHERE username='teacher'").get();
-    const T = { Authorization: `Bearer ${signToken(teacherRow)}` };
-    const inbox = await request(app).get("/api/classes/conversations").set(T);
-    expect(inbox.status).toBe(200);
-    const hit = inbox.body.unsettled.find((x) => x.session_id === first.sessionId);
-    expect(hit).toBeTruthy();
-    expect(hit.events).toBe(1);
-    expect(hit.closed).toBe(false);
-
-    // Deleting a graded attempt leaves a named trace in the audit log.
-    const attemptId = db.prepare("INSERT INTO attempts (user_id,type,case_id,class_id,score,eval_json) VALUES (?,?,?,?,?,?)")
-      .run(student.id, "vp", 1, classId, 10, "{}").lastInsertRowid;
-    const del = await request(app).delete(`/api/reports/attempts/${attemptId}`).set(T);
-    expect(del.status).toBe(200);
-    const trace = db.prepare("SELECT action FROM audit_log WHERE action='attempt.delete' AND resource=?").get(`attempts:${attemptId}`);
-    expect(trace).toBeTruthy();
   });
 });

@@ -54,6 +54,7 @@ export function findOpenVpSession({ userId, caseId, classId = null, examId = nul
     `SELECT * FROM vp_sessions
       WHERE user_id=? AND case_id=? AND IFNULL(class_id,0)=? AND IFNULL(exam_id,0)=?
         AND IFNULL(study_id,0)=? AND lang=? AND finished_at IS NULL AND attempt_id IS NULL
+        AND finish_requested_ms IS NULL AND review_required=0
       ORDER BY id DESC LIMIT 1`
   ).get(Number(userId), Number(caseId), Number(classId || 0), Number(examId || 0),
         Number(studyId || 0), lang === "en" ? "en" : "fa");
@@ -61,17 +62,18 @@ export function findOpenVpSession({ userId, caseId, classId = null, examId = nul
   return row;
 }
 
-/* The open encounter whose deadline has passed but which no sweep has finalized yet.
-   Settled before a new start, so a quick return never opens a second attempt. */
-export function findExpiredOpenVp({ userId, caseId, classId = null, examId = null, studyId = null, lang = "fa", now = Date.now() }) {
-  const row = db.prepare(
+/* An encounter the student finished, or whose time ran out, that still has no attempt and
+   is not under staff review. The student cannot start a new one over it until it is graded. */
+export function findGradingPending({ userId, caseId, classId = null, examId = null, studyId = null, lang = "fa", now = Date.now() }) {
+  return db.prepare(
     `SELECT * FROM vp_sessions
       WHERE user_id=? AND case_id=? AND IFNULL(class_id,0)=? AND IFNULL(exam_id,0)=?
         AND IFNULL(study_id,0)=? AND lang=? AND finished_at IS NULL AND attempt_id IS NULL
+        AND review_required=0
+        AND (finish_requested_ms IS NOT NULL OR (deadline_ms IS NOT NULL AND deadline_ms < ?))
       ORDER BY id DESC LIMIT 1`
   ).get(Number(userId), Number(caseId), Number(classId || 0), Number(examId || 0),
-        Number(studyId || 0), lang === "en" ? "en" : "fa");
-  return row && isExpired(row, now) ? row : null;
+        Number(studyId || 0), lang === "en" ? "en" : "fa", now) || null;
 }
 
 export function findExpiredOpenFlash({ userId, contextKey, now = Date.now() }) {
