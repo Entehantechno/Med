@@ -2508,12 +2508,9 @@ export function initSchema() {
   migrateR63(db);
   // R64: ECG back to one criterion; history/exam/symptom criteria split for partial credit.
   migrateR64(db);
-  db.exec(`CREATE TRIGGER IF NOT EXISTS cases_academic_insert BEFORE INSERT ON cases
-    WHEN json_valid(NEW.data_json) AND json_extract(NEW.data_json,'$.track')='learn'
-    BEGIN SELECT RAISE(ABORT, 'virtual_patient_university_only'); END;
-    CREATE TRIGGER IF NOT EXISTS cases_academic_update BEFORE UPDATE OF data_json ON cases
-    WHEN json_valid(NEW.data_json) AND json_extract(NEW.data_json,'$.track')='learn'
-    BEGIN SELECT RAISE(ABORT, 'virtual_patient_university_only'); END;`);
+  // R76: the competitive virtual patient is revived (admin-enabled). The R49 triggers that
+  // rejected learn-track cases are dropped so the admin VP library can save them again.
+  db.exec(`DROP TRIGGER IF EXISTS cases_academic_insert; DROP TRIGGER IF EXISTS cases_academic_update;`);
 
   markEngineVersion();
 }

@@ -1,6 +1,5 @@
-// Admin VP settings: the working toggles save, read back, and restore; learners cannot write them.
-// `enabled` is intentionally NOT covered here: lib/vpatient.js forces it to false (academic-only,
-// R49). Whether competitive learners get the feature back is a product decision, so that test waits.
+// Admin VP settings: every toggle (including the master switch) saves, reads back, and restores;
+// learners cannot write them.
 import { describe, it, expect, beforeAll } from "vitest";
 import { execSync } from "child_process";
 import request from "supertest";
@@ -20,11 +19,12 @@ beforeAll(async () => {
 describe("admin VP config round trip", () => {
   it("saves each toggle, reads it back, and restores it", async () => {
     const admin = (await login("admin")).body.token;
-    const on = { premium_only: false, in_path: true, in_daily: true, daily_gems: 15 };
-    const off = { premium_only: true, in_path: false, in_daily: false, daily_gems: 0 };
+    const on = { enabled: true, premium_only: false, in_path: true, in_daily: true, daily_gems: 15 };
+    const off = { enabled: false, premium_only: true, in_path: false, in_daily: false, daily_gems: 0 };
 
     const putOff = await request(app).put("/api/admin/vpatient").set(A(admin)).send({ config: off });
     expect(putOff.status).toBe(200);
+    expect(putOff.body.config.enabled).toBe(false);
     const readOff = await request(app).get("/api/admin/vpatient").set(A(admin));
     expect(readOff.body.config).toMatchObject(off);
 

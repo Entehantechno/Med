@@ -17,6 +17,13 @@ let app;
 function login(username, password) {
   return request(app).post("/api/auth/login").send({ username, password });
 }
+// A fresh seed has no competitive (learn-track) cases. Clone one university case through the
+// admin library import, the same path an admin uses, and return the new competitive case id.
+let LEARN = 0;
+async function freshLearnCaseId(atk) {
+  await request(app).post("/api/admin/vpatient/import-cases").set("Authorization", `Bearer ${atk}`).send({ ids: [3] });
+  return db.prepare("SELECT id FROM cases WHERE json_extract(data_json,'$.track')='learn' ORDER BY id DESC LIMIT 1").get().id;
+}
 async function token(username, password = "demo") {
   const res = await login(username, password);
   return res.body.token;
@@ -1715,9 +1722,8 @@ describe("TWA / Android app (assetlinks)", () => {
   });
 });
 
-// Competitive virtual patient is RETIRED (R49): /api/admin/vpatient answers 410 and the
-// academic-track triggers block competitive cases. These blocks are kept for history, not run.
-describe.skip("Virtual Patient (competitive) gating", () => {
+describe("Virtual Patient (competitive) gating", () => {
+  beforeAll(async () => { LEARN = await freshLearnCaseId(await token("admin")); });
   it("is OFF for learners by default", async () => {
     const ltk = await token("learner");
     const res = await request(app).get("/api/learn/vpatient").set("Authorization", `Bearer ${ltk}`);
@@ -1759,13 +1765,13 @@ describe.skip("Virtual Patient (competitive) gating", () => {
       .send({ config: { enabled: false } });
     const ltk = await token("learner");
     const res = await request(app).post("/api/exam/patient-reply").set("Authorization", `Bearer ${ltk}`)
-      .send({ caseId: 3, userText: "سلام", history: [], lang: "fa" });
+      .send({ caseId: LEARN, userText: "سلام", history: [], lang: "fa" });
     expect(res.status).toBe(403);
     // turn it back ON (open) → learner can play the competitive-track case
     await request(app).put("/api/admin/vpatient").set("Authorization", `Bearer ${atk}`)
       .send({ config: { enabled: true, premium_only: false } });
     const ok = await request(app).post("/api/exam/patient-reply").set("Authorization", `Bearer ${ltk}`)
-      .send({ caseId: 3, userText: "سلام", history: [], lang: "fa" });
+      .send({ caseId: LEARN, userText: "سلام", history: [], lang: "fa" });
     expect(ok.status).toBe(200);
     expect(ok.body.text).toBeTruthy();
     expect(ok.body.source).toBe("mock");   // deterministic (no AI key) — zero cost
@@ -1789,18 +1795,17 @@ describe.skip("Virtual Patient (competitive) gating", () => {
   });
 });
 
-// Competitive virtual patient is RETIRED (R49): /api/admin/vpatient answers 410 and the
-// academic-track triggers block competitive cases. These blocks are kept for history, not run.
-describe.skip("Virtual Patient — ranking XP (auto-evaluator → XP)", () => {
+describe("Virtual Patient — ranking XP (auto-evaluator → XP)", () => {
   let atk, ltk, uid;
   beforeAll(async () => {
     atk = await token("admin");
+    LEARN = await freshLearnCaseId(atk);
     const lg = await login("learner", "demo");
     ltk = lg.body.token; uid = lg.body.user.id;
     // open the feature + XP on, and set case #1 cap to 200 for predictable math
     await request(app).put("/api/admin/vpatient").set("Authorization", `Bearer ${atk}`)
       .send({ config: { enabled: true, premium_only: false, award_xp: true, default_xp_max: 120 } });
-    await request(app).put("/api/admin/vpatient/cases/3").set("Authorization", `Bearer ${atk}`)
+    await request(app).put(`/api/admin/vpatient/cases/${LEARN}`).set("Authorization", `Bearer ${atk}`)
       .send({ xp_max: 200 });
     // reset this learner's best-score record for the competitive case
     const { db } = await import("../src/db.js");
@@ -1813,12 +1818,12 @@ describe.skip("Virtual Patient — ranking XP (auto-evaluator → XP)", () => {
     tests: ["دی‌دایمر"], imaging: ["CTPA"], ddx: ["PE", "آمبولی ریه"], finalDx: "Pulmonary embolism آمبولی ریه",
   };
   const evalCase = (session) => request(app).post("/api/exam/evaluate")
-    .set("Authorization", `Bearer ${ltk}`).send({ caseId: 3, lang: "fa", session });
+    .set("Authorization", `Bearer ${ltk}`).send({ caseId: LEARN, lang: "fa", session });
 
   it("admin can list per-case XP caps (case 3 shows 200)", async () => {
     const res = await request(app).get("/api/admin/vpatient/cases?lang=fa").set("Authorization", `Bearer ${atk}`);
     expect(res.status).toBe(200);
-    const c1 = res.body.cases.find((c) => c.id === 3);
+    const c1 = res.body.cases.find((c) => c.id === LEARN);
     expect(c1.xp_max).toBe(200);
     expect(c1.effective).toBe(200);
   });
@@ -1878,9 +1883,8 @@ describe.skip("Virtual Patient — ranking XP (auto-evaluator → XP)", () => {
   });
 });
 
-// Competitive virtual patient is RETIRED (R49): /api/admin/vpatient answers 410 and the
-// academic-track triggers block competitive cases. These blocks are kept for history, not run.
-describe.skip("Virtual Patient — separate AI config + prompts", () => {
+describe("Virtual Patient — separate AI config + prompts", () => {
+  beforeAll(async () => { LEARN = await freshLearnCaseId(await token("admin")); });
   let atk, ltk;
   beforeAll(async () => {
     atk = await token("admin");
@@ -1927,7 +1931,7 @@ describe.skip("Virtual Patient — separate AI config + prompts", () => {
 
   it("a competitive learner's play uses the engine (mock, no key) and works", async () => {
     const res = await request(app).post("/api/exam/patient-reply").set("Authorization", `Bearer ${ltk}`)
-      .send({ caseId: 3, userText: "سلام", history: [], lang: "fa" });
+      .send({ caseId: LEARN, userText: "سلام", history: [], lang: "fa" });
     expect(res.status).toBe(200);
     expect(res.body.text).toBeTruthy();
     expect(res.body.source).toBe("mock");
@@ -1943,9 +1947,7 @@ describe.skip("Virtual Patient — separate AI config + prompts", () => {
   });
 });
 
-// Competitive virtual patient is RETIRED (R49): /api/admin/vpatient answers 410 and the
-// academic-track triggers block competitive cases. These blocks are kept for history, not run.
-describe.skip("Virtual Patient — import from university library", () => {
+describe("Virtual Patient — import from university library", () => {
   let atk;
   beforeAll(async () => { atk = await token("admin"); });
 
@@ -6044,9 +6046,7 @@ describe("Catalogs, profile fields, nickname & anonymous identity", () => {
    provider-specific headers, response parsing, and error surfacing —
    WITHOUT needing a paid key. (The mock/no-key path is tested elsewhere.)
    ================================================================ */
-// Competitive virtual patient is RETIRED (R49): /api/admin/vpatient answers 410 and the
-// academic-track triggers block competitive cases. These blocks are kept for history, not run.
-describe.skip("Real AI provider call path (mocked fetch — OpenAI-compatible)", () => {
+describe("Real AI provider call path (mocked fetch — OpenAI-compatible)", () => {
   let atk, ltk;
   const realFetch = global.fetch;
   let captured = null;
@@ -6054,6 +6054,7 @@ describe.skip("Real AI provider call path (mocked fetch — OpenAI-compatible)",
   beforeAll(async () => {
     atk = await token("admin");
     ltk = await token("learner");
+    LEARN = await freshLearnCaseId(atk);
   });
   afterAll(() => { global.fetch = realFetch; });
 
@@ -6095,7 +6096,7 @@ describe.skip("Real AI provider call path (mocked fetch — OpenAI-compatible)",
     await request(app).put("/api/admin/vpatient").set("Authorization", `Bearer ${atk}`)
       .send({ config: { enabled: true, premium_only: false } }).catch(() => {});
     const res = await request(app).post("/api/exam/patient-reply").set("Authorization", `Bearer ${ltk}`)
-      .send({ caseId: 3, userText: "درد به جای دیگری هم می‌زند؟", history: [], lang: "fa" });
+      .send({ caseId: LEARN, userText: "درد به جای دیگری هم می‌زند؟", history: [], lang: "fa" });
     expect(res.status).toBe(200);
     expect(res.body.source).toBe("llm");
     expect(res.body.text).toContain("بازوی چپ");
@@ -6112,7 +6113,7 @@ describe.skip("Real AI provider call path (mocked fetch — OpenAI-compatible)",
   it("a provider error degrades the STUDENT flow to mock gracefully (no crash)", async () => {
     mockProvider({ ok: false, status: 500 });
     const res = await request(app).post("/api/exam/patient-reply").set("Authorization", `Bearer ${ltk}`)
-      .send({ caseId: 3, userText: "سلام", history: [], lang: "fa" });
+      .send({ caseId: LEARN, userText: "سلام", history: [], lang: "fa" });
     expect(res.status).toBe(200);
     expect(res.body.text).toBeTruthy();          // learner still gets a reply
     expect(res.body.source).toBe("mock");        // fell back safely

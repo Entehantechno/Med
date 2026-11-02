@@ -49,8 +49,16 @@ import { getProfile } from "../lib/gamify.js";
 // times, which pollutes the class gradebook and (for a research study) destroys
 // the one-attempt-per-student guarantee the analysis relies on.
 function hasAccess(user, caseId, classId, examId, acceptedAt = Date.now()) {
-  // Virtual patients are academic-only, including requests from old clients.
-  if (['learner', 'content_manager', 'support'].includes(user.role)) return { allowed: false, reason: 'university_only' };
+  // Competitive learners reach virtual patients through the gated learner feature, NOT class or
+  // exam assignments: learn-track cases only, and only while the admin config grants access.
+  // Learners are deliberately unlimited (the best-score XP policy handles farming).
+  if (user.role === "learner") {
+    if (classId || examId || !caseIsLearn(caseId)) return { allowed: false, reason: "university_only" };
+    const vp = vpatientAccess(getProfile(user.id), user.role);
+    if (!vp.ok) return { allowed: false, reason: vp.reason || "off" };
+    return { allowed: true };
+  }
+  if (['content_manager', 'support'].includes(user.role)) return { allowed: false, reason: 'university_only' };
   if (user.role === "admin") return { allowed: true };
   if (user.role === "teacher") {
     if (caseIsLearn(caseId)) return { allowed: false, reason: "wrong_track" };

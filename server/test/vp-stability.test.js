@@ -350,7 +350,7 @@ describe("VP cycle named stages (zip 28)", () => {
   });
 
   // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
-  it.skip("learner hub GET /learn/vpatient returns JSON with enabled", async () => {
+  it("learner hub GET /learn/vpatient returns JSON with enabled", async () => {
     const ltk = await token("learner", "demo");
     const res = await request(app).get("/api/learn/vpatient").set(A(ltk));
     expect(res.status).toBe(200);
@@ -622,10 +622,12 @@ describe("zip-32 teacher results + daily reward + assignments", () => {
   });
 
   // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
-  it.skip("daily-reward with a non-daily caseId is 400 stage report", async () => {
+  it("daily-reward with a non-daily caseId is 400 stage report", async () => {
     const atk = await token("admin");
     await request(app).put("/api/admin/vpatient").set(A(atk))
       .send({ config: { enabled: true, premium_only: false, in_daily: true, daily_gems: 15 } });
+    // a fresh seed has no competitive case; import one so there is a case of the day to compare against
+    await request(app).post("/api/admin/vpatient/import-cases").set(A(atk)).send({ ids: [1] });
     const ltk = await token("learner");
     const r = await request(app).post("/api/learn/vpatient/daily-reward").set(A(ltk)).send({ caseId: 999999 });
     expect(r.status).toBe(400);
@@ -683,7 +685,7 @@ describe("zip-33 assigned-case home + corrupt banks", () => {
   });
 
   // RETIRED (R49): competitive/learn-track virtual patient is off; kept for history.
-  it.skip("GET /admin/vpatient/cases as admin is JSON", async () => {
+  it("GET /admin/vpatient/cases as admin is JSON", async () => {
     const atk = await token("admin");
     const r = await request(app).get("/api/admin/vpatient/cases").set(A(atk));
     expect(r.status).toBe(200);

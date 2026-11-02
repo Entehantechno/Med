@@ -2223,12 +2223,67 @@ r.post("/premium/cancel", ...learner, (req, res) => {
 });
 
 /* ---------------- Virtual Patient (competitive side) ----------------
-   Gated by the `virtual_patient` flag + an admin config (enabled / premium_only).
+   Gated by the `virtual_patient` flag + the admin config (enabled / premium_only).
    The actual play (chat, orders, evaluation) reuses the shared /exam engine.
    Here we expose: access status, the playable case list, and the case of the
    day for the daily challenge + a reward hook on completion. */
-r.all('/vpatient', ...learner, (req,res) => res.status(410).json({ error: 'university_only', enabled: false, cases: [] }));
-r.all('/vpatient/daily-reward', ...learner, (req,res) => res.status(410).json({ error: 'university_only' }));
+r.get("/vpatient", ...learner, async (req, res) => {
+  try {
+    const { getVpatientConfig, vpatientAccess, playableCases, caseOfTheDay } = await import("../lib/vpatient.js");
+    const lang = req.query.lang === "en" ? "en" : "fa";
+    const access = vpatientAccess(getProfile(req.user.id), req.user.role);
+    const cfg = getVpatientConfig();
+    const out = {
+      enabled: access.reason !== "off",
+      access: access.ok,
+      reason: access.reason,           // "off" | "premium" | null
+      premium_only: cfg.premium_only,
+      in_path: cfg.in_path,
+      in_daily: cfg.in_daily,
+      daily_gems: cfg.daily_gems,
+    };
+    // only reveal the case list to learners who actually have access
+    if (access.ok) {
+      out.cases = playableCases(lang, req.user.id);
+      if (cfg.in_daily) out.daily_case_id = caseOfTheDay();
+    }
+    res.json(out);
+  } catch (e) {
+    res.status(500).json({ error: "vpatient_boot_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
+  }
+});
+
+// Reward hook, once per day after finishing the "case of the day". Server-authoritative:
+// the client cannot pick the amount, and a mismatched case id pays nothing.
+r.post("/vpatient/daily-reward", ...learner, async (req, res) => {
+  try {
+    const { vpatientAccess, getVpatientConfig, caseOfTheDay } = await import("../lib/vpatient.js");
+    const access = vpatientAccess(getProfile(req.user.id), req.user.role);
+    if (!access.ok) return res.status(403).json({ error: access.reason || "unavailable", stage: "boot" });
+    const cfg = getVpatientConfig();
+    if (!cfg.in_daily) return res.status(400).json({ error: "daily disabled", stage: "boot" });
+    const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Tehran" });
+    const claimedKey = `vp_daily_${req.user.id}`;
+    const row = db.prepare("SELECT value FROM settings WHERE key=?").get(claimedKey);
+    let claimed = null; try { claimed = row ? JSON.parse(row.value) : null; } catch { claimed = null; }
+    if (claimed?.day === today) {
+      return res.json({ ok: true, alreadyClaimed: true, gems: 0, profile: getProfile(req.user.id) });
+    }
+    const dailyId = caseOfTheDay();
+    if (!dailyId) return res.status(400).json({ error: "no_daily_case", stage: "report" });
+    const requested = Number(req.body?.caseId || 0);
+    if (requested && requested !== Number(dailyId)) {
+      return res.status(400).json({ error: "not_daily_case", stage: "report" });
+    }
+    const gems = Math.max(0, cfg.daily_gems | 0);
+    if (gems > 0) db.prepare("UPDATE learner_profiles SET gems=gems+? WHERE user_id=?").run(gems, req.user.id);
+    db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
+      .run(claimedKey, JSON.stringify({ day: today, caseId: dailyId }));
+    res.json({ ok: true, alreadyClaimed: false, gems, profile: getProfile(req.user.id) });
+  } catch (e) {
+    res.status(500).json({ error: "vpatient_boot_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
+  }
+});
 
 /* Learner bug report (manual) — respects bug_hunt.enabled */
 r.post("/bug-report", ...learner, (req, res) => {

@@ -14,22 +14,36 @@ const SORTS = [
 ];
 
 export default function CaseList({ go, home }) {
-  const { t, lang } = useApp();
+  const { t, lang, user } = useApp();
   const fa = lang === "fa";
   const [cases, setCases] = useState(null);
   const [loadErr, setLoadErr] = useState("");
+  const [gate, setGate] = useState("");   // learner access: "" | "off" | "premium"
   const [query, setQuery] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [sort, setSort] = useState("default");
 
+  // Learners get their list (and access state) from /learn/vpatient; staff use /cases.
+  const learner = user?.role === "learner";
   const load = () => {
     setLoadErr("");
+    setGate("");
     setCases(null);
-    api.get("/cases", { timeoutMs: 20_000, stage: "boot" })
-      .then((d) => setCases(Array.isArray(d) ? d : []))
-      .catch((e) => { setCases([]); setLoadErr(loadFailKind(e)); });
+    const opts = { timeoutMs: 20_000, stage: "boot" };
+    if (learner) {
+      api.get(`/learn/vpatient?lang=${lang}`, opts)
+        .then((d) => {
+          setGate(d.access ? "" : (d.reason === "premium" ? "premium" : "off"));
+          setCases(Array.isArray(d.cases) ? d.cases : []);
+        })
+        .catch((e) => { setCases([]); setLoadErr(loadFailKind(e)); });
+    } else {
+      api.get("/cases", opts)
+        .then((d) => setCases(Array.isArray(d) ? d : []))
+        .catch((e) => { setCases([]); setLoadErr(loadFailKind(e)); });
+    }
   };
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [lang]);
 
   // Hooks stay above the early return. Search covers only what the card shows
   // (headline, chief complaint, specialty): students never see the internal title,
@@ -64,7 +78,14 @@ export default function CaseList({ go, home }) {
           <button type="button" className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
         </div>
 
-        {loadErr ? (
+        {gate ? (
+          <div className="card center" style={{ padding: 40 }} role="status">
+            <div style={{ fontSize: 44 }}><Icon name="lock" size={30} /></div>
+            <h3 className="mt8">{gate === "premium"
+              ? (fa ? "این بخش ویژهٔ کاربران پریمیوم است" : "This section is for premium learners")
+              : (fa ? "بیمار مجازی در حال حاضر فعال نیست" : "The virtual patient is not available right now")}</h3>
+          </div>
+        ) : loadErr ? (
           <div className="card center" style={{ padding: 40 }}>
             <div style={{ fontSize: 44 }}><Icon name="warn" size={30} /></div>
             <h3 className="mt8">{fa ? "«بارگذاری فهرست پرونده‌ها» قطع شد" : "[Loading the case list] failed"}</h3>

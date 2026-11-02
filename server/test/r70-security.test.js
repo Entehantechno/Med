@@ -129,7 +129,7 @@ describe("R70 · API keys hidden and encrypted at rest", () => {
   });
 
   it("the revived admin VP-patient AI endpoints (admin-only, R72) work and never echo a key", async () => {
-    // R72 revival: /vpatient/* is open to admins again (learner routes stay 410). Masking is still required.
+    // Admin VP config is open to admins (R72 revival). Masking is still required.
     const put = await request(app).put("/api/admin/vpatient/ai").set(bearer(admin))
       .send({ provider: "OpenAI", model: "gpt-4o-mini", apiKey: "sk-vp-SECRET-7777" });
     expect(put.status).toBe(200);

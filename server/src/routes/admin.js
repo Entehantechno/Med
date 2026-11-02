@@ -62,9 +62,8 @@ import { isLearnContent } from "../lib/content-track.js";
 import { SECRET_BEARING_SETTINGS, maskStoredSettingValue, maskConfigSecrets, openConfigSecrets, serializeSettings, preserveMaskedKeys, redactForAudit } from "../lib/secret-store.js";
 
 const r = Router();
-// R72: the admin screens for the competitive virtual patient (settings, AI, prompts,
-// library) are reachable again so admins can manage them. The learner-facing
-// /learn/vpatient* routes stay retired (410 university_only, covered in vp-stability tests).
+// The competitive virtual patient (settings, AI, prompts, library) is live: admins manage it
+// here, and learners reach it through /learn/vpatient* when the admin switch is on.
 const admin = [authRequired, requireRole("admin")];      // full-admin-only
 const P = (...perms) => [authRequired, requirePerm(...perms)];   // permission-gated (ANY of the perms)
 

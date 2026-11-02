@@ -41,7 +41,7 @@ export function getVpatientConfig() {
   let saved = {};
   try { saved = row ? JSON.parse(row.value) : {}; } catch { saved = {}; }
   const cfg = { ...DEFAULT_VPATIENT, ...saved };
-  cfg.enabled = false; // Virtual patients are academic-only.
+  cfg.enabled = saved.enabled === true;   // admin switch; off until an admin turns it on
   cfg.premium_only = saved.premium_only !== false;
   cfg.in_path = saved.in_path !== false;
   cfg.in_daily = saved.in_daily !== false;
@@ -61,7 +61,7 @@ function caseXpMax(caseData) {
 
 export function saveVpatientConfig(input) {
   const cfg = {
-    enabled: false,
+    enabled: input?.enabled === true,
     premium_only: input?.premium_only !== false,
     in_path: input?.in_path !== false,
     in_daily: input?.in_daily !== false,
