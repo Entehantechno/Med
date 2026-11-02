@@ -3,7 +3,7 @@
    promotion/relegation, tiers, and achievement checks.
    Design informed by Duolingo's mechanics: XP is the shared currency that feeds
    streaks, leagues and achievements simultaneously. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { isEnabled } from "./flags.js";
 import { getGameConfig } from "./gameconfig.js";
 import { tehranDay } from "./tehran-time.js";
@@ -101,14 +101,12 @@ function refreshDerived(p) {
       p.premium_until = null;
       db.prepare("UPDATE learner_profiles SET premium=0, premium_until=NULL WHERE user_id=?")
         .run(p.user_id);
-      persistNow();
     }
   } else if (!p.premium && p.premium_until) {
     const untilMs = new Date(p.premium_until).getTime();
     if (Number.isFinite(untilMs) && untilMs > Date.now()) {
       p.premium = 1;
       db.prepare("UPDATE learner_profiles SET premium=1 WHERE user_id=?").run(p.user_id);
-      persistNow();
     }
   }
   // "Effective premium": real premium OR the premium program is switched off
@@ -157,7 +155,6 @@ function refreshDerived(p) {
   if (changed) {
     db.prepare("UPDATE learner_profiles SET hearts=?, hearts_updated=?, week_key=?, weekly_xp=? WHERE user_id=?")
       .run(p.hearts, p.hearts_updated, p.week_key, p.weekly_xp, p.user_id);
-    persistNow();
   }
   return p;
 }
@@ -208,7 +205,6 @@ export function awardXp(userId, amount, reason = "lesson", nodeId = null) {
   syncLeagueXp(userId, newWeekly);
   // ---- Streak Society: reward milestones as they're crossed (auto-grant) ----
   const milestone = checkStreakSociety(userId, streak, p.society_tier || 0);
-  persistNow();
   const out = getProfile(userId);
   return { ...out, _streak: { incremented: streakIncremented, usedFreeze, milestone }, _tierUp: tierUp };
 }
@@ -259,14 +255,12 @@ export function loseHeart(userId) {
     : (p.hearts_updated || new Date().toISOString());
   db.prepare("UPDATE learner_profiles SET hearts=?, hearts_updated=? WHERE user_id=?")
     .run(h, ts, userId);
-  persistNow();
   return getProfile(userId);
 }
 export function refillHearts(userId, cost = 0) {
   const p = getProfile(userId);
   db.prepare("UPDATE learner_profiles SET hearts=?, hearts_updated=?, gems=? WHERE user_id=?")
     .run(maxHearts(), new Date().toISOString(), Math.max(0, p.gems - cost), userId);
-  persistNow();
   return getProfile(userId);
 }
 
@@ -295,7 +289,6 @@ function ensureLeague(userId) {
   }
   db.prepare("INSERT OR IGNORE INTO league_members (league_id, user_id, xp) VALUES (?,?,?)")
     .run(leagueId, userId, p.weekly_xp);
-  persistNow();
   return leagueId;
 }
 function syncLeagueXp(userId, weeklyXp) {
@@ -372,7 +365,6 @@ export function setAnonSettings(userId, patch = {}, lang = "fa") {
   if (sets.length) {
     vals.push(userId);
     db.prepare(`UPDATE learner_profiles SET ${sets.join(", ")} WHERE user_id=?`).run(...vals);
-    persistNow();
   }
   return getAnonSettings(userId, lang);
 }
@@ -467,6 +459,5 @@ export function checkAchievements(userId) {
       newly.push(a);
     }
   }
-  persistNow();
   return newly;
 }

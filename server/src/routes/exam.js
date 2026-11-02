@@ -8,7 +8,7 @@ import { acquireCompletion, completionBusy, publicEvaluation } from "../lib/vp-c
 import { Router } from "express";
 import { createHash } from "node:crypto";
 import { effectiveFlashNoPenalty, effectiveFlashAllowChange } from "../lib/orglimits.js";
-import { db, persistNow, durableTransaction } from "../db.js";
+import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { validateBody, s as vs } from "../lib/validate.js";
 import { patientReply, evaluate, scoreChecklistWithLLM, enrichEvaluationWithLLM, labImagingResult, listAiProviders, asMessages, resolveAiConfig } from "../lib/ai-engine.js";
@@ -632,7 +632,6 @@ async function evaluateRoute(req, res) {
       const response = publicEvaluation(stored, req.user.role, showAi, showMicro);
       response.logging = { enabled: !!vpSession.logging_enabled, eventsStored: vpSession.event_count || 0, eventsDropped: 0 };
       response.reportLang = attempt.lang || stored.meta?.lang || "fa";
-      persistNow({ throwOnError: true });
       return res.json({ attemptId: attempt.id, ...response, replayed: true });
     }
     if (vpSession.finished_at) return res.status(409).json({ error: "session_closed", stage: "evaluate" });
@@ -872,7 +871,7 @@ async function evaluateRoute(req, res) {
        more than it actually spent, so take the smaller of the two; the raw
        client value stays in meta.durationSecClient so tampering is auditable. */
     const finalDuration = Math.max(0, Math.round(Math.min(durationValidated, serverElapsed)));
-    logResult = finishSession({ sessionId: vpSession.id, userId: req.user.id, events, durationSec: finalDuration, attemptId: inserted.lastInsertRowid, persist: false });
+    logResult = finishSession({ sessionId: vpSession.id, userId: req.user.id, events, durationSec: finalDuration, attemptId: inserted.lastInsertRowid });
     if (logResult.error || logResult.alreadyFinished) throw new Error("Session changed during evaluation");
     db.prepare("UPDATE attempts SET duration_sec=? WHERE id=?").run(finalDuration, inserted.lastInsertRowid);
     evalResult.meta.durationSecServer = Math.round(serverElapsed);
@@ -887,7 +886,6 @@ async function evaluateRoute(req, res) {
       studyId, userId: req.user.id, eventType: "session_finished",
       contextType: ownerExamId ? "exam" : "class", contextId: ownerExamId || ownerClassId,
       data: { attemptId: inserted.lastInsertRowid, caseId: caseData.id, score: evalResult.score, type: "vp" },
-      persist: false,
     });
   }
   return inserted;
@@ -925,7 +923,6 @@ async function evaluateRoute(req, res) {
     }
   }
 
-  persistNow({ throwOnError: true });
   retryScoreDrop(sessionId, req.user.id);
   res.json({ attemptId: info.lastInsertRowid, ...out });
   } catch (e) {
@@ -1079,7 +1076,7 @@ r.post("/flashcard-result", authRequired, validateBody(flashResultSchema), (req,
         recordStudyEvent({
           studyId, userId: req.user.id, eventType: "flashcard_finished",
           contextType: "exam", contextId: examOwner,
-          data: { attemptId: info.lastInsertRowid, score: scoreN, type: "flash" }, persist: false,
+          data: { attemptId: info.lastInsertRowid, score: scoreN, type: "flash" },
         });
       }
     }

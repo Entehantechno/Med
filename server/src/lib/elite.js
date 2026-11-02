@@ -6,7 +6,7 @@
      • Diamond Tournament: an elite bracket layered on the weekly league for
        Diamond-tier learners — quarterfinal → semifinal → final, top N advance,
        finals podium earns gems + an XP boost + a Champion badge. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getProfile, awardXp, isoWeekKey } from "./gamify.js";
 import { getGameConfig } from "./gameconfig.js";
 
@@ -42,7 +42,6 @@ export function startLegendary(userId, nodeId) {
   if (!p.premium_effective) {
     if (p.gems < cfg.cost_gems) return { ok: false, error: "not enough gems" };
     db.prepare("UPDATE learner_profiles SET gems=gems-? WHERE user_id=?").run(cfg.cost_gems, userId);
-    persistNow();
   }
   return { ok: true };
 }
@@ -69,7 +68,6 @@ export function finishLegendary(userId, nodeId, correct, total) {
   db.prepare("UPDATE learner_profiles SET legendary_count=? WHERE user_id=?").run(count, userId);
   // bonus XP through the normal engine (feeds leagues/streak too)
   const profile = awardXp(userId, cfg.xp_reward, "legendary", nodeId);
-  persistNow();
   return { ok: true, passed: true, ratio, xp: cfg.xp_reward, legendaryCount: count, profile };
 }
 
@@ -121,7 +119,6 @@ export function ensureTournament(userId) {
     leagueId = r.lastInsertRowid;
   }
   db.prepare("INSERT OR IGNORE INTO league_members (league_id, user_id, xp) VALUES (?,?,?)").run(leagueId, userId, p.weekly_xp);
-  persistNow();
   return leagueId;
 }
 
@@ -176,7 +173,6 @@ export function settleTournamentFinals(leagueId) {
     db.prepare("UPDATE learner_profiles SET xp_boost_until=?, tournament_wins=tournament_wins+1 WHERE user_id=?").run(until, r.user_id);
     winners.push({ user_id: r.user_id, rank: i + 1, gems });
   });
-  persistNow();
   return { ok: true, winners };
 }
 

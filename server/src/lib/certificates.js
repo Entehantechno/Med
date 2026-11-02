@@ -14,7 +14,7 @@
    watching). Auto-issue can fire when a threshold is crossed, or an admin can
    issue/revoke manually. Each certificate stores SNAPSHOTS (name, title, signer)
    so it stays accurate even if the source later changes. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import crypto from "crypto";
 import { getGameConfig } from "./gameconfig.js";
 import { activeProgramFor, programLabel } from "./programs.js";
@@ -117,7 +117,6 @@ export function issueCertificate({ userId, kind = "program", courseId = null, fo
       c.show_hours ? String(totalStudyHours(userId)) : null,
       c.signer_name_fa || "", c.signer_title_fa || "", c.signer_title_en || ""
     );
-    persistNow();
     return { ok: true, serial, existing: false };
   }
 
@@ -137,7 +136,6 @@ export function issueCertificate({ userId, kind = "program", courseId = null, fo
       course.title_fa || "", course.title_en || "",
       course.instructor_fa || c.signer_name_fa || "", course.instructor_fa ? "" : (c.signer_title_fa || ""), course.instructor_en ? "" : (c.signer_title_en || "")
     );
-    persistNow();
     return { ok: true, serial, existing: false };
   }
   return { ok: false, error: "bad_kind" };
@@ -206,7 +204,6 @@ export function adminStats() {
 }
 export function setRevoked(id, revoked) {
   db.prepare("UPDATE certificates SET revoked=? WHERE id=?").run(revoked ? 1 : 0, id);
-  persistNow();
   return { ok: true };
 }
 /* Admin manual issue by username + kind (force past thresholds). */

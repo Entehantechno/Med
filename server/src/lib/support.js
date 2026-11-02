@@ -3,7 +3,7 @@
    exchanges chat messages with the admin team, and gets a bell notification when
    an agent replies. Admins see an inbox with full conversation context, reply,
    change category, and resolve. Small, dependency-free, persists to SQLite. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { notify } from "./notify.js";
 
 export const CATEGORIES = ["question", "bug", "feedback", "account"];
@@ -18,7 +18,6 @@ export function openTicket(userId, { category, subject, body }) {
       VALUES (?,?,?, 'open', 0, 1)`).run(userId, cat(category), String(subject || "").slice(0, 120));
   const ticketId = info.lastInsertRowid;
   addMessage(ticketId, "user", userId, "", body);
-  persistNow();
   return ticketId;
 }
 
@@ -45,14 +44,12 @@ export function userReply(userId, body, category) {
   }
   addMessage(ticket.id, "user", userId, "", body);
   db.prepare("UPDATE support_tickets SET status='open', admin_unread=admin_unread+1 WHERE id=?").run(ticket.id);
-  persistNow();
   return db.prepare("SELECT * FROM support_tickets WHERE id=?").get(ticket.id);
 }
 
 // Mark admin replies as seen by the user (called when the user opens the chat).
 export function markUserRead(userId) {
   db.prepare("UPDATE support_tickets SET user_unread=0 WHERE user_id=?").run(userId);
-  persistNow();
 }
 
 // Count of admin replies the user hasn't seen (drives the chat-bubble badge).
@@ -96,25 +93,21 @@ export function adminReply(ticketId, adminId, adminName, body) {
     title_fa: "💬 پاسخ پشتیبانی", title_en: "💬 Support replied",
     body_fa: "تیم پشتیبانی به پیام شما پاسخ داد.", body_en: "The support team answered your message.",
   });
-  persistNow();
   return { ok: true };
 }
 
 export function markAdminRead(ticketId) {
   db.prepare("UPDATE support_tickets SET admin_unread=0 WHERE id=?").run(ticketId);
-  persistNow();
 }
 
 export function setStatus(ticketId, status) {
   const s = ["open", "answered", "resolved"].includes(status) ? status : "open";
   db.prepare("UPDATE support_tickets SET status=? WHERE id=?").run(s, ticketId);
-  persistNow();
   return s;
 }
 
 export function setCategory(ticketId, category) {
   db.prepare("UPDATE support_tickets SET category=? WHERE id=?").run(cat(category), ticketId);
-  persistNow();
 }
 
 // Inbox KPIs for the admin overview + support tab header.

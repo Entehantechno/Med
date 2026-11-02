@@ -15,8 +15,8 @@
 
    The exported API is unchanged: db.prepare().get/all/run, db.exec, db.pragma,
    db.transaction, durableTransaction, onDbReady, initDb, reloadDb, snapshotDb.
-   persist / persistNow / markDirty remain as no-ops so existing call sites keep
-   working: a commit is already durable when the call that made it returns.
+   A commit is durable when the call that made it returns, so there is no separate
+   flush step.
    ================================================================ */
 import Database from "better-sqlite3";
 import { ensureContentIdentity, universityOnlyCases } from "./lib/content-identity.js";
@@ -235,9 +235,6 @@ export function durableTransaction(fn) {
   if (!rawDb) throw new Error("database_not_open");
   return rawDb.transaction(fn)();
 }
-
-function persist() { /* durable on commit */ }
-function persistNow() { /* durable on commit */ }
 
 const readyHooks = [];
 export function onDbReady(fn) {
@@ -2519,4 +2516,3 @@ export function initSchema() {
   markEngineVersion();
 }
 
-export { persist, persistNow };

@@ -4,7 +4,7 @@
    Online gating is opt-in per study. Text changes are informational only.
    Existing consent evidence is preserved, never fabricated by a policy switch. */
 import { createHash } from "node:crypto";
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { pseudonymFor } from "./pseudonym.js";
 
 export const CONSENT_MODES = ["online", "paper", "verbal"];
@@ -178,7 +178,7 @@ export function assertConsent(user, ctx) {
 /* ---- Granting ------------------------------------------------------------ */
 
 /* Online: the participant clicked "I agree" in the app themselves. */
-export function grantOnlineConsent(user, studyId, { persist = true } = {}) {
+export function grantOnlineConsent(user, studyId, {} = {}) {
   const study = db.prepare("SELECT * FROM research_studies WHERE id=?").get(Number(studyId) || 0);
   if (!study) return { error: "study_not_found" };
   if (!isStaffRole(user?.role) && !studentLinkedToStudy(user, study.id)) {
@@ -196,7 +196,7 @@ export function grantOnlineConsent(user, studyId, { persist = true } = {}) {
   }
   const hash = consentTextHash(text, study.protocol_version);
   upsertConsent({
-    persist, studyId: study.id, userId: user.id, pseudonym: pseudonymFor(user.id, `study:${study.id}`),
+    studyId: study.id, userId: user.id, pseudonym: pseudonymFor(user.id, `study:${study.id}`),
     mode: "online", recordedBy: null, note: "",
     protocolVersion: study.protocol_version || "", textHash: hash,
   });
@@ -206,7 +206,7 @@ export function grantOnlineConsent(user, studyId, { persist = true } = {}) {
 /* Offline: a researcher took the consent on paper (or verbally) and is
    recording it here. The researcher's identity and a note are mandatory —
    this row is the only evidence the consent exists. */
-export function recordOfflineConsent({ studyId, userId, pseudonym, mode, recordedBy, note, persist = true }) {
+export function recordOfflineConsent({ studyId, userId, pseudonym, mode, recordedBy, note }) {
   const study = db.prepare("SELECT * FROM research_studies WHERE id=?").get(Number(studyId) || 0);
   if (!study) return { error: "study_not_found", status: 404 };
   const m = String(mode || "").toLowerCase();
@@ -221,7 +221,7 @@ export function recordOfflineConsent({ studyId, userId, pseudonym, mode, recorde
 
   const text = study.consent_text_fa || study.consent_text_en || "";
   upsertConsent({
-    persist, studyId: study.id, userId: uid,
+    studyId: study.id, userId: uid,
     pseudonym: uid ? pseudonymFor(uid, `study:${study.id}`) : String(pseudonym).slice(0, 64),
     mode: m, recordedBy: Number(recordedBy) || null, note: String(note).slice(0, 500),
     protocolVersion: study.protocol_version || "", textHash: consentTextHash(text, study.protocol_version),
@@ -236,14 +236,13 @@ export function withdrawConsent(user, studyId, note = "") {
   if (!row) return { error: "no_consent_on_record", status: 404 };
   db.prepare(`UPDATE research_consents SET status='withdrawn', withdrawn_at=datetime('now'), note=? WHERE id=?`)
     .run(String(note || "").slice(0, 500) || row.note, row.id);
-  persistNow();
   return { ok: true, status: "withdrawn" };
 }
 
 /* One live decision per identified participant: update in place rather than
    piling up rows. (SQLite needs the explicit SELECT because NULLs are distinct
    in a UNIQUE index.) */
-function upsertConsent({ studyId, userId, pseudonym, mode, recordedBy, note, protocolVersion, textHash, persist = true }) {
+function upsertConsent({ studyId, userId, pseudonym, mode, recordedBy, note, protocolVersion, textHash }) {
   const now = new Date().toISOString().slice(0, 19).replace("T", " ");
   const existing = userId ? consentRow(userId, studyId) : null;
   if (existing) {
@@ -257,7 +256,7 @@ function upsertConsent({ studyId, userId, pseudonym, mode, recordedBy, note, pro
       VALUES (?,?,?,?, 'granted', ?,?,?,?,?)`)
       .run(studyId, userId, pseudonym, mode, textHash, protocolVersion, recordedBy, note, now);
   }
-  if (persist) persistNow();
+  
 }
 
 /* ---- Read-back for the researchers --------------------------------------- */

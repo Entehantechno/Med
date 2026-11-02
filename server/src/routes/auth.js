@@ -1,7 +1,7 @@
 import { Router } from "express";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { signToken, authRequired, authOptional, setAuthCookie, clearAuthCookie, bumpTokenVer, revokeJti } from "../lib/auth.js";
 import { permsFor } from "../lib/rbac.js";
 import { isEnabled } from "../lib/flags.js";
@@ -128,7 +128,6 @@ async function loginRoute(req, res) {
     if (await needsRehash(user.password_hash)) {
       const upgraded = await hashPassword(password || "");
       db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(upgraded, user.id);
-      persistNow();
     }
   } catch { /* migration must never block login */ }
   const token = signToken(user);
@@ -207,7 +206,6 @@ r.post("/register", signupGate, validateBody(registerSchema), async (req, res) =
       db.prepare("DELETE FROM email_verifications WHERE user_id=?").run(id);
     }
   }
-  persistNow();
   const user = db.prepare("SELECT * FROM users WHERE id=?").get(id);
   const token = signToken(user);
   setAuthCookie(res, token);
@@ -227,7 +225,6 @@ r.get("/verify", (req, res) => {
   if (!row || !fresh) return res.status(400).send("<h3>لینک نامعتبر یا منقضی است / Invalid or expired link</h3>");
   db.prepare("UPDATE users SET email_verified=1 WHERE id=?").run(row.user_id);
   db.prepare("DELETE FROM email_verifications WHERE user_id=?").run(row.user_id);
-  persistNow();
   res.redirect("/?verified=1");
 });
 
@@ -250,7 +247,6 @@ r.post("/forgot", async (req, res) => {
     const raw = crypto.randomBytes(32).toString("base64url");
     db.prepare("INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?,?, datetime('now', ?))")
       .run(u.id, resetHash(raw), `+${RESET_TTL_MINUTES} minutes`);
-    persistNow();
     const lang = req.body?.lang === "en" ? "en" : "fa";
     sendPasswordResetEmail(u.email, raw, lang).catch(() => {});
   }
@@ -275,7 +271,6 @@ r.post("/reset", async (req, res, next) => {
     const nextVer = bumpTokenVer(row.user_id);
     db.prepare("UPDATE users SET password_hash=?, token_ver=?, email_verified=1 WHERE id=?").run(newHash, nextVer, row.user_id);
     db.prepare("DELETE FROM password_resets WHERE user_id=? AND used_at IS NULL").run(row.user_id);
-    persistNow();
     res.json({ ok: true });
   } catch (e) { next(e); }
 });
@@ -309,7 +304,6 @@ r.post("/google", async (req, res) => {
     ).run(profile.email, profile.email, profile.google_id, "", profile.name, profile.name, profile.picture);
     createLearnerProfile(info.lastInsertRowid, req.body?.province, req.body?.program);
   }
-  persistNow();
   user = db.prepare("SELECT * FROM users WHERE google_id=?").get(profile.google_id);
   if (user.status !== "active") return res.status(403).json({ error: "account inactive" });
   const token = signToken(user);
@@ -374,7 +368,6 @@ r.put("/me", authRequired, noImpersonation, (req, res) => {
     db.prepare("UPDATE learner_profiles SET anon_mode=?, alias=? WHERE user_id=?")
       .run(anon, nickname || null, req.user.id);
   }
-  persistNow();
   const fresh = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
   res.json({ user: { ...publicUser(fresh), student_no: fresh.student_no, university_id: fresh.university_id } });
 });
@@ -405,7 +398,6 @@ r.put("/password", authRequired, noImpersonation, validateBody(changePwSchema), 
     const nextVer = bumpTokenVer(u.id);
     db.prepare("UPDATE users SET password_hash=?, token_ver=? WHERE id=?")
       .run(newHash, nextVer, req.user.id);
-    persistNow();
     const fresh = db.prepare("SELECT * FROM users WHERE id=?").get(u.id);
     const token = signToken(fresh);
     setAuthCookie(res, token);

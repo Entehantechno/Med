@@ -7,7 +7,7 @@
      GET  /api/pay/history           -> the user's transactions
    Amounts are in Rial. Prices come from getPlans(). */
 import { Router } from "express";
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { getProfile } from "../lib/gamify.js";
 import { requestPayment, verifyPayment, GATEWAY, isReal, mockAllowed } from "../lib/zarinpal.js";
@@ -68,7 +68,6 @@ r.post("/subscribe", authRequired, requireRole("learner"), async (req, res) => {
 
   db.prepare(`INSERT INTO transactions (user_id, plan, amount, authority, status, gateway)
     VALUES (?,?,?,?, 'pending', ?)`).run(req.user.id, plan, info.amount, pay.authority, pay.gateway);
-  persistNow();
   // real gateway gives an absolute URL; mock stays relative so it works on any host/port
   res.json({ url: pay.url, authority: pay.authority, gateway: pay.gateway });
 });
@@ -89,7 +88,6 @@ r.get("/callback", async (req, res) => {
 
   if (status && String(status).toUpperCase() !== "OK") {
     db.prepare("UPDATE transactions SET status='canceled' WHERE id=? AND status='pending'").run(tx.id);
-    persistNow();
     return back("canceled");
   }
 
@@ -98,7 +96,6 @@ r.get("/callback", async (req, res) => {
     // Transient (network) failures stay pending so /pay/reconcile can retry.
     if (!v.transient) {
       db.prepare("UPDATE transactions SET status='failed' WHERE id=? AND status='pending'").run(tx.id);
-      persistNow();
     }
     return back("failed");
   }
@@ -111,7 +108,6 @@ function settleVerifiedTx(tx, v) {
   const out = fulfillVerifiedTransaction(tx, v, { plusDays: catalog?.days });
   if (out.kind === "group") {
     if (out.orderId) markOrderPaid(out.orderId);
-    persistNow();
     return { group: true, already: !!out.already };
   }
   if (out.kind === "plus" && !out.already) notifyPremiumActivated(tx.user_id);
@@ -128,7 +124,6 @@ r.post("/reconcile", authRequired, async (req, res) => {
     const out = settleVerifiedTx(tx, v);
     if (!out.already) recovered++;
   }
-  persistNow();
   res.json({ ok: true, recovered, profile: getProfile(req.user.id) });
 });
 
@@ -184,7 +179,6 @@ r.post("/group/checkout", authRequired, requireRole("learner"), async (req, res)
   const info = db.prepare(`INSERT INTO transactions (user_id, plan, amount, authority, status, gateway)
     VALUES (?,?,?,?, 'pending', ?)`).run(req.user.id, `group:${order.id}`, pack.price, pay.authority, pay.gateway);
   linkTransaction(order.id, info.lastInsertRowid);
-  persistNow();
   res.json({ url: pay.url, authority: pay.authority, gateway: pay.gateway, orderId: order.id });
 });
 

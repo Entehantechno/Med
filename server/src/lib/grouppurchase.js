@@ -14,8 +14,8 @@
    Pricing model = PACKAGE pricing: the admin sets a fixed total price per pack
    (already discounted), so the per-seat price is simply price/seats. We expose
    that per-seat number + the % saved vs the single monthly plan so the value is
-   obvious. Everything is admin-editable. All writes flush via persistNow(). */
-import { db, persistNow } from "./../db.js";
+   obvious. Everything is admin-editable. */
+import { db } from "./../db.js";
 import crypto from "crypto";
 import { applyPremiumDays } from "./entitlement.js";
 
@@ -44,7 +44,6 @@ export function createPack(d = {}) {
     d.title_fa || null, d.title_en || null,
     Math.max(2, d.seats | 0 || 2), Math.max(1, d.days | 0 || 30),
     Math.max(0, d.price | 0), d.ord | 0, d.active === 0 ? 0 : 1);
-  persistNow();
   return db.prepare("SELECT * FROM group_packs WHERE id=?").get(info.lastInsertRowid);
 }
 export function updatePack(id, d = {}) {
@@ -55,12 +54,10 @@ export function updatePack(id, d = {}) {
     m("title_fa", cur.title_fa), m("title_en", cur.title_en),
     Math.max(2, (m("seats", cur.seats) | 0) || 2), Math.max(1, (m("days", cur.days) | 0) || 30),
     Math.max(0, m("price", cur.price) | 0), m("ord", cur.ord) | 0, m("active", cur.active) ? 1 : 0, id);
-  persistNow();
   return db.prepare("SELECT * FROM group_packs WHERE id=?").get(id);
 }
 export function deletePack(id) {
   db.prepare("DELETE FROM group_packs WHERE id=?").run(id);
-  persistNow();
   return true;
 }
 export function getPack(id) { return db.prepare("SELECT * FROM group_packs WHERE id=?").get(id); }
@@ -70,12 +67,10 @@ export function getPack(id) { return db.prepare("SELECT * FROM group_packs WHERE
 export function createOrder(buyerId, pack) {
   const info = db.prepare(`INSERT INTO group_orders (buyer_id,pack_id,seats,days,amount,status)
     VALUES (?,?,?,?,?, 'pending')`).run(buyerId, pack.id, pack.seats, pack.days, pack.price);
-  persistNow();
   return db.prepare("SELECT * FROM group_orders WHERE id=?").get(info.lastInsertRowid);
 }
 export function linkTransaction(orderId, txId) {
   db.prepare("UPDATE group_orders SET transaction_id=? WHERE id=?").run(txId, orderId);
-  persistNow();
 }
 export function getOrder(id) { return db.prepare("SELECT * FROM group_orders WHERE id=?").get(id); }
 
@@ -90,7 +85,6 @@ export function markOrderPaid(orderId) {
   if (!claimed.changes) return getOrder(orderId);
   const ins = db.prepare("INSERT INTO seat_codes (order_id, code, days, status) VALUES (?,?,?, 'active')");
   for (let i = 0; i < o.seats; i++) ins.run(orderId, genCode(), o.days);
-  persistNow();
   return getOrder(orderId);
 }
 
@@ -137,7 +131,6 @@ export function redeemCode(userId, rawCode) {
   if (!claimed.changes) return { ok: false, error: "already_used" };
 
   const profile = applyPremiumDays(userId, sc.days, { source: "group_code" });
-  persistNow();
   return {
     ok: true,
     days: sc.days,

@@ -4,7 +4,7 @@
    confidence proxy (a slow correct answer signals weaker recall than a fast
    one). Also powers the learner's performance dashboard, weak-spot detection
    and the "Mistakes" practice hub. */
-import { db, persist } from "../db.js";
+import { db } from "../db.js";
 import { tehranDay } from "./gamify.js";
 
 /* Record a single card answer (called once per question in a lesson/review).
@@ -33,7 +33,7 @@ function recordCardAnswer(userId, { cardId, nodeId = null, correct, responseMs =
 }
 export function recordAnswers(userId, answers = []) {
   const tx = db.transaction(() => { for (const a of answers) recordCardAnswer(userId, a); });
-  tx(); persist();
+  tx();
 }
 
 /* Crowd difficulty label from the observed pass rate. */

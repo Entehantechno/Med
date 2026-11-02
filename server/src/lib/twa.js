@@ -9,7 +9,7 @@
    This module stores an admin-editable TWA config in the `settings` table
    (key = "twa") and renders the assetlinks.json. AI-free, deterministic.
 */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 
 const KEY = "twa";
 
@@ -40,7 +40,6 @@ export function saveTwaConfig(input) {
   };
   db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
     .run(KEY, JSON.stringify(cfg));
-  persistNow();
   return cfg;
 }
 

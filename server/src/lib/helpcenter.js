@@ -1,7 +1,7 @@
 /* helpcenter.js — admin-editable FAQ / knowledge-base articles, shown in-app
    (searchable, categorized) to deflect support tickets. Bilingual; each article
    has a category and can be published/unpublished and ordered by admins. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 
 export const HELP_CATEGORIES = ["general", "account", "learning", "billing", "technical"];
 const cat = (c) => (HELP_CATEGORIES.includes(c) ? c : "general");
@@ -26,7 +26,6 @@ export function viewArticle(id, lang = "fa") {
   const a = db.prepare("SELECT * FROM help_articles WHERE id=? AND published=1").get(id);
   if (!a) return null;
   db.prepare("UPDATE help_articles SET views=views+1 WHERE id=?").run(id);
-  persistNow();
   return pick(a, lang);
 }
 
@@ -38,15 +37,12 @@ export function createArticle(b) {
   const info = db.prepare(`INSERT INTO help_articles (category,title_fa,title_en,body_fa,body_en,ord,published)
       VALUES (?,?,?,?,?,?,?)`).run(cat(b.category), b.title_fa || "", b.title_en || "", b.body_fa || "", b.body_en || "",
     Number(b.ord) || 0, b.published === 0 ? 0 : 1);
-  persistNow();
   return info.lastInsertRowid;
 }
 export function updateArticle(id, b) {
   db.prepare(`UPDATE help_articles SET category=?, title_fa=?, title_en=?, body_fa=?, body_en=?, ord=?, published=?, updated_at=datetime('now') WHERE id=?`)
     .run(cat(b.category), b.title_fa || "", b.title_en || "", b.body_fa || "", b.body_en || "", Number(b.ord) || 0, b.published === 0 ? 0 : 1, id);
-  persistNow();
 }
 export function deleteArticle(id) {
   db.prepare("DELETE FROM help_articles WHERE id=?").run(id);
-  persistNow();
 }

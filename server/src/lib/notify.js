@@ -1,7 +1,7 @@
 /* notify.js — unified notifications: (1) in-app bell feed, (2) optional browser Web Push.
    Web Push is best-effort: if the `web-push` package or VAPID keys are missing, it
    silently degrades to in-app only, so the app still runs on a bare local install. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { tehranDay } from "./tehran-time.js";
 
 let webpush = null;
@@ -34,7 +34,6 @@ export async function notify(userId, n) {
     userId, n.kind || "system", n.title_fa || "", n.title_en || "", n.body_fa || "", n.body_en || "",
     n.icon || "clock", n.link || ""
   );
-  persistNow();
   // browser push (optional)
   try {
     const wp = await ensureWebPush();

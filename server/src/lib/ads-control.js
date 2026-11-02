@@ -12,7 +12,7 @@
         frequency, prefer opt-in rewarded).
 
    All deterministic, no external calls, no cost. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getSetting } from "../routes/content.js";
 import { isEnabled } from "./flags.js";
 
@@ -65,7 +65,6 @@ function recordImpression(adId, userId) {
     db.prepare(`INSERT INTO ad_impressions (ad_id,user_id,day,count) VALUES (?,?,?,1)
       ON CONFLICT(ad_id,user_id,day) DO UPDATE SET count=count+1`).run(adId, userId, today());
   }
-  persistNow();
 }
 
 /* Serve ads for a slot (banner/native lists) OR a single format (rewarded/

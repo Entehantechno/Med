@@ -4,7 +4,7 @@
      • XP Ramp-Up    — timed blitz event that pays bonus XP
      • Streak Revival— free comeback for lapsed high-streak learners
    All knobs come from gameconfig.js (admin-editable). Days use Tehran time. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getProfile, tehranDay, awardXp } from "./gamify.js";
 import { getGameConfig } from "./gameconfig.js";
 import { tehranMonth } from "./tehran-time.js";
@@ -44,7 +44,6 @@ export function placeWager(userId) {
   db.prepare(`INSERT INTO streak_wagers (user_id, start_day, start_streak, target_days, stake, reward, status)
               VALUES (?,?,?,?,?,?, 'active')`)
     .run(userId, tehranDay(), p.streak || 0, cfg.target_days, cfg.stake, cfg.reward);
-  persistNow();
   return { ok: true, wager: wagerStatus(userId), profile: getProfile(userId) };
 }
 
@@ -59,7 +58,6 @@ export function settleWagers(userId) {
   if (daysDone >= w.target_days && (p.streak || 0) > w.start_streak) {
     db.prepare("UPDATE streak_wagers SET status='won', settled_at=datetime('now') WHERE id=?").run(w.id);
     db.prepare("UPDATE learner_profiles SET gems=gems+? WHERE user_id=?").run(w.reward, userId);
-    persistNow();
     return { result: "won", reward: w.reward };
   }
   // LOSE: streak was broken (dropped at or below where it started) after the wager
@@ -68,7 +66,6 @@ export function settleWagers(userId) {
     // Streak reset since wager: it fell back to (or below) the starting count.
     if ((p.streak || 0) < w.start_streak) {
       db.prepare("UPDATE streak_wagers SET status='lost', settled_at=datetime('now') WHERE id=?").run(w.id);
-      persistNow();
       return { result: "lost" };
     }
   }
@@ -104,7 +101,6 @@ export function bumpMonthly(userId) {
   const row = ensureMonthly(userId);
   if (row.progress < row.goal) {
     db.prepare("UPDATE monthly_quests SET progress=progress+1 WHERE id=?").run(row.id);
-    persistNow();
   }
 }
 export function claimMonthly(userId) {
@@ -118,7 +114,6 @@ export function claimMonthly(userId) {
   db.prepare(`INSERT OR IGNORE INTO user_badges (user_id, badge_slug, label_fa, label_en, icon)
               VALUES (?,?,?,?, 'medal')`)
     .run(userId, row.badge_slug, `قهرمان ${label.fa}`, `${label.en} Champion`);
-  persistNow();
   return { ok: true, gems: cfg.reward_gems, badge: row.badge_slug, profile: getProfile(userId) };
 }
 export function getBadges(userId) {
@@ -145,7 +140,6 @@ export function startEvent(userId, cardIds) {
   const r = db.prepare(`INSERT INTO event_runs (user_id, event_slug, card_ids, duration_s, total)
                         VALUES (?,?,?,?,?)`)
     .run(userId, cfg.slug, JSON.stringify(ids), cfg.duration_s, ids.length);
-  persistNow();
   return { ok: true, runId: r.lastInsertRowid, duration_s: cfg.duration_s, cardIds: ids };
 }
 export function finishEvent(userId, runId, correct) {
@@ -160,7 +154,6 @@ export function finishEvent(userId, runId, correct) {
     .run(c, xp, run.id);
   // credit XP through the normal engine (feeds leagues/streak the same way)
   const profile = awardXp(userId, xp, "event", null);
-  persistNow();
   return { ok: true, xp, correct: c, total: run.total, flawless, profile };
 }
 
@@ -194,6 +187,5 @@ export function claimRevival(userId) {
   const restored = Math.max(p.best_streak || 0, p.streak || 0);
   db.prepare("UPDATE learner_profiles SET streak=?, best_streak=?, last_active=? WHERE user_id=?")
     .run(restored, restored, tehranDay(), userId);
-  persistNow();
   return { ok: true, streak: restored, profile: getProfile(userId) };
 }

@@ -18,7 +18,7 @@
    Config is stored in the settings table under `seo` and merged over defaults,
    so the admin can edit everything from the panel. */
 import { db } from "../db.js";
-import { persistNow } from "../db.js";
+
 
 const SITE_URL_DEFAULT = "https://medschool.ir";
 
@@ -81,7 +81,6 @@ export function saveSeoConfig(cfg) {
   const merged = deepMerge(DEFAULT_SEO, cfg || {});
   db.prepare("INSERT INTO settings (key,value) VALUES ('seo',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
     .run(JSON.stringify(merged));
-  persistNow();
   return merged;
 }
 

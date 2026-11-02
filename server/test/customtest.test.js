@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import request from "supertest";
 import { execSync } from "child_process";
-import { initDb, db, persistNow } from "../src/db.js";
+import { initDb, db } from "../src/db.js";
 import { createApp } from "../src/app.js";
 
 let app;
@@ -11,7 +11,6 @@ async function token(u) { const r = await request(app).post("/api/auth/login").s
 function setPremium(on) {
   const u = db.prepare("SELECT id FROM users WHERE username='learner'").get();
   db.prepare("UPDATE learner_profiles SET premium=?, premium_until=? WHERE user_id=?").run(on ? 1 : 0, on ? "2030-01-01" : null, u.id);
-  persistNow();
 }
 beforeAll(async () => {
   execSync("node src/seed.js --force", { cwd: process.cwd(), stdio: "ignore" });

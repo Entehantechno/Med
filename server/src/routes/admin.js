@@ -9,7 +9,7 @@ import { Router } from "express";
 import { searchPool, normalizeText, highlightRanges, normDigits } from "../lib/textsearch.js";
 import path from "path";
 import { hashPassword } from "../lib/password.js";
-import { db, persistNow, durableTransaction } from "../db.js";
+import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole, signToken, bumpTokenVer } from "../lib/auth.js";
 import { passwordRejected, passwordErrorBody } from "./auth.js";
 import { passwordPwned } from "../lib/security.js";
@@ -213,7 +213,6 @@ r.put("/roles/:role", ...admin, (req, res) => {
     .run(JSON.stringify(cur));
   setRolePermOverrides(cur);            // apply immediately (no restart)
   audit(req, "rbac.role_edit", `role:${role}`, { perms });
-  persistNow();
   res.json({ ok: true, rolePerms: currentRolePerms() });
 });
 
@@ -240,7 +239,6 @@ r.put("/pricing", ...admin, (req, res) => {
   db.prepare("INSERT INTO settings (key,value) VALUES ('plan_prices',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
     .run(JSON.stringify(cfg));
   audit(req, "pricing.edit", "settings:plan_prices", cfg);
-  persistNow();
   res.json({ ok: true, ...cfg });
 });
 
@@ -264,7 +262,6 @@ r.put("/settings/:key", ...P("learn.settings"), (req, res) => {
   }
   db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").run(req.params.key, value);
   audit(req, "settings.change", `settings:${req.params.key}`, secretBearing ? redactForAudit(value) : { value });
-  persistNow();
   res.json({ ok: true });
 });
 
@@ -278,7 +275,6 @@ function getJsonSetting(key, fallback) {
 function putJsonSetting(key, obj) {
   db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
     .run(key, JSON.stringify(obj || {}));
-  persistNow();
 }
 // Maintenance mode
 r.get("/maintenance", ...P("learn.settings"), (req, res) => {
@@ -1101,7 +1097,6 @@ r.put("/vpatient/cases/:id", ...P("learn.settings"), async (req, res) => {
     d.xp_max = n;
   }
   db.prepare("UPDATE cases SET data_json=?, updated_at=datetime('now') WHERE id=?").run(JSON.stringify(d), id);
-  persistNow();
   audit(req, "vpatient.case_xp", "case", { id, xp_max: d.xp_max ?? null });
   res.json({ ok: true, id, xp_max: d.xp_max ?? null });
 });
@@ -1215,7 +1210,6 @@ r.post("/vpatient/import-cases", ...P("learn.settings"), async (req, res) => {
       .run(row.difficulty, row.checklist_id, JSON.stringify(d));
     imported++;
   }
-  persistNow();
   audit(req, "vpatient.import_cases", "case", { count: imported });
   res.json({ ok: true, imported });
 });
@@ -1234,7 +1228,6 @@ r.post("/vpatient/import-cards", ...P("learn.settings"), async (req, res) => {
       .run(row.difficulty, JSON.stringify(d));
     imported++;
   }
-  persistNow();
   audit(req, "vpatient.import_cards", "flashcard", { count: imported });
   res.json({ ok: true, imported });
 });
@@ -1289,7 +1282,6 @@ r.post("/case-promotions/:id/approve", ...P("learn.settings"), (req, res) => {
     // version history for audit
     try { db.prepare("INSERT INTO case_versions (case_id,version,data_json) VALUES (?,?,?)").run(info.lastInsertRowid, 1, JSON.stringify(d)); } catch {}
     audit(req, "case.promote_approve", `cases:${caseRow.id}->${info.lastInsertRowid}`, { university_id: rq.university_id });
-    persistNow();
     res.json({ ok: true, global_case_id: info.lastInsertRowid });
   } catch (e) { res.status(500).json({ error: "approve_failed", message: String(e.message || e).slice(0,200)}); }
 });
@@ -1303,7 +1295,6 @@ r.post("/case-promotions/:id/reject", ...P("learn.settings"), (req, res) => {
     db.prepare("UPDATE case_promotion_requests SET status='rejected', reviewed_by=?, reviewed_at=datetime('now'), reason=? WHERE id=?")
       .run(req.user.id, reason, rid);
     audit(req, "case.promote_reject", `promotion:${rid}`, { case_id: rq.case_id, reason });
-    persistNow();
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: "reject_failed", message: String(e.message || e).slice(0,200)}); }
 });
@@ -1330,7 +1321,6 @@ r.post("/cases/:id/publish-global", ...P("learn.settings"), (req, res) => {
       .run(req.user.id, info.lastInsertRowid, cid);
     try { db.prepare("INSERT INTO case_versions (case_id,version,data_json) VALUES (?,?,?)").run(info.lastInsertRowid, 1, JSON.stringify(d)); } catch {}
     audit(req, "case.direct_publish", `cases:${cid}->${info.lastInsertRowid}`, { university_id: caseRow.university_id });
-    persistNow();
     res.json({ ok: true, global_case_id: info.lastInsertRowid });
   } catch (e) { res.status(500).json({ error: "publish_failed", message: String(e.message || e).slice(0,200)}); }
 });
@@ -1497,7 +1487,6 @@ r.post("/users", ...P(PU), async (req, res) => {
     db.prepare("INSERT OR IGNORE INTO learner_profiles (user_id, week_key, hearts, hearts_updated, province) VALUES (?,?,?,?,?)")
       .run(info.lastInsertRowid, "", 5, new Date().toISOString(), b.province || "");
   audit(req, "user.create", `users:${info.lastInsertRowid}`, { role: b.role, username: uname });
-  persistNow();
   res.json({ id: info.lastInsertRowid });
 });
 
@@ -1538,7 +1527,6 @@ r.put("/users/:id", ...P(PU), (req, res) => {
       b.phone ?? u.phone, b.bio ?? u.bio, b.nickname ?? u.nickname, u.id);
   if (b.province != null) db.prepare("UPDATE learner_profiles SET province=? WHERE user_id=?").run(b.province, u.id);
   audit(req, "user.update", `users:${u.id}`, { before: { role: u.role, name_fa: u.name_fa }, after: { role, name_fa: b.name_fa } });
-  persistNow();
   res.json({ ok: true });
 });
 
@@ -1551,7 +1539,6 @@ r.post("/users/:id/status", ...P(PU), (req, res) => {
   const status = req.body?.status === "active" ? "active" : "inactive";
   db.prepare("UPDATE users SET status=? WHERE id=?").run(status, u.id);
   audit(req, "user.status", `users:${u.id}`, { status });
-  persistNow();
   res.json({ ok: true });
 });
 
@@ -1571,7 +1558,6 @@ r.post("/users/:id/password", ...P(PU), async (req, res, next) => {
     const nextVer = bumpTokenVer(u.id);
     db.prepare("UPDATE users SET password_hash=?, token_ver=? WHERE id=?").run(hash, nextVer, u.id);
     audit(req, "user.password_reset", `users:${u.id}`, {});
-    persistNow();
     res.json({ ok: true });
   } catch (e) {
     next(e);
@@ -1602,7 +1588,6 @@ r.post("/users/:id/learner", ...P("learn.users"), (req, res) => {
     db.prepare("UPDATE learner_profiles SET xp=?, gems=?, streak=? WHERE user_id=?").run(xp, gems, streak, u.id);
   }
   audit(req, "user.learner_adjust", `users:${u.id}`, { xp, gems, streak, premium });
-  persistNow();
   res.json({ ok: true });
 });
 
@@ -1669,7 +1654,6 @@ r.delete("/users/:id", ...P("learn.users.delete"), (req, res) => {
   db.prepare("DELETE FROM league_members WHERE user_id=?").run(u.id);
   db.prepare("DELETE FROM users WHERE id=?").run(u.id);
   audit(req, "user.delete", `users:${u.id}`, { username: u.username, role: u.role });
-  persistNow();
   res.json({ ok: true });
 });
 // bulk delete (selectable) — with per-id safety, reports blocked
@@ -1703,7 +1687,7 @@ r.post("/users/bulk-delete", ...P("learn.users.delete"), (req, res) => {
     }
   });
   tx();
-  if(deleted.length) { audit(req, "user.bulk_delete", `users:${deleted.join(",")}`, { count: deleted.length }); persistNow(); }
+  if(deleted.length) { audit(req, "user.bulk_delete", `users:${deleted.join(",")}`, { count: deleted.length }); }
   res.json({ deleted, blocked, count: deleted.length });
 });
 // bulk assign to university (for students/teachers without university or move)
@@ -1824,7 +1808,6 @@ r.put("/content/cards/:id/micro", ...P("learn.content"), (req, res) => {
   };
   db.prepare("UPDATE flashcards SET data_json=? WHERE id=?").run(JSON.stringify(d), c.id);
   audit(req, "content.micro_edit", `flashcards:${c.id}`, {});
-  persistNow();
   res.json({ ok: true });
 });
 // toggle a card active/inactive (soft)
@@ -1837,7 +1820,6 @@ r.post("/content/cards/:id/active", ...P("learn.content"), (req, res) => {
   const active = req.body?.active ? 1 : 0;
   db.prepare("UPDATE flashcards SET active=? WHERE id=?").run(active, req.params.id);
   audit(req, "content.card_active", `flashcards:${req.params.id}`, { active });
-  persistNow();
   res.json({ ok: true });
 });
 
@@ -2077,7 +2059,6 @@ r.put("/programs", ...P("learn.content"), (req, res) => {
   if (!programs.length) return res.status(400).json({ error: "no programs" });
   saveProgramsSetting(programs);
   audit(req, "programs.update", "settings:programs", { count: programs.length });
-  persistNow();
   res.json({ ok: true });
 });
 
@@ -2091,7 +2072,6 @@ r.post("/path/topics", ...P("learn.content"), (req, res) => {
       VALUES (?,?,?,?,?,?,?,?,?,?,1)`).run(slug, b.name_fa || "", b.name_en || "", b.parent || "major",
       b.program || "preint", b.budget || 0, b.color || "#2f7fd1", b.icon || "flask", b.emoji || "", ord);
     audit(req, "path.topic_create", `topics:${info.lastInsertRowid}`, { slug });
-    persistNow();
     res.json({ id: info.lastInsertRowid });
   } catch (e) { res.status(400).json({ error: "slug already exists" }); }
 });
@@ -2104,7 +2084,6 @@ r.put("/path/topics/:id", ...P("learn.content"), (req, res) => {
     .run(names.fa, names.en, b.parent ?? t.parent, b.program ?? t.program ?? "preint",
       b.budget ?? t.budget, b.color ?? t.color, b.icon ?? t.icon, b.emoji ?? t.emoji, b.ord ?? t.ord, t.id);
   audit(req, "path.topic_edit", `topics:${t.id}`, {});
-  persistNow();
   res.json({ ok: true });
 });
 r.delete("/path/topics/:id", ...P("learn.content"), (req, res) => {
@@ -2118,7 +2097,6 @@ r.delete("/path/topics/:id", ...P("learn.content"), (req, res) => {
   });
   tx();
   audit(req, "path.topic_delete", `topics:${req.params.id}`, { both_langs: true });
-  persistNow();
   res.json({ ok: true, both_langs: true });
 });
 
@@ -2134,7 +2112,6 @@ r.post("/path/nodes", ...P("learn.content"), (req, res) => {
     VALUES (?,?,?,?,?,?,?,?,1)`).run(topicId, titles.fa, titles.en, ord,
     b.kind || "lesson", JSON.stringify(cardIds), b.xp_reward || 20, b.emoji || "");
   audit(req, "path.node_create", `path_nodes:${info.lastInsertRowid}`, { topicId });
-  persistNow();
   res.json({ id: info.lastInsertRowid });
 });
 r.put("/path/nodes/:id", ...P("learn.content"), (req, res) => {
@@ -2156,7 +2133,6 @@ r.put("/path/nodes/:id", ...P("learn.content"), (req, res) => {
     .run(titles.fa, titles.en, b.kind ?? n.kind,
       JSON.stringify(cardIds), b.xp_reward ?? n.xp_reward, b.emoji ?? n.emoji, b.ord ?? n.ord, n.id);
   audit(req, "path.node_edit", `path_nodes:${n.id}`, {});
-  persistNow();
   res.json({ ok: true });
 });
 r.delete("/path/nodes/:id", ...P("learn.content"), (req, res) => {
@@ -2165,7 +2141,6 @@ r.delete("/path/nodes/:id", ...P("learn.content"), (req, res) => {
   tombstoneNode(n, topic);
   db.prepare("DELETE FROM path_nodes WHERE id=?").run(req.params.id);
   audit(req, "path.node_delete", `path_nodes:${req.params.id}`, { both_langs: true });
-  persistNow();
   res.json({ ok: true, both_langs: true });
 });
 
@@ -2222,7 +2197,6 @@ r.post("/path/questions", ...P("learn.content"), (req, res) => {
     }
   }
   audit(req, "path.question_create", `flashcards:${cardId}`, { node_id: b.node_id || null });
-  persistNow();
   res.json({ id: cardId });
 });
 
@@ -2234,7 +2208,6 @@ r.put("/path/topics/:id/reorder", ...P("learn.content"), (req, res) => {
   });
   tx();
   audit(req, "path.reorder", `topics:${req.params.id}`, { count: order.length });
-  persistNow();
   res.json({ ok: true });
 });
 // reorder subjects (topics) themselves: body { order: [topicId,...] }
@@ -2245,7 +2218,6 @@ r.put("/path/reorder", ...P("learn.content"), (req, res) => {
   });
   tx();
   audit(req, "path.reorder_topics", "topics", { count: order.length });
-  persistNow();
   res.json({ ok: true });
 });
 
@@ -2577,7 +2549,6 @@ r.post("/learn-cards", ...P("learn.content"), (req, res) => {
   db.prepare("DELETE FROM card_revisions WHERE card_id=?").run(info.lastInsertRowid);
   recordCardChange({ cardId: info.lastInsertRowid, action: "created", after: data, actor: req.user });
   audit(req, "learn.card_create", `flashcards:${info.lastInsertRowid}`, { premium: data.premium });
-  persistNow();
   res.json({ id: info.lastInsertRowid });
 });
 // bulk create many cards at once: body { cards: [ {...}, ... ] }
@@ -2594,7 +2565,6 @@ r.post("/learn-cards/bulk", ...P("learn.content"), (req, res) => {
   });
   tx();
   audit(req, "learn.card_bulk", "flashcards", { created });
-  persistNow();
   res.json({ created, total: list.length });
 });
 // Bulk action on many cards at once (from the filtered content list):
@@ -2636,7 +2606,6 @@ r.post("/learn-cards/bulk-action", ...P("learn.content"), (req, res) => {
   });
   tx();
   audit(req, "learn.card_bulk_action", "flashcards", { action, count: affected });
-  persistNow();
   res.json({ ok: true, action, affected });
 });
 
@@ -2734,7 +2703,6 @@ r.post("/learn-cards/import-bundle", ...P("learn.content"), (req, res) => {
   });
   tx();
   audit(req, "learn.card_import_bundle", "flashcards", { imported, attachToPath });
-  persistNow();
   res.json({ imported, errors: errors.slice(0, 50) });
 });
 
@@ -3317,7 +3285,6 @@ export function commitOfficialImport(body = {}, actor = null) {
   if (insertedIds.length) recordImport(insertedIds, actor, "official past-exam import");
   const revived = reviveNodesWithCards();
   const purged = purgeUnsignedInOfficialSubjects();
-  persistNow();
   return { ok: true, inserted, attached, skipped, revived, purged, counters: preview.counters };
 }
 
@@ -3382,7 +3349,6 @@ r.put("/learn-cards/:id", ...P("learn.content"), (req, res) => {
     before, after: d, actor: req.user,
   });
   audit(req, "learn.card_edit", `flashcards:${c.id}`, { fields });
-  persistNow();
   res.json({ ok: true, fields });
 });
 // ---------------------------------------------------------------------------
@@ -3531,7 +3497,7 @@ export function purgeUnsignedInOfficialSubjects() {
       if (!list.length) db.prepare("UPDATE path_nodes SET active=0 WHERE id=?").run(n.id);
     }
   });
-  tx(); persistNow();
+  tx();
   return { deleted: doomed.length, detached, subjects: [...officialSubjects] };
 }
 
@@ -3585,7 +3551,7 @@ r.post("/demo-cards/purge", ...P("learn.content"), (req, res) => {
       if (!list.length) db.prepare("UPDATE path_nodes SET active=0 WHERE id=?").run(n.id);
     }
   });
-  tx(); persistNow();
+  tx();
   audit(req, "learn.demo_purge", "flashcards", { mode, affected: ids.length, detached });
   res.json({ ok: true, mode, affected: ids.length, detached });
 });
@@ -3611,7 +3577,6 @@ r.delete("/learn-cards/:id", ...P("learn.content"), (req, res) => {
     }
   }
   audit(req, "learn.card_delete", `flashcards:${req.params.id}`, {});
-  persistNow();
   res.json({ ok: true });
 });
 
@@ -3674,7 +3639,6 @@ r.post("/content/import", ...P("learn.content"), (req, res) => {
   });
   tx();
   audit(req, "content.import", "flashcards", { imported, topics: Object.keys(perTopicCards) });
-  persistNow();
   res.json({ imported, errors: errors.slice(0, 50) });
 });
 

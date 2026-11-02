@@ -23,7 +23,7 @@ if (files.length !== 54 || expected !== 11604) throw new Error(`Incomplete bank:
 // auto-seeds a few rows before seed.js's guard, so an explicit reset is needed.
 execFileSync(process.execPath, ['server/src/seed.js', '--force'], { cwd: root, stdio: 'inherit', env: process.env });
 execFileSync(process.execPath, ['server/src/restore-demo-accounts.js', '--confirm-demo'], { cwd: root, stdio: 'inherit', env: process.env });
-const { initDb, initSchema, db, persistNow } = await import('../server/src/db.js');
+const { initDb, initSchema, db } = await import('../server/src/db.js');
 await initDb(); initSchema();
 const { commitOfficialImport } = await import('../server/src/routes/admin.js');
 let inserted = 0;
@@ -58,7 +58,6 @@ for (const file of files) {
 }
 const integrity = db.prepare('PRAGMA integrity_check').get().integrity_check;
 if (integrity !== 'ok') throw new Error(integrity);
-persistNow({ throwOnError: true });
 console.log(JSON.stringify({ files: files.length, sourceRecords: expected, databaseRecords: rows.length,
   activeCases: db.prepare('SELECT COUNT(*) n FROM cases WHERE active=1').get().n,
   integrity, curation }, null, 2));

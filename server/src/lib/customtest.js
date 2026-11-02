@@ -16,7 +16,7 @@
    JSON `config` so they resume after a refresh; answers are recorded per
    card (card_attempts) which also feeds SRS / mistakes / "incorrect" mode.
    ================================================================ */
-import { db, persist, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { awardXp } from "./gamify.js";
 import { recordAnswers } from "./analytics.js";
 import { matchFacets, buildFacetIndex } from "./cardfacets.js";
@@ -198,7 +198,6 @@ export function createCustomTest(userId, cfg, cardIds) {
   const info = db.prepare(`INSERT INTO exam_sims (user_id, card_ids, n, duration_s, topic_scope, status, kind, config)
     VALUES (?,?,?,?,?, 'active', 'custom', ?)`).run(userId, JSON.stringify(cardIds), cardIds.length, durationS,
     (cfg.topic || cfg.subject || ["all"]).join(",").slice(0, 200), JSON.stringify({ ...cfg, answers: {} }));
-  persistNow();
   return { id: info.lastInsertRowid, cardIds, durationS };
 }
 export function getCustomTest(userId, id) {
@@ -219,7 +218,6 @@ export function answerCustomTest(userId, id, { cardId, correct, sel, responseMs 
   t.answers[cardId] = { correct: !!correct, sel: sel ?? null, ms: responseMs | 0, flagged: !!flagged, at: new Date().toISOString() };
   db.prepare("UPDATE exam_sims SET config=? WHERE id=?").run(JSON.stringify({ ...t.cfg, answers: t.answers }), t.row.id);
   if (first) recordAnswers(userId, [{ cardId: cid, nodeId: null, correct: !!correct, responseMs, flagged: !!flagged, sel: Number.isInteger(sel) ? sel : null }]);
-  else persist();
   return { ok: true, answered: Object.keys(t.answers).length, total: t.ids.length };
 }
 export function finishCustomTest(userId, id, { timeMs = 0 } = {}) {
@@ -232,7 +230,6 @@ export function finishCustomTest(userId, id, { timeMs = 0 } = {}) {
     .run(correct, total, Math.max(0, timeMs | 0), t.row.id);
   const xp = correct + (total >= 10 ? 10 : 3);
   const profile = awardXp(userId, xp, "custom_test", null);
-  persist();
   return { correct, total, xp, profile, perTopic: perTopicBreakdown(t) };
 }
 function perTopicBreakdown(t) {

@@ -2531,7 +2531,7 @@ describe("province ranking, saved review, all card types", () => {
     expect(card.hasHints).toBe(true);
     expect(card.hasMicro).toBe(true);
   });
-  it("prompt edits persist (persistNow)", async () => {
+  it("prompt edits persist", async () => {
     const put = await A(request(app).put("/api/prompts").send({ patient_fa: "متن تست پرامپت" }));
     expect(put.status).toBe(200);
     const get = await A(request(app).get("/api/prompts"));

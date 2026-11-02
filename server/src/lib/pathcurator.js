@@ -34,7 +34,7 @@
 
    Only official cards (source_meta.kind === "past_exam_import") are managed.
    ================================================================ */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getSetting, setSetting } from "../routes/content.js";
 import { canonicalExamType, internalChapterSlug, isInternalMedicineSubject } from "../routes/admin.js";
 import { sittingKey } from "./cardfacets.js";
@@ -554,7 +554,6 @@ export function curateOfficialPath({ force = false } = {}) {
   // The version stamp is written after tx() commits, so a failure inside the
   // transaction cannot leave a stamp that claims the curation finished.
   setSetting("path_curator_version", CURATOR_VERSION);
-  persistNow();
   return { ok: true, version: CURATOR_VERSION, stages: stagesCreated, pathCards, premiumCards, bankOnlyCards, topicsCovered, demoRetired };
 }
 

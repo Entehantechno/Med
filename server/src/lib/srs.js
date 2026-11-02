@@ -5,7 +5,7 @@
      review(userId, cardId, grade)  grade: 0=wrong,1=hard,2=good,3=easy
      dueCards / dueCount / ensureTracked / getState
    Plus previewSchedule() for the FSRS "next interval per button" UX. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getGameConfig } from "./gameconfig.js";
 import { schedule as fsrsSchedule, previewIntervals } from "./fsrs.js";
 
@@ -63,7 +63,6 @@ function reviewFsrs(userId, cardId, grade, cfg) {
     db.prepare("INSERT INTO srs_review_log (user_id, card_id, grade, elapsed_days, day) VALUES (?,?,?,?,?)")
       .run(userId, cardId, g, elapsed, today);
   } catch { /* log is best-effort; never block a review */ }
-  persistNow();
   return {
     scheduler: "fsrs",
     stability: Math.round(r.stability * 10) / 10,
@@ -94,7 +93,6 @@ function reviewSm2(userId, cardId, grade) {
   const due = addDays(today, interval);
   db.prepare("UPDATE srs_state SET ease=?, interval_days=?, reps=?, lapses=?, due=?, last_reviewed=?, state='review', last_grade=?, scheduler='sm2' WHERE id=?")
     .run(ease, interval, reps, lapses, due, today, grade, s.id);
-  persistNow();
   return { scheduler: "sm2", ease, interval, reps, lapses, due };
 }
 
@@ -140,18 +138,15 @@ export function buryCard(userId, cardId) {
   const tomorrow = addDays(tehranDay(), 1);
   ensureTracked(userId, cardId);
   db.prepare("UPDATE srs_state SET buried_until=? WHERE user_id=? AND card_id=?").run(tomorrow, userId, cardId);
-  persistNow();
   return { buried_until: tomorrow };
 }
 export function suspendCard(userId, cardId) {
   ensureTracked(userId, cardId);
   db.prepare("UPDATE srs_state SET suspended=1 WHERE user_id=? AND card_id=?").run(userId, cardId);
-  persistNow();
   return { suspended: true };
 }
 export function unsuspendCard(userId, cardId) {
   db.prepare("UPDATE srs_state SET suspended=0, buried_until=NULL WHERE user_id=? AND card_id=?").run(userId, cardId);
-  persistNow();
   return { suspended: false };
 }
 

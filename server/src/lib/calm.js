@@ -7,7 +7,7 @@
    keep the habit positive. Calm Mode bundles these as an OPT-IN, learner-owned
    set of protections. Everything is deterministic & AI-free; admins tune the
    defaults via getGameConfig().calm and can disable the whole feature. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getGameConfig } from "./gameconfig.js";
 import { tehranDay, isoWeekKey } from "./gamify.js";
 
@@ -56,7 +56,6 @@ export function setCalmSettings(userId, patch = {}) {
   if (sets.length) {
     vals.push(userId);
     db.prepare(`UPDATE learner_profiles SET ${sets.join(", ")} WHERE user_id=?`).run(...vals);
-    persistNow();
   }
   return getCalmSettings(userId);
 }
@@ -99,6 +98,5 @@ export function takeRestDay(userId) {
       WHERE user_id=?`).run(today, today, used, week, userId);
   db.prepare("INSERT OR IGNORE INTO streak_days (user_id, day, frozen) VALUES (?,?,1)").run(userId, today);
   db.prepare("UPDATE streak_days SET frozen=1 WHERE user_id=? AND day=?").run(userId, today);
-  persistNow();
   return { ok: true, ...getCalmSettings(userId) };
 }

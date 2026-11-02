@@ -10,7 +10,7 @@
        s3 = time pressure factor (finishing comfortably in time is a good sign)
    - The blended score is mapped through a logistic curve centred on the pass
      mark so that being just above 50% gives ~50% probability and climbs fast. */
-import { db, persist } from "../db.js";
+import { db } from "../db.js";
 import { awardXp, getProfile } from "./gamify.js";
 
 const PASS_MARK = 50; // percent — pre-internship passing threshold
@@ -124,7 +124,6 @@ export function createSim(userId, { topicSlugs = [], n = 20, durationS = 1200, p
      VALUES (?,?,?,?,?, 'active')`
   ).run(userId, JSON.stringify(cards), cards.length, durationS,
     topicSlugs.length ? topicSlugs.join(",") : "all");
-  persist();
   return { id: info.lastInsertRowid, cardIds: cards, n: cards.length, durationS };
 }
 
@@ -148,7 +147,6 @@ export function finishSim(userId, simId, { correct, total, timeMs }) {
   // reward: 1 XP per correct answer + a small completion bonus (independent of hearts)
   const xp = c + 10;
   const profile = awardXp(userId, xp, "exam_sim", null);
-  persist();
   return { prob: est.prob, breakdown: est.breakdown, xp, profile };
 }
 

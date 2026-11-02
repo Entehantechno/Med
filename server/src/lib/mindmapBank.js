@@ -14,7 +14,7 @@
    - 349 maps (100 internal Harrison + 221 non-internal + 28 basic/high-density) (see seedMindmapBank) — visually rich
 */
 
-import { db, persistNow, onDbReady } from "../db.js";
+import { db, onDbReady } from "../db.js";
 import "./flags.js";
 
 export const MINDMAP_SYSTEMS = ["cardio","pulmo","gastro","nephro","endo","neuro","heme","rheum","infect","emergency","peds","obgyn","surgery","path","pharm","radio","ent","uro","ortho","psych","derm","ophth","stats","ethics","immuno","nutrition","genetics","anatomy","physio","biochem","histology","embryo","micro","biophys","physics","other"];
@@ -43,7 +43,6 @@ export function recordMindmapView(userId, isPremium) {
   const day = new Date().toISOString().slice(0,10);
   try {
     db.prepare(`INSERT INTO mindmap_daily_views (user_id, day, cnt) VALUES (?,?,1) ON CONFLICT(user_id, day) DO UPDATE SET cnt=cnt+1`).run(userId, day);
-    persistNow();
   } catch {}
 }
 

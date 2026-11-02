@@ -5,7 +5,7 @@
    scaled to the learner's daily minutes. The ONLY place we (optionally) call
    the LLM is a short 1–2 sentence motivational note, and even that has a
    deterministic template fallback so the feature works with zero AI cost. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { tehranDay } from "./gamify.js";
 import { emojiForTopic } from "./topicemoji.js";
 
@@ -109,7 +109,6 @@ export function buildStudyPlan(userId, { examDate, minutesPerDay = 60, lang = "f
     ON CONFLICT(user_id) DO UPDATE SET exam_date=excluded.exam_date, minutes_per_day=excluded.minutes_per_day,
       plan_json=excluded.plan_json, ai_note_fa=excluded.ai_note_fa, ai_note_en=excluded.ai_note_en, created_at=datetime('now')`)
     .run(userId, examDate || null, minutesPerDay, JSON.stringify(plan), noteFa, noteEn);
-  persistNow();
 
   return { plan, note: lang === "fa" ? noteFa : noteEn, weakest };
 }

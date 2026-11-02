@@ -8,7 +8,7 @@
    Research (SaaS 2025–2026): entitlements live in the app DB, handlers are
    idempotent, webhook/callback retries must not double-extend, and a reconcile
    path recovers when the user closes the bank page before the redirect. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getProfile, maxHearts, stackPremiumUntil } from "./gamify.js";
 import { tehranDay } from "./tehran-time.js";
 
@@ -47,7 +47,7 @@ function ensureGrantTable() {
 }
 
 /** Stack N days (or keep lifetime). Always leaves premium=1 and full hearts. */
-export function applyPremiumDays(userId, days, { source = "grant", persist = true } = {}) {
+export function applyPremiumDays(userId, days, { source = "grant" } = {}) {
   const p = getProfile(userId);
   const until = stackPremiumUntil(p, days);
   if (until === null) {
@@ -61,7 +61,7 @@ export function applyPremiumDays(userId, days, { source = "grant", persist = tru
     db.prepare("INSERT INTO premium_grants (user_id, days, until, kind) VALUES (?,?,?,?)")
       .run(userId, Math.max(1, Number(days) || 1), until, source);
   } catch { /* audit is best-effort */ }
-  if (persist) persistNow();
+  
   return getProfile(userId);
 }
 
@@ -81,7 +81,6 @@ function fulfillPaidSubscription(tx, { refId, days }) {
   const claimed = claimTransactionPaid(tx.id, refId);
   if (!claimed) return { ok: true, already: true, profile: getProfile(tx.user_id) };
   const profile = applyPremiumDays(tx.user_id, days, { source: "payment" });
-  persistNow();
   return { ok: true, already: false, profile };
 }
 
@@ -94,7 +93,6 @@ export function fulfillCoursePurchase(tx, { refId } = {}) {
     db.prepare("INSERT OR IGNORE INTO course_enrollments (user_id, course_id) VALUES (?,?)")
       .run(tx.user_id, courseId);
   }
-  persistNow();
   return { ok: true, courseId };
 }
 

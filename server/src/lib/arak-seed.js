@@ -1,6 +1,6 @@
 /* Histology demo belongs to the real Arak university, never a separate institution.
    Existing tenant content, memberships, codes and attempts are never rewritten by this seed. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import crypto from "crypto";
 import { hashPasswordSync } from "./password.js";
 import fs from "fs";
@@ -110,5 +110,4 @@ export function ensureArakHistology() {
       VALUES (?,?,?,1,'medium',1,?,?,'created')`).run(c.id,JSON.stringify(data),ARAK_ID,teacher?.id||null,teacher?.id||null);
     titles.add(data.title_fa);
   }
-  persistNow();
 }

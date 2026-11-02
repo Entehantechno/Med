@@ -3,7 +3,7 @@
    ================================================================ */
 import "./lib/node-version.js"; // must stay first: refuses Node < 22.14 before the native addon loads
 import "./load-env.js";
-import { initDb, reloadDb, initSchema, db, persistNow, snapshotDb } from "./db.js";
+import { initDb, reloadDb, initSchema, db, snapshotDb } from "./db.js";
 import { createApp } from "./app.js";
 import { runStreakReminders } from "./lib/notify.js";
 import { execFile, fork } from "child_process";
@@ -137,7 +137,7 @@ async function main() {
     logEnvironmentFindings(checkEnvironment());
     const { migrateLegacySecrets } = await import("./lib/secret-store.js");
     const sealed = migrateLegacySecrets(db);
-    if (sealed.migrated) { persistNow(); console.log(`[secret-store] sealed ${sealed.migrated} stored provider key(s)`); }
+    if (sealed.migrated) { console.log(`[secret-store] sealed ${sealed.migrated} stored provider key(s)`); }
   } catch (e) { console.error("[security-boot]", e?.message || e); }
   setTimeout(() => { warnIfDefaultAdminPassword().catch(() => {}); }, 5000);
 
@@ -151,7 +151,7 @@ async function main() {
     // Flush and quiesce this process's writer before the child seed runs:
     // with the seed child exporting the same DB file, a pending debounced write
     // from THIS process could otherwise land after the child's seeded image.
-    try { persistNow({ force: true }); } catch { /* best-effort */ }
+    try { } catch { /* best-effort */ }
     try {
       // async child so the placeholder page keeps being served meanwhile
       await new Promise((resolve, reject) => {
@@ -169,7 +169,6 @@ async function main() {
       // loss. Take a forced snapshot NOW so backups/ always contains the full
       // seeded database from day one.
       try {
-        persistNow({ force: true });
         snapshotDb({ force: true });
         console.log("💾 post-seed backup snapshot saved to backups/");
       } catch (e) { console.warn("post-seed snapshot skipped:", e?.message || e); }

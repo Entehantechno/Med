@@ -1,5 +1,5 @@
 import {isDeepStrictEqual} from 'node:util';
-import {db,persistNow,snapshotDb,durableTransaction} from '../db.js';
+import { db, snapshotDb, durableTransaction } from '../db.js';
 import {hashPasswordSync} from './password.js';
 import {EMERGENCY_TEN} from '../data/vp-emergency-ten.js';
 import {provisionEmergencyCases} from './emergency-provision.js';
@@ -34,7 +34,7 @@ export function repairDemo({universityId,password,actorId}){
  if(!Number.isInteger(uni)||!db.prepare('SELECT id FROM universities WHERE id=?').get(uni))throw new Error('invalid_university');
  if(typeof password!=='string'||password.length<12||password.length>128)throw new Error('demo_password_min_12');
  const hash=hashPasswordSync(password), accounts=[],cases=[];
- persistNow({throwOnError:true});snapshotDb({force:true});
+ snapshotDb({force:true});
  durableTransaction(()=>{
   const ids={};
   for(const role of ['teacher','student','learner']){

@@ -12,7 +12,7 @@
    • listTestimonials / listFaqs / listBadges — published rows for the public.
 
    Write helpers commit directly (R71: better-sqlite3, durable on commit). */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getGameConfig } from "./gameconfig.js";
 
 /* ---- helpers ---- */
@@ -106,7 +106,6 @@ export function createTestimonial(d = {}) {
     d.name_fa || null, d.name_en || null, d.role_fa || null, d.role_en || null,
     d.quote_fa || null, d.quote_en || null, d.photo || null,
     clampRating(d.rating), d.featured ? 1 : 0, d.ord | 0, d.published === 0 ? 0 : 1);
-  persistNow();
   return db.prepare("SELECT * FROM testimonials WHERE id=?").get(info.lastInsertRowid);
 }
 export function updateTestimonial(id, d = {}) {
@@ -119,12 +118,10 @@ export function updateTestimonial(id, d = {}) {
     m("quote_fa", cur.quote_fa), m("quote_en", cur.quote_en), m("photo", cur.photo),
     clampRating(m("rating", cur.rating)), m("featured", cur.featured) ? 1 : 0,
     m("ord", cur.ord) | 0, m("published", cur.published) ? 1 : 0, id);
-  persistNow();
   return db.prepare("SELECT * FROM testimonials WHERE id=?").get(id);
 }
 export function deleteTestimonial(id) {
   db.prepare("DELETE FROM testimonials WHERE id=?").run(id);
-  persistNow();
   return true;
 }
 function clampRating(r) { r = Number(r) || 5; return Math.max(1, Math.min(5, r)); }
@@ -145,7 +142,6 @@ function serializeFaq(f, lang = "fa") {
 export function createFaq(d = {}) {
   const info = db.prepare(`INSERT INTO landing_faqs (q_fa,q_en,a_fa,a_en,ord,published) VALUES (?,?,?,?,?,?)`)
     .run(d.q_fa || null, d.q_en || null, d.a_fa || null, d.a_en || null, d.ord | 0, d.published === 0 ? 0 : 1);
-  persistNow();
   return db.prepare("SELECT * FROM landing_faqs WHERE id=?").get(info.lastInsertRowid);
 }
 export function updateFaq(id, d = {}) {
@@ -155,12 +151,10 @@ export function updateFaq(id, d = {}) {
   db.prepare(`UPDATE landing_faqs SET q_fa=?,q_en=?,a_fa=?,a_en=?,ord=?,published=?,updated_at=datetime('now') WHERE id=?`)
     .run(m("q_fa", cur.q_fa), m("q_en", cur.q_en), m("a_fa", cur.a_fa), m("a_en", cur.a_en),
       m("ord", cur.ord) | 0, m("published", cur.published) ? 1 : 0, id);
-  persistNow();
   return db.prepare("SELECT * FROM landing_faqs WHERE id=?").get(id);
 }
 export function deleteFaq(id) {
   db.prepare("DELETE FROM landing_faqs WHERE id=?").run(id);
-  persistNow();
   return true;
 }
 
@@ -176,7 +170,6 @@ function serializeBadge(b, lang = "fa") {
 export function createBadge(d = {}) {
   const info = db.prepare(`INSERT INTO trust_badges (icon,label_fa,label_en,ord,published) VALUES (?,?,?,?,?)`)
     .run(d.icon || "check", d.label_fa || null, d.label_en || null, d.ord | 0, d.published === 0 ? 0 : 1);
-  persistNow();
   return db.prepare("SELECT * FROM trust_badges WHERE id=?").get(info.lastInsertRowid);
 }
 export function updateBadge(id, d = {}) {
@@ -186,12 +179,10 @@ export function updateBadge(id, d = {}) {
   db.prepare(`UPDATE trust_badges SET icon=?,label_fa=?,label_en=?,ord=?,published=? WHERE id=?`)
     .run(m("icon", cur.icon), m("label_fa", cur.label_fa), m("label_en", cur.label_en),
       m("ord", cur.ord) | 0, m("published", cur.published) ? 1 : 0, id);
-  persistNow();
   return db.prepare("SELECT * FROM trust_badges WHERE id=?").get(id);
 }
 export function deleteBadge(id) {
   db.prepare("DELETE FROM trust_badges WHERE id=?").run(id);
-  persistNow();
   return true;
 }
 

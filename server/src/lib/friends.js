@@ -8,7 +8,7 @@
      • friends leaderboard (weekly XP among friends)
    Research: learners with a shared streak are 22% more likely to complete their
    daily lesson; adding friends makes learners 5.6x more likely to finish. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getProfile, tehranDay, isoWeekKey } from "./gamify.js";
 import { getGameConfig } from "./gameconfig.js";
 import { bumpMonthly } from "./duoplus.js";
@@ -26,12 +26,10 @@ export function follow(userId, targetId) {
   db.prepare("INSERT OR IGNORE INTO follows (follower_id, followee_id) VALUES (?,?)").run(userId, targetId);
   // if it's now mutual, seed a friend_streak row so it can start growing
   if (isMutual(userId, targetId)) ensureFriendStreak(userId, targetId);
-  persistNow();
   return { ok: true };
 }
 export function unfollow(userId, targetId) {
   db.prepare("DELETE FROM follows WHERE follower_id=? AND followee_id=?").run(userId, targetId);
-  persistNow();
   return { ok: true };
 }
 function isFollowing(userId, targetId) {
@@ -117,7 +115,6 @@ export function markFriendActivity(userId) {
       db.prepare("UPDATE friend_streaks SET streak=?, best=?, last_day=? WHERE id=?").run(next, best, today, row.id);
     }
   }
-  persistNow();
 }
 
 export function friendStreaks(userId, lang = "fa") {
@@ -155,7 +152,6 @@ export function nudge(userId, friendId, lang = "fa") {
     body_fa: "استریک دوستانه‌تان امروز در خطر است — یک درس کوتاه انجام بده!",
     body_en: "Your friend streak is at risk today — do a quick lesson!",
   });
-  persistNow();
   return { ok: true };
 }
 
@@ -179,7 +175,6 @@ export function startFriendQuest(userId, friendId) {
     body_fa: `با هم ${cfg.quest_goal} XP جمع کنید و جایزه بگیرید!`,
     body_en: `Earn ${cfg.quest_goal} XP together to win a reward!`,
   });
-  persistNow();
   return { ok: true };
 }
 
@@ -203,7 +198,6 @@ export function progressFriendQuests(userId, xp) {
       }
     }
   }
-  persistNow();
 }
 
 export function friendQuests(userId, lang = "fa") {
@@ -237,7 +231,6 @@ export function claimFriendQuest(userId, questId) {
   // if both claimed, mark the quest fully claimed
   const after = db.prepare("SELECT a_claimed, b_claimed FROM friend_quests WHERE id=?").get(q.id);
   if (after.a_claimed && after.b_claimed) db.prepare("UPDATE friend_quests SET status='claimed' WHERE id=?").run(q.id);
-  persistNow();
   return { ok: true, gems: q.reward_gems, profile: getProfile(userId) };
 }
 
@@ -249,7 +242,6 @@ export function postFeed(userId, kind, title_fa, title_en, icon = "medal") {
   if (dup) return;
   db.prepare("INSERT INTO feed_events (user_id, kind, title_fa, title_en, icon, day) VALUES (?,?,?,?,?,?)")
     .run(userId, kind, title_fa, title_en, icon, day);
-  persistNow();
 }
 
 // The feed a user sees = their own events + events of people they follow.
@@ -281,7 +273,6 @@ export function highFive(userId, eventId, lang = "fa") {
     title_en: `🙌 ${nameOf(me, "en")} high-fived you`,
     body_fa: lang === "fa" ? ev.title_fa : ev.title_en, body_en: ev.title_en,
   });
-  persistNow();
   return { ok: true };
 }
 

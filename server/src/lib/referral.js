@@ -9,8 +9,8 @@
    Reward currency is gems + optional free premium days — tied to product value,
    which research shows outperforms cash for SaaS/education apps.
 
-   All writes flush via persistNow(). */
-import { db, persistNow } from "../db.js";
+   */
+import { db } from "../db.js";
 import crypto from "crypto";
 import { getGameConfig } from "./gameconfig.js";
 import { tehranDay } from "./gamify.js";
@@ -35,7 +35,6 @@ export function ensureCode(userId) {
   if (p && p.referral_code) return p.referral_code;
   const code = genCode();
   db.prepare("UPDATE learner_profiles SET referral_code=? WHERE user_id=?").run(code, userId);
-  persistNow();
   return code;
 }
 
@@ -57,7 +56,7 @@ function addXp(userId, xp) {
 function addPremiumDays(userId, days) {
   if (days <= 0) return;
   // Shared writer: stacks dated Plus and never downgrades a paid lifetime grant.
-  applyPremiumDays(userId, days, { source: "referral", persist: false });
+  applyPremiumDays(userId, days, { source: "referral" });
 }
 
 /* Called at signup when a valid referral code is supplied. Records the referral
@@ -74,7 +73,6 @@ export function attachReferral(referredId, code) {
   db.prepare("INSERT INTO referrals (referrer_id, referred_id, code, status) VALUES (?,?,?,?)")
     .run(owner.user_id, referredId, String(code).trim().toUpperCase(), "pending");
   db.prepare("UPDATE learner_profiles SET referred_by=? WHERE user_id=?").run(owner.user_id, referredId);
-  persistNow();
 
   if (cfg.qualify_on === "signup") qualifyReferral(referredId);
   return { ok: true };
@@ -103,7 +101,6 @@ export function qualifyReferral(referredId) {
     db.prepare("UPDATE learner_profiles SET referral_count=referral_count+1 WHERE user_id=?").run(ref.referrer_id);
     grantMilestones(ref.referrer_id);
   }
-  persistNow();
   return true;
 }
 
@@ -173,7 +170,6 @@ export function recordShare(userId, kind, channel) {
   }
   db.prepare("INSERT INTO share_events (user_id, kind, channel, day, rewarded) VALUES (?,?,?,?,?)")
     .run(userId, String(kind || "").slice(0, 30), String(channel || "").slice(0, 30), day, reward > 0 ? 1 : 0);
-  persistNow();
   return { rewardGems: reward };
 }
 

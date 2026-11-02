@@ -3,7 +3,7 @@
    admin approves → it becomes visible to everyone, votable, and importable into
    each learner's personal SRS. The best cards float up by net votes.
    NO AI — this is a social / network-effect feature. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { serializeCard } from "./cardserialize.js";
 import { ensureTracked } from "./srs.js";
 
@@ -23,7 +23,6 @@ export function shareCard(userId, flashcardId, topicId) {
   const info = db.prepare(
     "INSERT INTO community_cards (flashcard_id, author_id, topic_id, status) VALUES (?,?,?, 'pending')"
   ).run(flashcardId, userId, topicId || null);
-  persistNow();
   return { id: info.lastInsertRowid, status: "pending" };
 }
 
@@ -64,7 +63,6 @@ export function voteCommunity(userId, communityId, value) {
   }
   const score = db.prepare("SELECT COALESCE(SUM(value),0) s FROM community_votes WHERE community_id=?").get(communityId).s;
   db.prepare("UPDATE community_cards SET score=? WHERE id=?").run(score, communityId);
-  persistNow();
   const myVote = db.prepare("SELECT value FROM community_votes WHERE community_id=? AND user_id=?").get(communityId, userId);
   return { score, myVote: myVote?.value || 0 };
 }
@@ -80,7 +78,6 @@ export function importCommunity(userId, communityId) {
     .run(communityId, userId, cc.flashcard_id);
   db.prepare("UPDATE community_cards SET imports=imports+1 WHERE id=?").run(communityId);
   ensureTracked(userId, cc.flashcard_id);
-  persistNow();
   return { ok: true };
 }
 
@@ -99,7 +96,6 @@ export function moderate(communityId, action) {
   if (!cc) return { error: "not found" };
   const status = action === "approve" ? "approved" : "rejected";
   db.prepare("UPDATE community_cards SET status=?, reviewed_at=datetime('now') WHERE id=?").run(status, communityId);
-  persistNow();
   return { ok: true, status };
 }
 export function communityStats() {

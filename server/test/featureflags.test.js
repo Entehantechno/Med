@@ -4,7 +4,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import request from "supertest";
 import { execSync } from "child_process";
-import { initDb, db, persistNow } from "../src/db.js";
+import { initDb, db } from "../src/db.js";
 import { createApp } from "../src/app.js";
 import { setFlag, DEFAULT_FLAGS, allFlags } from "../src/lib/flags.js";
 
@@ -17,7 +17,6 @@ beforeAll(async () => {
   tk = r.body.token;
   uid = db.prepare("SELECT id FROM users WHERE username='learner'").get().id;
   db.prepare("UPDATE learner_profiles SET premium=1, premium_until='2030-01-01' WHERE user_id=?").run(uid);
-  persistNow();
 });
 afterAll(() => { for (const [k, , , def] of DEFAULT_FLAGS) setFlag(k, def !== 0); });
 

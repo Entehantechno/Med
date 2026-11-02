@@ -4,7 +4,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { execSync, execFileSync } from "child_process";
 import request from "supertest";
 import { createApp } from "../src/app.js";
-import { initDb, persistNow, db } from "../src/db.js";
+import { initDb, db } from "../src/db.js";
 
 let app;
 const login = (u, p = "demo") => request(app).post("/api/auth/login").send({ username: u, password: p });
@@ -33,7 +33,6 @@ describe("legacy classes without university_id", () => {
   it("the boot migration assigns NULL rows to university 1 (fresh process, same DB file)", async () => {
     const id = db.prepare("SELECT id FROM classes ORDER BY id DESC LIMIT 1").get().id;
     db.prepare("UPDATE classes SET university_id=NULL WHERE id=?").run(id);
-    persistNow();
     // schemaReady is process-wide, so the real boot path is exercised in a child process.
     const out = execFileSync(process.execPath, ["--input-type=module", "-e",
       `const m = await import("./src/db.js"); await m.initDb(); m.initSchema();

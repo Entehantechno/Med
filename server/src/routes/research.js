@@ -326,7 +326,7 @@ r.post("/consent", authRequired, (req, res) => {
     }
   }
   const out = durableTransaction(() => {
-    const decision = grantOnlineConsent(req.user, studyId, { persist: false });
+    const decision = grantOnlineConsent(req.user, studyId);
     if (!decision.error) db.prepare("INSERT INTO research_events (study_id,user_id,event_type,context_type,data_json) VALUES (?,?,?,?,?)")
       .run(studyId, req.user.id, "consent_granted", "study", JSON.stringify({ mode: "online", hash: decision.hash }));
     return decision;
@@ -382,7 +382,7 @@ r.post("/studies/:id/consents/record", ...admin, (req, res) => {
   const out = durableTransaction(() => {
     const decision = recordOfflineConsent({
       studyId: sid, userId: b.user_id, pseudonym: b.pseudonym,
-      mode: b.mode, recordedBy: req.user.id, note: b.note, persist: false,
+      mode: b.mode, recordedBy: req.user.id, note: b.note,
     });
     if (!decision.error && Number(b.user_id)) {
       db.prepare("INSERT INTO research_events (study_id,user_id,event_type,context_type,data_json) VALUES (?,?,?,?,?)")

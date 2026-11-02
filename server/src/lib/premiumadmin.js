@@ -7,10 +7,10 @@
    • grant/extend premium by N days, or revoke it — all manual admin actions,
      independent of the payment gateway (useful for support & comps).
 
-   All writes flush via persistNow(). Premium days are stored as an absolute
+   Premium days are stored as an absolute
    `premium_until` ISO timestamp on learner_profiles (same field the gateway uses),
    so admin grants and paid subscriptions stack naturally. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { maxHearts, premiumProgramOn, getProfile } from "./gamify.js";
 import { applyPremiumDays, daysLeftPremium, premiumUntilExpr, premiumActiveWhere, PREMIUM_ACTIVE_SQL, PREMIUM_EXPIRED_SQL } from "./entitlement.js";
 
@@ -91,14 +91,12 @@ export function grantLifetime(userId) {
   getProfile(userId);
   db.prepare("UPDATE learner_profiles SET premium=1, premium_until=NULL, hearts=? WHERE user_id=?")
     .run(maxHearts(), userId);
-  persistNow();
   return { ok: true, lifetime: true, premium: 1 };
 }
 
 /* Revoke premium immediately. */
 export function revokePremium(userId) {
   db.prepare("UPDATE learner_profiles SET premium=0, premium_until=NULL WHERE user_id=?").run(userId);
-  persistNow();
   return { ok: true };
 }
 

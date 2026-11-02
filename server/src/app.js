@@ -13,7 +13,7 @@ import compression from "compression";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import { initSchema, persistNow } from "./db.js";
+import { initSchema } from "./db.js";
 
 import authRoutes from "./routes/auth.js";
 import contentRoutes from "./routes/content.js";
@@ -132,7 +132,6 @@ function recordSuspiciousInput(req, hit) {
       safeText(req.headers["user-agent"] || "", 300),
       JSON.stringify(hit).slice(0, 1000)
     );
-    persistNow();
   } catch { /* never break requests */ }
 }
 function recordSecurityEvent(req, res) {

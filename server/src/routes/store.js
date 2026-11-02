@@ -8,7 +8,7 @@
    POST /api/store/courses/:id/buy -> creates a transaction (plan="course:<id>")
    and returns the gateway url; on callback verify, the buyer is enrolled. */
 import { Router } from "express";
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { requirePerm } from "../lib/rbac.js";
 import { audit } from "../lib/audit.js";
@@ -88,7 +88,6 @@ r.post("/courses/:id/buy", storeGate, authRequired, async (req, res) => {
   const price = effectivePrice(c);
   if (price <= 0) { // free course: enroll immediately
     db.prepare("INSERT OR IGNORE INTO course_enrollments (user_id, course_id) VALUES (?,?)").run(req.user.id, c.id);
-    persistNow();
     return res.json({ owned: true, free: true });
   }
   const pay = await requestPayment({
@@ -98,7 +97,6 @@ r.post("/courses/:id/buy", storeGate, authRequired, async (req, res) => {
   if (!pay.ok) return res.status(502).json({ error: pay.error || "gateway error" });
   db.prepare(`INSERT INTO transactions (user_id, plan, amount, authority, status, gateway)
     VALUES (?,?,?,?, 'pending', ?)`).run(req.user.id, `course:${c.id}`, price, pay.authority, pay.gateway);
-  persistNow();
   res.json({ url: pay.url, authority: pay.authority, gateway: pay.gateway });
 });
 
@@ -115,14 +113,12 @@ r.get("/callback", async (req, res) => {
   }
   if (status && String(status).toUpperCase() !== "OK") {
     db.prepare("UPDATE transactions SET status='canceled' WHERE id=? AND status='pending'").run(tx.id);
-    persistNow();
     return back("canceled");
   }
   const v = await verifyPayment({ amount: tx.amount, authority });
   if (!v.ok) {
     if (!v.transient) {
       db.prepare("UPDATE transactions SET status='failed' WHERE id=? AND status='pending'").run(tx.id);
-      persistNow();
     }
     return back("failed");
   }
@@ -162,7 +158,6 @@ r.post("/admin/courses", ...adminContent, (req, res) => {
     Number(b.price) || 0, b.discount_price === "" || b.discount_price == null ? null : Number(b.discount_price),
     b.instructor_fa || "", b.instructor_en || "", b.level || "all", b.published ? 1 : 0, ord);
   audit(req, "store.course_create", `courses:${info.lastInsertRowid}`, {});
-  persistNow();
   res.json({ id: info.lastInsertRowid });
 });
 r.put("/admin/courses/:id", ...adminContent, (req, res) => {
@@ -177,7 +172,6 @@ r.put("/admin/courses/:id", ...adminContent, (req, res) => {
     b.instructor_fa ?? c.instructor_fa, b.instructor_en ?? c.instructor_en, b.level ?? c.level,
     b.published != null ? (b.published ? 1 : 0) : c.published, c.id);
   audit(req, "store.course_edit", `courses:${c.id}`, {});
-  persistNow();
   res.json({ ok: true });
 });
 r.delete("/admin/courses/:id", ...adminContent, (req, res) => {
@@ -188,7 +182,6 @@ r.delete("/admin/courses/:id", ...adminContent, (req, res) => {
   });
   tx();
   audit(req, "store.course_delete", `courses:${req.params.id}`, {});
-  persistNow();
   res.json({ ok: true });
 });
 
@@ -201,7 +194,6 @@ r.post("/admin/courses/:id/lessons", ...adminContent, (req, res) => {
   const info = db.prepare(`INSERT INTO course_lessons (course_id,title_fa,title_en,video_url,duration,free_preview,ord)
     VALUES (?,?,?,?,?,?,?)`).run(c.id, b.title_fa || "", b.title_en || "", b.video_url || "", b.duration || "", b.free_preview ? 1 : 0, ord);
   audit(req, "store.lesson_create", `course_lessons:${info.lastInsertRowid}`, { course: c.id });
-  persistNow();
   res.json({ id: info.lastInsertRowid });
 });
 r.put("/admin/lessons/:id", ...adminContent, (req, res) => {
@@ -212,20 +204,18 @@ r.put("/admin/lessons/:id", ...adminContent, (req, res) => {
     b.title_fa ?? l.title_fa, b.title_en ?? l.title_en, b.video_url ?? l.video_url,
     b.duration ?? l.duration, b.free_preview != null ? (b.free_preview ? 1 : 0) : l.free_preview, l.id);
   audit(req, "store.lesson_edit", `course_lessons:${l.id}`, {});
-  persistNow();
   res.json({ ok: true });
 });
 r.delete("/admin/lessons/:id", ...adminContent, (req, res) => {
   db.prepare("DELETE FROM course_lessons WHERE id=?").run(req.params.id);
   audit(req, "store.lesson_delete", `course_lessons:${req.params.id}`, {});
-  persistNow();
   res.json({ ok: true });
 });
 // reorder lessons: body { order:[lessonId,...] }
 r.put("/admin/courses/:id/reorder", ...adminContent, (req, res) => {
   const order = Array.isArray(req.body?.order) ? req.body.order.map(Number).filter(Boolean) : [];
   const tx = db.transaction(() => order.forEach((lid, i) => db.prepare("UPDATE course_lessons SET ord=? WHERE id=? AND course_id=?").run(i, lid, req.params.id)));
-  tx(); persistNow();
+  tx();
   res.json({ ok: true });
 });
 

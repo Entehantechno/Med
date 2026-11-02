@@ -3,7 +3,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import request from "supertest";
 import { execSync } from "child_process";
-import { initDb, db, persistNow } from "../src/db.js";
+import { initDb, db } from "../src/db.js";
 import { createApp } from "../src/app.js";
 import { optionStats, percentileFor, dailyReport, checkStreakTrial, saveExplainAsCard } from "../src/lib/peerstats.js";
 import { recordAnswers } from "../src/lib/analytics.js";
@@ -13,7 +13,6 @@ const A = (tk) => ({ Authorization: `Bearer ${tk}` });
 async function token(u) { const r = await request(app).post("/api/auth/login").send({ username: u, password: "demo" }); return r.body.token; }
 function setPremium(on) {
   db.prepare("UPDATE learner_profiles SET premium=?, premium_until=? WHERE user_id=?").run(on ? 1 : 0, on ? "2030-01-01" : null, uid);
-  persistNow();
 }
 function anyMcqCardId() {
   for (const r of db.prepare("SELECT id, data_json FROM flashcards WHERE active=1 LIMIT 400").all()) {
@@ -100,7 +99,7 @@ describe("hint & one-tap flashcard", () => {
     let r = await request(app).post(`/api/learn/card/${row.id}/hint`).set(A(tk));
     expect(r.status).toBe(200); expect(r.body.hint).toBeTruthy(); expect(r.body.cost).toBe(0);
     setPremium(false);
-    db.prepare("UPDATE learner_profiles SET gems=100 WHERE user_id=?").run(uid); persistNow();
+    db.prepare("UPDATE learner_profiles SET gems=100 WHERE user_id=?").run(uid);
     tk = await token("learner");
     r = await request(app).post(`/api/learn/card/${row.id}/hint`).set(A(tk));
     expect(r.status).toBe(200); expect(r.body.cost).toBeGreaterThan(0); expect(r.body.gems).toBe(100 - r.body.cost);

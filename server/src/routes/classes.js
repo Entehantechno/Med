@@ -760,7 +760,7 @@ r.post('/:id/flashcards/finish',authRequired,requireRole('student'),validateBody
       const score=total?Math.round(counted.reduce((s,p)=>s+p.score*weight(p),0)/total):0;
       const result={ok:true,score,noPenalty:deck.noPenalty,parts};
       const studyId=studyIdForClass(cid);
-      if(studyId)recordStudyEvent({studyId,userId,eventType:'flashcard_finished',contextType:'class',contextId:cid,data:{type:'combined_flash',score,flashcardIds:parts.map(p=>p.id)},persist:false});
+      if(studyId)recordStudyEvent({studyId,userId,eventType:'flashcard_finished',contextType:'class',contextId:cid,data:{type:'combined_flash',score,flashcardIds:parts.map(p=>p.id)}});
       db.prepare('INSERT INTO class_flash_submissions(class_id,user_id,submission_id,result_json) VALUES (?,?,?,?)').run(cid,userId,req.body.submissionId,JSON.stringify(result));
       return result;
     });
@@ -817,7 +817,7 @@ r.post("/:id/flashcard/:fid/finish", authRequired, requireRole("student"), valid
     if (studyId) recordStudyEvent({
       studyId, userId: req.user.id, eventType: "flashcard_finished",
       contextType: "class", contextId: cid,
-      data: { flashcardId: fid, score, type: "flash" }, persist: false,
+      data: { flashcardId: fid, score, type: "flash" },
     });
   });
   closeFlashProgress(req.user.id, `classfc:${cid}:${fid}`);   // R64: the saved run is complete

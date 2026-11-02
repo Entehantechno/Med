@@ -8,7 +8,7 @@
                        first daily lesson that unlocks a reward
    A learner never gets more than the admin-set daily reward cap, and premium
    learners see no ads at all. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getProfile } from "./gamify.js";
 import { tehranDay } from "./gamify.js";
 import { getGameConfig } from "./gameconfig.js";
@@ -45,7 +45,6 @@ export function pickAd(lang, premium, format, nodeId = null) {
   if (!rows.length) return null;
   const a = rows[Math.floor(Math.random() * rows.length)];
   db.prepare("UPDATE ads SET impressions=impressions+1 WHERE id=?").run(a.id);
-  persistNow();
   return shapeAd(a, lang);
 }
 
@@ -68,7 +67,6 @@ export function claimRewardedAd(userId, adId, format = "rewarded") {
     // still log the view (no reward) so analytics is accurate
     db.prepare("INSERT INTO ad_views (user_id, ad_id, format, day, reward_kind, reward_amount) VALUES (?,?,?,?, 'none', 0)")
       .run(userId, adId || null, format, day);
-    persistNow();
     return { ok: false, error: "cap", capped: true, cap: cfg.daily_reward_cap };
   }
   const gems = format === "prelesson" ? cfg.prelesson_gems : cfg.rewarded_gems;
@@ -76,7 +74,6 @@ export function claimRewardedAd(userId, adId, format = "rewarded") {
     .run(userId, adId || null, format, day, gems);
   db.prepare("UPDATE learner_profiles SET gems=gems+? WHERE user_id=?").run(gems, userId);
   if (adId) db.prepare("UPDATE ads SET clicks=clicks+1 WHERE id=?").run(adId);
-  persistNow();
   return { ok: true, gems, remaining: cfg.daily_reward_cap - used - 1, profile: getProfile(userId) };
 }
 

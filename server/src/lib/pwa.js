@@ -11,7 +11,7 @@
      • installed    — the OS fired appinstalled (confirmed on device)
      • launch       — app opened; standalone=1 means launched as an installed app
 */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getGameConfig } from "./gameconfig.js";
 import { tehranDay } from "./tehran-time.js";
 
@@ -26,7 +26,6 @@ export function recordPwaEvent({ userId = null, event, platform = "other", stand
     `INSERT INTO pwa_events (user_id, event, platform, standalone, day)
      VALUES (?, ?, ?, ?, ?)`
   ).run(userId, event, plat, standalone ? 1 : 0, tehranDay());
-  persistNow();
   return { ok: true };
 }
 

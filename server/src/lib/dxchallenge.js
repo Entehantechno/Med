@@ -10,7 +10,7 @@
    shared (the same way many "…dle" games share the Wordle mechanic).
 
    Public state never leaks the answer or unrevealed clues. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getGameConfig } from "./gameconfig.js";
 import { tehranDay, awardXp, getProfile } from "./gamify.js";
 
@@ -134,7 +134,6 @@ export function submitGuess(userId, caseId, guess, lang = "fa") {
 
   db.prepare("UPDATE dx_attempts SET guesses_json=?, revealed=?, solved=?, finished=?, updated_at=datetime('now') WHERE id=?")
     .run(JSON.stringify(guesses), revealed, solved, finished, attempt.id);
-  persistNow();
 
   let awards = null;
   if (solved) awards = grantSolveRewards(userId, guesses.length, maxG);
@@ -169,7 +168,6 @@ function grantSolveRewards(userId, guessCount, maxG = 6) {
   const gemsFull = cfg.gems_solved || 0;
   const gems = guessCount === 1 ? gemsFull : Math.round(gemsFull * factor);
   if (gems) db.prepare("UPDATE learner_profiles SET gems=gems+? WHERE user_id=?").run(gems, userId);
-  persistNow();
   return { xp, gems, firstTry: guessCount === 1, solved: true, factor: Math.round(factor * 100) };
 }
 
@@ -183,7 +181,6 @@ function grantEffortReward(userId) {
     db.prepare("INSERT INTO xp_events (user_id, amount, reason, day) VALUES (?,?,?,?)")
       .run(userId, xp, "dx_attempt", tehranDay());
     db.prepare("UPDATE learner_profiles SET xp=xp+?, weekly_xp=weekly_xp+? WHERE user_id=?").run(xp, xp, userId);
-    persistNow();
   }
   return { xp, gems: 0, firstTry: false, solved: false, effort: true };
 }
@@ -228,7 +225,6 @@ export function createCase(d = {}) {
   const info = db.prepare(
     `INSERT INTO dx_cases (${DX_COLS.join(",")}) VALUES (${DX_COLS.map(() => "?").join(",")})`
   ).run(...vals);
-  persistNow();
   return db.prepare("SELECT * FROM dx_cases WHERE id=?").get(info.lastInsertRowid);
 }
 export function updateCase(id, d = {}) {
@@ -239,13 +235,11 @@ export function updateCase(id, d = {}) {
   db.prepare(
     `UPDATE dx_cases SET ${DX_COLS.map((k) => k + "=?").join(",")} WHERE id=?`
   ).run(...vals, id);
-  persistNow();
   return db.prepare("SELECT * FROM dx_cases WHERE id=?").get(id);
 }
 export function deleteCase(id) {
   db.prepare("DELETE FROM dx_cases WHERE id=?").run(id);
   db.prepare("DELETE FROM dx_attempts WHERE case_id=?").run(id);
-  persistNow();
   return true;
 }
 /* Bulk import from CSV rows. Each row = one case. Columns (any subset, both

@@ -10,7 +10,7 @@
    deps): headings (with slug ids for the TOC), bold/italic/code, links, lists,
    blockquotes, tables and paragraphs. All user/admin HTML is escaped first, so
    the output is XSS-safe by construction. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 
 const WORDS_PER_MIN = 200;
 
@@ -226,7 +226,7 @@ export function summarize(r, lang = "fa") {
 export function getPost(slug, lang = "fa", { countView = true } = {}) {
   const r = db.prepare("SELECT * FROM blog_posts WHERE slug=? AND published=1").get(slug);
   if (!r) return null;
-  if (countView) { db.prepare("UPDATE blog_posts SET views=views+1 WHERE id=?").run(r.id); persistNow(); }
+  if (countView) { db.prepare("UPDATE blog_posts SET views=views+1 WHERE id=?").run(r.id); }
   const body = L(r, "body", lang);
   const related = db.prepare(
     "SELECT * FROM blog_posts WHERE published=1 AND category=? AND id<>? ORDER BY COALESCE(published_at,created_at) DESC LIMIT 3"
@@ -285,7 +285,6 @@ export function createPost(d = {}) {
     d.meta_title_fa || "", d.meta_title_en || "", d.meta_desc_fa || "", d.meta_desc_en || "",
     d.canonical || "", d.scheduled_at || null
   );
-  persistNow();
   return adminGet(info.lastInsertRowid);
 }
 
@@ -315,7 +314,6 @@ export function updatePost(id, d = {}, editor = null) {
     d.canonical ?? cur.canonical, d.scheduled_at !== undefined ? (d.scheduled_at || null) : cur.scheduled_at,
     id
   );
-  persistNow();
   return adminGet(id);
 }
 
@@ -385,14 +383,12 @@ export function publishScheduled() {
   if (!due.length) return 0;
   const upd = db.prepare("UPDATE blog_posts SET published=1, published_at=COALESCE(published_at, scheduled_at), scheduled_at=NULL, updated_at=datetime('now') WHERE id=?");
   for (const p of due) upd.run(p.id);
-  persistNow();
   return due.length;
 }
 
 export function deletePost(id) {
   db.prepare("DELETE FROM blog_posts WHERE id=?").run(id);
   db.prepare("DELETE FROM blog_revisions WHERE post_id=?").run(id);
-  persistNow();
   return { ok: true };
 }
 

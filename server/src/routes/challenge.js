@@ -4,7 +4,7 @@
    scores (correct, then time) are compared → winner gets XP. */
 import { Router } from "express";
 import crypto from "crypto";
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { getProfile, awardXp } from "../lib/gamify.js";
 import { serializeCard } from "../lib/cardserialize.js";
@@ -45,7 +45,6 @@ r.post("/create", ...learner, (req, res) => {
   const code = code6();
   const info = db.prepare(`INSERT INTO challenges (code, topic_id, card_ids, creator_id, status, xp_stake)
     VALUES (?,?,?,?,'open',?)`).run(code, topicId, JSON.stringify(cards), req.user.id, 30);
-  persistNow();
   res.json({ id: info.lastInsertRowid, code });
 });
 
@@ -58,7 +57,6 @@ r.post("/quick", ...learner, (req, res) => {
   ).get(req.user.id);
   if (open) {
     db.prepare("UPDATE challenges SET opponent_id=?, status='active' WHERE id=?").run(req.user.id, open.id);
-    persistNow();
     notify(open.creator_id, {
       kind: "challenge", icon: "trophy", link: "challenge",
       title_fa: "⚔️ حریف پیدا شد!", title_en: "⚔️ Opponent joined!",
@@ -71,7 +69,6 @@ r.post("/quick", ...learner, (req, res) => {
   const cards = pickCards(null, 5);
   const info = db.prepare(`INSERT INTO challenges (code, topic_id, card_ids, creator_id, status, xp_stake)
     VALUES (?,?,?,?,'open',?)`).run(code6(), null, JSON.stringify(cards), req.user.id, 30);
-  persistNow();
   res.json({ id: info.lastInsertRowid, matched: false, waiting: true });
 });
 
@@ -106,7 +103,6 @@ r.post("/join", ...learner, (req, res) => {
   if (c.opponent_id && c.opponent_id !== req.user.id) return res.status(409).json({ error: "already full" });
   if (!c.opponent_id) {
     db.prepare("UPDATE challenges SET opponent_id=?, status='active' WHERE id=?").run(req.user.id, c.id);
-    persistNow();
     notify(c.creator_id, {
       kind: "challenge", icon: "trophy", link: "challenge",
       title_fa: "⚔️ حریف پیدا شد!", title_en: "⚔️ Opponent joined!",
@@ -171,7 +167,6 @@ r.post("/:id/submit", ...learner, (req, res) => {
     }
     outcome = { finished: true, winnerId: winner, tie: !winner };
   }
-  persistNow();
   res.json({ ...outcome, myScore: `${correct}/${total}` });
 });
 

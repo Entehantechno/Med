@@ -1,6 +1,6 @@
 /* flags.js — global feature flags. Seeded with sensible defaults; admins toggle them.
    Learner/teacher routes can check isEnabled() to gate features platform-wide. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 
 export const DEFAULT_FLAGS = [
   ["learner_signup", "ثبت‌نام آزاد کاربران رقابتی", "Public learner sign-up"],
@@ -82,7 +82,6 @@ export function ensureFlags() {
     const enabled = def === 0 ? 0 : 1;
     if (!row) db.prepare("INSERT INTO feature_flags (key, enabled, label_fa, label_en) VALUES (?,?,?,?)").run(key, enabled, fa, en);
   }
-  persistNow();
 }
 
 export function allFlags() {
@@ -106,5 +105,4 @@ export function setFlag(key, enabled) {
   flagCache.delete(key);
   db.prepare("INSERT INTO feature_flags (key, enabled, updated_at) VALUES (?,?,datetime('now')) ON CONFLICT(key) DO UPDATE SET enabled=excluded.enabled, updated_at=datetime('now')")
     .run(key, enabled ? 1 : 0);
-  persistNow();
 }

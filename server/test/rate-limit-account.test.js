@@ -9,7 +9,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import express from "express";
 import request from "supertest";
 import jwt from "jsonwebtoken";
-import { initDb, initSchema, db, persistNow } from "../src/db.js";
+import { initDb, initSchema, db } from "../src/db.js";
 import { GAME_CONFIG_KEY } from "../src/lib/gameconfig.js";
 import { apiLimiter } from "../src/lib/security.js";
 import { signToken, JWT_ISS, JWT_AUD } from "../src/lib/auth.js";
@@ -43,7 +43,6 @@ afterAll(() => {
   } else {
     db.prepare("DELETE FROM settings WHERE key=?").run(GAME_CONFIG_KEY);
   }
-  persistNow({ force: true });
   process.env.DISABLE_RATE_LIMIT = prevDisable;
 });
 

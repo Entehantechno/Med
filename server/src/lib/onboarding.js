@@ -4,7 +4,7 @@
    learner's REAL data (first lesson, daily goal, first review, explored a tool),
    so ticking a box always reflects a genuine action toward value. Admin controls
    which steps show + the completion reward via gameconfig. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getProfile } from "./gamify.js";
 import { getGameConfig } from "./gameconfig.js";
 
@@ -27,7 +27,6 @@ const STEP_DEFS = [
 // mark that the learner has chosen a daily goal (called from the goal endpoint)
 export function markGoalSet(userId) {
   db.prepare("UPDATE learner_profiles SET goal_set=1 WHERE user_id=?").run(userId);
-  persistNow();
 }
 
 function isDone(userId, key) {
@@ -72,7 +71,6 @@ export function onboardingStatus(userId, lang = "fa") {
 
 export function dismissOnboarding(userId) {
   db.prepare("UPDATE learner_profiles SET onboarding_dismissed=1 WHERE user_id=?").run(userId);
-  persistNow();
 }
 
 // claim the completion reward (once). Returns updated profile.
@@ -82,6 +80,5 @@ export function claimOnboarding(userId) {
   if (!st.complete) return { ok: false, error: "incomplete" };
   if (p.onboarding_claimed) return { ok: false, error: "claimed" };
   db.prepare("UPDATE learner_profiles SET onboarding_claimed=1, gems=gems+? WHERE user_id=?").run(st.reward_gems, userId);
-  persistNow();
   return { ok: true, gems: st.reward_gems, profile: getProfile(userId) };
 }

@@ -5,7 +5,7 @@
    it WITHOUT auth; only an admin can write. Any key the admin hasn't overridden
    falls back to the built-in i18n string on the client. */
 import { Router } from "express";
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 
 const r = Router();
@@ -18,7 +18,6 @@ function readContent() {
 function writeContent(obj) {
   db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
     .run(KEY, JSON.stringify(obj || {}));
-  persistNow();
 }
 
 /* Public: anyone (even logged-out) can read the published copy. */
@@ -130,14 +129,12 @@ r.put("/mascots", authRequired, requireRole("admin"), (req, res) => {
   if (!["slow", "normal", "fast"].includes(next.speed)) next.speed = "normal";
   db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
     .run("mascots", JSON.stringify(next));
-  persistNow();
   res.json({ ok: true, mascots: next });
 });
 
 // Admin reset to defaults.
 r.delete("/mascots", authRequired, requireRole("admin"), (req, res) => {
   db.prepare("DELETE FROM settings WHERE key=?").run("mascots");
-  persistNow();
   res.json({ ok: true, mascots: defaultMascots() });
 });
 

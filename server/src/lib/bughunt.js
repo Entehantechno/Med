@@ -9,7 +9,7 @@
    Manual reports are filed by learners/admins via POST /bug-report
    Auto-scans run on demand and on a timer (auto_scan_hours from gameconfig)
 */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getGameConfig } from "./gameconfig.js";
 import { notify } from "./notify.js";
 
@@ -26,7 +26,6 @@ export function listReports({ status, kind, limit = 50 } = {}) {
 export function createReport({ reporter_id, title, description, severity = "medium", kind = "manual", meta = {} }) {
   const info = db.prepare("INSERT INTO bug_reports (reporter_id,title,description,severity,status,kind,meta_json) VALUES (?,?,?,?,?,?,?)")
     .run(reporter_id || null, String(title).slice(0, 200), String(description).slice(0, 5000), severity, "open", kind, JSON.stringify(meta || {}));
-  persistNow();
   // notify admins if enabled
   try {
     const cfg = getGameConfig().bug_hunt;
@@ -52,7 +51,6 @@ export function updateReport(id, { status, severity }) {
   const ns = status || cur.status;
   const sev = severity || cur.severity;
   db.prepare("UPDATE bug_reports SET status=?, severity=?, updated_at=datetime('now') WHERE id=?").run(ns, sev, id);
-  persistNow();
   return { ok: true };
 }
 
@@ -147,7 +145,6 @@ export function scanOnce() {
   // persist scan
   const info = db.prepare("INSERT INTO bug_scans (findings, report_json, finished_at) VALUES (?,?,datetime('now'))")
     .run(findings.length, JSON.stringify(findings));
-  persistNow();
 
   // auto-file critical/high findings as bug_reports (kind=auto)
   for (const f of findings) {
@@ -161,7 +158,6 @@ export function scanOnce() {
     const keep = Number(getGameConfig().bug_hunt?.keep_reports ?? 30);
     if (keep > 0) {
       db.prepare("DELETE FROM bug_scans WHERE created_at < datetime('now', '-' || ? || ' days')").run(keep);
-      persistNow();
     }
   } catch {}
 

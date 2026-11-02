@@ -4,7 +4,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { execSync } from "child_process";
 import request from "supertest";
 import { createApp } from "../src/app.js";
-import { initDb, db, persistNow } from "../src/db.js";
+import { initDb, db } from "../src/db.js";
 import {
   gradeFlashcard, studentSafeFlashcard, gradeSubmittedDeck, flashTok, bodyFromAnswer, bodyFromClientSel, formatFlashAnswer,
 } from "../src/lib/flashcard-grade.js";
@@ -330,7 +330,6 @@ describe("competitive wiring: bodyFromClientSel + custom-test + learner regrade"
   it("custom-test grades fill/match from sel, ignoring client correct:true", async () => {
     const u = db.prepare("SELECT id FROM users WHERE username='learner'").get();
     db.prepare("UPDATE learner_profiles SET premium=1, premium_until=? WHERE user_id=?").run("2030-01-01", u.id);
-    persistNow();
     const atk = await token("admin");
     const fill = await request(app).post("/api/flashcards").set(A(atk)).send({
       track: "learn", type: "fill", title_en: "LearnFillCT", title_fa: "جای‌رقابت",
@@ -345,7 +344,6 @@ describe("competitive wiring: bodyFromClientSel + custom-test + learner regrade"
     const start = await request(app).post("/api/learn/custom-test/start").set(A(ltk)).send({ n: 1, mode: "tutor" });
     expect(start.status).toBe(200);
     db.prepare("UPDATE exam_sims SET card_ids=? WHERE id=?").run(JSON.stringify([fill.body.id, match.body.id]), start.body.id);
-    persistNow();
 
     const fillWrong = await request(app).post(`/api/learn/custom-test/${start.body.id}/answer`).set(A(ltk))
       .send({ cardId: fill.body.id, sel: "", correct: true });

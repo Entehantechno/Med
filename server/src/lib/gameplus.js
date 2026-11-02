@@ -4,7 +4,7 @@
    chests (Early Bird / Night Owl), a gem shop with powerups (XP Boost, Streak
    Freeze, Timer Boost, Streak Repair), personal records, and a streak calendar.
    All state is per-user in SQLite; days/weeks use the Tehran timezone helpers. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getProfile, tehranDay, maxHearts } from "./gamify.js";
 import { tehranHour } from "./tehran-time.js";
 
@@ -19,7 +19,6 @@ export const DAILY_GOALS = [
 export function setDailyGoal(userId, value) {
   const v = DAILY_GOALS.some((g) => g.value === value) ? value : 30;
   db.prepare("UPDATE learner_profiles SET daily_goal=? WHERE user_id=?").run(v, userId);
-  persistNow();
   return getProfile(userId);
 }
 // XP earned today (from xp_events) → progress toward the daily goal.
@@ -64,7 +63,6 @@ export function buyItem(userId, slug) {
     if (!ok) return { ok: false, error: "nothing to repair" };
     db.prepare("UPDATE learner_profiles SET gems=?, streak_repairs_used=streak_repairs_used+1 WHERE user_id=?").run(gems, userId);
   }
-  persistNow();
   return { ok: true, profile: getProfile(userId) };
 }
 export function xpBoostActive(userId) {
@@ -102,7 +100,6 @@ export function getQuests(userId) {
     const picks = pickN(QUEST_POOL, 3, seed);
     const ins = db.prepare("INSERT OR IGNORE INTO user_quests (user_id, day, slug, goal, progress, reward_gems) VALUES (?,?,?,?,0,?)");
     for (const q of picks) ins.run(userId, day, q.slug, q.goal, q.gems);
-    persistNow();
     rows = db.prepare("SELECT * FROM user_quests WHERE user_id=? AND day=?").all(userId, day);
   }
   return rows;
@@ -115,14 +112,12 @@ export function progressQuests(userId, metric, amount = 1) {
   if (!q || q.claimed) return;
   const prog = Math.min(q.goal, q.progress + amount);
   db.prepare("UPDATE user_quests SET progress=? WHERE id=?").run(prog, q.id);
-  persistNow();
 }
 export function claimQuest(userId, questId) {
   const q = db.prepare("SELECT * FROM user_quests WHERE id=? AND user_id=?").get(questId, userId);
   if (!q || q.claimed || q.progress < q.goal) return { ok: false };
   db.prepare("UPDATE user_quests SET claimed=1 WHERE id=?").run(q.id);
   db.prepare("UPDATE learner_profiles SET gems=gems+? WHERE user_id=?").run(q.reward_gems, userId);
-  persistNow();
   return { ok: true, gems: q.reward_gems, profile: getProfile(userId) };
 }
 
@@ -149,7 +144,6 @@ export function openChest(userId, slug) {
   db.prepare("INSERT OR IGNORE INTO daily_chests (user_id, day, slug, opened_at, reward_gems) VALUES (?,?,?,?,?)")
     .run(userId, day, slug, new Date().toISOString(), c.gems);
   db.prepare("UPDATE learner_profiles SET gems=gems+? WHERE user_id=?").run(c.gems, userId);
-  persistNow();
   return { ok: true, gems: c.gems, profile: getProfile(userId) };
 }
 

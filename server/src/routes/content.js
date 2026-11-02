@@ -10,7 +10,7 @@ import { openConfigSecrets, serializeSettings, maskConfigSecrets, isMaskedSecret
    ================================================================ */
 import { Router } from "express";
 import { hashPassword, hashPasswordSync } from "../lib/password.js";
-import { db, persistNow, durableTransaction } from "../db.js";
+import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole, bumpTokenVer, isJtiRevoked } from "../lib/auth.js";
 import { passwordRejected, passwordErrorBody } from "./auth.js";
 import { toAsciiDigits } from "../lib/digits.js";
@@ -415,7 +415,6 @@ r.post("/site-bank/cases/:id/clone", authRequired, requireRole("teacher", "admin
     }
     const info = db.prepare("INSERT INTO cases (version,difficulty,checklist_id,data_json,university_id,created_by,reference_policy_id,reference_snapshot_json) VALUES (1,?,?,?, ?,?,?,?)")
       .run(src.difficulty, src.checklist_id, JSON.stringify(data), uni, req.user.id, policyId, snapshotJson);
-    persistNow();
     res.json({ ok: true, id: info.lastInsertRowid, university_id: uni });
   } catch (e) {
     res.status(500).json({ error: "clone_failed", message: String(e.message || e).slice(0, 200) });
@@ -587,7 +586,6 @@ r.post("/flashcards", authRequired, requireRole("teacher", "admin"), (req, res) 
   const uni = wantLearn ? null : (req.user.role === "admin" ? (Number(req.body?.university_id) || currentUniversityId(req.user) || 1) : currentUniversityId(req.user));
   const info = db.prepare("INSERT INTO flashcards (version,difficulty,data_json,university_id,created_by,last_editor_id,last_action,created_at,content_updated_at) VALUES (1,?,?,?, ?,?, 'created', datetime('now'), datetime('now'))")
     .run(difficulty, JSON.stringify(data), uni, req.user.id, req.user.id);
-  persistNow();
   res.json({ id: info.lastInsertRowid, version: 1 });
 });
 r.put("/flashcards/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -603,7 +601,6 @@ r.put("/flashcards/:id", authRequired, requireRole("teacher", "admin"), (req, re
   const newVersion = row.version + 1;
   db.prepare("UPDATE flashcards SET version=?,difficulty=?,data_json=?,updated_at=datetime('now'),content_updated_at=datetime('now'),last_editor_id=?,last_action='edited',revision=COALESCE(revision,1)+1 WHERE id=?")
     .run(newVersion, difficulty, JSON.stringify(data), req.user.id, row.id);
-  persistNow();
   res.json({ id: row.id, version: newVersion });
 });
 r.delete("/flashcards/:id", authRequired, requireRole("teacher", "admin"), (req, res) => {
@@ -1450,7 +1447,6 @@ export function getSetting(key, fallback) {
 export function setSetting(key, obj) {
   db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
     .run(key, serializeSettings(obj));
-  persistNow();
   return obj;
 }
 function saveSettings(entries) {

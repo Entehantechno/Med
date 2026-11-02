@@ -4,7 +4,7 @@ import { createHash } from "node:crypto";
    achievements, ads, and premium (simulated). */
 import { Router } from "express";
 import { searchPool, normalizeText, highlightRanges, snippet as searchSnippet, suggest as suggestValues } from "../lib/textsearch.js";
-import { db, persistNow, onDbReady } from "../db.js";
+import { db, onDbReady } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import {
   getProfile, awardXp, loseHeart, refillHearts, maxHearts, heartRefillGems,
@@ -94,7 +94,6 @@ function nextPathNode(node) {
 function rememberNode(userId, nodeId) {
   try {
     db.prepare("UPDATE learner_profiles SET last_node_id=? WHERE user_id=?").run(nodeId, userId);
-    persistNow();
   } catch { /* column may be missing on a very old DB */ }
 }
 
@@ -156,7 +155,6 @@ r.get("/programs", ...learner, (req, res) => {
 r.post("/program", ...learner, (req, res) => {
   const out = setActiveProgram(req.user.id, req.body?.program);
   if (out.error) return res.status(400).json(out);
-  persistNow();
   res.json({ ...out, label: programLabel(out.program, L(req)) });
 });
 
@@ -539,7 +537,6 @@ r.post("/lesson/:nodeId/finish", ...learner, (req, res) => {
       body_en: `You mastered "${b.name_en || b.name_fa}" (${b.accuracy}% durable accuracy). +${b.reward_xp} XP and +${b.reward_gems} gems.`,
     });
   }
-  persistNow();
   const profile2 = (newMastery.length || premiumTrial) ? getProfile(req.user.id) : profile;   // reflect mastery gems / trial
   const lang = L(req);
   let summary = null;
@@ -637,7 +634,6 @@ r.post("/checkpoint/:section/finish", ...learner, flagGate("checkpoint"), (req, 
       body_en: `You mastered "${b.name_en || b.name_fa}". +${b.reward_xp} XP and +${b.reward_gems} gems.`,
     });
   }
-  persistNow();
   const cpProfile = cpNewMastery.length ? getProfile(req.user.id) : profile;
   res.json({ ...out, profile: cpProfile, unlocked, errorReport: cpErrorReport, srsAdded: cpSrsAdded, newMastery: cpNewMastery });
 });
@@ -699,7 +695,6 @@ r.post("/daily/goal", ...learner, (req, res) => {
 /* First-time welcome flow: mark the one-time welcome modal as seen. */
 r.post("/welcome/seen", ...learner, (req, res) => {
   db.prepare("UPDATE learner_profiles SET welcome_seen=1 WHERE user_id=?").run(req.user.id);
-  persistNow();
   res.json({ ok: true });
 });
 
@@ -1335,7 +1330,6 @@ r.post("/library/save/:cardId", ...learner, flagGate("library"), (req, res) => {
     VALUES (?,?,?,?,datetime('now'))
     ON CONFLICT(user_id, card_id) DO UPDATE SET highlight=excluded.highlight, updated_at=datetime('now')`)
     .run(req.user.id, cardId, "", next);
-  persistNow();
   res.json({ saved: !!next });
 });
 r.get("/library/save/:cardId", ...learner, flagGate("library"), (req, res) => {
@@ -1898,7 +1892,6 @@ r.put("/notes/:cardId", ...learner, flagGate("notes"), (req, res) => {
     VALUES (?,?,?,?,datetime('now'))
     ON CONFLICT(user_id, card_id) DO UPDATE SET note=excluded.note, highlight=excluded.highlight, updated_at=datetime('now')`)
     .run(req.user.id, cardId, note, highlight);
-  persistNow();
   res.json({ ok: true });
 });
 
@@ -1915,7 +1908,6 @@ r.get("/ads", ...learner, (req, res) => {
 });
 r.post("/ads/:id/click", ...learner, (req, res) => {
   db.prepare("UPDATE ads SET clicks=clicks+1 WHERE id=?").run(req.params.id);
-  persistNow();
   res.json({ ok: true });
 });
 
@@ -2077,7 +2069,6 @@ r.post("/review/unsuspend", ...learner, flagGate("srs_review"), (req, res) => {
   }
   // no cardId → unsuspend all
   db.prepare("UPDATE srs_state SET suspended=0, buried_until=NULL WHERE user_id=? AND suspended=1").run(req.user.id);
-  persistNow();
   res.json({ ok: true });
 });
 r.get("/review/suspended", ...learner, (req, res) => {
@@ -2105,7 +2096,6 @@ r.get("/notifications", ...learner, (req, res) => {
 });
 r.post("/notifications/seen", ...learner, (req, res) => {
   db.prepare("UPDATE notifications SET seen=1 WHERE user_id=?").run(req.user.id);
-  persistNow();
   res.json({ ok: true });
 });
 
@@ -2118,7 +2108,6 @@ r.post("/push/subscribe", ...learner, (req, res) => {
   if (!s.endpoint) return res.status(400).json({ error: "no endpoint" });
   db.prepare(`INSERT OR IGNORE INTO push_subscriptions (user_id, endpoint, p256dh, auth) VALUES (?,?,?,?)`)
     .run(req.user.id, s.endpoint, s.keys?.p256dh || "", s.keys?.auth || "");
-  persistNow();
   res.json({ ok: true });
 });
 // Fire a test streak reminder for the current user (demo/testing convenience)
@@ -2189,7 +2178,6 @@ r.post("/mycards", ...learner, flagGate("learner_cards"), (req, res) => {
   db.prepare("INSERT INTO learner_cards (user_id, flashcard_id, topic_id) VALUES (?,?,?)")
     .run(req.user.id, fid, b.topic_id || null);
   ensureTracked(req.user.id, fid); // include personal cards in SRS immediately
-  persistNow();
   res.json({ id: fid });
 });
 
@@ -2199,7 +2187,6 @@ r.delete("/mycards/:linkId", ...learner, (req, res) => {
   db.prepare("UPDATE flashcards SET active=0 WHERE id=?").run(link.flashcard_id);
   db.prepare("DELETE FROM learner_cards WHERE id=?").run(link.id);
   db.prepare("DELETE FROM srs_state WHERE user_id=? AND card_id=?").run(req.user.id, link.flashcard_id);
-  persistNow();
   res.json({ ok: true });
 });
 
@@ -2232,7 +2219,6 @@ r.get("/premium/plans", ...learner, flagGate("premium"), (req, res) => {
 // This endpoint is kept only for automated tests / admin overrides.
 r.post("/premium/cancel", ...learner, (req, res) => {
   db.prepare("UPDATE learner_profiles SET premium=0, premium_until=NULL WHERE user_id=?").run(req.user.id);
-  persistNow();
   res.json({ profile: getProfile(req.user.id) });
 });
 

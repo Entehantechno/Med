@@ -3,7 +3,7 @@
    (optionally) let the learner "skip ahead" on strong topics by marking their
    first lesson as already mastered — so returning/knowledgeable users don't start
    from zero. Non-destructive: it only ever ADDS progress, never removes it. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getProfile } from "./gamify.js";
 import { getGameConfig } from "./gameconfig.js";
 import { activeProgramFor } from "./programs.js";
@@ -243,7 +243,6 @@ export function submitPlacement(userId, answers, lang = "fa") {
   const result = { overall, level, perTopic, strongTopics, skippedLessons, unlockedTopics, behavior,
     adaptive, ceilingDiff, questionsAnswered: total, at: new Date().toISOString() };
   db.prepare("UPDATE learner_profiles SET placement_done=1, placement_json=? WHERE user_id=?").run(JSON.stringify(result), userId);
-  persistNow();
   return result;
 }
 
@@ -423,14 +422,12 @@ export function placementAnalyticsCsv(lang = "fa") {
 
 export function skipPlacement(userId) {
   db.prepare("UPDATE learner_profiles SET placement_done=1 WHERE user_id=?").run(userId);
-  persistNow();
 }
 
 // Learner hides the offer without taking it (dismissible offer). Doesn't mark
 // the test as "done" so they can still take it later from the tools menu.
 export function dismissPlacement(userId) {
   db.prepare("UPDATE learner_profiles SET placement_dismissed=1 WHERE user_id=?").run(userId);
-  persistNow();
 }
 
 // Admin: reset a learner's placement so they can retake it (clears result +
@@ -438,6 +435,5 @@ export function dismissPlacement(userId) {
 export function resetPlacement(userId) {
   db.prepare("UPDATE learner_profiles SET placement_done=0, placement_dismissed=0, placement_json=NULL WHERE user_id=?").run(userId);
   db.prepare("DELETE FROM placement_unlocks WHERE user_id=?").run(userId);
-  persistNow();
   return { ok: true };
 }

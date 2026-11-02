@@ -20,7 +20,7 @@
 
    All client-supplied event data is validated before it touches the database:
    a research dataset that can be polluted by a crafted request is worthless. */
-import { db, persistNow, durableTransaction } from "../db.js";
+import { db, durableTransaction } from "../db.js";
 import { parseReferenceSnapshot, snapshotForCaseRow } from "./reference-governance.js";
 
 /* Event vocabulary. Anything outside this list is dropped. */
@@ -69,7 +69,6 @@ export function startSession({ userId, caseId, classId, examId, studyId, lang, r
           Number(existing.exam_id) !== Number(examId || 0) || Number(existing.study_id) !== Number(studyId || 0) || existing.lang !== (lang === "en" ? "en" : "fa")) {
         return { error: "start_request_context_mismatch", status: 409 };
       }
-      persistNow({ throwOnError: true });
       return { sessionId: existing.id, loggingEnabled: !!existing.logging_enabled, serverNow: existing.started_ms, deadlineMs: existing.deadline_ms ?? null, limitSec: existing.limit_sec || 0, replayed: true };
     }
   }
@@ -206,7 +205,7 @@ function normaliseEvent(ev, index) {
    Deliberately a no-op for content when logging is off: only the timing is
    written, so "we did not record this conversation" stays literally true.
    Returns { stored, loggingEnabled, dropped }. */
-export function finishSession({ sessionId, userId, events, durationSec, attemptId, persist = true }) {
+export function finishSession({ sessionId, userId, events, durationSec, attemptId }) {
   const s = getSession(sessionId);
   if (!s) return { stored: 0, loggingEnabled: false, dropped: 0, error: "session_not_found" };
   if (Number(s.user_id) !== Number(userId)) return { stored: 0, loggingEnabled: !!s.logging_enabled, dropped: 0, error: "not_your_session" };
@@ -236,7 +235,7 @@ export function finishSession({ sessionId, userId, events, durationSec, attemptI
   db.prepare(
     `UPDATE vp_sessions SET finished_at=datetime('now'), attempt_id=?, duration_sec=?, event_count=? WHERE id=?`
   ).run(attemptId ? Number(attemptId) : null, dur, stored, s.id);
-  if (persist) persistNow();
+  
   return { stored, loggingEnabled: !!s.logging_enabled, dropped };
 }
 

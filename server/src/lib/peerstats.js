@@ -10,7 +10,7 @@
      • saveExplainAsCard(...)   one-tap personal flashcard from a question
      • checkStreakTrial(...)    free premium days at streak milestones
      • jump-ahead quiz          short quiz that unlocks a whole unit             */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getGameConfig } from "./gameconfig.js";
 import { isEnabled } from "./flags.js";
 import { getProfile, awardXp, tehranDay } from "./gamify.js";
@@ -144,7 +144,6 @@ export function takeHint(userId, cardId, lang = "fa") {
     if (p.gems < cost) return { error: "not enough gems", needGems: cost, gems: p.gems };
     gems = p.gems - cost;
     db.prepare("UPDATE learner_profiles SET gems=? WHERE user_id=?").run(gems, userId);
-    persistNow();
   }
   return { hint: text, gems, cost: p.premium_effective ? 0 : cost };
 }
@@ -178,7 +177,6 @@ export function saveExplainAsCard(userId, cardId, lang = "fa") {
   const topicId = c.topicSlug ? db.prepare("SELECT id FROM topics WHERE slug=?").get(c.topicSlug)?.id || null : null;
   db.prepare("INSERT INTO learner_cards (user_id, flashcard_id, topic_id) VALUES (?,?,?)").run(userId, fid, topicId);
   ensureTracked(userId, fid);
-  persistNow();
   return { ok: true, id: fid };
 }
 
@@ -269,6 +267,5 @@ export function submitJumpQuiz(userId, topicId, answers = []) {
     for (const nd of nodes) { ins.run(userId, nd.id, pct, now); skipped++; }
     awardXp(userId, 20 + correct * 2, "jump_ahead", null);
   }
-  persistNow();
   return { passed, pct, pass, correct, total, skipped, graded };
 }

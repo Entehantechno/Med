@@ -24,7 +24,7 @@ if (!process.argv.includes("--confirm")) {
   process.exit(1);
 }
 
-const { initDb, db, persistNow } = await import("./db.js");
+const { initDb, db } = await import("./db.js");
 const { hashPassword } = await import("./lib/password.js");
 const { DATA_DIR, DB_PATH } = await import("./lib/paths.js");
 
@@ -39,7 +39,6 @@ if (!admin) {
 const password = crypto.randomBytes(12).toString("base64url"); // 16 url-safe characters
 db.prepare("UPDATE users SET password_hash=?, token_ver=COALESCE(token_ver,1)+1 WHERE id=?")
   .run(await hashPassword(password), admin.id);
-persistNow({ throwOnError: true });
 
 fs.mkdirSync(DATA_DIR, { recursive: true, mode: 0o700 });
 const file = path.join(DATA_DIR, "ADMIN-PASSWORD-RESET.txt");

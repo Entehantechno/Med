@@ -3,7 +3,7 @@ if (!process.argv.includes('--confirm-demo') || !process.env.DATA_DIR || !['deve
   console.error('Demo only: set an explicit DATA_DIR and pass --confirm-demo (not in production).');
   process.exit(1);
 }
-const { initDb, db, persistNow } = await import('./db.js');
+const { initDb, db } = await import('./db.js');
 const { hashPasswordSync } = await import('./lib/password.js');
 await initDb();
 const accounts = [
@@ -25,5 +25,4 @@ db.transaction(() => {
     }
   }
 })();
-persistNow({ throwOnError: true });
 console.log('Restored four demo accounts. Password: demo. Do not deploy these credentials publicly.');

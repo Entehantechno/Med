@@ -12,7 +12,7 @@
    Everything here is deterministic & AI-free. All thresholds are admin-tunable
    via getGameConfig().mastery, and the whole feature is gated by the `mastery`
    feature flag at the route layer. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { getGameConfig } from "./gameconfig.js";
 import { awardXp } from "./gamify.js";
 
@@ -95,7 +95,6 @@ function grantMasteryIfEarned(userId, topicId) {
     .run(userId, topicId, m.accuracy, m.matureRatio);
   if (c.reward_xp) { try { awardXp(userId, c.reward_xp, "mastery", null); } catch { /* */ } }
   if (c.reward_gems) db.prepare("UPDATE learner_profiles SET gems=gems+? WHERE user_id=?").run(c.reward_gems, userId);
-  persistNow();
   const topic = db.prepare("SELECT name_fa, name_en FROM topics WHERE id=?").get(topicId);
   return {
     topicId, accuracy: m.accuracy, matureRatio: m.matureRatio,

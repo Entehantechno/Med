@@ -1,6 +1,6 @@
 /* Record a research event only when a live study is actually linked.
    Classes/exams without study_id never write here. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 
 const EVENT_TYPES = new Set([
   "consent_viewed", "consent_granted", "consent_withdrawn",
@@ -9,7 +9,7 @@ const EVENT_TYPES = new Set([
   "note", "custom", "flashcard_finished",
 ]);
 
-export function recordStudyEvent({ studyId, userId, eventType, contextType, contextId, data, persist = true }) {
+export function recordStudyEvent({ studyId, userId, eventType, contextType, contextId, data }) {
   const sid = Number(studyId) || 0;
   if (!sid) return false;
   const st = db.prepare("SELECT id, active FROM research_studies WHERE id=?").get(sid);
@@ -21,7 +21,7 @@ export function recordStudyEvent({ studyId, userId, eventType, contextType, cont
   db.prepare(`INSERT INTO research_events
     (study_id,user_id,event_type,context_type,context_id,data_json) VALUES (?,?,?,?,?,?)`)
     .run(sid, Number(userId) || null, kind, ctx, Number(contextId) || null, dataJson);
-  if (persist) persistNow();
+  
   return true;
 }
 

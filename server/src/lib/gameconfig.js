@@ -3,7 +3,7 @@
    (Admin → گیمیفیکیشن). Values are stored as a single JSON row in `settings`
    under the key `gameplus_config`; missing keys fall back to DEFAULT_GAME_CONFIG
    so old databases keep working. */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 
 export const GAME_CONFIG_KEY = "gameplus_config";
 
@@ -389,6 +389,5 @@ export function saveGameConfig(cfg) {
   const merged = deepMerge(DEFAULT_GAME_CONFIG, cfg || {});
   db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
     .run(GAME_CONFIG_KEY, JSON.stringify(merged));
-  persistNow();
   return merged;
 }

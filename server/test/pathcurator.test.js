@@ -9,7 +9,7 @@
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { execSync } from "child_process";
 import request from "supertest";
-import { initDb, db, persistNow } from "../src/db.js";
+import { initDb, db } from "../src/db.js";
 import { createApp } from "../src/app.js";
 import { commitOfficialImport } from "../src/routes/admin.js";
 import { splitFreePremium, curateOfficialPath } from "../src/lib/pathcurator.js";
@@ -106,7 +106,6 @@ afterAll(() => {
     if (learner) db.prepare("UPDATE learner_profiles SET premium=0, premium_until=NULL WHERE user_id=?").run(learner.id);
   });
   tx();
-  persistNow();
 });
 
 describe("path curator (round 5): syllabus chapters, ≤15 questions per node, all free", () => {
@@ -272,7 +271,6 @@ describe("learner-facing rules over the curated bank", () => {
   it("premium library covers the full bank", async () => {
     const learner = db.prepare("SELECT id FROM users WHERE username='learner'").get();
     db.prepare("UPDATE learner_profiles SET premium=1, premium_until='2030-01-01' WHERE user_id=?").run(learner.id);
-    persistNow();
     const ltk = await token("learner");
     const lib = await request(app).get("/api/learn/library").set(A(ltk));
     expect(lib.status).toBe(200);

@@ -13,7 +13,7 @@
  * question and read its history, or ask "last modified questions in Neurology
  * → Headache" — the combined query the product needs.
  */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 
 /** Fields that change what the learner sees. Touching only `active` or an
  *  internal flag should not masquerade as a content edit. */
@@ -134,7 +134,6 @@ export function recordImport(cardIds, actor, note = "") {
     }
   });
   tx(cardIds);
-  persistNow();
 }
 
 /**

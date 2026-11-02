@@ -16,7 +16,7 @@ import { routingSettings } from "./ai-routing.js";
    AI-free by default: the engine falls back to the deterministic mock patient
    unless an AI key is configured (opt-in), exactly per the platform's cost rule.
 */
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { isEnabled } from "./flags.js";
 import { awardXp } from "./gamify.js";
 import { resolveAiConfig } from "./ai-engine.js";
@@ -71,7 +71,6 @@ export function saveVpatientConfig(input) {
   };
   db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
     .run(KEY, JSON.stringify(cfg));
-  persistNow();
   return cfg;
 }
 
@@ -159,7 +158,6 @@ export function awardVpatientXp(userId, caseData, scorePct) {
   const newBest = Math.max(prevBest, pct);
   db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
     .run(key, JSON.stringify({ best: newBest, xpMax, updated: new Date().toISOString() }));
-  persistNow();
 
   if (delta > 0) {
     // award through the standard XP pipeline so ranking, tiers, leagues all update
@@ -233,7 +231,6 @@ export function saveVpatientAi(input) {
   };
   db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
     .run(AI_KEY, serializeSettings(cfg));
-  persistNow();
   return cfg;
 }
 
@@ -241,7 +238,6 @@ export function setVpatientAiConnected(ok) {
   const cur = getVpatientAiRaw();
   db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
     .run(AI_KEY, JSON.stringify({ ...cur, connected: !!ok }));
-  persistNow();
 }
 
 /* RAW separate prompts (admin-typed; may be partial/empty). */
@@ -271,6 +267,5 @@ export function saveVpatientPrompts(input) {
   for (const k of PROMPT_KEYS) clean[k] = typeof input?.[k] === "string" ? input[k] : "";
   db.prepare("INSERT INTO settings (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
     .run(PROMPTS_KEY, JSON.stringify(clean));
-  persistNow();
   return clean;
 }

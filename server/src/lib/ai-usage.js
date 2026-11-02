@@ -2,7 +2,7 @@
 // Stores COUNTS ONLY (stage, provider, model, token numbers). No prompt, reply,
 // student id, session id or API key is written here. The admin can read the
 // totals to see where tokens go and whether prompt caching is actually hitting.
-import { db, onDbReady, persistNow } from "../db.js";
+import { db, onDbReady } from "../db.js";
 
 let ready = false;
 
@@ -51,7 +51,6 @@ export function recordAiUsage({ stage = "other", provider = "", model = "", usag
   try {
     db.prepare(`INSERT INTO ai_usage (stage, provider, model, prompt_tokens, completion_tokens, cached_tokens, cache_write_tokens)
       VALUES (?,?,?,?,?,?,?)`).run(...row);
-    persistNow();
     return true;
   } catch {
     return false;   // metering must never break a student's request

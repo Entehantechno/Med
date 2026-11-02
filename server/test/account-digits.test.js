@@ -5,7 +5,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { execSync } from "child_process";
 import request from "supertest";
 import { createApp } from "../src/app.js";
-import { initDb, persistNow, db } from "../src/db.js";
+import { initDb, db } from "../src/db.js";
 import { hashPassword } from "../src/lib/password.js";
 import { normalizeAccountDigits } from "../src/lib/digits.js";
 import { passwordRejected } from "../src/routes/auth.js";
@@ -50,7 +50,6 @@ describe("account digits: Persian, Arabic-Indic and ASCII are interchangeable at
     // simulate a row written before normalisation: Persian username, hash of the Persian spelling
     db.prepare("UPDATE users SET username=?, student_no=?, password_hash=? WHERE id=?")
       .run("۵۵۵۶۶۶۷", "۵۵۵۶۶۶۷", await hashPassword("۵۵۵۶۶۶۷"), made.body.id);
-    persistNow();
     // the same one-time normalisation the server runs on every boot (index.js)
     const fixed = normalizeAccountDigits(db);
     expect(fixed.usernames).toBe(1);

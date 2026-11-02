@@ -2,7 +2,7 @@
    Learners fetch active ads via /api/learn/ads; admins manage them here.
    A single MASTER SWITCH globally turns all ads on/off for everyone. */
 import { Router } from "express";
-import { db, persistNow } from "../db.js";
+import { db } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { adStats } from "../lib/rewardedads.js";
 import { getSetting, setSetting } from "./content.js";
@@ -105,7 +105,6 @@ r.post("/", ...admin, (req, res) => {
     fmt(b.format), b.sponsor || "", num(b.reward_gems, 0), num(b.skippable_after, 5), num(b.duration_s, 15),
     Math.max(1, num(b.weight, 1)), isoOrNull(b.start_at), isoOrNull(b.end_at), Math.max(0, num(b.daily_cap, 0)), aud(b.audience)
   );
-  persistNow();
   res.json({ id: info.lastInsertRowid });
 });
 
@@ -122,7 +121,6 @@ r.put("/:id", ...admin, (req, res) => {
     Math.max(1, num(b.weight, 1)), isoOrNull(b.start_at), isoOrNull(b.end_at), Math.max(0, num(b.daily_cap, 0)), aud(b.audience),
     req.params.id
   );
-  persistNow();
   res.json({ ok: true });
 });
 
@@ -131,13 +129,11 @@ r.put("/:id/toggle", ...admin, (req, res) => {
   const a = db.prepare("SELECT active FROM ads WHERE id=?").get(req.params.id);
   if (!a) return res.status(404).json({ error: "not found" });
   db.prepare("UPDATE ads SET active=? WHERE id=?").run(a.active ? 0 : 1, req.params.id);
-  persistNow();
   res.json({ ok: true, active: a.active ? 0 : 1 });
 });
 
 r.delete("/:id", ...admin, (req, res) => {
   db.prepare("DELETE FROM ads WHERE id=?").run(req.params.id);
-  persistNow();
   res.json({ ok: true });
 });
 

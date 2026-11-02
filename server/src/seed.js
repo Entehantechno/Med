@@ -3,7 +3,7 @@
    Run: npm run seed
    ================================================================ */
 import bcrypt from "bcryptjs";
-import { db, initDb, initSchema, persistNow } from "./db.js";
+import { db, initDb, initSchema } from "./db.js";
 import { isoWeekKey } from "./lib/gamify.js";
 // Built-in answer catalogs (Histology, Anatomy, …) are seeded as REAL, editable
 // rows in the `catalogs` table so they show up — and can be edited — in the admin
@@ -1343,7 +1343,6 @@ ensureArakHistology();
 const {seedDemoStudents}=await import('./lib/demo-students.js');
 seedDemoStudents();
 db.prepare("UPDATE cases SET university_id=1 WHERE university_id IS NULL").run();
-persistNow();   // flush the seeded database to disk
 
 console.log("✅ Database seeded successfully.");
 console.log("   Staff logins (password: demo): teacher / admin");

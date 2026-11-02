@@ -1,5 +1,5 @@
 /* import-arak-from-word.js — حذف دانشجویان دمو و ورود 85 دانشجوی اراک از دو فایل ورد */
-import { initDb, db, persistNow } from "../server/src/db.js";
+import { initDb, db } from "../server/src/db.js";
 import { hashPasswordSync } from "../server/src/lib/password.js";
 import { audit } from "../server/src/lib/audit.js";
 import fs from "fs";
@@ -195,9 +195,6 @@ async function main() {
   // sample
   const sample = db.prepare("SELECT student_no, name_fa, university_id FROM users WHERE university_id=? ORDER BY student_no LIMIT 5").all(arakId);
   console.log("[sample Arak]", sample);
-
-  persistNow({ force: true });
-  console.log("\n[done] persistNow done");
 
   // audit
   try {
