@@ -3,7 +3,9 @@
    counted in the database, so every worker enforces the same limits. */
 import { describe, it, expect, beforeAll } from "vitest";
 import { initDb, initSchema, db } from "../src/db.js";
-import { tryLease, releaseLease } from "../src/lib/leases.js";
+import { makeLeases } from "../src/lib/leases.js";
+
+const { tryLease, releaseLease } = makeLeases(db);
 import { SqliteRateStore } from "../src/lib/shared-store.js";
 
 beforeAll(async () => {

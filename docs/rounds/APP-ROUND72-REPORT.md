@@ -322,6 +322,13 @@
 - **تست‌ها:** سرور: ۱۹۹۰ پاس، ۴۵ شکست در `master-bank` (پایه، بدون تغییر)، ۴۵ رد. کلاینت: بیلد ۰، ۱۴۹ تست پاس. بودجه: CSS کل ۶۴٫۷۶ KB از ۶۶، JS ورودی ۲۳٫۴۴ KB از ۲۵ (سقف‌ها بدون تغییر).
 - **شکاف‌های باز:** اندازه‌گیری CPU ورود هنوز حدود ۱۶۸ ms به ازای هر ورود است (تأیید یک argon2 حدود ۶۰ ms)، علتش بررسی نشده. عکس ۳۷۵ پیکسل مسیر یادگیری تفاوت غیرقطعی دارد و بازبینی چشمی لازم است. بررسی جمع‌های `xp_events` و `attempts` انجام نشد.
 
+## ۲س. مرحلهٔ ۲س (R75) — graphify و چرخهٔ وابستگی
+
+- **مهارت graphify:** گراف دانش پروژه ساخته شد (۶٬۴۹۵ گره، ۱۵٬۴۷۶ یال). راهنما و یافته‌ها در `docs/research/GRAPHIFY-R75-FA.md`. خروجی محلی در `graphify-out/` است و در `.gitignore` قرار دارد.
+- **چرخهٔ وارد‌کردن رفع شد:** `server/src/db.js ⇄ server/src/lib/leases.js`. `leases.js` حالا `makeLeases(db)` را صادر می‌کند؛ `db.js`، `timed-expiry.js`، `index.js` و تست `multiprocess-state` آن را به‌کار می‌برند. گزارش گراف: «چرخه‌ای یافت نشد».
+- **بسته‌بندی:** `scripts/pack-host-zip.mjs` پوشهٔ `graphify-out/` را از زیپ حذف می‌کند (پیش از این ۳۸۶ فایل تولیدی وارد زیپ شده بود).
+- **تست‌ها:** سرور: ۱۹۹۰ پاس، ۴۵ شکست در `master-bank` (پایه). `multiprocess-state`: ۴/۴. بوت کپی بدون خطا.
+
 ## ۳. باقی‌مانده (برای دور بعد)
 
 - **حذف اموجی از صفحات دیگر:** `Admin.jsx` (۲۴۹)، `learn/Mindmap.jsx` (۹۴)، `admin/MindmapBankAdmin.jsx` (۷۱)، `learn/Lesson.jsx`، `MotionAd`، `PremiumBanner`، `Quests`، `DailyChallenge`.

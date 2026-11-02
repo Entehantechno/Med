@@ -36,6 +36,8 @@ import fs from "node:fs";
 import {DB_PATH,DATA_DIR} from './lib/paths.js';
 import {installBundledDemo} from './lib/first-run.js';
 import {warnIfDefaultAdminPassword} from './lib/demo-credentials.js';
+import { makeLeases } from './lib/leases.js';
+const leases = makeLeases(db);
 
 let realApp = null;                      // set once the full app is ready
 let bootState = { phase: "starting", startedAt: Date.now(), error: null };
@@ -260,8 +262,7 @@ async function main() {
   // Streak-reminder scheduler: check hourly for learners who risk losing a streak.
   const tick = async () => {
     // Hourly jobs (streak reminders, admin digests, bug-hunt scan) run in one process only.
-    const { tryLease } = await import("./lib/leases.js");
-    if (!tryLease("hourly-tick", 50 * 60 * 1000)) return;
+    if (!leases.tryLease("hourly-tick", 50 * 60 * 1000)) return;
     try { const n = await runStreakReminders(); if (n) console.log(`🔔 sent ${n} streak reminders`); } catch (e) { /* */ }
     // Admin analytics scheduler: daily health-alert notifications + weekly digest
     // (self-gated by per-day/per-week de-dup tags, so it's safe to call hourly).

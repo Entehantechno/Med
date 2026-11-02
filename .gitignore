@@ -27,3 +27,6 @@ tools/neurology-bank/import-payload.json
 
 # OS noise
 .DS_Store
+
+# graphify knowledge graph (generated, local only)
+graphify-out/

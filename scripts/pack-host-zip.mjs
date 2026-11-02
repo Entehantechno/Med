@@ -30,6 +30,7 @@ const skip = [
   /(^|\/)test-results\//,
   /(^|\/)__pycache__\//,
   /(^|\/)\.venv\//,
+  /^graphify-out\//, // local knowledge-graph cache (generated, git-ignored)
   /\.zip$/i,
   /^(?!demo-database\/medlab\.db$).*\.(db|sqlite|sqlite3)(-|$|\.)/i,
   /\.md$/i,

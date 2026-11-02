@@ -25,7 +25,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { migrateUsersRoleCheck } from "./lib/users-role-migrate.js";
 import { regroupDefaultItems } from "./lib/checklist-facets.js";
-import { tryLease } from "./lib/leases.js";
+import { makeLeases } from "./lib/leases.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Persistent data (DB + uploads + backups) lives OUTSIDE the code in DATA_DIR
@@ -55,7 +55,7 @@ class DbUnreadableError extends Error {
 /* Several worker processes share this database: only the one holding the lease
    writes the scheduled snapshot (a backup per process would duplicate work). */
 function autoBackupLeased() {
-  if (!tryLease("auto-backup", 5 * 60 * 60 * 1000)) return;
+  if (!leases.tryLease("auto-backup", 5 * 60 * 60 * 1000)) return;
   autoBackup();
 }
 
@@ -228,6 +228,8 @@ export const db = {
     };
   },
 };
+/* One lease handle for this process (see lib/leases.js). */
+const leases = makeLeases(db);
 
 /* Synchronous, durable write boundary. The commit is on disk when this returns
    (WAL + synchronous=FULL); a failure rolls the whole block back and throws. */
