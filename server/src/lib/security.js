@@ -147,9 +147,16 @@ export function apiLimiter() {
   // (see R55 report). Signed-in traffic is therefore counted per VERIFIED account; the
   // user id comes from a signature-checked token, so a forged id cannot evade or fill
   // someone else's bucket. Anonymous traffic keeps the conservative per-IP limit.
+  // Anonymous calls the login page and landing make by design are not counted here:
+  // auth endpoints have their own limiters (authLimiter, forgotLimiter), /auth/me answers
+  // 401 cheaply, and public site content is cacheable. Counting them let one campus NAT
+  // (every student loads the landing and logs in through one IP) hit 429 at exam time.
+  const anonExempt = (req) =>
+    /^\/auth\/(login|register|forgot|reset|google|me)$/.test(req.path || "") ||
+    (req.method === "GET" && /^\/site-content(\/|$)/.test(req.path || ""));
   const anon = rateLimit({
     windowMs, limit: c.api_max, standardHeaders: true, legacyHeaders: false, message,
-    skip: (req) => !cfg().enabled || skipPath(req) || verifiedUserIdFromRequest(req) != null,
+    skip: (req) => !cfg().enabled || skipPath(req) || anonExempt(req) || verifiedUserIdFromRequest(req) != null,
   });
   const perAccount = rateLimit({
     windowMs, limit: c.api_user_max, standardHeaders: true, legacyHeaders: false, message,
