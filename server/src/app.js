@@ -183,13 +183,6 @@ function recordRumMetric(req, body) {
       safeText(JSON.stringify(body.serverTiming || []), 1000),
       JSON.stringify(payload).slice(0, 2000)
     );
-  // Keep the monitoring tables bounded on small cPanel disks.
-  if (Math.random() < 0.02) {
-    try {
-      _db.prepare("DELETE FROM rum_vitals WHERE created_at < datetime('now','-45 day')").run();
-      _db.prepare("DELETE FROM security_events WHERE created_at < datetime('now','-90 day')").run();
-    } catch { /* */ }
-  }
   return true;
 }
 

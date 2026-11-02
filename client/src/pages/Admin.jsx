@@ -53,6 +53,7 @@ import PasswordCard from "../components/PasswordCard.jsx";
 // user opens that section do we download its code.
 const PathManager = lazy(() => import("./admin/PathManager.jsx"));
 const VpPageEditor = lazy(() => import("./admin/VpPageEditor.jsx"));
+const RetentionPanel = lazy(() => import("./admin/RetentionPanel.jsx"));
 const MindmapBankAdmin = lazy(() => import("./admin/MindmapBankAdmin.jsx"));
 const RoleEditor = lazy(() => import("./admin/RoleEditor.jsx"));
 const StoreManager = lazy(() => import("./admin/StoreManager.jsx"));
@@ -150,7 +151,7 @@ export default function Admin({ home }) {
   const uniSections = [
     { title: t("navGroupOverview"), items: [["dashboard", "dashboard", "uni.view"], ["reports", "chart", "uni.reports"]] },
     { title: t("navGroupTeaching"), items: [["classes", "class", "uni.classes"], ["vpConversations", "chat", "uni.classes"], ["classResults", "chart", "uni.classes"], ["drawingReviews", "image", "uni.classes"], ["vpGrading", "target", "uni.content"], ["exams", "exam", "uni.exams"], ["results", "trophy", "uni.exams"], ["researchAdmin", "book", "uni.classes"]] },
-    { title: t("navGroupPeople"), items: [["users", "users", "uni.users"], ["universities", "class", "uni.users"]] },
+    { title: t("navGroupPeople"), items: [["users", "users", "uni.users"], ["universities", "class", "uni.users"], ["retention", "shield", "role:admin"]] },
     { title: t("navGroupContent"), items: [["cases", "patient", "uni.content"], ["flashcards", "flask", "uni.content"], ["catalogs", "catalog", "uni.content"], ["checklists", "check", "uni.content"], ["vpPage", "patient", "role:admin"], ["questionnairesAdmin", "check", "uni.content"], ["aiConfig", "ai", "uni.ai"]] },
   ];
   const competitiveSections = [
@@ -158,7 +159,7 @@ export default function Admin({ home }) {
     { title: t("navGroupContent"), items: [["learnCards", "flask", "learn.content"], ["competitiveReferences", "book", "learn.content"], ["contentStats", "chart", "learn.content"], ["mediaLibrary", "image", "learn.content"], ["pathManager", "book", "learn.content"], ["mindmapBank", "book", "learn.content"], ["vpatientAdmin", "stethoscope", "learn.settings"], ["mascotsAdmin", "star", "learn.content"], ["dxAdmin", "target", "learn.content"], ["blogAdmin", "book", "learn.content"], ["communityMod", "users", "learn.content"]] },
     { title: t("navGroupMarketing"), items: [["adsMgmt", "image", "learn.ads"], ["storeManager", "store", "store.manage"], ["pricingEditor", "crown", "learn.settings"], ["groupPurchase", "users", "learn.settings"], ["payments", "crown", "learn.settings"]] },
     { title: t("navGroupSupport"), items: [["supportInbox", "chat", "learn.support"], ["helpCenter", "book", "learn.content"]] },
-    { title: t("navGroupSystem"), items: [["remindersAdmin", "clock", "learn.settings"], ["pwaAdmin", "download", "learn.view"], ["twaAdmin", "download", "learn.settings"], ["seoAdmin", "settings", "learn.settings"], ["gamification", "bolt", "learn.settings"], ["fsrsOptimizer", "brain", "learn.settings"], ["bugHunt", "bug", "learn.settings"]] },
+    { title: t("navGroupSystem"), items: [["remindersAdmin", "clock", "learn.settings"], ["retention", "shield", "role:admin"], ["pwaAdmin", "download", "learn.view"], ["twaAdmin", "download", "learn.settings"], ["seoAdmin", "settings", "learn.settings"], ["gamification", "bolt", "learn.settings"], ["fsrsOptimizer", "brain", "learn.settings"], ["bugHunt", "bug", "learn.settings"]] },
   ];
   // Build visible nav sections and de-duplicate by tab id. This is a safety net
   // so future additions cannot accidentally show the same admin tab twice.
@@ -333,6 +334,7 @@ export default function Admin({ home }) {
             {tab === "catalogs" && <Catalogs />}
             {tab === "checklists" && <Checklists />}
             {tab === "vpPage" && <LazyAdminChunk><VpPageEditor /></LazyAdminChunk>}
+            {tab === "retention" && <LazyAdminChunk><RetentionPanel /></LazyAdminChunk>}
             {tab === "vpGrading" && <VpGradingPanel />}
             {tab === "questionnairesAdmin" && <QuestionnairesAdmin />}
             {tab === "aiConfig" && <AiSection />}
@@ -3859,10 +3861,15 @@ function ConversationDetail({ detail, onBack }) {
 }
 
 function VpConversations() {
-  const { t, lang } = useApp();
+  const { t, lang, user } = useApp();
   const fa = lang === "fa";
   const toast = useToast();
+  const isAdmin = user?.role === "admin";
   const [rows, setRows] = useState(null);
+  // R83 (admin only): choose saved conversations and delete their chat text and event log.
+  // The grade and the evaluation stay. Confirmation names the number removed.
+  const [picked, setPicked] = useState(() => new Set());
+  const [confirmPurge, setConfirmPurge] = useState(null);
   // R65: export every saved conversation, or one class, as one CSV for the instructors.
   const [exportClass, setExportClass] = useState("");
   const [exportClasses, setExportClasses] = useState([]);
@@ -3919,6 +3926,21 @@ function VpConversations() {
     finally { setBusy(false); }
   };
   const num = (n) => (n || 0).toLocaleString(fa ? "fa-IR" : "en-US");
+  const purgeText = async (ids) => {
+    setBusy(true);
+    try {
+      const r = await api.post("/admin/retention/vp-chats/delete", { attemptIds: ids, confirm: true });
+      toast(fa ? `متن ${num(r.sessions)} گفت‌وگو پاک شد؛ نمره‌ها حفظ شدند.` : `Text of ${r.sessions} conversations removed; grades kept.`);
+      setPicked(new Set());
+      setConfirmPurge(null);
+      load();
+    } catch {
+      toast(fa ? "پاک‌سازی انجام نشد." : "Purge failed.");
+    } finally { setBusy(false); }
+  };
+  const togglePick = (id) => setPicked((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  const withText = (rows || []).filter((r) => r.has_transcript);
+  const allPicked = withText.length > 0 && withText.every((r) => picked.has(r.id));
   if (detail) {
     return (
       <div className="card">
@@ -3986,6 +4008,8 @@ function VpConversations() {
       ) : (
         <div className="table-wrap"><table>
           <thead><tr>
+            {isAdmin && <th><input type="checkbox" aria-label={fa ? "انتخاب همه متن‌دارها" : "Select all with text"} checked={allPicked} disabled={withText.length === 0}
+              onChange={() => setPicked(allPicked ? new Set() : new Set(withText.map((r) => r.id)))} /></th>}
             <th>{fa ? "دانشجو" : "Student"}</th>
             <th>{t("classes")}</th>
             <th>{t("caseTitle") || (fa ? "کیس" : "Case")}</th>
@@ -3996,22 +4020,47 @@ function VpConversations() {
           </tr></thead>
           <tbody>{rows.map((r) => (
             <tr key={r.id}>
+              {isAdmin && <td>{r.has_transcript ? <input type="checkbox" aria-label={`${fa ? "انتخاب" : "Select"} ${fa ? r.name_fa : r.name_en} #${r.id}`} checked={picked.has(r.id)} onChange={() => togglePick(r.id)} /> : null}</td>}
               <td>{fa ? r.name_fa : r.name_en}<div className="small muted">{r.student_no}</div></td>
               <td>{fa ? r.class_fa : r.class_en} <span className="tag">{r.code}</span></td>
               <td>{fa ? r.title_fa : r.title_en}</td>
               <td><b>{num(r.score)}</b></td>
               <td>{r.has_transcript ? <span className="pill pill-active">{fa ? "ثبت شده" : "Saved"}</span> : <span className="pill pill-medium">{fa ? "بدون متن" : "No text"}</span>}</td>
               <td className="small muted">{(r.created_at || "").slice(0, 16).replace("T", " ")}</td>
-              <td><button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={() => open(r)}>{fa ? "مشاهده" : "Open"}</button></td>
+              <td className="row" style={{ gap: 6, flexWrap: "wrap" }}>
+                <button type="button" className="btn btn-sm btn-primary" disabled={busy} onClick={() => open(r)}>{fa ? "مشاهده" : "Open"}</button>
+                {isAdmin && r.has_transcript && (
+                  <button type="button" className="btn btn-sm btn-ghost" disabled={busy} onClick={() => setConfirmPurge({ ids: [r.id] })}>{fa ? "حذف متن" : "Delete text"}</button>
+                )}
+              </td>
             </tr>
           ))}</tbody>
         </table></div>
+      )}
+      {isAdmin && picked.size > 0 && (
+        <div className="row mb8" role="region" aria-label={fa ? "عملیات گروهی گفت‌وگوها" : "Conversation bulk actions"} style={{ gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          <span className="small">{fa ? `${num(picked.size)} گفت‌وگو انتخاب شد` : `${picked.size} selected`}</span>
+          <button type="button" className="btn btn-danger btn-sm" disabled={busy} onClick={() => setConfirmPurge({ ids: [...picked] })}>
+            {fa ? "حذف متن و لاگ گفت‌وگوهای انتخابی" : "Delete text and log of selected"}
+          </button>
+        </div>
       )}
       {Array.isArray(rows) && rows.length > 0 && (
         <div className="row-between mt16 small muted" style={{ alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <span>{fa ? `نمایش ${rows.length.toLocaleString("fa-IR")} از ${total.toLocaleString("fa-IR")} گفت‌وگو` : `Showing ${rows.length} of ${total} conversations`}</span>
           {rows.length < total && <button type="button" className="btn btn-sm btn-ghost" disabled={busy} onClick={() => load(true)}>{fa ? "بارگذاری بیشتر" : "Load more"}</button>}
         </div>
+      )}
+      {confirmPurge && (
+        <Modal title={fa ? "حذف متن و لاگ گفت‌وگو" : "Delete conversation text and log"} saveLabel={fa ? "حذف کن" : "Delete"}
+          onClose={() => setConfirmPurge(null)} onSave={() => purgeText(confirmPurge.ids)}>
+          <p className="small" style={{ margin: "0 0 8px" }}>
+            {fa ? `متن و لاگ رویدادهای ${num(confirmPurge.ids.length)} گفت‌وگو برای همیشه پاک می‌شود.` : `The text and event log of ${confirmPurge.ids.length} conversations are deleted for good.`}
+          </p>
+          <p className="small muted" style={{ margin: 0 }}>
+            {fa ? "نمره، ارزیابی و درسنامهٔ هر گفت‌وگو می‌ماند. هر حذف در ممیزی با شمار ثبت می‌شود." : "Each grade, evaluation and lesson stays. Each deletion is audited with counts."}
+          </p>
+        </Modal>
       )}
     </div>
   );

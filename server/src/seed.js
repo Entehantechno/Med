@@ -25,6 +25,12 @@ initSchema();
    unless the operator explicitly forces it with `--force` or SEED_FORCE=1.
    First run (empty DB) and the test suite (fresh DB) are unaffected. */
 const forced = process.argv.includes("--force") || process.env.SEED_FORCE === "1";
+// R83: the seed rewrites teacher content and demo accounts. It never runs against a
+// production database unless the operator sets SEED_ALLOW_PRODUCTION=1 on purpose.
+if (process.env.NODE_ENV === "production" && process.env.SEED_ALLOW_PRODUCTION !== "1") {
+  console.error("⛔ seed refused: NODE_ENV=production. Set SEED_ALLOW_PRODUCTION=1 only on a throwaway copy.");
+  process.exit(1);
+}
 // Protect ANY existing content, not just users — a real site accumulates
 // flashcards, cases, blog posts, learner progress, etc. If ANY of these tables
 // has rows, seeding is blocked (it would DELETE them). This makes accidental

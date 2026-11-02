@@ -35,6 +35,10 @@ import {
 import { productHealth } from "../lib/producthealth.js";
 import { getVpPage, saveVpPage, DEFAULT_VP_PAGE, VP_PAGE_LIMITS } from "../lib/vp-page.js";
 import { recordPassword, revealPassword } from "../lib/password-vault.js";
+import {
+  CATEGORIES, MIN_DAYS, MAX_DAYS, PRESET_DAYS, readPolicy, savePolicy, previewPurge, purgeCategory,
+  purgeVpAttempts, storageInfo, compactDatabase, listItemPeriods, setItemPeriods, cleanDays, lastRunMs,
+} from "../lib/retention.js";
 import { cardFacets, buildFacetIndex, matchFacets, sortCards } from "../lib/cardfacets.js";
 import { recordCardChange, recordImport, listRevisions, revisionSummary } from "../lib/cardhistory.js";
 import { analyzeFsrs, loadTrainingItems, optimizeParams, evaluateParams } from "../lib/fsrs-optimizer.js";
@@ -1040,6 +1044,70 @@ r.put("/vp-page", ...admin, (req, res) => {
   const config = saveVpPage(req.body?.config || {});
   audit(req, "vp_page.update", "vp_page", { enabled: config.enabled });
   res.json({ config });
+});
+
+/* ============ Data retention (R83) ============
+   Stored chats and logs are deleted only when an admin sets a period, or when an
+   admin asks for a purge. Every action is audited with COUNTS, never content.
+   Full admin only. */
+const retentionFail = (res, err) => res.status(err === "confirmation_required" ? 409 : 400).json({ error: err });
+r.get("/retention", ...admin, (req, res) => {
+  const policy = readPolicy();
+  const due = Object.fromEntries(CATEGORIES.map((c) => [c, previewPurge(c, policy[c])]));
+  res.json({
+    policy, due, categories: CATEGORIES, presets: PRESET_DAYS, minDays: MIN_DAYS, maxDays: MAX_DAYS,
+    lastRunMs: lastRunMs(), storage: storageInfo(),
+  });
+});
+r.put("/retention", ...admin, (req, res) => {
+  const out = savePolicy(req.body?.policy || {}, { confirmed: req.body?.confirm === true, req });
+  if (out.error) return retentionFail(res, out.error);
+  res.json(out);
+});
+r.post("/retention/preview", ...admin, (req, res) => {
+  const p = previewPurge(req.body?.category, req.body?.days);
+  if (!p) return retentionFail(res, "bad_retention_request");
+  res.json(p);
+});
+r.post("/retention/run", ...admin, async (req, res) => {
+  const category = req.body?.category;
+  const days = cleanDays(req.body?.days);
+  if (!CATEGORIES.includes(category) || days === undefined || days === null || days < MIN_DAYS) {
+    return retentionFail(res, "bad_retention_request");
+  }
+  if (req.body?.confirm !== true) return retentionFail(res, "confirmation_required");
+  try {
+    const counts = await purgeCategory(category, days);
+    audit(req, "retention.purge", `retention:${category}`, { days, ...counts });
+    res.json({ category, days, ...counts });
+  } catch (e) {
+    res.status(500).json({ error: "retention_failed", message: String(e.message || e).slice(0, 200) });
+  }
+});
+r.post("/retention/vp-chats/delete", ...admin, (req, res) => {
+  const ids = Array.isArray(req.body?.attemptIds) ? req.body.attemptIds : [];
+  if (!ids.length) return retentionFail(res, "bad_retention_request");
+  if (req.body?.confirm !== true) return retentionFail(res, "confirmation_required");
+  res.json({ ok: true, ...purgeVpAttempts(ids, req) });
+});
+r.get("/retention/items", ...admin, (req, res) => {
+  const kind = req.query.kind === "exam" ? "exam" : "class";
+  res.json({ kind, rows: listItemPeriods(kind) });
+});
+r.put("/retention/items", ...admin, (req, res) => {
+  const kind = req.body?.kind === "exam" ? "exam" : "class";
+  const out = setItemPeriods(kind, req.body?.ids, req.body?.days, req);
+  if (out.error) return retentionFail(res, out.error);
+  res.json(out);
+});
+r.post("/retention/compact", ...admin, (req, res) => {
+  try {
+    const out = compactDatabase();
+    audit(req, "db.compact", "database", { before: out.before.fileBytes, after: out.after.fileBytes });
+    res.json(out);
+  } catch (e) {
+    res.status(500).json({ error: "compact_failed", message: String(e.message || e).slice(0, 200) });
+  }
 });
 
 /* ============ Virtual Patient (competitive side) ============

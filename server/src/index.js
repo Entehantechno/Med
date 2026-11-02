@@ -288,6 +288,9 @@ async function main() {
   // R64: finalize encounters and flashcard runs whose time ran out (every 30 s).
   const { startTimedExpiry } = await import("./lib/timed-expiry.js");
   startTimedExpiry();
+  // R83: stored chats and logs are deleted only by the admin's retention periods, once a day.
+  const { startRetention } = await import("./lib/retention.js");
+  startRetention();
 }
 
 main().catch((e) => {

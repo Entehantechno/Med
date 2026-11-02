@@ -38,7 +38,7 @@ ensureDataDirs();
 
 /** Schema/engine generation stored in PRAGMA user_version. A database below this
  *  value is upgraded in place, after a verified snapshot. */
-export const DB_ENGINE_VERSION = 72;
+export const DB_ENGINE_VERSION = 73;
 const BUSY_TIMEOUT_MS = 5000;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const CACHE_KIB = Math.max(2000, Math.min(262144, Number(process.env.DB_CACHE_KIB) || 16000));
@@ -2262,6 +2262,18 @@ export function initSchema() {
   // R82: the 30-second sweeper reads only unsettled encounters. A partial index keeps it small.
   db.exec(`CREATE INDEX IF NOT EXISTS idx_vp_sessions_unsettled ON vp_sessions(COALESCE(finish_requested_ms, deadline_ms))
     WHERE finished_at IS NULL AND attempt_id IS NULL AND review_required=0`);
+  // R83: data retention. classes/exams.retention_days: NULL = inherit the global policy, 0 = keep, N = days.
+  // vp_sessions.purged_ms: when the chat text and the event log were removed (the grade is kept).
+  // The age-based retention deletes scan these columns, so they get plain indexes.
+  const colsNamed = (t) => db.prepare(`PRAGMA table_info(${t})`).all().map((c) => c.name);
+  if (!colsNamed("classes").includes("retention_days")) db.exec("ALTER TABLE classes ADD COLUMN retention_days INTEGER");
+  if (!colsNamed("exams").includes("retention_days")) db.exec("ALTER TABLE exams ADD COLUMN retention_days INTEGER");
+  if (!colsNamed("vp_sessions").includes("purged_ms")) db.exec("ALTER TABLE vp_sessions ADD COLUMN purged_ms INTEGER");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_tutor_chats_created ON tutor_chats(created_at)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_security_created ON security_events(created_at)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_rum_created ON rum_vitals(created_at)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_vp_sessions_class ON vp_sessions(class_id)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_vp_sessions_exam ON vp_sessions(exam_id)");
   // R64: flashcard runs resume from saved progress. Plain (non-unique) index on purpose:
   // an expired, unfinalized row must never block a new run.
   db.exec(`CREATE TABLE IF NOT EXISTS flash_progress (
