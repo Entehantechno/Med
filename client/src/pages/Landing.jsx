@@ -12,6 +12,8 @@ export default function Landing({ publicConfig, onGetStarted, onSignIn, onBlog, 
   // signal (hover/touchstart/focus) so «ورود»/«ثبت‌نام» open instantly.
   const warmAuth = authWarmProps ? authWarmProps() : {};
   const openStore = onStore || onGetStarted;   // fallback keeps old behaviour
+  // /VP is a full page load (its own lazy chunk). Warm the chunk on intent so the click is instant.
+  const vpIntent = { onMouseEnter: () => warm("vp"), onFocus: () => warm("vp"), onTouchStart: () => warm("vp") };
 
   // The auth form is the overwhelmingly-next destination for a logged-out
   // visitor: warm its (tiny) chunk as soon as the browser is idle so the CTA
@@ -133,6 +135,7 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
             <button type="button" className="lp-menu-item" data-testid="menu-signin" {...warmAuth} onClick={() => { setMenuOpen(false); onSignIn(); }}><Icon name="user" size={18} /> {tc("landCtaSecondary")}</button>
             {storeEnabled && <button type="button" className="lp-menu-item" onClick={() => { setMenuOpen(false); openStore(); }}><Icon name="store" size={18} /> {tc("landStore")}</button>}
             {onBlog && <button type="button" className="lp-menu-item" onClick={() => { setMenuOpen(false); onBlog(); }}><Icon name="book" size={18} /> {tc("landBlog")}</button>}
+            <a className="lp-menu-item" href="/VP" data-testid="menu-vp" style={{ textDecoration: "none" }} {...vpIntent}><Icon name="stethoscope" size={18} /> {tc("landVpCta")}</a>
             <div className="lp-menu-row">
               <button type="button" className="lp-menu-item" onClick={toggleTheme}><Icon name={theme === "light" ? "moon" : "sun"} size={18} /> {fa ? (theme === "light" ? "حالت تاریک" : "حالت روشن") : (theme === "light" ? "Dark mode" : "Light mode")}</button>
               <button type="button" className="lp-menu-item" onClick={toggleLang}><Icon name="globe" size={18} /> {t("otherLang")}</button>
@@ -154,6 +157,9 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
               <Icon name="crown" size={18} /> {tc("landCtaPrimary")}
             </button>
             <button type="button" className="lp-btn-outline lp-btn-lg" {...warmAuth} onClick={onSignIn}>{tc("landCtaSecondary")}</button>
+            <a className="lp-btn-ghost lp-btn-lg" href="/VP" data-testid="hero-vp" style={{ textDecoration: "none" }} {...vpIntent}>
+              <Icon name="stethoscope" size={18} /> {tc("landVpCta")}
+            </a>
           </div>
           {/* trust badges right under the CTA — objection-killers at decision point */}
           {badges.length > 0 && (
