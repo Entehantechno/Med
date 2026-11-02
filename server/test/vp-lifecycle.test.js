@@ -205,6 +205,24 @@ describe("leaving and returning", () => {
     expect(attempt.transcript_json).toContain("TIMED-OUT");
   });
 
+  it("an untimed encounter idle for two hours is graded with its chat kept; an active one is not", async () => {
+    const c = setup("idle", true);
+    db.prepare("UPDATE classes SET timer_enabled=0 WHERE id=?").run(c);
+    const s = (await start(c)).body.sessionId;
+    await save(s, "IDLE-CHAT");
+    expect(row(s).deadline_ms).toBeNull();
+    await expireVpSessions();
+    expect(row(s).attempt_id).toBeNull();                   // still active: nothing to grade yet
+    db.prepare("UPDATE vp_sessions SET progress_ms=? WHERE id=?").run(Date.now() - 3 * 3600 * 1000, s);
+    const late = await save(s, "LATE");
+    expect(late.status).toBe(409);                          // the idle encounter no longer takes messages
+    expect(late.body.error).toBe("session_expired");
+    await expireVpSessions();
+    const r = row(s);
+    expect(r.attempt_id).toBeTruthy();
+    expect(db.prepare("SELECT transcript_json FROM attempts WHERE id=?").get(r.attempt_id).transcript_json).toContain("IDLE-CHAT");
+  });
+
   it("a pending timed-out encounter is graded once, even when two sweeps overlap", async () => {
     const c = setup("overlap", true);
     const s = (await start(c)).body.sessionId;

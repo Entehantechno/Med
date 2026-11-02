@@ -31,15 +31,39 @@ export function limitSecFor({ classId = null, examId = null, fallbackMin = 15 })
    this many ms, so the transcript is complete. Chat and other interaction stay refused
    at the deadline itself; the sweeper finalizes only after the grace has passed. */
 export const SAVE_GRACE_MS = 5000;
-export const savesOpen = (row, now = Date.now()) => {
-  const d = deadlineOf(row);
-  return d == null || now <= d + SAVE_GRACE_MS;
-};
+/* An untimed encounter (its class has no timer) ends after this long without a saved change.
+   R82 decision: a chat the student left open is graded by the server, not kept open forever. */
+export const IDLE_LIMIT_MS = 2 * 60 * 60 * 1000;
+
+/* Last activity in SQL (autosave, else start). Rows from before started_ms use started_at. */
+export const lastActivitySql = (t = "") =>
+  `COALESCE(${t}progress_ms, ${t}started_ms, CAST(strftime('%s', ${t}started_at) AS INTEGER) * 1000, 0)`;
 
 export const deadlineOf = (row) => (row && row.deadline_ms != null ? Number(row.deadline_ms) : null);
 
-export function isExpired(row, now = Date.now()) {
+const lastActivityOf = (row) => {
+  const v = Number(row?.progress_ms || row?.started_ms || 0);
+  if (v > 0) return v;
+  const t = row?.started_at ? Date.parse(String(row.started_at).replace(" ", "T") + "Z") : NaN;
+  return Number.isFinite(t) ? t : 0;
+};
+
+/* When the encounter counts as over: its deadline, or for an untimed one, idle since its last save. */
+export const expiryOf = (row) => {
   const d = deadlineOf(row);
+  if (d != null) return d;
+  if (!row || row.deadline_ms != null) return null;
+  const last = lastActivityOf(row);
+  return last > 0 ? last + IDLE_LIMIT_MS : null;
+};
+
+export const savesOpen = (row, now = Date.now()) => {
+  const d = expiryOf(row);
+  return d == null || now <= d + SAVE_GRACE_MS;
+};
+
+export function isExpired(row, now = Date.now()) {
+  const d = expiryOf(row);
   return d != null && now > d;
 }
 
@@ -70,10 +94,11 @@ export function findGradingPending({ userId, caseId, classId = null, examId = nu
       WHERE user_id=? AND case_id=? AND IFNULL(class_id,0)=? AND IFNULL(exam_id,0)=?
         AND IFNULL(study_id,0)=? AND lang=? AND finished_at IS NULL AND attempt_id IS NULL
         AND review_required=0
-        AND (finish_requested_ms IS NOT NULL OR (deadline_ms IS NOT NULL AND deadline_ms < ?))
+        AND (finish_requested_ms IS NOT NULL OR (deadline_ms IS NOT NULL AND deadline_ms < ?)
+             OR (deadline_ms IS NULL AND ${lastActivitySql()} + ${IDLE_LIMIT_MS} < ?))
       ORDER BY id DESC LIMIT 1`
   ).get(Number(userId), Number(caseId), Number(classId || 0), Number(examId || 0),
-        Number(studyId || 0), lang === "en" ? "en" : "fa", now) || null;
+        Number(studyId || 0), lang === "en" ? "en" : "fa", now, now) || null;
 }
 
 export function findExpiredOpenFlash({ userId, contextKey, now = Date.now() }) {

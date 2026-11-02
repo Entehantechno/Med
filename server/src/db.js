@@ -2260,7 +2260,8 @@ export function initSchema() {
   }
   db.exec("CREATE INDEX IF NOT EXISTS idx_vp_sessions_open ON vp_sessions(finished_at, deadline_ms)");
   // R82: the 30-second sweeper reads only unsettled encounters. A partial index keeps it small.
-  db.exec(`CREATE INDEX IF NOT EXISTS idx_vp_sessions_unsettled ON vp_sessions(COALESCE(finish_requested_ms, deadline_ms))
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_vp_sessions_unsettled
+    ON vp_sessions(COALESCE(finish_requested_ms, deadline_ms, progress_ms, started_ms, 0))
     WHERE finished_at IS NULL AND attempt_id IS NULL AND review_required=0`);
   // R64: flashcard runs resume from saved progress. Plain (non-unique) index on purpose:
   // an expired, unfinalized row must never block a new run.
