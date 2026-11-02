@@ -193,6 +193,15 @@ function LoginCard({ cfg, lang, ui, wide }) {
   return (
     <section id="vp-login" aria-labelledby="vp-login-title" style={{ ...glass, padding: wide ? 32 : 22, maxWidth: 480, margin: "0 auto" }}>
       <h2 id="vp-login-title" style={h2Style}>{tx(cfg.login.title, lang)}</h2>
+      <aside aria-labelledby="vp-access-title" style={{ display: "grid", gridTemplateColumns: "auto minmax(0, 1fr)", gap: 12, alignItems: "start", padding: 14, marginBottom: 20, borderRadius: 14, border: "1px solid rgba(122,184,255,.35)", background: "rgba(122,184,255,.08)" }}>
+        <span aria-hidden="true" style={{ width: 36, height: 36, borderRadius: 12, display: "grid", placeItems: "center", background: "rgba(122,184,255,.16)", color: C.blue }}>
+          <Icon name="idcard" size={20} />
+        </span>
+        <div>
+          <h3 id="vp-access-title" style={{ margin: "0 0 4px", fontSize: 16, fontWeight: 800, lineHeight: 1.6 }}>{tx(cfg.access.title, lang)}</h3>
+          <p style={{ margin: 0, color: C.muted, lineHeight: 1.8, fontSize: 15 }}>{tx(cfg.access.body, lang)}</p>
+        </div>
+      </aside>
       <p id="vp-login-help" style={{ margin: "0 0 22px", color: C.muted, lineHeight: 1.8 }}>{tx(cfg.login.help, lang)}</p>
       <form onSubmit={submit} noValidate style={{ display: "grid", gap: 16 }}>
         <div>

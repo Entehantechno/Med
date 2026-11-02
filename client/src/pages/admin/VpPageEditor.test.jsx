@@ -25,6 +25,7 @@ const CONFIG = {
   features: [],
   faq: [],
   login: { title: bi('t', 't'), help: bi('h', 'h'), submit: bi('s', 's') },
+  access: { title: bi('at', 'at'), body: bi('ab', 'ab') },
   closed: bi('c', 'c'),
 };
 
@@ -46,6 +47,17 @@ describe('VpPageEditor', () => {
     const [path, body] = mocks.put.mock.calls[0];
     expect(path).toBe('/admin/vp-page');
     expect(body.config.headline).toEqual({ fa: 'New Persian headline', en: 'Hero EN' });
+  });
+
+  it('edits the registration requirement shown above the sign-in form', async () => {
+    render(<VpPageEditor />);
+    const card = (await screen.findByText('Access requirement (above the sign-in form)')).closest('.card');
+    const body = card.querySelector('textarea[dir="rtl"]');
+    expect(body.value).toBe('ab');
+    fireEvent.change(body, { target: { value: 'دانشجو باید ثبت‌نام شود.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(mocks.put).toHaveBeenCalledTimes(1));
+    expect(mocks.put.mock.calls[0][1].config.access.body).toEqual({ fa: 'دانشجو باید ثبت‌نام شود.', en: 'ab' });
   });
 
   it('saves the page switch', async () => {

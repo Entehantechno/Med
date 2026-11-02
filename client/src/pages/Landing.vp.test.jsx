@@ -24,11 +24,20 @@ const renderLanding = () => render(
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 describe('landing → /VP', () => {
-  it('puts a link to /VP in the hero', () => {
+  it('keeps the link out of the hero', () => {
+    const { container } = renderLanding();
+    expect(container.querySelector('.lp-hero a[href="/VP"]')).toBeNull();
+  });
+
+  it('has a showcase section that links to /VP', () => {
     renderLanding();
-    const link = screen.getByTestId('hero-vp');
+    const section = document.querySelector('section[aria-labelledby="landing-vp-title"]');
+    expect(section).toBeTruthy();
+    const link = screen.getByTestId('vp-showcase-cta');
+    expect(section.contains(link)).toBe(true);
     expect(link.getAttribute('href')).toBe('/VP');
     expect(link.textContent).toContain('landVpCta');
+    expect(section.textContent).toContain('landVpPrereq');
   });
 
   it('keeps the same link in the phone menu', () => {
@@ -39,7 +48,7 @@ describe('landing → /VP', () => {
 
   it('warms the /VP chunk on hover, focus and touch', () => {
     renderLanding();
-    const link = screen.getByTestId('hero-vp');
+    const link = screen.getByTestId('vp-showcase-cta');
     fireEvent.mouseEnter(link);
     fireEvent.focus(link);
     fireEvent.touchStart(link);

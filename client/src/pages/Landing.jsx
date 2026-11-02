@@ -157,9 +157,6 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
               <Icon name="crown" size={18} /> {tc("landCtaPrimary")}
             </button>
             <button type="button" className="lp-btn-outline lp-btn-lg" {...warmAuth} onClick={onSignIn}>{tc("landCtaSecondary")}</button>
-            <a className="lp-btn-ghost lp-btn-lg" href="/VP" data-testid="hero-vp" style={{ textDecoration: "none" }} {...vpIntent}>
-              <Icon name="stethoscope" size={18} /> {tc("landVpCta")}
-            </a>
           </div>
           {/* trust badges right under the CTA — objection-killers at decision point */}
           {badges.length > 0 && (
@@ -236,6 +233,29 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
             </div>
           ))}
         </div>
+      </section>
+
+      {/* ---- Virtual patient: product showcase, links to the /VP page ---- */}
+      <section className="lp-gamify" aria-labelledby="landing-vp-title">
+        <div className="lp-gamify-text">
+          <div className="lp-badge"><Icon name="stethoscope" size={14} /> {tc("landVpKicker")}</div>
+          <h2 id="landing-vp-title" className="lp-h2" style={{ textAlign: "start" }}>{tc("landVpTitle")}</h2>
+          <p>{tc("landVpDesc")}</p>
+          <div className="lp-chips">
+            <span className="lp-chip"><Icon name="chat" size={15} /> {tc("landVpChipChat")}</span>
+            <span className="lp-chip"><Icon name="heart" size={15} /> {tc("landVpChipVitals")}</span>
+            <span className="lp-chip"><Icon name="check" size={15} /> {tc("landVpChipFeedback")}</span>
+          </div>
+          <div className="lp-cta-row" style={{ marginTop: 22 }}>
+            <a className="lp-btn-primary lp-btn-lg" href="/VP" data-testid="vp-showcase-cta" style={{ textDecoration: "none" }} {...vpIntent}>
+              <Icon name="stethoscope" size={18} /> {tc("landVpCta")}
+            </a>
+          </div>
+          <p className="muted small" style={{ marginTop: 14, display: "flex", gap: 8, alignItems: "flex-start" }}>
+            <Icon name="idcard" size={16} /> <span>{tc("landVpPrereq")}</span>
+          </p>
+        </div>
+        <div className="lp-gamify-visual"><MockVp fa={fa} /></div>
       </section>
 
       {/* ---- How it works ---- */}
@@ -372,6 +392,30 @@ function MockPath() {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function MockVp({ fa }) {
+  const rows = [
+    ["1", fa ? "شرح حال بالینی" : "Clinical history", "✓"],
+    ["2", fa ? "معاینه فیزیکی" : "Physical exam", "✓"],
+    ["3", fa ? "تشخیص و بازخورد" : "Diagnosis and feedback", "…"],
+  ];
+  return (
+    <div className="mock-card mock-league" aria-hidden="true">
+      <div className="mock-hud">
+        <span className="mock-pill heart"><Icon name="heart" size={14} /> {fa ? "۱۰۴" : "104"}</span>
+        <span className="mock-pill xp"><Icon name="activity" size={14} /> {fa ? "۱۴۸/۹۲" : "148/92"}</span>
+      </div>
+      <div className="mock-league-title"><Icon name="stethoscope" size={16} /> {fa ? "پرونده: درد قفسه سینه" : "Case: chest pain"}</div>
+      {rows.map(([m, name, state], i) => (
+        <div className={`mock-lg-row ${i === 2 ? "me" : ""}`} key={i}>
+          <span className="mock-lg-rank">{m}</span>
+          <span className="mock-lg-name">{name}</span>
+          <span className="mock-lg-xp">{state}</span>
+        </div>
+      ))}
     </div>
   );
 }

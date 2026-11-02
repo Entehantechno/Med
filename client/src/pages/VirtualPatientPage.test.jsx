@@ -27,6 +27,7 @@ const CONFIG = {
   features: [{ title: bi('مهارت', 'Skill'), text: bi('توضیح', 'Detail') }],
   faq: [{ q: bi('پرسش', 'Question'), a: bi('پاسخ', 'Answer') }],
   login: { title: bi('ورود دانشجویان', 'Student sign-in'), help: bi('راهنما', 'Help'), submit: bi('ورود', 'Sign in') },
+  access: { title: bi('پیش‌نیاز ثبت‌نام', 'Registration requirement'), body: bi('دانشجو باید ثبت‌نام شده باشد.', 'The student must be registered.') },
   closed: bi('بسته است', 'Closed'),
 };
 
@@ -60,6 +61,17 @@ describe('/VP virtual-patient page', () => {
     expect(sn().getAttribute('autocomplete')).toBe('username');
     expect(pw().getAttribute('autocomplete')).toBe('current-password');
     expect(mocks.get).toHaveBeenCalledWith('/site-content/vp-page');
+  });
+
+  it('states the registration requirement above the sign-in form', async () => {
+    render(<VirtualPatientPage />);
+    const title = await screen.findByText('پیش‌نیاز ثبت‌نام');
+    expect(title.tagName).toBe('H3');
+    expect(screen.getByText('دانشجو باید ثبت‌نام شده باشد.')).toBeTruthy();
+    const notice = document.querySelector('aside[aria-labelledby="vp-access-title"]');
+    const form = document.querySelector('form');
+    // The notice comes before the form, so it is read before the fields.
+    expect(notice.compareDocumentPosition(form) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('renders English with LTR when the visitor switches language', async () => {

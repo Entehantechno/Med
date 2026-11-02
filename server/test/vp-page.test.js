@@ -1,5 +1,6 @@
-/* /VP page copy: public read with defaults, admin write behind uni.content,
-   and normalization that keeps stored text plain, bounded, and renderable. */
+/* /VP page copy: public read with defaults, full-admin-only read and write,
+   and normalization that keeps stored text plain, bounded, and renderable.
+   The registration notice (vp_page.access) is covered here too. */
 import { describe, it, expect, beforeAll } from "vitest";
 import { execSync } from "child_process";
 import request from "supertest";
@@ -50,6 +51,19 @@ describe("normalizeVpPage", () => {
     expect(normalizeVpPage({ features: [] }).features).toEqual([]);
   });
 
+  it("fills the registration notice from defaults and caps its text", () => {
+    expect(normalizeVpPage({}).access).toEqual(DEFAULT_VP_PAGE.access);
+    expect(DEFAULT_VP_PAGE.access.body.fa).toMatch(/ثبت‌نام/);
+    expect(DEFAULT_VP_PAGE.access.body.en).toMatch(/registered/);
+    const out = normalizeVpPage({
+      access: { title: { fa: "<b>پیش‌نیاز</b>", en: "x".repeat(500) }, body: { fa: "a".repeat(2000), en: "<script>alert(1)</script>" } },
+    });
+    expect(out.access.title.fa).not.toMatch(/[<>]/);
+    expect(out.access.title.en.length).toBe(120);
+    expect(out.access.body.fa.length).toBe(400);
+    expect(out.access.body.en).not.toMatch(/[<>]/);
+  });
+
   it("treats the page switch as a strict boolean", () => {
     expect(normalizeVpPage({ enabled: "yes" }).enabled).toBe(false);
     expect(normalizeVpPage({ enabled: true }).enabled).toBe(true);
@@ -75,9 +89,12 @@ describe("/VP page API", () => {
     expect((await request(app).get("/api/site-content/vp-page")).body.config.enabled).toBe(true);
   });
 
-  it("lets a university content manager read the copy and its limits", async () => {
+  it("refuses a teacher even though a teacher holds uni.content, and serves limits to the full admin", async () => {
     const teacher = (await login("teacher")).body.token;
-    const r = await request(app).get("/api/admin/vp-page").set(A(teacher));
+    expect((await request(app).get("/api/admin/vp-page").set(A(teacher))).status).toBe(403);
+    expect((await request(app).put("/api/admin/vp-page").set(A(teacher)).send({ config: { enabled: false } })).status).toBe(403);
+    const admin = (await login("admin")).body.token;
+    const r = await request(app).get("/api/admin/vp-page").set(A(admin));
     expect(r.status).toBe(200);
     expect(r.body.limits).toEqual(VP_PAGE_LIMITS);
     expect(r.body.defaults).toEqual(DEFAULT_VP_PAGE);
@@ -108,5 +125,15 @@ describe("/VP page API", () => {
     expect((await request(app).get("/api/site-content/vp-page")).body.config.enabled).toBe(false);
     await request(app).put("/api/admin/vp-page").set(A(admin)).send({ config: { enabled: true } });
     expect((await request(app).get("/api/site-content/vp-page")).body.config.enabled).toBe(true);
+  });
+
+  it("publishes the registration notice on the public read and lets a full admin edit and restore it", async () => {
+    const admin = (await login("admin")).body.token;
+    const edited = { ...DEFAULT_VP_PAGE, access: { title: { fa: "پیش‌نیاز تست", en: "Test requirement" }, body: { fa: "متن تست", en: "Test body" } } };
+    expect((await request(app).put("/api/admin/vp-page").set(A(admin)).send({ config: edited })).status).toBe(200);
+    expect((await request(app).get("/api/admin/vp-page").set(A(admin))).body.config.access).toEqual(edited.access);
+    expect((await request(app).get("/api/site-content/vp-page")).body.config.access.body.en).toBe("Test body");
+    const restore = await request(app).put("/api/admin/vp-page").set(A(admin)).send({ config: DEFAULT_VP_PAGE });
+    expect(restore.body.config.access).toEqual(DEFAULT_VP_PAGE.access);
   });
 });

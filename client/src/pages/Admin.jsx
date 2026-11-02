@@ -150,7 +150,7 @@ export default function Admin({ home }) {
     { title: t("navGroupOverview"), items: [["dashboard", "dashboard", "uni.view"], ["reports", "chart", "uni.reports"]] },
     { title: t("navGroupTeaching"), items: [["classes", "class", "uni.classes"], ["vpConversations", "chat", "uni.classes"], ["classResults", "chart", "uni.classes"], ["drawingReviews", "image", "uni.classes"], ["vpGrading", "target", "uni.content"], ["exams", "exam", "uni.exams"], ["results", "trophy", "uni.exams"], ["researchAdmin", "book", "uni.classes"]] },
     { title: t("navGroupPeople"), items: [["users", "users", "uni.users"], ["universities", "class", "uni.users"]] },
-    { title: t("navGroupContent"), items: [["cases", "patient", "uni.content"], ["flashcards", "flask", "uni.content"], ["catalogs", "catalog", "uni.content"], ["checklists", "check", "uni.content"], ["vpPage", "patient", "uni.content"], ["questionnairesAdmin", "check", "uni.content"], ["aiConfig", "ai", "uni.ai"]] },
+    { title: t("navGroupContent"), items: [["cases", "patient", "uni.content"], ["flashcards", "flask", "uni.content"], ["catalogs", "catalog", "uni.content"], ["checklists", "check", "uni.content"], ["vpPage", "patient", "role:admin"], ["questionnairesAdmin", "check", "uni.content"], ["aiConfig", "ai", "uni.ai"]] },
   ];
   const competitiveSections = [
     { title: t("navGroupPeople"), items: [["learnerMgmt", "users", "learn.users"], ["placementReport", "compass", "learn.view"], ["certificatesAdmin", "medal", "learn.users"], ["premiumAccounts", "crown", "learn.users"]] },
@@ -167,7 +167,9 @@ export default function Admin({ home }) {
       .map((s) => ({
         ...s,
         items: s.items.filter(([id, , perm]) => {
-          if (!can(perm) || seen.has(id)) return false;
+          // "role:x" gates a tab by role instead of permission (the /VP editor is admin-only).
+          const allowed = perm.startsWith("role:") ? user?.role === perm.slice(5) : can(perm);
+          if (!allowed || seen.has(id)) return false;
           seen.add(id);
           return true;
         }),

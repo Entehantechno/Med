@@ -1030,11 +1030,12 @@ r.put("/twa", ...P("learn.settings"), async (req, res) => {
 });
 
 /* ============ Virtual patient page (/VP, university content) ============
-   Public copy, login text and FAQ of the /VP landing page. Perm uni.content. */
-r.get("/vp-page", ...P("uni.content"), (req, res) => {
+   Public copy, login text and FAQ of the /VP landing page. Full admin only: a
+   teacher's uni.content permission does not reach this page. */
+r.get("/vp-page", ...admin, (req, res) => {
   res.json({ config: getVpPage(), defaults: DEFAULT_VP_PAGE, limits: VP_PAGE_LIMITS });
 });
-r.put("/vp-page", ...P("uni.content"), (req, res) => {
+r.put("/vp-page", ...admin, (req, res) => {
   const config = saveVpPage(req.body?.config || {});
   audit(req, "vp_page.update", "vp_page", { enabled: config.enabled });
   res.json({ config });

@@ -66,6 +66,14 @@ export const DEFAULT_VP_PAGE = {
     help: bi("شماره دانشجویی و رمزی را وارد کنید که دانشگاه برایتان ثبت کرده است.", "Enter the student number and password your university registered for you."),
     submit: bi("ورود به بیمار مجازی", "Sign in to the virtual patient"),
   },
+  // Shown above the sign-in form. Students only get access once their university has registered them.
+  access: {
+    title: bi("پیش‌نیاز: ثبت‌نام دانشجو در دانشگاه", "Requirement: student registration at your university"),
+    body: bi(
+      "بیمار مجازی برای دانشجویان دانشگاه‌های همکار است. دانشجو باید پیش از ورود، توسط دانشگاه ثبت‌نام شده باشد؛ آموزش دانشگاه یا مدرس درس این کار را انجام می‌دهد. اگر حساب ندارید، از آموزش دانشگاه خود بخواهید آن را بسازد، سپس با شماره دانشجویی و رمز عبور وارد شوید.",
+      "The virtual patient is for students of partner universities. A student must be registered by their university before signing in. The education office or course instructor does this. If you do not have an account, ask your education office to create one, then sign in with your student number and password.",
+    ),
+  },
   closed: bi("این صفحه فعلاً در دسترس نیست.", "This page is not available right now."),
 };
 
@@ -118,6 +126,10 @@ export function normalizeVpPage(input) {
       title: orDefault(loginSrc.title, loginDef.title, (v) => bilingual(v, LIMIT.short)),
       help: orDefault(loginSrc.help, loginDef.help, (v) => bilingual(v, LIMIT.line)),
       submit: orDefault(loginSrc.submit, loginDef.submit, (v) => bilingual(v, LIMIT.short)),
+    },
+    access: {
+      title: orDefault(src.access?.title, DEFAULT_VP_PAGE.access.title, (v) => bilingual(v, LIMIT.title)),
+      body: orDefault(src.access?.body, DEFAULT_VP_PAGE.access.body, (v) => bilingual(v, LIMIT.line)),
     },
     closed: pick(src, "closed", (v) => bilingual(v, LIMIT.line)),
   };

@@ -183,6 +183,12 @@ export default function VpPageEditor() {
         )} />
 
       <div className="card" style={{ display: "grid", gap: 14 }}>
+        <strong>{fa ? "پیش‌نیاز دسترسی (بالای فرم ورود)" : "Access requirement (above the sign-in form)"}</strong>
+        <Bi fa={fa} label={fa ? "عنوان" : "Title"} value={cfg.access.title} max={L.title} onChange={(title) => set("access")({ ...cfg.access, title })} />
+        <Bi fa={fa} label={fa ? "متن" : "Text"} value={cfg.access.body} max={L.line} multiline onChange={(body) => set("access")({ ...cfg.access, body })} />
+      </div>
+
+      <div className="card" style={{ display: "grid", gap: 14 }}>
         <strong>{fa ? "فرم ورود" : "Sign-in form"}</strong>
         <Bi fa={fa} label={fa ? "عنوان فرم" : "Form title"} value={cfg.login.title} max={L.short} onChange={(title) => set("login")({ ...cfg.login, title })} />
         <Bi fa={fa} label={fa ? "راهنما زیر عنوان" : "Help text"} value={cfg.login.help} max={L.line} multiline onChange={(help) => set("login")({ ...cfg.login, help })} />
