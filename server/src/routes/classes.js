@@ -259,8 +259,10 @@ r.get("/conversations", authRequired, requireRole("teacher", "admin"), (req, res
   const isTeacher = req.user.role === "teacher";
   const scopeSql = isTeacher ? "AND c.owner_id=? AND COALESCE(c.university_id,1)=?" : "";
   const scopeArgs = isTeacher ? [req.user.id, currentUniversityId(req.user) || 1] : [];
+  // LEFT JOINs: an encounter from an exam has no class, and a missing user row must not
+  // hide the chat either. Teachers still see only their own classes (scopeSql).
   const total = db.prepare(
-    `SELECT COUNT(*) n FROM attempts a JOIN classes c ON c.id = a.class_id
+    `SELECT COUNT(*) n FROM attempts a LEFT JOIN classes c ON c.id = a.class_id
       WHERE a.type='vp' ${scopeSql}`
   ).get(...scopeArgs).n;
   const rows = db.prepare(
@@ -271,12 +273,37 @@ r.get("/conversations", authRequired, requireRole("teacher", "admin"), (req, res
               c.name_fa AS class_fa, c.name_en AS class_en, c.code, c.active AS class_active,
               cs.data_json
          FROM attempts a
-         JOIN classes c ON c.id = a.class_id
-         JOIN users u ON u.id = a.user_id
+         LEFT JOIN classes c ON c.id = a.class_id
+         LEFT JOIN users u ON u.id = a.user_id
          LEFT JOIN cases cs ON cs.id = a.case_id
         WHERE a.type='vp' ${scopeSql}
         ORDER BY a.id DESC LIMIT ? OFFSET ?`
     ).all(...scopeArgs, limit, offset);
+  /* Encounters that were never graded (grading failed past the expiry) but whose chat
+     was kept as a log. They have no attempt, so they are listed here, not lost. */
+  const unsettled = db.prepare(
+      `SELECT s.id, s.user_id, s.case_id, s.class_id, s.exam_id, s.started_at, s.event_count,
+              s.expiry_attempts, s.expiry_error, s.finished_at,
+              u.name_fa, u.name_en, u.student_no,
+              c.name_fa AS class_fa, c.name_en AS class_en, c.code,
+              cs.data_json
+         FROM vp_sessions s
+         LEFT JOIN classes c ON c.id = s.class_id
+         LEFT JOIN users u ON u.id = s.user_id
+         LEFT JOIN cases cs ON cs.id = s.case_id
+        WHERE s.attempt_id IS NULL AND s.logging_enabled=1 AND s.expiry_attempts>0 ${scopeSql}
+        ORDER BY s.id DESC LIMIT 200`
+    ).all(...scopeArgs).map((row) => {
+      let title_fa = "", title_en = "";
+      try { const cd = row.data_json ? JSON.parse(row.data_json) : {}; title_fa = cd.title_fa || ""; title_en = cd.title_en || ""; } catch { /* */ }
+      return {
+        session_id: row.id, user_id: row.user_id, case_id: row.case_id, class_id: row.class_id, exam_id: row.exam_id,
+        started_at: row.started_at, events: row.event_count || 0, closed: !!row.finished_at,
+        error: row.expiry_error || "", tries: row.expiry_attempts,
+        name_fa: row.name_fa, name_en: row.name_en, student_no: row.student_no,
+        class_fa: row.class_fa, class_en: row.class_en, code: row.code, title_fa, title_en,
+      };
+    });
   const attempts = rows.map((row) => {
     let title_fa = "", title_en = "";
     try { const cd = row.data_json ? JSON.parse(row.data_json) : {}; title_fa = cd.title_fa || ""; title_en = cd.title_en || ""; } catch { /* */ }
@@ -291,7 +318,7 @@ r.get("/conversations", authRequired, requireRole("teacher", "admin"), (req, res
       title_fa, title_en,
     };
   });
-  res.json({ attempts, total, limit, offset });
+  res.json({ attempts, total, limit, offset, unsettled });
   } catch (e) {
     res.status(500).json({ error: "conversations_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });
   }

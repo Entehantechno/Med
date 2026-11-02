@@ -2110,7 +2110,9 @@ export function initSchema() {
   if (!examColsRestored.includes("tutor_prompt")) db.exec("ALTER TABLE exams ADD COLUMN tutor_prompt TEXT");
   try {
     const hasAll=(cols,req)=>req.every(c=>cols.includes(c));
-    const dropIfBad=(name, req)=>{ const cols=db.prepare(`PRAGMA table_info(${name})`).all().map(c=>c.name); if(cols.length&&!hasAll(cols,req)) db.exec(`DROP TABLE IF EXISTS ${name}`); };
+    // A table with an unexpected shape is set aside, never dropped: its rows are learner
+    // and research records. The renamed copy stays in the database for recovery.
+    const dropIfBad=(name, req)=>{ const cols=db.prepare(`PRAGMA table_info(${name})`).all().map(c=>c.name); if(cols.length&&!hasAll(cols,req)) db.exec(`ALTER TABLE ${name} RENAME TO ${name}_set_aside_${Date.now()}`); };
     dropIfBad('questionnaire_responses',["form_id","user_id","context_type","context_id","answers_json","created_at"]);
     dropIfBad('questionnaire_forms',["questions_json","active","anonymous","created_at"]);
     dropIfBad('tutor_chats',["context_type","context_id","role","message","created_at"]);

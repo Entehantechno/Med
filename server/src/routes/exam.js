@@ -349,11 +349,17 @@ r.post("/session-start", authRequired, async (req, res) => {
   // keeps the same clock and the same attempt budget, and returns the saved transcript.
   // An encounter whose time ran out, but which no sweep has settled yet, is finalized
   // as it stood first. A quick return therefore never opens a second attempt.
+  // A previous encounter that is still being settled blocks a new one: starting over it
+  // used to orphan its saved chat. Once its retries are spent it is closed (kept as a log).
   const stale = findExpiredOpenVp({ userId: req.user.id, caseId: caseData.id, classId: ownerClassId, examId: ownerExamId, studyId, lang });
   if (stale) {
-    const { finalizeVpRow } = await import("../lib/timed-expiry.js");
-    const settled = await finalizeVpRow(stale);
-    if (settled.status === "deferred") return res.status(409).json({ error: "evaluation_in_progress", stage: "session", retryable: true });
+    const { settleExpiredEncounter } = await import("../lib/timed-expiry.js");
+    const settled = await settleExpiredEncounter(stale);
+    if (settled.status === "pending") return res.status(409).json({
+      error: "evaluation_in_progress", stage: "session", retryable: true,
+      message_fa: "جلسهٔ قبلی هنوز ثبت نهایی نشده است؛ چند لحظه بعد دوباره تلاش کنید. گفتگوی شما ذخیره شده است.",
+      message_en: "Your previous encounter is still being recorded. Try again shortly; your conversation is saved.",
+    });
   }
   const resumable = findOpenVpSession({ userId: req.user.id, caseId: caseData.id, classId: ownerClassId, examId: ownerExamId, studyId, lang });
   if (resumable) {

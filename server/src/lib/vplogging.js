@@ -205,6 +205,36 @@ function normaliseEvent(ev, index) {
    Deliberately a no-op for content when logging is off: only the timing is
    written, so "we did not record this conversation" stays literally true.
    Returns { stored, loggingEnabled, dropped }. */
+/* Replace the stored event log of one open encounter. Replacing (not appending)
+   keeps the log identical whether it was written during an unsettled attempt or
+   at finish. Returns { stored, dropped }. */
+function writeEvents(sessionId, events) {
+  const list = Array.isArray(events) ? events.slice(0, MAX_EVENTS) : [];
+  let stored = 0, dropped = (Array.isArray(events) ? events.length : 0) - list.length;
+  db.prepare("DELETE FROM vp_session_events WHERE session_id=?").run(Number(sessionId));
+  const ins = db.prepare("INSERT INTO vp_session_events (session_id,seq,at_ms,kind,payload_json) VALUES (?,?,?,?,?)");
+  list.forEach((raw, i) => {
+    const ev = normaliseEvent(raw, i);
+    if (!ev) { dropped++; return; }
+    ins.run(Number(sessionId), ev.seq, ev.at_ms, ev.kind, ev.payload_json);
+    stored++;
+  });
+  return { stored, dropped };
+}
+
+/* Keep the interaction log of an encounter whose grading has not succeeded (yet, or
+   ever). Without this the chat exists only in the autosave snapshot, which the
+   teacher's log and the student's resume never read. No-op when logging is off. */
+export function preserveEncounterLog(session, events) {
+  if (!session || !session.logging_enabled) return { stored: 0 };
+  const { stored } = durableTransaction(() => {
+    const result = writeEvents(session.id, events);
+    db.prepare("UPDATE vp_sessions SET event_count=? WHERE id=?").run(result.stored, Number(session.id));
+    return result;
+  });
+  return { stored };
+}
+
 export function finishSession({ sessionId, userId, events, durationSec, attemptId }) {
   const s = getSession(sessionId);
   if (!s) return { stored: 0, loggingEnabled: false, dropped: 0, error: "session_not_found" };
@@ -213,29 +243,17 @@ export function finishSession({ sessionId, userId, events, durationSec, attemptI
   // A duplicate abandon/finish must never erase an attempt link or append logs.
   if (s.finished_at) return { stored: s.event_count || 0, loggingEnabled: !!s.logging_enabled, dropped: 0, alreadyFinished: true };
 
-  let stored = 0, dropped = 0;
-  if (s.logging_enabled) {
-    const list = Array.isArray(events) ? events.slice(0, MAX_EVENTS) : [];
-    dropped = (Array.isArray(events) ? events.length : 0) - list.length;
-    const ins = db.prepare(
-      "INSERT INTO vp_session_events (session_id,seq,at_ms,kind,payload_json) VALUES (?,?,?,?,?)"
-    );
-    list.forEach((raw, i) => {
-      const ev = normaliseEvent(raw, i);
-      if (!ev) { dropped++; return; }
-      ins.run(s.id, ev.seq, ev.at_ms, ev.kind, ev.payload_json);
-      stored++;
-    });
-  } else {
-    dropped = Array.isArray(events) ? events.length : 0;
-  }
+  // Privacy: content is written only when logging is on for this encounter.
+  const { stored, dropped } = s.logging_enabled
+    ? durableTransaction(() => writeEvents(s.id, events))
+    : { stored: 0, dropped: Array.isArray(events) ? events.length : 0 };
 
   const dur = Number.isFinite(Number(durationSec)) && Number(durationSec) > 0
     ? Math.min(6 * 3600, Math.round(Number(durationSec))) : 0;
   db.prepare(
     `UPDATE vp_sessions SET finished_at=datetime('now'), attempt_id=?, duration_sec=?, event_count=? WHERE id=?`
   ).run(attemptId ? Number(attemptId) : null, dur, stored, s.id);
-  
+
   return { stored, loggingEnabled: !!s.logging_enabled, dropped };
 }
 

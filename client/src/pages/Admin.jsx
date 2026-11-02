@@ -3871,6 +3871,8 @@ function VpConversations() {
   const [busy, setBusy] = useState(false);
   const [loadErr, setLoadErr] = useState("");
   const [total, setTotal] = useState(0);
+  // Chats whose grading failed: kept as logs, listed here so they are never lost from view.
+  const [unsettled, setUnsettled] = useState([]);
   // Paged: the server returns the newest rows first plus the full total, so the
   // inbox never silently hides older saved chats. "Load more" appends the next page.
   const PAGE = 250;
@@ -3880,6 +3882,7 @@ function VpConversations() {
     api.get(`/classes/conversations?limit=${PAGE}&offset=${offset}`).then((d) => {
       const list = Array.isArray(d?.attempts) ? d.attempts : [];
       setTotal(Number(d?.total) || list.length);
+      if (!more) setUnsettled(Array.isArray(d?.unsettled) ? d.unsettled : []);
       setRows((prev) => (more && Array.isArray(prev) ? [...prev, ...list] : list));
     }).catch((e) => { setLoadErr(String(e.message || e)); setRows({ __err: true }); });
   };
@@ -3954,6 +3957,25 @@ function VpConversations() {
         </div>
         <span className="small muted">{fa ? "فایل CSV برای ارائه به اساتید؛ هر ردیف یک رویداد با زمان." : "CSV for the instructors; one timestamped event per row."}</span>
       </div>
+      {unsettled.length > 0 && (
+        <div className="card mb16" role="region" aria-labelledby="vp-unsettled-title">
+          <h4 id="vp-unsettled-title" className="mb8"><Icon name="warn" size={14} /> {fa ? `گفت‌وگوهای ثبت‌نشده (${unsettled.length.toLocaleString("fa-IR")})` : `Unscored conversations (${unsettled.length})`}</h4>
+          <span className="small muted">{fa ? "نمرهٔ این گفت‌وگوها ثبت نشده، اما متن آن‌ها در لاگ نگه داشته شده است." : "These were not graded, but their conversation is kept in the log."}</span>
+          <div className="table-wrap mt8"><table>
+            <thead><tr><th>{fa ? "دانشجو" : "Student"}</th><th>{fa ? "کلاس" : "Class"}</th><th>{fa ? "کیس" : "Case"}</th><th>{fa ? "تاریخ" : "Started"}</th><th>{fa ? "پیام‌های ثبت‌شده" : "Logged events"}</th><th>{fa ? "وضعیت" : "Status"}</th></tr></thead>
+            <tbody>{unsettled.map((u) => (
+              <tr key={u.session_id}>
+                <td>{u.name_fa || u.name_en || u.student_no || "—"}</td>
+                <td>{u.class_fa || u.class_en || u.code || "—"}</td>
+                <td>{(fa ? u.title_fa : u.title_en) || u.title_fa || u.title_en || `#${u.case_id}`}</td>
+                <td className="small">{String(u.started_at || "").slice(0, 16)}</td>
+                <td>{Number(u.events || 0).toLocaleString(fa ? "fa-IR" : "en-US")}</td>
+                <td className="small">{u.closed ? (fa ? "بسته‌شده" : "Closed") : (fa ? "در انتظار ثبت" : "Pending")}{u.error ? ` · ${u.error}` : ""}</td>
+              </tr>
+            ))}</tbody>
+          </table></div>
+        </div>
+      )}
       {rows?.__err || loadErr ? <div className="empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr || (fa ? "بارگذاری گفت‌وگوها شکست خورد" : "Could not load conversations")}</h3><button type="button" className="btn btn-ghost mt16" onClick={() => { setRows(null); load(); }}>{fa ? "تلاش دوباره" : "Retry"}</button></div> : rows == null ? <Spinner /> : rows.length === 0 ? (
         <div className="small muted center" style={{ padding: 24 }}>{fa ? "هنوز گفت‌وگوی ذخیره‌شده‌ای نیست. ثبت گفت‌وگو را در تنظیمات کلاس روشن بگذارید." : "No saved conversations yet. Keep conversation logging on in the class settings."}</div>
       ) : (

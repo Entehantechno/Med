@@ -6,6 +6,7 @@ import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { toCSV, safeFilename } from "../lib/csv.js";
 import { isLearnContent, caseIsLearn } from "../lib/content-track.js";
+import { audit } from "../lib/audit.js";
 
 const r = Router();
 
@@ -276,7 +277,11 @@ r.delete("/attempts/:id", authRequired, requireRole("teacher", "admin"), (req, r
   if (!teacherOwnsAttempt(req.user, a)) {
     return res.status(403).json({ error: "wrong_university", stage: "access" });
   }
+  /* Learner work is evidence: the deletion is recorded with what it removed, so a
+     missing chat can always be traced to a named action. */
+  const full = db.prepare("SELECT id,user_id,case_id,type,score,class_id,exam_id,transcript_json IS NOT NULL AND transcript_json != '' AS had_transcript FROM attempts WHERE id=?").get(req.params.id);
   durableTransaction(() => db.prepare("DELETE FROM attempts WHERE id=?").run(req.params.id));
+  audit(req, "attempt.delete", `attempts:${a.id}`, { userId: full?.user_id, caseId: full?.case_id, type: full?.type, score: full?.score, classId: full?.class_id, examId: full?.exam_id, hadTranscript: !!full?.had_transcript });
   res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: "attempt_delete_failed", stage: "boot", message: String(e.message || e).slice(0, 200) });

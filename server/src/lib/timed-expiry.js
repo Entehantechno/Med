@@ -3,17 +3,19 @@
    When a deadline passes and the student never came back, the attempt is recorded
    and graded as it stood: the saved snapshot is used, and the time is capped at the
    case limit. The same handlers as the HTTP routes are called, so the business logic
-   is not copied. Failures are counted (expiry_attempts) and retried up to MAX_TRIES,
+   is not copied. Failures are counted (expiry_attempts) and retried up to MAX_SETTLE_TRIES,
    never silently dropped. */
 import { makeLeases } from "./leases.js";
 import { db } from "../db.js";
 import exam, { evaluateRoute } from "../routes/exam.js";
 import classes from "../routes/classes.js";
-import { readFlashProgress, closeFlashProgress, SAVE_GRACE_MS } from "./timed-session.js";
+import { readFlashProgress, closeFlashProgress, readVpProgress, SAVE_GRACE_MS } from "./timed-session.js";
+import { preserveEncounterLog } from "./vplogging.js";
+import { durableTransaction } from "../db.js";
 
 const leases = makeLeases(db);
 
-const MAX_TRIES = 5;
+export const MAX_SETTLE_TRIES = 5;
 const BATCH = 20;
 
 /* The final handler of a route, looked up on the router itself. */
@@ -63,12 +65,41 @@ function recordFailure(table, id, error) {
     .run(String(error || "unknown").slice(0, 200), Number(id));
 }
 
+/* A settlement that failed must never lose the chat. The stored snapshot is kept as the
+   interaction log first; only when every retry is spent is the encounter closed, so it
+   stops being "open" and a new encounter may start. Closing without an attempt is what
+   makes it a visible, unscored record rather than a silent orphan. */
+function keepUnsettled(row, error) {
+  recordFailure("vp_sessions", row.id, error);
+  const fresh = db.prepare("SELECT * FROM vp_sessions WHERE id=?").get(Number(row.id));
+  if (!fresh || fresh.finished_at || fresh.attempt_id) return;
+  preserveEncounterLog(fresh, readVpProgress(fresh).events);
+  if (Number(fresh.expiry_attempts) >= MAX_SETTLE_TRIES) {
+    durableTransaction(() => db.prepare(
+      "UPDATE vp_sessions SET finished_at=datetime('now') WHERE id=? AND attempt_id IS NULL AND finished_at IS NULL"
+    ).run(Number(row.id)));
+  }
+}
+
 const RETRY_LATER = new Set(["evaluation_in_progress"]);
+
+/* Used when a student returns to an encounter that expired but is not settled yet.
+   "pending" means it is still being graded: the student waits, nothing new is opened.
+   "closed" means the retries are spent and the chat is kept as a log. */
+export async function settleExpiredEncounter(row) {
+  if (Number(row.expiry_attempts) >= MAX_SETTLE_TRIES) {
+    keepUnsettled(row, row.expiry_error || "settlement_retries_exhausted");
+    return { status: "closed" };
+  }
+  const r = await finalizeVpRow(row);
+  if (r.status === "finalized") return { status: "finalized", attemptId: r.attemptId };
+  return { status: "pending", error: r.error || null };
+}
 
 /* Finalize one expired encounter as it stood. Returns { status: finalized | deferred | failed }. */
 export async function finalizeVpRow(row) {
   const user = ownerRow(row.user_id);
-  if (!user || user.status !== "active") { recordFailure("vp_sessions", row.id, "owner_inactive"); return { status: "failed", error: "owner_inactive" }; }
+  if (!user || user.status !== "active") { keepUnsettled(row, "owner_inactive"); return { status: "failed", error: "owner_inactive" }; }
   // The stored snapshot is used by evaluateRoute once the deadline has passed.
   const body = {
     caseId: row.case_id, lang: row.lang, durationSec: row.limit_sec,
@@ -78,7 +109,7 @@ export async function finalizeVpRow(row) {
   if (res.status === 200 && res.body?.attemptId) return { status: "finalized", attemptId: res.body.attemptId };
   if (res.status === 409 && (res.body?.retryable || RETRY_LATER.has(res.body?.error))) return { status: "deferred" };
   const error = res.body?.error || `status_${res.status}`;
-  recordFailure("vp_sessions", row.id, error);
+  keepUnsettled(row, error);
   return { status: "failed", error };
 }
 
@@ -89,7 +120,7 @@ export async function expireVpSessions(now = Date.now()) {
       WHERE finished_at IS NULL AND attempt_id IS NULL AND deadline_ms IS NOT NULL
         AND deadline_ms < ? AND expiry_attempts < ?
       ORDER BY deadline_ms LIMIT ?`
-  ).all(now - SAVE_GRACE_MS, MAX_TRIES, BATCH);
+  ).all(now - SAVE_GRACE_MS, MAX_SETTLE_TRIES, BATCH);
   const out = { finalized: 0, failed: 0, deferred: 0 };
   for (const row of rows) {
     const r = await finalizeVpRow(row);
@@ -137,7 +168,7 @@ export async function expireFlashProgress(now = Date.now()) {
       WHERE finished_at IS NULL AND deadline_ms IS NOT NULL
         AND deadline_ms < ? AND expiry_attempts < ?
       ORDER BY deadline_ms LIMIT ?`
-  ).all(now - SAVE_GRACE_MS, MAX_TRIES, BATCH);
+  ).all(now - SAVE_GRACE_MS, MAX_SETTLE_TRIES, BATCH);
   const out = { finalized: 0, failed: 0 };
   for (const row of rows) {
     const r = await finalizeFlashRow(row);
