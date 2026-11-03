@@ -60,9 +60,9 @@ export default function Community({ onBack }) {
         {cards.map((c) => (
           <div key={c.id} className="card cc-card">
             <div className="cc-vote">
-              <button type="button" className={`cc-arrow ${c.myVote === 1 ? "on" : ""}`} onClick={() => vote(c.id, 1)} title={t("upvote")}>▲</button>
+              <button type="button" className={`cc-arrow ${c.myVote === 1 ? "on" : ""}`} onClick={() => vote(c.id, 1)} title={t("upvote")} aria-label={t("upvote")}>▲</button>
               <span className="cc-score">{c.score}</span>
-              <button type="button" className={`cc-arrow down ${c.myVote === -1 ? "on" : ""}`} onClick={() => vote(c.id, -1)} title={t("downvote")}>▼</button>
+              <button type="button" className={`cc-arrow down ${c.myVote === -1 ? "on" : ""}`} onClick={() => vote(c.id, -1)} title={t("downvote")} aria-label={t("downvote")}>▼</button>
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 700 }}>{c.card.q}</div>

@@ -358,7 +358,7 @@ export default function LearnApp() {
         <div className={`learn-topline${tab === "home" ? " on-home" : ""}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div className="learn-topline-main" style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {history.length > 0 && (
-              <button type="button" className="btn btn-ghost btn-sm" onClick={goBack} title={t("back")}>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={goBack} title={t("back")} aria-label={t("back")}>
                 <Icon name={lang === "fa" ? "chevronRight" : "chevronLeft"} size={16} /> {t("back")}
               </button>
             )}

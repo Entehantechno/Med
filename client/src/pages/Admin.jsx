@@ -686,13 +686,13 @@ export function UsersManager({ scope = "all" }) {
           { key: "status", label: t("statusCol"), sortValue: (u) => u.status, render: (u) => <span className={`pill pill-${u.status === "active" ? "active" : "danger"}`}>{t(u.status === "active" ? "active" : "inactive")}</span> },
           { key: "actions", label: "", sortable: false, thStyle: { textAlign: "end" },
             render: (u) => (<span style={{ display: "flex", gap: 4, justifyContent: "flex-end", whiteSpace: "nowrap" }}>
-              {showUniTools && u.role === "student" && <button type="button" className="btn btn-sm btn-ghost" onClick={() => setAccess(u)} title={t("manageAccess")}><Icon name="key" size={13} /></button>}
-              <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(u)} title={t("editUser")}><Icon name="edit" size={13} /></button>
-              <button type="button" className="btn btn-sm btn-ghost" onClick={() => impersonate(u)} title={t("impersonate")}><Icon name="user" size={13} /></button>
+              {showUniTools && u.role === "student" && <button type="button" className="btn btn-sm btn-ghost" onClick={() => setAccess(u)} title={t("manageAccess")} aria-label={t("manageAccess")}><Icon name="key" size={13} /></button>}
+              <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEditing(u)} title={t("editUser")} aria-label={t("editUser")}><Icon name="edit" size={13} /></button>
+              <button type="button" className="btn btn-sm btn-ghost" onClick={() => impersonate(u)} title={t("impersonate")} aria-label={t("impersonate")}><Icon name="user" size={13} /></button>
               {u.status === "active"
-                ? <button type="button" className="btn btn-sm btn-warn" onClick={() => setStatus(u, "inactive")} title={t("ban")}><Icon name="lock" size={13} /></button>
-                : <button type="button" className="btn btn-sm btn-accent" onClick={() => setStatus(u, "active")} title={t("activate")}><Icon name="check" size={13} /></button>}
-              <button type="button" className="btn btn-sm btn-danger" onClick={() => del(u)} title={t("deleteUser")}><Icon name="trash" size={13} /></button>
+                ? <button type="button" className="btn btn-sm btn-warn" onClick={() => setStatus(u, "inactive")} title={t("ban")} aria-label={t("ban")}><Icon name="lock" size={13} /></button>
+                : <button type="button" className="btn btn-sm btn-accent" onClick={() => setStatus(u, "active")} title={t("activate")} aria-label={t("activate")}><Icon name="check" size={13} /></button>}
+              <button type="button" className="btn btn-sm btn-danger" onClick={() => del(u)} title={t("deleteUser")} aria-label={t("deleteUser")}><Icon name="trash" size={13} /></button>
             </span>) },
         ]}
       /></fieldset></div>
@@ -2334,9 +2334,9 @@ function ChecklistEditor({ ch, meta = { sections: [], internalHistory: [] }, onS
                 <td><input type="number" min="1" value={it.weight} onChange={(e) => setItem(idx, "weight", e.target.value)} style={{ width: 60 }} /></td>
                 <td><input value={keysText(it)} onChange={(e) => setItem(idx, "keys", e.target.value)} placeholder={fa ? "مثال: درد|pain، بازو|arm — | یعنی مترادف یک نکتهٔ امتیازی" : "e.g. pain|ache, arm — | = synonyms of one point"} title={fa ? "هر نکتهٔ امتیازی را با | بین مترادف‌هایش بنویسید؛ هر نکته جدا امتیاز نسبی دارد." : "Write synonyms of one scoring point with |; each point earns its own share."} style={{ minWidth: 150 }} /></td>
                 <td style={{ whiteSpace: "nowrap" }}>
-                  <button type="button" className="btn btn-sm btn-ghost" title={fa ? "بالا" : "Up"} onClick={() => move(idx, -1)}><Icon name="chevronUp" size={13} /></button>
-                  <button type="button" className="btn btn-sm btn-ghost" title={fa ? "پایین" : "Down"} onClick={() => move(idx, 1)}><Icon name="chevronDown" size={13} /></button>
-                  <button type="button" className="btn btn-sm btn-danger" title={fa ? "حذف" : "Delete"} onClick={() => removeItem(idx)}><Icon name="close" size={13} /></button>
+                  <button type="button" className="btn btn-sm btn-ghost" title={fa ? "بالا" : "Up"} onClick={() => move(idx, -1)} aria-label={fa ? "بالا" : "Up"}><Icon name="chevronUp" size={13} /></button>
+                  <button type="button" className="btn btn-sm btn-ghost" title={fa ? "پایین" : "Down"} onClick={() => move(idx, 1)} aria-label={fa ? "پایین" : "Down"}><Icon name="chevronDown" size={13} /></button>
+                  <button type="button" className="btn btn-sm btn-danger" title={fa ? "حذف" : "Delete"} onClick={() => removeItem(idx)} aria-label={fa ? "حذف" : "Delete"}><Icon name="close" size={13} /></button>
                 </td>
               </tr>
             ))}
@@ -4622,7 +4622,7 @@ function ExamResults() {
       </button>
     );
     if (key === "delete") return (
-      <button type="button" className="btn btn-sm btn-danger" onClick={() => deleteAttempt(a.id)} title={lang === "fa" ? "حذف کارنامه" : "Delete report"}>
+      <button type="button" className="btn btn-sm btn-danger" onClick={() => deleteAttempt(a.id)} title={lang === "fa" ? "حذف کارنامه" : "Delete report"} aria-label={lang === "fa" ? "حذف کارنامه" : "Delete report"}>
         <Icon name="trash" size={13} />
       </button>
     );
@@ -5912,7 +5912,7 @@ function MascotsAdmin() {
                 <img loading="lazy" decoding="async" src={g} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                 <button type="button" className="btn btn-sm btn-danger" title={fa ? "حذف" : "Remove"}
                   style={{ position: "absolute", top: 2, insetInlineEnd: 2, padding: "0 7px", lineHeight: 1.6 }}
-                  onClick={() => setCfg({ ...cfg, dr: { ...cfg.dr, guides: cfg.dr.guides.filter((_, j) => j !== i) } })}>×</button>
+                  onClick={() => setCfg({ ...cfg, dr: { ...cfg.dr, guides: cfg.dr.guides.filter((_, j) => j !== i) } })} aria-label={fa ? "حذف" : "Remove"}>×</button>
               </div>
             ))}
           </div>
@@ -7659,7 +7659,7 @@ function BlogEditor({ id, categories, onBack }) {
               {addingCat ? (
                 <div style={{ display: "flex", gap: 6 }}>
                   <input autoFocus dir="ltr" value={f.category} placeholder={fa ? "نام دستهٔ جدید" : "new category"} onChange={(e) => set("category", e.target.value)} />
-                  <button type="button" className="btn btn-ghost btn-sm" title={fa ? "انتخاب از فهرست" : "pick from list"} onClick={() => setAddingCat(false)}><Icon name="close" size={13} /></button>
+                  <button type="button" className="btn btn-ghost btn-sm" title={fa ? "انتخاب از فهرست" : "pick from list"} onClick={() => setAddingCat(false)} aria-label={fa ? "انتخاب از فهرست" : "pick from list"}><Icon name="close" size={13} /></button>
                 </div>
               ) : (
                 <select value={f.category} onChange={(e) => { if (e.target.value === "__new__") { setAddingCat(true); set("category", ""); } else set("category", e.target.value); }}>

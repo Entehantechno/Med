@@ -496,10 +496,10 @@ export default function LearnCards({ jump, onJumpConsumed } = {}) {
           { key: "usedIn", label: t("usedIn"), sortable: false, render: (c) => c.usedIn.length ? c.usedIn.join("، ") : <span className="muted small">—</span> },
           { key: "actions", label: "", sortable: false, thStyle: { textAlign: "end" }, render: (c) => (
             <span style={{ display: "flex", gap: 4, justifyContent: "flex-end", whiteSpace: "nowrap" }}>
-              <button type="button" className={`btn btn-sm ${c.premium ? "btn-accent" : "btn-ghost"}`} onClick={() => togglePremium(c)} title={t("premiumCard")}><Icon name="crown" size={13} /></button>
-              <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEdit(c)} title={t("edit")}><Icon name="edit" size={13} /></button>
-              <button type="button" className="btn btn-sm btn-ghost" onClick={() => toggleActive(c)} title={c.active ? t("disable") : t("enable")}>{c.active ? <Icon name="lock" size={13} /> : <Icon name="check" size={13} />}</button>
-              <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)} title={t("delete")}><Icon name="trash" size={13} /></button>
+              <button type="button" className={`btn btn-sm ${c.premium ? "btn-accent" : "btn-ghost"}`} onClick={() => togglePremium(c)} title={t("premiumCard")} aria-label={t("premiumCard")}><Icon name="crown" size={13} /></button>
+              <button type="button" className="btn btn-sm btn-ghost" onClick={() => setEdit(c)} title={t("edit")} aria-label={t("edit")}><Icon name="edit" size={13} /></button>
+              <button type="button" className="btn btn-sm btn-ghost" onClick={() => toggleActive(c)} title={c.active ? t("disable") : t("enable")} aria-label={c.active ? t("disable") : t("enable")}>{c.active ? <Icon name="lock" size={13} /> : <Icon name="check" size={13} />}</button>
+              <button type="button" className="btn btn-sm btn-danger" onClick={() => del(c.id)} title={t("delete")} aria-label={t("delete")}><Icon name="trash" size={13} /></button>
             </span>) },
         ]}
       />

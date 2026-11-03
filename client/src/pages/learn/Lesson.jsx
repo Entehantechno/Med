@@ -201,7 +201,7 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
       return (
         <div className="lesson-wrap">
           <div className="lesson-top">
-            <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onDone} title={t("back")}><Icon name="logout" size={16} /></button>
+            <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onDone} title={t("back")} aria-label={t("back")}><Icon name="logout" size={16} /></button>
             <div style={{ flex: 1 }} />
           </div>
           {introAd ? (
@@ -307,7 +307,7 @@ export default function Lesson({ nodeId, onDone, onProfile, onContinueLesson, on
   return (
     <div className="lesson-wrap">
       <div className="lesson-top">
-        <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onDone} title={t("back")}><Icon name="logout" size={16} /></button>
+        <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onDone} title={t("back")} aria-label={t("back")}><Icon name="logout" size={16} /></button>
         <div className="pbar" style={{ "--seg": cards.length }} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress} aria-label={`${idx + 1} / ${cards.length}`}><span style={{ width: `${progress}%` }} /></div>
         {combo >= 2 && <span className="combo-chip" title={t("comboLabel")}><StreakIcon size={15} /> {combo}</span>}
         <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={toggleSound} title={soundOn ? t("soundOff") : t("soundOn")} aria-label={soundOn ? t("soundOff") : t("soundOn")}>
@@ -495,7 +495,7 @@ function SaveCardButton({ cardId }) {
   useEffect(() => { let ok = true; api.get(`/learn/library/save/${cardId}`).then((d) => ok && setSaved(!!d.saved)).catch(() => {}); return () => { ok = false; }; }, [cardId]);
   const toggle = async () => { try { const r = await api.post(`/learn/library/save/${cardId}`, {}); setSaved(!!r.saved); } catch { /* */ } };
   return (
-    <button type="button" className={`btn btn-sm ${saved ? "btn-accent" : "btn-ghost"}`} onClick={toggle} title={t("saveForLater")} style={{ padding: "3px 10px" }}>
+    <button type="button" className={`btn btn-sm ${saved ? "btn-accent" : "btn-ghost"}`} onClick={toggle} title={t("saveForLater")} style={{ padding: "3px 10px" }} aria-label={t("saveForLater")}>
       <Icon name="star" size={13} /> {saved ? t("savedCard") : t("saveForLater")}
     </button>
   );

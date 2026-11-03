@@ -123,7 +123,7 @@ export default function MediaLibrary() {
               </div>
               <div className="mli-actions">
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => copyUrl(it.url)} title={t("copyUrl")}><Icon name="bookmark" size={13} /> {t("copyUrl")}</button>
-                <button type="button" className={`btn btn-sm ${it.usedBy > 0 ? "btn-ghost" : "btn-danger"}`} disabled={it.usedBy > 0} onClick={() => del(it)} title={it.usedBy > 0 ? t("mediaProtected") : t("delete")}>
+                <button type="button" className={`btn btn-sm ${it.usedBy > 0 ? "btn-ghost" : "btn-danger"}`} disabled={it.usedBy > 0} onClick={() => del(it)} title={it.usedBy > 0 ? t("mediaProtected") : t("delete")} aria-label={it.usedBy > 0 ? t("mediaProtected") : t("delete")}>
                   <Icon name="trash" size={13} />
                 </button>
               </div>

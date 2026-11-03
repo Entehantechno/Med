@@ -40,10 +40,10 @@ export default function OnboardingChecklist({ go, onProfile }) {
           </div>
         </div>
         <div style={{ display: "flex", gap: 4 }}>
-          <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={() => setCollapsed((c) => !c)} title={collapsed ? t("expand") : t("collapse")}>
+          <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={() => setCollapsed((c) => !c)} title={collapsed ? t("expand") : t("collapse")} aria-label={collapsed ? t("expand") : t("collapse")}>
             <Icon name={collapsed ? "chevronDown" : "chevronUp"} size={16} />
           </button>
-          <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={dismiss} title={t("dismiss")}><Icon name="close" size={16} /></button>
+          <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={dismiss} title={t("dismiss")} aria-label={t("dismiss")}><Icon name="close" size={16} /></button>
         </div>
       </div>
 

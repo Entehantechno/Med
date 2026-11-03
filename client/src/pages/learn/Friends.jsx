@@ -105,7 +105,7 @@ function FriendsTab({ data, t, lang, busy, doNudge, doQuest, claimQuest, doUnfol
               ) : (
                 <button type="button" className="btn btn-primary btn-sm" disabled={busy === "q" + f.id} onClick={() => doQuest(f.id)}>🤝 {t("startFriendQuest")}</button>
               )}
-              <button type="button" className="btn btn-ghost btn-sm" disabled={busy === "u" + f.id} onClick={() => doUnfollow(f.id)} title={t("unfollow")}><Icon name="close" size={13} /></button>
+              <button type="button" className="btn btn-ghost btn-sm" disabled={busy === "u" + f.id} onClick={() => doUnfollow(f.id)} title={t("unfollow")} aria-label={t("unfollow")}><Icon name="close" size={13} /></button>
             </div>
           );
         })}

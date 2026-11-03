@@ -159,9 +159,9 @@ export default function DailyChallenge({ onProfile }) {
               <button type="button" className="btn btn-ghost btn-sm" onClick={() => { copyShare(d, shareGrid, fa); share("copy"); }}>
                 <Icon name="download" size={14} /> {fa ? "کپی نتیجه" : "Copy result"}
               </button>
-              <button type="button" className="dx-sh tg" title="Telegram" onClick={() => { openShare("telegram", shareTextOf(d, shareGrid, fa)); share("telegram"); }}></button>
-              <button type="button" className="dx-sh wa" title="WhatsApp" onClick={() => { openShare("whatsapp", shareTextOf(d, shareGrid, fa)); share("whatsapp"); }}><span style={{ color: "#16a34a" }}>●</span></button>
-              <button type="button" className="dx-sh ig" title="Instagram" onClick={() => { copyShare(d, shareGrid, fa); share("instagram"); }}></button>
+              <button type="button" className="dx-sh tg" title="Telegram" aria-label="Telegram" onClick={() => { openShare("telegram", shareTextOf(d, shareGrid, fa)); share("telegram"); }}></button>
+              <button type="button" className="dx-sh wa" title="WhatsApp" aria-label="WhatsApp" onClick={() => { openShare("whatsapp", shareTextOf(d, shareGrid, fa)); share("whatsapp"); }}><span style={{ color: "#16a34a" }}>●</span></button>
+              <button type="button" className="dx-sh ig" title="Instagram" aria-label="Instagram" onClick={() => { copyShare(d, shareGrid, fa); share("instagram"); }}></button>
             </div>
           </div>
         </div>

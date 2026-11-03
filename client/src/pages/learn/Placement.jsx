@@ -119,7 +119,7 @@ export default function Placement({ onProfile, onBack }) {
     return (
       <div className="lesson-wrap">
         <div className="lesson-top">
-          <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onBack} title={t("back")}><Icon name="logout" size={16} /></button>
+          <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onBack} title={t("back")} aria-label={t("back")}><Icon name="logout" size={16} /></button>
           <div className="pbar"><span style={{ width: `${progress}%` }} /></div>
           <span className="hud-chip" style={{ fontSize: ".95rem" }}>{done + 1}/{aTotal || status.questions}</span>
         </div>
@@ -164,7 +164,7 @@ export default function Placement({ onProfile, onBack }) {
   return (
     <div className="lesson-wrap">
       <div className="lesson-top">
-        <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onBack} title={t("back")}><Icon name="logout" size={16} /></button>
+        <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onBack} title={t("back")} aria-label={t("back")}><Icon name="logout" size={16} /></button>
         <div className="pbar"><span style={{ width: `${progress}%` }} /></div>
         <span className="hud-chip" style={{ fontSize: ".95rem" }}>{idx + 1}/{cards.length}</span>
       </div>

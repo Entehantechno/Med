@@ -100,7 +100,7 @@ const pageStyle = {
   fontFamily: "inherit",
   colorScheme: "dark",
 };
-const wrap = (wide) => ({ maxWidth: 1120, margin: "0 auto", padding: wide ? "0 32px" : "0 18px" });
+const wrap = (wide) => ({ maxWidth: 1120, margin: "0 auto", paddingLeft: wide ? 32 : 18, paddingRight: wide ? 32 : 18 });
 const h2Style = { margin: "0 0 20px", fontSize: 24, fontWeight: 800, lineHeight: 1.6, fontFamily: "var(--font-display, inherit)" };
 const glass = { background: C.glass, border: `1px solid ${C.line}`, borderRadius: 20 };
 const linkBtn = (primary) => ({
@@ -241,13 +241,13 @@ function Content({ cfg, lang, ui, wide }) {
     playOnce(heroCopy.current, [{ opacity: 0, transform: "translateY(14px)" }, { opacity: 1, transform: "none" }], { duration: 700 });
   }, []);
 
-  const sectionPad = { padding: wide ? "64px 0" : "40px 0" };
+  const sectionPad = { paddingTop: wide ? 64 : 40, paddingBottom: wide ? 64 : 40 };
   const stepCols = { display: "grid", gridTemplateColumns: wide ? "repeat(3, minmax(0, 1fr))" : "1fr", gap: 16, listStyle: "none", padding: 0, margin: 0 };
   const featureCols = { display: "grid", gridTemplateColumns: wide ? "repeat(3, minmax(0, 1fr))" : "1fr", gap: 14, listStyle: "none", padding: 0, margin: 0 };
 
   return (
     <main id="vp-main">
-      <section style={{ ...wrap(wide), display: "grid", gridTemplateColumns: wide ? "minmax(0, 1.05fr) minmax(0, .95fr)" : "1fr", gap: wide ? 48 : 28, alignItems: "center", padding: wide ? "56px 0 64px" : "28px 0 40px" }}>
+      <section style={{ ...wrap(wide), display: "grid", gridTemplateColumns: wide ? "minmax(0, 1.05fr) minmax(0, .95fr)" : "1fr", gap: wide ? 48 : 28, alignItems: "center", paddingTop: wide ? 56 : 28, paddingBottom: wide ? 64 : 40 }}>
         <div ref={heroCopy}>
           <h1 style={{ margin: "0 0 18px", fontSize: wide ? 48 : 30, lineHeight: lang === "fa" ? 1.6 : 1.2, fontWeight: 800, textWrap: "balance", fontFamily: "var(--font-display, inherit)" }}>
             {tx(cfg.headline, lang)}
@@ -355,19 +355,19 @@ export default function VirtualPatientPage() {
 
       {!cfg && !failed && <div aria-busy="true" style={{ minHeight: "70dvh" }} />}
       {failed && (
-        <div role="alert" style={{ ...wrap(wide), padding: "80px 0", textAlign: "center" }}>
+        <div role="alert" style={{ ...wrap(wide), paddingTop: 80, paddingBottom: 80, textAlign: "center" }}>
           <p style={{ color: C.muted, lineHeight: 1.8 }}>{ui.loadFailed}</p>
           <button type="button" onClick={() => setAttempt((n) => n + 1)} style={navBtn}>{ui.retry}</button>
         </div>
       )}
       {cfg && !cfg.enabled && (
-        <div style={{ ...wrap(wide), padding: "80px 0", textAlign: "center" }}>
+        <div style={{ ...wrap(wide), paddingTop: 80, paddingBottom: 80, textAlign: "center" }}>
           <p style={{ color: C.muted, fontSize: 18 }}>{tx(cfg.closed, lang)}</p>
         </div>
       )}
       {cfg?.enabled && <Content cfg={cfg} lang={lang} ui={ui} wide={wide} />}
 
-      <footer style={{ ...wrap(wide), padding: "40px 0 calc(56px + env(safe-area-inset-bottom))", borderTop: `1px solid ${C.line}`, marginTop: 24, display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 12, color: C.muted, fontSize: 14 }}>
+      <footer style={{ ...wrap(wide), paddingTop: 40, paddingBottom: "calc(56px + env(safe-area-inset-bottom))", borderTop: `1px solid ${C.line}`, marginTop: 24, display: "flex", flexWrap: "wrap", justifyContent: "space-between", gap: 12, color: C.muted, fontSize: 14 }}>
         <span>{ui.footer}</span>
         <a href="/" style={{ color: C.blue }}>{ui.back}</a>
       </footer>

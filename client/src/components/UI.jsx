@@ -43,11 +43,11 @@ export function TopBar({ onHome }) {
             <Icon name="user" size={16} /> <span className="small">{lang === "fa" ? user.name_fa : user.name_en}</span>
           </button>
         )}
-        <button type="button" className="btn btn-sm btn-ghost icon-btn" onClick={toggleTheme} title={theme === "light" ? t("darkMode") : t("lightMode")}>
+        <button type="button" className="btn btn-sm btn-ghost icon-btn" onClick={toggleTheme} title={theme === "light" ? t("darkMode") : t("lightMode")} aria-label={theme === "light" ? t("darkMode") : t("lightMode")}>
           <Icon name={theme === "light" ? "moon" : "sun"} size={16} />
         </button>
         <button type="button" className="btn btn-sm btn-ghost" onClick={toggleLang}><Icon name="globe" size={16} /> <span className="icon-lang-label">{t("otherLang")}</span></button>
-        {user && <button type="button" className="btn btn-sm btn-danger icon-btn" onClick={logout} title={t("logout")}><Icon name="logout" size={16} /></button>}
+        {user && <button type="button" className="btn btn-sm btn-danger icon-btn" onClick={logout} title={t("logout")} aria-label={t("logout")}><Icon name="logout" size={16} /></button>}
       </div>
     </div>
   );

@@ -132,7 +132,7 @@ export default function RampEvent({ onProfile, onBack }) {
   return (
     <div className="lesson-wrap">
       <div className="lesson-top">
-        <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={() => finish(correctRef.current)} title={t("back")}><Icon name="logout" size={16} /></button>
+        <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={() => finish(correctRef.current)} title={t("back")} aria-label={t("back")}><Icon name="logout" size={16} /></button>
         <div className={`pbar ${left <= 15 ? "danger" : ""}`}><span style={{ width: `${timePct}%`, background: left <= 15 ? "var(--flame)" : undefined }} /></div>
         <span className="hud-chip" style={{ fontSize: ".95rem" }}>⏱️ {left}s</span>
       </div>

@@ -420,7 +420,7 @@ function Runner({ test, setTest, onFinish, onQuit }) {
       </div>
 
       <div className="lesson-actions" style={{ display: "flex", gap: 8, alignItems: "center" }}>
-        <button type="button" className={`btn btn-ghost btn-sm ${flag ? "ct-flag-on" : ""}`} onClick={() => setFlag((f) => !f)} aria-pressed={flag} title={fa ? "نشان‌کردن برای مرور" : "Mark for review"}><Icon name="flag" size={15} /></button>
+        <button type="button" className={`btn btn-ghost btn-sm ${flag ? "ct-flag-on" : ""}`} onClick={() => setFlag((f) => !f)} aria-pressed={flag} title={fa ? "نشان‌کردن برای مرور" : "Mark for review"} aria-label={fa ? "نشان‌کردن برای مرور" : "Mark for review"}><Icon name="flag" size={15} /></button>
         <button aria-label={t("prev")} type="button" className="btn btn-ghost" disabled={idx === 0} onClick={() => setIdx(idx - 1)}><Icon name="chevronRight" size={15} /></button>
         {!prev && !checked
           ? <button type="button" className="btn btn-primary" style={{ flex: 1 }} disabled={!canCheck || busy} onClick={submit}>{timed ? (fa ? "ثبت و بعدی" : "Save & next") : t("check")}</button>

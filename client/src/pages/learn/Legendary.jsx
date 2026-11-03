@@ -118,7 +118,7 @@ export default function Legendary({ nodeId, onProfile, onDone }) {
   return (
     <div className="lesson-wrap legendary-run">
       <div className="lesson-top">
-        <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onDone} title={t("back")}><Icon name="logout" size={16} /></button>
+        <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onDone} title={t("back")} aria-label={t("back")}><Icon name="logout" size={16} /></button>
         <div className="pbar"><span style={{ width: `${progress}%`, background: "linear-gradient(90deg,#a855f7,#eab308)" }} /></div>
         <span className="hud-chip" style={{ fontSize: ".95rem" }}>👑 {correct}/{cards.length}</span>
       </div>

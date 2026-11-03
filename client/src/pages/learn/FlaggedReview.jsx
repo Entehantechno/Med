@@ -66,7 +66,7 @@ export default function FlaggedReview({ onProfile, onBack }) {
   return (
     <div className="lesson-wrap">
       <div className="lesson-top">
-        <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onBack} title={t("back")}><Icon name="logout" size={16} /></button>
+        <button type="button" className="btn btn-ghost btn-sm icon-btn" onClick={onBack} title={t("back")} aria-label={t("back")}><Icon name="logout" size={16} /></button>
         <div className="pbar"><span style={{ width: `${Math.round((idx / cards.length) * 100)}%` }} /></div>
         <span className="tag">🚩 {idx + 1}/{cards.length}</span>
       </div>

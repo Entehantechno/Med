@@ -98,8 +98,8 @@ export default function PathManager() {
               <div style={{ fontWeight: 800 }}>{lang === "en" ? (topic.name_en || topic.name_fa) : (topic.name_fa || topic.name_en)}</div>
               <div className="small muted">{topic.nodes.length} {t("lessonsCount")} · {topic.slug}</div>
             </div>
-            <button type="button" className="btn btn-sm btn-ghost" onClick={(e) => { e.stopPropagation(); setTopicEdit(topic); }} title={t("edit")}><Icon name="edit" size={13} /></button>
-            <button type="button" className="btn btn-sm btn-danger" onClick={(e) => { e.stopPropagation(); delTopic(topic.id); }} title={t("delete")}><Icon name="trash" size={13} /></button>
+            <button type="button" className="btn btn-sm btn-ghost" onClick={(e) => { e.stopPropagation(); setTopicEdit(topic); }} title={t("edit")} aria-label={t("edit")}><Icon name="edit" size={13} /></button>
+            <button type="button" className="btn btn-sm btn-danger" onClick={(e) => { e.stopPropagation(); delTopic(topic.id); }} title={t("delete")} aria-label={t("delete")}><Icon name="trash" size={13} /></button>
             <button type="button" className="btn btn-sm btn-ghost" aria-expanded={!!open[topic.id]} aria-label={lang === "fa" ? "باز یا بسته کردن این بخش" : "Expand or collapse this topic"}
               onClick={(e) => { e.stopPropagation(); setOpen((s) => ({ ...s, [topic.id]: !s[topic.id] })); }}>
               <Icon name={open[topic.id] ? "chevronUp" : "chevronDown"} size={16} />
@@ -120,10 +120,10 @@ export default function PathManager() {
                     <div style={{ fontWeight: 700 }}>{lang === "fa" ? n.title_fa : n.title_en || "—"}</div>
                     <div className="small muted">{n.cardCount} {t("questionsCount")} · {n.xp_reward} XP · {t(n.kind)}</div>
                   </div>
-                  <button type="button" className="btn btn-sm btn-ghost" onClick={() => setCardsFor({ ...n, topicName: lang === "fa" ? topic.name_fa : topic.name_en })} title={t("chooseQuestions")}><Icon name="check" size={13} /></button>
+                  <button type="button" className="btn btn-sm btn-ghost" onClick={() => setCardsFor({ ...n, topicName: lang === "fa" ? topic.name_fa : topic.name_en })} title={t("chooseQuestions")} aria-label={t("chooseQuestions")}><Icon name="check" size={13} /></button>
                   <button type="button" className="btn btn-sm btn-ghost" onClick={() => setDesignFor(n)} title={t("designQuestion")}><Icon name="edit" size={13} /> +</button>
-                  <button type="button" className="btn btn-sm btn-ghost" onClick={() => setNodeEdit(n)} title={t("edit")}><Icon name="settings" size={13} /></button>
-                  <button type="button" className="btn btn-sm btn-danger" onClick={() => delNode(n.id)} title={t("delete")}><Icon name="trash" size={13} /></button>
+                  <button type="button" className="btn btn-sm btn-ghost" onClick={() => setNodeEdit(n)} title={t("edit")} aria-label={t("edit")}><Icon name="settings" size={13} /></button>
+                  <button type="button" className="btn btn-sm btn-danger" onClick={() => delNode(n.id)} title={t("delete")} aria-label={t("delete")}><Icon name="trash" size={13} /></button>
                 </div>
               ))}
               <button type="button" className="btn btn-ghost btn-sm mt8" onClick={() => setNodeEdit({ topic_id: topic.id, kind: "lesson", xp_reward: 20 })}>

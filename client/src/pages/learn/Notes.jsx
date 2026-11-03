@@ -28,7 +28,7 @@ export default function Notes({ onBack }) {
             <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "flex-start" }}>
               <div style={{ fontWeight: 700, flex: 1, minWidth: 0 }}>{n.question}</div>
               <button type="button" className={`btn btn-sm ${n.highlight ? "btn-accent" : "btn-ghost"}`}
-                onClick={() => save(n.card_id, n.note, !n.highlight)} title={t("highlight")}>
+                onClick={() => save(n.card_id, n.note, !n.highlight)} title={t("highlight")} aria-label={t("highlight")}>
                 <Icon name="star" size={14} />
               </button>
             </div>
