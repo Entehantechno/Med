@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { useApp } from "../context.jsx";
 
 /* Dependency-free charts using inline SVG / CSS. */
@@ -21,8 +22,10 @@ export function BarChart({ data, max = 100, unit = "" }) {
 }
 
 // Line/sparkline via SVG: values = number[]
-export function LineChart({ values, height = 130, color = "var(--primary)" }) {
+export function LineChart({ values, height = 130, color = "var(--primary)", label = "" }) {
   const { t } = useApp();
+  // Unique per instance: a fixed gradient id collides when two charts share a page.
+  const gradId = `lg-${useId().replace(/:/g, "")}`;
   if (!values || values.length < 2) return <div className="small muted">{t("noData")}</div>;
   const w = 100, h = height;
   const max = Math.max(...values, 1), min = Math.min(...values, 0);
@@ -35,15 +38,15 @@ export function LineChart({ values, height = 130, color = "var(--primary)" }) {
   const path = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
   const area = `${path} L${w},${h} L0,${h} Z`;
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={height} preserveAspectRatio="none"
+    <svg viewBox={`0 0 ${w} ${h}`} width="100%" height={height} preserveAspectRatio="none" role="img" aria-label={label || undefined}
       style={{ display: "block", width: "100%", height: `${height}px` }}>
       <defs>
-        <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor={color} stopOpacity="0.35" />
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d={area} fill="url(#lg)" />
+      <path d={area} fill={`url(#${gradId})`} />
       <path d={path} fill="none" stroke={color} strokeWidth="2" vectorEffect="non-scaling-stroke" />
       {pts.map((p, i) => <circle key={i} cx={p[0]} cy={p[1]} r="2.5" fill={color} vectorEffect="non-scaling-stroke" />)}
     </svg>
@@ -51,7 +54,7 @@ export function LineChart({ values, height = 130, color = "var(--primary)" }) {
 }
 
 // Donut for two-part split: parts = [{label,value,color}]
-export function Donut({ parts, size = 140 }) {
+export function Donut({ parts, size = 140, label = "" }) {
   const { t } = useApp();
   const total = parts.reduce((a, b) => a + b.value, 0);
   if (!total) return (
@@ -64,7 +67,8 @@ export function Donut({ parts, size = 140 }) {
   let offset = 0;
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-      <svg width={size} height={size} viewBox="0 0 140 140">
+      <svg width={size} height={size} viewBox="0 0 140 140" role="img"
+        aria-label={label ? `${label}: ${parts.map((p) => `${p.label} ${p.value}`).join("، ")}` : undefined}>
         <circle cx="70" cy="70" r={r} fill="none" stroke="var(--panel2)" strokeWidth="16" />
         {parts.map((p, i) => {
           const len = (p.value / total) * c;
@@ -109,7 +113,7 @@ export function RadarChart({ data, size = 260, color = "var(--primary)" }) {
         const anchor = Math.abs(x - cx) < 10 ? "middle" : (x < cx ? "end" : "start");
         const lbl = (d.label || "");
         const short = lbl.length > 14 ? lbl.slice(0, 13) + "…" : lbl;
-        return <text key={i} x={x} y={y} fontSize="8.5" fill="var(--muted)" textAnchor={anchor} dominantBaseline="middle">{short} ({d.value}%)</text>;
+        return <text key={i} x={x} y={y} fontSize="10" fill="var(--muted)" textAnchor={anchor} dominantBaseline="middle">{short} ({d.value}%)</text>;
       })}
     </svg>
   );

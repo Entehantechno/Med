@@ -125,6 +125,16 @@ function AppInner() {
     }
   }, [user]);
 
+  // A new screen (sign-in, sign-out, auth step, or route) starts at the top. The page
+  // offset that remained after sign-in came from scroll anchoring, which is disabled in
+  // styles.css (html{overflow-anchor:none}). Blur first so a restored focus does not scroll.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const el = document.activeElement;
+    if (el && el !== document.body && typeof el.blur === "function") el.blur();
+    window.scrollTo({ top: 0 });
+  }, [user?.id, authView, route.name]);
+
   if (!ready) return <Spinner />;
 
   // Public certificate verification is available to everyone (even logged-in

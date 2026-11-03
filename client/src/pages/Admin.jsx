@@ -404,12 +404,21 @@ export function Dashboard() {
   // One request: the server computes every number and the charts' series in SQL.
   const [s, setS] = useState(null);
   const [loadErr, setLoadErr] = useState("");
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     setLoadErr("");
+    setS(null);
     api.get("/reports/summary").then(setS).catch((e) => { setLoadErr(String(e.message || e)); setS({ __err: true }); });
-  }, []);
-  if (s?.__err || loadErr) return <div className="card empty-state"><div className="ico"><Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /></div><h3>{loadErr || (fa ? "بارگذاری داشبورد شکست خورد" : "Could not load the dashboard")}</h3></div>;
-  if (!s) return (<><div className="grid grid-4">{[0,1,2,3].map(i=><div className="card" key={i}><div className="skeleton sk-card"/></div>)}</div><div className="mt16"><SkeletonTable rows={4} /></div></>);
+  }, [attempt]);
+  if (s?.__err || loadErr) return (
+    <div className="card empty-state" role="alert">
+      <div className="ico"><Icon name="warn" size={30} /></div>
+      <h3>{fa ? "بارگذاری داشبورد شکست خورد" : "Could not load the dashboard"}</h3>
+      {loadErr && <div className="muted small mt8">{loadErr}</div>}
+      <button type="button" className="btn btn-primary mt16" onClick={() => setAttempt((n) => n + 1)}>{fa ? "تلاش دوباره" : "Try again"}</button>
+    </div>
+  );
+  if (!s) return (<><div className="grid stat-grid">{[0,1,2,3].map(i=><div className="card" key={i}><div className="skeleton sk-card"/></div>)}</div><div className="mt16"><SkeletonTable rows={4} /></div></>);
 
   const buckets = [
     { label: "0–59", value: s.buckets[0] }, { label: "60–74", value: s.buckets[1] },
@@ -419,7 +428,7 @@ export function Dashboard() {
 
   return (
     <>
-      <div className="grid grid-4">
+      <div className="grid stat-grid">
         <Stat num={s.students} label={t("totalStudents")} />
         <Stat num={s.cases} label={t("totalCases")} />
         <Stat num={s.cards} label={t("totalCards")} />
@@ -432,12 +441,12 @@ export function Dashboard() {
           {/* The line plots the last 12 attempts, so the caption says exactly that. */}
           <div className="small muted mb8">{fa ? "۱۲ آزمون اخیر" : "Last 12 attempts"}</div>
           {trend.length >= 2
-            ? <LineChart values={trend} />
+            ? <LineChart values={trend} label={fa ? `روند نمره: ${trend.length} آزمون اخیر، آخرین نمره ${trend[trend.length - 1]}` : `Score trend: last ${trend.length} attempts, latest score ${trend[trend.length - 1]}`} />
             : <div className="muted small" style={{ padding: "24px 0", textAlign: "center" }}>{fa ? "هنوز آزمون کافی برای نمودار ثبت نشده است." : "Not enough attempts to draw the trend yet."}</div>}
         </div>
         <div className="card chart-card">
           <h4 className="mb8"><Icon name="pie" size={16} /> {t("activityByType")}</h4>
-          <Donut parts={[
+          <Donut label={fa ? "تفکیک فعالیت" : "Activity split"} parts={[
             { label: t("vpExams"), value: s.byType.vp, color: "var(--primary)" },
             { label: t("flashPractice"), value: s.byType.flash, color: "var(--accent)" },
           ]} />
@@ -8937,14 +8946,29 @@ function GamificationConfig() {
 function SystemOverview({ onJump }) {
   const { t, lang } = useApp();
   const [d, setD] = useState(null);
-  useEffect(() => { api.get("/admin/overview").then(setD).catch(() => setD({})); }, []);
+  const [attempt, setAttempt] = useState(0);
+  // A failed request must not render as zeros: show the error and let the admin retry.
+  useEffect(() => {
+    setD(null);
+    api.get("/admin/overview").then(setD).catch((e) => setD({ __err: String(e?.message || e) }));
+  }, [attempt]);
   if (!d) return <Spinner />;
+  if (d.__err) return (
+    <div className="card empty-state" role="alert">
+      <div className="ico"><Icon name="warn" size={30} /></div>
+      <h3>{lang === "fa" ? "بارگذاری نمای کلی شکست خورد" : "Could not load the overview"}</h3>
+      <div className="muted small mt8">{d.__err}</div>
+      <button type="button" className="btn btn-primary mt16" onClick={() => setAttempt((n) => n + 1)}>{lang === "fa" ? "تلاش دوباره" : "Try again"}</button>
+    </div>
+  );
   const c = d.counts || {};
-  const kpis = [
-    ["users", c.users, "users"], ["learners", c.learners, "medal"], ["students", c.students, "patient"],
-    ["premiumOn", c.premium, "crown"], ["flashcards", c.flashcards, "flask"], ["challenges", c.challenges, "trophy"],
-  ];
   const fa = lang === "fa";
+  // Explicit labels: t(k) has no "learners" key, so the raw key used to show on the Persian screen.
+  const kpis = [
+    ["users", c.users, "users", fa ? "کاربران" : "Users"], ["learners", c.learners, "medal", fa ? "رقابتی" : "Learners"],
+    ["students", c.students, "patient", fa ? "دانشجویان" : "Students"], ["premiumOn", c.premium, "crown", fa ? "پریمیوم" : "Premium"],
+    ["flashcards", c.flashcards, "flask", fa ? "فلش‌کارت" : "Flashcards"], ["challenges", c.challenges, "trophy", fa ? "چالش‌ها" : "Challenges"],
+  ];
   const quick = [
     ["siteContent", "edit", fa ? "متن‌ها و نظرات لندینگ" : "Landing texts & testimonials", fa ? "متن‌های عمومی، بخش کاربران چه می‌گویند و محتوای صفحه اصلی را از اینجا کنترل کنید." : "Control public texts, testimonials, and homepage copy here."],
     ["landingManager", "medal", fa ? "اعداد و بخش‌های صفحه اصلی" : "Homepage stats & sections", fa ? "عدد کل کاربران، کف آمار نمایشی و محتوای لندینگ اینجاست." : "Homepage counters, stats floor, and landing sections live here."],
@@ -8959,12 +8983,12 @@ function SystemOverview({ onJump }) {
   return (
     <div className="page">
       <div className="section-title"><h4><Icon name="dashboard" size={18} /> {t("overview")}</h4></div>
-      <div className="grid grid-3 mb16">
-        {kpis.map(([k, v, ic]) => (
+      <div className="grid stat-grid-3 mb16">
+        {kpis.map(([k, v, ic, label]) => (
           <div className="card stat-card" key={k}>
             <div className="mod-ico" style={{ width: 40, height: 40, marginBottom: 8, background: "var(--grad-primary)" }}><Icon name={ic} size={20} /></div>
             <div className="num"><StatNum value={v || 0} /></div>
-            <div className="lbl">{t(k) || k}</div>
+            <div className="lbl">{label}</div>
           </div>
         ))}
       </div>

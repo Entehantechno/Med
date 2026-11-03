@@ -27,5 +27,5 @@ export default function StatNum({ value = 0, duration = 900, delay = 0 }) {
     return () => { cancelAnimationFrame(raf.current); clearTimeout(timer.current); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, duration, delay]);
-  return <>{n}</>;
+  return <>{n.toLocaleString("en-US")}</>;
 }
