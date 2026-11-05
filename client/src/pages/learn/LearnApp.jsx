@@ -29,6 +29,7 @@ const RampEvent = lazy(() => import("./RampEvent.jsx"));
 const Legendary = lazy(() => import("./Legendary.jsx"));
 const Practice = lazy(() => import("./Practice.jsx"));
 const Browse = lazy(() => import("./Browse.jsx"));
+const VpatientHub = lazy(() => import("./VpatientHub.jsx"));
 const Placement = lazy(() => import("./Placement.jsx"));
 const DailyChallenge = lazy(() => import("./DailyChallenge.jsx"));
 const InviteFriends = lazy(() => import("./InviteFriends.jsx"));
@@ -82,6 +83,9 @@ export default function LearnApp() {
   const [history, setHistory] = useState([]);   // previous tabs for the Back button
   const [lessonNode, setLessonNode] = useState(null);
   const [pathFocus, setPathFocus] = useState(null);   // topic slug to scroll to + highlight on the path
+  // Cross-link between flashcards and virtual-patient cases of one subject: {key,label,tab}.
+  // It applies only to the tab it was opened for, and setTab clears it when the learner leaves.
+  const [linkTopic, setLinkTopic] = useState(null);
   const [profile, setProfile] = useState(null);
   const [calm, setCalm] = useState(null);   // Calm Mode flags (hide streak, etc.)
   const [programs, setPrograms] = useState([]);        // Duolingo-style courses
@@ -90,6 +94,7 @@ export default function LearnApp() {
   // navigate while remembering where we came from (capped to avoid unbounded growth)
   const setTab = (next) => {
     setMoreOpen(false); setMoreQuery("");
+    setLinkTopic((cur) => (cur && cur.tab !== next ? null : cur));
     if (next !== "browse" && /^#browse/.test(window.location.hash)) window.history.replaceState(null, "", window.location.pathname);
     setTabState((cur) => {
       if (cur !== next) queueMicrotask(() => setHistory((h) => [...h, cur].slice(-50)));
@@ -250,6 +255,7 @@ export default function LearnApp() {
       ["summaries", "book", t("summariesTitle"), flag("summaries")],
       ["examSim", "exam", t("examSim"), flag("exam_sim")],
       ["flashcards", "flask", t("learnFlashNav"), true],
+      ["vpatient", "stethoscope", lang === "fa" ? "بیمار مجازی" : "Virtual patient", flag("virtual_patient")],
       ["checkpoint", "medal", t("checkpointNav"), flag("checkpoint")],
       ["studyPlan", "book", t("studyPlan"), flag("study_plan")],
       ["mindmap", "chart", t("mindmaps"), flag("mindmap")],
@@ -283,13 +289,15 @@ export default function LearnApp() {
   ].map((sec) => ({ ...sec, items: sec.items.filter((n) => n[3]) })).filter((sec) => sec.items.length);
   const nav = navSections.flatMap((s) => s.items);
 
+  const openLink = (tabId, link) => { setTab(tabId); setLinkTopic({ ...link, tab: tabId }); };
+  const topicFor = (tabId) => (linkTopic && linkTopic.tab === tabId ? linkTopic : null);
   const openLesson = (nodeId) => { setLessonNode(nodeId); setTab("lesson"); };
   const openLegendary = (nodeId) => { setLessonNode(nodeId); setTab("legendary"); };
 
   // Admin kill-switch: a tab whose feature flag is OFF (filtered out of the nav
   // above) never renders its page — deep links get a friendly notice instead.
   const allTabIds = new Set(["home", "path", "lesson", "legendary", "settings", ...(flag("premium") ? ["premium"] : []), ...nav.map((n) => n[0])]);
-  const knownTab = ["premium","dxChallenge","review","quests","placement","practice","browse","customTest","summaries","examSim","flashcards","checkpoint","studyPlan","mindmap","mnemonics","crowd","friends","invite","league","ranking","rampEvent","challenge","community","achievements","progress","mastery","flagged","certificates","notes","mycards","library","store"].includes(tab);
+  const knownTab = ["vpatient","premium","dxChallenge","review","quests","placement","practice","browse","customTest","summaries","examSim","flashcards","checkpoint","studyPlan","mindmap","mnemonics","crowd","friends","invite","league","ranking","rampEvent","challenge","community","achievements","progress","mastery","flagged","certificates","notes","mycards","library","store"].includes(tab);
   const tabDisabled = knownTab && !allTabIds.has(tab);
   const isRefTab = typeof tab === "string" && tab.startsWith("reference:");
   let page;
@@ -329,7 +337,8 @@ export default function LearnApp() {
   else if (tab === "mastery") page = <Mastery onBack={goBack} />;
   else if (tab === "examSim") page = <ExamSim onProfile={setProfile} onBack={goBack} onPremium={() => setTab("premium")} />;
   else if (tab === "customTest") page = <CustomTest onProfile={setProfile} onBack={goBack} onPremium={() => setTab("premium")} />;
-    else if (tab === "flashcards") page = <Flashcards home={goBack} embedded />;
+    else if (tab === "flashcards") page = <Flashcards home={goBack} embedded topic={topicFor("flashcards")} onOpenCases={(l) => openLink("vpatient", l)} onClearTopic={() => setLinkTopic(null)} />;
+  else if (tab === "vpatient") page = <Suspense fallback={<Spinner />}><VpatientHub home={goBack} topic={topicFor("vpatient")} onOpenCards={(l) => openLink("flashcards", l)} /></Suspense>;
   else if (tab === "checkpoint") page = <Checkpoint onProfile={setProfile} />;
   else if (tab === "studyPlan") page = <StudyPlan onBack={goBack} openMindmap={() => setTab("mindmap")} />;
   else if (tab === "mindmap") page = <Mindmap onBack={goBack} />;

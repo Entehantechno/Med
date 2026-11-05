@@ -1,4 +1,5 @@
 import { openConfigSecrets, serializeSettings, isMaskedSecret } from "./secret-store.js";
+import { topicKeyOf, topicLabel } from "./topic-key.js";
 import { routingSettings } from "./ai-routing.js";
 /* vpatient.js — Virtual Patient for the COMPETITIVE (learner) side.
 
@@ -97,6 +98,8 @@ export function playableCases(lang = "fa", userId = null) {
     try { d = JSON.parse(r.data_json); } catch { d = {}; }
     const pick = (k) => (lang === "fa" ? (d[`${k}_fa`] || d[`${k}_en`]) : (d[`${k}_en`] || d[`${k}_fa`]));
     const best = getBest ? (getBest.get(userId, r.id)?.best ?? null) : null;
+    // `topic` links the case to flashcards of the same subject (lib/topic-key.js).
+    const topic = topicKeyOf(d);
     return {
       id: r.id,
       difficulty: r.difficulty || "medium",
@@ -104,6 +107,8 @@ export function playableCases(lang = "fa", userId = null) {
       // the chief complaint is the headline. Staff use GET /cases instead.
       title: "",
       specialty: pick("specialty") || "",
+      topic,
+      topic_label: topicLabel(topic, lang),
       chief: pick("chief") || pick("chief_complaint") || "",
       age: d.age ?? null,
       sex: d.sex || null,

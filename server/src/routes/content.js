@@ -1,4 +1,5 @@
 import {flashcardLanguageFallback} from '../lib/flashcard-language.js';
+import { topicKeyOf } from "../lib/topic-key.js";
 import {sharedAcademic} from '../lib/academic-sharing.js';
 import { assignmentInput } from '../lib/assignment-input.js';
 import { validateCase, normalizeCaseAge } from "../lib/case-validation.js";
@@ -498,7 +499,8 @@ r.get("/flashcards", authRequired, (req, res) => {
         // Path demo cards stay on /learn/*; the competitive Flashcards player
         // only lists curated university-type cards (hotspot, drawing, MCQ, …).
         if (card.content_origin === "demo_seed") continue;
-        list.push(studentSafeFlashcard(card));
+        // `topic` links the card to virtual-patient cases of the same subject (lib/topic-key.js).
+        list.push({ ...studentSafeFlashcard(card), topic: topicKeyOf(card) });
       } catch { /* skip corrupt */ }
     }
     return res.json(list);

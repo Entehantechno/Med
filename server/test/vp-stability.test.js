@@ -2752,7 +2752,9 @@ describe("zip-49 source: embedded flash + leftover container gates", () => {
     expect(fc).toContain("function flashChrome");
     expect(fc).toContain("embedded = false");
     expect(fc).toContain("skipUniExamSettings");
-    expect(learnApp).toContain("<Flashcards home={goBack} embedded />");
+    // R88: the flashcard tab also receives topic props (VP <-> flashcard links).
+    // The embedded contract is what matters: embedded flag, and no university props.
+    expect(learnApp).toMatch(/<Flashcards home=\{goBack\} embedded[ \/>]/);
   });
 
   it("learner reports drop class/exam rows and assignments skip learn cases", () => {

@@ -27,7 +27,7 @@ function flashChrome(embedded, home, inner) {
   return <div className="app"><TopBar onHome={home} />{inner}</div>;
 }
 
-export default function Flashcards({ home, examId, flashcardIds, examDuration, shuffle, antiCheat, competition, classId, classFlashcardId, classCombined = false, showCorrect: examShowCorrect, showHints: examShowHints, noPenalty: noPenaltyProp, allowBack: allowBackProp, allowChange: allowChangeProp, embedded = false }) {
+export default function Flashcards({ home, examId, flashcardIds, examDuration, shuffle, antiCheat, competition, classId, classFlashcardId, classCombined = false, showCorrect: examShowCorrect, showHints: examShowHints, noPenalty: noPenaltyProp, allowBack: allowBackProp, allowChange: allowChangeProp, embedded = false, topic = null, onOpenCases, onClearTopic }) {
   // Tell sw-update.js that in-progress work is on screen: a new build must
   // not auto-reload the page until this screen unmounts.
   useEffect(() => { markBusy(true); return () => markBusy(false); }, []);
@@ -295,7 +295,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
   // Deck picker only for FREE practice. In an exam, it auto-starts (no preview of answers).
   if (!cards) {
     if (inExam) return flashChrome(embedded, home, <Spinner />);
-    return <DeckPicker allCards={allCards} onStart={startDeck} home={home} embedded={embedded} />;
+    return <DeckPicker allCards={allCards} onStart={startDeck} home={home} embedded={embedded} topic={topic} onOpenCases={onOpenCases} onClearTopic={onClearTopic} />;
   }
 
   if (finished) return <Summary cards={cards} results={results} totalHints={totalHints} home={home}
@@ -747,12 +747,19 @@ const courseOf = (c, lang) => biField(c, "course", lang) || "—";
 
 /* Deck chooser: decks are the courses; a category chip narrows them, search matches
    course or category names, and "practice" runs exactly the decks on screen. */
-export function DeckPicker({ allCards, onStart, home, embedded = false }) {
+// topic: {key, label} from a virtual-patient case ("study this subject"), or null.
+// onOpenCases(topic): jump to the virtual-patient cases of the same subject.
+export function DeckPicker({ allCards: allCardsAll, onStart, home, embedded = false, topic = null, onOpenCases, onClearTopic }) {
   const { t, lang } = useApp();
   const fa = lang === "fa";
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("");
   const [sort, setSort] = useState("title");
+  // Narrow to the chosen subject first. Cards without a topic key are not shown under a topic.
+  const allCards = useMemo(
+    () => (topic ? allCardsAll.filter((c) => c.topic === topic.key) : allCardsAll),
+    [allCardsAll, topic],
+  );
 
   const categories = useMemo(() => facetCounts(allCards, (c) => catOf(c, lang)), [allCards, lang]);
   const inCategory = useMemo(
@@ -786,6 +793,24 @@ export function DeckPicker({ allCards, onStart, home, embedded = false }) {
         <h2><Icon name="flask" size={16} /> {t("flashTitle")}</h2>
         <button type="button" className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
       </div>
+      {topic && (
+        <section className="card mb16" aria-labelledby="deck-topic-title" style={{ display: "grid", gap: 8 }}>
+          <div className="small muted" id="deck-topic-title">{fa ? "موضوع انتخاب‌شده" : "Selected topic"}</div>
+          <strong>{topic.label}</strong>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {onOpenCases && (
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => onOpenCases(topic)}>
+                {fa ? "بیماران مجازی این موضوع" : "Virtual patients for this topic"}
+              </button>
+            )}
+            {onClearTopic && (
+              <button type="button" className="btn btn-ghost btn-sm" onClick={onClearTopic}>
+                {fa ? "نمایش همه کارت‌ها" : "Show all cards"}
+              </button>
+            )}
+          </div>
+        </section>
+      )}
       <div className="card mb16" style={{ textAlign: "center" }}>
         <div className="mod-ico" style={{ margin: "0 auto 12px", background: "var(--grad-primary)" }}><Icon name="catalog" size={30} /></div>
         <h3>{t("pickDeck")}</h3>
@@ -832,7 +857,12 @@ export function DeckPicker({ allCards, onStart, home, embedded = false }) {
         )}
       </div>
 
-      {decks.length === 0 && allCards.length > 0 ? (
+      {topic && allCards.length === 0 ? (
+        <div className="card center" style={{ padding: 32 }} role="status">
+          <div style={{ fontWeight: 800 }}>{fa ? "هنوز کارتی برای این موضوع نداریم." : "There are no cards for this topic yet."}</div>
+          {onClearTopic && <button type="button" className="btn btn-ghost mt16" onClick={onClearTopic}>{fa ? "نمایش همه کارت‌ها" : "Show all cards"}</button>}
+        </div>
+      ) : decks.length === 0 && allCards.length > 0 ? (
         <div className="card center" style={{ padding: 32 }} role="status">
           <div style={{ fontWeight: 800 }}>{fa ? "دسته‌ای با این فیلتر پیدا نشد." : "No deck matches these filters."}</div>
           <button type="button" className="btn btn-ghost mt16" onClick={resetFilters}>{fa ? "پاک‌کردن فیلترها" : "Clear filters"}</button>
