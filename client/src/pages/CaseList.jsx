@@ -48,7 +48,9 @@ export default function CaseList({ go, home, initialTopic = null, onOpenCards })
         .catch((e) => { setCases([]); setLoadErr(loadFailKind(e)); });
     }
   };
-  useEffect(() => { load(); }, [lang]);
+  // Reload when the role resolves too: a deep link can mount this list before `user` is known,
+  // and the staff /cases request would otherwise stay on screen for a learner.
+  useEffect(() => { load(); }, [lang, learner]);
 
   // Hooks stay above the early return. Search covers only what the card shows
   // (headline, chief complaint, specialty): students never see the internal title,
@@ -191,6 +193,13 @@ export default function CaseList({ go, home, initialTopic = null, onOpenCards })
             {visible.length === 0 ? (
               <div className="card center" style={{ padding: 32 }} role="status">
                 <div style={{ fontWeight: 800 }}>{fa ? "پرونده‌ای با این فیلتر پیدا نشد." : "No case matches these filters."}</div>
+                {learner && topic && (
+                  <div className="small muted mt8" style={{ maxWidth: 520, marginInline: "auto" }}>
+                    {fa
+                      ? "هنوز بیماری از این موضوع باز نشده است. بیماران با تخصص عمومی، پس از یک تلاش کامل، موضوعشان را نشان می‌دهند."
+                      : "No case for this topic is open yet. Cases with a general specialty show their topic after one completed attempt."}
+                  </div>
+                )}
                 <button type="button" className="btn btn-ghost mt16" onClick={resetFilters}>{fa ? "پاک‌کردن فیلترها" : "Clear filters"}</button>
               </div>
             ) : (

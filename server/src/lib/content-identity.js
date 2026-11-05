@@ -88,6 +88,11 @@ function migrateIdentity(db) {
 // Preserve historical encounters. Archive duplicate competitive copies instead
 // of deleting them; move unique legacy cases into the academic tenant 1.
 export function universityOnlyCases(db) {
+  // Opt-in only (settings.university_only_cases_v1 = '1'). This used to run on every
+  // boot and moved every learn-track case into the university tenant, which undid the
+  // competitive clones that admins make with POST /admin/vpatient/import-cases.
+  const flag = db.prepare("SELECT value FROM settings WHERE key='university_only_cases_v1'").get();
+  if (flag?.value !== '1') return;
   const rows = db.prepare('SELECT id,data_json,university_id,active FROM cases').all();
   const academic = rows.filter(r => { try { return JSON.parse(r.data_json).track !== 'learn'; } catch { return false; } });
   for (const row of rows) {

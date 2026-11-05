@@ -1,5 +1,5 @@
 import { openConfigSecrets, serializeSettings, isMaskedSecret } from "./secret-store.js";
-import { topicKeyOf, topicLabel } from "./topic-key.js";
+import { topicKeyOf, topicKeyFromText, topicLabel } from "./topic-key.js";
 import { routingSettings } from "./ai-routing.js";
 /* vpatient.js — Virtual Patient for the COMPETITIVE (learner) side.
 
@@ -93,6 +93,10 @@ export function playableCases(lang = "fa", userId = null) {
   const rows = db.prepare("SELECT id, difficulty, data_json FROM cases WHERE active=1 ORDER BY id").all()
     .filter((r) => !reserved.has(r.id) && isLearnContent(r.data_json));
   const getBest = userId ? db.prepare("SELECT MAX(score) best FROM attempts WHERE user_id=? AND case_id=?") : null;
+  // Cases whose specialty is generic (e.g. "Internal Medicine - Emergency") hide
+  // their subject until the learner has a scored attempt on them, so the topic
+  // chip cannot give the diagnosis away before the case is played.
+  const scored = userId ? new Set(db.prepare("SELECT DISTINCT case_id FROM attempts WHERE user_id=? AND score IS NOT NULL").all(userId).map((x) => x.case_id)) : new Set();
   return rows.map((r) => {
     let d = {};
     try { d = JSON.parse(r.data_json); } catch { d = {}; }
@@ -100,6 +104,11 @@ export function playableCases(lang = "fa", userId = null) {
     const best = getBest ? (getBest.get(userId, r.id)?.best ?? null) : null;
     // `topic` links the case to flashcards of the same subject (lib/topic-key.js).
     const topic = topicKeyOf(d);
+    const specialtyText = pick("specialty") || "";
+    // Shown at once when the specialty already names the same subject.
+    const obvious = !!topic && topicKeyFromText(specialtyText) === topic;
+    const revealed = !topic ? false : (obvious || scored.has(r.id));
+    const shownTopic = revealed ? topic : "";
     return {
       id: r.id,
       difficulty: r.difficulty || "medium",
@@ -107,8 +116,8 @@ export function playableCases(lang = "fa", userId = null) {
       // the chief complaint is the headline. Staff use GET /cases instead.
       title: "",
       specialty: pick("specialty") || "",
-      topic,
-      topic_label: topicLabel(topic, lang),
+      topic: shownTopic,
+      topic_label: topicLabel(shownTopic, lang),
       chief: pick("chief") || pick("chief_complaint") || "",
       age: d.age ?? null,
       sex: d.sex || null,

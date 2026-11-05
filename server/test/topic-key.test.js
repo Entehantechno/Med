@@ -77,3 +77,15 @@ describe("labels", () => {
     expect(topicLabel("nope", "fa")).toBe("");
   });
 });
+
+describe("client labels mirror the server topic table (R88)", () => {
+  it("every client label matches TOPIC_KEYS, in both languages", async () => {
+    const { TOPIC_LABELS } = await import("../../client/src/lib/topic-link.js");
+    const keys = TOPIC_KEYS.map((t) => t.key).sort();
+    expect(Object.keys(TOPIC_LABELS).sort()).toEqual(keys);
+    for (const t of TOPIC_KEYS) {
+      expect(TOPIC_LABELS[t.key].fa).toBe(t.fa);
+      expect(TOPIC_LABELS[t.key].en).toBe(t.en);
+    }
+  });
+});

@@ -11,6 +11,7 @@ import Icon from "../../components/Icon.jsx";
 import { Glyph } from "../../components/Glyph.jsx";
 import { GemIcon, HeartIcon, XpIcon, StreakIcon } from "../../components/StatIcons.jsx";
 import LearnHome from "./LearnHome.jsx";
+import { parseTopicHash, topicHash, topicLabel } from "../../lib/topic-link.js";
 import { NotificationBell } from "./NotificationBell.jsx";
 
 const LearnPath = lazy(() => import("./LearnPath.jsx"));
@@ -74,7 +75,9 @@ export default function LearnApp() {
   // deep-link to reference viewer via pathname /learn/reference/:code?page=N  (SPA fallback)
   const refMatch = typeof window !== "undefined" ? /^\/learn\/reference\/([^/?#]+)/.exec(window.location.pathname) : null;
   const initRef = refMatch ? { code: decodeURIComponent(refMatch[1]), page: new URLSearchParams(window.location.search).get("page") || "", chapter: new URLSearchParams(window.location.search).get("chapter")||new URLSearchParams(window.location.search).get("ch")||"" } : null;
-  const [tab, setTabState] = useState(() => initRef ? `reference:${initRef.code}:${initRef.page}${initRef.chapter?`:${initRef.chapter}`:""}` : (typeof window !== "undefined" && /^#browse(\?|$)/.test(window.location.hash) ? "browse" : "home"));
+  // A flashcard/VP topic link in the hash (#flashcards?topic=cardio) opens that tab on first load.
+  const initLink = typeof window !== "undefined" ? parseTopicHash(window.location.hash) : null;
+  const [tab, setTabState] = useState(() => initRef ? `reference:${initRef.code}:${initRef.page}${initRef.chapter?`:${initRef.chapter}`:""}` : (initLink ? initLink.tab : (typeof window !== "undefined" && /^#browse(\?|$)/.test(window.location.hash) ? "browse" : "home")));
   const [navOpen, setNavOpen] = useState({});   // collapsible nav groups (cleaner menu)
   const [moreOpen, setMoreOpen] = useState(false);
   const [moreQuery, setMoreQuery] = useState("");
@@ -85,7 +88,7 @@ export default function LearnApp() {
   const [pathFocus, setPathFocus] = useState(null);   // topic slug to scroll to + highlight on the path
   // Cross-link between flashcards and virtual-patient cases of one subject: {key,label,tab}.
   // It applies only to the tab it was opened for, and setTab clears it when the learner leaves.
-  const [linkTopic, setLinkTopic] = useState(null);
+  const [linkTopic, setLinkTopic] = useState(() => (initLink && initLink.key ? { key: initLink.key, label: topicLabel(initLink.key, lang), tab: initLink.tab } : null));
   const [profile, setProfile] = useState(null);
   const [calm, setCalm] = useState(null);   // Calm Mode flags (hide streak, etc.)
   const [programs, setPrograms] = useState([]);        // Duolingo-style courses
@@ -289,7 +292,17 @@ export default function LearnApp() {
   ].map((sec) => ({ ...sec, items: sec.items.filter((n) => n[3]) })).filter((sec) => sec.items.length);
   const nav = navSections.flatMap((s) => s.items);
 
-  const openLink = (tabId, link) => { setTab(tabId); setLinkTopic({ ...link, tab: tabId }); };
+  // Keep the URL in step with the tab: a topic link stays in the address bar only while its tab is open.
+  // Covers every tab change (setTab, goBack, course switch), so a reload never reopens a stale link.
+  useEffect(() => {
+    const h = parseTopicHash(window.location.hash);
+    if (h && h.tab !== tab) window.history.replaceState(null, "", window.location.pathname + window.location.search);
+  }, [tab]);
+  const openLink = (tabId, link) => {
+    setTab(tabId);
+    setLinkTopic({ ...link, tab: tabId });
+    window.history.replaceState(null, "", topicHash(tabId, link.key));
+  };
   const topicFor = (tabId) => (linkTopic && linkTopic.tab === tabId ? linkTopic : null);
   const openLesson = (nodeId) => { setLessonNode(nodeId); setTab("lesson"); };
   const openLegendary = (nodeId) => { setLessonNode(nodeId); setTab("legendary"); };
