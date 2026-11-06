@@ -44,6 +44,7 @@ Version: `2026.11.06-r95-bughunt`. Base: `4b97307` (R94). Release zip: `releases
 - Server: `npx vitest run`: 2146 passed, 15 skipped, 45 failed (all `master-bank.test.js`, pre-existing). Before R95: 2143 passed, same 45.
 - Build: `npm run build` exit 0; service-worker cache stamped `medschool-2026.11.06-r95-bughunt`.
 - Perf budget: passes. Entry JS 25.091 KB (limit 25.1); entry CSS 58.95 (limit 60); total CSS 65.27 (limit 66); learn 24.10 (limit 25); fonts 126.31 raw (limit 150).
+- Release zip: `releases/MED-School-FINAL-2026-11-06-R95.zip` (1051 files, 29.9 MB). `check-release-zip.mjs` passed (54 question-bank payloads, 79 feature markers). The zip has a root `.env`, which is `.env.ready` renamed by the pack script (the operator-facing template). Its `JWT_SECRET` and `AI_API_KEY` are empty, so the server generates the secret on first start. (R94's report said the zip had no `.env`; that was inaccurate, and the file has always been this template.)
 - Audit gate (`npm run audit:gate`): 0 critical, 0 high, 0 moderate, 0 low in production deps.
 - Lint: the repo has no lint script. The changed source was reviewed by hand (diff read in full); no unused imports in `App.jsx`.
 
