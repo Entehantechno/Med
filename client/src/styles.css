@@ -509,10 +509,12 @@ tbody tr:last-child td{border-bottom:none}
    ============================================================ */
 :root{
   --xp:#e0a52e; --xp2:#c98a12;
+  --xp-ink:#8a5a00; /* text-safe amber (5.9:1 on white); --xp stays for graphics */
   --heart:#e0544f; --flame:#ef7d1a; --gem:#2fb6e0;
   --tier-bronze:#c68b52; --tier-silver:#9aa7b6; --tier-gold:#e0a52e;
   --tier-sapphire:#3a8ede; --tier-ruby:#e0544f; --tier-diamond:#38d0d8;
 }
+[data-theme="dark"]{--xp-ink:#f2c35c}
 /* learner top status bar */
 .learn-shell{max-width:1200px;margin:0 auto;padding:0 clamp(10px,3vw,20px);width:100%;box-sizing:border-box}
 .learn-layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:20px;align-items:start}
@@ -548,7 +550,7 @@ tbody tr:last-child td{border-bottom:none}
 .hud-chip.flame:hover svg{animation:flamePop .4s ease}
 .hud-chip.heart:hover svg{animation:heartBeat .5s ease}
 @keyframes heartBeat{0%,100%{transform:scale(1)}25%{transform:scale(1.22)}50%{transform:scale(.95)}75%{transform:scale(1.15)}}
-.hud-chip.flame{color:var(--flame)} .hud-chip.xp{color:var(--xp)}
+.hud-chip.flame{color:var(--flame)} .hud-chip.xp{color:var(--xp-ink)}
 .hud-chip.heart{color:var(--heart)} .hud-chip.gem{color:var(--gem)}
 .hud-chip svg{stroke-width:2.4}
 
@@ -566,7 +568,7 @@ tbody tr:last-child td{border-bottom:none}
   background:conic-gradient(var(--xp) var(--pct), var(--panel3) 0);position:relative}
 .goal-ring::after{content:"";position:absolute;inset:12px;border-radius:50%;background:var(--panel)}
 .goal-ring .gv{position:relative;z-index:1;text-align:center}
-.goal-ring .gv b{font-size:1.5rem;color:var(--xp)}
+.goal-ring .gv b{font-size:1.5rem;color:var(--xp-ink)}
 
 /* ---- learning path map ---- */
 .path-topic{margin-bottom:26px}
@@ -622,7 +624,7 @@ tbody tr:last-child td{border-bottom:none}
 
 /* celebrate screen */
 .celebrate{text-align:center;padding:36px 16px}
-.celebrate .big{font-size:3rem;font-weight:900;color:var(--xp);margin:10px 0}
+.celebrate .big{font-size:3rem;font-weight:900;color:var(--xp-ink);margin:10px 0}
 .reward-chips{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:18px 0}
 .reward-chip{background:var(--panel2);border:1.5px solid var(--border);border-radius:16px;padding:14px 22px;font-weight:800}
 .reward-chip .rv{font-size:1.6rem}
@@ -963,7 +965,7 @@ html[dir="rtl"] .micro-ref-text{text-align:right}
 @keyframes mockFloat{0%,100%{transform:rotate(-2deg) translateY(0)}50%{transform:rotate(-2deg) translateY(-10px)}}
 .mock-hud{display:flex;gap:8px;justify-content:center;margin-bottom:14px}
 .mock-pill{font-weight:800;font-size:.8rem;border-radius:999px;padding:4px 10px;background:var(--panel3)}
-.mock-pill.flame{color:var(--flame)}.mock-pill.xp{color:var(--xp)}.mock-pill.heart{color:var(--heart)}
+.mock-pill.flame{color:var(--flame)}.mock-pill.xp{color:var(--xp-ink)}.mock-pill.heart{color:var(--heart)}
 .mock-path{display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:6px 30px}
 .mock-node{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#fff;
   background:var(--panel3);color:var(--muted);box-shadow:0 5px 0 rgba(0,0,0,.12)}
@@ -993,7 +995,7 @@ html[dir="rtl"] .micro-ref-text{text-align:right}
 .lp-feature{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:22px;display:flex;flex-direction:column;align-items:flex-start}
 .lp-feature-ico{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;color:#fff;
   background:var(--grad-primary);margin-bottom:14px;flex:none}
-.lp-feature h4{margin:0 0 8px;font-size:1.05rem;line-height:1.4}
+.lp-feature h3{margin:0 0 8px;font-size:1.05rem;line-height:1.4}
 .lp-feature p{color:var(--muted);line-height:1.8;margin:0;font-size:.92rem}
 
 /* steps */
@@ -1004,7 +1006,7 @@ html[dir="rtl"] .micro-ref-text{text-align:right}
   background:var(--grad-primary);color:#fff;font-weight:900;display:grid;place-items:center}
 .lp-step-ico{width:52px;height:52px;border-radius:14px;background:var(--panel3);color:var(--primary);
   display:grid;place-items:center;margin:8px auto 14px}
-.lp-step h4{margin:0 0 8px}
+.lp-step h3{margin:0 0 8px;font-size:1rem}
 .lp-step p{color:var(--muted);margin:0;line-height:1.8;font-size:.92rem}
 
 /* gamify */
@@ -1015,7 +1017,7 @@ html[dir="rtl"] .micro-ref-text{text-align:right}
 .lp-chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
 .lp-chip{display:inline-flex;align-items:center;gap:6px;font-weight:800;border-radius:999px;padding:7px 15px;
   border:1.5px solid var(--border);background:var(--panel)}
-.lp-chip.flame{color:var(--flame)}.lp-chip.xp{color:var(--xp)}.lp-chip.lg{color:var(--primary)}
+.lp-chip.flame{color:var(--flame)}.lp-chip.xp{color:var(--xp-ink)}.lp-chip.lg{color:var(--primary)}
 .lp-gamify-visual{display:grid;place-items:center}
 .mock-league{transform:rotate(2deg);width:min(320px,90vw)}
 .mock-league-title{font-weight:900;text-align:center;margin-bottom:12px;color:var(--primary)}

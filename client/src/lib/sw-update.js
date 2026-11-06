@@ -121,8 +121,15 @@ export function initSwUpdate() {
   // the page is already the freshest build — and (b) when a new build took over.
   navigator.serviceWorker.addEventListener("controllerchange", () => {
     if (!firstControllerSeen) { firstControllerSeen = true; return; }
-    pendingReload = true;
-    tryReload();
+    // R94: loaded on demand (rare event) so the entry bundle does not grow.
+    import("./build-check.js")
+      .then((m) => m.isDocumentStale())
+      .catch(() => true)
+      .then((stale) => {
+        if (!stale) return;               // already running the deployed build: no second boot
+        pendingReload = true;
+        tryReload();
+      });
   });
 
   if (document.readyState === "complete") register();

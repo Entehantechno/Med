@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { isSafeToReload, markBusy, initSwUpdate } from "../lib/sw-update.js";
+import { isDocumentStale } from "../lib/build-check.js";
 
 describe("sw-update — silent update never interrupts work", () => {
   beforeEach(() => { document.body.innerHTML = ""; delete document.body.dataset.busy; });
@@ -66,5 +67,39 @@ describe("sw-update — silent update never interrupts work", () => {
       expect(ev.defaultPrevented).toBe(true);
       expect(window.sessionStorage.getItem("medlab_preload_reload")).toBeNull();
     } finally { markBusy(false); }
+  });
+
+  // R94: a controllerchange must not reload a document that already runs the deployed build.
+  describe("isDocumentStale (R94: no second boot for a current document)", () => {
+    const loadEntry = (src) => {
+      document.head.querySelectorAll('script[type="module"]').forEach((n) => n.remove());
+      if (src === null) return;
+      const s = document.createElement("script");
+      s.type = "module"; s.src = src; document.head.appendChild(s);
+    };
+    afterEach(() => { vi.unstubAllGlobals(); loadEntry(null); });
+
+    it("is not stale when the served HTML names the same entry script", async () => {
+      loadEntry("/assets/index-AAA111.js");
+      vi.stubGlobal("fetch", vi.fn(async () => new Response('<script type="module" src="/assets/index-AAA111.js"></script>', { status: 200 })));
+      expect(await isDocumentStale()).toBe(false);
+    });
+    it("is stale when the server has a newer entry script", async () => {
+      loadEntry("/assets/index-AAA111.js");
+      vi.stubGlobal("fetch", vi.fn(async () => new Response('<script type="module" src="/assets/index-BBB222.js"></script>', { status: 200 })));
+      expect(await isDocumentStale()).toBe(true);
+    });
+    it("is stale when the check fails, so the old behaviour is kept", async () => {
+      loadEntry("/assets/index-AAA111.js");
+      vi.stubGlobal("fetch", vi.fn(async () => { throw new TypeError("offline"); }));
+      expect(await isDocumentStale()).toBe(true);
+    });
+    it("is stale when the page has no built entry script (dev server)", async () => {
+      loadEntry(null);
+      const f = vi.fn(async () => new Response("", { status: 200 }));
+      vi.stubGlobal("fetch", f);
+      expect(await isDocumentStale()).toBe(true);
+      expect(f).not.toHaveBeenCalled();
+    });
   });
 });

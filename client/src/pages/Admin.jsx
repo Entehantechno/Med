@@ -95,18 +95,21 @@ function CsvTools({kind,onImported}) {
 
 /* Admin notification bell — analytics alerts + weekly digests, with an unseen
    badge. Polls the admin feed and lets the admin mark all as seen. */
-function AdminBell() {
-  const { t, lang } = useApp();
+export function AdminBell() {
+  const { t, lang, user } = useApp();
   const fa = lang === "fa";
+  const isAdmin = user?.role === "admin";
   const [open, setOpen] = useState(false);
   const [d, setD] = useState({ notifications: [], unseen: 0 });
   const load = () => api.get("/admin/notifications").then(setD).catch(() => {});
-  useEffect(() => { load(); const id = setInterval(load, 120000); return () => clearInterval(id); }, []);
+  // Only full admins can read /admin/notifications; teachers saw a 403 on every poll.
+  useEffect(() => { if (!isAdmin) return undefined; load(); const id = setInterval(load, 120000); return () => clearInterval(id); }, [isAdmin]);
   const toggle = async () => {
     const next = !open; setOpen(next);
     if (next && d.unseen > 0) { try { await api.post("/admin/notifications/seen", {}); setD((x) => ({ ...x, unseen: 0 })); } catch { /* */ } }
   };
   const kindIcon = (k) => (k === "admin_digest" ? <Icon name="chart" size={14} style={{ verticalAlign: "-2px" }} /> : k === "admin_alert" ? <Icon name="warn" size={14} style={{ verticalAlign: "-2px" }} /> : <Icon name="bell" size={14} style={{ verticalAlign: "-2px" }} />);
+  if (!isAdmin) return null;
   return (
     <div style={{ position: "relative" }}>
       <button type="button" className="btn btn-ghost btn-sm" onClick={toggle} title={t("adminNotifs")} style={{ position: "relative" }}>
@@ -9014,7 +9017,7 @@ function SystemOverview({ onJump }) {
         <div className="card">
           <h4 className="mb8"><Icon name="image" size={16} /> {t("adPerf")}</h4>
           <div className="case-meta"><span className="tag">{t("impressions")}: {d.ads?.imp || 0}</span><span className="tag">{t("clicks")}: {d.ads?.clk || 0}</span></div>
-          <div className="mt16"><div className="small muted">{t("totalXpLabel")}</div><div style={{ fontSize: "1.6rem", fontWeight: 900, color: "var(--xp)" }}>{c.totalXp || 0}</div></div>
+          <div className="mt16"><div className="small muted">{t("totalXpLabel")}</div><div style={{ fontSize: "1.6rem", fontWeight: 900, color: "var(--xp-ink)" }}>{c.totalXp || 0}</div></div>
         </div>
       </div>
       <div className="card">

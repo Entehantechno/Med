@@ -1,0 +1,671 @@
+{
+ "method": "Lighthouse 12.x lab runs, one run per row. Noise is roughly +/-3 performance points and +/-300 ms LCP; single runs, not medians. Mobile = Moto G Power emulation with Slow 4G and 4x CPU (simulated throttling). Desktop = 1350x940, 40 ms RTT. Headless Chromium in a sandbox with software rasterisation, so absolute paint timings are pessimistic. Signed-in runs use a profile seeded with the bearer token (prof-student, prof-teacher, prof-learner, prof-admin). Cold runs clear the HTTP cache, code cache, service worker and Cache Storage first.",
+ "experiments": [
+  {
+   "id": "exp-sw-1",
+   "what": "Desktop student home, warm profile (old service worker), build r94b before the stale-check fix",
+   "result": "perf 69, TBT 1437 ms (repeat: perf 70, TBT 6324 ms)"
+  },
+  {
+   "id": "exp-sw-2",
+   "what": "Same profile, HTTP cache cleared, service worker kept",
+   "result": "perf 77, TBT 455 ms"
+  },
+  {
+   "id": "exp-sw-3",
+   "what": "Same profile, service worker and Cache Storage cleared",
+   "result": "perf 99, TBT 0 (printed to stdout, not saved to a file)"
+  },
+  {
+   "id": "probe-nav-before",
+   "what": "Playwright, warm profile, build r94b: main-frame navigations of /",
+   "result": "2 loads (controllerchange then reload). Cleared profile: 1 load; controllerchange on first install, no reload"
+  },
+  {
+   "id": "probe-nav-after",
+   "what": "Playwright, warm profile, final build: main-frame navigations of /",
+   "result": "1 load, controllerchange observed, no reload (3 runs)"
+  },
+  {
+   "id": "probe-req-teacher",
+   "what": "Playwright, signed-in teacher /",
+   "result": "auth/me 200; /api/admin/notifications calls 0; API responses >= 400: 0; console errors 0"
+  },
+  {
+   "id": "probe-req-admin",
+   "what": "Playwright, signed-in admin /admin",
+   "result": "auth/me 200; /api/admin/notifications 200 (expected for admin); API responses >= 400: 0; console errors 0"
+  }
+ ],
+ "rows": [
+  {
+   "group": "before (R93 build, pre-change): anonymous, fresh profile",
+   "name": "base-anon-home-mobile",
+   "url": "/",
+   "preset": "mobile",
+   "cats": {
+    "performance": 93,
+    "accessibility": 98,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 2681,
+   "fcpMs": 1869,
+   "tbtMs": 159,
+   "cls": 0.032,
+   "speedIndexMs": 3133
+  },
+  {
+   "group": "before (R93 build, pre-change): anonymous, fresh profile",
+   "name": "base-anon-home-desktop",
+   "url": "/",
+   "preset": "desktop",
+   "cats": {
+    "performance": 98,
+    "accessibility": 98,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 581,
+   "fcpMs": 422,
+   "tbtMs": 0,
+   "cls": 0.05,
+   "speedIndexMs": 1375
+  },
+  {
+   "group": "before (R93 build, pre-change): anonymous, fresh profile",
+   "name": "base-anon-blog-mobile",
+   "url": "/blog",
+   "preset": "mobile",
+   "cats": {
+    "performance": 93,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 2863,
+   "fcpMs": 1923,
+   "tbtMs": 113,
+   "cls": 0,
+   "speedIndexMs": 2732
+  },
+  {
+   "group": "before (R93 build, pre-change): anonymous, fresh profile",
+   "name": "base-anon-store-mobile",
+   "url": "/store",
+   "preset": "mobile",
+   "cats": {
+    "performance": 86,
+    "accessibility": 93,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 2921,
+   "fcpMs": 1958,
+   "tbtMs": 304,
+   "cls": 0,
+   "speedIndexMs": 3108
+  },
+  {
+   "group": "before (R93 build, pre-change): anonymous, fresh profile",
+   "name": "base-stu-home-mobile",
+   "url": "/",
+   "preset": "mobile",
+   "cats": {
+    "performance": 93,
+    "accessibility": 98,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 2796,
+   "fcpMs": 1923,
+   "tbtMs": 120,
+   "cls": 0.032,
+   "speedIndexMs": 3131
+  },
+  {
+   "group": "before (R93 build, pre-change): anonymous, fresh profile",
+   "name": "base-stu-home-desktop",
+   "url": "/",
+   "preset": "desktop",
+   "cats": {
+    "performance": 99,
+    "accessibility": 98,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 583,
+   "fcpMs": 429,
+   "tbtMs": 0,
+   "cls": 0.05,
+   "speedIndexMs": 1340
+  },
+  {
+   "group": "before (R93 build, pre-change): anonymous, fresh profile",
+   "name": "base-stu-vp-mobile",
+   "url": "/vp",
+   "preset": "mobile",
+   "cats": {
+    "performance": 83,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 2735,
+   "fcpMs": 1877,
+   "tbtMs": 36,
+   "cls": 0.191,
+   "speedIndexMs": 4628
+  },
+  {
+   "group": "before (R93 build, pre-change): anonymous, fresh profile",
+   "name": "base-teacher-home-mobile",
+   "url": "/",
+   "preset": "mobile",
+   "cats": {
+    "performance": 95,
+    "accessibility": 98,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 2606,
+   "fcpMs": 1876,
+   "tbtMs": 71,
+   "cls": 0.032,
+   "speedIndexMs": 3034
+  },
+  {
+   "group": "before (R93 build, pre-change): anonymous, fresh profile",
+   "name": "base-learner-home-mobile",
+   "url": "/",
+   "preset": "mobile",
+   "cats": {
+    "performance": 94,
+    "accessibility": 98,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 2739,
+   "fcpMs": 1872,
+   "tbtMs": 91,
+   "cls": 0.032,
+   "speedIndexMs": 3155
+  },
+  {
+   "group": "before (R93 build, pre-change): anonymous, fresh profile",
+   "name": "base-admin-mobile",
+   "url": "/admin",
+   "preset": "mobile",
+   "cats": {
+    "performance": 94,
+    "accessibility": 92,
+    "best-practices": 100,
+    "seo": 66
+   },
+   "lcpMs": 2716,
+   "fcpMs": 1870,
+   "tbtMs": 103,
+   "cls": 0,
+   "speedIndexMs": 2639
+  },
+  {
+   "group": "before (R93 build): signed-in, WARM profile",
+   "name": "authbase-stu-vp-mobile",
+   "url": "/vp",
+   "preset": "mobile",
+   "cats": {
+    "performance": 94,
+    "accessibility": 92,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 1351,
+   "fcpMs": 825,
+   "tbtMs": 192,
+   "cls": 0,
+   "speedIndexMs": 4658
+  },
+  {
+   "group": "before (R93 build): signed-in, WARM profile",
+   "name": "authbase-teacher-home-mobile",
+   "url": "/",
+   "preset": "mobile",
+   "cats": {
+    "performance": 91,
+    "accessibility": 91,
+    "best-practices": 96,
+    "seo": 100
+   },
+   "lcpMs": 3056,
+   "fcpMs": 1786,
+   "tbtMs": 114,
+   "cls": 0,
+   "speedIndexMs": 3649
+  },
+  {
+   "group": "before (R93 build): signed-in, WARM profile",
+   "name": "authbase-learner-home-mobile",
+   "url": "/",
+   "preset": "mobile",
+   "cats": {
+    "performance": 93,
+    "accessibility": 92,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 2278,
+   "fcpMs": 1306,
+   "tbtMs": 193,
+   "cls": 0,
+   "speedIndexMs": 3791
+  },
+  {
+   "group": "before (R93 build): signed-in, WARM profile",
+   "name": "authbase-admin-mobile",
+   "url": "/admin",
+   "preset": "mobile",
+   "cats": {
+    "performance": 89,
+    "accessibility": 83,
+    "best-practices": 96,
+    "seo": 66
+   },
+   "lcpMs": 3022,
+   "fcpMs": 1764,
+   "tbtMs": 179,
+   "cls": 0,
+   "speedIndexMs": 4066
+  },
+  {
+   "group": "before (R93 build): signed-in, WARM profile",
+   "name": "authbase-stu-home-desktop",
+   "url": "/",
+   "preset": "desktop",
+   "cats": {
+    "performance": 98,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 539,
+   "fcpMs": 275,
+   "tbtMs": 0,
+   "cls": 0.004,
+   "speedIndexMs": 1616
+  },
+  {
+   "group": "after (R94): anonymous, fresh profile",
+   "name": "after-anon-home-mobile",
+   "url": "/",
+   "preset": "mobile",
+   "cats": {
+    "performance": 94,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 2635,
+   "fcpMs": 1902,
+   "tbtMs": 122,
+   "cls": 0.032,
+   "speedIndexMs": 3156
+  },
+  {
+   "group": "after (R94): anonymous, fresh profile",
+   "name": "after-anon-home-desktop",
+   "url": "/",
+   "preset": "desktop",
+   "cats": {
+    "performance": 97,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 614,
+   "fcpMs": 452,
+   "tbtMs": 0,
+   "cls": 0.05,
+   "speedIndexMs": 1591
+  },
+  {
+   "group": "after (R94): anonymous, fresh profile",
+   "name": "after-anon-blog-mobile",
+   "url": "/blog",
+   "preset": "mobile",
+   "cats": {
+    "performance": 94,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 2825,
+   "fcpMs": 1898,
+   "tbtMs": 62,
+   "cls": 0,
+   "speedIndexMs": 2405
+  },
+  {
+   "group": "after (R94): anonymous, fresh profile",
+   "name": "after-anon-store-mobile",
+   "url": "/store",
+   "preset": "mobile",
+   "cats": {
+    "performance": 94,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 2691,
+   "fcpMs": 1882,
+   "tbtMs": 117,
+   "cls": 0,
+   "speedIndexMs": 3137
+  },
+  {
+   "group": "after (R94 build r94, before stale-check fix): signed-in WARM profile with older service worker. EXCLUDED from conclusions",
+   "name": "after-stu-home-mobile",
+   "url": "/",
+   "preset": "mobile",
+   "cats": {
+    "performance": 68,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 2225,
+   "fcpMs": 1316,
+   "tbtMs": 6713,
+   "cls": 0,
+   "speedIndexMs": 2565
+  },
+  {
+   "group": "after (R94 build r94, before stale-check fix): signed-in WARM profile with older service worker. EXCLUDED from conclusions",
+   "name": "after-stu-home-desktop",
+   "url": "/",
+   "preset": "desktop",
+   "cats": {
+    "performance": 96,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 616,
+   "fcpMs": 348,
+   "tbtMs": 116,
+   "cls": 0.022,
+   "speedIndexMs": 1599
+  },
+  {
+   "group": "after (R94 build r94, before stale-check fix): signed-in WARM profile with older service worker. EXCLUDED from conclusions",
+   "name": "after-stu-vp-mobile",
+   "url": "/vp",
+   "preset": "mobile",
+   "cats": {
+    "performance": 69,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 1736,
+   "fcpMs": 1285,
+   "tbtMs": 9670,
+   "cls": 0,
+   "speedIndexMs": 2677
+  },
+  {
+   "group": "after (R94 build r94, before stale-check fix): signed-in WARM profile with older service worker. EXCLUDED from conclusions",
+   "name": "after-stu-vp-desktop",
+   "url": "/vp",
+   "preset": "desktop",
+   "cats": {
+    "performance": 65,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 724,
+   "fcpMs": 399,
+   "tbtMs": 1032,
+   "cls": 0.004,
+   "speedIndexMs": 2576
+  },
+  {
+   "group": "after (R94 build r94, before stale-check fix): signed-in WARM profile with older service worker. EXCLUDED from conclusions",
+   "name": "after-teacher-home-mobile",
+   "url": "/",
+   "preset": "mobile",
+   "cats": {
+    "performance": 69,
+    "accessibility": 98,
+    "best-practices": 100,
+    "seo": 66
+   },
+   "lcpMs": 1759,
+   "fcpMs": 1392,
+   "tbtMs": 10642,
+   "cls": 0.013,
+   "speedIndexMs": 2286
+  },
+  {
+   "group": "after (R94 build r94, before stale-check fix): signed-in WARM profile with older service worker. EXCLUDED from conclusions",
+   "name": "after-learner-home-mobile",
+   "url": "/",
+   "preset": "mobile",
+   "cats": {
+    "performance": 65,
+    "accessibility": 98,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 2827,
+   "fcpMs": 1194,
+   "tbtMs": 7652,
+   "cls": 0,
+   "speedIndexMs": 1955
+  },
+  {
+   "group": "after (R94 build r94, before stale-check fix): signed-in WARM profile with older service worker. EXCLUDED from conclusions",
+   "name": "after-admin-mobile",
+   "url": "/admin",
+   "preset": "mobile",
+   "cats": {
+    "performance": 68,
+    "accessibility": 97,
+    "best-practices": 96,
+    "seo": 66
+   },
+   "lcpMs": 1863,
+   "fcpMs": 1115,
+   "tbtMs": 6493,
+   "cls": 0.068,
+   "speedIndexMs": 3218
+  },
+  {
+   "group": "after (R94): signed-in COLD cache (CLEAR_CACHE=1)",
+   "name": "cold3-stu-home-mobile",
+   "url": "/",
+   "preset": "mobile",
+   "cats": {
+    "performance": 82,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 3933,
+   "fcpMs": 2314,
+   "tbtMs": 171,
+   "cls": 0,
+   "speedIndexMs": 3214
+  },
+  {
+   "group": "after (R94): signed-in COLD cache (CLEAR_CACHE=1)",
+   "name": "cold3-stu-vp-mobile",
+   "url": "/vp",
+   "preset": "mobile",
+   "cats": {
+    "performance": 84,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 3933,
+   "fcpMs": 2202,
+   "tbtMs": 102,
+   "cls": 0.004,
+   "speedIndexMs": 3416
+  },
+  {
+   "group": "after (R94): signed-in COLD cache (CLEAR_CACHE=1)",
+   "name": "cold3-teacher-home-mobile",
+   "url": "/",
+   "preset": "mobile",
+   "cats": {
+    "performance": 79,
+    "accessibility": 98,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 4470,
+   "fcpMs": 2657,
+   "tbtMs": 42,
+   "cls": 0,
+   "speedIndexMs": 4011
+  },
+  {
+   "group": "after (R94): signed-in COLD cache (CLEAR_CACHE=1)",
+   "name": "cold3-learner-home-mobile",
+   "url": "/",
+   "preset": "mobile",
+   "cats": {
+    "performance": 78,
+    "accessibility": 98,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 4643,
+   "fcpMs": 2211,
+   "tbtMs": 140,
+   "cls": 0,
+   "speedIndexMs": 4144
+  },
+  {
+   "group": "after (R94): signed-in COLD cache (CLEAR_CACHE=1)",
+   "name": "cold3-admin-mobile",
+   "url": "/admin",
+   "preset": "mobile",
+   "cats": {
+    "performance": 78,
+    "accessibility": 97,
+    "best-practices": 96,
+    "seo": 66
+   },
+   "lcpMs": 4617,
+   "fcpMs": 2668,
+   "tbtMs": 49,
+   "cls": 0,
+   "speedIndexMs": 4106
+  },
+  {
+   "group": "after (R94): signed-in COLD cache (CLEAR_CACHE=1)",
+   "name": "cold2-stu-home-desktop",
+   "url": "/",
+   "preset": "desktop",
+   "cats": {
+    "performance": 98,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 796,
+   "fcpMs": 512,
+   "tbtMs": 0,
+   "cls": 0.004,
+   "speedIndexMs": 1327
+  },
+  {
+   "group": "after (R94, build r94b, before stale-check fix): desktop WARM profile with older service worker",
+   "name": "warm2-stu-home-desktop",
+   "url": "/",
+   "preset": "desktop",
+   "cats": {
+    "performance": 69,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 591,
+   "fcpMs": 373,
+   "tbtMs": 1437,
+   "cls": 0.019,
+   "speedIndexMs": 1459
+  },
+  {
+   "group": "after (R94 final, stale-check fix): WARM profile with older service worker",
+   "name": "warm3-stu-home-desktop",
+   "url": "/",
+   "preset": "desktop",
+   "cats": {
+    "performance": 98,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 741,
+   "fcpMs": 401,
+   "tbtMs": 0,
+   "cls": 0.019,
+   "speedIndexMs": 1550
+  },
+  {
+   "group": "after (R94 final, stale-check fix): WARM profile with older service worker",
+   "name": "warm4-stu-home-desktop",
+   "url": "/",
+   "preset": "desktop",
+   "cats": {
+    "performance": 94,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 736,
+   "fcpMs": 409,
+   "tbtMs": 0,
+   "cls": 0.004,
+   "speedIndexMs": 2341
+  },
+  {
+   "group": "after (R94 final, stale-check fix): WARM profile with older service worker",
+   "name": "warm3-stu-home-mobile",
+   "url": "/",
+   "preset": "mobile",
+   "cats": {
+    "performance": 93,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 1950,
+   "fcpMs": 1223,
+   "tbtMs": 177,
+   "cls": 0,
+   "speedIndexMs": 4949
+  },
+  {
+   "group": "after (R94): signed-in COLD cache (CLEAR_CACHE=1)",
+   "name": "final-stu-home-mobile",
+   "url": "/",
+   "preset": "mobile",
+   "cats": {
+    "performance": 81,
+    "accessibility": 100,
+    "best-practices": 100,
+    "seo": 100
+   },
+   "lcpMs": 3955,
+   "fcpMs": 2162,
+   "tbtMs": 231,
+   "cls": 0,
+   "speedIndexMs": 3200
+  }
+ ]
+}

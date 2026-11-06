@@ -97,12 +97,22 @@ function AppInner() {
         import("./pages/CaseList.jsx").catch(() => {});
       }
     };
-    if ("requestIdleCallback" in window) {
-      const id = window.requestIdleCallback(prefetch, { timeout: 3000 });
-      return () => window.cancelIdleCallback(id);
-    }
-    const id = setTimeout(prefetch, 1500);
-    return () => clearTimeout(id);
+    // R94: start only after the window load event. A 1.5 s / 3 s timer fired inside the
+    // dashboard's LCP window on slow phones (Lighthouse cold, Slow 4G: LCP ~3.9 s, prefetch
+    // competing for the same bandwidth and main thread).
+    let idleId = null;
+    let timerId = null;
+    const schedule = () => {
+      if ("requestIdleCallback" in window) idleId = window.requestIdleCallback(prefetch, { timeout: 5000 });
+      else timerId = setTimeout(prefetch, 2000);
+    };
+    if (document.readyState === "complete") schedule();
+    else window.addEventListener("load", schedule, { once: true });
+    return () => {
+      window.removeEventListener("load", schedule);
+      if (idleId !== null && "cancelIdleCallback" in window) window.cancelIdleCallback(idleId);
+      if (timerId !== null) clearTimeout(timerId);
+    };
   }, [user]);
 
   useEffect(() => {

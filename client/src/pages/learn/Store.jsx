@@ -24,7 +24,7 @@ export default function Store({ onRequireAuth }) {
       {courses.length === 0 && <div className="card empty-state"><div className="ico"><Icon name="store" size={40} /></div><h3>{t("noCourses")}</h3></div>}
       <div className="store-grid">
         {courses.map((c) => (
-          <div className="course-card" key={c.id} role="button" tabIndex={0} aria-label={c.title} onClick={() => setOpen(c.id)}
+          <div className="course-card" key={c.id} role="button" tabIndex={0} onClick={() => setOpen(c.id)}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setOpen(c.id); } }}>
             <div className="course-cover" style={c.cover ? { backgroundImage: `url(${c.cover})` } : {}}>
               {!c.cover && <Icon name="play" size={40} />}

@@ -99,8 +99,8 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
       )}
       {/* ---- Top nav (the ONLY header; sticky, compact on phones) ---- */}
       <header className={`lp-nav${scrolled ? " raised" : ""}`}>
-        <button type="button" className="lp-brand" onClick={() => { window.location.href = "/"; }} aria-label={fa ? "بازگشت به صفحه اصلی" : "Go to home"}>
-          <span className="lp-logo"><Icon name="cap" size={22} /></span>
+        <button type="button" className="lp-brand" onClick={() => { window.location.href = "/"; }}>
+          <span className="lp-logo" aria-hidden="true"><Icon name="cap" size={22} /></span>
           <span className="lp-brand-text">
             <span className="lp-brand-name"><span className="lp-brand-med">MED</span> School</span>
             <span className="lp-brand-tag">{fa ? "آموزش پزشکی هوشمند" : "Smart Medical Education"}</span>
@@ -228,7 +228,7 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
           {features.map(([ic, title, desc]) => (
             <div className="lp-feature" key={title}>
               <div className="lp-feature-ico"><Icon name={ic} size={22} /></div>
-              <h4>{title}</h4>
+              <h3>{title}</h3>
               <p>{desc}</p>
             </div>
           ))}
@@ -266,7 +266,7 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
             <div className="lp-step" key={title}>
               <div className="lp-step-num">{fa ? ["۱", "۲", "۳"][i] : i + 1}</div>
               <div className="lp-step-ico"><Icon name={ic} size={20} /></div>
-              <h4>{title}</h4>
+              <h3>{title}</h3>
               <p>{desc}</p>
             </div>
           ))}
@@ -332,8 +332,8 @@ const cmsTestimonials = [1,2,3].map(i=>{const quote=siteContent?.[`${lang}:landT
 
       {/* ---- Footer ---- */}
       <footer className="lp-footer">
-        <button type="button" className="lp-brand" onClick={() => { window.location.href = "/"; }} aria-label={fa ? "بازگشت به صفحه اصلی" : "Go to home"}>
-          <span className="lp-logo"><Icon name="cap" size={20} /></span>
+        <button type="button" className="lp-brand" onClick={() => { window.location.href = "/"; }}>
+          <span className="lp-logo" aria-hidden="true"><Icon name="cap" size={20} /></span>
           <span className="lp-brand-text"><span className="lp-brand-name"><span className="lp-brand-med">MED</span> School</span><span className="lp-brand-tag">{fa ? "آموزش پزشکی هوشمند" : "Smart Medical Education"}</span></span>
         </button>
         <div className="lp-footer-tag">{tc("landFooterTagline")}</div>
