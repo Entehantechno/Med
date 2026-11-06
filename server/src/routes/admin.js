@@ -1789,6 +1789,26 @@ r.post("/users/:id/impersonate", ...P("learn.users.impersonate"), (req, res) => 
   res.json({ token, expires_in: 1800, user: { id: u.id, username: u.username, role: u.role, name_fa: u.name_fa, name_en: u.name_en } });
 });
 
+/* R92: one place that removes an account's own rows. Roster rows (class and exam membership)
+   and the personal AI tutor chat go with the account. Attempts and virtual-patient encounters
+   are kept on purpose: they are graded academic records that the retention settings govern.
+   Callers check the inspection hold first. Runs inside the caller's transaction when there is one. */
+function deleteAccountRows(uid) {
+  const id = Number(uid) || 0;
+  // A transaction (a savepoint when the caller already has one): a crash leaves the account whole.
+  db.transaction(() => { for (const sql of [
+    "DELETE FROM learner_profiles WHERE user_id=?",
+    "DELETE FROM node_progress WHERE user_id=?",
+    "DELETE FROM srs_state WHERE user_id=?",
+    "DELETE FROM xp_events WHERE user_id=?",
+    "DELETE FROM notifications WHERE user_id=?",
+    "DELETE FROM league_members WHERE user_id=?",
+    "DELETE FROM class_members WHERE user_id=?",
+    "DELETE FROM exam_participants WHERE user_id=?",
+    "DELETE FROM tutor_chats WHERE user_id=?",
+    "DELETE FROM users WHERE id=?",
+  ]) db.prepare(sql).run(id); })();
+}
 // delete a single user (granular; blocks self + last admin)
 r.delete("/users/:id", ...P("learn.users.delete"), (req, res) => {
   const u = db.prepare("SELECT * FROM users WHERE id=?").get(req.params.id);
@@ -1798,14 +1818,8 @@ r.delete("/users/:id", ...P("learn.users.delete"), (req, res) => {
     return res.status(400).json({ error: "cannot delete the last admin" });
   // R90: an open inspection request on this student blocks deletion of their account.
   if (studentOnInspectionHold(u.id)) return res.status(409).json({ error: "inspection_hold" });
-  // cascade learner data
-  db.prepare("DELETE FROM learner_profiles WHERE user_id=?").run(u.id);
-  db.prepare("DELETE FROM node_progress WHERE user_id=?").run(u.id);
-  db.prepare("DELETE FROM srs_state WHERE user_id=?").run(u.id);
-  db.prepare("DELETE FROM xp_events WHERE user_id=?").run(u.id);
-  db.prepare("DELETE FROM notifications WHERE user_id=?").run(u.id);
-  db.prepare("DELETE FROM league_members WHERE user_id=?").run(u.id);
-  db.prepare("DELETE FROM users WHERE id=?").run(u.id);
+  // R92: the same cascade as bulk delete (roster rows were left behind here before).
+  deleteAccountRows(u.id);
   audit(req, "user.delete", `users:${u.id}`, { username: u.username, role: u.role });
   res.json({ ok: true });
 });
@@ -1827,15 +1841,7 @@ r.post("/users/bulk-delete", ...P("learn.users.delete"), (req, res) => {
       }
       if(!staffMayWriteUser(req.user, u)){ blocked.push({id, reason:"forbidden", name: u.name_fa||u.username}); continue; }
       if(studentOnInspectionHold(u.id)){ blocked.push({id, reason:"inspection_hold", name: u.name_fa||u.username}); continue; }
-      db.prepare("DELETE FROM learner_profiles WHERE user_id=?").run(id);
-      db.prepare("DELETE FROM node_progress WHERE user_id=?").run(id);
-      db.prepare("DELETE FROM srs_state WHERE user_id=?").run(id);
-      db.prepare("DELETE FROM xp_events WHERE user_id=?").run(id);
-      db.prepare("DELETE FROM notifications WHERE user_id=?").run(id);
-      db.prepare("DELETE FROM league_members WHERE user_id=?").run(id);
-      db.prepare("DELETE FROM class_members WHERE user_id=?").run(id);
-      db.prepare("DELETE FROM exam_participants WHERE user_id=?").run(id);
-      db.prepare("DELETE FROM users WHERE id=?").run(id);
+      deleteAccountRows(id);
       deleted.push(id);
       if(u.role==="admin") adminLeft--;
     }

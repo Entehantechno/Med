@@ -5,6 +5,24 @@ import { useApp } from "../context.jsx";
 /* Dr Tutor panel. R90: the reply is shown (it was dropped before), the sent
    message appears at once (optimistic) and is marked failed if the server
    refuses, and the answer's source (AI or guide) is labelled. */
+/* R92: say why a message failed. Each cause gets its own text: "try again" is wrong for a
+   disabled tutor, a per-account limit, or a context the student is not enrolled in. */
+function tutorErrorText(err, fa) {
+  const code = err?.data?.error || "";
+  if (code === "ai_rate_limited") {
+    return (fa ? err.data.message_fa : err.data.message_en) || (fa ? "کمی صبر کن و دوباره بپرس." : "Wait a moment and ask again.");
+  }
+  if (code === "tutor_disabled") return fa ? "دکتر راهنما فعلاً در دسترس نیست." : "Dr Tutor is not available right now.";
+  if (code === "bad_context") return fa ? "این گفتگو پیدا نشد." : "This chat could not be found.";
+  if (["not enrolled", "not assigned", "context_unavailable", "university_only", "forbidden"].includes(code)) {
+    return fa ? "این گفتگو برای حساب تو در دسترس نیست." : "This chat is not available for your account.";
+  }
+  if (err?.status === 0 || code === "network" || code === "timeout") {
+    return fa ? "اتصال برقرار نشد. دوباره تلاش کن." : "Connection failed. Please try again.";
+  }
+  return fa ? "ارسال نشد. دوباره تلاش کن." : "Not sent. Please try again.";
+}
+
 export default function DrTutorChat({ contextType = "general", contextId = null }) {
   const { lang } = useApp();
   const fa = lang !== "en";
@@ -67,8 +85,7 @@ export default function DrTutorChat({ contextType = "general", contextId = null 
     } catch (err) {
       setItems((list) => list.map((m) => (m.id === id ? { ...m, status: "failed" } : m)));
       setText(message);
-      setError(fa ? "ارسال نشد. دوباره تلاش کن." : "Not sent. Please try again.");
-      void err;
+      setError(tutorErrorText(err, fa));
     } finally {
       setBusy(false);
     }

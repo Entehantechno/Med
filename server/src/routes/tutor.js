@@ -3,6 +3,7 @@ import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { resolveAiConfig, tutorReply } from "../lib/ai-engine.js";
 import { getSetting } from "./content.js";
+import { takeAiTurn } from "../lib/ai-budget.js";
 
 const r = express.Router();
 const admin = [authRequired, requireRole("admin", "teacher", "content_manager")];
@@ -17,6 +18,17 @@ const isEnabledFor = (ct = "general", cid = null) => {
 const reply = (m, l) => l === "en"
   ? `Dr Tutor: I can guide your reasoning. Compare close options. Your question: "${String(m).slice(0, 160)}"`
   : `دکتر راهنما: جواب نهایی آزمون را مستقیم لو نمی‌دهم، اما مسیر فکر کردن را راهنمایی می‌کنم. سؤال تو: «${String(m).slice(0, 160)}»`;
+
+/* R92: only the three known contexts are stored. An unknown contextType used to be saved as-is
+   (rows with any label), and a general chat kept whatever contextId was sent, so the same
+   conversation could land under two keys. Returns null for an unknown context. */
+const CONTEXT_TYPES = ["general", "class", "exam"];
+function contextOf(raw, rawId) {
+  const ct = raw == null || raw === "" ? "general" : String(raw);
+  if (!CONTEXT_TYPES.includes(ct)) return null;
+  const cid = ct === "general" ? null : (Number(rawId || 0) || null);
+  return { ct, cid };
+}
 
 function studentBelongsToClass(uid, cid) {
   return !!db.prepare("SELECT 1 FROM class_members WHERE class_id=? AND user_id=?").get(cid, uid);
@@ -94,7 +106,8 @@ r.put("/context-settings", ...admin, (req, res) => {
     const uni = currentUniversityId(req.user) || -1;
     if (b.contextType === "class") {
       const cl = db.prepare("SELECT university_id,owner_id FROM classes WHERE id=?").get(id);
-      if (!cl || cl.university_id !== uni) return res.status(403).json({ error: "wrong_university", stage: "access" });
+      // R92: the list uses COALESCE(university_id,1); the check must agree, or a teacher sees a class and cannot save it.
+      if (!cl || Number(cl.university_id ?? 1) !== uni) return res.status(403).json({ error: "wrong_university", stage: "access" });
       if (Number(cl.owner_id) !== Number(req.user.id)) return res.status(403).json({ error: "not_owner", stage: "access" });
     } else if (b.contextType === "exam") {
       const ex = db.prepare("SELECT university_id,owner_id FROM exams WHERE id=?").get(id);
@@ -112,14 +125,17 @@ r.put("/context-settings", ...admin, (req, res) => {
   res.json({ ok: true });
 });
 r.get("/status", authRequired, (req, res) => {
-  const ct = req.query.contextType || "general";
-  const cid = Number(req.query.contextId || 0) || null;
+  const c = contextOf(req.query.contextType, req.query.contextId);
+  if (!c) return res.status(400).json({ error: "bad_context" });
+  const { ct, cid } = c;
   const denied = tutorContextDenied(req.user, ct, cid);
   if (denied) return res.status(denied.status).json({ error: denied.error, stage: denied.stage });
   res.json({ enabled: isEnabledFor(ct, cid) });
 });
 r.get("/history", authRequired, (req, res) => {
-  const ct = req.query.contextType || "general", cid = Number(req.query.contextId || 0) || null;
+  const c = contextOf(req.query.contextType, req.query.contextId);
+  if (!c) return res.status(400).json({ error: "bad_context" });
+  const { ct, cid } = c;
   const denied = tutorContextDenied(req.user, ct, cid);
   if (denied) return res.status(denied.status).json({ error: denied.error, stage: denied.stage });
   if (!isEnabledFor(ct, cid)) return res.status(403).json({ error: "tutor_disabled" });
@@ -151,7 +167,10 @@ function tutorMessages(uid, ct, cid, lang, msg) {
   return [{ role: "system", content: system }, ...history, { role: "user", content: msg }];
 }
 r.post("/message", authRequired, async (req, res) => {
-  const b = req.body || {}, ct = b.contextType || "general", cid = Number(b.contextId || 0) || null;
+  const b = req.body || {};
+  const c = contextOf(b.contextType, b.contextId);
+  if (!c) return res.status(400).json({ error: "bad_context" });
+  const { ct, cid } = c;
   const denied = tutorContextDenied(req.user, ct, cid);
   if (denied) return res.status(denied.status).json({ error: denied.error, stage: denied.stage });
   if (!isEnabledFor(ct, cid)) return res.status(403).json({ error: "tutor_disabled" });
@@ -161,8 +180,17 @@ r.post("/message", authRequired, async (req, res) => {
   let out = null, source = "guide";
   if (settings().ai_enabled) {
     const aiCfg = resolveAiConfig(getSetting("ai", {}));
-    out = await tutorReply({ messages: tutorMessages(req.user.id, ct, cid, lang, msg), aiCfg });
-    if (out) source = "ai";
+    // R92: a paid model call is counted per account. Over the budget the student gets a clear
+    // 429 (not the canned guide, which would look like the tutor is broken).
+    if (aiCfg?.apiKey) {
+      if (!takeAiTurn("tutor", req.user.id)) {
+        return res.status(429).json({ error: "ai_rate_limited", stage: "tutor",
+          message_fa: "در چند دقیقهٔ اخیر پیام زیادی فرستادی. کمی صبر کن و دوباره بپرس.",
+          message_en: "You sent many messages in the last few minutes. Wait a moment and ask again." });
+      }
+      out = await tutorReply({ messages: tutorMessages(req.user.id, ct, cid, lang, msg), aiCfg });
+      if (out) source = "ai";
+    }
   }
   if (!out) out = reply(msg, lang);
   // A success response promises a complete, durably saved exchange.

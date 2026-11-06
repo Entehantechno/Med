@@ -69,4 +69,24 @@ describe("Dr Tutor panel (R90)", () => {
     expect(screen.getByRole("alert").textContent).toContain("Not sent");
     expect(input.value).toBe("will fail");
   });
+
+  it("says why a refused message failed: per-account limit, not a generic retry", async () => {
+    const err = Object.assign(new Error("too many"), { status: 429, data: { error: "ai_rate_limited", message_en: "Wait a moment and ask again." } });
+    post.mockRejectedValue(err);
+    await openPanel();
+    fireEvent.change(screen.getByRole("textbox", { name: "Message to Dr Tutor" }), { target: { value: "again" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await screen.findByText("Failed");
+    expect(screen.getByRole("alert").textContent).toContain("Wait a moment and ask again.");
+    expect(screen.getByRole("alert").textContent).not.toContain("Not sent");
+  });
+
+  it("says the tutor is off when the server reports tutor_disabled", async () => {
+    post.mockRejectedValue(Object.assign(new Error("off"), { status: 403, data: { error: "tutor_disabled" } }));
+    await openPanel();
+    fireEvent.change(screen.getByRole("textbox", { name: "Message to Dr Tutor" }), { target: { value: "x" } });
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    await screen.findByText("Failed");
+    expect(screen.getByRole("alert").textContent).toContain("not available right now");
+  });
 });

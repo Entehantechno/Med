@@ -13,6 +13,7 @@ import { authRequired, requireRole } from "../lib/auth.js";
 import { validateBody, s as vs } from "../lib/validate.js";
 import { patientReply, evaluate, scoreChecklistWithLLM, enrichEvaluationWithLLM, labImagingResult, listAiProviders, asMessages, resolveAiConfig } from "../lib/ai-engine.js";
 import { extractReportBundle, takeTranslationBudget } from "../lib/report-translate.js";
+import { takeAiTurn } from "../lib/ai-budget.js";
 import { getSetting, setSetting, canAccessCase, studentSafeCase } from "./content.js";
 import { caseInLiveExam } from "../lib/live-exam-content.js";
 import { caseIsLearn } from "../lib/content-track.js";
@@ -555,6 +556,12 @@ r.post("/patient-reply", authRequired, async (req, res) => {
     if (!caseData) return res.status(404).json({ error: "case not found", stage: "case" });
     if (refuseInactiveCase(res, req.user, caseId)) return;
     const { aiCfg, prompts } = engineContext(req, req.body);
+    // R92: a model call per turn is counted per account (mock replies cost nothing and are not counted).
+    if (aiCfg?.apiKey && !takeAiTurn("vp", req.user.id)) {
+      return res.status(429).json({ error: "ai_rate_limited", stage: "chat",
+        message_fa: "پیام‌های زیادی در چند دقیقهٔ اخیر فرستادی. کمی صبر کن.",
+        message_en: "You sent many messages in the last few minutes. Wait a moment." });
+    }
     const canDeliver = interactionAccessGuard(req, res, caseId, classId, examId, acc, "chat");
     // The encounter id fixes the patient's name for this encounter; the student's name
     // decides the honorific («آقای دکتر» / «خانم دکتر» / «دکتر»).
