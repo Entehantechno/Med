@@ -1,0 +1,10 @@
+/* R89: boot skeleton + screen-reader-only text. Static blocks only (no animation), see Skeleton.jsx. */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.app-boot-skeleton{min-height:100vh;background:var(--bg,#eef1f6)}
+.abs-block{background:var(--panel2,#e4e9f1);border-radius:12px}
+.abs-bar{height:52px;border-radius:0}
+.abs-body{max-width:1100px;margin:0 auto;padding:20px 16px;display:grid;gap:14px}
+.abs-title{width:40%;height:26px}
+.abs-sub{width:65%;height:14px}
+.abs-cards{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));margin-top:6px}
+.abs-card{height:96px}

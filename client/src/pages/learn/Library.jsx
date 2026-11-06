@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
+import CoverImage from "../../components/CoverImage.jsx";
 import { TYPE_MAP, MicroLesson } from "./QuestionTypes.jsx";
 
 /* Premium card library: licensed cards grouped by category, for premium users,
@@ -55,7 +56,7 @@ export default function Library() {
                 window.dispatchEvent(new CustomEvent("medlab-go",{detail:`reference:${r.code}:`}));
               }}>
                 {r.cover_url
-                  ? <img src={r.cover_url} alt={r.title_en||r.title_fa} style={{width:76,height:102,objectFit:"cover",borderRadius:8,border:"1px solid #e8e8e8",flexShrink:0}} loading="lazy" />
+                  ? <CoverImage src={r.cover_url} alt={r.title_en||r.title_fa} style={{width:76,height:102,objectFit:"cover",borderRadius:8,border:"1px solid #e8e8e8",flexShrink:0}} />
                   : <div className="ref-card-icon" aria-hidden><Icon name="book" size={22} /></div>}
                 <div className="ref-card-body">
                   <div className="ref-card-title">{lang === "fa" ? (r.title_fa || r.title_en) : (r.title_en || r.title_fa)}</div>

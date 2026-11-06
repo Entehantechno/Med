@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { I18N_LITE } from "./i18n-lite.js";
 import { api, getToken, setToken } from "./api.js";
 import { isSoundOn, setSoundOn } from "./lib/sound-pref.js";
@@ -14,7 +14,9 @@ export function AppProvider({ children }) {
   const [dict, setDict] = useState(I18N_LITE);
   const fullDictPromise = useRef(null);
   const [user, setUser] = useState(null);
-  const [ready, setReady] = useState(false);
+  // R89: a visitor with no token has nothing to restore, so the app is ready on the first
+  // render. Only a returning, signed-in visitor waits for /auth/me (the App shows a skeleton).
+  const [ready, setReady] = useState(() => !getToken());
 
   const loadFullDict = useCallback(() => {
     if (!fullDictPromise.current) {
@@ -212,8 +214,18 @@ export function AppProvider({ children }) {
     return Array.isArray(user.perms) && user.perms.includes(perm);
   }, [user]);
 
+  // R89: one memoized value. Without it every provider render (a toast, a poll, a flag
+  // change) re-rendered every consumer, even when none of their inputs had changed.
+  const value = useMemo(() => ({
+    lang, setLang, toggleLang, theme, setTheme, toggleTheme, sound, setSound, toggleSound,
+    fontScale, setFontScale, t, tc, siteContent, reloadSiteContent, user, setUser, login,
+    register, googleLogin, logout, logoutAll, impersonate, exitImpersonation, ready, can, flag,
+  }), [lang, setLang, toggleLang, theme, setTheme, toggleTheme, sound, setSound, toggleSound,
+    fontScale, setFontScale, t, tc, siteContent, reloadSiteContent, user, setUser, login,
+    register, googleLogin, logout, logoutAll, impersonate, exitImpersonation, ready, can, flag]);
+
   return (
-    <AppCtx.Provider value={{ lang, setLang, toggleLang, theme, setTheme, toggleTheme, sound, setSound, toggleSound, fontScale, setFontScale, t, tc, siteContent, reloadSiteContent, user, setUser, login, register, googleLogin, logout, logoutAll, impersonate, exitImpersonation, ready, can, flag }}>
+    <AppCtx.Provider value={value}>
       {children}
     </AppCtx.Provider>
   );

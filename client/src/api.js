@@ -9,7 +9,21 @@ const etags = new Map();
 export function getToken() { return safeLocal.getItem(TOKEN_KEY); }
 export function setToken(t) { t ? safeLocal.setItem(TOKEN_KEY, t) : safeLocal.removeItem(TOKEN_KEY); }
 
-async function req(method, path, body, opts = {}) {
+// R89: identical GETs that are already in flight share one request. The key includes the
+// token, so two accounts in one browser never share a response. The entry is removed when the
+// request settles, so later calls always go to the network (or the ETag revalidation path).
+const inflight = new Map();
+function req(method, path, body, opts = {}) {
+  if (method !== "GET") return reqOnce(method, path, body, opts);
+  const key = `${getToken()}|${path}|${opts.revalidate ? "r" : ""}`;
+  if (inflight.has(key)) return inflight.get(key);
+  // While the key is present no other request can take its place, so a plain delete is safe.
+  const p = reqOnce(method, path, body, opts).finally(() => inflight.delete(key));
+  inflight.set(key, p);
+  return p;
+}
+
+async function reqOnce(method, path, body, opts = {}) {
   const headers = { "Content-Type": "application/json" };
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;

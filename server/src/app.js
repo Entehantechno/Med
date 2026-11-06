@@ -46,6 +46,7 @@ import { renderMetaTags, routeNameForPath, renderBlogPostMeta, renderRobotsTxt, 
 import { pwaClientConfig, recordPwaEvent } from "./lib/pwa.js";
 import { renderAssetLinks } from "./lib/twa.js";
 import { httpsRedirect, adminIpAllowlist } from "./lib/hardening.js";
+import { slowThresholdMs, slowRequestLine, isSlow } from "./lib/slow-request.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -244,6 +245,7 @@ export function createApp() {
   // Server-Timing: lets Chrome DevTools and RUM correlate browser speed with
   // backend processing time. Implemented by wrapping writeHead so the duration
   // is set just before headers are sent.
+  const SLOW_MS = slowThresholdMs();
   app.use((req, res, next) => {
     const start = process.hrtime.bigint();
     const writeHead = res.writeHead;
@@ -251,6 +253,8 @@ export function createApp() {
       try {
         const dur = Number(process.hrtime.bigint() - start) / 1e6;
         if (!res.getHeader("Server-Timing")) res.setHeader("Server-Timing", `app;dur=${dur.toFixed(1)}`);
+        // R89: one log line for each slow request (see lib/slow-request.js).
+        if (isSlow(dur, SLOW_MS)) console.warn(slowRequestLine({ method: req.method, route: req.route?.path, path: req.originalUrl || req.path, status: res.statusCode, durMs: dur }));
         if (!String(req.path || "").startsWith("/api")) res.setHeader("Timing-Allow-Origin", "same-origin");
       } catch { /* */ }
       return writeHead.apply(this, args);

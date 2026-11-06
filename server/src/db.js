@@ -2439,6 +2439,8 @@ export function initSchema() {
   // progress and notifications. Idempotent and safe on existing databases.
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_attempts_user        ON attempts(user_id);
+    -- R89: per-learner best score per case (playableCases, learn dashboards). Covers the GROUP BY.
+    CREATE INDEX IF NOT EXISTS idx_attempts_user_case   ON attempts(user_id, case_id, score);
     CREATE INDEX IF NOT EXISTS idx_attempts_exam        ON attempts(exam_id, user_id);
     CREATE INDEX IF NOT EXISTS idx_attempts_class       ON attempts(class_id, user_id);
     CREATE INDEX IF NOT EXISTS idx_attempts_created     ON attempts(created_at);

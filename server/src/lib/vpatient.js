@@ -92,16 +92,23 @@ export function playableCases(lang = "fa", userId = null) {
   const reserved = liveExamCaseIdSet();
   const rows = db.prepare("SELECT id, difficulty, data_json FROM cases WHERE active=1 ORDER BY id").all()
     .filter((r) => !reserved.has(r.id) && isLearnContent(r.data_json));
-  const getBest = userId ? db.prepare("SELECT MAX(score) best FROM attempts WHERE user_id=? AND case_id=?") : null;
+  // R89: one grouped query for the learner's best score per case (was one query per case: N+1).
+  // MAX ignores NULL, so a case is "scored" exactly when its best is not NULL.
+  const bestByCase = new Map();
+  if (userId) {
+    for (const row of db.prepare("SELECT case_id, MAX(score) AS best FROM attempts WHERE user_id=? AND case_id IS NOT NULL GROUP BY case_id").all(userId)) {
+      bestByCase.set(row.case_id, row.best ?? null);
+    }
+  }
   // Cases whose specialty is generic (e.g. "Internal Medicine - Emergency") hide
   // their subject until the learner has a scored attempt on them, so the topic
   // chip cannot give the diagnosis away before the case is played.
-  const scored = userId ? new Set(db.prepare("SELECT DISTINCT case_id FROM attempts WHERE user_id=? AND score IS NOT NULL").all(userId).map((x) => x.case_id)) : new Set();
+  const scored = new Set([...bestByCase].filter(([, best]) => best !== null).map(([id]) => id));
   return rows.map((r) => {
     let d = {};
     try { d = JSON.parse(r.data_json); } catch { d = {}; }
     const pick = (k) => (lang === "fa" ? (d[`${k}_fa`] || d[`${k}_en`]) : (d[`${k}_en`] || d[`${k}_fa`]));
-    const best = getBest ? (getBest.get(userId, r.id)?.best ?? null) : null;
+    const best = userId ? (bestByCase.get(r.id) ?? null) : null;
     // `topic` links the case to flashcards of the same subject (lib/topic-key.js).
     const topic = topicKeyOf(d);
     const specialtyText = pick("specialty") || "";

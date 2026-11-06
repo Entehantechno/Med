@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
+import CoverImage from "../../components/CoverImage.jsx";
 
 /* Student viewer — opens to the page the author picked, but the whole
    reference is browsable. No copyrighted PDF is hosted here: we only show
@@ -56,7 +57,7 @@ export default function ReferenceViewer({ code: propCode, initialPage, onBack })
       </div>
 
       <div className="card" style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
-        <img loading="lazy" decoding="async" src={cover} alt={title} style={{ width: 180, height: 250, objectFit: "cover", borderRadius: 10, border: "1px solid #e8e8e8", boxShadow: "0 4px 16px rgba(0,0,0,.08)" }} onError={(e)=>{ e.currentTarget.style.display="none"; }} />
+        <CoverImage src={cover} alt={title} style={{ width: 180, height: 250, objectFit: "cover", borderRadius: 10, border: "1px solid #e8e8e8", boxShadow: "0 4px 16px rgba(0,0,0,.08)" }} onError={(e)=>{ e.currentTarget.style.display="none"; }} />
         <div style={{ flex: 1, minWidth: 240 }}>
           <h2 style={{ margin: "0 0 6px" }}>{title}</h2>
           <div className="muted" style={{ marginBottom: 10 }}>{[ref.short_title, ref.edition ? `${fa ? "ویراست " : "Edition "}${ref.edition}` : null, ref.publisher].filter(Boolean).join(" • ")}</div>

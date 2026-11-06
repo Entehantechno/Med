@@ -1,14 +1,16 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
 import { GemIcon, XpIcon, StreakIcon } from "../../components/StatIcons.jsx";
 import { MotionAd } from "./MotionAd.jsx";
 import { PremiumHero, PremiumInline } from "./PremiumBanner.jsx";
-import { RewardedAd } from "./RewardedAd.jsx";
 import { TierBadge } from "./TierBadge.jsx";
 import OnboardingChecklist from "./OnboardingChecklist.jsx";
-import WelcomeModal from "./WelcomeModal.jsx";
+// R89: these two render only when opened, so they load on demand and stay out of the learn
+// home chunk (the learn app is over its gzip budget).
+const WelcomeModal = lazy(() => import("./WelcomeModal.jsx"));
+const RewardedAd = lazy(() => import("./RewardedAd.jsx"));
 import MedGuide from "./MedGuide.jsx";
 import { DailyReportCard } from "../../components/PeerBits.jsx";
 
@@ -40,7 +42,7 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
 
   return (
     <div className="page learn-home">
-      {showWelcome && <WelcomeModal user={user} onDone={() => { setShowWelcome(false); reload(); }} />}
+      {showWelcome && <Suspense fallback={null}><WelcomeModal user={user} onDone={() => { setShowWelcome(false); reload(); }} /></Suspense>}
 
       {/* ---- Hero header: greeting + tier + quick stats, one clean strip ---- */}
       <div className="home-hero">
@@ -207,8 +209,10 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
         </div>
       )}
       {showRewarded && (
-        <RewardedAd format="rewarded" onClose={() => setShowRewarded(false)}
-          onReward={(prof) => { if (prof) { onProfile?.(prof); setData((d) => d ? { ...d, profile: prof } : d); } }} />
+        <Suspense fallback={null}>
+          <RewardedAd format="rewarded" onClose={() => setShowRewarded(false)}
+            onReward={(prof) => { if (prof) { onProfile?.(prof); setData((d) => d ? { ...d, profile: prof } : d); } }} />
+        </Suspense>
       )}
 
       {/* premium hero — beautiful motion upsell for non-premium (home slot motion when available) */}

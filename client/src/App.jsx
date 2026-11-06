@@ -1,6 +1,7 @@
 import { useState, useEffect, lazy, Suspense } from "react";
 import { useApp } from "./context.jsx";
 import { Toast, Spinner } from "./components/UI.jsx";
+import { AppBootSkeleton } from "./components/Skeleton.jsx";
 import ConnectionBanner from "./components/ConnectionBanner.jsx";
 // Landing + Login stay eager — they're the first paint for logged-out visitors.
 import Landing from "./pages/Landing.jsx";
@@ -34,7 +35,7 @@ import PasswordNudge from "./components/PasswordNudge.jsx";
 /* A lightweight, full-screen fallback shown while a lazy route chunk loads.
    Kept minimal to avoid layout shift; it inherits the theme background. */
 function RouteFallback() {
-  return <div className="route-fallback"><Spinner /></div>;
+  return <div className="route-fallback"><AppBootSkeleton /></div>;
 }
 
 /* Public wrapper: provides a single <Suspense> boundary so any lazily-loaded
@@ -135,7 +136,7 @@ function AppInner() {
     window.scrollTo({ top: 0 });
   }, [user?.id, authView, route.name]);
 
-  if (!ready) return <Spinner />;
+  if (!ready) return <AppBootSkeleton />;
 
   // Public certificate verification is available to everyone (even logged-in
   // users) at /verify or /verify/:serial — a shareable, no-login trust page.
