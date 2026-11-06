@@ -9,7 +9,7 @@ import { applyRubric, normalizeRubric } from "./grading-rubric.js";
 import { normalExamLine, normalStudyText } from "./normal-findings.js";
 import { routingSettings, effectiveRouting, routeCompletion, providerFailure } from "./ai-routing.js";
 import { inferSection } from "./history-sections.js";
-import { patientNameAnswer, addressDoctor, genderFromStudentName } from "./patient-persona.js";
+import { patientNameAnswer, addressDoctor } from "./patient-persona.js";
 
 function norm(s) {
   return (s || "").toString().toLowerCase()
@@ -855,18 +855,17 @@ function refusesExamFindings(t, raw) {
 }
 
 /* Public entry. Runs the reply, then applies the honorific rule to every patient
-   reply: «آقای دکتر» / «خانم دکتر» only when the student's gender is clear. */
+   reply: the patient always says plain «دکتر» (R95). */
 export async function patientReply(args, opts = {}) {
   const result = await patientReplyCore(args, opts);
   if (result && result.mode === "patient" && typeof result.text === "string") {
-    result.text = addressDoctor(result.text, genderFromStudentName(opts.student || {}));
+    result.text = addressDoctor(result.text);
   }
   return result;
 }
 
 async function patientReplyCore({ caseData, userText, history = [], lang, prompts, aiCfg }, opts = {}) {
   const persona = { seed: opts.seed || "0" };
-  const studentGender = genderFromStudentName(opts.student || {});
   history = asMessages(history).filter(m => typeof m.text === "string" && m.text.trim());
   // One question at a time: three or more questions in one message confuse a
   // real patient. Answer that confusion instead of picking one question at random.
@@ -998,9 +997,7 @@ async function patientReplyCore({ caseData, userText, history = [], lang, prompt
       const personaRule = lang === "fa"
         ? "\nنام و عنوان:\n" +
           `- اگر دانشجو اسم تو را پرسید، فقط همین جمله را بگو: «${patientNameAnswer(caseData, persona.seed, "fa")}»\n` +
-          (studentGender === "male" ? "- دانشجو آقاست: او را «آقای دکتر» صدا کن.\n"
-            : studentGender === "female" ? "- دانشجو خانم است: او را «خانم دکتر» صدا کن.\n"
-            : "- جنسیت دانشجو معلوم نیست: فقط «دکتر» بگو و هرگز «آقا» یا «خانم» قبل از دکتر نگو.\n")
+          "- همیشه فقط «دکتر» صدا کن؛ هرگز «آقای دکتر» یا «خانم دکتر» نگو.\n"
         : "";
       const sys = `${replyLanguageInstruction(lang)}\n\n${roleInstr}\n\n${rules}\n\n${bitByBitRule}\n\n${personaRule}\n\n${patientRole}\n\n` +
         (lang === "fa" ? "پروندهٔ بیمار (فقط بر همین اساس پاسخ بده):\n" : "PATIENT CHART (answer only from this):\n") +

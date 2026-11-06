@@ -8,12 +8,11 @@
       name is on the triage sheet. The choice is fixed per encounter (session),
       so asking twice gives the same answer, while different encounters differ.
 
-   2. TITLE. The patient addresses the student as «دکتر». Only when the
-      student's gender is clear from the name do we say «آقای دکتر» / «خانم دکتر».
-      Otherwise the patient just says «دکتر» (any «آقا»/«خانم» the model adds is removed).
+   2. TITLE. The patient always addresses the student as «دکتر», and nothing else.
+      No «آقای دکتر» / «خانم دکتر», whatever the student's name is. Any «آقا»/«خانم»
+      the model adds in front of «دکتر» is removed (R95: the gender guess was removed).
 
-   Gender is inferred from the first name only, from the lists below. An unknown
-   or ambiguous name gives null, and nothing gendered is said. */
+   The name lists below are only used for the patient's own name (rule 1). */
 
 // Common Iranian first names. Ambiguous names are left out on purpose.
 const MALE_FA = [
@@ -44,31 +43,6 @@ const FEMALE_EN = [
   "Azadeh", "Shaghayegh", "Elnaz", "Yalda", "Nasrin", "Nazanin", "Mobina", "Yasaman", "Setareh",
   "Diba", "Negar", "Elham", "Sepideh", "Shadi", "Roya", "Hanieh", "Samira", "Golnaz",
 ];
-
-const ARABIC_FA = (s) => String(s || "").replace(/ي/g, "ی").replace(/ك/g, "ک").replace(/[\u064B-\u065F\u0670]/g, "").replace(/\u200c/g, "").trim();
-
-function firstToken(s) {
-  return ARABIC_FA(s).split(/\s+/).filter(Boolean)[0] || "";
-}
-
-/* Male / female from a student's name. Persian name first, then English. Returns
-   null when the name is not in the lists (so the patient uses «دکتر» only). */
-export function genderFromStudentName({ name_fa, name_en } = {}) {
-  const fa = firstToken(name_fa);
-  if (fa) {
-    if (MALE_FA.includes(fa)) return "male";
-    if (FEMALE_FA.includes(fa)) return "female";
-  }
-  // Some accounts keep the English name in the Persian field ("Maryam Hosseini").
-  // A Latin-script name_fa is read as English, not dropped.
-  const faIsLatin = /^[A-Za-z]/.test(String(name_fa || "").trim());
-  const en = (firstToken(name_en) || (faIsLatin ? String(name_fa).trim().split(/\s+/)[0] : "")).toLowerCase();
-  if (en) {
-    if (MALE_EN.some((n) => n.toLowerCase() === en)) return "male";
-    if (FEMALE_EN.some((n) => n.toLowerCase() === en)) return "female";
-  }
-  return null;
-}
 
 /* Stable pseudo-random number from a string (FNV-1a). Same seed → same choice. */
 function hash(s) {
@@ -108,11 +82,10 @@ export function patientNameAnswer(caseData, seed, lang) {
   return fa ? `اسمم ${n} است دکتر.` : `My name is ${n}, doctor.`;
 }
 
-/* Persian honorific for the student. Removes any «آقا/خانم» the model put in front
-   of «دکتر», then adds the one the student's gender allows (or nothing). */
-export function addressDoctor(text, studentGender) {
+/* Persian honorific for the student: always plain «دکتر». Removes any «آقای»/«آقا»/«خانم»
+   the model put in front of «دکتر» (a word that merely starts with دکتر, like «دکتری», is kept). */
+export function addressDoctor(text) {
   const s = String(text || "");
   if (!s.includes("دکتر")) return s;
-  const title = studentGender === "male" ? "آقای دکتر" : studentGender === "female" ? "خانم دکتر" : "دکتر";
-  return s.replace(/(?:آقای\s*|آقا\s*|خانم\s*)?دکتر(?![\p{L}\p{M}\u200c])/gu, title);
+  return s.replace(/(?:آقای\s*|آقا\s*|خانم\s*)?دکتر(?![\p{L}\p{M}\u200c])/gu, "دکتر");
 }

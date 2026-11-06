@@ -10,7 +10,7 @@ import request from "supertest";
 import { initDb } from "../src/db.js";
 import { createApp } from "../src/app.js";
 import { patientReply } from "../src/lib/ai-engine.js";
-import { genderFromStudentName, addressDoctor, patientNameAnswer } from "../src/lib/patient-persona.js";
+import { addressDoctor, patientNameAnswer } from "../src/lib/patient-persona.js";
 
 const female = { sex: "female", age: 40, chief_fa: "درد شکم از دیشب", history_fa: "درد شکم از دیشب شروع شده، با تهوع.", chief_en: "Abdominal pain since last night", history_en: "Abdominal pain since last night, with nausea." };
 const male = { ...female, sex: "male" };
@@ -19,31 +19,16 @@ const noPrompts = {};
 const ask = (caseData, userText, student, seed = "enc-1", lang = "fa") =>
   patientReply({ caseData, userText, history: [], lang, prompts: noPrompts, aiCfg: noAiCfg }, { seed, student });
 
-describe("R68 student gender from the name", () => {
-  it("recognises common Persian and English first names", () => {
-    expect(genderFromStudentName({ name_fa: "علی رضایی", name_en: "Ali Rezaei" })).toBe("male");
-    expect(genderFromStudentName({ name_fa: "مریم حسینی", name_en: "Maryam Hosseini" })).toBe("female");
-    expect(genderFromStudentName({ name_fa: "محمدمهدی فتحی" })).toBe("male");
-    expect(genderFromStudentName({ name_fa: "نیلوفر احمدی" })).toBe("female");
+describe("R95: the patient always says «دکتر» (never «آقای دکتر» / «خانم دکتر»)", () => {
+  it("keeps a plain «دکتر» as it is", () => {
+    expect(addressDoctor("سلام دکتر. نه، چیز خاصی نیست دکتر.")).toBe("سلام دکتر. نه، چیز خاصی نیست دکتر.");
   });
-  it("returns null when the name does not tell (no guessing)", () => {
-    expect(genderFromStudentName({ name_fa: "دانشجوی اراک" })).toBeNull();
-    expect(genderFromStudentName({})).toBeNull();
-  });
-});
-
-describe("R68 the honorific for the student", () => {
-  it("female student: «خانم دکتر»", () => {
-    expect(addressDoctor("سلام دکتر. نه، چیز خاصی نیست دکتر.", "female")).toBe("سلام خانم دکتر. نه، چیز خاصی نیست خانم دکتر.");
-  });
-  it("male student: «آقای دکتر»", () => {
-    expect(addressDoctor("ببخشید دکتر، دوباره بگویید.", "male")).toBe("ببخشید آقای دکتر، دوباره بگویید.");
-  });
-  it("unknown gender: plain «دکتر», and any «آقا»/«خانم» the model added is removed", () => {
-    expect(addressDoctor("سلام آقای دکتر، ببخشید خانم دکتر", null)).toBe("سلام دکتر، ببخشید دکتر");
+  it("removes «آقای» / «آقا» / «خانم» in front of «دکتر» (the model may add them)", () => {
+    expect(addressDoctor("ببخشید آقای دکتر، دوباره بگویید.")).toBe("ببخشید دکتر، دوباره بگویید.");
+    expect(addressDoctor("سلام خانم دکتر، ببخشید آقا دکتر")).toBe("سلام دکتر، ببخشید دکتر");
   });
   it("does not touch words that merely start with دکتر", () => {
-    expect(addressDoctor("دکتری خوانده‌ام، دکتر.", "female")).toBe("دکتری خوانده‌ام، خانم دکتر.");
+    expect(addressDoctor("دکتری خوانده‌ام، دکتر.")).toBe("دکتری خوانده‌ام، دکتر.");
   });
 });
 
@@ -83,14 +68,14 @@ describe("R68 the patient's name", () => {
   });
 });
 
-describe("R68 patientReply uses the student's gender for «دکتر»", () => {
-  it("greeting «سلام دکتر» to a female student: «سلام خانم دکتر.»", async () => {
-    expect((await ask(female, "سلام دکتر", { name_fa: "مریم حسینی" })).text).toBe("سلام خانم دکتر.");
+describe("R95 patientReply: «دکتر» for every student", () => {
+  it("greeting «سلام دکتر» to a female-named student: «سلام دکتر.»", async () => {
+    expect((await ask(female, "سلام دکتر", { name_fa: "مریم حسینی" })).text).toBe("سلام دکتر.");
   });
-  it("greeting to a male student: «سلام آقای دکتر.»", async () => {
-    expect((await ask(female, "سلام دکتر", { name_fa: "علی رضایی" })).text).toBe("سلام آقای دکتر.");
+  it("greeting to a male-named student: «سلام دکتر.»", async () => {
+    expect((await ask(female, "سلام دکتر", { name_fa: "علی رضایی" })).text).toBe("سلام دکتر.");
   });
-  it("greeting to a student of unknown gender: «سلام دکتر.»", async () => {
+  it("greeting to a student whose name is unknown: «سلام دکتر.»", async () => {
     expect((await ask(female, "سلام دکتر", { name_fa: "دانشجوی اراک" })).text).toBe("سلام دکتر.");
   });
   it("a question addressed to «دکتر» is still answered, not treated as a greeting", async () => {
@@ -98,11 +83,11 @@ describe("R68 patientReply uses the student's gender for «دکتر»", () => {
     expect(r.text).toMatch(/دیشب|شروع/);
     expect(r.text).not.toMatch(/متوجه سؤالتان نشدم/);
   });
-  it("the name question is answered from the same encounter every time", async () => {
+  it("the name question is answered from the same encounter every time, with plain «دکتر»", async () => {
     const a = await ask(male, "اسمتان چیست؟", { name_fa: "مریم حسینی" }, "enc-99");
     const b = await ask(male, "اسمتان چیست؟", { name_fa: "مریم حسینی" }, "enc-99");
     expect(a.text).toBe(b.text);
-    expect(a.text).toContain("خانم دکتر");
+    expect(a.text).not.toMatch(/(آقای|خانم) دکتر/);
   });
 });
 
@@ -114,7 +99,7 @@ describe("R68 HTTP: the route sends the logged-in student's name", () => {
     await initDb();
     app = createApp();
   });
-  it("student 40012345 (علی رضایی) is greeted as «آقای دکتر»", async () => {
+  it("student 40012345 (علی رضایی) is greeted as plain «دکتر»", async () => {
     const tk = (await login("40012345")).body.token;
     const A = { Authorization: `Bearer ${tk}` };
     const sess = await request(app).post("/api/exam/session-start").set(A).send({ caseId: 1, lang: "fa" });
@@ -122,6 +107,6 @@ describe("R68 HTTP: the route sends the logged-in student's name", () => {
     const r = await request(app).post("/api/exam/patient-reply").set(A)
       .send({ sessionId: sess.body.sessionId, caseId: 1, userText: "سلام دکتر", history: [], lang: "fa" });
     expect(r.status).toBe(200);
-    expect(r.body.text).toBe("سلام آقای دکتر.");
+    expect(r.body.text).toBe("سلام دکتر.");
   });
 });

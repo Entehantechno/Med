@@ -157,13 +157,3 @@ describe("R68 bug 3: errorHandler message visibility", () => {
   });
 });
 
-import { genderFromStudentName } from "../src/lib/patient-persona.js";
-describe("R68 bug 4: a Latin name in the Persian name field is read as English", () => {
-  it("Maryam Hosseini (in name_fa) → female; Ali Rezaei → male", () => {
-    expect(genderFromStudentName({ name_fa: "Maryam Hosseini" })).toBe("female");
-    expect(genderFromStudentName({ name_fa: "Ali Rezaei" })).toBe("male");
-  });
-  it("an unknown Latin name still gives null (no guessing)", () => {
-    expect(genderFromStudentName({ name_fa: "Zzqx Yyvw" })).toBeNull();
-  });
-});
