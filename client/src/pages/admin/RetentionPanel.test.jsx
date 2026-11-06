@@ -185,3 +185,29 @@ describe('RetentionPanel', () => {
     await waitFor(() => expect(mocks.put).toHaveBeenCalledWith('/admin/retention/items/hold', { kind: 'class', ids: [7, 8, 9, 10], hold: true, confirm: true }));
   });
 });
+
+describe('RetentionPanel per-student inspection request (R90)', () => {
+  it('opens a request by student number, and closes it only after the dialog is confirmed', async () => {
+    let holds = [];
+    const base = mocks.get.getMockImplementation();
+    mocks.get.mockImplementation((path) => (path === '/admin/retention/student-holds' ? Promise.resolve({ holds }) : base(path)));
+    mocks.post.mockImplementation((path) => {
+      if (path === '/admin/retention/student-holds') {
+        holds = [{ id: 5, username: '40012345', student_no: '40012345', name_en: 'Student', opened_at: '2026-11-06 08:00:00', reference: 'REF-1', classes: 1, exams: 0, attempts: 2, vp_sessions: 0 }];
+        return Promise.resolve({ ok: true, id: 5, created: true });
+      }
+      return Promise.resolve({ ok: true, changed: 1 });
+    });
+    render(<RetentionPanel />);
+    const input = await screen.findByLabelText('Student number or username');
+    fireEvent.change(input, { target: { value: '40012345' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Open request' }));
+    await waitFor(() => expect(mocks.post).toHaveBeenCalledWith('/admin/retention/student-holds', { studentNo: '40012345', reference: '' }));
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Close request' }));
+    expect(mocks.post.mock.calls.some((c) => String(c[0]).endsWith('/close'))).toBe(false);
+    const dialog = await screen.findByRole('dialog', { name: 'Close the inspection request' });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close request' }));
+    await waitFor(() => expect(mocks.post).toHaveBeenCalledWith('/admin/retention/student-holds/5/close', { confirm: true }));
+  });
+});

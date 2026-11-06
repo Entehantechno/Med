@@ -1252,6 +1252,22 @@ export async function studyNote({ daysLeft, weakest, minutesPerDay, lang, aiCfg 
   }
 }
 
+/* R90: Dr Tutor answer through the same AI routing as the other features.
+   Returns null when no key is saved or the provider fails; the route then
+   falls back to the deterministic guide, so the student is never left empty. */
+export async function tutorReply({ messages, aiCfg } = {}) {
+  if (!aiCfg?.apiKey || !Array.isArray(messages) || !messages.length) return null;
+  try {
+    const out = await callRealLLM(aiCfg, messages, {
+      temperature: 0.3, maxTokens: 600, stage: "tutor", timeoutMs: 20_000, totalTimeoutMs: 20_000,
+    });
+    const text = String(out || "").trim();
+    return text ? text.slice(0, 2000) : null;
+  } catch {
+    return null;
+  }
+}
+
 /* ---------------- BLOG DRAFT GENERATOR (opt-in AI) ----------------
    Given a topic, produce a complete blog-post DRAFT (title, excerpt, markdown
    body with H2/H3 + a table, tags, and SEO meta). Requires an API key — returns

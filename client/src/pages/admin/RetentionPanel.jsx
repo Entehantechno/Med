@@ -202,6 +202,55 @@ export default function RetentionPanel() {
     });
   };
 
+  // R90: per-student inspection requests. Each one keeps every record of one student until it is closed.
+  const [holds, setHolds] = useState(null);
+  const [holdForm, setHoldForm] = useState({ studentNo: "", reference: "" });
+  const loadHolds = useCallback(() => api.get("/admin/retention/student-holds")
+    .then((d) => setHolds(d.holds || []))
+    .catch(() => setHolds([])), []);
+  useEffect(() => { loadHolds(); }, [loadHolds]);
+
+  const holdError = (e) => {
+    const code = e?.data?.error || "";
+    if (code === "not_found" || code === "bad_retention_request") return fa ? "دانشجویی با این مشخصات پیدا نشد." : "No student matches that number or username.";
+    if (code === "not_a_student") return fa ? "فقط حساب دانشجو یا یادگیرنده را می‌شود نگه داشت." : "Only student or learner accounts can be held.";
+    return fa ? "ثبت درخواست انجام نشد." : "Could not open the request.";
+  };
+
+  const openHold = async () => {
+    setBusy(true);
+    try {
+      const r = await api.post("/admin/retention/student-holds", { studentNo: holdForm.studentNo.trim(), reference: holdForm.reference.trim() });
+      toast(r.created === false
+        ? (fa ? "این دانشجو از قبل درخواست باز دارد." : "This student already has an open request.")
+        : (fa ? "درخواست بازرسی ثبت شد؛ رکوردهای دانشجو نگه داشته می‌شود." : "Inspection request opened; the student's records are held."));
+      setHoldForm({ studentNo: "", reference: "" });
+      await loadHolds();
+    } catch (e) { toast(holdError(e)); }
+    finally { setBusy(false); }
+  };
+
+  const closeHold = async (h) => {
+    setBusy(true);
+    try {
+      await api.post(`/admin/retention/student-holds/${h.id}/close`, { confirm: true });
+      toast(fa ? "درخواست بسته شد." : "Request closed.");
+      setConfirm(null);
+      await loadHolds();
+    } catch { toast(fa ? "بستن درخواست انجام نشد." : "Could not close the request."); }
+    finally { setBusy(false); }
+  };
+
+  const askCloseHold = (h) => setConfirm({
+    title: fa ? "بستن درخواست بازرسی" : "Close the inspection request",
+    lines: [
+      fa ? "پس از بستن، نگه‌داری رکوردهای این دانشجو برداشته می‌شود و پاک‌سازی عادی دوباره اعمال می‌شود."
+        : "After closing, this student's records are no longer held and normal retention applies again.",
+      fa ? "کلاس یا آزمونی که نگه‌داری دستی روی آن است، با این کار آزاد نمی‌شود." : "A class or exam with its own manual hold stays held.",
+    ],
+    label: fa ? "بستن درخواست" : "Close request", danger: true, run: () => closeHold(h),
+  });
+
   const archivedPicked = (kind) => items[kind].filter((r) => !r.active && !r.inspection_hold && picked[kind].has(r.id));
   const pickedRows = (kind) => items[kind].filter((r) => picked[kind].has(r.id));
 
@@ -435,6 +484,40 @@ export default function RetentionPanel() {
           )}
         </div>
       ))}
+
+      <h4 className="mt16 mb8">{fa ? "درخواست بازرسی هر دانشجو" : "Inspection request per student"}</h4>
+      <p className="small muted mb8">{fa
+        ? "با یک درخواست، همه رکوردهای یک دانشجو نگه داشته می‌شود: کلاس‌ها و آزمون‌های او، حساب کاربری، نمره‌ها، گفت‌وگوهای بیمار مجازی و دکتر راهنما. کلاس یا آزمونی که او در آن است، تا بستن درخواست حذف نمی‌شود."
+        : "One request holds all records of one student: their classes and exams, account, grades, virtual-patient and Dr Tutor chats. A class or exam they are on is not deleted until the request is closed."}</p>
+      <div className="row" style={{ gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        <input aria-label={fa ? "شماره دانشجویی یا نام کاربری" : "Student number or username"} value={holdForm.studentNo}
+          onChange={(e) => setHoldForm((f) => ({ ...f, studentNo: e.target.value }))} maxLength={40} />
+        <input aria-label={fa ? "شماره پرونده یا ارجاع (اختیاری)" : "Case or reference number (optional)"} value={holdForm.reference}
+          onChange={(e) => setHoldForm((f) => ({ ...f, reference: e.target.value }))} maxLength={100} />
+        <button type="button" className="btn btn-primary" disabled={busy || !holdForm.studentNo.trim()} onClick={openHold}>
+          {fa ? "باز کردن درخواست" : "Open request"}
+        </button>
+      </div>
+      {holds === null ? <Spinner /> : holds.length === 0 ? (
+        <p className="small muted mt8">{fa ? "هیچ دانشجویی درخواست بازرسی باز ندارد." : "No student has an open inspection request."}</p>
+      ) : (
+        <div className="table-wrap mt8"><table className="table">
+          <thead><tr>
+            <th>{fa ? "دانشجو" : "Student"}</th><th>{fa ? "ارجاع" : "Reference"}</th><th>{fa ? "باز از" : "Opened"}</th>
+            <th>{fa ? "کلاس‌ها / آزمون‌ها" : "Classes / exams"}</th><th>{fa ? "نمره‌ها / بیمار مجازی" : "Attempts / VP sessions"}</th><th />
+          </tr></thead>
+          <tbody>{holds.map((h) => (
+            <tr key={h.id}>
+              <td>{(fa ? h.name_fa || h.name_en : h.name_en || h.name_fa) || h.username} <span className="small muted">{h.student_no || h.username}</span></td>
+              <td>{h.reference || "—"}</td>
+              <td className="small">{String(h.opened_at || "").slice(0, 16)}</td>
+              <td>{num(h.classes)} / {num(h.exams)}</td>
+              <td>{num(h.attempts)} / {num(h.vp_sessions)}</td>
+              <td><button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => askCloseHold(h)}>{fa ? "بستن درخواست" : "Close request"}</button></td>
+            </tr>
+          ))}</tbody>
+        </table></div>
+      )}
 
       {confirm && (
         <Modal title={confirm.title} saveLabel={confirm.label} onClose={() => setConfirm(null)} onSave={confirm.run}>

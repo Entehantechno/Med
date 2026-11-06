@@ -3,6 +3,14 @@ import { useApp } from "../../context.jsx";
 import { api } from "../../api.js";
 import Icon from "../../components/Icon.jsx";
 
+/* R90: built-in covers (/covers/<code>.jpg) offer AVIF and WebP through image-set(); other URLs are used as they are.
+   CSS only, so the admin page does not import the cover component into the shared bundle. */
+function coverBackground(src) {
+  const m = /^\/covers\/[A-Za-z0-9._-]+\.jpe?g$/i.test(String(src || "")) ? String(src).replace(/\.jpe?g$/i, "") : null;
+  if (!m) return `url(${src})`;
+  return `image-set(url("${m}.avif") type("image/avif"), url("${m}.webp") type("image/webp"), url("${src}") type("image/jpeg"))`;
+}
+
 export default function CompetitiveReferences() {
   const { lang } = useApp();
   const fa = lang === "fa";
@@ -40,7 +48,7 @@ export default function CompetitiveReferences() {
       <div className="ref-grid">
         {refs.map(r=>(
           <div key={r.id} className="card ref-card" style={{flexDirection:"column", alignItems:"stretch", padding:0, overflow:"hidden"}}>
-            <div style={{height:140, background:`center/cover no-repeat url(${r.cover_url || `/covers/${r.code}.jpg`})`, backgroundColor:"#f1f5f9", borderBottom:"1px solid var(--border)"}} />
+            <div style={{height:140, backgroundColor:"#f1f5f9", borderBottom:"1px solid var(--border)", backgroundImage:coverBackground(r.cover_url || `/covers/${r.code}.jpg`), backgroundSize:"cover", backgroundPosition:"center", backgroundRepeat:"no-repeat"}} />
             <div style={{padding:12}}>
               <div style={{fontWeight:900, fontSize:".92rem"}}>{fa ? (r.title_fa||r.title_en) : (r.title_en||r.title_fa)}</div>
               <div className="small muted">{[r.short_title, r.edition, r.publisher].filter(Boolean).join(" • ")}{r.pdf_url ? ` • ${fa?"PDF دارد":"has PDF"}` : ""}</div>

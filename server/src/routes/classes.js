@@ -9,6 +9,7 @@ import { Router } from "express";
 import { safeFilename, spreadsheetCell } from "../lib/csv.js";
 import crypto from "crypto";
 import { db, durableTransaction } from "../db.js";
+import { heldDropCount } from "../lib/retention.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { hashPasswordSync } from "../lib/password.js";
 import { audit } from "../lib/audit.js";
@@ -898,6 +899,8 @@ r.put("/:id/members", authRequired, requireRole("teacher", "admin"), (req, res) 
       else { blocked.push(uid); }
     }
     const skipped = blocked.length;
+    // R90: a held student left off the new roster would lose the enrolment row; refuse the replace.
+    if (heldDropCount("class", cid, allowed) > 0) return { error: "inspection_hold", stage: "roster" };
     {
       db.prepare("DELETE FROM class_members WHERE class_id=?").run(cid);
       const ins = db.prepare("INSERT OR IGNORE INTO class_members (class_id,user_id) VALUES (?,?)");
@@ -907,6 +910,7 @@ r.put("/:id/members", authRequired, requireRole("teacher", "admin"), (req, res) 
 
     return ({ ok: true, added: allowed.length, skipped, healed: healed.length });
   });
+  if (result?.error) return res.status(409).json(result);
   res.json(result);
 });
 

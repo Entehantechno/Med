@@ -98,10 +98,14 @@ export function savePolicy(input, { confirmed = false, req = null } = {}) {
 
 /* ---------- virtual-patient chats ---------- */
 
+/* R90: an encounter of a student under an open per-student inspection request is never purged. */
+const STUDENT_NOT_HELD_VP = `NOT EXISTS (SELECT 1 FROM inspection_requests ir WHERE ir.closed_at IS NULL AND ir.user_id=s.user_id)`;
+
 /* A purge needs a settled, graded encounter outside research. */
 const VP_SETTLED = `s.finished_at IS NOT NULL AND s.attempt_id IS NOT NULL AND s.study_id IS NULL
   AND s.review_required=0 AND s.purged_ms IS NULL
-  AND COALESCE(c.inspection_hold,0)=0 AND COALESCE(e.inspection_hold,0)=0`;
+  AND COALESCE(c.inspection_hold,0)=0 AND COALESCE(e.inspection_hold,0)=0
+  AND ${STUDENT_NOT_HELD_VP}`;
 const VP_PERIOD = "COALESCE(c.retention_days, e.retention_days, ?)";
 const VP_FROM = `FROM vp_sessions s LEFT JOIN classes c ON c.id=s.class_id LEFT JOIN exams e ON e.id=s.exam_id`;
 const VP_DUE = `${VP_SETTLED} AND ${VP_PERIOD} > 0 AND julianday(s.finished_at) < julianday('now') - ${VP_PERIOD}`;
@@ -158,22 +162,32 @@ function academicIdsDue(days) {
   return [...cls, ...exm];
 }
 
+/* R90: a student under an open per-student request keeps every class and exam they are on,
+   because the records of that student sit in them. Other students' rows there are kept too
+   until redaction exists (34 CFR 99.12 allows limiting access to records about several people). */
+const HELD_STUDENT_IN_CLASS = `EXISTS (SELECT 1 FROM inspection_requests r WHERE r.closed_at IS NULL AND r.user_id IN (
+    SELECT user_id FROM class_members WHERE class_id=@id UNION SELECT user_id FROM attempts WHERE class_id=@id UNION SELECT user_id FROM vp_sessions WHERE class_id=@id))`;
+const HELD_STUDENT_IN_EXAM = `EXISTS (SELECT 1 FROM inspection_requests r WHERE r.closed_at IS NULL AND r.user_id IN (
+    SELECT user_id FROM exam_participants WHERE exam_id=@id UNION SELECT user_id FROM attempts WHERE exam_id=@id UNION SELECT user_id FROM vp_sessions WHERE exam_id=@id))`;
+
 /* Why this item must not be deleted now, or null when it may be. */
 /* Held when the item, or anything of it that is shared with the other kind, is under an open inspection request. */
 const HOLD_SQL = {
-  class: `SELECT 1 FROM classes WHERE id=? AND inspection_hold=1
-    UNION SELECT 1 FROM attempts a JOIN exams x ON x.id=a.exam_id WHERE a.class_id=? AND x.inspection_hold=1
-    UNION SELECT 1 FROM vp_sessions s JOIN exams x ON x.id=s.exam_id WHERE s.class_id=? AND x.inspection_hold=1 LIMIT 1`,
-  exam: `SELECT 1 FROM exams WHERE id=? AND inspection_hold=1
-    UNION SELECT 1 FROM attempts a JOIN classes x ON x.id=a.class_id WHERE a.exam_id=? AND x.inspection_hold=1
-    UNION SELECT 1 FROM vp_sessions s JOIN classes x ON x.id=s.class_id WHERE s.exam_id=? AND x.inspection_hold=1 LIMIT 1`,
+  class: `SELECT 1 WHERE EXISTS (SELECT 1 FROM classes WHERE id=@id AND inspection_hold=1)
+    OR EXISTS (SELECT 1 FROM attempts a JOIN exams x ON x.id=a.exam_id WHERE a.class_id=@id AND x.inspection_hold=1)
+    OR EXISTS (SELECT 1 FROM vp_sessions s JOIN exams x ON x.id=s.exam_id WHERE s.class_id=@id AND x.inspection_hold=1)
+    OR ${HELD_STUDENT_IN_CLASS}`,
+  exam: `SELECT 1 WHERE EXISTS (SELECT 1 FROM exams WHERE id=@id AND inspection_hold=1)
+    OR EXISTS (SELECT 1 FROM attempts a JOIN classes x ON x.id=a.class_id WHERE a.exam_id=@id AND x.inspection_hold=1)
+    OR EXISTS (SELECT 1 FROM vp_sessions s JOIN classes x ON x.id=s.class_id WHERE s.exam_id=@id AND x.inspection_hold=1)
+    OR ${HELD_STUDENT_IN_EXAM}`,
 };
 
 export function blockReason(kind, id, now = Date.now()) {
   const table = kind === "exam" ? "exams" : "classes";
   const row = db.prepare(`SELECT id, active, study_id FROM ${table} WHERE id=?`).get(id);
   if (!row) return "not_found";
-  if (db.prepare(HOLD_SQL[kind === "exam" ? "exam" : "class"]).get(id, id, id)) return "inspection_hold";
+  if (db.prepare(HOLD_SQL[kind === "exam" ? "exam" : "class"]).get({ id })) return "inspection_hold";
   if (row.active !== 0) return "not_archived";
   if (row.study_id != null) return "research_linked";
   if (kind === "class") {
@@ -253,12 +267,17 @@ function purgeAcademic(items, req = null, now = Date.now()) {
 
 function previewTable(category, days) {
   const r = TABLE_RULE[category];
-  const row = db.prepare(`SELECT COUNT(*) n FROM ${r.table} WHERE ${r.col} < datetime('now', ?)`).get(ageSince(days));
+  const row = db.prepare(`SELECT COUNT(*) n FROM ${r.table} WHERE ${r.col} < datetime('now', ?)${heldClause(r)}`).get(ageSince(days));
   return { rows: row?.n || 0 };
 }
 
+function heldClause(r) {
+  return r.heldBy ? ` AND NOT EXISTS (SELECT 1 FROM inspection_requests ir WHERE ir.closed_at IS NULL AND ir.user_id=${r.table}.${r.heldBy})` : "";
+}
+
 const TABLE_RULE = {
-  tutor_chats: { table: "tutor_chats", col: "created_at" },
+  // R90: tutor chats of a student under an open inspection request are kept (heldBy = owner column).
+  tutor_chats: { table: "tutor_chats", col: "created_at", heldBy: "user_id" },
   security_events: { table: "security_events", col: "created_at" },
   rum_vitals: { table: "rum_vitals", col: "created_at" },
 };
@@ -310,7 +329,7 @@ export async function purgeCategory(category, days, now = Date.now()) {
   const r = TABLE_RULE[category];
   for (let guard = 0; guard < 100000; guard++) {
     const changes = durableTransaction(() => db.prepare(
-      `DELETE FROM ${r.table} WHERE id IN (SELECT id FROM ${r.table} WHERE ${r.col} < datetime('now', ?) ORDER BY id LIMIT ?)`
+      `DELETE FROM ${r.table} WHERE id IN (SELECT id FROM ${r.table} WHERE ${r.col} < datetime('now', ?)${heldClause(r)} ORDER BY id LIMIT ?)`
     ).run(ageSince(d), BATCH).changes);
     total.rows += changes;
     if (changes < BATCH) break;
@@ -327,7 +346,7 @@ export function purgeVpAttempts(attemptIds, req = null, now = Date.now()) {
   const sessionIds = db.prepare(`SELECT s.id FROM vp_sessions s JOIN attempts a ON a.id=s.attempt_id
     LEFT JOIN classes c ON c.id=s.class_id LEFT JOIN exams e ON e.id=s.exam_id
     WHERE a.type='vp' AND a.id IN (${marks}) AND s.finished_at IS NOT NULL AND s.study_id IS NULL AND s.purged_ms IS NULL
-      AND COALESCE(c.inspection_hold,0)=0 AND COALESCE(e.inspection_hold,0)=0`)
+      AND COALESCE(c.inspection_hold,0)=0 AND COALESCE(e.inspection_hold,0)=0 AND ${STUDENT_NOT_HELD_VP}`)
     .all(...ids).map((r) => r.id);
   const counts = purgeVpIds(sessionIds, now);
   audit(req, "vp_chat.purge", "attempts", { attempts: ids.length, ...counts });
@@ -443,6 +462,50 @@ export function setInspectionHold(kind, ids, hold, req = null) {
     .run(flag, ...list, flag).changes);
   audit(req, hold ? "inspection.hold" : "inspection.release", `${table}:${list.length}`, { kind, count: changed });
   return { changed };
+}
+
+/* R90: per-student inspection requests. Opening one is idempotent per student; closing one
+   releases that student's protection (the class/exam holds are separate and stay as they are). */
+export function studentOnInspectionHold(uid) {
+  return !!db.prepare("SELECT 1 FROM inspection_requests WHERE user_id=? AND closed_at IS NULL LIMIT 1").get(Number(uid) || 0);
+}
+/* R90: how many students under an open request would lose their enrolment row if the roster
+   of this class or exam were replaced by keepUserIds. A replace is refused when this is above 0. */
+export function heldDropCount(kind, id, keepUserIds) {
+  const table = kind === "exam" ? "exam_participants" : "class_members";
+  const col = kind === "exam" ? "exam_id" : "class_id";
+  const keep = new Set((keepUserIds || []).map(Number));
+  const rows = db.prepare(`SELECT user_id FROM ${table} WHERE ${col}=? AND user_id IN (SELECT user_id FROM inspection_requests WHERE closed_at IS NULL)`).all(Number(id) || 0);
+  return rows.filter((r) => !keep.has(Number(r.user_id))).length;
+}
+export function openStudentHold(userId, { reference = "" } = {}, req = null) {
+  const uid = Number(userId) || 0;
+  const u = db.prepare("SELECT id,role FROM users WHERE id=?").get(uid);
+  if (!u) return { error: "not_found" };
+  if (!["student", "learner"].includes(u.role)) return { error: "not_a_student" };
+  const open = db.prepare("SELECT id FROM inspection_requests WHERE user_id=? AND closed_at IS NULL").get(uid);
+  if (open) return { id: open.id, created: false };
+  const ref = String(reference || "").trim().slice(0, 100);
+  const id = durableTransaction(() => db.prepare("INSERT INTO inspection_requests (user_id,opened_by,reference) VALUES (?,?,?)")
+    .run(uid, req?.user?.id ?? null, ref).lastInsertRowid);
+  audit(req, "inspection.request.open", `user:${uid}`, { request: Number(id) });
+  return { id: Number(id), created: true };
+}
+export function closeStudentHold(id, req = null) {
+  const rid = Number(id) || 0;
+  const changed = durableTransaction(() => db.prepare("UPDATE inspection_requests SET closed_at=datetime('now'),closed_by=? WHERE id=? AND closed_at IS NULL")
+    .run(req?.user?.id ?? null, rid).changes);
+  audit(req, "inspection.request.close", `inspection:${rid}`, { count: changed });
+  return { changed };
+}
+export function listStudentHolds() {
+  return db.prepare(`SELECT r.id, r.user_id, r.opened_at, r.reference, u.username, u.student_no, u.name_fa, u.name_en,
+      (SELECT COUNT(*) FROM class_members m WHERE m.user_id=r.user_id) AS classes,
+      (SELECT COUNT(*) FROM exam_participants p WHERE p.user_id=r.user_id) AS exams,
+      (SELECT COUNT(*) FROM attempts a WHERE a.user_id=r.user_id) AS attempts,
+      (SELECT COUNT(*) FROM vp_sessions v WHERE v.user_id=r.user_id AND v.purged_ms IS NULL) AS vp_sessions
+    FROM inspection_requests r JOIN users u ON u.id=r.user_id
+    WHERE r.closed_at IS NULL ORDER BY r.id DESC LIMIT 200`).all();
 }
 
 /* Admin deletes chosen archived classes or exams now (periods do not apply). Blocked items are reported. */

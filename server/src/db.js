@@ -2273,6 +2273,18 @@ export function initSchema() {
   // Nothing of a held class or exam is deleted by any retention path until the hold is released.
   if (!colsNamed("classes").includes("inspection_hold")) db.exec("ALTER TABLE classes ADD COLUMN inspection_hold INTEGER NOT NULL DEFAULT 0");
   if (!colsNamed("exams").includes("inspection_hold")) db.exec("ALTER TABLE exams ADD COLUMN inspection_hold INTEGER NOT NULL DEFAULT 0");
+  // R90: per-student inspection request. An open row protects every record of that student
+  // (roster, attempts, virtual-patient encounters) until the request is closed.
+  db.exec(`CREATE TABLE IF NOT EXISTS inspection_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    opened_by INTEGER,
+    opened_at TEXT NOT NULL DEFAULT (datetime('now')),
+    closed_at TEXT,
+    closed_by INTEGER,
+    reference TEXT NOT NULL DEFAULT ''
+  )`);
+  db.exec("CREATE INDEX IF NOT EXISTS idx_inspection_open ON inspection_requests(user_id) WHERE closed_at IS NULL");
   db.exec("CREATE INDEX IF NOT EXISTS idx_tutor_chats_created ON tutor_chats(created_at)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_security_created ON security_events(created_at)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_rum_created ON rum_vitals(created_at)");

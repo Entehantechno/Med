@@ -5,6 +5,7 @@ import {academicCopy,academicError,academicContentTransaction} from '../lib/acad
    ================================================================ */
 import { Router } from "express";
 import { db, durableTransaction } from "../db.js";
+import { heldDropCount } from "../lib/retention.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { isLearnContent, caseIsLearn } from "../lib/content-track.js";
 import { hashPasswordSync } from "../lib/password.js";
@@ -398,6 +399,8 @@ r.put("/:id/participants", authRequired, requireRole("teacher", "admin"), (req, 
       if (u.university_id !== ex.university_id) { wrongUniversity.push({ student_no: key, existing: u }); continue; }
       ids.add(u.id);
     }
+    // R90: a held student left off the new list would lose the participant row; refuse the replace.
+    if (heldDropCount("exam", eid, [...ids]) > 0) return { error: "inspection_hold", stage: "roster" };
     {
       db.prepare("DELETE FROM exam_participants WHERE exam_id=?").run(eid);
       const ins = db.prepare("INSERT OR IGNORE INTO exam_participants (exam_id,user_id) VALUES (?,?)");
@@ -406,6 +409,7 @@ r.put("/:id/participants", authRequired, requireRole("teacher", "admin"), (req, 
 
     return ({ ok: true, added: ids.size, notFound, wrongUniversity, created, limitBlocked, studentLimit });
   });
+  if (result?.error) return res.status(409).json(result);
   res.json(result);
 });
 

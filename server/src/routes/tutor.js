@@ -1,6 +1,8 @@
 import express from "express";
 import { db, durableTransaction } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
+import { resolveAiConfig, tutorReply } from "../lib/ai-engine.js";
+import { getSetting } from "./content.js";
 
 const r = express.Router();
 const admin = [authRequired, requireRole("admin", "teacher", "content_manager")];
@@ -126,21 +128,50 @@ r.get("/history", authRequired, (req, res) => {
       .all(req.user.id, ct, cid).reverse(),
   });
 });
-r.post("/message", authRequired, (req, res) => {
+/* R90: the Dr Tutor answer is produced by the configured AI when the admin has
+   turned on tutor AI and saved a key. Exam context: never a final answer. */
+const TUTOR_RULES = {
+  fa: "تو دکتر راهنمای آموزشی MED School هستی. فقط برای آموزش دانشجوی پزشکی پاسخ بده، نه برای تشخیص یا درمان بیمار واقعی. به زبان دانشجو جواب بده، کوتاه و علمی. به‌جای دادن پاسخ نهایی یک سؤال، به استدلال کمک کن: گزینه‌ها را مقایسه کن، سؤال راهنما بپرس و مفهوم کلیدی را توضیح بده.",
+  en: "You are the Dr Tutor for MED School, an educational assistant for medical students. Answer for education only, never for diagnosing or treating a real patient. Reply briefly and scientifically in the learner's language. Do not state the final answer to a question; guide the reasoning: compare options, ask guiding questions, and explain the key concept.",
+};
+const EXAM_RULE = {
+  fa: "این گفتگو مربوط به یک آزمون است: هرگز پاسخ نهایی یا شماره گزینه درست را نگو.",
+  en: "This chat belongs to an exam: never reveal the final answer or the correct option.",
+};
+function tutorMessages(uid, ct, cid, lang, msg) {
+  const L = lang === "en" ? "en" : "fa";
+  const ctxPrompt = ct === "class" && cid
+    ? db.prepare("SELECT tutor_prompt FROM classes WHERE id=?").get(cid)?.tutor_prompt
+    : ct === "exam" && cid ? db.prepare("SELECT tutor_prompt FROM exams WHERE id=?").get(cid)?.tutor_prompt : "";
+  const system = [TUTOR_RULES[L], ct === "exam" ? EXAM_RULE[L] : "",
+    String(settings().default_prompt || "").slice(0, 800), String(ctxPrompt || "").slice(0, 800)].filter(Boolean).join("\n\n");
+  const history = db.prepare("SELECT role,message FROM tutor_chats WHERE user_id=? AND context_type=? AND COALESCE(context_id,0)=COALESCE(?,0) ORDER BY id DESC LIMIT 8")
+    .all(uid, ct, cid).reverse()
+    .map((h) => ({ role: h.role === "user" ? "user" : "assistant", content: String(h.message || "").slice(0, 1200) }));
+  return [{ role: "system", content: system }, ...history, { role: "user", content: msg }];
+}
+r.post("/message", authRequired, async (req, res) => {
   const b = req.body || {}, ct = b.contextType || "general", cid = Number(b.contextId || 0) || null;
   const denied = tutorContextDenied(req.user, ct, cid);
   if (denied) return res.status(denied.status).json({ error: denied.error, stage: denied.stage });
   if (!isEnabledFor(ct, cid)) return res.status(403).json({ error: "tutor_disabled" });
   const msg = String(b.message || "").trim().slice(0, 2000);
   if (!msg) return res.status(400).json({ error: "empty" });
-  const out = reply(msg, b.lang === "en" ? "en" : "fa");
+  const lang = b.lang === "en" ? "en" : "fa";
+  let out = null, source = "guide";
+  if (settings().ai_enabled) {
+    const aiCfg = resolveAiConfig(getSetting("ai", {}));
+    out = await tutorReply({ messages: tutorMessages(req.user.id, ct, cid, lang, msg), aiCfg });
+    if (out) source = "ai";
+  }
+  if (!out) out = reply(msg, lang);
   // A success response promises a complete, durably saved exchange.
   durableTransaction(() => {
     db.prepare("INSERT INTO tutor_chats (user_id,context_type,context_id,role,message) VALUES (?,?,?,?,?)")
       .run(req.user.id, ct, cid, "user", msg);
     db.prepare("INSERT INTO tutor_chats (user_id,context_type,context_id,role,message,meta_json) VALUES (?,?,?,?,?,?)")
-      .run(req.user.id, ct, cid, "tutor", out, JSON.stringify({ ai: false }));
+      .run(req.user.id, ct, cid, "tutor", out, JSON.stringify({ ai: source === "ai", source }));
   });
-  res.json({ reply: out });
+  res.json({ reply: out, source });
 });
 export default r;

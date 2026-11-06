@@ -39,6 +39,7 @@ import {
   CATEGORIES, MIN_DAYS, MAX_DAYS, PRESET_DAYS, readPolicy, savePolicy, previewPurge, purgeCategory,
   purgeVpAttempts, storageInfo, compactDatabase, listItemPeriods, setItemPeriods, cleanDays, lastRunMs,
   academicImpact, blockReason, deleteAcademicNow, setInspectionHold,
+  openStudentHold, closeStudentHold, listStudentHolds, studentOnInspectionHold,
 } from "../lib/retention.js";
 import { cardFacets, buildFacetIndex, matchFacets, sortCards } from "../lib/cardfacets.js";
 import { recordCardChange, recordImport, listRevisions, revisionSummary } from "../lib/cardhistory.js";
@@ -1116,6 +1117,30 @@ r.put("/retention/items/hold", ...admin, (req, res) => {
   if (!hold && req.body?.confirm !== true) return retentionFail(res, "confirmation_required");
   res.json({ ok: true, ...setInspectionHold(req.body?.kind === "exam" ? "exam" : "class", ids, hold, req) });
 });
+/* R90: per-student inspection request. Protects every record of one student (roster, attempts,
+   virtual-patient encounters, tutor chats) until the request is closed. Closing needs confirm. */
+r.get("/retention/student-holds", ...admin, (req, res) => {
+  res.json({ holds: listStudentHolds() });
+});
+r.post("/retention/student-holds", ...admin, (req, res) => {
+  const b = req.body || {};
+  let uid = Number(b.userId) || 0;
+  const key = String(b.studentNo || "").trim();
+  if (!uid && key) {
+    uid = db.prepare("SELECT id FROM users WHERE role IN ('student','learner') AND (student_no=? OR username=?)").get(key, key)?.id || 0;
+  }
+  if (!uid) return retentionFail(res, "bad_retention_request");
+  const out = openStudentHold(uid, { reference: b.reference }, req);
+  if (out.error === "not_found") return res.status(404).json({ error: "not_found" });
+  if (out.error) return retentionFail(res, out.error);
+  res.json({ ok: true, ...out });
+});
+r.post("/retention/student-holds/:id/close", ...admin, (req, res) => {
+  const id = Number(req.params.id);
+  if (!Number.isInteger(id) || id <= 0) return retentionFail(res, "bad_retention_request");
+  if (req.body?.confirm !== true) return retentionFail(res, "confirmation_required");
+  res.json({ ok: true, ...closeStudentHold(id, req) });
+});
 /* Deletes chosen ARCHIVED classes or exams, with their grades. Blocked items are reported, not deleted. */
 r.post("/retention/items/delete", ...admin, (req, res) => {
   const ids = Array.isArray(req.body?.ids) ? req.body.ids : [];
@@ -1771,6 +1796,8 @@ r.delete("/users/:id", ...P("learn.users.delete"), (req, res) => {
   if (u.id === req.user.id) return res.status(400).json({ error: "cannot delete yourself" });
   if (u.role === "admin" && db.prepare("SELECT COUNT(*) c FROM users WHERE role='admin'").get().c <= 1)
     return res.status(400).json({ error: "cannot delete the last admin" });
+  // R90: an open inspection request on this student blocks deletion of their account.
+  if (studentOnInspectionHold(u.id)) return res.status(409).json({ error: "inspection_hold" });
   // cascade learner data
   db.prepare("DELETE FROM learner_profiles WHERE user_id=?").run(u.id);
   db.prepare("DELETE FROM node_progress WHERE user_id=?").run(u.id);
@@ -1799,6 +1826,7 @@ r.post("/users/bulk-delete", ...P("learn.users.delete"), (req, res) => {
         blocked.push({id, reason:"wrong_university", name: u.name_fa||u.username}); continue;
       }
       if(!staffMayWriteUser(req.user, u)){ blocked.push({id, reason:"forbidden", name: u.name_fa||u.username}); continue; }
+      if(studentOnInspectionHold(u.id)){ blocked.push({id, reason:"inspection_hold", name: u.name_fa||u.username}); continue; }
       db.prepare("DELETE FROM learner_profiles WHERE user_id=?").run(id);
       db.prepare("DELETE FROM node_progress WHERE user_id=?").run(id);
       db.prepare("DELETE FROM srs_state WHERE user_id=?").run(id);
