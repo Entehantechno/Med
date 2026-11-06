@@ -259,7 +259,7 @@ function parseStartedAt(raw) {
 }
 
 /* ---------------- RUNNER ---------------- */
-function Runner({ test, setTest, onFinish, onQuit }) {
+export function Runner({ test, setTest, onFinish, onQuit }) {
   const { t, lang } = useApp();
   const fa = lang === "fa";
   const timed = test.config?.mode === "timed";
@@ -328,8 +328,9 @@ function Runner({ test, setTest, onFinish, onQuit }) {
     }
   };
   const mmss = (s) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
-  if (!card) return null;
-  const prev = answers[card.id];
+  // R93: hooks must run on every render. The early return used to sit above this effect,
+  // so a render with no current card (empty or shrinking question list) changed the hook count.
+  const prev = card ? answers[card.id] : undefined;
 
   useEffect(() => {
     const onKey = (e) => {
@@ -374,6 +375,7 @@ function Runner({ test, setTest, onFinish, onQuit }) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [card, sel, checked, prev, busy, idx, cards.length, showLabModal, canCheck]);
+  if (!card) return null;
 
   return (
     <div className="lesson-wrap ct-run">

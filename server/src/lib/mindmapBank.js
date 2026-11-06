@@ -290,7 +290,8 @@ const conflict = (msg) => httpError(409, msg);
 const SLUG_RE = /^[a-z0-9-]+$/;
 
 // Admin: upsert mindmap
-export function upsertMindmap(data) {
+// R93: the actor is set by the caller from the signed-in user, never from the request body.
+export function upsertMindmap(data, actor = "admin") {
   const now = new Date().toISOString();
   const graphStr = typeof data.graph_json === "string" ? data.graph_json : JSON.stringify(data.graph_json || { nodes: [], edges: [] });
   // validation
@@ -309,7 +310,7 @@ export function upsertMindmap(data) {
       data.summary_fa || "", data.summary_en || "", graphStr, data.cover_url || "", data.is_premium ? 1 : 0, data.status || "active", now, data.slug
     );
     // history
-    try { db.prepare("INSERT INTO mindmap_history (slug, action, data_json, actor) VALUES (?,?,?,?)").run(data.slug, "update", JSON.stringify(data), data.actor || "admin"); } catch {}
+    try { db.prepare("INSERT INTO mindmap_history (slug, action, data_json, actor) VALUES (?,?,?,?)").run(data.slug, "update", JSON.stringify(data), actor); } catch {}
     return db.prepare("SELECT * FROM mindmap_bank WHERE slug=?").get(data.slug);
   } else {
     const info = db.prepare(`
@@ -319,7 +320,7 @@ export function upsertMindmap(data) {
       data.slug, data.title_fa, data.title_en, data.type || "mind", data.system || "other", data.level || "core",
       data.summary_fa || "", data.summary_en || "", graphStr, data.cover_url || "", data.is_premium ? 1 : 0, data.status || "active", now, now
     );
-    try { db.prepare("INSERT INTO mindmap_history (slug, action, data_json, actor) VALUES (?,?,?,?)").run(data.slug, "create", JSON.stringify(data), data.actor || "admin"); } catch {}
+    try { db.prepare("INSERT INTO mindmap_history (slug, action, data_json, actor) VALUES (?,?,?,?)").run(data.slug, "create", JSON.stringify(data), actor); } catch {}
     return db.prepare("SELECT * FROM mindmap_bank WHERE id=?").get(info.lastInsertRowid);
   }
 }
@@ -363,8 +364,8 @@ export function unlinkQuestion({ question_id, mindmap_slug }) {
   db.prepare("DELETE FROM question_mindmap_links WHERE question_id=? AND mindmap_slug=?").run(question_id, mindmap_slug);
 }
 
-export function bulkDelete(slugs) {
-  for (const s of slugs) deleteMindmap(s);
+export function bulkDelete(slugs, actor = "admin") {
+  for (const s of slugs) deleteMindmap(s, actor);
 }
 export function bulkUpdateStatus(slugs, status) {
   const now = new Date().toISOString();

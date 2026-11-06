@@ -973,17 +973,38 @@ r.post("/practice/start", ...learner, flagGate("smart_practice"), (req, res) => 
   res.json({ cards, count: cards.length });
 });
 // grade a practice answer (records telemetry + SRS + small XP + quest progress)
+// R93: practice grading. For a single-choice card the server decides correctness from the
+// stored option (the client's `correct` flag is ignored). Other card types keep the client's
+// judgement, but XP and quest progress are bounded by the once-per-card-per-day rule below.
+const PRACTICE_CLIENT_JUDGED = new Set(["truefalse", "fill", "match", "order", "compare"]);
+export function practiceVerdict(dataJson, sel) {
+  let d = {};
+  try { d = JSON.parse(dataJson || "{}") || {}; } catch { d = {}; }
+  const type = String(d.type || "mcq").toLowerCase();
+  if (PRACTICE_CLIENT_JUDGED.has(type) || !Array.isArray(d.options) || !d.options.length) return null;
+  if (!Number.isInteger(sel) || sel < 0 || sel >= d.options.length) return false;
+  return d.options[sel]?.correct === true;
+}
 r.post("/practice/answer", ...learner, flagGate("smart_practice"), (req, res) => {
   const cardId = parseInt(req.body?.cardId, 10);
-  const correct = !!req.body?.correct;
-  const responseMs = parseInt(req.body?.responseMs, 10) || 0;
   if (!cardId) return res.status(400).json({ error: "no card" });
-  recordAnswers(req.user.id, [{ cardId, nodeId: null, correct, responseMs, sel: Number.isInteger(req.body?.sel) ? req.body.sel : null }]);
+  // Only a live card can be answered. Before R93 any id (including retired cards) was recorded.
+  const card = db.prepare("SELECT id, data_json FROM flashcards WHERE id=? AND active=1").get(cardId);
+  if (!card) return res.status(404).json({ error: "no card" });
+  const sel = Number.isInteger(req.body?.sel) ? req.body.sel : null;
+  const judged = practiceVerdict(card.data_json, sel);
+  const correct = judged === null ? !!req.body?.correct : judged;
+  const responseMs = parseInt(req.body?.responseMs, 10) || 0;
+  recordAnswers(req.user.id, [{ cardId, nodeId: null, correct, responseMs, sel }]);
   // feed the spaced-repetition scheduler too (a review counts as a review quest)
   try { srsReview(req.user.id, cardId, correct ? 3 : 1); } catch { /* card may not be tracked */ }
-  progressQuests(req.user.id, "review", 1);
   let profile = getProfile(req.user.id);
-  if (correct) {
+  // XP and review-quest progress: once per card per learner per day. Before R93 a
+  // client could repeat `correct:true` for one card and farm XP and quest counts.
+  const day = tehranDay();
+  const counted = db.prepare("SELECT 1 FROM xp_events WHERE user_id=? AND reason='practice' AND node_id=? AND day=? LIMIT 1").get(req.user.id, cardId, day);
+  if (!counted && correct) {
+    progressQuests(req.user.id, "review", 1);
     const xp = getGameConfig().practice.xp_per_correct;
     profile = awardXp(req.user.id, xp, "practice", cardId);
   }

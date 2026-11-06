@@ -14,7 +14,7 @@ const EMOJI_ICON = {
   "⚠": "warn", "✅": "check", "❌": "close", "✕": "close", "🔒": "lock", "🔔": "bell", "🔕": "bell", "📣": "bell",
   "🧩": "puzzle", "🎲": "dice", "💡": "bulb", "❓": "bulb", "🔗": "link", "🎁": "gift", "🚩": "flag",
   "🔊": "volume", "🔇": "volume", "🔎": "search", "🔍": "search", "♾": "heart", "🚫": "shield", "📘": "book", "🧭": "compass", "📍": "pin", "👥": "users", "👤": "user", "🧑": "user",
-  "🛒": "store", "🔍": "search", "⚙": "settings", "🌐": "globe", "🖼": "image", "💬": "chat", "📝": "edit",
+  "🛒": "store", "⚙": "settings", "🌐": "globe", "🖼": "image", "💬": "chat", "📝": "edit",
   "✏": "edit", "▶": "play", "🚀": "bolt", "🗂": "list", "🕒": "clock", "⏰": "clock", "📅": "clock", "🎉": "party",
 };
 const norm = (v) => String(v).replace(/[\uFE0E\uFE0F\u200D]/g, "").trim();

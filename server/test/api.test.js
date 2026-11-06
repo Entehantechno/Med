@@ -3605,7 +3605,11 @@ describe("Smart Practice Hub (weak-area targeted sessions)", () => {
     const start = await request(app).post("/api/learn/practice/start").set(A(tk)).send({});
     const card = start.body.cards[0];
     const before = (await request(app).get("/api/learn/profile").set(A(tk))).body.profile.xp;
-    const res = await request(app).post("/api/learn/practice/answer").set(A(tk)).send({ cardId: card.id, correct: true, responseMs: 1500 });
+    // R93: the server grades single-choice cards from the selected option, so the test answers
+    // with the option the card marks correct (the real client always sends `sel`).
+    const sel = (card.options || []).findIndex((o) => o.correct === true);
+    expect(sel).toBeGreaterThanOrEqual(0);
+    const res = await request(app).post("/api/learn/practice/answer").set(A(tk)).send({ cardId: card.id, sel, correct: true, responseMs: 1500 });
     expect(res.status).toBe(200);
     expect(res.body.profile.xp).toBeGreaterThan(before);
   });

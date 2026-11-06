@@ -381,7 +381,13 @@ r.get("/cases/:id/versions", authRequired, requireRole("teacher", "admin"), (req
 r.get("/site-bank/cases", authRequired, (req, res) => {
   try {
     const rows = db.prepare("SELECT * FROM cases WHERE active=1").all().filter((row) => isLearnContent(row.data_json));
-    res.json(rows.map((row) => parse(row, caseReferenceExtra(row))));
+    // R93: the list must apply the same student view as the detail route. Before this,
+    // a student or learner received diagnosis, objectives, labs and imaging for every case.
+    const learner = req.user.role === "student" || req.user.role === "learner";
+    res.json(rows.map((row) => {
+      const full = parse(row, caseReferenceExtra(row));
+      return learner ? studentSafeCase(full) : full;
+    }));
   } catch (e) {
     res.status(500).json({ error: "site_bank_list_failed", message: String(e.message || e).slice(0, 200) });
   }
@@ -441,7 +447,9 @@ r.post("/cases/:id/request-promotion", authRequired, requireRole("teacher", "adm
     res.status(500).json({ error: "promotion_request_failed", message: String(e.message || e).slice(0, 200) });
   }
 });
-r.get("/site-bank/promotion-requests", authRequired, (req, res) => {
+r.get("/site-bank/promotion-requests", authRequired, requireRole("teacher", "admin"), (req, res) => {
+  // R93: students and learners are not promotion reviewers. Before this, any signed-in
+  // student could read their university's promotion requests (teacher-side notes).
   try {
     if (req.user.role === "admin") {
       const rows = db.prepare("SELECT * FROM case_promotion_requests ORDER BY id DESC LIMIT 200").all();

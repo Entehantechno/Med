@@ -3856,6 +3856,8 @@ r.get("/export/:table", ...P("learn.data"), (req, res) => {
 });
 
 /* ---------------- MINDMAP BANK ADMIN (premium graph) — FULL CONTROL ---------------- */
+// R93: who changed a mindmap is the signed-in account, not a body field (teachers were logged as "admin").
+const mmActor = (u) => `${u?.role || "user"}:${u?.id ?? ""}`;
 r.get("/mindmap-bank", authRequired, requireRole("admin","teacher"), (req, res) => {
   try { seedMindmapBank(); } catch {}
   const lang = (req.query.lang || "fa").slice(0,2);
@@ -3896,7 +3898,7 @@ r.post("/mindmap-bank/import/csv", authRequired, requireRole("admin","teacher"),
 });
 r.post("/mindmap-bank/import/json", authRequired, requireRole("admin","teacher"), (req, res) => {
   const arr = req.body?.items || req.body || [];
-  let ok=0; for(const it of (Array.isArray(arr)?arr:[])){ try{ upsertMindmap(it); ok++; }catch{} }
+  let ok=0; for(const it of (Array.isArray(arr)?arr:[])){ try{ upsertMindmap(it, mmActor(req.user)); ok++; }catch{} }
   res.json({ ok:true, imported: ok });
 });
 r.get("/mindmap-bank/history/:slug", authRequired, requireRole("admin","teacher"), (req, res) => {
@@ -3905,7 +3907,7 @@ r.get("/mindmap-bank/history/:slug", authRequired, requireRole("admin","teacher"
 });
 r.post("/mindmap-bank/bulk/delete", authRequired, requireRole("admin","teacher"), (req, res) => {
   const slugs = req.body?.slugs || [];
-  for (const s of slugs) try { deleteMindmap(s); } catch {}
+  for (const s of slugs) try { deleteMindmap(s, mmActor(req.user)); } catch {}
   res.json({ ok: true });
 });
 r.post("/mindmap-bank/bulk/status", authRequired, requireRole("admin","teacher"), (req, res) => {
@@ -3963,11 +3965,11 @@ r.get("/mindmap-bank/:slug/links", authRequired, requireRole("admin","teacher"),
 r.post("/mindmap-bank", authRequired, requireRole("admin","teacher"), (req, res) => {
   const data = req.body || {};
   if (typeof data.graph_json === "string") try { data.graph_json = JSON.parse(data.graph_json); } catch {}
-  const row = upsertMindmap(data);
+  const row = upsertMindmap(data, mmActor(req.user));
   res.json({ ok: true, row });
 });
 r.delete("/mindmap-bank/:slug", authRequired, requireRole("admin","teacher"), (req, res) => {
-  deleteMindmap(req.params.slug);
+  deleteMindmap(req.params.slug, mmActor(req.user));
   res.json({ ok: true });
 });
 r.post("/mindmap-bank/link", authRequired, requireRole("admin","teacher"), (req, res) => {

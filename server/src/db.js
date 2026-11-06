@@ -2457,6 +2457,8 @@ export function initSchema() {
     CREATE INDEX IF NOT EXISTS idx_attempts_class       ON attempts(class_id, user_id);
     CREATE INDEX IF NOT EXISTS idx_attempts_created     ON attempts(created_at);
     CREATE INDEX IF NOT EXISTS idx_class_members_user   ON class_members(user_id);
+    -- R93: league_members is looked up by user on account delete (UNIQUE(league_id,user_id) cannot serve it).
+    CREATE INDEX IF NOT EXISTS idx_league_members_user  ON league_members(user_id);
     CREATE INDEX IF NOT EXISTS idx_exam_parts_user      ON exam_participants(user_id);
     CREATE INDEX IF NOT EXISTS idx_flashcards_active    ON flashcards(active);
     CREATE INDEX IF NOT EXISTS idx_cases_active         ON cases(active);
