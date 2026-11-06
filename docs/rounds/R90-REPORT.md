@@ -52,6 +52,6 @@ Not verified in a browser: the admin Retention section (covered by unit tests on
 - **Tutor AI is off by default** (admin toggle `ai_enabled`). Turning it on is a cost decision, so it was left to the admin. The dev database has the global tutor switch on, `ai_enabled` off.
 - **Estedad 800 face**: decision for the user (visible change, +27 KB).
 - **Inter Variable** is in the body font stack but not loaded: decision for the user.
-- **Legal confirmation**: the per-student scope is a technical reading of 34 CFR §99.10(e) and §99.12(a); the institution's counsel should confirm it.
+- **Legal confirmation**: not required (owner decision, R91). The per-student scope remains a technical reading of 34 CFR §99.10(e) and §99.12(a).
 - **Infra, not done in this round**: CDN, Redis (in-process TTL cache is the substitute; not built), OpenTelemetry (Server-Timing slow-request log is the substitute), load balancing, deploying near the DB, background queue, full SSR/SSG (anonymous LCP is the React H1), per-route splitting beyond existing `lazy()`.
 - **Open from R88**: `universityOnlyCases` opt-in on production data; reveal generic-specialty topic before first attempt; QB-04877/QB-04880 editorial text; release decision.
