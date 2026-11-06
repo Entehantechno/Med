@@ -10,7 +10,7 @@ import { Router } from "express";
 import { db } from "../db.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { getProfile } from "../lib/gamify.js";
-import { requestPayment, verifyPayment, GATEWAY, isReal, mockAllowed } from "../lib/zarinpal.js";
+import { requestPayment, verifyPayment, GATEWAY, isReal, mockAllowed, gatewayErrorStatus } from "../lib/zarinpal.js";
 import { fulfillVerifiedTransaction, isLifetimePremium, notifyPremiumActivated, PREMIUM_ACTIVE_SQL } from "../lib/entitlement.js";
 import {
   listPacks, serializePack, getPack, createOrder, linkTransaction, getOrder,
@@ -64,7 +64,7 @@ r.post("/subscribe", authRequired, requireRole("learner"), async (req, res) => {
     amount: info.amount, description, callbackUrl,
     email: req.user.email || "", mobile: "",
   });
-  if (!pay.ok) return res.status(502).json({ error: pay.error || "gateway error" });
+  if (!pay.ok) return res.status(gatewayErrorStatus(pay.error)).json({ error: pay.error || "gateway error" });
 
   db.prepare(`INSERT INTO transactions (user_id, plan, amount, authority, status, gateway)
     VALUES (?,?,?,?, 'pending', ?)`).run(req.user.id, plan, info.amount, pay.authority, pay.gateway);
@@ -174,7 +174,7 @@ r.post("/group/checkout", authRequired, requireRole("learner"), async (req, res)
   const description = `MED School — Group pack (${pack.seats} seats)`;
   const callbackUrl = `${publicBaseUrl(req)}/api/pay/callback`;
   const pay = await requestPayment({ amount: pack.price, description, callbackUrl, email: req.user.email || "", mobile: "" });
-  if (!pay.ok) return res.status(502).json({ error: pay.error || "gateway error" });
+  if (!pay.ok) return res.status(gatewayErrorStatus(pay.error)).json({ error: pay.error || "gateway error" });
 
   const info = db.prepare(`INSERT INTO transactions (user_id, plan, amount, authority, status, gateway)
     VALUES (?,?,?,?, 'pending', ?)`).run(req.user.id, `group:${order.id}`, pack.price, pay.authority, pay.gateway);

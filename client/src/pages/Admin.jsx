@@ -440,7 +440,7 @@ export function Dashboard() {
 
       <div className="grid grid-2 mt16" style={{ alignItems: "start" }}>
         <div className="card chart-card">
-          <h4 className="mb8"><Icon name="chart" size={16} /> {t("scoreTrend")}</h4>
+          <h3 className="card-title mb8"><Icon name="chart" size={16} /> {t("scoreTrend")}</h3>
           {/* The line plots the last 12 attempts, so the caption says exactly that. */}
           <div className="small muted mb8">{fa ? "۱۲ آزمون اخیر" : "Last 12 attempts"}</div>
           {trend.length >= 2
@@ -448,7 +448,7 @@ export function Dashboard() {
             : <div className="muted small" style={{ padding: "24px 0", textAlign: "center" }}>{fa ? "هنوز آزمون کافی برای نمودار ثبت نشده است." : "Not enough attempts to draw the trend yet."}</div>}
         </div>
         <div className="card chart-card">
-          <h4 className="mb8"><Icon name="pie" size={16} /> {t("activityByType")}</h4>
+          <h3 className="card-title mb8"><Icon name="pie" size={16} /> {t("activityByType")}</h3>
           <Donut label={fa ? "تفکیک فعالیت" : "Activity split"} parts={[
             { label: t("vpExams"), value: s.byType.vp, color: "var(--primary)" },
             { label: t("flashPractice"), value: s.byType.flash, color: "var(--accent)" },
@@ -457,11 +457,11 @@ export function Dashboard() {
       </div>
 
       <div className="card chart-card mt16">
-        <h4 className="mb16"><Icon name="chart" size={16} /> {t("scoreDistribution")}</h4>
+        <h3 className="card-title mb16"><Icon name="chart" size={16} /> {t("scoreDistribution")}</h3>
         <BarChart data={buckets} max={Math.max(1, ...buckets.map((b) => b.value))} />
       </div>
 
-      <div className="card mt16"><h4 className="mb8"><Icon name="clock" size={16} /> {t("recentActivity")}</h4>
+      <div className="card mt16"><h3 className="card-title mb8"><Icon name="clock" size={16} /> {t("recentActivity")}</h3>
         {(s.recent || []).length === 0 && <div className="muted small">{fa ? "هنوز فعالیتی ثبت نشده است." : "No activity recorded yet."}</div>}
         {(s.recent || []).map((a) => (
           <div className="info-row" key={a.id}>
@@ -8985,7 +8985,7 @@ function SystemOverview({ onJump }) {
   ];
   return (
     <div className="page">
-      <div className="section-title"><h4><Icon name="dashboard" size={18} /> {t("overview")}</h4></div>
+      <div className="section-title"><h3 className="overview-title"><Icon name="dashboard" size={18} /> {t("overview")}</h3></div>
       <div className="grid stat-grid-3 mb16">
         {kpis.map(([k, v, ic, label]) => (
           <div className="card stat-card" key={k}>

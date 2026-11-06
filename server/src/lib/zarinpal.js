@@ -61,6 +61,12 @@ export async function requestPayment({ amount, description, callbackUrl, mobile,
   }
 }
 
+/* R95: HTTP status for a failed checkout. A missing gateway configuration is a
+   service-unavailable state (503); anything else is a bad upstream response (502). */
+export function gatewayErrorStatus(error) {
+  return error === "gateway_not_configured" || error === "mock_disabled" ? 503 : 502;
+}
+
 /* Verify a payment. Returns { ok, refId, code } or { ok:false, error }. */
 export async function verifyPayment({ amount, authority }) {
   if (String(authority || "").startsWith("MOCK")) {

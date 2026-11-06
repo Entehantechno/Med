@@ -13,7 +13,7 @@ import { authRequired, requireRole } from "../lib/auth.js";
 import { requirePerm } from "../lib/rbac.js";
 import { audit } from "../lib/audit.js";
 import { isEnabled } from "../lib/flags.js";
-import { requestPayment, verifyPayment } from "../lib/zarinpal.js";
+import { requestPayment, verifyPayment, gatewayErrorStatus } from "../lib/zarinpal.js";
 import { fulfillCoursePurchase } from "../lib/entitlement.js";
 import { publicBaseUrl } from "../lib/publicurl.js";
 
@@ -94,7 +94,7 @@ r.post("/courses/:id/buy", storeGate, authRequired, async (req, res) => {
     amount: price, description: `Course #${c.id}`, callbackUrl: `${publicBaseUrl(req)}/api/store/callback`,
     email: req.user.email || "", mobile: "",
   });
-  if (!pay.ok) return res.status(502).json({ error: pay.error || "gateway error" });
+  if (!pay.ok) return res.status(gatewayErrorStatus(pay.error)).json({ error: pay.error || "gateway error" });
   db.prepare(`INSERT INTO transactions (user_id, plan, amount, authority, status, gateway)
     VALUES (?,?,?,?, 'pending', ?)`).run(req.user.id, `course:${c.id}`, price, pay.authority, pay.gateway);
   res.json({ url: pay.url, authority: pay.authority, gateway: pay.gateway });

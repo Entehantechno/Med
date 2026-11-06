@@ -1,1 +1,1 @@
-2026.11.06-r94-web-quality
+2026.11.06-r95-bughunt

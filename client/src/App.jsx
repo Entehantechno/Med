@@ -219,8 +219,13 @@ function AppInner() {
     page = <Admin home={home} />;
   }
 
-  const contextType = route.name === "exam" || route.name === "exams" ? "exam" : route.name === "classes" ? "class" : "general";
-  const contextId = route.examId || route.classId || null;
+  // R95: the type and its id must match (exam -> examId, class -> classId); a list page with
+  // nothing selected is "general". The old pairs ("exam" with a classId, "class"/"exam" with null)
+  // made the server answer 403 on every classes and exams list visit.
+  const isExam = route.name === "exam";
+  const { contextType, contextId } = isExam && route.examId ? { contextType: "exam", contextId: route.examId }
+    : isExam && route.classId ? { contextType: "class", contextId: route.classId }
+    : { contextType: "general", contextId: null };
   const studentTools = user.role === "student"
     ? <Suspense fallback={null}><QuestionnairePrompt contextType={contextType} contextId={contextId} /><DrTutorChat contextType={contextType} contextId={contextId} /></Suspense>
     : user.role === "learner"
