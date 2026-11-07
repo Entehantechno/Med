@@ -40,7 +40,8 @@ deck is larger, a random sample of 200 is practised. The picker button shows the
 for example "Practice all cards (200)". Exams, class runs and staff are not capped.
 
 Effect on the lab deck: "practice all" for 11,605 cards used to load 86.7 MB in 59 requests. Now it
-loads 200 cards (about 1.6 MB) in one request. The cardio topic deck (534 cards) loads 200 cards.
+loads 200 cards (1,605 KB decoded, about 8.0 KB per card) in one request. The cardio topic deck (534 cards) loads 200 cards.
+The earlier estimate of 6.3 KB per card was low; the measured figure is used here.
 
 ### Measured (lab DB `/home/user/data-ui`, 11,665 learn cards)
 
@@ -84,7 +85,8 @@ round.
 4. **Learner home has about eight cards with competing accents and gradients,** including the
    premium banner. Product decision; not changed.
 5. **Student home is sparse** (one classes card, three stat tiles). Needs the owner's priorities.
-6. **Virtual-patient case screen** not re-audited this round.
+6. **Virtual-patient case screen, admin and teacher pages** not audited with axe this round. The
+   design-token pass (`client/src/design-refresh.css`) has not started.
 7. **Admin learn-cards** still 215–246 ms warm (deferred in R96).
 
 ## 3. Design pass (first step)
@@ -100,18 +102,54 @@ for this audience. Decision and tokens: `docs/design/DESIGN.md`.
 - Desktop before/after screenshots of the learner home: the empty emoji boxes are now icons. The
   layout is otherwise unchanged.
 
+## 3b. Accessibility audit (axe-core 4.14.0, five key screens)
+
+Skill: `ui-ux-pro-max`, accessibility rules (landmarks, labels, contrast). Method: `/tmp/uilab/axe-run.mjs`
+audits five screens in a Playwright browser (one browser per screen) against the lab server. The
+results are in `/home/user/axe-base.json` (before) and `/home/user/axe-after.json` (after).
+
+| Screen | Before (rules / nodes) | After |
+|---|---|---|
+| Landing (anonymous) | 0 / 0 | 0 / 0 |
+| Virtual patient sign-in `/vp` (anonymous) | 1 / 1 (`landmark-unique`) | 0 / 0 |
+| Student home | 2 / 3 (`landmark-one-main`, `region`) | 0 / 0 |
+| Learner home | 3 / 19 (`heading-order`, `landmark-one-main`, `region`) | 0 / 0 |
+| Flashcards picker | 2 / 7 (`landmark-one-main`, `region`) | 0 / 0 |
+
+Baseline: no critical or serious findings, and no colour-contrast or button-name failures. Every
+finding was moderate and was about landmarks or heading order.
+
+Fixes (each is a single, asserted edit):
+- `LearnApp.jsx`: the learner content `#learn-main` is `role="main"`. The top bar row (back button,
+  HUD, notification bell) is a labelled `section` so it sits inside a region.
+- `StudentHome.jsx`: the loaded-state container is `role="main"`.
+- `VirtualPatientPage.jsx`: the `/vp` wrapper was a second labelled `section` with the same name as
+  the login card. It is now a `div`. The login card keeps `section#vp-login`.
+- `PremiumBanner.jsx`: the title is `h3` (was `h4`, which skipped a level).
+
+Guards: `client/src/a11y-landmarks.test.js` (5 tests, red before the fixes, green after). It reads
+the source, so it runs without a browser.
+
+Not covered by axe in this round: the virtual-patient case screen, admin, and teacher pages.
+Contrast was not measured against the design tokens (see section 2, item 6).
+
 ## 4. Verification
 
 | Check | Result |
 |---|---|
 | Server, learner gate + summary + index tests | 21 passed (r97 summary 8, r96 gate 6, r96 index 7) |
 | Server full suite | 2171 passed, 15 skipped, 45 failed. All 45 are the pre-existing `test/master-bank.test.js` failures (R96 baseline 2157 / 45) |
-| Client full suite | 58 files, 284 tests passed (R96: 278) |
+| Client full suite | 59 files, 289 tests passed (R96: 278; log `r97-client-tests4.log`) |
+| axe re-run (5 screens) | 0 rules on every screen (section 3b) |
 | `npm run perf:budget` | passed. Entry JS **25.0898 KB** (below the original 25.0908; gzip size varies with chunk hashes; gate 25.1). Entry CSS 58.95, total CSS 65.27 (limit 66), learn app 24.11 (limit 25), fonts 126 KB |
 | `npm run audit:gate` | passed (0 critical, 0 high) |
-| Browser flow (learner deck, 390 px) | no console errors; summary then one ids request for a capped 200-card session; picker label "Practice all cards (200)" |
+| Browser flow (learner deck, 390 px) | no console errors; `summary=1` (312 KB decoded) then one `ids` request with exactly **200** ids (1,605 KB decoded); picker label "Practice all cards (200)" |
+| Learner home, flashcards picker | screenshot after the a11y fixes: top bar unchanged, cap label shown |
 
-**Budget note:** the approved figure was 25.0947 KB, and the deck work moved it to 25.0957 KB. After
+**Budget assumption (for the owner to confirm):** the owner's "تایید می‌کنم" reply is read as approving
+the entry-JS figure of **25.0957 KB**, the value after the paging work, which was 0.001 KB over the
+25.0947 KB figure from the icon change. The gate stays at 25.1 KB. The a11y fixes did not change the
+measured figure (still 25.0898 KB). The budget was not raised. After
 the final cap change the measured figure is 25.0898 KB, below the original 25.0908 KB and under the
 25.1 KB gate. The gate was not edited.
 

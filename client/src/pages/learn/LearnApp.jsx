@@ -377,7 +377,7 @@ export default function LearnApp() {
       <a className="skip-link" href="#learn-main">{lang === "fa" ? "پرش به محتوای اصلی" : "Skip to main content"}</a>
       <TopBar onHome={() => setTab("home")} />
       <div className="learn-shell" style={{ paddingTop: 14, paddingBottom: 40 }}>
-        <div className={`learn-topline${tab === "home" ? " on-home" : ""}`} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+        <section className={`learn-topline${tab === "home" ? " on-home" : ""}`} aria-label={lang === "fa" ? "ابزارهای صفحه" : "Page tools"} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
           <div className="learn-topline-main" style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {history.length > 0 && (
               <button type="button" className="btn btn-ghost btn-sm" onClick={goBack} title={t("back")} aria-label={t("back")}>
@@ -387,7 +387,7 @@ export default function LearnApp() {
             <Hud profile={profile} hideStreak={calm?.enabled && calm?.hideStreak} />
           </div>
           <NotificationBell onNavigate={(link) => setTab(link)} />
-        </div>
+        </section>
         <div className="learn-layout">
           <div className="learn-nav">
             {/* Program (course) selector — Duolingo-style. Shown only when there
@@ -429,7 +429,7 @@ export default function LearnApp() {
           {/* key includes the active program so every program-scoped page
               (path, home, exam-sim, mind-map, study-plan, crowd, mnemonics)
               remounts and re-fetches fresh data when the course is switched. */}
-          <div id="learn-main" tabIndex="-1" style={{ minWidth: 0 }} key={`${tab}:${activeProgram}`}>
+          <div id="learn-main" role="main" tabIndex="-1" style={{ minWidth: 0 }} key={`${tab}:${activeProgram}`}>
             <Suspense fallback={<div className="route-fallback" role="status" aria-live="polite"><Spinner /></div>}>
               {page}
             </Suspense>

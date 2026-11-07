@@ -295,9 +295,9 @@ function Content({ cfg, lang, ui, wide }) {
         </ul>
       </section>
 
-      <section aria-label={tx(cfg.login.title, lang)} style={{ ...wrap(wide), ...sectionPad }}>
+      <div style={{ ...wrap(wide), ...sectionPad }}>
         <LoginCard cfg={cfg} lang={lang} ui={ui} wide={wide} />
-      </section>
+      </div>
 
       <section aria-labelledby="vp-faq-title" style={{ ...wrap(wide), ...sectionPad, paddingTop: 0 }}>
         <h2 id="vp-faq-title" style={h2Style}>{ui.faqTitle}</h2>

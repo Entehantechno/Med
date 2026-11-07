@@ -76,7 +76,7 @@ export default function StudentHome({ go }) {
   return (
     <div className="app">
       <TopBar onHome={() => go("home")} />
-      <div className="container">
+      <div className="container" role="main">
         <div className="section-title"><h2>{t("welcome")}، {lang === "fa" ? user.name_fa : user.name_en} </h2></div>
 
         {/* Active exams banner — the most important thing for a student */}
