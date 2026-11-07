@@ -16,6 +16,7 @@ import rateLimit from "express-rate-limit";
 import { getGameConfig } from "./gameconfig.js";
 import { verifiedUserIdFromRequest } from "./auth.js";
 import { SqliteRateStore } from "./shared-store.js";
+import { storedIpFromReq } from "./ip-privacy.js";
 
 // Each limiter mount gets its own counter prefix. Mount order is fixed at boot, so every
 // worker process derives the same prefixes and they share one budget per mount.
@@ -194,14 +195,14 @@ export function authLimiter() {
     ...common,
     store: new SqliteRateStore(`${mount}-acct`, common.windowMs),
     limit: c.auth_max,
-    keyGenerator: (req) => `acct|${req.ip}|${String(req.body?.username ?? "").trim().toLowerCase().slice(0, 100)}`,
+    keyGenerator: (req) => `acct|${storedIpFromReq(req)}|${String(req.body?.username ?? "").trim().toLowerCase().slice(0, 100)}`,
   });
   // Per IP ceiling against password spraying across many accounts (generous for shared networks).
   const perIp = rateLimit({
     ...common,
     store: new SqliteRateStore(`${mount}-ip`, common.windowMs),
     limit: c.auth_max * 12,
-    keyGenerator: (req) => `ip|${req.ip}`,
+    keyGenerator: (req) => `ip|${storedIpFromReq(req)}`,
   });
   return (req, res, next) => perAccount(req, res, (err) => (err ? next(err) : perIp(req, res, next)));
 }
@@ -213,8 +214,8 @@ export function forgotLimiter() {
   const message = { error: "too_many_requests", message_fa: "درخواست‌های بازیابی رمز زیاد است. یک ساعت بعد دوباره تلاش کنید.", message_en: "Too many reset requests. Try again in an hour." };
   const common = { windowMs: 60 * 60 * 1000, standardHeaders: true, legacyHeaders: false, skip: () => !cfg().enabled, message };
   const mount = `forgot${++forgotMountSeq}`;
-  const perIdent = rateLimit({ ...common, store: new SqliteRateStore(`${mount}-ident`, common.windowMs), limit: 5, keyGenerator: (req) => `fg|${req.ip}|${String(req.body?.email || req.body?.username || "").trim().toLowerCase().slice(0, 100)}` });
-  const perIp = rateLimit({ ...common, store: new SqliteRateStore(`${mount}-ip`, common.windowMs), limit: 30, keyGenerator: (req) => `fgip|${req.ip}` });
+  const perIdent = rateLimit({ ...common, store: new SqliteRateStore(`${mount}-ident`, common.windowMs), limit: 5, keyGenerator: (req) => `fg|${storedIpFromReq(req)}|${String(req.body?.email || req.body?.username || "").trim().toLowerCase().slice(0, 100)}` });
+  const perIp = rateLimit({ ...common, store: new SqliteRateStore(`${mount}-ip`, common.windowMs), limit: 30, keyGenerator: (req) => `fgip|${storedIpFromReq(req)}` });
   return (req, res, next) => perIdent(req, res, (err) => (err ? next(err) : perIp(req, res, next)));
 }
 

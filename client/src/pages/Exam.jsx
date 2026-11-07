@@ -11,6 +11,7 @@ import Icon from "../components/Icon.jsx";
 import ClinicalLesson, { EvaluationProvenance } from "../components/ClinicalLesson.jsx";
 import { translateReport, applyReportBundle, cacheGeneratedReport } from "../lib/report-translate.js";
 import { remainingFromServer, isResumedSession } from "../lib/resume-state.js";
+import { newIdempotencyKey } from "../lib/idempotency-key.js";
 
 /* Named steps of the virtual-patient path so a failure is never a silent
    reset: the student sees WHERE it stopped (case / consent / session / chat /
@@ -603,7 +604,11 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
         sessionId: sessionIdRef.current,
         events: loggingRef.current ? eventsRef.current : [],
       };
-      const postEval = () => api.post("/exam/evaluate", payload, { timeoutMs: 180_000, stage: "evaluate" });
+      // One key for this finish. Retries re-send it, so the server replays the stored grade
+      // instead of answering 409 or grading the same attempt twice.
+      const evalKey = newIdempotencyKey();
+      const postEval = () => api.post("/exam/evaluate", payload,
+        { timeoutMs: 180_000, stage: "evaluate", headers: { "Idempotency-Key": evalKey } });
       const retryableEval = (e) => {
         const err = e?.data?.error;
         if (err === "ai_evaluation_unavailable" || err === "session_id_required" || err === "session_closed") return false;

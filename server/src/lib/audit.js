@@ -1,12 +1,14 @@
 /* audit.js — immutable audit log for admin write actions.
    Records: actor, action, resource, detail (before/after), IP, timestamp. */
 import { db } from "../db.js";
+import { storedIpFromReq } from "./ip-privacy.js";
 
 export function audit(req, action, resource, detail) {
   try {
     const actor = req?.user || {};
     const name = actor.username || actor.name_fa || actor.name_en || "system";
-    const ip = (req?.headers?.["x-forwarded-for"] || req?.socket?.remoteAddress || "").toString().split(",")[0];
+    // Persist a keyed digest of the trusted client address (never the spoofable XFF header).
+    const ip = storedIpFromReq(req);
     db.prepare(`INSERT INTO audit_log (actor_id, actor_name, action, resource, detail, ip) VALUES (?,?,?,?,?,?)`)
       .run(actor.id || null, name, action, resource || "", detail ? JSON.stringify(detail) : null, ip);
   } catch { /* never let logging break the request */ }

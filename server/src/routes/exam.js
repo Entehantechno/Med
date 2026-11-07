@@ -9,6 +9,7 @@ import { Router } from "express";
 import { createHash } from "node:crypto";
 import { effectiveFlashNoPenalty, effectiveFlashAllowChange } from "../lib/orglimits.js";
 import { db, durableTransaction } from "../db.js";
+import { idempotent } from "../lib/idempotency.js";
 import { authRequired, requireRole } from "../lib/auth.js";
 import { validateBody, s as vs } from "../lib/validate.js";
 import { patientReply, evaluate, scoreChecklistWithLLM, enrichEvaluationWithLLM, labImagingResult, listAiProviders, asMessages, resolveAiConfig } from "../lib/ai-engine.js";
@@ -1030,7 +1031,7 @@ async function gradeEncounter(req, res) {
     releaseCompletion?.();
   }
 }
-r.post("/evaluate", authRequired, evaluateRoute);
+r.post("/evaluate", authRequired, idempotent("exam.evaluate"), evaluateRoute);
 
 /* ---- Flashcard practice submit (multiple choice / search) ---- */
 const flashResultSchema = {

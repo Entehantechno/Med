@@ -13,6 +13,7 @@ import { recordPassword, captureLoginPassword } from "../lib/password-vault.js";
 import { validateBody, s } from "../lib/validate.js";
 import { passwordVariants, toAsciiDigits } from "../lib/digits.js";
 import { normDigits } from "../lib/textsearch.js";
+import { recordLoginFailure } from "../lib/login-anomaly.js";
 
 const r = Router();
 const publicUser = (u) => ({ id: u.id, username: u.username, role: u.role, name_fa: u.name_fa, name_en: u.name_en, email: u.email, email_verified: !!u.email_verified, avatar: u.avatar, phone: u.phone, bio: u.bio, nickname: u.nickname, anon_mode: !!u.anon_mode, initial_password: !!u.initial_password, perms: permsFor(u.role) });
@@ -117,6 +118,7 @@ async function loginRoute(req, res) {
   if (!user || !user.password_hash || !match) {
     noteLoginFail(id);
     if (idNorm && idNorm !== id) noteLoginFail(idNorm);
+    recordLoginFailure(req, id);
     return res.status(401).json({ error: "invalid credentials" });
   }
   if (user.status !== "active")

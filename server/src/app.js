@@ -46,6 +46,7 @@ import { renderMetaTags, routeNameForPath, renderBlogPostMeta, renderRobotsTxt, 
 import { pwaClientConfig, recordPwaEvent } from "./lib/pwa.js";
 import { renderAssetLinks } from "./lib/twa.js";
 import { httpsRedirect, adminIpAllowlist } from "./lib/hardening.js";
+import { storedIpFromReq } from "./lib/ip-privacy.js";
 import { slowThresholdMs, slowRequestLine, isSlow } from "./lib/slow-request.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -129,7 +130,7 @@ function recordSuspiciousInput(req, hit) {
       400,
       req.method,
       safeText(req.originalUrl || req.url, 300),
-      safeText(req.ip || req.headers["x-forwarded-for"] || "", 120),
+      storedIpFromReq(req),
       safeText(req.headers["user-agent"] || "", 300),
       JSON.stringify(hit).slice(0, 1000)
     );
@@ -151,7 +152,7 @@ function recordSecurityEvent(req, res) {
         res.statusCode,
         req.method,
         safeText(req.originalUrl || req.url, 300),
-        safeText(req.ip || req.headers["x-forwarded-for"] || "", 120),
+        storedIpFromReq(req),
         safeText(req.headers["user-agent"] || "", 300),
         ""
       );
@@ -391,7 +392,7 @@ export function createApp() {
       _db.prepare(`INSERT INTO security_events (user_id, kind, status, method, path, ip, user_agent, detail)
         VALUES (?,?,?,?,?,?,?,?)`).run(
           null, "csp_violation", 0, "REPORT", safeText(r["document-uri"] || "", 300),
-          safeText(req.ip || "", 120), safeText(req.headers["user-agent"] || "", 300),
+          storedIpFromReq(req), safeText(req.headers["user-agent"] || "", 300),
           JSON.stringify({ blocked: r["blocked-uri"], directive: r["violated-directive"] || r["effective-directive"], source: r["source-file"] }).slice(0, 1000)
         );
     } catch { /* */ }

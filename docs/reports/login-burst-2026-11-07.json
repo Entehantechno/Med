@@ -1,0 +1,89 @@
+{
+  "base": "http://localhost:3000",
+  "startedAt": "2026-11-07T18:04:24.214Z",
+  "thresholds": {
+    "p95Ms": {
+      "limit": 800,
+      "actual": 3,
+      "passed": true
+    },
+    "errorPct": {
+      "limit": 1,
+      "actual": 0,
+      "passed": true
+    },
+    "rate429Pct": {
+      "limit": 5,
+      "actual": 0,
+      "passed": true
+    },
+    "loginBurstUnexpected": {
+      "limit": 0,
+      "actual": 0,
+      "passed": true
+    }
+  },
+  "checks": {
+    "setupLogins": {
+      "count": 20,
+      "p50": 88,
+      "p95": 144,
+      "p99": 144,
+      "max": 144,
+      "okCount": 20,
+      "of": 20
+    },
+    "loginBurst": {
+      "concurrent": 20,
+      "statusMix": {
+        "200": 20
+      },
+      "latency": {
+        "count": 20,
+        "p50": 979,
+        "p95": 1688,
+        "p99": 1688,
+        "max": 1688
+      },
+      "unexpected": 0,
+      "passed": true
+    },
+    "load": {
+      "vus": 1,
+      "rampSec": 1,
+      "holdSec": 1,
+      "requests": 2,
+      "statusMix": {
+        "200": 2
+      },
+      "okPct": 100,
+      "errorPct": 0,
+      "rate429Pct": 0,
+      "latencyMs": {
+        "count": 2,
+        "p50": 3,
+        "p95": 3,
+        "p99": 3,
+        "max": 3
+      },
+      "perPath": {
+        "/api/auth/me": {
+          "count": 1,
+          "p50": 3,
+          "p95": 3,
+          "p99": 3,
+          "max": 3
+        },
+        "/api/classes": {
+          "count": 1,
+          "p50": 3,
+          "p95": 3,
+          "p99": 3,
+          "max": 3
+        }
+      }
+    }
+  },
+  "passed": true,
+  "finishedAt": "2026-11-07T18:04:40.769Z"
+}

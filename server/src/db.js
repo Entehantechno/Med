@@ -1450,6 +1450,20 @@ export function initSchema() {
   CREATE INDEX IF NOT EXISTS idx_rum_path_created ON rum_vitals(path, created_at);
 
   -- Security-relevant response log (401/403/429/5xx) for early warning and audit.
+  -- Idempotency-Key replay store (lib/idempotency.js). Keyed by a digest of
+  -- (user, scope, key); the client key itself is never stored.
+  CREATE TABLE IF NOT EXISTS idempotency_keys (
+    key_hash TEXT PRIMARY KEY,
+    user_id INTEGER,
+    scope TEXT NOT NULL,
+    fingerprint TEXT NOT NULL,
+    state TEXT NOT NULL,               -- in_flight | done
+    status INTEGER,
+    body TEXT,
+    created_ms INTEGER NOT NULL,
+    updated_ms INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_idem_created ON idempotency_keys(created_ms);
   CREATE TABLE IF NOT EXISTS security_events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER,

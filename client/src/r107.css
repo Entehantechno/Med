@@ -28,7 +28,7 @@
 .r107-next{
   display:inline-block; font-size:11px; font-weight:800; letter-spacing:.2px;
   padding:2px 8px; border-radius:999px; margin-bottom:6px; margin-inline-end:8px; vertical-align:middle;
-  background:#1e4fa3; color:#fff;
+  background:#1e4fa3; color:var(--on-solid,#fff);
 }
 [data-theme="dark"] .r107-next{ background:#93c5fd; color:#0b1d3a; }
 

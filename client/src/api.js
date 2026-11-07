@@ -27,6 +27,7 @@ async function reqOnce(method, path, body, opts = {}) {
   const headers = { "Content-Type": "application/json" };
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
+  if (opts.headers) Object.assign(headers, opts.headers);
   if (method === "GET" && opts.revalidate) {
     const prev = etags.get(path);
     if (prev) headers["If-None-Match"] = prev;

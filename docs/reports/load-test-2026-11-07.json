@@ -1,0 +1,64 @@
+{
+  "base": "http://localhost:3000",
+  "startedAt": "2026-11-07T18:02:49.298Z",
+  "thresholds": {
+    "p95Ms": {
+      "limit": 800,
+      "actual": 3,
+      "passed": true
+    },
+    "errorPct": {
+      "limit": 1,
+      "actual": 0,
+      "passed": true
+    },
+    "rate429Pct": {
+      "limit": 5,
+      "actual": 0,
+      "passed": true
+    }
+  },
+  "checks": {
+    "tokens": {
+      "source": "tokens-file",
+      "count": 100
+    },
+    "load": {
+      "vus": 100,
+      "rampSec": 20,
+      "holdSec": 60,
+      "requests": 3656,
+      "statusMix": {
+        "200": 3656
+      },
+      "okPct": 100,
+      "errorPct": 0,
+      "rate429Pct": 0,
+      "latencyMs": {
+        "count": 3656,
+        "p50": 2,
+        "p95": 3,
+        "p99": 6,
+        "max": 45
+      },
+      "perPath": {
+        "/api/auth/me": {
+          "count": 1857,
+          "p50": 2,
+          "p95": 3,
+          "p99": 5,
+          "max": 14
+        },
+        "/api/classes": {
+          "count": 1799,
+          "p50": 2,
+          "p95": 3,
+          "p99": 7,
+          "max": 45
+        }
+      }
+    }
+  },
+  "passed": true,
+  "finishedAt": "2026-11-07T18:04:16.710Z"
+}
