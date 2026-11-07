@@ -26,6 +26,7 @@ import { fileURLToPath } from "url";
 import { migrateUsersRoleCheck } from "./lib/users-role-migrate.js";
 import { regroupDefaultItems } from "./lib/checklist-facets.js";
 import { makeLeases } from "./lib/leases.js";
+import { TRACK_INDEX_SQL, FLASHCARDS_SIG_INDEX_SQL } from "./lib/flashcard-track.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Persistent data (DB + uploads + backups) lives OUTSIDE the code in DATA_DIR
@@ -2285,6 +2286,10 @@ export function initSchema() {
     reference TEXT NOT NULL DEFAULT ''
   )`);
   db.exec("CREATE INDEX IF NOT EXISTS idx_inspection_open ON inspection_requests(user_id) WHERE closed_at IS NULL");
+  // R96: /api/flashcards splits the bank by track on every request. This expression index makes
+  // that an index lookup instead of a JSON parse over ~11.7k rows (see lib/flashcard-track.js).
+  db.exec(TRACK_INDEX_SQL);
+  db.exec(FLASHCARDS_SIG_INDEX_SQL); // R96: covering index for the browse pool cache key
   db.exec("CREATE INDEX IF NOT EXISTS idx_tutor_chats_created ON tutor_chats(created_at)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_security_created ON security_events(created_at)");
   db.exec("CREATE INDEX IF NOT EXISTS idx_rum_created ON rum_vitals(created_at)");

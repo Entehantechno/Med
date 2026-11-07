@@ -26,6 +26,7 @@ import { sqlInList } from "../lib/http-cache.js";
 import { isLearnContent, caseIsLearn } from "../lib/content-track.js";
 import { policyRow, policyReadiness, referenceSnapshotForPolicy, publicReferenceSnapshot, sanitizeReferenceIds } from "../lib/reference-governance.js";
 import { recordPassword } from "../lib/password-vault.js";
+import { BANK_SQL, NON_BANK_SQL, FLASHCARDS_BY_TRACK } from "../lib/flashcard-track.js";
 
 const r = Router();
 r.use('/cases', authRequired, (req, res, next) => {
@@ -480,18 +481,18 @@ r.get("/flashcards", authRequired, (req, res) => {
   // json_valid() guard: json_extract() on a corrupt row would throw and 500
   // the whole list — a corrupt card is treated as a university card and then
   // skipped by the parse try/catch below.
-  const bankSql = "CASE WHEN json_valid(data_json) THEN json_extract(data_json, '$.track') = 'learn' ELSE 0 END";
+  // R96: the split uses the shared expression so idx_flashcards_active_track serves it.
   const wantIds = req.query.ids == null ? null : sqlInList(String(req.query.ids).split(/[,\s]+/));
   if (wantIds && !wantIds.length) return res.json([]);
   let rows;
   if (wantIds) {
     const ph = wantIds.map(() => "?").join(",");
     rows = db.prepare(
-      `SELECT * FROM flashcards WHERE ${activeSql} AND id IN (${ph}) AND ${learnRole ? "" : "NOT "}COALESCE(${bankSql}, 0) ORDER BY id`
+      `SELECT * FROM ${FLASHCARDS_BY_TRACK} WHERE ${activeSql} AND id IN (${ph}) AND ${learnRole ? BANK_SQL : NON_BANK_SQL} ORDER BY id`
     ).all(...wantIds);
   } else {
     rows = db.prepare(
-      `SELECT * FROM flashcards WHERE ${activeSql} AND ${learnRole ? "" : "NOT "}COALESCE(${bankSql}, 0) ORDER BY id`
+      `SELECT * FROM ${FLASHCARDS_BY_TRACK} WHERE ${activeSql} AND ${learnRole ? BANK_SQL : NON_BANK_SQL} ORDER BY id`
     ).all();
   }
   const uniId = tenantFilterFor(req.user);

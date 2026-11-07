@@ -68,6 +68,7 @@ import {
 } from "../lib/mindmapBank.js";
 import { isLearnContent } from "../lib/content-track.js";
 import { SECRET_BEARING_SETTINGS, maskStoredSettingValue, maskConfigSecrets, openConfigSecrets, serializeSettings, preserveMaskedKeys, redactForAudit } from "../lib/secret-store.js";
+import { BANK_SQL, NON_BANK_SQL, FLASHCARDS_BY_TRACK } from "../lib/flashcard-track.js";
 
 const r = Router();
 // The competitive virtual patient (settings, AI, prompts, library) is live: admins manage it
@@ -98,9 +99,10 @@ r.get("/overview", ...P("learn.view"), (req, res) => {
     teachers: one("SELECT COUNT(*) c FROM users WHERE role='teacher'").c,
     admins: one("SELECT COUNT(*) c FROM users WHERE role='admin'").c,
     inactive: one("SELECT COUNT(*) c FROM users WHERE status!='active'").c,
-    flashcards: one(`SELECT COUNT(*) c FROM flashcards WHERE active=1 AND NOT COALESCE(${bankSql}, 0)`).c,
+    // R96: the flashcard counts use the track index (lib/flashcard-track.js); the bank count was a JSON scan.
+    flashcards: one(`SELECT COUNT(*) c FROM ${FLASHCARDS_BY_TRACK} WHERE active=1 AND ${NON_BANK_SQL}`).c,
     cases: one(`SELECT COUNT(*) c FROM cases WHERE active=1 AND NOT COALESCE(${bankSql}, 0)`).c,
-    learnQuestions: one(`SELECT COUNT(*) c FROM flashcards WHERE active=1 AND COALESCE(${bankSql}, 0)`).c,
+    learnQuestions: one(`SELECT COUNT(*) c FROM ${FLASHCARDS_BY_TRACK} WHERE active=1 AND ${BANK_SQL}`).c,
     classes: one("SELECT COUNT(*) c FROM classes WHERE active=1").c,
     exams: one("SELECT COUNT(*) c FROM exams WHERE active=1").c,
     attempts: one("SELECT COUNT(*) c FROM attempts").c,

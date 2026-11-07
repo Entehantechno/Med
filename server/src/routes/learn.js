@@ -68,6 +68,7 @@ import {
   markFriendActivity, progressFriendQuests, postFeed,
 } from "../lib/friends.js";
 import { createReport as createBugReport } from "../lib/bughunt.js";
+import { BANK_SIG_SQL } from "../lib/flashcard-track.js";
 
 // feature-flag gate: 404 the feature cleanly when an admin turns it off
 const flagGate = (key) => (req, res, next) => isEnabled(key) ? next() : res.status(403).json({ error: "feature disabled", flag: key });
@@ -1073,15 +1074,13 @@ r.get("/streak", ...learner, (req, res) => {
 // straight from SQLite. Any create, edit, import or activity toggle bumps one of
 // those three, so the cache invalidates itself without needing hooks anywhere.
 let browsePoolCache = { sig: null, all: null };
+// R96: memo of browse facet counts, keyed by the bank signature (see the /browse handler).
+const FACET_MEMO_MAX = 256;
+let facetMemo = { sig: null, map: new Map() };
+export function facetMemoStats() { return { sig: facetMemo.sig, size: facetMemo.map.size }; }
 
 function browsePool() {
-  const s = db.prepare(
-    `SELECT COUNT(*) AS n,
-            COALESCE(MAX(COALESCE(content_updated_at, updated_at)), '') AS t,
-            COALESCE(MAX(id), 0) AS m,
-            COALESCE(SUM(revision), 0) AS r
-       FROM flashcards WHERE active=1`
-  ).get();
+  const s = db.prepare(BANK_SIG_SQL).get(); // R96: served by idx_flashcards_sig (see lib/flashcard-track.js)
   const sig = `${s.n}|${s.t}|${s.m}|${s.r}`;
   if (browsePoolCache.sig === sig) return browsePoolCache.all;
 
@@ -1173,17 +1172,27 @@ r.get("/browse", ...learner, flagGate("bank_browse"), (req, res) => {
   // choosing a subject, the year counts reflect that subject rather than the
   // whole bank, so a learner never picks an option that returns nothing.
   const facetKeys = ["subject", "chapter", "concept", "year", "month", "sitting", "scope", "style", "difficulty", "exam", "examType"];
-  const facets = {};
-  // When a facet is NOT one of the active filters, "the pool narrowed by every
-  // other filter" is just the current hit set, so all such facets share one
-  // index instead of re-filtering the pool ten times. Only the handful of
-  // facets the learner has actually clicked need their own pass.
-  const activeKeys = facetKeys.filter((k) => filt[k] != null && filt[k] !== "" && !(Array.isArray(filt[k]) && !filt[k].length));
-  const baseIndex = buildFacetIndex(hits, lang);
-  for (const k of facetKeys) {
-    if (!activeKeys.includes(k)) { facets[k] = baseIndex[k] || []; continue; }
-    const others = { ...filt, [k]: null };
-    facets[k] = buildFacetIndex(pool.filter((c) => matchFacets(c.facets, others)), lang)[k] || [];
+  // R96: the facet counts depend only on the bank signature, the language, includeDemo, the
+  // filters and the search term, so they are memoised under that key. The memo is dropped when
+  // the bank signature changes (browsePool re-reads it on every request above).
+  const facetKey = JSON.stringify([lang, q.includeDemo === "1", filt, term]);
+  if (facetMemo.sig !== browsePoolCache.sig) facetMemo = { sig: browsePoolCache.sig, map: new Map() };
+  let facets = facetMemo.map.get(facetKey);
+  if (!facets) {
+    facets = {};
+    // When a facet is NOT one of the active filters, "the pool narrowed by every
+    // other filter" is just the current hit set, so all such facets share one
+    // index instead of re-filtering the pool ten times. Only the handful of
+    // facets the learner has actually clicked need their own pass.
+    const activeKeys = facetKeys.filter((k) => filt[k] != null && filt[k] !== "" && !(Array.isArray(filt[k]) && !filt[k].length));
+    const baseIndex = buildFacetIndex(hits, lang);
+    for (const k of facetKeys) {
+      if (!activeKeys.includes(k)) { facets[k] = baseIndex[k] || []; continue; }
+      const others = { ...filt, [k]: null };
+      facets[k] = buildFacetIndex(pool.filter((c) => matchFacets(c.facets, others)), lang)[k] || [];
+    }
+    if (facetMemo.map.size >= FACET_MEMO_MAX) facetMemo.map.clear();
+    facetMemo.map.set(facetKey, facets);
   }
 
   // With a text query the default order is relevance; an explicit sort wins.

@@ -8,6 +8,7 @@ import { toCSV, safeFilename } from "../lib/csv.js";
 import { isLearnContent, caseIsLearn } from "../lib/content-track.js";
 import { audit } from "../lib/audit.js";
 import { studentOnInspectionHold } from "../lib/retention.js";
+import { NON_BANK_SQL, FLASHCARDS_BY_TRACK } from "../lib/flashcard-track.js";
 
 const r = Router();
 
@@ -136,6 +137,13 @@ r.get("/summary", authRequired, requireRole("teacher", "admin"), (req, res) => {
     return res.status(403).json({ error: "university_required", stage: "access" });
   }
   const countUniBank = (table, universityId) => {
+    // R96: flashcards use the track index. The index yields the ~31 non-bank rows first, then the
+    // university filter runs on them (filtering inside the index scan read all 11.7k rows).
+    if (table === "flashcards") {
+      const where = universityId ? "COALESCE(university_id,1)=?" : "1=1";
+      const sql = `SELECT COUNT(*) n FROM (SELECT university_id FROM ${FLASHCARDS_BY_TRACK} WHERE active=1 AND ${NON_BANK_SQL}) WHERE ${where}`;
+      return (universityId ? db.prepare(sql).get(universityId) : db.prepare(sql).get()).n;
+    }
     const bankSql = "CASE WHEN json_valid(data_json) THEN json_extract(data_json, '$.track') = 'learn' ELSE 0 END";
     if (universityId) {
       return db.prepare(`SELECT COUNT(*) n FROM ${table} WHERE active=1 AND COALESCE(university_id,1)=? AND NOT COALESCE(${bankSql}, 0)`).get(universityId).n;

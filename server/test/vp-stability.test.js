@@ -3311,7 +3311,12 @@ describe("zip-52 source: rubric strip + staff/checklist isolation", () => {
     expect(contentJs).toContain("return unis.has(mine);");
     expect(contentJs).toContain("if (!teacherManagesChecklist(req.user, req.params.id))");
     // Round 5: the learn/university split moved into SQL (bank rows never parsed).
-    expect(contentJs).toContain("json_extract(data_json, '$.track') = 'learn'");
+    // R96: the predicate lives in lib/flashcard-track.js (shared with the track index); content.js
+    // picks BANK_SQL for learn roles and NON_BANK_SQL for everyone else.
+    expect(contentJs).toMatch(/learnRole \? BANK_SQL : NON_BANK_SQL/);
+    const trackJs = readFileSync(join(process.cwd(), "src/lib/flashcard-track.js"), "utf8");
+    expect(trackJs).toContain("json_extract(data_json, '$.track') END");
+    expect(trackJs).toMatch(/BANK_SQL = `\(\$\{TRACK_EXPR\}\) = 'learn'`/);
   });
 });
 
