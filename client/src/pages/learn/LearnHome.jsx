@@ -48,7 +48,7 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
       <div className="home-hero">
         <div className="home-hero-top">
           <div>
-            <h2 className="home-greet">{t("welcome")}، {uname} 👋</h2>
+            <h2 className="home-greet">{t("welcome")}، {uname}</h2>
             <TierBadge tier={p.tier} />
           </div>
           <div className="home-hero-stats">
@@ -63,8 +63,8 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
             <div className="gv"><b>{data?.todayXp || 0}</b><div className="small muted">/ {p.daily_goal}</div></div>
           </div>
           <div className="home-hero-cta">
-            <div className="hhc-title">{goalPct >= 100 ? `🎉 ${t("todayGoal")} ✓` : t("todayGoal")}</div>
-            <div className="hhc-sub small">{streak?.atRisk ? `⚠️ ${t("streakAtRisk")}` : t("keepStreak")}</div>
+            <div className="hhc-title">{goalPct >= 100 ? <><Icon name="party" size={18} /> {t("todayGoal")} ✓</> : t("todayGoal")}</div>
+            <div className="hhc-sub small">{streak?.atRisk ? <><Icon name="warn" size={14} /> {t("streakAtRisk")}</> : t("keepStreak")}</div>
             <button type="button" className="btn btn-accent btn-lg btn-block" onClick={() => {
               if (data?.resume?.nodeId && openLesson) openLesson(data.resume.nodeId);
               else go("path");
@@ -93,7 +93,7 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
           a forced exam). Only before it's taken and if not dismissed. */}
       {placement?.enabled && !placement?.done && !placement?.dismissed && (
         <div className="card mb16 placement-offer" style={{ display: "flex", alignItems: "center", gap: 14, borderInlineStart: "4px solid var(--primary)" }}>
-          <div className="mod-ico" style={{ background: "linear-gradient(135deg,#3b82f6,#6d28d9)", width: 48, height: 48, marginBottom: 0 }}>🧭</div>
+          <div className="mod-ico" style={{ background: "linear-gradient(135deg,#3b82f6,#6d28d9)", width: 48, height: 48, marginBottom: 0 }}><Icon name="compass" size={24} /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 800 }}>{t("placementOfferTitle")}</div>
             <div className="small muted">{placement.offerText || t("placementOfferBody")}</div>
@@ -115,13 +115,13 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
           dismissible so it never nags. Points to the weakest topic. */}
       {placement?.enabled && placement?.done && placement?.recommendation && !recoHidden && (
         <div className="card mb16 placement-reco" style={{ display: "flex", alignItems: "center", gap: 14, borderInlineStart: "4px solid var(--green)" }}>
-          <div className="mod-ico" style={{ background: "linear-gradient(135deg,#22a06b,#0f766e)", width: 48, height: 48, marginBottom: 0 }}>🎯</div>
+          <div className="mod-ico" style={{ background: "linear-gradient(135deg,#22a06b,#0f766e)", width: 48, height: 48, marginBottom: 0 }}><Icon name="target" size={24} /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 800 }}>{placement.recommendation.title}</div>
             <div className="small muted">{placement.recommendation.body}</div>
             {placement.recommendation.strongTopics?.length > 0 && (
               <div className="small mt4" style={{ color: "var(--green)" }}>
-                💪 {t("placementYouAreStrong")}: {placement.recommendation.strongTopics.join("، ")}
+                <Icon name="strength" size={14} /> {t("placementYouAreStrong")}: {placement.recommendation.strongTopics.join("، ")}
               </div>
             )}
           </div>
@@ -161,7 +161,7 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 800 }}>{p.streak} {t("dayStreak")}</div>
               <div className="ss-bar mt8"><span style={{ width: `${Math.min(100, Math.round((streak.streak / streak.nextMilestone) * 100))}%` }} /></div>
-              <div className="small muted" style={{ marginTop: 4 }}>🎁 {streak.toNext} {t("daysToMilestone")}</div>
+              <div className="small muted" style={{ marginTop: 4 }}><Icon name="gift" size={14} /> {streak.toNext} {t("daysToMilestone")}</div>
             </div>
             {streak?.freezes > 0 && <span className="ss-freezes"><Icon name="ampoule" size={14} /> {streak.freezes}</span>}
           </div>
@@ -176,7 +176,7 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
             <div style={{ fontWeight: 800 }}>
               {data.questsClaimable > 0 && `${data.questsClaimable} ${t("dailyQuests")} ✓`}
               {data.questsClaimable > 0 && data.chestsReady > 0 && " · "}
-              {data.chestsReady > 0 && `${data.chestsReady} 🎁`}
+              {data.chestsReady > 0 && <>{data.chestsReady} <Icon name="gift" size={15} /></>}
             </div>
             <div className="small muted">{t("questsHub")}</div>
           </div>
@@ -200,7 +200,7 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
           Hidden for premium AND when the premium/ads program is switched off. */}
       {!(p.premium_effective ?? p.premium) && (
         <div className="card mb16 rewarded-cta" style={{ display: "flex", alignItems: "center", gap: 14, borderInlineStart: "4px solid var(--gem, #8b5cf6)" }}>
-          <div className="mod-ico" style={{ background: "linear-gradient(135deg,#8b5cf6,#6d28d9)", width: 48, height: 48, marginBottom: 0 }}>🎁</div>
+          <div className="mod-ico" style={{ background: "linear-gradient(135deg,#8b5cf6,#6d28d9)", width: 48, height: 48, marginBottom: 0 }}><Icon name="gift" size={24} /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 800 }}>{t("rewardedCtaTitle")}</div>
             <div className="small muted">{t("rewardedCtaBody")}</div>
