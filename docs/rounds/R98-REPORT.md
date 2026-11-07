@@ -126,3 +126,20 @@ student. That is content setup, so it is left open.
    bar) reads faint in dark mode. Check it by eye during the token pass.
 4. **Course labels on the bank:** still a content task (R97, section 2, item 1).
 5. **Learner VP case list empty in the lab** (section 4): diagnose before any VP-related change.
+
+## 6. Screenshots and release zip (this round)
+
+- Screenshots: `screenshots/r98/` (12 PNG, index and review notes in its `README.md`).
+- Release zip: `releases/MED-School-FINAL-2026-11-07-R98.zip` (1,054 files, 30.0 MB). Built with
+  `scripts/pack-host-zip.mjs` and checked with `scripts/check-release-zip.mjs` (passed).
+  The packer now skips `screenshots/` (review files, not runtime).
+
+## 7. UI review of the student home (not changed; needs an owner decision)
+
+Looked at screenshot 05 (desktop, light). The page is sparse: one classes card and three stat
+tiles, with the content ending about halfway down the viewport. The two link tiles have no icon
+and no visible affordance. The progress tile is not interactive. A layout change needs owner
+direction, so none was made. The options are: (a) icons and link affordance on the stat tiles
+only; (b) a "next steps" section (open exams, due flashcards, the next case). Option (b) needs
+data the student home does not currently load.
+

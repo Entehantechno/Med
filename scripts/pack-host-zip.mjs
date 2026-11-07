@@ -32,6 +32,7 @@ const skip = [
   /(^|\/)\.venv\//,
   /^graphify-out\//, // local knowledge-graph cache (generated, git-ignored)
   /\.zip$/i,
+  /^screenshots\//, // review screenshots (docs), not runtime files
   /^(?!demo-database\/medlab\.db$).*\.(db|sqlite|sqlite3)(-|$|\.)/i,
   /\.md$/i,
   /^(docs|reports)\//,
