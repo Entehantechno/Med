@@ -668,7 +668,7 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
     return examChrome(embedded, home, (
       <div className="center-screen">
         <div className="card" style={{ maxWidth: 520, textAlign: fa ? "right" : "left" }}>
-          <h3><Icon name="warn" size={18} /> {stageTitle(boot.stage, lang)}</h3>
+          <h2 className="center-h"><Icon name="warn" size={18} /> {stageTitle(boot.stage, lang)}</h2>
           <div className="err-banner mt12">{boot.error || error || t("errorGeneric")}</div>
           <div className="small muted mt8">
             {fa ? "اگر مشکل ادامه داشت، این مرحله را به استاد بگویید." : "If this keeps happening, tell your instructor which step failed."}
@@ -692,7 +692,7 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
     const fa = lang === "fa";
     return examChrome(embedded, home, (
       <div className="center-screen"><div className="card" style={{ maxWidth: 520, textAlign: fa ? "right" : "left" }}>
-        <h3><Icon name="warn" size={18} /> {fa ? "گفتگو در صف ارزیابی است" : "Conversation queued for evaluation"}</h3>
+        <h2 className="center-h"><Icon name="warn" size={18} /> {fa ? "گفتگو در صف ارزیابی است" : "Conversation queued for evaluation"}</h2>
         <div className="small mt12">{fa ? queued.fa : queued.en}</div>
         <div className="row gap8 mt12" style={{ flexWrap: "wrap" }}>
           <button type="button" className="btn btn-primary" onClick={() => { finishingRef.current = false; setQueued(null); finish(); }}>
@@ -708,7 +708,7 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
     return examChrome(embedded, home, (
         <div className="center-screen"><div className="card center" style={{ maxWidth: 420 }}>
           <Spinner />
-          <h3 className="mt8">{t("evaluating")}</h3>
+          <h2 className="center-h mt8">{t("evaluating")}</h2>
           <div className="muted small mt8">{stageTitle("evaluate", lang)}</div>
         </div></div>
     ));
@@ -729,7 +729,7 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
     return examChrome(embedded, home, (
         <div className="center-screen">
           <div className="card" style={{ maxWidth: 620, textAlign: fa ? "right" : "left" }}>
-            <h3><Icon name="shield" size={18} /> {fa ? "رضایت آگاهانهٔ پژوهشی" : "Informed research consent"}</h3>
+            <h2 className="center-h"><Icon name="shield" size={18} /> {fa ? "رضایت آگاهانهٔ پژوهشی" : "Informed research consent"}</h2>
             <div className="muted small mt4">{fa ? consent.titleFa : consent.titleEn}</div>
             <div className="row gap8 mt8 small" style={{ flexWrap: "wrap" }}>
               {consent.ethicsCode && <span className="tag">{fa ? "کد اخلاق" : "Ethics code"}: {consent.ethicsCode}</span>}

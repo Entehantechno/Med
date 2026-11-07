@@ -2848,3 +2848,15 @@ tbody tr:hover td{ transform: translateX(1px) }
    were invisible on dark surfaces. --header-ink is the readable text version: the light value equals
    the light --header, so light pixels do not change. Found by a screenshot, not by axe (axe reports it as incomplete). */
 [data-theme="dark"]{ --header-ink:#eaf1ff; }
+
+/* ---- R102 ---- */
+/* Notification badge. It sat on the button's top-left corner and reached past the top bar, so it
+   touched the page edge and the control next to it (seen on the learner case screen). It now sits
+   inside the 44px button, with a ring of the panel colour so it reads on both themes. */
+.bell-badge{top:2px;inset-inline-end:2px;box-shadow:0 0 0 2px var(--panel)}
+
+/* Standalone case-screen states (boot error, queued, evaluating, consent) are the page's only heading,
+   so they are h2. An h3 there skipped the h1 level (axe heading-order). The old h3 metrics are kept:
+   1.17em size and zero margin (measured: the card height is unchanged). The mt8 utility keeps its top margin. */
+h2.center-h{font-size:1.17em;margin:0}
+h2.center-h.mt8{margin-top:8px}
