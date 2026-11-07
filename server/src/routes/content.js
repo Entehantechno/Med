@@ -27,6 +27,9 @@ import { isLearnContent, caseIsLearn } from "../lib/content-track.js";
 import { policyRow, policyReadiness, referenceSnapshotForPolicy, publicReferenceSnapshot, sanitizeReferenceIds } from "../lib/reference-governance.js";
 import { recordPassword } from "../lib/password-vault.js";
 import { BANK_SQL, NON_BANK_SQL, FLASHCARDS_BY_TRACK } from "../lib/flashcard-track.js";
+import { isEnabled } from "../lib/flags.js";
+import { getProfile } from "../lib/gamify.js";
+import { lockedTeaserIds } from "../lib/bank-pool.js";
 
 const r = Router();
 r.use('/cases', authRequired, (req, res, next) => {
@@ -482,7 +485,13 @@ r.get("/flashcards", authRequired, (req, res) => {
   // the whole list — a corrupt card is treated as a university card and then
   // skipped by the parse try/catch below.
   // R96: the split uses the shared expression so idx_flashcards_active_track serves it.
-  const wantIds = req.query.ids == null ? null : sqlInList(String(req.query.ids).split(/[,\s]+/));
+  let wantIds = req.query.ids == null ? null : sqlInList(String(req.query.ids).split(/[,\s]+/));
+  // R96: a free learner gets the three teaser cards only, the same rule as /learn/browse (the
+  // whole bank is premium). Staff roles and students are not affected. See r96-learner-bank-gate.test.js.
+  if (req.user.role === "learner" && isEnabled("full_bank") && !getProfile(req.user.id).premium_effective) {
+    const teasers = lockedTeaserIds();
+    wantIds = wantIds ? wantIds.filter((id) => teasers.includes(Number(id))) : teasers;
+  }
   if (wantIds && !wantIds.length) return res.json([]);
   let rows;
   if (wantIds) {
