@@ -2860,3 +2860,29 @@ tbody tr:hover td{ transform: translateX(1px) }
    1.17em size and zero margin (measured: the card height is unchanged). The mt8 utility keeps its top margin. */
 h2.center-h{font-size:1.17em;margin:0}
 h2.center-h.mt8{margin-top:8px}
+
+/* ---- R104 — style decision: flat-first, accessible boundaries (docs/design/DESIGN.md, R104) ----
+   Measured before this block (WCAG, panel #fff / #141d33):
+   - control borders --border #dbe3ee = 1.29:1 (light), #2a3757 = 1.42:1 (dark). 1.4.11 asks 3:1 when the
+     border is the only cue for an input or button. Controls now use --control-line (3.63:1 light, 4.15:1 dark).
+     Hairline dividers keep --border; they are decoration, not controls.
+   - green CTA fill: white label on the old gradient ends = 2.45:1 to 4.05:1. --accent-btn gives 5.34:1.
+   - gradients and the hover gloss sheen on buttons are decoration; the flat style drops them.
+   Text colours already pass (muted 5.89:1 light, 5.34:1 dark on panel). Not changed. */
+:root{ --control-line:#7a879d; }
+[data-theme="dark"]{ --control-line:#6b7fa5; }
+/* controls: the boundary is the only cue, so it must reach 3:1 */
+.field input,.field textarea,.field select,
+.chat-input input,.support-compose textarea,.st-select,
+input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),
+textarea,select{ border-color:var(--control-line); }
+.btn-ghost{ border-color:var(--control-line); }
+/* learner home: list actions are outline buttons in the primary colour (one solid CTA is the hero) */
+.learn-home .card .btn-ghost{ color:var(--primary); }
+/* R104 dark CTA fix. `[data-theme="dark"] .btn` (later in this file) set a panel gradient that overrode the
+   solid CTA fills, so the dark hero CTA looked like a plain panel. These rules have higher specificity.
+   Dark primary uses dark ink (--bg #0b1020): 6.0:1 on #4f93e8, 4.7:1 on #3f7fd6. White would be 3.2:1 / 4.0:1. */
+[data-theme="dark"] .btn.btn-primary,[data-theme="dark"] .btn.btn-primary:hover,[data-theme="dark"] .btn.btn-primary:focus,
+[data-theme="dark"] .btn.btn-primary:focus-visible,[data-theme="dark"] .btn.btn-primary:active{ background:var(--grad-primary); color:var(--bg); }
+[data-theme="dark"] .btn.btn-accent,[data-theme="dark"] .btn.btn-accent:hover,[data-theme="dark"] .btn.btn-accent:focus,
+[data-theme="dark"] .btn.btn-accent:focus-visible,[data-theme="dark"] .btn.btn-accent:active,[data-theme="dark"] .btn.btn-accent:disabled{ background:var(--accent-btn); color:var(--on-solid); }

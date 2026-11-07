@@ -65,7 +65,7 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
           <div className="home-hero-cta">
             <div className="hhc-title">{goalPct >= 100 ? <><Icon name="party" size={18} /> {t("todayGoal")} ✓</> : t("todayGoal")}</div>
             <div className="hhc-sub small">{streak?.atRisk ? <><Icon name="warn" size={14} /> {t("streakAtRisk")}</> : t("keepStreak")}</div>
-            <button type="button" className="btn btn-accent btn-lg btn-block" onClick={() => {
+            <button type="button" className="btn btn-primary btn-lg btn-block" onClick={() => {
               if (data?.resume?.nodeId && openLesson) openLesson(data.resume.nodeId);
               else go("path");
             }}>
@@ -93,7 +93,7 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
           a forced exam). Only before it's taken and if not dismissed. */}
       {placement?.enabled && !placement?.done && !placement?.dismissed && (
         <div className="card mb16 placement-offer" style={{ display: "flex", alignItems: "center", gap: 14, borderInlineStart: "4px solid var(--primary)" }}>
-          <div className="mod-ico" style={{ background: "linear-gradient(135deg,#3b82f6,#6d28d9)", width: 48, height: 48, marginBottom: 0 }}><Icon name="compass" size={24} /></div>
+          <div className="mod-ico" style={{ background: "var(--primary)", width: 48, height: 48, marginBottom: 0 }}><Icon name="compass" size={24} /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 800 }}>{t("placementOfferTitle")}</div>
             <div className="small muted">{placement.offerText || t("placementOfferBody")}</div>
@@ -115,7 +115,7 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
           dismissible so it never nags. Points to the weakest topic. */}
       {placement?.enabled && placement?.done && placement?.recommendation && !recoHidden && (
         <div className="card mb16 placement-reco" style={{ display: "flex", alignItems: "center", gap: 14, borderInlineStart: "4px solid var(--green)" }}>
-          <div className="mod-ico" style={{ background: "linear-gradient(135deg,#22a06b,#0f766e)", width: 48, height: 48, marginBottom: 0 }}><Icon name="target" size={24} /></div>
+          <div className="mod-ico" style={{ background: "var(--accent-btn)", width: 48, height: 48, marginBottom: 0 }}><Icon name="target" size={24} /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 800 }}>{placement.recommendation.title}</div>
             <div className="small muted">{placement.recommendation.body}</div>
@@ -139,13 +139,13 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
 
       {/* Daily Diagnosis Challenge teaser — a quick daily habit hook */}
       {flag("dx_challenge") && (
-        <div className="card mb16 dx-teaser" style={{ display: "flex", alignItems: "center", gap: 14, borderInlineStart: "4px solid #e0533d" }}>
-          <div className="mod-ico" style={{ background: "linear-gradient(135deg,#e0533d,#b5321e)", width: 48, height: 48, marginBottom: 0 }}><Icon name="stethoscope" size={22} style={{ color: "var(--on-solid)" }} /></div>
+        <div className="card mb16 dx-teaser" style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div className="mod-ico" style={{ background: "var(--primary)", width: 48, height: 48, marginBottom: 0 }}><Icon name="stethoscope" size={22} style={{ color: "var(--on-solid)" }} /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 800 }}>{t("dxTitle")}</div>
             <div className="small muted">{t("dxTeaser")}</div>
           </div>
-          <button type="button" className="btn btn-accent btn-sm" onClick={() => go("dxChallenge")}><Icon name="play" size={14} /> {t("dxPlay")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => go("dxChallenge")}><Icon name="play" size={14} /> {t("dxPlay")}</button>
         </div>
       )}
 
@@ -170,8 +170,8 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
 
       {/* quests / chests teaser */}
       {flag("quests") && ((data?.questsClaimable > 0) || (data?.chestsReady > 0)) && (
-        <div className="card mb16" style={{ display: "flex", alignItems: "center", gap: 14, borderInlineStart: "4px solid var(--xp)" }}>
-          <div className="mod-ico" style={{ background: "var(--grad-primary)", width: 48, height: 48, marginBottom: 0 }}><Icon name="target" size={24} /></div>
+        <div className="card mb16" style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div className="mod-ico" style={{ background: "var(--primary)", width: 48, height: 48, marginBottom: 0 }}><Icon name="target" size={24} /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 800 }}>
               {data.questsClaimable > 0 && `${data.questsClaimable} ${t("dailyQuests")} ✓`}
@@ -180,32 +180,32 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
             </div>
             <div className="small muted">{t("questsHub")}</div>
           </div>
-          <button type="button" className="btn btn-accent btn-sm" onClick={() => go("quests")}><Icon name="target" size={14} /> {t("questsHub")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => go("quests")}><Icon name="target" size={14} /> {t("questsHub")}</button>
         </div>
       )}
 
       {/* spaced-repetition review reminder */}
       {flag("srs_review") && data?.dueReviews > 0 && (
-        <div className="card mb16" style={{ display: "flex", alignItems: "center", gap: 14, borderInlineStart: "4px solid var(--flame)" }}>
-          <div className="mod-ico" style={{ background: "var(--grad-warm)", width: 48, height: 48, marginBottom: 0 }}><Icon name="repeat" size={24} /></div>
+        <div className="card mb16" style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div className="mod-ico" style={{ background: "var(--primary)", width: 48, height: 48, marginBottom: 0 }}><Icon name="repeat" size={24} /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 800 }}>{data.dueReviews} {t("dueCount")}</div>
             <div className="small muted">{t("reviewDesc")}</div>
           </div>
-          <button type="button" className="btn btn-accent btn-sm" onClick={() => go("review")}><Icon name="repeat" size={14} /> {t("review")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => go("review")}><Icon name="repeat" size={14} /> {t("review")}</button>
         </div>
       )}
 
       {/* Rewarded video — opt-in "watch to earn gems" (Duolingo Ads model).
           Hidden for premium AND when the premium/ads program is switched off. */}
       {!(p.premium_effective ?? p.premium) && (
-        <div className="card mb16 rewarded-cta" style={{ display: "flex", alignItems: "center", gap: 14, borderInlineStart: "4px solid var(--gem, #8b5cf6)" }}>
-          <div className="mod-ico" style={{ background: "linear-gradient(135deg,#8b5cf6,#6d28d9)", width: 48, height: 48, marginBottom: 0 }}><Icon name="gift" size={24} /></div>
+        <div className="card mb16 rewarded-cta" style={{ display: "flex", alignItems: "center", gap: 14 }}>
+          <div className="mod-ico" style={{ background: "var(--primary)", width: 48, height: 48, marginBottom: 0 }}><Icon name="gift" size={24} /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 800 }}>{t("rewardedCtaTitle")}</div>
             <div className="small muted">{t("rewardedCtaBody")}</div>
           </div>
-          <button type="button" className="btn btn-accent btn-sm" onClick={() => setShowRewarded(true)}><Icon name="play" size={14} /> {t("rewardedWatch")}</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setShowRewarded(true)}><Icon name="play" size={14} /> {t("rewardedWatch")}</button>
         </div>
       )}
       {showRewarded && (

@@ -111,3 +111,46 @@ Budget: `design-refresh.css` entry CSS is at 59.331 KB of a 60 KB limit. Trim be
    inside LearnApp.
 5. **Verify dark mode with a screenshot and `getComputedStyle`.** axe reports some low-contrast text as
    "incomplete", not as a violation, so a clean axe run does not prove the text is readable.
+
+## R104 — style decision: flat-first, accessible boundaries
+
+Research (ui-ux-pro-max `--domain style` / `--domain product` / `--domain color` searches, plus sources
+listed in `docs/rounds/R104-REPORT.md`):
+
+| Style | Decision for MED | Reason (measured or cited) |
+|---|---|---|
+| Flat (solid surfaces, hairlines, one elevation scale) | **Base** | Most accessible base; lowest GPU cost; the skill's default for dashboards and corporate/health. |
+| Neumorphism | **Rejected** | Relies on shadow steps with 1.7:1 contrast; fails 1.4.3/1.4.11 in every review found. |
+| Claymorphism | **Rejected** | Playful; the skill itself lists it for kids' and onboarding products. R97 already rejected it for a clinical audience. |
+| Glassmorphism | **Overlays only** | Text on translucent blur fails contrast when the background changes; backdrop-filter adds GPU cost. 95 uses on the site; reduce to overlays in a later round. |
+| Skeuomorphic gloss (hover sheen on buttons) | **Removed** | Decoration. Removed from `.btn-primary` and `.btn-accent`. |
+| Gradients on controls and icon tiles | **Removed on the learner home and the green CTA** | One accent per screen. Gradients were the main source of visual noise. |
+
+### Tokens (measured, WCAG 2.2)
+
+| Token | Light | Dark | Used for | Ratio |
+|---|---|---|---|---|
+| `--control-line` (new) | `#7a879d` | `#6b7fa5` | input, select, textarea, `.btn-ghost` boundary | 3.63:1 / 4.15:1 on panel (1.4.11 ≥ 3:1) |
+| `--border` (unchanged) | `#dbe3ee` | `#2a3757` | hairline dividers only | 1.29:1 / 1.42:1 (decoration, not a control) |
+| `--accent-btn` (new) | `#1a7a4c` | `#1a7a4c` | solid green CTA fill | white label 5.34:1 (old gradient ends 2.45–4.05:1) |
+| dark primary CTA label | — | `var(--bg)` `#0b1020` | blue CTA in dark | 6.0:1 on `#4f93e8`, 4.7:1 on `#3f7fd6` (white 3.2 / 4.0) |
+
+### Rules (R104)
+
+1. **One accent per screen.** Coloured side stripes are reserved for status: the placement offer and
+   the placement recommendation. Decorative stripes (dx teaser, quest, review, rewarded) are removed.
+2. **One solid CTA per screen.** The hero "continue" action is the solid primary. List actions are
+   outline buttons in the primary colour (`.btn-ghost`).
+3. **Controls have a 3:1 boundary.** Inputs and outline buttons use `--control-line`. A hairline
+   `--border` is not enough when the border is the only cue.
+4. **Flat surfaces.** No hover gloss on buttons. Icon tiles are one solid tint, not a gradient.
+5. **Guarded.** `client/src/r104-style.test.js` checks the ratios, the declared tokens, and the
+   one-accent rule on the learner home.
+
+### Known open items (not in R104)
+
+- The daily-report card and the streak card still carry a gold stripe and a gradient banner.
+- The XP and warning non-text colours are below 3:1 on white (`--warn` 2.54:1, gold 2.19:1). They need
+  separate `-line` tokens, applied only where the colour is the only cue.
+- Glassmorphism on 95 rules: reduce to overlays in a later round.
+- Okabe-Ito is the verified colour-blind-safe set for charts and categories. Status colour pairs are not yet audited for red-green.
