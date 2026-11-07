@@ -262,9 +262,10 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
   const startDeck = async (deck) => {
     let playable = deck;
     if (deck.some((c) => c && c._summary)) {
+      const session = deck.length > LEARNER_SESSION_CAP ? shuffleArray(deck).slice(0, LEARNER_SESSION_CAP) : deck;
       setDeckBusy(true);
       try {
-        playable = await loadCardBodies(deck.map((c) => c.id));
+        playable = await loadCardBodies(session.map((c) => c.id));
       } catch (e) {
         setDeckBusy(false);
         setLoadErr(loadFailKind(e));
@@ -311,7 +312,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
   // Deck picker only for FREE practice. In an exam, it auto-starts (no preview of answers).
   if (!cards) {
     if (inExam || deckBusy) return flashChrome(embedded, home, <Spinner />);
-    return <DeckPicker allCards={allCards} onStart={startDeck} home={home} embedded={embedded} topic={topic} onOpenCases={onOpenCases} onClearTopic={onClearTopic} />;
+    return <DeckPicker allCards={allCards} onStart={startDeck} home={home} embedded={embedded} topic={topic} onOpenCases={onOpenCases} onClearTopic={onClearTopic} sessionCap={!inExam && user?.role === "learner" ? LEARNER_SESSION_CAP : null} />;
   }
 
   if (finished) return <Summary cards={cards} results={results} totalHints={totalHints} home={home}
@@ -758,6 +759,11 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
 }
 
 
+// R97 (owner-approved): one learner session loads at most this many cards. A random sample of the
+// chosen deck is practised; the picker labels the real session size.
+export const LEARNER_SESSION_CAP = 200;
+const capFor = (n, cap) => (cap ? Math.min(n, cap) : n);
+
 // R97: full bodies for the chosen deck, in deck order. The server takes up to 400 ids per request;
 // 200 keeps the URL short.
 async function loadCardBodies(ids) {
@@ -776,7 +782,7 @@ const courseOf = (c, lang) => biField(c, "course", lang) || "—";
    course or category names, and "practice" runs exactly the decks on screen. */
 // topic: {key, label} from a virtual-patient case ("study this subject"), or null.
 // onOpenCases(topic): jump to the virtual-patient cases of the same subject.
-export function DeckPicker({ allCards: allCardsAll, onStart, home, embedded = false, topic = null, onOpenCases, onClearTopic }) {
+export function DeckPicker({ allCards: allCardsAll, onStart, home, embedded = false, topic = null, onOpenCases, onClearTopic, sessionCap = null }) {
   const { t, lang } = useApp();
   const fa = lang === "fa";
   const [query, setQuery] = useState("");
@@ -843,8 +849,8 @@ export function DeckPicker({ allCards: allCardsAll, onStart, home, embedded = fa
         <h3>{t("pickDeck")}</h3>
         <p className="muted small">{t("pickDeckDesc")}</p>
         <button type="button" className="btn btn-primary mt16" disabled={!shown.length} onClick={() => onStart(shown)}>
-          ▶ {filtered ? (fa ? `تمرین نتایج نمایش‌داده‌شده (${shown.length.toLocaleString("fa-IR")})` : `Practise shown (${shown.length})`)
-            : `${t("practiceAll")} (${allCards.length})`}
+          ▶ {filtered ? (fa ? `تمرین نتایج نمایش‌داده‌شده (${capFor(shown.length, sessionCap).toLocaleString("fa-IR")})` : `Practise shown (${capFor(shown.length, sessionCap)})`)
+            : `${t("practiceAll")} (${capFor(allCards.length, sessionCap)})`}
         </button>
       </div>
 
@@ -898,12 +904,12 @@ export function DeckPicker({ allCards: allCardsAll, onStart, home, embedded = fa
         <div className="grid grid-2">
           {decks.map((d) => (
             <div className="card mod-card" key={d.course} role="button" tabIndex={0}
-              aria-label={`${d.course} — ${d.cards.length} ${t("totalCards")}`}
+              aria-label={`${d.course} — ${capFor(d.cards.length, sessionCap)} ${t("totalCards")}`}
               onClick={() => onStart(d.cards)}
               onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onStart(d.cards); } }}>
               <div className="mod-ico" style={{ background: "var(--grad-purple)" }}><Icon name="book" size={30} /></div>
               <h3>{d.course}</h3>
-              <p>{d.cards.length} {t("totalCards")}</p>
+              <p>{capFor(d.cards.length, sessionCap)} {t("totalCards")}</p>
               <div className="case-meta mt8">
                 {d.cats.slice(0, 3).map((cat) => (
                   <span className="tag" key={cat}>{cat}</span>

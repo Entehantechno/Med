@@ -70,3 +70,34 @@ describe('learner deck summary (R97)', () => {
     expect(after.some((p) => p.startsWith('/flashcards?ids='))).toBe(false);
   });
 });
+
+describe('learner session cap (R97)', () => {
+  const BIG = Array.from({ length: 250 }, (_, i) => ({ id: 1000 + i, topic: 'cardio' }));
+  const body = (id) => ({ id, type: 'mcq', topic: 'cardio', title_en: `Card ${id}`, questionText_en: `Question ${id}`,
+    options: [{ fa: 'الف', en: 'Alpha', correct: true }, { fa: 'ب', en: 'Beta', correct: false }] });
+
+  beforeEach(() => {
+    who.role = 'learner';
+    mocks.get.mockImplementation(async (path) => {
+      if (path === '/flashcards?summary=1') return structuredClone(BIG);
+      if (path.startsWith('/flashcards?ids=')) {
+        return path.slice('/flashcards?ids='.length).split(',').map((n) => body(Number(n)));
+      }
+      return {};
+    });
+  });
+
+  it('a learner session is capped at 200 cards: the label says so and only 200 bodies are fetched', async () => {
+    mount();
+    const btn = await screen.findByRole('button', { name: /practiceAll \(200\)/ });
+    fireEvent.click(btn);
+    await screen.findByText(/^Question 1\d{3}$/);
+    const requested = mocks.get.mock.calls
+      .map(([p]) => p)
+      .filter((p) => p.startsWith('/flashcards?ids='))
+      .flatMap((p) => p.slice('/flashcards?ids='.length).split(',').map(Number));
+    expect(requested).toHaveLength(200);
+    expect(new Set(requested).size).toBe(200);
+    for (const id of requested) expect(id).toBeGreaterThanOrEqual(1000);
+  });
+});

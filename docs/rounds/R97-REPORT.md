@@ -9,6 +9,9 @@ Version: `2026.11.07-r97-ui`. Branch `arena/3419d01b-med`. Builds on R96 (`1126a
   additional +0.001 KB that appeared after the deck work.
 - **Premium payload:** the owner approved server-side paging. Implemented as a light deck summary
   plus deck-start body fetch (section 1).
+- **Second approval (2026-11-07, "تایید می‌کنم"):** read as acceptance of the two recommendations
+  in the previous report: the budget figure, and a per-session cap for learner "practice all"
+  (implemented at 200 cards, section 1b). Course labels on the bank are still a content task.
 - **Paywall rule (R96):** unchanged. Free learners get the three teasers.
 
 ## 1. Learner payload
@@ -29,6 +32,15 @@ learner starts.
 - `client/src/pages/Flashcards.jsx`: learners boot on the summary. Starting a deck fetches the full
   bodies with `GET /api/flashcards?ids=…`, 200 ids per request. A spinner shows while this loads.
   Exams and class runs are unchanged. Staff are unchanged.
+
+### 1b. Session cap (learner)
+
+A learner session loads at most **200 cards** (`LEARNER_SESSION_CAP` in `Flashcards.jsx`). When a
+deck is larger, a random sample of 200 is practised. The picker button shows the real session size,
+for example "Practice all cards (200)". Exams, class runs and staff are not capped.
+
+Effect on the lab deck: "practice all" for 11,605 cards used to load 86.7 MB in 59 requests. Now it
+loads 200 cards (about 1.6 MB) in one request. The cardio topic deck (534 cards) loads 200 cards.
 
 ### Measured (lab DB `/home/user/data-ui`, 11,665 learn cards)
 
@@ -60,14 +72,10 @@ round.
 
 ## 2. Open issues — decisions for the owner
 
-1. **"Practice all" for a premium learner still loads the whole bank (86.7 MB, 3.9 s).** The cause
-   is data: only 1 of 11,605 bank cards has a `category` or `course` label, so the picker shows one
-   deck of 11,605 cards. Options:
-   (a) cap a "practice all" session at N cards (for example 100 or 200, shuffled) and let the
-   learner pick a topic for more;
-   (b) fill course labels on the bank (content work);
-   (c) keep as is.
-   **Recommended:** (a) together with (b) over time.
+1. **Course labels on the bank (content work).** Only 1 of 11,605 bank cards has a `category` or
+   `course` label, so the course view is one deck. The session cap (section 1b) bounds the cost of
+   a session, but the picker is still not useful by course until the labels exist. Owner to decide
+   who fills them and when.
 2. **Cache cost on bank edits.** The summary cache signature covers every active flashcard,
    including university cards. A teacher edit to a university card rebuilds the learner summary on
    the next learner request (about 1.2 s once). Making the signature bank-only would mean scanning
@@ -98,14 +106,14 @@ for this audience. Decision and tokens: `docs/design/DESIGN.md`.
 |---|---|
 | Server, learner gate + summary + index tests | 21 passed (r97 summary 8, r96 gate 6, r96 index 7) |
 | Server full suite | 2171 passed, 15 skipped, 45 failed. All 45 are the pre-existing `test/master-bank.test.js` failures (R96 baseline 2157 / 45) |
-| Client full suite | 58 files, 283 tests passed (R96: 278) |
-| `npm run perf:budget` | passed. Entry JS **25.0957 KB** (approved 25.0947; +0.001 KB more after the deck change, see below). Entry CSS 58.95, total CSS 65.27 (limit 66), learn app 24.11 (limit 25), fonts 126 KB |
+| Client full suite | 58 files, 284 tests passed (R96: 278) |
+| `npm run perf:budget` | passed. Entry JS **25.0898 KB** (below the original 25.0908; gzip size varies with chunk hashes; gate 25.1). Entry CSS 58.95, total CSS 65.27 (limit 66), learn app 24.11 (limit 25), fonts 126 KB |
 | `npm run audit:gate` | passed (0 critical, 0 high) |
-| Browser flow (learner deck) | no console errors; summary and ids requests as above |
+| Browser flow (learner deck, 390 px) | no console errors; summary then one ids request for a capped 200-card session; picker label "Practice all cards (200)" |
 
-**Budget note for the owner:** the approved figure was 25.0947 KB. The deck change moved the
-measured entry to 25.0957 KB, which is still under the 25.1 KB gate. The gate was not edited. The
-extra 0.001 KB was not part of the approval, so please confirm it, or tell me to find the bytes.
+**Budget note:** the approved figure was 25.0947 KB, and the deck work moved it to 25.0957 KB. After
+the final cap change the measured figure is 25.0898 KB, below the original 25.0908 KB and under the
+25.1 KB gate. The gate was not edited.
 
 ## 5. Environment notes
 
