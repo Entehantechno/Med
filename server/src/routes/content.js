@@ -27,6 +27,7 @@ import { isLearnContent, caseIsLearn } from "../lib/content-track.js";
 import { policyRow, policyReadiness, referenceSnapshotForPolicy, publicReferenceSnapshot, sanitizeReferenceIds } from "../lib/reference-governance.js";
 import { recordPassword } from "../lib/password-vault.js";
 import { BANK_SQL, NON_BANK_SQL, FLASHCARDS_BY_TRACK } from "../lib/flashcard-track.js";
+import { learnerDeckSummary } from "../lib/flashcard-summary.js";
 import { isEnabled } from "../lib/flags.js";
 import { getProfile } from "../lib/gamify.js";
 import { lockedTeaserIds } from "../lib/bank-pool.js";
@@ -493,6 +494,11 @@ r.get("/flashcards", authRequired, (req, res) => {
     wantIds = wantIds ? wantIds.filter((id) => teasers.includes(Number(id))) : teasers;
   }
   if (wantIds && !wantIds.length) return res.json([]);
+  // R97: learners who ask for the light deck summary (picker fields only). Same rows, same gate.
+  // See lib/flashcard-summary.js and test/r97-learner-summary.test.js.
+  if (req.user.role === "learner" && req.query.summary === "1") {
+    return res.json(learnerDeckSummary(wantIds, (row) => parse(row)));
+  }
   let rows;
   if (wantIds) {
     const ph = wantIds.map(() => "?").join(",");

@@ -1,80 +1,115 @@
-# R97 — learner payload gate and first design pass (2026-11-07)
+# R97 — learner payload (paging) and first design pass (2026-11-07)
 
 Version: `2026.11.07-r97-ui`. Branch `arena/3419d01b-med`. Builds on R96 (`1126aa4`).
 
-## 1. Learner payload gate (owner decision: teasers only)
+## 0. Owner decisions in this round
 
-Rule (owner, R96): a free learner sees only the three teaser cards on `GET /api/flashcards`,
-the same rule as `/learn/browse`. Implemented in the uncommitted R96 gate work and committed here:
-`server/src/lib/bank-pool.js` (pool, cache, `lockedTeaserIds`, `browsePoolSignature`),
-`server/src/routes/learn.js`, `server/src/routes/content.js`.
-Test: `server/test/r96-learner-bank-gate.test.js` (6 tests, passing).
+- **Entry JS budget:** the owner accepted the change from 25.0908 KB to 25.0947 KB (+0.004 KB, from
+  the icon imports in `LearnHome.jsx`). Gate value unchanged at 25.1 KB. See section 4 for the
+  additional +0.001 KB that appeared after the deck work.
+- **Premium payload:** the owner approved server-side paging. Implemented as a light deck summary
+  plus deck-start body fetch (section 1).
+- **Paywall rule (R96):** unchanged. Free learners get the three teasers.
 
-Measured after the gate (lab DB `/home/user/data-ui`, 11,665 learn cards, server time and
-decoded body size, `curl`):
+## 1. Learner payload
 
-| Account | Cards returned | Body | Server time |
+### What was wrong
+
+The learner's flashcards picker called `GET /api/flashcards` and received the whole competitive
+bank (11,605 full cards, about 91 MB decoded). The picker needs only `id`, `topic` and the
+category/course labels to group and filter. The full bodies are needed only for the deck that the
+learner starts.
+
+### What changed
+
+- `GET /api/flashcards?summary=1` (learner only): returns `{id, topic, category*, course*}` per card.
+  Same rows, same teaser gate, demo seed cards excluded, corrupt rows skipped. Other roles ignore
+  the parameter. Module: `server/src/lib/flashcard-summary.js`. Route: `server/src/routes/content.js`.
+- The summary is parsed once per bank signature (`BANK_SIG_SQL`) and kept in memory.
+- `client/src/pages/Flashcards.jsx`: learners boot on the summary. Starting a deck fetches the full
+  bodies with `GET /api/flashcards?ids=…`, 200 ids per request. A spinner shows while this loads.
+  Exams and class runs are unchanged. Staff are unchanged.
+
+### Measured (lab DB `/home/user/data-ui`, 11,665 learn cards)
+
+| Request (premium learner) | Items | Size | Time |
 |---|---|---|---|
-| Free learner (`learner`) | 3 | 28 KB | 13 ms |
-| Student (`40012345`) | 4 | 9 KB | 6 ms |
-| Premium learner (`learner`, premium set for the test) | 11,605 | 90.9 MB | 2.5–2.9 s |
+| Picker boot `?summary=1`, first call after restart / bank change | 11,605 | 320 KB raw, 31 KB gzip | 1.24 s (cache build, once) |
+| Picker boot, warm | 11,605 | 320 KB | 6 ms |
+| Topic deck "cardio" (from a virtual-patient link) | 534 | about 4.3 MB in 3 requests | about 0.1 s per request |
+| "Practice all" (whole bank as one deck) | 11,605 | **86.7 MB in 59 requests** | 3.9 s total |
 
-Before the gate (R96 baseline): about 91 MB and 2.5–3.1 s for a free learner.
-**Open:** premium learners still receive the whole bank in one response, so the premium
-payload is unchanged. Reducing it needs paging or a search API and a client change. This is
-an owner decision (see section 4). The premium test flag was reverted in the lab database.
+Before this round the picker call alone was about 91 MB and 2.5–2.9 s on every open.
+Free learner (`learner` account, not premium): 3 teaser cards on boot, about 28 KB before this
+round.
 
-## 2. Design pass (first step)
+### Browser check (390 px, learner, `/#flashcards?topic=cardio`)
+
+- Boot: one request, `GET /api/flashcards?summary=1`.
+- Start "Practice all cards (534)": three `ids` requests (200, 200, 134 ids), then card 1 of 534
+  shows the full question. No console errors.
+
+### Tests
+
+- `server/test/r97-learner-summary.test.js` (8 tests): summary keys are limited to the picker
+  fields; summary ids equal the full learner list (premium and free); demo cards are excluded from
+  both; labels match the full list; body fetch by ids matches the full list; a bank change appears
+  in the summary; other roles ignore `summary=1`.
+- `client/src/pages/Flashcards.learner-summary.test.jsx` (3 tests): learner boots on the summary;
+  starting a deck fetches bodies by id; student boots on the full list and does not fetch by id.
+
+## 2. Open issues — decisions for the owner
+
+1. **"Practice all" for a premium learner still loads the whole bank (86.7 MB, 3.9 s).** The cause
+   is data: only 1 of 11,605 bank cards has a `category` or `course` label, so the picker shows one
+   deck of 11,605 cards. Options:
+   (a) cap a "practice all" session at N cards (for example 100 or 200, shuffled) and let the
+   learner pick a topic for more;
+   (b) fill course labels on the bank (content work);
+   (c) keep as is.
+   **Recommended:** (a) together with (b) over time.
+2. **Cache cost on bank edits.** The summary cache signature covers every active flashcard,
+   including university cards. A teacher edit to a university card rebuilds the learner summary on
+   the next learner request (about 1.2 s once). Making the signature bank-only would mean scanning
+   rows on every request, so this was not changed.
+3. **Public `/vp` page is dark while the app is light.** Theme decision; not changed.
+4. **Learner home has about eight cards with competing accents and gradients,** including the
+   premium banner. Product decision; not changed.
+5. **Student home is sparse** (one classes card, three stat tiles). Needs the owner's priorities.
+6. **Virtual-patient case screen** not re-audited this round.
+7. **Admin learn-cards** still 215–246 ms warm (deferred in R96).
+
+## 3. Design pass (first step)
 
 Reference: Notion entry of `VoltAgent/awesome-design-md`. Process: `ui-ux-pro-max` skill
-(design-system search, RTL-aware). The generic recommendation (claymorphism, Baloo 2) was
-rejected for this audience. The decision and the token rules are in `docs/design/DESIGN.md`.
+(design-system search, RTL-aware). The generic recommendation (claymorphism, Baloo 2) was rejected
+for this audience. Decision and tokens: `docs/design/DESIGN.md`.
 
-Changes:
-- `client/src/pages/learn/LearnHome.jsx`: 8 emoji (wave, target, party, warning, compass, strength,
-  gift ×3) replaced by the shared SVG `Icon` set. The wave emoji in the greeting was removed.
-- `client/src/pages/learn/LearnHome.icons.test.js` (new, 2 tests): fails if pictographic emoji come
-  back into the learner home (verified red on the R96 file: 9 matches; green now: 0).
+- `client/src/pages/learn/LearnHome.jsx`: 8 emoji replaced by the shared SVG `Icon` set; the wave
+  emoji in the greeting removed.
+- `client/src/pages/learn/LearnHome.icons.test.js` (2 tests): fails if pictographic emoji return
+  (red on the R96 file: 9 matches; green now: 0).
+- Desktop before/after screenshots of the learner home: the empty emoji boxes are now icons. The
+  layout is otherwise unchanged.
 
-Screenshots (desktop, learner home) were checked before and after. The boxes that used to render
-as empty glyphs are now icons. The rest of the layout is unchanged.
-
-## 3. Verification
+## 4. Verification
 
 | Check | Result |
 |---|---|
-| Server suite (`npx vitest run`) | 2163 passed, 15 skipped, 45 failed. All 45 are the pre-existing `test/master-bank.test.js` failures (baseline in R96: 2157 / 45). +6 new passing tests. |
-| Client suite (`npx vitest run`) | 57 files, 280 tests passed (R96: 278; +2 icon guard tests). |
-| `npm run perf:budget` | Passed. Entry JS **25.0947 KB** (was 25.0908, +0.004 KB from the icon imports; limit 25.1). Entry CSS 58.95, total CSS 65.27 (limit 66), learn app 24.11, fonts 126 KB. |
-| `npm run audit:gate` | Passed. Production deps: 0 critical, 0 high. |
-| Browser check | No console errors on the learner home after the restart. |
+| Server, learner gate + summary + index tests | 21 passed (r97 summary 8, r96 gate 6, r96 index 7) |
+| Server full suite | 2171 passed, 15 skipped, 45 failed. All 45 are the pre-existing `test/master-bank.test.js` failures (R96 baseline 2157 / 45) |
+| Client full suite | 58 files, 283 tests passed (R96: 278) |
+| `npm run perf:budget` | passed. Entry JS **25.0957 KB** (approved 25.0947; +0.001 KB more after the deck change, see below). Entry CSS 58.95, total CSS 65.27 (limit 66), learn app 24.11 (limit 25), fonts 126 KB |
+| `npm run audit:gate` | passed (0 critical, 0 high) |
+| Browser flow (learner deck) | no console errors; summary and ids requests as above |
 
-Note: the measured entry JS moved from 25.0908 to 25.0947 KB (+0.004 KB). It is still under the
-25.1 KB limit, but the standing rule is to keep the figure at 25.0908 unless the owner approves a
-change. **The owner should confirm this change.** The number is not silently raised; the gate
-value itself (25.1) was not edited.
-
-## 4. Not done in this round, and open decisions
-
-1. **Premium learner payload (owner decision needed).** Options: (a) server-side paging of the
-   bank for premium learners with a client change; (b) keep the full bank and cache it on the
-   client. Option (a) is recommended. No change was made without the owner's decision.
-2. **Public `/vp` page is dark while the app is light.** A theme decision for the owner; not
-   changed.
-3. **Learner home still has about eight cards with competing accents and gradients,** including
-   the premium banner. Reducing them is a product decision (the premium banner is a revenue
-   surface); not changed.
-4. **Student home is sparse** (one classes card and three stat tiles). A redesign needs the
-   owner's priorities for that screen; not changed.
-5. **Virtual-patient case screen was not re-audited in this round.** Next step.
-6. **Admin learn-cards** remains at about 215–246 ms warm (R96 deferred).
+**Budget note for the owner:** the approved figure was 25.0947 KB. The deck change moved the
+measured entry to 25.0957 KB, which is still under the 25.1 KB gate. The gate was not edited. The
+extra 0.001 KB was not part of the approval, so please confirm it, or tell me to find the bytes.
 
 ## 5. Environment notes
 
-- The `ui-ux-pro-max`, `design`, and `design-system` skills are installed in `~/.claude/skills`.
-  The first copy attempt picked the wrong `SKILL.md` (`banner-design`); it was removed and the
-  correct skill was copied.
-- The Playwright lab is in `/tmp/uilab`. Chromium needs `LD_LIBRARY_PATH=/tmp/al2023x/lib`
-  (unpacked from `@sparticuz/chromium`).
-- The lab data directory is `/home/user/data-ui` (seeded with `SEED_ALLOW_PRODUCTION=1`).
-  It is not part of the repository.
+- Skills installed in `~/.claude/skills`: `ui-ux-pro-max`, `design`, `design-system`.
+- Playwright lab: `/tmp/uilab`. Chromium needs `LD_LIBRARY_PATH=/tmp/al2023x/lib`.
+- Lab data: `/home/user/data-ui` (seeded with `SEED_ALLOW_PRODUCTION=1`), not part of the repo.
+  The premium flag used for measurement was reverted.

@@ -33,6 +33,8 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
   useEffect(() => { markBusy(true); return () => markBusy(false); }, []);
   const { t, lang, user } = useApp();
   const [allCards, setAllCards] = useState(null);
+  // R97: true while a learner deck's full card bodies are being fetched after the picker.
+  const [deckBusy, setDeckBusy] = useState(false);
   const [loadErr, setLoadErr] = useState("");
   const [bootNonce, setBootNonce] = useState(0);
   const [gradeErr, setGradeErr] = useState("");
@@ -119,6 +121,8 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
       setLoadErr("");
       try {
         const skipUniExamSettings = user?.role === "learner";
+        // R97: a learner's free-practice picker needs only id/topic/labels; bodies come per deck.
+        const learnerSummary = !inExam && skipUniExamSettings;
         let requestedIds=flashcardIds;
         if(classCombined&&classId){
           const cfg=await api.get(`/classes/${classId}/flashcards/config`,{timeoutMs:15000,stage:'boot'});
@@ -127,14 +131,14 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
         const examIds = Array.isArray(requestedIds) ? requestedIds.map(Number).filter((n) => Number.isFinite(n) && n > 0) : [];
         const flashPath = inExam
           ? (examIds.length ? `/flashcards?ids=${examIds.slice(0, 400).join(",")}` : "/flashcards?ids=")
-          : "/flashcards";
+          : learnerSummary ? "/flashcards?summary=1" : "/flashcards";
         const [c, s] = await Promise.all([
           api.get(flashPath, { timeoutMs: 20_000, stage: "boot" }),
           skipUniExamSettings
             ? Promise.resolve({ showHints: true, showCorrect: true })
             : api.get("/settings/exam", { timeoutMs: 20_000, stage: "boot" }),
         ]);
-        const list = Array.isArray(c) ? c : [];
+        const list = Array.isArray(c) ? (learnerSummary ? c.map((card) => ({ ...card, _summary: true })) : c) : [];
         let filtered = list;
         if (inExam) {
           filtered = examIds.length ? list.filter((card) => examIds.includes(card.id)) : [];
@@ -255,8 +259,20 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
     return () => clearTimeout(id);
   }, [timeLeft, finished]);
 
-  const startDeck = (deck) => {
-    setCards(deck); setIdx(0); setCardStates(deck.map(() => newState())); setReachedIdx(0); setResults([]); setTotalHints(0);
+  const startDeck = async (deck) => {
+    let playable = deck;
+    if (deck.some((c) => c && c._summary)) {
+      setDeckBusy(true);
+      try {
+        playable = await loadCardBodies(deck.map((c) => c.id));
+      } catch (e) {
+        setDeckBusy(false);
+        setLoadErr(loadFailKind(e));
+        return;
+      }
+      setDeckBusy(false);
+    }
+    setCards(playable); setIdx(0); setCardStates(deck.map(() => newState())); setReachedIdx(0); setResults([]); setTotalHints(0);
     setFinished(false); startRef.current = Date.now(); hotspotLock.current = false;
   };
 
@@ -294,7 +310,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
 
   // Deck picker only for FREE practice. In an exam, it auto-starts (no preview of answers).
   if (!cards) {
-    if (inExam) return flashChrome(embedded, home, <Spinner />);
+    if (inExam || deckBusy) return flashChrome(embedded, home, <Spinner />);
     return <DeckPicker allCards={allCards} onStart={startDeck} home={home} embedded={embedded} topic={topic} onOpenCases={onOpenCases} onClearTopic={onClearTopic} />;
   }
 
@@ -742,6 +758,17 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
 }
 
 
+// R97: full bodies for the chosen deck, in deck order. The server takes up to 400 ids per request;
+// 200 keeps the URL short.
+async function loadCardBodies(ids) {
+  const byId = new Map();
+  for (let i = 0; i < ids.length; i += 200) {
+    const part = ids.slice(i, i + 200);
+    const rows = await api.get(`/flashcards?ids=${part.join(",")}`, { timeoutMs: 20_000, stage: "boot" });
+    for (const row of Array.isArray(rows) ? rows : []) byId.set(row.id, row);
+  }
+  return ids.map((id) => byId.get(id)).filter(Boolean);
+}
 const catOf = (c, lang) => biField(c, "category", lang);
 const courseOf = (c, lang) => biField(c, "course", lang) || "—";
 
