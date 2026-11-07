@@ -34,7 +34,10 @@ import { lockedTeaserIds } from "../lib/bank-pool.js";
 
 const r = Router();
 r.use('/cases', authRequired, (req, res, next) => {
-  if (['learner', 'content_manager', 'support'].includes(req.user.role)) return res.status(403).json({ error: 'university_only' });
+  // R100: a learner may read ONE learn-track case (GET /cases/:id, the virtual-patient case screen).
+  // The handler below enforces the learn track, the VP switch and studentSafeCase. Every other /cases route stays closed.
+  const learnerCaseRead = req.user.role === 'learner' && req.method === 'GET' && /^\/\d+$/.test(req.path);
+  if (!learnerCaseRead && ['learner', 'content_manager', 'support'].includes(req.user.role)) return res.status(403).json({ error: 'university_only' });
   if (req.body?.track === 'learn') return res.status(400).json({ error: 'university_only' });
   next();
 });
@@ -263,7 +266,8 @@ r.get("/cases/:id", authRequired, async (req, res) => {
         && !isLearnContent(row.data_json)) {
       return res.status(403).json({ error: "university_only", reason: "university_only", stage: "access" });
     }
-    if (!canAccessCase(req.user, req.params.id)) {
+    // Learners are gated by the learn track (above) and the VP switch (below), not by assignment (R100).
+    if (req.user.role !== "learner" && !canAccessCase(req.user, req.params.id)) {
       return res.status(403).json({ error: "not assigned to this exam", stage: "access" });
     }
     if (req.user.role === "learner") {

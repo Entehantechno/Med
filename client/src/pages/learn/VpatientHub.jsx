@@ -20,7 +20,7 @@ export default function VpatientHub({ home, topic = null, onOpenCards }) {
   };
 
   if (caseId) {
-    return <Exam caseId={caseId} go={go} home={() => setCaseId(null)} />;
+    return <Exam caseId={caseId} go={go} home={() => setCaseId(null)} embedded />;
   }
-  return <CaseList go={go} home={home} initialTopic={topic} onOpenCards={onOpenCards} />;
+  return <CaseList go={go} home={home} initialTopic={topic} onOpenCards={onOpenCards} embedded />;
 }

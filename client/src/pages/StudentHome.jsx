@@ -143,7 +143,7 @@ export default function StudentHome({ go }) {
               <div className="sd-mods">
                 {restModules.map((m) => (
                   <button type="button" className="card sd-mod" key={m.key} onClick={() => go(m.key)}>
-                    <span className="sd-ico" style={{ background: m.bg, color: "#fff", position: "relative" }}>
+                    <span className="sd-ico" style={{ background: m.bg, color: "var(--on-solid)", position: "relative" }}>
                       <Icon name={m.ico} size={20} />
                       {m.badge > 0 && <span className="sd-badge">{m.badge}</span>}
                     </span>

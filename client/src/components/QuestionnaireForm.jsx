@@ -78,7 +78,7 @@ export default function QuestionnaireForm({ form, lang, contextType, contextId, 
               <div className="row gap8 mt4" style={{ flexWrap: "wrap" }}>
                 {steps.map((v) => (
                   <label key={v} className="btn btn-ghost btn-sm"
-                         style={answers[q.id] === v ? { background: "var(--brand,#2563eb)", color: "#fff" } : {}}
+                         style={answers[q.id] === v ? { background: "var(--brand,#2563eb)", color: "var(--on-solid)" } : {}}
                          onClick={() => set(q.id, v)}>
                     {v}
                   </label>

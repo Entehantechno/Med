@@ -884,7 +884,8 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
                 </button>
               ))}
             </div>
-            <div className="tab-content">
+            {/* R100: the case panel scrolls, so it is a labelled, keyboard-focusable region (axe scrollable-region-focusable). */}
+            <div className="tab-content" role="region" tabIndex={0} aria-label={t(({ history: "tabHistory", problem: "tabProblem", tests: "tabTests", paraclinic: "tabParaclinic", imaging: "tabImaging", images: "tabImages" })[tab] || "tabDx")}>
               {tab === "history" && <HistoryTab c={caseData} t={t} lang={lang} />}
               {tab === "problem" && <ProblemTab value={problemList} onChange={setProblemListSync} t={t} lang={lang} onBlurLog={(text) => { const lines = String(text||"").split(/\n/).map((s)=>s.trim()).filter(Boolean); if (lines.length) logEvent("problem_list", { lines: lines.length, text: lines.join("\n") }); }} />}
               {tab === "dx" && <DxTab ddx={ddx} setDdx={setDdxSync} finalDx={finalDx} setFinalDx={setFinalDxSync} t={t}

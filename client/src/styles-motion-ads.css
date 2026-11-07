@@ -21,7 +21,7 @@
   position: relative;
   overflow: hidden;
   border-radius: 18px;
-  color: #fff;
+  color: var(--on-solid);
   isolation: isolate;
   border: 1px solid rgba(255,255,255,.14);
   box-shadow:
@@ -139,7 +139,7 @@
   font-weight: 800; line-height: 1.22;
   font-size: clamp(1.06rem, 3.4vw, 1.28rem);
   letter-spacing: -.02em;
-  color: #fff;
+  color: var(--on-solid);
   text-shadow: 0 1px 18px rgba(0,0,0,.22);
 }
 [dir="rtl"] .motion-ad__title { font-family: "Estedad Variable","Estedad",Vazirmatn,Tahoma,sans-serif; }
@@ -166,7 +166,7 @@
   padding: 4px 10px; border-radius: 999px;
   background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.18);
   backdrop-filter: blur(8px);
-  color: #fff;
+  color: var(--on-solid);
 }
 .motion-ad__cta {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
@@ -194,7 +194,7 @@
 }
 .motion-ad__cta--dark {
   background: linear-gradient(180deg, #0f1e3a, #162d5e);
-  color: #fff; border-color: rgba(255,255,255,.18);
+  color: var(--on-solid); border-color: rgba(255,255,255,.18);
 }
 .motion-ad__media {
   flex: none; width: 104px; height: 104px; border-radius: 14px;
@@ -328,7 +328,7 @@
   margin: 7px 0 4px;
   font-family: "Estedad Variable","Estedad",Vazirmatn,sans-serif;
   font-weight: 900; font-size: clamp(1.08rem, 3.2vw, 1.30rem); line-height:1.18;
-  color:#fff; text-shadow: 0 1px 16px rgba(0,0,0,.28);
+  color:var(--on-solid); text-shadow: 0 1px 16px rgba(0,0,0,.28);
   letter-spacing: -.02em;
 }
 [dir="rtl"] .premium-banner__title { font-family: "Estedad Variable","Estedad",Vazirmatn,Tahoma,sans-serif; }
@@ -353,7 +353,7 @@
 }
 .premium-banner__price {
   display:inline-flex; align-items:baseline; gap:6px; margin-top:10px;
-  font-weight:900; color:#fff;
+  font-weight:900; color:var(--on-solid);
 }
 .premium-banner__price b { font-size:1.08rem; letter-spacing:-.02em; }
 .premium-banner__price s { font-size:.78rem; opacity:.72; font-weight:700; }

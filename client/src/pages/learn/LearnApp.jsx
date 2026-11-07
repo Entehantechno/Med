@@ -393,7 +393,7 @@ export default function LearnApp() {
             {/* Program (course) selector — Duolingo-style. Shown only when there
                 is more than one program available. */}
             {programs.length > 1 && (
-              <div className="program-switch">
+              <nav className="program-switch" aria-label={t("program")}>
                 <div className="learn-nav-title">{t("program")}</div>
                 {programs.map((p) => (
                   <button type="button" key={p.slug} className={`program-opt ${activeProgram === p.slug ? "active" : ""}`}
@@ -402,7 +402,7 @@ export default function LearnApp() {
                     <span className="program-label">{p.label}</span>
                   </button>
                 ))}
-              </div>
+              </nav>
             )}
             {navSections.map((sec, sIdx) => {
               // Collapsed by default except the first group and the active one
@@ -465,7 +465,7 @@ export default function LearnApp() {
             <div className="learn-more-handle" />
             <div className="learn-more-head learn-more-head--glass">
               <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <span style={{ width:36, height:36, borderRadius:12, background:"linear-gradient(135deg,#0ea5e9,#6366f1)", display:"inline-flex", alignItems:"center", justifyContent:"center", color:"#fff", boxShadow:"0 8px 18px rgba(99,102,241,.28)" }}><Icon name="menu" size={18} /></span>
+                <span style={{ width:36, height:36, borderRadius:12, background:"linear-gradient(135deg,#0ea5e9,#6366f1)", display:"inline-flex", alignItems:"center", justifyContent:"center", color:"var(--on-solid)", boxShadow:"0 8px 18px rgba(99,102,241,.28)" }}><Icon name="menu" size={18} /></span>
                 <div>
                   <div style={{ fontWeight:900, fontSize:".98rem", lineHeight:1 }}>{t("navMoreTitle")}</div>
                   <div className="small muted" style={{ fontSize:".72rem" }}>{lang==="fa"?"همهٔ ابزارها — یک‌جا":"All tools — one place"}</div>
@@ -495,7 +495,7 @@ export default function LearnApp() {
             {/* Quick access — primary tabs as large glass cards */}
             {!moreQuery && (
               <div className="learn-more-quick">
-                <div className="learn-more-quick-title small muted" style={{ fontWeight:800, marginBottom:6, display:"flex", alignItems:"center", gap:6 }}><span style={{ width:22, height:22, borderRadius:7, background:"linear-gradient(135deg,#22c55e,#06b6d4)", display:"inline-flex", alignItems:"center", justifyContent:"center", color:"#fff", fontSize:11 }}>⚡</span> {lang==="fa"?"دسترسیِ سریع":"Quick access"}</div>
+                <div className="learn-more-quick-title small muted" style={{ fontWeight:800, marginBottom:6, display:"flex", alignItems:"center", gap:6 }}><span style={{ width:22, height:22, borderRadius:7, background:"linear-gradient(135deg,#22c55e,#06b6d4)", display:"inline-flex", alignItems:"center", justifyContent:"center", color:"var(--on-solid)", fontSize:11 }}>⚡</span> {lang==="fa"?"دسترسیِ سریع":"Quick access"}</div>
                 <div className="learn-more-quick-grid">
                   {[
                     {id:"home", ico:"dashboard", label:t("navTabHome"), grad:"linear-gradient(135deg,#0ea5e9,#6366f1)"},

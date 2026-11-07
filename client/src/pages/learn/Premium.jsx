@@ -81,9 +81,9 @@ export default function Premium({ onProfile }) {
       <div className="section-title"><h2><Icon name="crown" size={22} /> {t("premiumTitle")}</h2></div>
 
       {profile?.premium ? (
-        <div className="card center" style={{ background: "linear-gradient(135deg,#f0c454,#d0982a)", color: "#fff" }}>
+        <div className="card center" style={{ background: "linear-gradient(135deg,#f0c454,#d0982a)", color: "var(--on-solid)" }}>
           <Icon name="crown" size={40} />
-          <h3 style={{ border: "none", color: "#fff", marginTop: 8 }}>{t("subscribed")}</h3>
+          <h3 style={{ border: "none", color: "var(--on-solid)", marginTop: 8 }}>{t("subscribed")}</h3>
           {profile.premium_until
             ? <div style={{ opacity: .95 }}>{t("premiumUntil")}: {fmtDate(profile.premium_until)}</div>
             : <div style={{ opacity: .95 }}>{t("premiumLifetime")}</div>}

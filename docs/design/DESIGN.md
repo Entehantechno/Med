@@ -97,3 +97,17 @@ The student home (`client/src/pages/StudentHome.jsx`) follows these rules. Class
 6. **Empty state** guides the next step (kept from R97).
 
 Budget: `design-refresh.css` entry CSS is at 59.331 KB of a 60 KB limit. Trim before adding.
+
+## R100 — solid text, header ink, learner case screen
+
+1. **Text on a solid fill** uses `var(--on-solid)` (white in both themes). Do not write `color: #fff`.
+   Guarded by `client/src/on-solid-token.test.js`.
+2. **`--header` is a background, never a text colour.** For headings and timers use `var(--header-ink)`:
+   `#26527a` in light, `#eaf1ff` in dark. The dark `--header` (`#0e1730`) is invisible as text on a dark surface.
+   Guarded by the same test.
+3. **Scrollable content** that a keyboard user must reach is a labelled region: `role="region"`,
+   `tabIndex={0}`, `aria-label`. The learner case panel is the example.
+4. **Embedded screens** (`CaseList`, `Exam`, `Flashcards`) take `embedded` and do not draw a second top bar
+   inside LearnApp.
+5. **Verify dark mode with a screenshot and `getComputedStyle`.** axe reports some low-contrast text as
+   "incomplete", not as a violation, so a clean axe run does not prove the text is readable.

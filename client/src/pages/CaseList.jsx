@@ -15,7 +15,7 @@ const SORTS = [
 
 // initialTopic: a topic key from a flashcard deck ("show cases for this subject").
 // onOpenCards({key, label}): learner shortcut from a case to the flashcards of its subject.
-export default function CaseList({ go, home, initialTopic = null, onOpenCards }) {
+export default function CaseList({ go, home, initialTopic = null, onOpenCards, embedded = false }) {
   const { t, lang, user } = useApp();
   const fa = lang === "fa";
   const [cases, setCases] = useState(null);
@@ -83,7 +83,9 @@ export default function CaseList({ go, home, initialTopic = null, onOpenCards })
     });
   }, [all, query, specialty, topic, learner, sort, lang]);
 
-  if (!cases) return <div className="app"><TopBar onHome={home} /><Spinner /></div>;
+  // Embedded (inside LearnApp) the shell already has the top bar, so CaseList must not add a second one.
+  const shell = (inner) => (embedded ? <div>{inner}</div> : <div className="app"><TopBar onHome={home} />{inner}</div>);
+  if (!cases) return shell(<Spinner />);
   const filtered = Boolean(query.trim() || specialty || topic);
   const resetFilters = () => { setQuery(""); setSpecialty(""); setTopic(""); };
   const topicLabelNow = topics.find((x) => x.key === topic)?.label || "";
@@ -91,10 +93,8 @@ export default function CaseList({ go, home, initialTopic = null, onOpenCards })
   const dailyCase = learner && daily != null ? all.find((c) => c.id === daily) : null;
   const startCase = (c) => go("exam", { caseId: c.id });
 
-  return (
-    <div className="app">
-      <TopBar onHome={home} />
-      <div className="container">
+  return shell(
+    <div className="container">
         <div className="section-title">
           <h2>{t("caseList")}</h2>
           <button type="button" className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
@@ -246,6 +246,5 @@ export default function CaseList({ go, home, initialTopic = null, onOpenCards })
           </>
         )}
       </div>
-    </div>
   );
 }

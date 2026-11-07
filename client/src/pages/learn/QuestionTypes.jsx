@@ -337,7 +337,7 @@ export function MicroLesson({ micro, defaultOpen = false, glossary, features }) 
     <div className="micro-box" style={{ borderColor: radar ? "#fcd34d" : undefined, boxShadow: radar ? "0 0 0 2px #fef3c7" : undefined }}>
       <button type="button" className="micro-toggle" onClick={() => setOpen((v) => !v)} style={{ background: radar ? "#fffbeb" : undefined }}>
         <Icon name="book" size={16} /> {fa ? "درسنامهٔ کوتاه" : "Quick lesson"}
-        {radar && <span className="tag" style={{ marginInlineStart: 8, background: "#dc2626", color: "#fff", fontSize: ".72rem", animation: "pulse 1.5s infinite" }}>🔴 Radar</span>}
+        {radar && <span className="tag" style={{ marginInlineStart: 8, background: "#dc2626", color: "var(--on-solid)", fontSize: ".72rem", animation: "pulse 1.5s infinite" }}>🔴 Radar</span>}
         <span style={{ marginInlineStart: "auto" }}>{open ? "▾" : "▸"}</span>
       </button>
       {open && (

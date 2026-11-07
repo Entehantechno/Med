@@ -267,7 +267,7 @@ export default function Browse() {
               const on = (fil.difficulty||[]).includes(lvl);
               const map = { easy:{ fa:"آسان", en:"Easy", h:1, c:"#10b981", bg:"#ecfdf5", bd:"#a7f3d0" }, medium:{ fa:"متوسط", en:"Medium", h:2, c:"#f59e0b", bg:"#fffbeb", bd:"#fde68a" }, hard:{ fa:"سخت", en:"Hard", h:3, c:"#ef4444", bg:"#fef2f2", bd:"#fecaca" } }[lvl];
               return (
-                <button key={lvl} type="button" onClick={()=>toggle("difficulty", lvl)} className={`browse-quick-chip browse-quick-hammer ${on?"on":""}`} style={on?{ background: map.c, color:"#fff", borderColor: map.c, boxShadow:`0 6px 14px ${map.c}33` }:{ background: map.bg, color: map.c, borderColor: map.bd }}>
+                <button key={lvl} type="button" onClick={()=>toggle("difficulty", lvl)} className={`browse-quick-chip browse-quick-hammer ${on?"on":""}`} style={on?{ background: map.c, color:"var(--on-solid)", borderColor: map.c, boxShadow:`0 6px 14px ${map.c}33` }:{ background: map.bg, color: map.c, borderColor: map.bd }}>
                   <span aria-hidden="true" style={{ display: "inline-flex", gap: 1 }}>{Array.from({ length: map.h }, (_, i) => <Icon key={i} name="bolt" size={11} />)}</span> {fa?map.fa:map.en} <span className="bqc-count" style={{ background: on?"rgba(255,255,255,.22)":"#fff", color: on?"#fff":map.c, border:`1px solid ${on?"rgba(255,255,255,.4)":map.bd}` }}>{(facets.difficulty||[]).find(x=>x.value===lvl)?.count ?? ""}</span>
                 </button>
               );
@@ -304,7 +304,7 @@ export default function Browse() {
         <div className="card browse-filters browse-filters-new" role="dialog" aria-label={t("browseFilters")}>
           <div className="browse-filters-head">
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg,#0ea5e9,#6366f1)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#fff" }}><Icon name="settings" size={16} /></span>
+              <span style={{ width: 32, height: 32, borderRadius: 10, background: "linear-gradient(135deg,#0ea5e9,#6366f1)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "var(--on-solid)" }}><Icon name="settings" size={16} /></span>
               <div>
                 <div style={{ fontWeight: 800, fontSize: ".92rem" }}>{t("browseFilters")}</div>
                 <div className="small muted">{active} {fa ? "فیلتر فعال" : "active"} · {total.toLocaleString(fa ? "fa-IR" : "en-US")} {fa ? "نتیجه" : "results"}</div>
@@ -371,7 +371,7 @@ export default function Browse() {
         <div className="browse-premium-gate-new">
           <div className="browse-premium-glow" aria-hidden="true" />
           <div style={{ position: "relative", display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
-            <span style={{ width: 48, height: 48, borderRadius: 14, background: "linear-gradient(135deg,#f59e0b,#f97316)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 22, flex: "none", boxShadow: "0 8px 20px rgba(245,158,11,.35)" }}><Icon name="crown" size={22} /></span>
+            <span style={{ width: 48, height: 48, borderRadius: 14, background: "linear-gradient(135deg,#f59e0b,#f97316)", display: "inline-flex", alignItems: "center", justifyContent: "center", color: "var(--on-solid)", fontSize: 22, flex: "none", boxShadow: "0 8px 20px rgba(245,158,11,.35)" }}><Icon name="crown" size={22} /></span>
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ fontWeight: 900, fontSize: "1rem" }}>{t("browsePremiumTitle")}</div>
               <p className="muted small" style={{ margin: "4px 0 0", lineHeight: 1.7 }}>{t("browsePremiumBody")}</p>

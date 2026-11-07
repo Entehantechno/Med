@@ -99,8 +99,8 @@ export default function BugHunt() {
                 <tr key={r.id}>
                   <td>{r.id}</td>
                   <td style={{ maxWidth: 260, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }} title={r.description}>{r.title}</td>
-                  <td><span className="tag" style={{ background: sevColor(r.severity), color: "#fff" }}>{r.severity}</span></td>
-                  <td><span className="tag" style={{ background: statusColor(r.status), color: "#fff" }}>{r.status}</span></td>
+                  <td><span className="tag" style={{ background: sevColor(r.severity), color: "var(--on-solid)" }}>{r.severity}</span></td>
+                  <td><span className="tag" style={{ background: statusColor(r.status), color: "var(--on-solid)" }}>{r.status}</span></td>
                   <td>{r.kind}</td>
                   <td className="small muted">{new Date(r.created_at).toLocaleDateString(fa ? "fa-IR" : "en-US")}</td>
                   <td style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>

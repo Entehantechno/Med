@@ -479,7 +479,7 @@ export default function Mindmap({ onBack }) {
               {/* ——— Mindmap toolbar: Zen / Pitch / Structure (XMind + Miro) ——— */}
               <div className={`mm-toolbar ${zen?"mm-toolbar--zen":""}`} style={{ display:"flex", flexWrap:"wrap", gap:8, alignItems:"center", justifyContent:"space-between", padding:"10px 12px", borderRadius:16, background: zen?"rgba(255,255,255,.82)":"#fff", backdropFilter: zen?"saturate(1.4) blur(12px)":"none", border:"1px solid #e2e8f0", boxShadow:"0 8px 22px rgba(15,23,48,.06)" }}>
                 <div style={{ display:"flex", gap:8, flexWrap:"wrap", alignItems:"center" }}>
-                  <span className="small muted" style={{ fontWeight:800, fontSize:".72rem", display:"flex", alignItems:"center", gap:6 }}><span style={{ width:22, height:22, borderRadius:7, background:"linear-gradient(135deg,#06b6d4,#6366f1)", display:"inline-grid", placeItems:"center", color:"#fff", fontSize:11 }}><Icon name="star" size={14} style={{ verticalAlign: "-2px" }} /></span> {lang==="fa"?"نما":"View"}</span>
+                  <span className="small muted" style={{ fontWeight:800, fontSize:".72rem", display:"flex", alignItems:"center", gap:6 }}><span style={{ width:22, height:22, borderRadius:7, background:"linear-gradient(135deg,#06b6d4,#6366f1)", display:"inline-grid", placeItems:"center", color:"var(--on-solid)", fontSize:11 }}><Icon name="star" size={14} style={{ verticalAlign: "-2px" }} /></span> {lang==="fa"?"نما":"View"}</span>
                   {[
                     {id:"radial", fa:"شعاعی", en:"Radial", ico:"🌸"},
                     {id:"logic", fa:"درختی", en:"Tree", ico:"🌳"},

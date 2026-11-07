@@ -140,7 +140,7 @@ export default function LearnHome({ go, goToTopic, openLesson, profile, onProfil
       {/* Daily Diagnosis Challenge teaser — a quick daily habit hook */}
       {flag("dx_challenge") && (
         <div className="card mb16 dx-teaser" style={{ display: "flex", alignItems: "center", gap: 14, borderInlineStart: "4px solid #e0533d" }}>
-          <div className="mod-ico" style={{ background: "linear-gradient(135deg,#e0533d,#b5321e)", width: 48, height: 48, marginBottom: 0 }}><Icon name="stethoscope" size={22} style={{ color: "#fff" }} /></div>
+          <div className="mod-ico" style={{ background: "linear-gradient(135deg,#e0533d,#b5321e)", width: 48, height: 48, marginBottom: 0 }}><Icon name="stethoscope" size={22} style={{ color: "var(--on-solid)" }} /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontWeight: 800 }}>{t("dxTitle")}</div>
             <div className="small muted">{t("dxTeaser")}</div>

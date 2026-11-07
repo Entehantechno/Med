@@ -114,7 +114,7 @@ export function AdminBell() {
     <div style={{ position: "relative" }}>
       <button type="button" className="btn btn-ghost btn-sm" onClick={toggle} title={t("adminNotifs")} style={{ position: "relative" }}>
         <Icon name="bell" size={18} />
-        {d.unseen > 0 && <span style={{ position: "absolute", top: -4, insetInlineEnd: -4, background: "var(--flame,#e0533d)", color: "#fff", borderRadius: 10, fontSize: 10, fontWeight: 800, minWidth: 16, height: 16, lineHeight: "16px", textAlign: "center", padding: "0 3px" }}>{d.unseen}</span>}
+        {d.unseen > 0 && <span style={{ position: "absolute", top: -4, insetInlineEnd: -4, background: "var(--flame,#e0533d)", color: "var(--on-solid)", borderRadius: 10, fontSize: 10, fontWeight: 800, minWidth: 16, height: 16, lineHeight: "16px", textAlign: "center", padding: "0 3px" }}>{d.unseen}</span>}
       </button>
       {open && (
         <div className="card" style={{ position: "absolute", insetInlineEnd: 0, top: "110%", zIndex: 50, width: 340, maxWidth: "88vw", maxHeight: 420, overflowY: "auto", boxShadow: "0 10px 30px rgba(0,0,0,.18)" }}>
@@ -2935,7 +2935,7 @@ function ClassProgress({ classId, cases = [] }) {
         <span className="tag">{fa ? "شروع نکرده" : "Not started"}: {d.totals.notStarted}</span>
         <span className="tag">{fa ? "میانگین" : "Mean"}: {d.totals.mean ?? "—"}</span>
         {d.totals.needsRemedial > 0 && (
-          <span className="tag" style={{ background: "var(--bad,#c0392b)", color: "#fff" }}>
+          <span className="tag" style={{ background: "var(--bad,#c0392b)", color: "var(--on-solid)" }}>
             {fa ? `${d.totals.needsRemedial} نیاز به جبرانی` : `${d.totals.needsRemedial} need remedial`}
           </span>
         )}
@@ -2949,7 +2949,7 @@ function ClassProgress({ classId, cases = [] }) {
         { key: "best", label: fa ? "بهترین" : "Best" },
         { key: "needsRemedial", label: fa ? "جبرانی" : "Remedial",
           render: (x) => x.needsRemedial
-            ? <span className="tag" style={{ background: "var(--bad,#c0392b)", color: "#fff" }}>{fa ? "بله" : "yes"}</span>
+            ? <span className="tag" style={{ background: "var(--bad,#c0392b)", color: "var(--on-solid)" }}>{fa ? "بله" : "yes"}</span>
             : <span className="small muted">—</span> },
         { key: "actions", label: "", sortable: false, render: (x) => (
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => setPick(pick === x.userId ? null : x.userId)}>
@@ -10194,7 +10194,7 @@ export function ResearchAdmin(){
         <span className="tag">{fa?"رضایت داده":"Granted"}: {roster.counts.granted}</span>
         <span className="tag">{fa?"انصراف":"Withdrawn"}: {roster.counts.withdrawn}</span>
         {Object.entries(roster.counts.byMode||{}).filter(([,n])=>n>0).map(([m,n])=><span key={m} className="tag">{m}: {n}</span>)}
-        {roster.counts.stale>0 && <span className="tag" style={{background:'var(--bad,#c0392b)',color:'#fff'}}>{fa?`${roster.counts.stale} رضایت مربوط به متن قدیمی`:`${roster.counts.stale} consent(s) cover superseded wording`}</span>}
+        {roster.counts.stale>0 && <span className="tag" style={{background:'var(--bad,#c0392b)',color:'var(--on-solid)'}}>{fa?`${roster.counts.stale} رضایت مربوط به متن قدیمی`:`${roster.counts.stale} consent(s) cover superseded wording`}</span>}
         {roster.study.ethicsCode && <span className="tag">{roster.study.ethicsCode}</span>}
         {roster.study.protocolVersion && <span className="tag">{roster.study.protocolVersion}</span>}
       </div>
@@ -10208,7 +10208,7 @@ export function ResearchAdmin(){
         {key:'recorder',label:fa?'ثبت‌کننده':'Recorded by'},
         {key:'note',label:fa?'یادداشت':'Note'},
         {key:'grantedAt',label:t('dateTime')},
-        {key:'stale',label:'',sortable:false,render:(c)=>c.stale?<span className="tag" style={{background:'var(--bad,#c0392b)',color:'#fff'}}>{fa?'متن قدیمی':'stale'}</span>:null}
+        {key:'stale',label:'',sortable:false,render:(c)=>c.stale?<span className="tag" style={{background:'var(--bad,#c0392b)',color:'var(--on-solid)'}}>{fa?'متن قدیمی':'stale'}</span>:null}
       ]}/>
     </div>}
     {rec && <Modal title={fa?"ثبت رضایت کسب‌شده در بیرون از سامانه":"Record consent collected offline"} onClose={()=>setRec(null)} onSave={recordConsent}>
