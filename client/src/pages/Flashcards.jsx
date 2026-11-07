@@ -576,6 +576,11 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
         <h2 className="ddle-title">{biField(c, "questionText", lang) || biField(c, "q", lang) || biField(c, "title", lang)}</h2>
         <div className="ddle-underline" />
 
+        {/* R106: an image-identification card with no image must say so, not look broken. */}
+        {!c.imageUrl && (cIsHotspot || /شناسایی|identify/i.test(biField(c, "questionText", lang) || biField(c, "q", lang) || biField(c, "title", lang) || "")) && (
+          <div className="r106-noimg" role="note"><Icon name="warn" size={14} /> {lang === "fa" ? "این کارت تصویر ندارد. از روی متن سؤال پاسخ دهید." : "This card has no image. Answer from the question text."}</div>
+        )}
+
         {/* Optional image in the question */}
         {c.imageUrl && !cIsHotspot && (
           <button type="button" className="ddle-img zoomable-img u-tap" title={lang === "fa" ? "برای بزرگ‌نمایی کلیک کنید" : "Click to zoom"} aria-label={lang === "fa" ? "بزرگ‌نمایی تصویر سؤال" : "Zoom the question image"} onClick={() => setZoomSrc(c.imageUrl)}>
@@ -736,12 +741,21 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
             </div>
           )}
           {gradeErr && <div className="err-banner mb16"><Icon name="warn" size={16} /> {lang === "fa" ? "نمره‌دهی این سؤال شکست خورد" : "Grading this question failed"}: {gradeErr}</div>}
+          {/* R106: labelled progress (text + bar, not colour alone). Dots stay as a visual aid. */}
+          <div className="r106-progress" role="group" aria-label={lang === "fa" ? "پیشرفت مرور" : "Review progress"}>
+            <div className="r106-progress-top">
+              <span className="r106-progress-step">{lang === "fa" ? `کارت ${idx + 1} از ${cards.length}` : `Card ${idx + 1} of ${cards.length}`}</span>
+              <span className="r106-progress-done">{lang === "fa"
+                ? `${cards.filter((_, i) => results[i] && results[i].solved).length} پاسخ درست`
+                : `${cards.filter((_, i) => results[i] && results[i].solved).length} correct`}</span>
+            </div>
+            <div className="r106-progress-bar" aria-hidden="true"><span style={{ width: `${Math.round(((idx + (locked ? 1 : 0)) / Math.max(1, cards.length)) * 100)}%` }} /></div>
+          </div>
           <div className={`progress-dots${cards.length > 20 ? " dense" : ""}`} aria-hidden="true">
             {cards.map((_, i) => (
               <div key={i} className={`dot ${i === idx ? "active" : ""} ${results[i] && results[i].solved ? "solved" : ""}`} />
             ))}
           </div>
-          {cards.length > 20 && <div className="progress-count">{idx + 1} / {cards.length}</div>}
 
           {shownIdxs.map((j) => (
             <div key={cards[j].id} hidden={j !== idx}>{renderCard(j)}</div>

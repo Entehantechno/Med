@@ -826,8 +826,23 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
           <div className="card chat-box">
             <div style={{ fontWeight: 700, marginBottom: 8 }}><Icon name="chat" size={16} /> {t("patientChat")}</div>
             <div className="chat-msgs">
-              {messages.length === 0 && !typing &&
-                <div className="muted small center" style={{ margin: "auto" }}>{t("typeMessage")}</div>}
+              {messages.length === 0 && !typing && (
+                // R106: empty state explains the next step and offers history-taking openers.
+                // Chips only fill the input; the student still presses send.
+                <div className="r106-chat-empty">
+                  <div className="r106-chat-empty-ico" aria-hidden="true"><Icon name="chat" size={22} /></div>
+                  <div className="r106-chat-empty-title">{lang === "fa" ? "گفتگو را با بیمار شروع کنید" : "Start the conversation with the patient"}</div>
+                  <div className="muted small">{lang === "fa" ? "با یک سؤال باز شروع کنید، سپس جزئیات را بپرسید." : "Open with a broad question, then ask for detail."}</div>
+                  <div className="r106-chips" role="list">
+                    {(lang === "fa"
+                      ? ["شکایت اصلی شما چیست؟", "این علائم از کی شروع شده؟", "آیا داروی خاصی مصرف می‌کنید؟", "سابقه بیماری یا جراحی دارید؟"]
+                      : ["What brings you in today?", "When did this start?", "Are you taking any medications?", "Any past illnesses or surgeries?"]
+                    ).map((q) => (
+                      <button key={q} type="button" role="listitem" className="r106-chip" onClick={() => { setInput(q); }}>{q}</button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {messages.map((m, i) => (
                 m.role === "system" ? (
                   <div key={i} className="msg msg-lab" style={{ alignSelf: "center", background: "var(--panel2, #eef3f9)", border: "1px dashed var(--danger, #c44)", borderRadius: 12, maxWidth: "92%", textAlign: "start" }}>
@@ -903,7 +918,7 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
                 onOrder={(q) => orderResult("imaging", q)} />}
               {tab === "images" && <ImagesTab images={requestedImages} t={t} lang={lang} />}
             </div>
-            <button type="button" className="btn btn-accent btn-block mt16" onClick={finish}>✓ {t("finishExam")}</button>
+            <button type="button" className="btn btn-accent btn-block mt16 r106-finish" onClick={finish}>✓ {t("finishExam")}</button>
           </div>
         </div>
       </div>

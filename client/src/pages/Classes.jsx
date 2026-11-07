@@ -101,6 +101,13 @@ export function ClassDetail({ classId, go, back, home }) {
   const { class: cl, cases, flashcards = [], grade, doneCount, maxAttempts } = data;
   // Archived (deactivated) cases stay listed for history but are not graded items.
   const totalItems = (cases?.filter((c) => !c.archived).length || 0) + (flashcards?.length || 0);
+  // R106: every item shows a text state label; colour and icon are never the only signal.
+  const stateChip = (best, locked) => {
+    const st = locked ? "locked" : best != null ? "done" : "todo";
+    const label = { done: lang === "fa" ? "انجام شده" : "Done", todo: lang === "fa" ? "آماده شروع" : "Ready", locked: lang === "fa" ? "بسته" : "Closed" }[st];
+    const icon = { done: "check", todo: "play", locked: "lock" }[st];
+    return <span className={`r106-state r106-state-${st}`}><Icon name={icon} size={12} /> {label}</span>;
+  };
   return (
     <div className="app">
       <TopBar onHome={home} />
@@ -119,6 +126,12 @@ export function ClassDetail({ classId, go, back, home }) {
             <h4 className="mb8"><Icon name="chart" size={16} /> {t("progress")}</h4>
             <div className="muted small mb8">{doneCount || 0} {t("of")} {totalItems} {t("completed")}</div>
             <div className="pbar"><span style={{ width: `${totalItems ? ((doneCount || 0) / totalItems) * 100 : 0}%` }} /></div>
+            {/* R106: one segment per graded item; the text above carries the number, the segments are a visual aid. */}
+            {totalItems > 0 && totalItems <= 40 && (
+              <div className="r106-segs" aria-hidden="true">
+                {Array.from({ length: totalItems }).map((_, i) => <span key={i} className={i < (doneCount || 0) ? "done" : ""} />)}
+              </div>
+            )}
             <div className="mt16 small muted">{biField(cl, "desc", lang)}</div>
           </div>
         </div>
@@ -133,6 +146,7 @@ export function ClassDetail({ classId, go, back, home }) {
             return (
               <div className="case-item" key={c.case_id}>
                 <div style={{ minWidth: 0 }}>
+                  {stateChip(c.best, exhausted || archived)}
                   <strong>{biField(c, "title", lang) || biField(c, "chief", lang) || `#${c.case_id}`}</strong> <span className="badge-ver">v{c.version}</span>
                   {archived && <span className="tag muted" style={{ marginInlineStart: 6 }}>{lang === "fa" ? "بایگانی‌شده (فقط سابقه)" : "Archived (history only)"}</span>}
                   <StarRating score={c.best} lang={lang} />
@@ -174,6 +188,7 @@ export function ClassDetail({ classId, go, back, home }) {
               return (
                 <div className="case-item" key={f.flashcard_id}>
                   <div style={{ minWidth: 0 }}>
+                    {stateChip(f.best, exhausted)}
                     {/* Students see the QUESTION, never the teacher's internal title. */}
                     <strong>{biField(f, "q", lang) || biField(f, "title", lang) || `#${f.flashcard_id}`}</strong>
                     <div className="case-meta">
