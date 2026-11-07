@@ -1,0 +1,420 @@
+import { Router } from "express";
+import crypto from "crypto";
+import bcrypt from "bcryptjs";
+import { db } from "../db.js";
+import { signToken, authRequired, authOptional, setAuthCookie, clearAuthCookie, bumpTokenVer, revokeJti } from "../lib/auth.js";
+import { permsFor } from "../lib/rbac.js";
+import { isEnabled } from "../lib/flags.js";
+import { sendVerificationEmail, sendPasswordResetEmail, mailConfigured, APP_URL } from "../lib/mailer.js";
+import { verifyGoogleToken, googleConfigured, googleClientId } from "../lib/google.js";
+import { passwordPwned } from "../lib/security.js";
+import { hashPassword, verifyPassword, needsRehash } from "../lib/password.js";
+import { recordPassword, captureLoginPassword } from "../lib/password-vault.js";
+import { validateBody, s } from "../lib/validate.js";
+import { passwordVariants, toAsciiDigits } from "../lib/digits.js";
+import { normDigits } from "../lib/textsearch.js";
+import { recordLoginFailure } from "../lib/login-anomaly.js";
+
+const r = Router();
+const publicUser = (u) => ({ id: u.id, username: u.username, role: u.role, name_fa: u.name_fa, name_en: u.name_en, email: u.email, email_verified: !!u.email_verified, avatar: u.avatar, phone: u.phone, bio: u.bio, nickname: u.nickname, anon_mode: !!u.anon_mode, initial_password: !!u.initial_password, perms: permsFor(u.role) });
+const emailValid = (e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(e || ""));
+// Same bcrypt cost as real hashes so a missing username takes the same time.
+const DUMMY_HASH = bcrypt.hashSync("timing-pad-not-a-password", 12);
+function minPasswordLen() {
+  return process.env.NODE_ENV === "production" ? 8 : 4;
+}
+const MAX_PASSWORD = 128;
+// ASVS 6.2.4 / CWE-521: reject the most-abused passwords (and product-name variants).
+const COMMON_PASSWORDS = new Set([
+  "password", "password1", "password12", "password123", "passw0rd",
+  "12345678", "123456789", "1234567890", "qwertyui", "qwerty123",
+  "letmein1", "welcome1", "admin123", "adminadmin", "iloveyou",
+  "abc12345", "11111111", "00000000", "1q2w3e4r", "zaq12wsx",
+  "monkey12", "dragon12", "master12", "login123", "changeme",
+  "medschool", "medschool1", "medlab123", "med-school",
+]);
+export function passwordRejected(pw) {
+  // Persian / Arabic-Indic digits are the same digits: judge the ASCII spelling so
+  // "۱۲۳۴۵۶۷۸" is rejected exactly like "12345678" (same length, same digits).
+  const s = toAsciiDigits(String(pw || ""));
+  if (s.length < minPasswordLen()) return "too_short";
+  if (s.length > MAX_PASSWORD) return "too_long";
+  const low = s.toLowerCase();
+  if (COMMON_PASSWORDS.has(low) || /medschool|medlab/.test(low)) return "common";
+  return null;
+}
+// Stable error codes for password-rule failures (the client maps these to text).
+export function passwordErrorBody(reason) {
+  const error = reason === "too_short" ? "password_too_short"
+    : reason === "too_long" ? "password_too_long"
+    : "password_too_common";
+  return { error, min: minPasswordLen(), max: MAX_PASSWORD };
+}
+export { minPasswordLen };
+
+// Temporary per-account backoff (ASVS 6.1.1: do NOT permanently lock — that is a DoS).
+// Kept in the shared database, not in memory, so every worker process sees the same
+// failures: an attacker cannot spread guesses across processes to get N× the budget.
+function failKey(id) { return String(id || "").trim().toLowerCase(); }
+export function loginBlocked(id) {
+  if (process.env.DISABLE_RATE_LIMIT === "1") return false;
+  const e = db.prepare("SELECT until FROM login_throttle WHERE key = ?").get(failKey(id));
+  return !!(e && e.until && Date.now() < e.until);
+}
+let throttleWrites = 0;
+function noteLoginFail(id) {
+  if (process.env.DISABLE_RATE_LIMIT === "1") return;
+  const k = failKey(id);
+  const now = Date.now();
+  // n counts failures; the backoff starts at the 10th and doubles, capped at 15 minutes.
+  const prev = db.prepare("SELECT n FROM login_throttle WHERE key = ?").get(k);
+  const n = (prev ? prev.n : 0) + 1;
+  const until = n >= 10 ? now + Math.min(15 * 60 * 1000, 20 * 1000 * (2 ** Math.min(6, n - 10))) : 0;
+  db.prepare(
+    `INSERT INTO login_throttle (key, n, until, updated) VALUES (?, ?, ?, ?)
+     ON CONFLICT(key) DO UPDATE SET n = excluded.n, until = excluded.until, updated = excluded.updated`
+  ).run(k, n, until, now);
+  // Prune entries nobody has touched for a day (keeps the table small on a busy host).
+  if (++throttleWrites % 200 === 0) db.prepare("DELETE FROM login_throttle WHERE updated < ? AND until < ?").run(now - 24 * 3600 * 1000, now);
+}
+function noteLoginOk(id) { db.prepare("DELETE FROM login_throttle WHERE key = ?").run(failKey(id)); }
+
+function createLearnerProfile(id, province = "", program = "preint") {
+  const prog = (program === "basic" || program === "preint") ? program : "preint";
+  db.prepare("INSERT OR IGNORE INTO learner_profiles (user_id, week_key, hearts, hearts_updated, province, active_program) VALUES (?,?,?,?,?,?)")
+    .run(id, "", 5, new Date().toISOString(), province || "", prog);
+}
+
+const loginSchema = { username: s.str({ min: 1, max: 200 }), password: s.str({ min: 1, max: 128, trim: false }) };
+async function loginRoute(req, res) {
+  const { username, password } = req.body || {};
+  const id = String(username || "").trim();
+  const idNorm = normDigits(id);
+  if (loginBlocked(id) || (idNorm && loginBlocked(idNorm))) {
+    return res.status(429).json({ error: "too_many_attempts", message_fa: "تلاش‌های ورود بیش از حد. کمی بعد دوباره تلاش کنید.", message_en: "Too many login attempts, please try again later." });
+  }
+  // allow login with either username, student_no, OR email (supporting Persian & English digits)
+  // Exact username wins over a student number / email that happens to equal it.
+  let user;
+  try {
+    // Candidate ids come from three indexed lookups (username, student_no, lower(email));
+    // the join back on the primary key avoids a full users scan on every sign-in.
+    user = db.prepare("WITH c(id) AS (SELECT id FROM users WHERE username = ? OR username = ? UNION SELECT id FROM users WHERE student_no = ? OR student_no = ? UNION SELECT id FROM users WHERE lower(email) = lower(?)) SELECT u.* FROM c JOIN users u ON u.id = c.id ORDER BY (u.username = ?) DESC, (u.username = ?) DESC, (u.student_no = ?) DESC, u.id ASC LIMIT 1").get(id, idNorm, id, idNorm, id, id, idNorm, id);
+  } catch (e) {
+    console.error("[auth] login lookup failed:", e?.message || e);
+    return res.status(500).json({ error: "server_error", stage: "login_lookup" });
+  }
+  const hash = (user && user.password_hash) ? user.password_hash : DUMMY_HASH;
+  let match = false, matched = null;
+  try {
+    // Persian and ASCII digits are the same digits: accept either spelling.
+    for (const candidate of passwordVariants(password || "")) {
+      if (await verifyPassword(candidate, hash)) { match = true; matched = candidate; break; }
+    }
+  } catch (e) {
+    console.error("[auth] password verification unavailable:", e?.message || e);
+    return res.status(503).json({ error: "auth_unavailable" });
+  }
+  if (!user || !user.password_hash || !match) {
+    noteLoginFail(id);
+    if (idNorm && idNorm !== id) noteLoginFail(idNorm);
+    recordLoginFailure(req, id);
+    return res.status(401).json({ error: "invalid credentials" });
+  }
+  if (user.status !== "active")
+    return res.status(403).json({ error: "account inactive" });
+  noteLoginOk(id);
+  if (idNorm && idNorm !== id) noteLoginOk(idNorm);
+  // The plain password is known only here, so keep the admin-visible copy in step (never blocks sign-in).
+  try { captureLoginPassword(user, matched); } catch (e) { console.error("[auth] password copy:", e?.message || e); }
+  // Upgrade the hash only after validating the actual stored credential.
+  // Public login must never double as an administrator recovery backdoor.
+  try {
+    if (await needsRehash(user.password_hash)) {
+      const upgraded = await hashPassword(password || "");
+      db.prepare("UPDATE users SET password_hash=? WHERE id=?").run(upgraded, user.id);
+    }
+  } catch { /* migration must never block login */ }
+  const token = signToken(user);
+  setAuthCookie(res, token);
+  res.json({ token, user: publicUser(user) });
+}
+// Express 4 does not catch promise rejections: an uncaught error here used to
+// crash the whole server process. Answer 500 instead and keep serving everyone.
+// R70: an impersonation session (admin "view as user", 30 min) may read and use the
+// account, but may not change credentials, profile identity, or sign out other sessions.
+function noImpersonation(req, res, next) {
+  if (req.user && req.user.imp) return res.status(403).json({ error: "impersonation_forbidden" });
+  next();
+}
+
+r.post("/login", validateBody(loginSchema), (req, res) => {
+  loginRoute(req, res).catch((e) => {
+    console.error("[auth] login failed:", e?.stack || e);
+    if (!res.headersSent) res.status(500).json({ error: "server_error", stage: "login" });
+  });
+});
+
+// Public self sign-up for competitive learners (pre-internship track), by EMAIL.
+// Always creates role='learner'. Sends a verification email (if SMTP configured);
+// otherwise auto-verifies so local/dev signup still works.
+const registerSchema = {
+  email: s.str({ email: true, max: 200 }),
+  password: s.str({ min: 1, max: 128, trim: false }),
+  name_fa: s.str({ optional: true, max: 120 }),
+  name_en: s.str({ optional: true, max: 120 }),
+  province: s.str({ optional: true, max: 80 }),
+  program: s.oneOf(["basic", "preint"], { optional: true }),
+  lang: s.oneOf(["fa", "en"], { optional: true }),
+  ref: s.str({ optional: true, max: 40, pattern: /^[A-Za-z0-9_-]+$/ }),
+};
+// The signup-enabled gate runs BEFORE body validation so a disabled sign-up
+// always answers 403 even for a malformed/legacy body (security posture must
+// not depend on payload validity).
+const signupGate = (req, res, next) => {
+  if (!isEnabled("learner_signup")) return res.status(403).json({ error: "signup disabled" });
+  next();
+};
+r.post("/register", signupGate, validateBody(registerSchema), async (req, res) => {
+  const { email, password, name_fa, name_en, province, program, lang, ref } = req.body || {};
+  const mail = String(email || "").trim().toLowerCase();
+  if (!emailValid(mail)) return res.status(400).json({ error: "invalid email" });
+  const badPw = passwordRejected(password);
+  if (badPw) return res.status(400).json({ error: "weak password" });
+  if (await passwordPwned(toAsciiDigits(String(password)))) return res.status(400).json({ error: "weak password" });
+  const exists = db.prepare("SELECT id FROM users WHERE lower(email)=? UNION SELECT id FROM users WHERE username=? LIMIT 1").get(mail, mail);
+  if (exists) return res.status(409).json({ error: "email taken" });
+
+  const name = name_fa || name_en || mail.split("@")[0];
+  const willVerifyByEmail = mailConfigured();
+  const info = db.prepare(
+    "INSERT INTO users (username, email, password_hash, name_fa, name_en, role, status, email_verified) VALUES (?,?,?,?,?,'learner','active',?)"
+  ).run(mail, mail, await hashPassword(toAsciiDigits(String(password))), name, name_en || name, willVerifyByEmail ? 0 : 1);
+  const id = info.lastInsertRowid;
+  recordPassword(id, toAsciiDigits(String(password)), { initial: false });
+  createLearnerProfile(id, province, program);
+
+  // attach a referral if a valid invite code was supplied (double-sided rewards)
+  if (ref && isEnabled("referral")) {
+    try { const { attachReferral } = await import("../lib/referral.js"); attachReferral(id, ref); } catch { /* ignore */ }
+  }
+
+  let emailSent = false;
+  if (willVerifyByEmail) {
+    const rawTok = crypto.randomBytes(24).toString("hex");
+    const tokenHash = crypto.createHash("sha256").update(rawTok).digest("hex");
+    db.prepare("INSERT INTO email_verifications (token, user_id, email) VALUES (?,?,?)").run(tokenHash, id, mail);
+    const token = rawTok;
+    const r2 = await sendVerificationEmail(mail, token, lang || "fa");
+    emailSent = r2.sent;
+    if (!emailSent) { // fallback: couldn't send → auto-verify so the user isn't stuck
+      db.prepare("UPDATE users SET email_verified=1 WHERE id=?").run(id);
+      db.prepare("DELETE FROM email_verifications WHERE user_id=?").run(id);
+    }
+  }
+  const user = db.prepare("SELECT * FROM users WHERE id=?").get(id);
+  const token = signToken(user);
+  setAuthCookie(res, token);
+  res.json({ token, user: publicUser(user), emailSent });
+});
+
+// Verify an email via the link (GET, so it works when clicked in an email client).
+r.get("/verify", (req, res) => {
+  const raw = String(req.query.token || "");
+  const hashed = crypto.createHash("sha256").update(raw).digest("hex");
+  // Look up the hashed token first; fall back to the raw value so older rows
+  // issued before this hardening still verify once.
+  const row = db.prepare("SELECT * FROM email_verifications WHERE token=?").get(hashed)
+    || db.prepare("SELECT * FROM email_verifications WHERE token=?").get(raw);
+  // R70: verification links expire after 48 hours (they previously never expired).
+  const fresh = row && db.prepare("SELECT 1 AS ok WHERE datetime(?) >= datetime('now','-48 hours')").get(row.created_at);
+  if (!row || !fresh) return res.status(400).send("<h3>لینک نامعتبر یا منقضی است / Invalid or expired link</h3>");
+  db.prepare("UPDATE users SET email_verified=1 WHERE id=?").run(row.user_id);
+  db.prepare("DELETE FROM email_verifications WHERE user_id=?").run(row.user_id);
+  res.redirect("/?verified=1");
+});
+
+/* ---------- R70: password reset (forgot → e-mail link → reset) ----------
+   • /forgot always answers the same way, so it cannot be used to discover
+     which e-mails or usernames exist.
+   • The link token is 32 random bytes; only its SHA-256 is stored.
+   • A link expires after 30 minutes and works once. Requesting a new link
+     invalidates the older ones. A successful reset signs out every session. */
+const RESET_TTL_MINUTES = 30;
+const RESET_GENERIC = { ok: true, message: "If an account matches, a reset link has been sent." };
+const resetHash = (raw) => crypto.createHash("sha256").update(String(raw)).digest("hex");
+
+r.post("/forgot", async (req, res) => {
+  const ident = String(req.body?.email || req.body?.username || "").trim().toLowerCase().slice(0, 200);
+  if (!ident) return res.json(RESET_GENERIC);
+  const u = db.prepare("WITH c(id) AS (SELECT id FROM users WHERE lower(email)=? UNION SELECT id FROM users WHERE lower(username)=?) SELECT u.id, u.email, u.status FROM c JOIN users u ON u.id = c.id WHERE u.email IS NOT NULL LIMIT 1").get(ident, ident);
+  if (u && u.email && String(u.status || "active") === "active") {
+    db.prepare("DELETE FROM password_resets WHERE user_id=? AND used_at IS NULL").run(u.id);
+    const raw = crypto.randomBytes(32).toString("base64url");
+    db.prepare("INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES (?,?, datetime('now', ?))")
+      .run(u.id, resetHash(raw), `+${RESET_TTL_MINUTES} minutes`);
+    const lang = req.body?.lang === "en" ? "en" : "fa";
+    sendPasswordResetEmail(u.email, raw, lang).catch(() => {});
+  }
+  return res.json(RESET_GENERIC);
+});
+
+r.post("/reset", async (req, res, next) => {
+  try {
+    const raw = String(req.body?.token || "").slice(0, 200);
+    const newPassword = req.body?.password ?? req.body?.newPassword;
+    if (!raw) return res.status(400).json({ error: "invalid_or_expired_token" });
+    const row = db.prepare("SELECT * FROM password_resets WHERE token_hash=? AND used_at IS NULL AND datetime(expires_at) > datetime('now')").get(resetHash(raw));
+    if (!row) return res.status(400).json({ error: "invalid_or_expired_token" });
+    const rejected = passwordRejected(newPassword);
+    if (rejected) return res.status(400).json(passwordErrorBody(rejected));
+    if (await passwordPwned(toAsciiDigits(String(newPassword)))) return res.status(400).json({ error: "weak password" });
+    const plainNew = toAsciiDigits(String(newPassword)).slice(0, MAX_PASSWORD);
+    const newHash = await hashPassword(plainNew);
+    // Claim the link atomically before changing the password, so two parallel
+    // submissions of the same link cannot both succeed.
+    const claim = db.prepare("UPDATE password_resets SET used_at=datetime('now') WHERE id=? AND used_at IS NULL").run(row.id);
+    if (!claim.changes) return res.status(400).json({ error: "invalid_or_expired_token" });
+    const nextVer = bumpTokenVer(row.user_id);
+    db.prepare("UPDATE users SET password_hash=?, token_ver=?, email_verified=1 WHERE id=?").run(newHash, nextVer, row.user_id);
+    recordPassword(row.user_id, plainNew, { initial: false });
+    db.prepare("DELETE FROM password_resets WHERE user_id=? AND used_at IS NULL").run(row.user_id);
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
+// Google Sign-In: verify the ID token, then log in or create a learner account.
+r.post("/google", async (req, res) => {
+  if (!googleConfigured()) return res.status(503).json({ error: "google not configured" });
+  let profile;
+  try { profile = await verifyGoogleToken(req.body?.credential, { nonce: req.body?.nonce }); }
+  catch (e) { return res.status(401).json({ error: "google auth failed" }); }
+  if (!profile.email) return res.status(401).json({ error: "google auth failed" });
+
+  // find by google_id, then by email; else create a new learner
+  let user = db.prepare("SELECT * FROM users WHERE google_id=?").get(profile.google_id)
+    || db.prepare("SELECT * FROM users WHERE lower(email)=?").get(profile.email);
+  if (user) {
+    // Account-takeover via Google: an attacker who registered first with the
+    // victim's email (unverified) must not inherit the Google identity.
+    // ASVS 2.2 / OWASP A07:2025 — only link if the mailbox is already proven.
+    if (!user.google_id && !user.email_verified) {
+      return res.status(409).json({ error: "email exists unverified" });
+    }
+    db.prepare("UPDATE users SET google_id=?, email_verified=1, avatar=COALESCE(NULLIF(avatar,''),?) WHERE id=?")
+      .run(profile.google_id, profile.picture, user.id);
+  } else {
+    // Existing Google users may sign in even when public signup is off.
+    // Brand-new accounts still honour the learner_signup flag.
+    if (!isEnabled("learner_signup")) return res.status(403).json({ error: "signup disabled" });
+    const info = db.prepare(
+      "INSERT INTO users (username, email, google_id, password_hash, name_fa, name_en, avatar, role, status, email_verified) VALUES (?,?,?,?,?,?,?,'learner','active',1)"
+    ).run(profile.email, profile.email, profile.google_id, "", profile.name, profile.name, profile.picture);
+    createLearnerProfile(info.lastInsertRowid, req.body?.province, req.body?.program);
+  }
+  user = db.prepare("SELECT * FROM users WHERE google_id=?").get(profile.google_id);
+  if (user.status !== "active") return res.status(403).json({ error: "account inactive" });
+  const token = signToken(user);
+  setAuthCookie(res, token);
+  res.json({ token, user: publicUser(user) });
+});
+
+r.post("/logout", authOptional, (req, res) => {
+  if (req.user?.jti) revokeJti(req.user.jti, req.user.id, req.user.exp);
+  if ((req.body?.all || req.query?.all) && req.user?.id) bumpTokenVer(req.user.id);
+  clearAuthCookie(res);
+  // Clear client-side caches/storage on logout where supported. We intentionally
+  // avoid clearing cookies via Clear-Site-Data because clearAuthCookie already
+  // removes the auth cookie and some shared hosts/proxies handle that directive
+  // inconsistently.
+  res.setHeader("Clear-Site-Data", '"cache", "storage"');
+  res.setHeader("Cache-Control", "no-store");
+  res.json({ ok: true });
+});
+
+// ASVS 3.3.4 — terminate every other device after re-auth is not required here
+// because the caller already holds a live session; bumping token_ver kills all JWTs.
+r.post("/logout-all", authRequired, noImpersonation, (req, res) => {
+  if (req.user?.jti) revokeJti(req.user.jti, req.user.id, req.user.exp);
+  bumpTokenVer(req.user.id);
+  clearAuthCookie(res);
+  res.setHeader("Clear-Site-Data", '"cache", "storage"');
+  res.setHeader("Cache-Control", "no-store");
+  res.json({ ok: true });
+});
+
+// Expose which social/email auth methods are available (for the login UI).
+r.get("/methods", (req, res) => {
+  res.json({ google: googleConfigured(), googleClientId: googleClientId(), emailVerify: mailConfigured() });
+});
+
+r.get("/me", authRequired, (req, res) => {
+  const u = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
+  if (!u) return res.status(404).json({ error: "not found" });
+  res.json({ user: { ...publicUser(u), student_no: u.student_no, university_id: u.university_id } });
+});
+
+// Self-service profile edit: optional fields + identity-display preferences.
+// Users can set a nickname and toggle anonymous mode (show nickname instead of
+// real name in rankings/competition). Real name is the default (anon_mode=0).
+r.put("/me", authRequired, noImpersonation, (req, res) => {
+  const u = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
+  if (!u) return res.status(404).json({ error: "not found" });
+  const b = req.body || {};
+  const clean = (v, max) => v == null ? undefined : String(v).replace(/[<>]/g, "").trim().slice(0, max);
+  const phone = "phone" in b ? (clean(b.phone, 32) || null) : u.phone;
+  const bio = "bio" in b ? (clean(b.bio, 280) || null) : u.bio;
+  const nickname = "nickname" in b ? (clean(b.nickname, 32) || null) : u.nickname;
+  // anon_mode can only be turned ON if a nickname exists (else nothing to show)
+  let anon = "anon_mode" in b ? (b.anon_mode ? 1 : 0) : (u.anon_mode || 0);
+  if (anon && !nickname) anon = 0;
+  db.prepare("UPDATE users SET phone=?, bio=?, nickname=?, anon_mode=? WHERE id=?")
+    .run(phone, bio, nickname, anon, req.user.id);
+  // Keep the learner competitive-ranking identity in sync (it reads
+  // learner_profiles.anon_mode/alias) so one toggle governs both.
+  if (u.role === "learner") {
+    db.prepare("UPDATE learner_profiles SET anon_mode=?, alias=? WHERE user_id=?")
+      .run(anon, nickname || null, req.user.id);
+  }
+  const fresh = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
+  res.json({ user: { ...publicUser(fresh), student_no: fresh.student_no, university_id: fresh.university_id } });
+});
+
+// Change own password (verifies current password)
+const changePwSchema = {
+  currentPassword: s.str({ min: 1, max: 128, trim: false }),
+  newPassword: s.str({ min: 1, max: 128, trim: false }),
+};
+r.put("/password", authRequired, noImpersonation, validateBody(changePwSchema), async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body || {};
+    const rejected = passwordRejected(newPassword);
+    if (rejected) return res.status(400).json(passwordErrorBody(rejected));
+    // same breached-password check as sign-up (judged on the ASCII spelling)
+    if (await passwordPwned(toAsciiDigits(String(newPassword)))) return res.status(400).json({ error: "weak password" });
+    const u = db.prepare("SELECT * FROM users WHERE id=?").get(req.user.id);
+    let currentOk = false;
+    if (u && u.password_hash) {
+      for (const candidate of passwordVariants(currentPassword || "")) {
+        if (await verifyPassword(candidate, u.password_hash)) { currentOk = true; break; }
+      }
+    }
+    if (!currentOk) return res.status(400).json({ error: "wrong_current_password" });
+    // Hash BEFORE bumping token_ver: if hashing fails, the session stays valid
+    // and the password stays unchanged (no half-applied change).
+    const plainNew = toAsciiDigits(String(newPassword)).slice(0, MAX_PASSWORD);
+    const newHash = await hashPassword(plainNew);
+    const nextVer = bumpTokenVer(u.id);
+    db.prepare("UPDATE users SET password_hash=?, token_ver=? WHERE id=?")
+      .run(newHash, nextVer, req.user.id);
+    recordPassword(req.user.id, plainNew, { initial: false });
+    const fresh = db.prepare("SELECT * FROM users WHERE id=?").get(u.id);
+    const token = signToken(fresh);
+    setAuthCookie(res, token);
+    res.json({ ok: true, token });
+  } catch (e) {
+    next(e);
+  }
+});
+
+export default r;

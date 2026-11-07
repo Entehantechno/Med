@@ -1,0 +1,2592 @@
+/* ================================================================
+   db.js — SQLite through better-sqlite3 (R71; replaces the sql.js engine).
+
+   Why (full research in docs/research/DATABASE-RESEARCH-FA.md):
+   • sql.js held the whole database in WASM memory and rewrote the entire file on
+     every flush. The cost grew with the database (~125 MB in production), blocked
+     the event loop, and writes made in the flush window were lost on a hard kill.
+   • better-sqlite3 opens the same SQLite file in place. In WAL mode with
+     synchronous=FULL every COMMIT is on disk when the call returns, the page
+     cache is bounded (DB_CACHE_KIB, 16 MB), and a crash loses nothing that was
+     acknowledged.
+   • The file format is unchanged: a database written by sql.js opens as-is. The
+     first start of R71 takes a verified snapshot into backups/pre-upgrade-r71-*.db
+     before any migration runs, then records PRAGMA user_version = 72.
+
+   The exported API is unchanged: db.prepare().get/all/run, db.exec, db.pragma,
+   db.transaction, durableTransaction, onDbReady, initDb, reloadDb, snapshotDb.
+   A commit is durable when the call that made it returns, so there is no separate
+   flush step.
+   ================================================================ */
+import Database from "better-sqlite3";
+import { ensureContentIdentity, universityOnlyCases } from "./lib/content-identity.js";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { migrateUsersRoleCheck } from "./lib/users-role-migrate.js";
+import { regroupDefaultItems } from "./lib/checklist-facets.js";
+import { makeLeases } from "./lib/leases.js";
+import { TRACK_INDEX_SQL, FLASHCARDS_SIG_INDEX_SQL } from "./lib/flashcard-track.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Persistent data (DB + uploads + backups) lives OUTSIDE the code in DATA_DIR
+// so the site can be upgraded without losing data. See lib/paths.js.
+import { DB_PATH, BACKUPS_DIR, ensureDataDirs } from "./lib/paths.js";
+import { migrateR63 } from "./lib/r63-migration.js";
+import { migrateR64 } from "./lib/r64-migration.js";
+import "bcryptjs";
+ensureDataDirs();
+
+/** Schema/engine generation stored in PRAGMA user_version. A database below this
+ *  value is upgraded in place, after a verified snapshot. */
+export const DB_ENGINE_VERSION = 74;
+const BUSY_TIMEOUT_MS = 5000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const CACHE_KIB = Math.max(2000, Math.min(262144, Number(process.env.DB_CACHE_KIB) || 16000));
+const SYNC_MODE = String(process.env.DB_SYNCHRONOUS || "full").toLowerCase() === "normal" ? "NORMAL" : "FULL";
+
+let rawDb = null;          // the open better-sqlite3 connection
+let backupTimer = null;   // periodic snapshot check (see initDb)
+let schemaReady = false;   // initSchema() is expensive; run it once per open connection
+
+class DbUnreadableError extends Error {
+  constructor(message) { super(message); this.name = "DbUnreadableError"; }
+}
+
+/* Several worker processes share this database: only the one holding the lease
+   writes the scheduled snapshot (a backup per process would duplicate work). */
+function autoBackupLeased() {
+  if (!leases.tryLease("auto-backup", 5 * 60 * 60 * 1000)) return;
+  autoBackup();
+}
+
+/* Connection settings. WAL gives readers that do not block the writer and a
+   COMMIT that is one sequential append; synchronous=FULL makes that append durable
+   before COMMIT returns (SQLite: "FULL is ACID in WAL mode"). */
+function configureConnection(conn) {
+  conn.pragma("journal_mode = WAL");
+  conn.pragma(`synchronous = ${SYNC_MODE}`);
+  conn.pragma("foreign_keys = ON");
+  conn.pragma("trusted_schema = OFF");        // schema is not trusted to run arbitrary functions
+  conn.pragma("secure_delete = FAST");        // overwrite deleted personal data pages
+  conn.pragma(`cache_size = -${CACHE_KIB}`);
+  conn.pragma("temp_store = MEMORY");
+  conn.pragma("journal_size_limit = 67108864");
+  return conn;
+}
+
+/* Integrity check of a database FILE without changing it (read-only handle).
+   Returns "ok" or "corrupt"; throws DbUnreadableError for I/O or permission
+   problems, which are NOT corruption and must never trigger a restore. */
+const SQLITE_FORMAT_ERR = /file is not a database|not a database|malformed/i;
+function checkFile(file) {
+  let conn;
+  try {
+    conn = new Database(file, { readonly: true, fileMustExist: true, timeout: BUSY_TIMEOUT_MS });
+  } catch (e) {
+    if (SQLITE_FORMAT_ERR.test(String(e?.message || e))) return "corrupt";
+    throw new DbUnreadableError(`database_open_failed: ${e?.message || e}`);
+  }
+  try {
+    const row = conn.pragma("quick_check", { simple: true });
+    return String(row).trim().toLowerCase() === "ok" ? "ok" : "corrupt";
+  } catch (e) {
+    if (SQLITE_FORMAT_ERR.test(String(e?.message || e))) return "corrupt";
+    throw new DbUnreadableError(`quick_check_failed: ${e?.message || e}`);
+  } finally {
+    try { conn.close(); } catch { /* */ }
+  }
+}
+function checkFileSafe(file) {
+  try { return checkFile(file); } catch { return "unreadable"; }
+}
+
+/* Consistent snapshot of the OPEN database, WAL content included. VACUUM INTO
+   reads through the connection, so it is correct while the site is serving
+   traffic; a plain file copy of a WAL-mode database is not (committed pages may
+   still be in the -wal file). The result is verified before it is returned. */
+function writeSnapshot(dest) {
+  if (!rawDb) throw new Error("database_not_open");
+  if (fs.existsSync(dest)) throw new Error("snapshot_destination_exists");
+  rawDb.prepare("VACUUM INTO ?").run(dest);
+  if (checkFile(dest) !== "ok") {
+    try { fs.rmSync(dest, { force: true }); } catch { /* */ }
+    throw new Error("snapshot_verification_failed");
+  }
+  try { fs.chmodSync(dest, 0o600); } catch { /* */ }
+  return dest;
+}
+export function createSnapshot(dir = BACKUPS_DIR, prefix = "medlab") {
+  fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+  let dest = path.join(dir, `${prefix}-${stamp}.db`);
+  for (let n = 1; fs.existsSync(dest); n++) dest = path.join(dir, `${prefix}-${stamp}-${n}.db`);
+  return writeSnapshot(dest);
+}
+
+function listBackups(dir, re) {
+  return fs.readdirSync(dir)
+    .filter((f) => re.test(f))
+    .map((f) => { try { return { f, t: fs.statSync(path.join(dir, f)).mtimeMs }; } catch { return null; } })
+    .filter(Boolean)
+    .sort((a, b) => b.t - a.t);
+}
+function pruneBackups(dir, re, keep) {
+  try {
+    for (const { f } of listBackups(dir, re).slice(keep)) {
+      try { fs.unlinkSync(path.join(dir, f)); } catch { /* */ }
+    }
+  } catch { /* */ }
+}
+
+/* ---- statement wrapper (better-sqlite3 semantics, sql.js-tolerant) ---- */
+
+// Booleans bind as 0/1 and undefined as NULL; better-sqlite3 accepts neither.
+function bindValue(v) {
+  if (v === undefined) return null;
+  if (typeof v === "boolean") return v ? 1 : 0;
+  return v;
+}
+function isPlainObject(x) {
+  return x !== null && typeof x === "object" && Object.getPrototypeOf(x) === Object.prototype;
+}
+function bindArgs(args) {
+  if (args.length === 1 && Array.isArray(args[0])) return args[0].map(bindValue);
+  if (args.length === 1 && isPlainObject(args[0])) {
+    const named = {};
+    for (const k of Object.keys(args[0])) named[k] = bindValue(args[0][k]);
+    return [named];
+  }
+  return args.map(bindValue);
+}
+
+// Opt-in slow-statement log: DB_SLOW_MS=50 prints every statement at or above 50 ms
+// (SQL text trimmed). Off by default, so the hot path only pays one comparison.
+const SLOW_MS = Number(process.env.DB_SLOW_MS) || 0;
+function timedStatement(sql, fn) {
+  if (!SLOW_MS) return fn();
+  const t0 = performance.now();
+  try { return fn(); } finally {
+    const ms = performance.now() - t0;
+    if (ms >= SLOW_MS) console.warn(`[db-slow] ${ms.toFixed(1)}ms ${sql.replace(/\s+/g, " ").slice(0, 160)}`);
+  }
+}
+
+class Statement {
+  constructor(sql) { this.sql = sql; this._conn = null; this._stmt = null; }
+  // Prepared once per connection; re-prepared after a reload.
+  _s() {
+    if (!rawDb) throw new Error("database_not_open");
+    if (this._conn !== rawDb) { this._stmt = rawDb.prepare(this.sql); this._conn = rawDb; }
+    return this._stmt;
+  }
+  get(...args) {
+    const s = this._s(); const p = bindArgs(args);
+    if (!s.reader) { s.run(...p); return undefined; }
+    return timedStatement(this.sql, () => s.get(...p));
+  }
+  all(...args) {
+    const s = this._s(); const p = bindArgs(args);
+    if (!s.reader) { s.run(...p); return []; }
+    return timedStatement(this.sql, () => s.all(...p));
+  }
+  run(...args) {
+    const s = this._s(); const p = bindArgs(args);
+    if (s.reader) { s.all(...p); return { changes: 0, lastInsertRowid: 0 }; }
+    const info = s.run(...p);
+    return { changes: info.changes, lastInsertRowid: info.lastInsertRowid };
+  }
+}
+
+// Statement objects are cached by SQL text (bounded; cleared when it overflows).
+// Each one re-prepares itself only when the connection is replaced by reloadDb().
+const statementCache = new Map();
+const STATEMENT_CACHE_MAX = 1000;
+
+export const db = {
+  prepare(sql) {
+    let s = statementCache.get(sql);
+    if (!s) {
+      if (statementCache.size >= STATEMENT_CACHE_MAX) statementCache.clear();
+      s = new Statement(sql);
+      statementCache.set(sql, s);
+    }
+    return s;
+  },
+  exec(sql) {
+    if (!rawDb) throw new Error("database_not_open");
+    rawDb.exec(sql);
+    return this;
+  },
+  pragma(str) {
+    try { if (rawDb) rawDb.pragma(str); } catch { /* best-effort, as before */ }
+  },
+  // Nested calls become savepoints automatically; a throw rolls the work back.
+  transaction(fn) {
+    return (...args) => {
+      if (!rawDb) throw new Error("database_not_open");
+      return rawDb.transaction(fn)(...args);
+    };
+  },
+};
+/* One lease handle for this process (see lib/leases.js). */
+const leases = makeLeases(db);
+
+/* Synchronous, durable write boundary. The commit is on disk when this returns
+   (WAL + synchronous=FULL); a failure rolls the whole block back and throws. */
+export function durableTransaction(fn) {
+  if (!rawDb) throw new Error("database_not_open");
+  return rawDb.transaction(fn)();
+}
+
+const readyHooks = [];
+export function onDbReady(fn) {
+  if (rawDb) { fn(); return; }
+  readyHooks.push(fn);
+}
+
+/* Checkpoint the WAL into the main file and close. Called on process exit and by
+   reloadDb(). The checkpoint is best-effort; the WAL survives a crash anyway. */
+export function closeDatabase() {
+  if (!rawDb) return;
+  const conn = rawDb;
+  rawDb = null;
+  schemaReady = false;
+  try {
+    if (String(conn.pragma("journal_mode", { simple: true })).toLowerCase() === "wal") conn.pragma("wal_checkpoint(TRUNCATE)");
+  } catch (e) { console.error("[db] checkpoint on close failed:", e?.message || e); }
+  try { conn.close(); } catch { /* */ }
+}
+let closedOnExit = false;
+function closeOnExit() {
+  if (closedOnExit) return;
+  closedOnExit = true;
+  closeDatabase();
+}
+process.on("exit", closeOnExit);
+process.on("SIGINT", () => { closeOnExit(); process.exit(0); });
+process.on("SIGTERM", () => { closeOnExit(); process.exit(0); });
+
+/* Load-time validation with verified-backup fallback. Returns
+   { restoredFrom, quarantined }. A DEFINITIVELY corrupt file is replaced by the
+   newest verified backup and kept as .corrupt-* for forensics. An unreadable file
+   throws and is never touched. A corrupt file with no valid backup also throws:
+   an empty database must never be created over real data. */
+export function loadImageWithFallback(dbPath, { log = console.error, backupsDir = BACKUPS_DIR } = {}) {
+  if (!fs.existsSync(dbPath)) {
+    // A WAL with no main file cannot belong to anything that will be opened; keep it aside.
+    for (const suffix of ["-wal", "-shm"]) {
+      const f = dbPath + suffix;
+      if (fs.existsSync(f)) { try { fs.renameSync(f, `${dbPath}.orphan-${Date.now()}${suffix}`); } catch { /* */ } }
+    }
+  }
+  if (fs.existsSync(dbPath)) {
+    if (checkFile(dbPath) === "ok") return { restoredFrom: null, quarantined: false };
+    log(`[db] ❌ ${path.basename(dbPath)} failed the integrity check — attempting automatic restore from backups/`);
+  }
+  let candidates = [];
+  try {
+    candidates = listBackups(backupsDir, /^(medlab|pre-upgrade-r\d+)-.*\.db$/)
+      .slice(0, 5)
+      .map((x) => path.join(backupsDir, x.f));
+  } catch { /* no backups dir */ }
+  for (const cand of candidates) {
+    if (checkFileSafe(cand) !== "ok") {
+      log(`[db] backup ${path.basename(cand)} also fails validation; trying older…`);
+      continue;
+    }
+    let quarantined = false;
+    if (fs.existsSync(dbPath)) {
+      quarantineDatabaseFiles(dbPath);
+      quarantined = true;
+    }
+    const tmp = `${dbPath}.restore-${process.pid}`;
+    fs.copyFileSync(cand, tmp);
+    fs.renameSync(tmp, dbPath);
+    log(`[db] ✓ automatically restored database from backup ${path.basename(cand)}`);
+    return { restoredFrom: cand, quarantined };
+  }
+  if (fs.existsSync(dbPath)) {
+    throw new Error(`database_corrupt_no_valid_backup: ${dbPath} is damaged and no verified backup exists. The file was NOT modified. Restore it manually, then start again.`);
+  }
+  return { restoredFrom: null, quarantined: false };
+}
+// Moves the main file and its WAL/SHM sidecars aside. Nothing is deleted: a WAL
+// may hold committed pages that are still worth recovering by hand.
+function quarantineDatabaseFiles(dbPath) {
+  const stamp = Date.now();
+  for (const suffix of ["", "-wal", "-shm"]) {
+    const src = dbPath + suffix;
+    if (fs.existsSync(src)) {
+      try { fs.renameSync(src, `${dbPath}.corrupt-${stamp}${suffix}`); } catch { /* */ }
+    }
+  }
+}
+
+// Automatic snapshots are named medlab-<ISO timestamp>.db. Manual ones
+// (medlab-backup-*.db, admin route) have their own retention and are never pruned here.
+const AUTO_BACKUP_RE = /^medlab-\d{4}-\d{2}-\d{2}T[^/]*\.db$/;
+// Daily snapshot (at most one per 24 h unless forced) with retention of the newest 3.
+export function snapshotDb({ keep = 3, force = false } = {}) { return autoBackup(keep, force); }
+function autoBackup(keep = 3, force = false) {
+  if (!rawDb) return;
+  try { fs.mkdirSync(BACKUPS_DIR, { recursive: true, mode: 0o700 }); } catch { /* */ }
+  try {
+    const existing = listBackups(BACKUPS_DIR, AUTO_BACKUP_RE);
+    // On cPanel, Passenger restarts can be frequent. Back up at most daily so
+    // startup stays fast and small hosting disks are not filled by boot copies.
+    if (!force && existing[0] && Date.now() - existing[0].t < DAY_MS) return;
+  } catch { /* */ }
+  try {
+    createSnapshot(BACKUPS_DIR, "medlab");
+  } catch (e) {
+    console.error("[db] backup failed:", e?.message || e);
+    return;
+  }
+  pruneBackups(BACKUPS_DIR, AUTO_BACKUP_RE, keep);
+}
+
+/* Before the first R71 start on an existing database: keep a verified copy of
+   the sql.js-era file. If the snapshot fails, startup stops and nothing is
+   migrated. A brand-new database (no tables) has nothing to protect. */
+function snapshotBeforeUpgrade() {
+  const version = Number(rawDb.pragma("user_version", { simple: true })) || 0;
+  if (version >= DB_ENGINE_VERSION) return null;
+  const tables = Number(rawDb.prepare("SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table'").get().n) || 0;
+  if (tables === 0) return null;
+  const file = createSnapshot(BACKUPS_DIR, `pre-upgrade-r${DB_ENGINE_VERSION}`);
+  pruneBackups(BACKUPS_DIR, /^pre-upgrade-r\d+-.*\.db$/, 5);
+  console.log(`[db] upgrade: verified snapshot saved to backups/${path.basename(file)} (user_version ${version} → ${DB_ENGINE_VERSION})`);
+  return file;
+}
+
+function markEngineVersion() {
+  rawDb.pragma(`user_version = ${DB_ENGINE_VERSION}`);
+}
+
+// Temp files left behind by the retired sql.js flush (medlab.db.tmp-<pid>).
+function cleanupLegacyTempFiles() {
+  try {
+    const dir = path.dirname(DB_PATH);
+    for (const f of fs.readdirSync(dir)) {
+      if (f.startsWith(path.basename(DB_PATH) + ".tmp-")) {
+        try { fs.unlinkSync(path.join(dir, f)); } catch { /* */ }
+      }
+    }
+  } catch { /* best-effort */ }
+}
+
+export async function initDb(opts = {}) {
+  if (rawDb) return;
+  ensureDataDirs();
+  if (opts.worker) {
+    // Worker process (WEB_CONCURRENCY > 1): the primary already validated, migrated,
+    // snapshotted and seeded this file. A worker only opens its own connection, so
+    // schema, seed and backup work runs exactly once per host.
+    rawDb = new Database(DB_PATH, { timeout: BUSY_TIMEOUT_MS });
+    try { configureConnection(rawDb); } catch (e) { closeDatabase(); throw e; }
+    schemaReady = true;
+    return;
+  }
+  cleanupLegacyTempFiles();
+  loadImageWithFallback(DB_PATH);       // validates; may restore; throws if unsafe
+  // Snapshot BEFORE the file is switched to WAL, so a failed upgrade leaves the
+  // original file exactly as it was. The probe connection is in rollback mode.
+  rawDb = new Database(DB_PATH, { timeout: BUSY_TIMEOUT_MS });
+  schemaReady = false;
+  try {
+    snapshotBeforeUpgrade();
+  } catch (e) {
+    closeDatabase();
+    throw new Error(`upgrade_snapshot_failed: ${e?.message || e}. Startup stopped; the database was not migrated.`);
+  }
+  try { configureConnection(rawDb); } catch (e) { closeDatabase(); throw e; }
+  try { autoBackupLeased(); } catch { /* best-effort, never block startup */ }
+  // A long-running process must also keep taking snapshots. autoBackup() itself
+  // keeps the 24 h cadence, so checking every 6 h is cheap.
+  if (!backupTimer) {
+    backupTimer = setInterval(() => { try { autoBackupLeased(); } catch { /* */ } }, 6 * 60 * 60 * 1000);
+    if (backupTimer.unref) backupTimer.unref();
+  }
+  for (const fn of readyHooks.splice(0)) {
+    try { fn(); } catch (e) { console.error("[db] ready hook failed:", e && e.message ? e.message : e); }
+  }
+}
+
+// Re-open after another process changed the file (e.g. the seed child).
+export async function reloadDb() {
+  closeDatabase();
+  await initDb();
+}
+
+export function initSchema() {
+  if (schemaReady) return;
+  schemaReady = true;
+  db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    name_fa TEXT, name_en TEXT,
+    student_no TEXT,
+    role TEXT NOT NULL CHECK(role IN ('student','teacher','admin','learner','content_manager','support')),
+    status TEXT NOT NULL DEFAULT 'active',
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS exam_assignments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    case_id INTEGER NOT NULL,
+    assigned_by INTEGER,
+    max_attempts INTEGER DEFAULT 1,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, case_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS classes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name_fa TEXT, name_en TEXT,
+    desc_fa TEXT, desc_en TEXT,
+    code TEXT UNIQUE,
+    owner_id INTEGER,
+    max_attempts INTEGER DEFAULT 1,
+    exam_mode TEXT DEFAULT 'perQuestion',
+    timer_enabled INTEGER DEFAULT 1,
+    timer_minutes INTEGER DEFAULT 30,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS class_cases (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    class_id INTEGER NOT NULL,
+    case_id INTEGER NOT NULL,
+    weight INTEGER DEFAULT 1,
+    UNIQUE(class_id, case_id)
+  );
+  CREATE TABLE IF NOT EXISTS class_members (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    class_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    joined_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(class_id, user_id)
+  );
+
+  CREATE TABLE IF NOT EXISTS checklists (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name_fa TEXT, name_en TEXT,
+    items_json TEXT NOT NULL DEFAULT '[]'
+  );
+
+  CREATE TABLE IF NOT EXISTS cases (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    version INTEGER NOT NULL DEFAULT 1,
+    difficulty TEXT DEFAULT 'medium',
+    checklist_id INTEGER,
+    data_json TEXT NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1,
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS case_versions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    case_id INTEGER NOT NULL,
+    version INTEGER NOT NULL,
+    data_json TEXT NOT NULL,
+    archived_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS flashcards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    version INTEGER NOT NULL DEFAULT 1,
+    difficulty TEXT DEFAULT 'medium',
+    data_json TEXT NOT NULL,
+    active INTEGER NOT NULL DEFAULT 1,
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS flashcard_versions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    flashcard_id INTEGER NOT NULL,
+    version INTEGER NOT NULL,
+    data_json TEXT NOT NULL,
+    archived_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS prompts (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+
+  -- Teacher-authored custom answer catalogs (subject → list of options)
+  CREATE TABLE IF NOT EXISTS catalogs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name_fa TEXT, name_en TEXT,
+    items_json TEXT NOT NULL DEFAULT '[]',
+    owner_id INTEGER,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- AI-generated learner texts (study-plan note). Kept per user so a later
+  -- language switch can translate the real text; never shared between users.
+  CREATE TABLE IF NOT EXISTS ai_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    kind TEXT NOT NULL,
+    lang TEXT NOT NULL,
+    text TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_ai_notes_user ON ai_notes(user_id, kind, id);
+
+  CREATE TABLE IF NOT EXISTS attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    type TEXT NOT NULL,
+    case_id INTEGER,
+    class_id INTEGER,
+    exam_id INTEGER,
+    content_version INTEGER,
+    score INTEGER,
+    transcript_json TEXT,
+    eval_json TEXT,
+    turns INTEGER DEFAULT 0,
+    tests INTEGER DEFAULT 0,
+    imaging_count INTEGER DEFAULT 0,
+    ddx_count INTEGER DEFAULT 0,
+    hints INTEGER DEFAULT 0,
+    total_questions INTEGER DEFAULT 0,
+    correct_count INTEGER DEFAULT 0,
+    wrong_count INTEGER DEFAULT 0,
+    duration_sec INTEGER DEFAULT 0,
+    lang TEXT DEFAULT 'fa',
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- Scheduled exams: combine virtual-patient cases and/or flashcards,
+  -- assigned to specific students, available only within a time window.
+  CREATE TABLE IF NOT EXISTS exams (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title_fa TEXT, title_en TEXT,
+    desc_fa TEXT, desc_en TEXT,
+    case_ids TEXT DEFAULT '[]',        -- JSON array of virtual-patient case ids
+    flashcard_ids TEXT DEFAULT '[]',   -- JSON array of flashcard ids (empty = all)
+    use_flashcards INTEGER DEFAULT 0,  -- include the flashcard module
+    starts_at TEXT,                    -- ISO datetime (local) window start
+    ends_at TEXT,                      -- ISO datetime window end
+    duration_min INTEGER DEFAULT 30,
+    max_attempts INTEGER DEFAULT 1,
+    lang TEXT DEFAULT 'both',
+    shuffle INTEGER DEFAULT 0,        -- randomize question order per student
+    anti_cheat INTEGER DEFAULT 1,     -- tab-switch detection + no copy/paste
+    competition INTEGER DEFAULT 0,    -- show ranked leaderboard at the end
+    show_correct INTEGER DEFAULT 1,
+    show_hints INTEGER DEFAULT 1,
+    show_ai INTEGER DEFAULT 1,
+    show_micro INTEGER DEFAULT 1,
+    owner_id INTEGER,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS exam_participants (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    exam_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    UNIQUE(exam_id, user_id)
+  );
+
+  /* =====================================================================
+     GAMIFIED PRE-INTERNSHIP TRACK (Duolingo-style, role = 'learner')
+     ===================================================================== */
+
+  -- One profile row per learner: XP wallet, streak, hearts (energy), tier, premium
+  CREATE TABLE IF NOT EXISTS learner_profiles (
+    user_id INTEGER PRIMARY KEY,
+    xp INTEGER NOT NULL DEFAULT 0,
+    weekly_xp INTEGER NOT NULL DEFAULT 0,
+    week_key TEXT,                       -- ISO week the weekly_xp belongs to
+    streak INTEGER NOT NULL DEFAULT 0,
+    best_streak INTEGER NOT NULL DEFAULT 0,
+    last_active TEXT,                    -- YYYY-MM-DD (Tehran) of last lesson
+    freezes INTEGER NOT NULL DEFAULT 0, -- streak-freeze insurance count
+    hearts INTEGER NOT NULL DEFAULT 5,  -- energy; wrong answer costs one
+    hearts_updated TEXT,                -- ISO ts of last heart refill tick
+    tier TEXT NOT NULL DEFAULT 'bronze',
+    gems INTEGER NOT NULL DEFAULT 0,    -- soft currency
+    premium INTEGER NOT NULL DEFAULT 0, -- 1 = MED School Plus (unlimited hearts, no ads)
+    premium_until TEXT,
+    province TEXT,                       -- for country/province ranking
+    daily_goal INTEGER NOT NULL DEFAULT 30,  -- XP goal per day
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- Append-only log of XP earned (for trends / audit)
+  CREATE TABLE IF NOT EXISTS xp_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    amount INTEGER NOT NULL,
+    reason TEXT,                         -- lesson, streak_bonus, achievement, ...
+    node_id INTEGER,
+    day TEXT,                            -- YYYY-MM-DD (Tehran)
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- Pre-internship subjects (with question budget from the national exam)
+  CREATE TABLE IF NOT EXISTS topics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT UNIQUE,
+    name_fa TEXT, name_en TEXT,
+    parent TEXT,                         -- e.g. 'internal' groups its sub-specialties
+    budget INTEGER DEFAULT 0,           -- number of questions in the real exam
+    color TEXT DEFAULT '#2f7fd1',
+    icon TEXT DEFAULT 'flask',
+    ord INTEGER DEFAULT 0,
+    active INTEGER NOT NULL DEFAULT 1
+  );
+
+  -- Learning-path nodes (a lesson = a node on the map, ordered within a topic)
+  CREATE TABLE IF NOT EXISTS path_nodes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    topic_id INTEGER NOT NULL,
+    title_fa TEXT, title_en TEXT,
+    ord INTEGER DEFAULT 0,
+    kind TEXT DEFAULT 'lesson',          -- lesson | checkpoint | boss
+    card_ids TEXT DEFAULT '[]',          -- JSON array of flashcard ids used in this lesson
+    subtitle_fa TEXT DEFAULT '',          -- explicit list of concepts the stage tests
+    subtitle_en TEXT DEFAULT '',
+    curated INTEGER NOT NULL DEFAULT 0,   -- 1 = maintained by the automatic bank curator
+    premium INTEGER NOT NULL DEFAULT 0,   -- 1 = locked «تمرین بیشتر» node (premium learners only)
+    xp_reward INTEGER DEFAULT 20,
+    active INTEGER NOT NULL DEFAULT 1
+  );
+
+  -- Per-learner progress on each node (crown levels 0..5 like Duolingo)
+  CREATE TABLE IF NOT EXISTS node_progress (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    node_id INTEGER NOT NULL,
+    stars INTEGER NOT NULL DEFAULT 0,   -- best crowns earned (0..5)
+    attempts INTEGER NOT NULL DEFAULT 0,
+    last_score INTEGER DEFAULT 0,
+    completed_at TEXT,
+    UNIQUE(user_id, node_id)
+  );
+
+  -- Weekly competitive leagues (~30 learners per room, promotion/relegation)
+  CREATE TABLE IF NOT EXISTS leagues (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    week_key TEXT NOT NULL,              -- e.g. 2026-W27
+    tier TEXT NOT NULL,                 -- bronze..diamond
+    room INTEGER NOT NULL DEFAULT 1,    -- room number within the tier
+    UNIQUE(week_key, tier, room)
+  );
+  CREATE TABLE IF NOT EXISTS league_members (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    league_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    xp INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(league_id, user_id)
+  );
+
+  -- Achievement catalog + per-user unlock state
+  CREATE TABLE IF NOT EXISTS achievements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT UNIQUE,
+    name_fa TEXT, name_en TEXT,
+    desc_fa TEXT, desc_en TEXT,
+    icon TEXT DEFAULT 'medal',
+    metric TEXT,                         -- streak | xp | nodes | perfect | league
+    threshold INTEGER DEFAULT 1,
+    ord INTEGER DEFAULT 0
+  );
+  CREATE TABLE IF NOT EXISTS user_achievements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    achievement_id INTEGER NOT NULL,
+    progress INTEGER NOT NULL DEFAULT 0,
+    unlocked_at TEXT,
+    UNIQUE(user_id, achievement_id)
+  );
+
+  -- Daily quests: per-user, per-day set of small goals (Duolingo-style).
+  CREATE TABLE IF NOT EXISTS user_quests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    day TEXT NOT NULL,                    -- YYYY-MM-DD (Tehran)
+    slug TEXT NOT NULL,                   -- xp | lessons | perfect | review | earlybird
+    goal INTEGER NOT NULL,
+    progress INTEGER NOT NULL DEFAULT 0,
+    reward_gems INTEGER NOT NULL DEFAULT 0,
+    claimed INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(user_id, day, slug)
+  );
+
+  -- Timed daily chests (Early Bird / Night Owl) — time-pressure retention.
+  CREATE TABLE IF NOT EXISTS daily_chests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    day TEXT NOT NULL,
+    slug TEXT NOT NULL,                   -- earlybird | nightowl
+    opened_at TEXT,
+    reward_gems INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(user_id, day, slug)
+  );
+
+  -- Streak day log (for the calendar + repair logic).
+  CREATE TABLE IF NOT EXISTS streak_days (
+    user_id INTEGER NOT NULL,
+    day TEXT NOT NULL,                    -- YYYY-MM-DD active
+    UNIQUE(user_id, day)
+  );
+
+  -- Per-card answer log (Duolingo-style granular telemetry): each answer with
+  -- correctness and response time feeds analytics, weak-spot detection and the
+  -- crowd difficulty model.
+  CREATE TABLE IF NOT EXISTS card_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    card_id INTEGER NOT NULL,
+    node_id INTEGER,                      -- lesson/topic grouping
+    correct INTEGER NOT NULL DEFAULT 0,
+    response_ms INTEGER DEFAULT 0,        -- time to answer (confidence proxy)
+    day TEXT,                             -- YYYY-MM-DD (Tehran)
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- Aggregated crowd difficulty per card (Birdbrain-style, computed from real
+  -- user error rates rather than a fixed label).
+  CREATE TABLE IF NOT EXISTS question_stats (
+    card_id INTEGER PRIMARY KEY,
+    seen INTEGER NOT NULL DEFAULT 0,
+    correct INTEGER NOT NULL DEFAULT 0,
+    total_ms INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- Personal notes + highlights the learner attaches to a card.
+  CREATE TABLE IF NOT EXISTS user_notes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    card_id INTEGER NOT NULL,
+    note TEXT DEFAULT '',
+    highlight INTEGER NOT NULL DEFAULT 0, -- 1 = flagged/bookmarked
+    updated_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, card_id)
+  );
+
+  -- Payment transactions (Zarinpal + mock gateway) for premium subscriptions.
+  CREATE TABLE IF NOT EXISTS transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    plan TEXT NOT NULL,                   -- monthly | yearly | course:<id>
+    amount INTEGER NOT NULL,              -- in Rial
+    authority TEXT,                       -- gateway authority token
+    ref_id TEXT,                          -- gateway reference (on success)
+    status TEXT NOT NULL DEFAULT 'pending', -- pending | paid | failed | canceled
+    gateway TEXT NOT NULL DEFAULT 'mock', -- mock | zarinpal
+    created_at TEXT DEFAULT (datetime('now')),
+    paid_at TEXT
+  );
+
+  -- ===== Course store (sell video courses) =====
+  -- A course = a sellable product with chapters of video lessons.
+  CREATE TABLE IF NOT EXISTS courses (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title_fa TEXT, title_en TEXT,
+    desc_fa TEXT, desc_en TEXT,
+    cover TEXT,                           -- cover image url
+    price INTEGER NOT NULL DEFAULT 0,     -- in Rial (0 = free)
+    discount_price INTEGER,              -- optional sale price (Rial)
+    instructor_fa TEXT, instructor_en TEXT,
+    level TEXT DEFAULT 'all',            -- all | basic | pre-internship | residency
+    published INTEGER NOT NULL DEFAULT 0, -- draft until published
+    ord INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  -- A lesson (video) inside a course. free_preview=1 shows to everyone.
+  CREATE TABLE IF NOT EXISTS course_lessons (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    course_id INTEGER NOT NULL,
+    title_fa TEXT, title_en TEXT,
+    video_url TEXT,                       -- uploaded file url or external link
+    duration TEXT,                        -- e.g. "12:30"
+    free_preview INTEGER NOT NULL DEFAULT 0, -- 1 = watchable before buying
+    ord INTEGER DEFAULT 0
+  );
+  -- Which users own which courses (enrollment after purchase / free).
+  CREATE TABLE IF NOT EXISTS course_enrollments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    course_id INTEGER NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, course_id)
+  );
+
+  -- Ad slots (simulated monetization; admin-managed)
+  CREATE TABLE IF NOT EXISTS ads (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slot TEXT NOT NULL,                  -- home | path | lesson-intro | between-lessons | sidebar
+    node_id INTEGER,                     -- optional: target a single lesson (path_nodes.id); NULL = applies to all
+    title_fa TEXT, title_en TEXT,
+    body_fa TEXT, body_en TEXT,
+    image TEXT,
+    cta_fa TEXT, cta_en TEXT,
+    url TEXT,
+    bg TEXT DEFAULT '#2f7fd1',
+    active INTEGER NOT NULL DEFAULT 1,
+    impressions INTEGER NOT NULL DEFAULT 0,
+    clicks INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- In-app notifications (bell icon feed) for learners
+  CREATE TABLE IF NOT EXISTS notifications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    kind TEXT NOT NULL,                  -- streak | league | achievement | challenge | system
+    title_fa TEXT, title_en TEXT,
+    body_fa TEXT, body_en TEXT,
+    icon TEXT DEFAULT 'clock',
+    link TEXT,                           -- optional in-app tab to open
+    seen INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- Web Push subscriptions (browser push, one row per device/endpoint)
+  CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    endpoint TEXT UNIQUE NOT NULL,
+    p256dh TEXT, auth TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- 1v1 asynchronous challenges (Duolingo-style match): same question set, compared scores
+  CREATE TABLE IF NOT EXISTS challenges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT UNIQUE,                    -- shareable join code
+    topic_id INTEGER,
+    card_ids TEXT DEFAULT '[]',          -- fixed question set both players face
+    creator_id INTEGER NOT NULL,
+    opponent_id INTEGER,
+    status TEXT NOT NULL DEFAULT 'open', -- open | active | finished
+    xp_stake INTEGER DEFAULT 20,
+    winner_id INTEGER,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS challenge_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    challenge_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    correct INTEGER DEFAULT 0,
+    total INTEGER DEFAULT 0,
+    time_ms INTEGER DEFAULT 0,
+    finished_at TEXT,
+    UNIQUE(challenge_id, user_id)
+  );
+
+  -- Spaced-repetition state (SM-2-lite) per learner per card
+  CREATE TABLE IF NOT EXISTS srs_state (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    card_id INTEGER NOT NULL,
+    ease REAL NOT NULL DEFAULT 2.5,      -- easiness factor
+    interval_days INTEGER NOT NULL DEFAULT 0,
+    reps INTEGER NOT NULL DEFAULT 0,     -- consecutive correct reviews
+    lapses INTEGER NOT NULL DEFAULT 0,
+    due TEXT,                            -- YYYY-MM-DD (Tehran) next review date
+    last_reviewed TEXT,
+    UNIQUE(user_id, card_id)
+  );
+
+  -- Learner-authored personal flashcards (with hints) made in the learn phase
+  CREATE TABLE IF NOT EXISTS learner_cards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    flashcard_id INTEGER NOT NULL,       -- points to a row in flashcards
+    topic_id INTEGER,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- Exam simulator sessions (timed, exam-like blocks). Powers pass-probability.
+  CREATE TABLE IF NOT EXISTS exam_sims (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    card_ids TEXT NOT NULL,              -- JSON array of flashcard ids in this sim
+    n INTEGER NOT NULL,                  -- number of questions
+    duration_s INTEGER NOT NULL,        -- allotted time in seconds
+    topic_scope TEXT,                    -- 'all' or a comma list of topic slugs
+    status TEXT NOT NULL DEFAULT 'active', -- active | finished
+    correct INTEGER DEFAULT 0,
+    total INTEGER DEFAULT 0,
+    time_ms INTEGER DEFAULT 0,
+    pass_prob INTEGER,                   -- 0-100 estimated probability of passing
+    started_at TEXT DEFAULT (datetime('now')),
+    finished_at TEXT
+  );
+
+  -- AI-assisted study plans (mostly deterministic; AI only writes a short note)
+  CREATE TABLE IF NOT EXISTS study_plans (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    exam_date TEXT,                      -- YYYY-MM-DD target exam date
+    minutes_per_day INTEGER DEFAULT 60,
+    plan_json TEXT,                      -- the generated day-by-day plan
+    ai_note_fa TEXT, ai_note_en TEXT,   -- optional motivational note (AI or template)
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id)
+  );
+
+  -- Community decks: learner-shared cards (AnkiHub-style), moderated & votable.
+  CREATE TABLE IF NOT EXISTS community_cards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    flashcard_id INTEGER NOT NULL,       -- the shared flashcards row
+    author_id INTEGER NOT NULL,
+    topic_id INTEGER,
+    status TEXT NOT NULL DEFAULT 'pending', -- pending | approved | rejected
+    score INTEGER NOT NULL DEFAULT 0,     -- cached net votes (up - down)
+    imports INTEGER NOT NULL DEFAULT 0,   -- how many learners added it to their SRS
+    created_at TEXT DEFAULT (datetime('now')),
+    reviewed_at TEXT
+  );
+  CREATE TABLE IF NOT EXISTS community_votes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    community_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    value INTEGER NOT NULL,               -- +1 or -1
+    UNIQUE(community_id, user_id)
+  );
+  -- track which community cards a learner imported into their own SRS
+  CREATE TABLE IF NOT EXISTS community_imports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    community_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    flashcard_id INTEGER NOT NULL,
+    UNIQUE(community_id, user_id)
+  );
+
+  -- Immutable audit log of every admin write action (actor, action, resource, before/after)
+  CREATE TABLE IF NOT EXISTS audit_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    actor_id INTEGER,
+    actor_name TEXT,
+    action TEXT NOT NULL,                -- e.g. user.update, flashcard.delete, settings.change
+    resource TEXT,                       -- e.g. users:12
+    detail TEXT,                         -- JSON before/after or notes
+    ip TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- Global feature flags (toggle platform features on/off)
+  CREATE TABLE IF NOT EXISTS feature_flags (
+    key TEXT PRIMARY KEY,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    label_fa TEXT, label_en TEXT,
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- Universities (institutions). Teachers & students belong to a university.
+  CREATE TABLE IF NOT EXISTS universities (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name_fa TEXT, name_en TEXT,
+    city_fa TEXT, city_en TEXT,
+    code TEXT UNIQUE,
+    active INTEGER NOT NULL DEFAULT 1,
+    -- Per-university licensing / sales (B2B). All nullable limits = unlimited.
+    limits_enabled INTEGER NOT NULL DEFAULT 0,  -- enforce max_* caps when 1
+    max_students INTEGER,                       -- cap on students of this university
+    max_vp_msgs_month INTEGER,                  -- cap on virtual-patient chat messages per month
+    max_vp_tokens_month INTEGER,                -- cap on (estimated) VP AI tokens per month
+    license_plan TEXT NOT NULL DEFAULT 'standard',  -- trial | standard | enterprise
+    license_expires_at TEXT,                    -- ISO date / freeform expiry
+    sales_method TEXT,                          -- سازمانی | معرف | فاکتور رسمی | آزمایشی...
+    -- Per-university feature flags (NULL = inherit the global default)
+    flash_no_penalty INTEGER,                   -- no-penalty flashcards (h / wrong-stage free)
+    flash_allow_back INTEGER,                   -- flashcard exams: students may return to earlier cards
+    flash_allow_change INTEGER,                 -- flashcard exams: students may change a confirmed answer
+    live_board_speed INTEGER,                   -- leaderboard tie-break by less time
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- Canonical reference catalog (metadata-only) and per-university approved policies.
+  CREATE TABLE IF NOT EXISTS reference_catalog (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      code TEXT NOT NULL UNIQUE,
+      title_fa TEXT NOT NULL DEFAULT '', title_en TEXT NOT NULL,
+      short_title TEXT NOT NULL DEFAULT '', publisher TEXT NOT NULL DEFAULT '', edition TEXT NOT NULL DEFAULT '',
+      publication_year INTEGER, isbn TEXT NOT NULL DEFAULT '', source_url TEXT NOT NULL DEFAULT '',
+      cover_url TEXT NOT NULL DEFAULT '', pdf_url TEXT NOT NULL DEFAULT '',
+      rights_status TEXT NOT NULL DEFAULT 'metadata_only', rights_note_fa TEXT NOT NULL DEFAULT '', rights_note_en TEXT NOT NULL DEFAULT '',
+      version INTEGER NOT NULL DEFAULT 1, active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now'))
+    );
+  CREATE TABLE IF NOT EXISTS course_reference_policies (
+      id INTEGER PRIMARY KEY AUTOINCREMENT, university_id INTEGER NOT NULL,
+      course_code TEXT NOT NULL, course_name_fa TEXT NOT NULL DEFAULT '', course_name_en TEXT NOT NULL DEFAULT '',
+      specialty_fa TEXT NOT NULL DEFAULT '', specialty_en TEXT NOT NULL DEFAULT '', reference_id INTEGER,
+      source_anchor TEXT NOT NULL DEFAULT '', citation_label_fa TEXT NOT NULL DEFAULT '', citation_label_en TEXT NOT NULL DEFAULT '',
+      teaching_basis_fa TEXT NOT NULL DEFAULT '', teaching_basis_en TEXT NOT NULL DEFAULT '',
+      content_mode TEXT NOT NULL DEFAULT 'teacher_authored', status TEXT NOT NULL DEFAULT 'draft', approval_note TEXT NOT NULL DEFAULT '',
+      approved_by INTEGER, approved_at TEXT, version INTEGER NOT NULL DEFAULT 1, active INTEGER NOT NULL DEFAULT 1,
+      created_by INTEGER, created_at TEXT DEFAULT (datetime('now')), updated_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(university_id,course_code)
+    );
+
+  -- Monthly usage counters per university (enforcement + admin meters).
+  CREATE TABLE IF NOT EXISTS university_usage (
+    university_id INTEGER NOT NULL,
+    period TEXT NOT NULL,                       -- "YYYY-MM" (UTC monthly bucket)
+    vp_msgs INTEGER NOT NULL DEFAULT 0,
+    vp_tokens INTEGER NOT NULL DEFAULT 0,
+    vp_sessions INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT DEFAULT (datetime('now')),
+    PRIMARY KEY (university_id, period)
+  );
+
+  -- Pending email-verification tokens (learner email signup)
+  CREATE TABLE IF NOT EXISTS email_verifications (
+    token TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    email TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- R70: password-reset links. Only a SHA-256 of the token is stored; a link
+  -- expires after 30 minutes and is single-use (used_at).
+  CREATE TABLE IF NOT EXISTS password_resets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE,
+    created_at TEXT DEFAULT (datetime('now')),
+    expires_at TEXT NOT NULL,
+    used_at TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets(user_id);
+
+  /* =====================================================================
+     NEW DUOLINGO-2026 GAMIFICATION & AD MECHANICS
+     ===================================================================== */
+
+  -- Streak Wager: learner stakes gems to commit to N more streak days; on
+  -- success the stake is returned multiplied. One active wager per learner.
+  CREATE TABLE IF NOT EXISTS streak_wagers (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    start_day TEXT NOT NULL,             -- YYYY-MM-DD when placed
+    start_streak INTEGER NOT NULL,       -- streak count when placed
+    target_days INTEGER NOT NULL,        -- extra days to reach (e.g. 7)
+    stake INTEGER NOT NULL,              -- gems staked
+    reward INTEGER NOT NULL,             -- gems paid out on success
+    status TEXT NOT NULL DEFAULT 'active', -- active | won | lost
+    settled_at TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- Monthly quest progress: complete N daily quests in a calendar month to earn
+  -- a collectible badge. One row per learner per month.
+  CREATE TABLE IF NOT EXISTS monthly_quests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    month TEXT NOT NULL,                 -- YYYY-MM (Tehran)
+    progress INTEGER NOT NULL DEFAULT 0, -- daily quests completed this month
+    goal INTEGER NOT NULL DEFAULT 30,
+    badge_slug TEXT,                     -- collectible badge id for this month
+    claimed INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(user_id, month)
+  );
+
+  -- Collectible badges the learner has earned (monthly quest, events, etc.)
+  CREATE TABLE IF NOT EXISTS user_badges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    badge_slug TEXT NOT NULL,            -- e.g. month:2026-07 | event:ramp-xp
+    label_fa TEXT, label_en TEXT,
+    icon TEXT DEFAULT 'medal',
+    earned_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, badge_slug)
+  );
+
+  -- Per-learner participation in a timed XP Ramp-Up challenge event session.
+  CREATE TABLE IF NOT EXISTS event_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    event_slug TEXT NOT NULL,            -- which event definition (from settings)
+    card_ids TEXT NOT NULL,              -- JSON array of flashcard ids in this run
+    duration_s INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active', -- active | finished
+    correct INTEGER DEFAULT 0,
+    total INTEGER DEFAULT 0,
+    xp_earned INTEGER DEFAULT 0,
+    started_at TEXT DEFAULT (datetime('now')),
+    finished_at TEXT
+  );
+
+  -- Rewarded-ad view log: opt-in ad views that granted gems/hearts. Used to cap
+  -- daily reward claims per learner and to report ad revenue to admins.
+  CREATE TABLE IF NOT EXISTS ad_views (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    ad_id INTEGER,
+    format TEXT NOT NULL,                -- rewarded | interstitial | prelesson
+    day TEXT NOT NULL,                   -- YYYY-MM-DD (Tehran)
+    reward_kind TEXT,                    -- gems | hearts | energy | none
+    reward_amount INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  /* =====================================================================
+     FRIEND / SOCIAL SYSTEM (Duolingo-style: follow, friend streak,
+     friend quest, activity feed with high-fives, nudges)
+     ===================================================================== */
+
+  -- Directed follow graph. A "friend" (for streaks/quests) = mutual follow.
+  CREATE TABLE IF NOT EXISTS follows (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    follower_id INTEGER NOT NULL,
+    followee_id INTEGER NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(follower_id, followee_id)
+  );
+
+  -- Pairwise friend streak: consecutive days BOTH friends did a lesson.
+  -- user_lo < user_hi keeps one canonical row per pair.
+  CREATE TABLE IF NOT EXISTS friend_streaks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_lo INTEGER NOT NULL,
+    user_hi INTEGER NOT NULL,
+    streak INTEGER NOT NULL DEFAULT 0,
+    best INTEGER NOT NULL DEFAULT 0,
+    lo_day TEXT,                          -- last day user_lo was active
+    hi_day TEXT,                          -- last day user_hi was active
+    last_day TEXT,                        -- last day the shared streak advanced
+    UNIQUE(user_lo, user_hi)
+  );
+
+  -- Weekly friend quest: two friends share an XP goal within a time window.
+  CREATE TABLE IF NOT EXISTS friend_quests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    week_key TEXT NOT NULL,
+    a_id INTEGER NOT NULL,               -- initiator
+    b_id INTEGER NOT NULL,               -- partner
+    goal INTEGER NOT NULL,               -- shared XP goal
+    a_xp INTEGER NOT NULL DEFAULT 0,
+    b_xp INTEGER NOT NULL DEFAULT 0,
+    reward_gems INTEGER NOT NULL DEFAULT 0,
+    status TEXT NOT NULL DEFAULT 'active', -- active | complete | claimed
+    a_claimed INTEGER NOT NULL DEFAULT 0,
+    b_claimed INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(week_key, a_id, b_id)
+  );
+
+  -- Activity feed: milestone events friends can high-five.
+  CREATE TABLE IF NOT EXISTS feed_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,            -- who the event is about
+    kind TEXT NOT NULL,                  -- streak | perfect_day | league | badge | join
+    title_fa TEXT, title_en TEXT,
+    icon TEXT DEFAULT 'medal',
+    day TEXT,                            -- YYYY-MM-DD (Tehran)
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS feed_highfives (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,            -- who gave the high-five
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(event_id, user_id)
+  );
+
+  /* =====================================================================
+     ELITE PROGRESSION: Legendary levels + Diamond Tournament
+     ===================================================================== */
+
+  -- Record of Diamond-Tournament champions (finals top finishers) for the
+  -- profile badge + leaderboard icon.
+  CREATE TABLE IF NOT EXISTS tournament_champions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    week_key TEXT NOT NULL,
+    rank INTEGER NOT NULL,               -- final placement (1..3 = podium)
+    gems INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, week_key)
+  );
+
+  /* =====================================================================
+     SUPPORT / FEEDBACK — in-app chat between any user and the admin team.
+     A ticket is one conversation thread; messages are its chat bubbles.
+     ===================================================================== */
+  CREATE TABLE IF NOT EXISTS support_tickets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    category TEXT NOT NULL DEFAULT 'question', -- question | bug | feedback | account
+    subject TEXT DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'open',   -- open | answered | resolved
+    user_unread INTEGER NOT NULL DEFAULT 0, -- admin replies the user hasn't seen
+    admin_unread INTEGER NOT NULL DEFAULT 1, -- messages the admin team hasn't seen
+    last_message_at TEXT DEFAULT (datetime('now')),
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE TABLE IF NOT EXISTS support_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ticket_id INTEGER NOT NULL,
+    sender TEXT NOT NULL,                  -- user | admin
+    sender_id INTEGER,                     -- who wrote it
+    sender_name TEXT,                      -- cached display name (admin agent)
+    body TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  /* =====================================================================
+     HELP CENTER — admin-editable FAQ / knowledge-base articles, shown
+     in-app (searchable) to deflect support tickets before they're created.
+     ===================================================================== */
+  CREATE TABLE IF NOT EXISTS help_articles (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category TEXT NOT NULL DEFAULT 'general', -- general | account | learning | billing | technical
+    title_fa TEXT, title_en TEXT,
+    body_fa TEXT, body_en TEXT,
+    ord INTEGER DEFAULT 0,
+    published INTEGER NOT NULL DEFAULT 1,
+    views INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- Landing-page social proof: real, admin-managed testimonials shown to
+  -- logged-out visitors. Photos are optional (avatar falls back to initials).
+  CREATE TABLE IF NOT EXISTS testimonials (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name_fa TEXT, name_en TEXT,      -- author display name
+    role_fa TEXT, role_en TEXT,      -- author role / title (e.g. "Pre-int candidate")
+    quote_fa TEXT, quote_en TEXT,    -- the testimonial text
+    photo TEXT,                      -- optional uploaded photo path (else initials avatar)
+    rating INTEGER NOT NULL DEFAULT 5, -- 1..5 stars
+    featured INTEGER NOT NULL DEFAULT 0, -- pin to front
+    ord INTEGER DEFAULT 0,
+    published INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- Landing-page FAQ (objection-handling), separate from the in-app help center
+  -- so marketing copy can differ. Public read, admin write.
+  CREATE TABLE IF NOT EXISTS landing_faqs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    q_fa TEXT, q_en TEXT,
+    a_fa TEXT, a_en TEXT,
+    ord INTEGER DEFAULT 0,
+    published INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- Landing-page trust badges (e.g. "No card required", "Bilingual", "PWA").
+  -- Small icon + short label, admin-managed, shown near the CTA.
+  CREATE TABLE IF NOT EXISTS trust_badges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    icon TEXT NOT NULL DEFAULT 'check', -- Icon.jsx name
+    label_fa TEXT, label_en TEXT,
+    ord INTEGER DEFAULT 0,
+    published INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- FSRS review log: one row per graded spaced-repetition review. This is the
+  -- raw training data the FSRS optimizer fits parameters against (each card's
+  -- ordered sequence of {grade, elapsed_days} reconstructs its memory trace).
+  -- grade is FSRS 1..4 (Again/Hard/Good/Easy); elapsed_days is days since the
+  -- card's previous review (0 for the first/same-day review).
+  CREATE TABLE IF NOT EXISTS srs_review_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    card_id INTEGER NOT NULL,
+    grade INTEGER NOT NULL,           -- 1..4
+    elapsed_days INTEGER NOT NULL DEFAULT 0,
+    day TEXT,                         -- YYYY-MM-DD (Tehran)
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- ===== Group purchase (volume discount) =====
+  -- Each buyer purchases a PACK of seats at a discounted per-seat price and
+  -- gets one redemption CODE per seat. Everyone stays on their OWN independent
+  -- account; redeeming a code just grants that redeemer their own premium time.
+  -- (No shared accounts — data never gets mixed.)
+  CREATE TABLE IF NOT EXISTS group_packs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title_fa TEXT, title_en TEXT,
+    seats INTEGER NOT NULL DEFAULT 3,     -- how many independent accounts this pack covers
+    days INTEGER NOT NULL DEFAULT 30,     -- premium days each redeemed seat grants
+    price INTEGER NOT NULL DEFAULT 0,     -- TOTAL pack price in Rial (already discounted)
+    ord INTEGER DEFAULT 0,
+    active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  -- A completed (or pending) bulk purchase of one pack by a buyer.
+  CREATE TABLE IF NOT EXISTS group_orders (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    buyer_id INTEGER NOT NULL,
+    pack_id INTEGER,
+    seats INTEGER NOT NULL,
+    days INTEGER NOT NULL,
+    amount INTEGER NOT NULL,              -- Rial paid
+    status TEXT NOT NULL DEFAULT 'pending', -- pending | paid | canceled
+    transaction_id INTEGER,              -- links to transactions.id
+    created_at TEXT DEFAULT (datetime('now')),
+    paid_at TEXT
+  );
+  -- One redemption code per seat. The buyer distributes these to friends; each
+  -- friend redeems on their own account to activate their own premium.
+  CREATE TABLE IF NOT EXISTS seat_codes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_id INTEGER NOT NULL,
+    code TEXT NOT NULL UNIQUE,
+    days INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active', -- active | redeemed
+    redeemed_by INTEGER,                 -- user_id who used it (their own account)
+    redeemed_at TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- ===== Daily Diagnosis Challenge (original, Wordle-style clinical reasoning) =====
+  -- Admin-authored cases. The player reads an opening vignette, guesses the
+  -- diagnosis, and each wrong guess reveals the NEXT clue (labs, exam, history,
+  -- imaging). Fewer guesses = better score. All content is written by the admin;
+  -- nothing is copied from any third-party game.
+  CREATE TABLE IF NOT EXISTS dx_cases (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    category_fa TEXT, category_en TEXT,           -- e.g. Cardiology / قلب
+    vignette_fa TEXT, vignette_en TEXT,           -- opening one-liner (age, chief complaint)
+    clues_json TEXT NOT NULL DEFAULT '[]',        -- [{fa,en}] progressive clues, revealed one per wrong guess
+    answer_fa TEXT, answer_en TEXT,               -- the correct diagnosis (display)
+    aliases_json TEXT NOT NULL DEFAULT '[]',      -- accepted spellings/synonyms (both langs)
+    options_json TEXT NOT NULL DEFAULT '[]',      -- [{fa,en}] the picklist the player chooses from (incl. the answer)
+    explanation_fa TEXT, explanation_en TEXT,     -- shown after the case (the "why")
+    difficulty TEXT NOT NULL DEFAULT 'medium',
+    max_guesses INTEGER NOT NULL DEFAULT 6,
+    scheduled_day TEXT,                            -- optional YYYY-MM-DD to pin as that day's case
+    active INTEGER NOT NULL DEFAULT 1,
+    ord INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  -- One row per user per case: their guesses, whether solved, and how many tries.
+  CREATE TABLE IF NOT EXISTS dx_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    case_id INTEGER NOT NULL,
+    day TEXT,                                      -- YYYY-MM-DD (Tehran) the daily case belongs to
+    guesses_json TEXT NOT NULL DEFAULT '[]',       -- [{text, correct}] ordered guesses
+    revealed INTEGER NOT NULL DEFAULT 1,           -- how many clues are shown (starts at 1 = vignette)
+    solved INTEGER NOT NULL DEFAULT 0,
+    finished INTEGER NOT NULL DEFAULT 0,           -- solved OR out of guesses
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, case_id)
+  );
+
+  -- ===== Referral (invite-a-friend) program =====
+  -- Each learner has a personal invite code (stored on learner_profiles.referral_code).
+  -- A referral row records: who invited whom, the current status, and whether
+  -- the double-sided rewards were paid. Milestone rewards (invite N friends) are
+  -- tracked via learner_profiles.referral_count + a claimed-milestones list.
+  CREATE TABLE IF NOT EXISTS referrals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    referrer_id INTEGER NOT NULL,      -- the inviter
+    referred_id INTEGER NOT NULL,      -- the new user who signed up with the code
+    code TEXT,                         -- the code used
+    status TEXT NOT NULL DEFAULT 'pending', -- pending (signed up) | qualified (did first lesson) 
+    referrer_rewarded INTEGER NOT NULL DEFAULT 0,
+    referred_rewarded INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    qualified_at TEXT,
+    UNIQUE(referred_id)                -- a user can only be referred once
+  );
+  -- Log of social-share actions (for the optional "share to earn" reward + admin analytics).
+  CREATE TABLE IF NOT EXISTS share_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    kind TEXT NOT NULL,                -- streak | dx | achievement | invite | ...
+    channel TEXT,                      -- instagram | telegram | whatsapp | copy | ...
+    day TEXT,                          -- YYYY-MM-DD (Tehran)
+    rewarded INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  CREATE TABLE IF NOT EXISTS pwa_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,                   -- may be null (logged-out visitor)
+    event TEXT NOT NULL,               -- prompt_shown | accepted | dismissed | installed | launch
+    platform TEXT,                     -- android | ios | desktop | other
+    standalone INTEGER NOT NULL DEFAULT 0, -- 1 if running as installed app
+    day TEXT,                          -- YYYY-MM-DD (Tehran)
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- Real-user performance monitoring (Core Web Vitals + navigation timing).
+  -- Public endpoint writes here; admin analytics reads aggregates from it.
+  CREATE TABLE IF NOT EXISTS rum_vitals (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    session_id TEXT,
+    metric TEXT NOT NULL,              -- LCP | CLS | INP | TTFB | FCP | app
+    value REAL NOT NULL,
+    rating TEXT,                       -- good | needs-improvement | poor
+    delta REAL,
+    path TEXT,
+    page TEXT,
+    navigation_type TEXT,
+    device TEXT,
+    connection TEXT,
+    server_timing TEXT,
+    payload_json TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_rum_metric_created ON rum_vitals(metric, created_at);
+  CREATE INDEX IF NOT EXISTS idx_rum_path_created ON rum_vitals(path, created_at);
+
+  -- Security-relevant response log (401/403/429/5xx) for early warning and audit.
+  -- Idempotency-Key replay store (lib/idempotency.js). Keyed by a digest of
+  -- (user, scope, key); the client key itself is never stored.
+  CREATE TABLE IF NOT EXISTS idempotency_keys (
+    key_hash TEXT PRIMARY KEY,
+    user_id INTEGER,
+    scope TEXT NOT NULL,
+    fingerprint TEXT NOT NULL,
+    state TEXT NOT NULL,               -- in_flight | done
+    status INTEGER,
+    body TEXT,
+    created_ms INTEGER NOT NULL,
+    updated_ms INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_idem_created ON idempotency_keys(created_ms);
+  CREATE TABLE IF NOT EXISTS security_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    kind TEXT NOT NULL,                -- unauthorized | forbidden | rate_limited | server_error
+    status INTEGER,
+    method TEXT,
+    path TEXT,
+    ip TEXT,
+    user_agent TEXT,
+    detail TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_security_kind_created ON security_events(kind, created_at);
+  CREATE INDEX IF NOT EXISTS idx_security_path_created ON security_events(path, created_at);
+
+  CREATE TABLE IF NOT EXISTS certificates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    serial TEXT UNIQUE NOT NULL,        -- public verification code, e.g. MED-2026-AB12CD
+    user_id INTEGER NOT NULL,
+    kind TEXT NOT NULL DEFAULT 'program', -- program | course
+    ref_id INTEGER,                     -- course id (for kind=course) or program key hash
+    program_key TEXT,                   -- active program key snapshot (for kind=program)
+    recipient_name TEXT,                -- learner display name at issue time (snapshot)
+    title_fa TEXT, title_en TEXT,       -- course/program title snapshot
+    hours TEXT,                         -- optional "X hours of study" text
+    grade TEXT,                         -- optional grade/level
+    signer_name TEXT,                   -- signer (e.g. academic head) snapshot
+    signer_title_fa TEXT, signer_title_en TEXT,
+    issued_at TEXT DEFAULT (datetime('now')),
+    revoked INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(user_id, kind, ref_id, program_key)
+  );
+
+  CREATE TABLE IF NOT EXISTS blog_posts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT UNIQUE NOT NULL,          -- URL-safe id (e.g. "stemi-diagnosis")
+    category TEXT NOT NULL DEFAULT 'general',
+    title_fa TEXT, title_en TEXT,
+    excerpt_fa TEXT, excerpt_en TEXT,  -- short summary (list + meta description)
+    body_fa TEXT, body_en TEXT,        -- markdown body
+    cover TEXT,                         -- cover image URL (optional)
+    meta_title_fa TEXT, meta_title_en TEXT,   -- SEO <title> override (blank = use title)
+    meta_desc_fa TEXT, meta_desc_en TEXT,     -- SEO meta description (blank = use excerpt)
+    canonical TEXT,                     -- canonical URL override (optional)
+    scheduled_at TEXT,                  -- if set + not published, auto-publishes at this time
+    tags TEXT,                          -- comma-separated tags
+    author_name TEXT,                   -- E-E-A-T: named author
+    author_credentials TEXT,            -- e.g. "MD, cardiology"
+    reviewed INTEGER NOT NULL DEFAULT 0,-- "medically reviewed" trust badge
+    published INTEGER NOT NULL DEFAULT 0,
+    featured INTEGER NOT NULL DEFAULT 0,
+    views INTEGER NOT NULL DEFAULT 0,
+    ord INTEGER DEFAULT 0,
+    published_at TEXT,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+  );
+
+  -- Blog post revisions: a snapshot of the post is saved BEFORE every edit so
+  -- an admin can review the edit history and restore an earlier version.
+  CREATE TABLE IF NOT EXISTS blog_revisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    post_id INTEGER NOT NULL,
+    data_json TEXT NOT NULL,             -- full snapshot of the post row
+    editor TEXT,                         -- username who triggered the edit
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  CREATE INDEX IF NOT EXISTS idx_blog_rev_post ON blog_revisions(post_id, id DESC);
+
+  -- Placement "unlock": when a learner tests STRONG on a topic and the admin's
+  -- skip_behavior is "unlock", we record it here. The learning path then treats
+  -- that topic's lessons as unlocked (no fake stars) so the learner can jump in.
+  CREATE TABLE IF NOT EXISTS placement_unlocks (
+    user_id INTEGER NOT NULL,
+    topic_id INTEGER NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, topic_id)
+  );
+
+  -- Section Checkpoint exams (shelf-exam style): a cumulative test that MIXES
+  -- questions drawn from every completed lesson across a whole section (the
+  -- topic 'parent' group, e.g. all Internal-Medicine topics). Each attempt is
+  -- recorded so we can show best score, gate a cooldown and drive analytics.
+  CREATE TABLE IF NOT EXISTS checkpoint_results (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    program TEXT NOT NULL,               -- program key snapshot (preint | basic)
+    section TEXT NOT NULL,               -- topic parent group (internal | major | ...)
+    total INTEGER NOT NULL DEFAULT 0,    -- questions asked
+    correct INTEGER NOT NULL DEFAULT 0,  -- questions answered correctly
+    score INTEGER NOT NULL DEFAULT 0,    -- percentage 0..100 (scaled, shelf-style)
+    passed INTEGER NOT NULL DEFAULT 0,   -- 1 if score >= pass threshold
+    duration_ms INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
+  `);
+
+  // --- lightweight migrations for pre-existing databases ---
+  const ucols = db.prepare("PRAGMA table_info(users)").all().map((c) => c.name);
+  if (!ucols.includes("student_no")) db.exec("ALTER TABLE users ADD COLUMN student_no TEXT");
+  if (!ucols.includes("email")) db.exec("ALTER TABLE users ADD COLUMN email TEXT");
+  if (!ucols.includes("email_verified")) db.exec("ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0");
+  if (!ucols.includes("google_id")) db.exec("ALTER TABLE users ADD COLUMN google_id TEXT");
+  if (!ucols.includes("avatar")) db.exec("ALTER TABLE users ADD COLUMN avatar TEXT");
+  if (!ucols.includes("university_id")) db.exec("ALTER TABLE users ADD COLUMN university_id INTEGER");
+  // Defense-in-depth for duplicate student numbers. We only add the unique
+  // partial index when the existing database is clean, so old production data
+  // with accidental duplicates never prevents the app from booting. App-level
+  // duplicate prevention still blocks all new duplicates either way.
+  try {
+    const dupStudentNo = db.prepare("SELECT student_no FROM users WHERE student_no IS NOT NULL AND student_no<>'' GROUP BY student_no HAVING COUNT(*)>1 LIMIT 1").get();
+    if (!dupStudentNo) db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_student_no_unique ON users(student_no) WHERE student_no IS NOT NULL AND student_no<>''");
+  } catch { /* best-effort duplicate hardening */ }
+  // Backfill only when introducing tenant membership to a legacy database.
+  // NULL in an already upgraded database is authoritative (e.g. revoked membership).
+  db.exec("INSERT OR IGNORE INTO universities (id,name_fa,name_en,city_fa,city_en,code,active) VALUES (1,'دانشگاه پیش‌فرض','Default University','','','DEFAULT',1)");
+  if (!ucols.includes("university_id")) {
+    db.exec("UPDATE users SET university_id=1 WHERE role IN ('teacher','student') AND university_id IS NULL");
+  }
+  // ── Seed full medical-universities catalog (65+). Code is the stable key; id=1 is preserved.
+  // Existing rows (e.g. Arak id=120 from old seed) are kept; new rows use AUTOINCREMENT.
+  try {
+    // Synchronous read — initSchema is sync, so we use fs (works in both ESM/CJS after build)
+    let list = [];
+    try {
+      const jPath = path.join(__dirname, "data", "medical-universities.json");
+      if (fs.existsSync(jPath)) list = JSON.parse(fs.readFileSync(jPath, "utf8"));
+    } catch {}
+    if (list && list.length) {
+      const ins = db.prepare("INSERT OR IGNORE INTO universities (name_fa,name_en,city_fa,city_en,code,active) VALUES (?,?,?,?,?,1)");
+      const byCode = db.prepare("SELECT id, name_fa FROM universities WHERE code=?");
+      for (const u of list) {
+        const code = String(u.code||"").trim().toUpperCase();
+        if (!code || code==="DEFAULT") continue;
+        const existing = byCode.get(code);
+        if (existing) {
+          if (!existing.name_fa || existing.name_fa!==u.name_fa) {
+            try { db.prepare("UPDATE universities SET name_fa=?, name_en=?, city_fa=?, city_en=? WHERE code=?").run(u.name_fa||"", u.name_en||"", u.city_fa||"", u.city_en||"", code); } catch {}
+          }
+          continue;
+        }
+        try { ins.run(u.name_fa||"", u.name_en||"", u.city_fa||"", u.city_en||"", code); } catch {}
+      }
+    }
+  } catch { /* best-effort seed */ }
+  db.exec(`CREATE TABLE IF NOT EXISTS university_storage_namespaces (
+      namespace TEXT PRIMARY KEY, university_id INTEGER NOT NULL, created_at TEXT DEFAULT (datetime('now'))
+    )`);
+  // Retire the erroneous demo institution from directories without deleting tenant history.
+  const retirementCols=db.prepare('PRAGMA table_info(universities)').all().map(c=>c.name);
+  if(!retirementCols.includes('retired_at'))db.exec('ALTER TABLE universities ADD COLUMN retired_at TEXT');
+  db.exec("UPDATE universities SET retired_at=COALESCE(retired_at,datetime('now')) WHERE code='ARAK_HIST' OR (id=120 AND code='ARAK120')");
+  const catalogCols=db.prepare('PRAGMA table_info(catalogs)').all().map(c=>c.name);
+  if(!catalogCols.includes('shared_to_teachers'))db.exec('ALTER TABLE catalogs ADD COLUMN shared_to_teachers INTEGER NOT NULL DEFAULT 0');
+  // Seed Harrison as canonical metadata-only reference (id=1 stable for tests/policies).
+  try {
+    db.exec("INSERT OR IGNORE INTO reference_catalog (id,code,title_en,short_title,publisher,edition,rights_status,active) VALUES (1,'harrison-22e','Harrison''s Principles of Internal Medicine','Harrison''s 22e','McGraw Hill','22e','metadata_only',1)");
+  } catch { /* best-effort seed */ }
+  // cover_url + pdf_url columns for the attractive reference shelf (added after 106/110)
+  try {
+    const cols = db.prepare("PRAGMA table_info(reference_catalog)").all().map(c=>c.name);
+    if (!cols.includes("cover_url")) db.exec("ALTER TABLE reference_catalog ADD COLUMN cover_url TEXT NOT NULL DEFAULT ''");
+    if (!cols.includes("pdf_url")) db.exec("ALTER TABLE reference_catalog ADD COLUMN pdf_url TEXT NOT NULL DEFAULT ''");
+  } catch {}
+  // Seed the full competitive reference library (bilingual, metadata-only).
+  // These back the attractive "View in reference" button at the bottom of every micro-lesson.
+  try {
+    const refBooks = [
+      ["harrison-22e","هاریسون - اصول طب داخلی","Harrison's Principles of Internal Medicine","Harrison 22e","McGraw Hill","22e","https://accessmedicine.mhmedical.com/book.aspx?bookid=3095","/covers/harrison-22e.jpg","/pdfs/harrison-22e-sample.pdf"],
+      ["harrison-fa-22e","هاریسون - اصول طب داخلی (ترجمه فارسی)","Harrison's Principles of Internal Medicine - Persian Edition","هاریسون فارسی ۲۲","McGraw Hill / اندیشه رفیع","22e","https://accessmedicine.mhmedical.com/book.aspx?bookid=3095","/covers/harrison-fa-22e.jpg","/pdfs/harrison-fa-22e-sample.pdf"],
+      ["nelson-21e","نلسون - طب کودکان","Nelson Textbook of Pediatrics","Nelson 21e","Elsevier","21e","https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111","/covers/nelson-21e.jpg","/pdfs/nelson-21e-sample.pdf"],
+      ["williams-ob-26e","ویلیامز - بارداری و زایمان","Williams Obstetrics","Williams 26e","McGraw Hill","26e","https://accessmedicine.mhmedical.com/book.aspx?bookid=2977","/covers/williams-26e.jpg","/pdfs/williams-ob-26e-sample.pdf"],
+      ["berek-16e","برک و نواک - بیماری‌های زنان","Berek & Novak's Gynecology","Berek 16e","Wolters Kluwer","16e","https://shop.lww.com/Berek-and-Novak-s-Gynecology/p/9781975225639","/covers/berek-16e.jpg","/pdfs/berek-16e-sample.pdf"],
+      ["schwartz-11e","شوارتز - اصول جراحی","Schwartz's Principles of Surgery","Schwartz 11e","McGraw Hill","11e","https://accessmedicine.mhmedical.com/book.aspx?bookid=2576","/covers/schwartz-11e.jpg","/pdfs/schwartz-11e-sample.pdf"],
+      ["robbins-10e","رابینز - آسیب‌شناسی پایه","Robbins & Cotran Pathologic Basis of Disease","Robbins 10e","Elsevier","10e","https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111","/covers/robbins-10e.jpg","/pdfs/robbins-10e-sample.pdf"],
+      ["katzung-15e","کاتزونگ - فارماکولوژی پایه و بالینی","Katzung's Basic & Clinical Pharmacology","Katzung 15e","McGraw Hill","15e","https://accessmedicine.mhmedical.com/book.aspx?bookid=3058","/covers/katzung-15e.jpg","/pdfs/katzung-15e-sample.pdf"],
+      ["guyton-14e","گایتون و هال - فیزیولوژی پزشکی","Guyton and Hall Textbook of Medical Physiology","Guyton 14e","Elsevier","14e","https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111","/covers/guyton-14e.jpg","/pdfs/guyton-14e-sample.pdf"],
+      ["junqueira-15e","جان‌کوئرا - بافت‌شناسی پایه","Junqueira's Basic Histology","Junqueira 15e","McGraw Hill","15e","https://accessmedicine.mhmedical.com/book.aspx?bookid=2430","/covers/junqueira-15e.jpg","/pdfs/junqueira-15e-sample.pdf"],
+      ["kaplan-11e","کاپلان و سادوک - خلاصه روان‌پزشکی","Kaplan & Sadock's Synopsis of Psychiatry","Kaplan 11e","Wolters Kluwer","11e","https://shop.lww.com/Kaplan-and-Sadock-s-Synopsis-of-Psychiatry/p/9781975145569","/covers/kaplan-11e.jpg","/pdfs/kaplan-11e-sample.pdf"],
+      ["bolognia-4e","بولونیا - پوست‌شناسی","Bolognia Dermatology","Bolognia 4e","Elsevier","4e","https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111","/covers/bolognia-4e.jpg","/pdfs/bolognia-4e-sample.pdf"],
+    ];
+    for (const [code, fa, en, short, pub, ed, url, cover, pdf] of refBooks) {
+      db.prepare("INSERT OR IGNORE INTO reference_catalog (code,title_fa,title_en,short_title,publisher,edition,source_url,cover_url,pdf_url,rights_status,active) VALUES (?,?,?,?,?,?,?,?,?,?,1)").run(code, fa, en, short, pub, ed, url, cover, pdf, "metadata_only");
+      db.prepare("UPDATE reference_catalog SET title_fa=?, title_en=?, short_title=?, publisher=?, edition=?, source_url=?, cover_url=?, pdf_url=? WHERE code=?").run(fa, en, short, pub, ed, url, cover, pdf, code);
+    }
+  } catch { /* best-effort */ }
+  // Ensure every competitive micro-lesson has a reference link for the attractive button.
+  // This repairs old DBs and survives a wiped-and-reimported bank without needing to rewrite 54 JSON payloads.
+  try {
+    const topicRef = {
+      cardio:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"قلب و عروق",chapter_en:"Cardiovascular Medicine",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      pulmo:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"بیماری‌های ریه",chapter_en:"Pulmonary Medicine",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      gi:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"بیماری‌های گوارش",chapter_en:"Gastroenterology",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      nephro:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"بیماری‌های کلیه",chapter_en:"Nephrology",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      endo:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"غدد و متابولیسم",chapter_en:"Endocrinology",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      heme:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"خون‌شناسی",chapter_en:"Hematology",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      rheum:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"روماتولوژی",chapter_en:"Rheumatology",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      infect:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"بیماری‌های عفونی",chapter_en:"Infectious Diseases",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      neuro:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"نورولوژی",chapter_en:"Neurology",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      internal:{book_fa:"هاریسون - اصول طب داخلی",book_en:"Harrison's Principles of Internal Medicine",chapter_fa:"طب داخلی",chapter_en:"Internal Medicine",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3095",edition:"22e"},
+      peds:{book_fa:"نلسون - طب کودکان",book_en:"Nelson Textbook of Pediatrics",chapter_fa:"طب کودکان",chapter_en:"Pediatrics",url:"https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111",edition:"21e"},
+      obgyn:{book_fa:"ویلیامز - بارداری و زایمان",book_en:"Williams Obstetrics",chapter_fa:"زنان و زایمان",chapter_en:"Obstetrics & Gynecology",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=2977",edition:"26e"},
+      surgery:{book_fa:"شوارتز - اصول جراحی",book_en:"Schwartz's Principles of Surgery",chapter_fa:"جراحی عمومی",chapter_en:"General Surgery",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=2576",edition:"11e"},
+      radio:{book_fa:"برانت و هلمز - رادیولوژی",book_en:"Brant & Helms - Fundamentals of Diagnostic Radiology",chapter_fa:"رادیولوژی",chapter_en:"Radiology",url:"https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111",edition:"5e"},
+      psych:{book_fa:"کاپلان و سادوک - روان‌پزشکی",book_en:"Kaplan & Sadock's Synopsis of Psychiatry",chapter_fa:"روان‌پزشکی",chapter_en:"Psychiatry",url:"https://shop.lww.com/Kaplan-and-Sadock-s-Synopsis-of-Psychiatry/p/9781975145569",edition:"11e"},
+      derm:{book_fa:"بولونیا - پوست",book_en:"Bolognia Dermatology",chapter_fa:"پوست",chapter_en:"Dermatology",url:"https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111",edition:"4e"},
+      ortho:{book_fa:"شوارتز - اصول جراحی (ارتوپدی)",book_en:"Campbell's Operative Orthopaedics",chapter_fa:"ارتوپدی",chapter_en:"Orthopaedics",url:"https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111",edition:"14e"},
+      uro:{book_fa:"کمپبل - اورولوژی",book_en:"Campbell-Walsh Urology",chapter_fa:"اورولوژی",chapter_en:"Urology",url:"https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111",edition:"12e"},
+      ophth:{book_fa:"یانوف و دوکر - چشم‌پزشکی",book_en:"Yanoff & Duker Ophthalmology",chapter_fa:"چشم‌پزشکی",chapter_en:"Ophthalmology",url:"https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111",edition:"5e"},
+      ent:{book_fa:"کامینگز - گوش و حلق و بینی",book_en:"Cummings Otolaryngology",chapter_fa:"گوش و حلق و بینی",chapter_en:"ENT",url:"https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111",edition:"7e"},
+      pharm:{book_fa:"کاتزونگ - فارماکولوژی",book_en:"Katzung's Basic & Clinical Pharmacology",chapter_fa:"فارماکولوژی",chapter_en:"Pharmacology",url:"https://accessmedicine.mhmedical.com/book.aspx?bookid=3058",edition:"15e"},
+      path:{book_fa:"رابینز - آسیب‌شناسی",book_en:"Robbins & Cotran Pathologic Basis of Disease",chapter_fa:"آسیب‌شناسی",chapter_en:"Pathology",url:"https://www.clinicalkey.com/#!/browse/book/3-s2.0-C20161017111",edition:"10e"},
+    };
+    const rows = db.prepare("SELECT id, data_json FROM flashcards WHERE data_json LIKE '%\"track\":\"learn\"%'").all();
+    let patched = 0;
+    const upd = db.prepare("UPDATE flashcards SET data_json=?, updated_at=datetime('now'), content_updated_at=datetime('now'), revision=COALESCE(revision,1)+1 WHERE id=?");
+    db.exec("BEGIN");
+    for (const r of rows) {
+      try {
+        const d = JSON.parse(r.data_json);
+        if (d.micro && d.micro.reference && d.micro.reference.book_fa) continue;
+        const top = String(d.topic || "").toLowerCase();
+        let ref = topicRef[top] || null;
+        if (!ref) {
+          if (String(d.course_fa||"").includes("کودک")) ref = topicRef.peds;
+          else if (String(d.course_fa||"").includes("زنان")) ref = topicRef.obgyn;
+          else ref = topicRef.internal || topicRef.gi;
+        }
+        if (!d.micro) d.micro = {};
+        d.micro.reference = { book_fa: ref.book_fa, book_en: ref.book_en, short_fa: ref.short || ref.book_en, short_en: ref.short || ref.book_en, chapter_fa: ref.chapter_fa, chapter_en: ref.chapter_en, edition: ref.edition, url: ref.url, page: "" };
+        if (!d.micro.source_fa || String(d.micro.source_fa).includes("منابع رسمی")) { d.micro.source_fa = `${ref.book_fa} - ${ref.chapter_fa}`; d.micro.source_en = `${ref.book_en} - ${ref.chapter_en}`; d.micro.source = d.micro.source_fa; }
+        upd.run(JSON.stringify(d), r.id);
+        patched++;
+      } catch {}
+    }
+    db.exec("COMMIT");
+  } catch { try{ db.exec("ROLLBACK"); }catch{} }
+  // Optional profile fields (self- or admin-editable) + identity display prefs.
+  if (!ucols.includes("phone")) db.exec("ALTER TABLE users ADD COLUMN phone TEXT");
+  if (!ucols.includes("bio")) db.exec("ALTER TABLE users ADD COLUMN bio TEXT");
+  if (!ucols.includes("nickname")) db.exec("ALTER TABLE users ADD COLUMN nickname TEXT");
+  // 0 = show real name (default), 1 = show nickname (anonymous in rankings/competition)
+  if (!ucols.includes("anon_mode")) db.exec("ALTER TABLE users ADD COLUMN anon_mode INTEGER DEFAULT 0");
+  // Bumped on password change / admin reset so stolen JWTs die (OWASP / NIST 2026).
+  if (!ucols.includes("token_ver")) {
+    db.exec("ALTER TABLE users ADD COLUMN token_ver INTEGER DEFAULT 1");
+    try { db.exec("UPDATE users SET token_ver=1 WHERE token_ver IS NULL"); } catch { /* */ }
+  }
+  // Per-JWT denylist for single-session logout (ASVS 3.3.1).
+  db.exec(`CREATE TABLE IF NOT EXISTS revoked_tokens (
+    jti TEXT PRIMARY KEY,
+    user_id INTEGER,
+    exp INTEGER,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+  db.exec("CREATE INDEX IF NOT EXISTS idx_revoked_tokens_exp ON revoked_tokens(exp)");
+  // blog_posts: pro editor fields — dedicated SEO meta, canonical URL, and
+  // scheduled publishing (publish automatically at a future date/time).
+  const caseTenantCols = db.prepare("PRAGMA table_info(cases)").all().map((c) => c.name);
+  if (!caseTenantCols.includes("university_id")) db.exec("ALTER TABLE cases ADD COLUMN university_id INTEGER");
+  if (!caseTenantCols.includes("reference_policy_id")) db.exec("ALTER TABLE cases ADD COLUMN reference_policy_id INTEGER");
+  if (!caseTenantCols.includes("reference_snapshot_json")) db.exec("ALTER TABLE cases ADD COLUMN reference_snapshot_json TEXT");
+  {
+    const orphans = db.prepare("SELECT id, data_json FROM cases WHERE university_id IS NULL").all();
+    const up = db.prepare("UPDATE cases SET university_id=1 WHERE id=?");
+    for (const row of orphans) {
+      let learn = false;
+      try { learn = JSON.parse(row.data_json || "{}").track === "learn"; } catch { /* */ }
+      if (!learn) up.run(row.id);
+    }
+  }
+  const flashTenantCols = db.prepare("PRAGMA table_info(flashcards)").all().map((c) => c.name);
+  if (!flashTenantCols.includes("university_id")) db.exec("ALTER TABLE flashcards ADD COLUMN university_id INTEGER");
+
+  // --- question modification tracking ---------------------------------
+  // Admins need to answer "what changed most recently, and in which subject
+  // and chapter?". `updated_at` already existed but was never a reliable
+  // audit trail: it is set on insert too, so a freshly imported card looked
+  // "just edited". These columns separate the three moments that matter —
+  // when a card entered the bank, when its content last actually changed,
+  // and how many times it has been revised — plus who did it.
+  if (!flashTenantCols.includes("created_at")) {
+    db.exec("ALTER TABLE flashcards ADD COLUMN created_at TEXT");
+    // Backfill: for existing rows the only timestamp we have is updated_at,
+    // so treat that as the creation moment rather than leaving a null that
+    // would sort unpredictably.
+    db.exec("UPDATE flashcards SET created_at = COALESCE(created_at, updated_at, datetime('now'))");
+  }
+  if (!flashTenantCols.includes("content_updated_at")) {
+    db.exec("ALTER TABLE flashcards ADD COLUMN content_updated_at TEXT");
+    db.exec("UPDATE flashcards SET content_updated_at = COALESCE(content_updated_at, updated_at)");
+  }
+  if (!flashTenantCols.includes("revision")) {
+    db.exec("ALTER TABLE flashcards ADD COLUMN revision INTEGER NOT NULL DEFAULT 1");
+  }
+  if (!flashTenantCols.includes("last_editor_id")) db.exec("ALTER TABLE flashcards ADD COLUMN last_editor_id INTEGER");
+  if (!flashTenantCols.includes("last_action")) db.exec("ALTER TABLE flashcards ADD COLUMN last_action TEXT DEFAULT 'created'");
+  // Per-teacher isolation: teacher sees only own questions/patients, کارشناس آموزش (is_expert) sees all of university
+  for (const table of ['cases','flashcards']) {
+    if (!db.prepare(`PRAGMA table_info(${table})`).all().some(c=>c.name==='shared_to_teachers')) db.exec(`ALTER TABLE ${table} ADD COLUMN shared_to_teachers INTEGER NOT NULL DEFAULT 0`);
+  }
+  db.exec(`CREATE TABLE IF NOT EXISTS academic_content_copies(kind TEXT NOT NULL,source_id INTEGER NOT NULL,source_version INTEGER NOT NULL,university_id INTEGER NOT NULL,owner_id INTEGER NOT NULL,copy_id INTEGER NOT NULL,PRIMARY KEY(kind,source_id,source_version,university_id,owner_id));
+    CREATE INDEX IF NOT EXISTS idx_users_directory ON users(university_id,role,student_no,id);`);
+  try { const fcols2 = db.prepare("PRAGMA table_info(flashcards)").all().map((c) => c.name); if (!fcols2.includes("created_by")) db.exec("ALTER TABLE flashcards ADD COLUMN created_by INTEGER"); } catch { /* */ }
+  try { const ccols2 = db.prepare("PRAGMA table_info(cases)").all().map((c) => c.name); if (!ccols2.includes("created_by")) db.exec("ALTER TABLE cases ADD COLUMN created_by INTEGER"); } catch { /* */ }
+  try { const ucolsX = db.prepare("PRAGMA table_info(users)").all().map((c) => c.name); if (!ucolsX.includes("is_expert")) db.exec("ALTER TABLE users ADD COLUMN is_expert INTEGER DEFAULT 0"); } catch { /* */ }
+  try { db.exec("UPDATE flashcards SET created_by = last_editor_id WHERE created_by IS NULL AND last_editor_id IS NOT NULL"); } catch { /* */ }
+  try { db.exec("UPDATE users SET is_expert=0 WHERE is_expert IS NULL"); } catch { /* */ }
+  try {
+    const remCases = db.prepare("SELECT id, university_id FROM cases WHERE created_by IS NULL AND university_id IS NOT NULL").all();
+    for (const row of remCases) {
+      const t = db.prepare("SELECT id FROM users WHERE role='teacher' AND university_id=? ORDER BY id LIMIT 1").get(row.university_id);
+      if (t) try { db.prepare("UPDATE cases SET created_by=? WHERE id=?").run(t.id, row.id); } catch { /* */ }
+    }
+  } catch { /* */ }
+  try {
+    const remFlash = db.prepare("SELECT id, university_id FROM flashcards WHERE created_by IS NULL AND university_id IS NOT NULL").all();
+    for (const row of remFlash) {
+      const t = db.prepare("SELECT id FROM users WHERE role='teacher' AND university_id=? ORDER BY id LIMIT 1").get(row.university_id);
+      if (t) try { db.prepare("UPDATE flashcards SET created_by=? WHERE id=?").run(t.id, row.id); } catch { /* */ }
+    }
+  } catch { /* */ }
+
+  // Per-card change log. Keeps the WHAT (which fields), the WHO and the WHEN
+  // so the admin can open any question and read its history, and so the
+  // "recently changed" view can be filtered by subject/chapter like any other
+  // facet rather than being a separate one-off report.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS card_revisions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      card_id INTEGER NOT NULL,
+      revision INTEGER NOT NULL,
+      action TEXT NOT NULL,               -- created | edited | imported | activated | deactivated | deleted
+      fields TEXT DEFAULT '[]',           -- JSON array of changed field names
+      actor_id INTEGER,
+      actor_name TEXT DEFAULT '',
+      subject TEXT DEFAULT '',            -- denormalised so the log filters without a join
+      chapter TEXT DEFAULT '',
+      note TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_card_revisions_card    ON card_revisions(card_id, revision);
+    CREATE INDEX IF NOT EXISTS idx_card_revisions_time    ON card_revisions(created_at);
+    CREATE INDEX IF NOT EXISTS idx_card_revisions_subject ON card_revisions(subject, chapter, created_at);
+    CREATE INDEX IF NOT EXISTS idx_flashcards_content_upd ON flashcards(content_updated_at);
+    CREATE INDEX IF NOT EXISTS idx_flashcards_created     ON flashcards(created_at);
+  `);
+  {
+    // Learn-track cards legitimately keep university_id NULL, so "IS NULL"
+    // alone matched all 11k bank cards and pulled ~70 MB of JSON through
+    // JSON.parse on EVERY boot (~0.8 s, +200 MB RSS on a shared host). Let
+    // SQLite exclude them first; the JSON check stays for the few remaining.
+    const orphans = db.prepare("SELECT id, data_json FROM flashcards WHERE university_id IS NULL AND data_json NOT LIKE '%\"track\":\"learn\"%'").all();
+    const up = db.prepare("UPDATE flashcards SET university_id=1 WHERE id=?");
+    for (const row of orphans) {
+      let learn = false;
+      try { learn = JSON.parse(row.data_json || "{}").track === "learn"; } catch { /* */ }
+      if (!learn) up.run(row.id);
+    }
+  }
+  const bcols = db.prepare("PRAGMA table_info(blog_posts)").all().map((c) => c.name);
+  if (!bcols.includes("meta_title_fa")) db.exec("ALTER TABLE blog_posts ADD COLUMN meta_title_fa TEXT");
+  if (!bcols.includes("meta_title_en")) db.exec("ALTER TABLE blog_posts ADD COLUMN meta_title_en TEXT");
+  if (!bcols.includes("meta_desc_fa")) db.exec("ALTER TABLE blog_posts ADD COLUMN meta_desc_fa TEXT");
+  if (!bcols.includes("meta_desc_en")) db.exec("ALTER TABLE blog_posts ADD COLUMN meta_desc_en TEXT");
+  if (!bcols.includes("canonical")) db.exec("ALTER TABLE blog_posts ADD COLUMN canonical TEXT");
+  if (!bcols.includes("scheduled_at")) db.exec("ALTER TABLE blog_posts ADD COLUMN scheduled_at TEXT");
+
+  // learner_profiles powerup / gamification columns
+  // topics + path_nodes emoji (relevant emoji per subject / lesson)
+  const tcols = db.prepare("PRAGMA table_info(topics)").all().map((c) => c.name);
+  if (!tcols.includes("emoji")) db.exec("ALTER TABLE topics ADD COLUMN emoji TEXT DEFAULT ''");
+  const pncols = db.prepare("PRAGMA table_info(path_nodes)").all().map((c) => c.name);
+  if (!pncols.includes("emoji")) db.exec("ALTER TABLE path_nodes ADD COLUMN emoji TEXT DEFAULT ''");
+  // Curated competitive-path stages carry an explicit subtitle listing the
+  // exact concepts tested (learners must know what a stage quizzes), and a
+  // marker so the automatic curator can maintain its own nodes without ever
+  // touching a teacher-authored lesson.
+  if (!pncols.includes("subtitle_fa")) db.exec("ALTER TABLE path_nodes ADD COLUMN subtitle_fa TEXT DEFAULT ''");
+  if (!pncols.includes("subtitle_en")) db.exec("ALTER TABLE path_nodes ADD COLUMN subtitle_en TEXT DEFAULT ''");
+  if (!pncols.includes("curated")) db.exec("ALTER TABLE path_nodes ADD COLUMN curated INTEGER DEFAULT 0");
+  if (!pncols.includes("premium")) db.exec("ALTER TABLE path_nodes ADD COLUMN premium INTEGER DEFAULT 0");
+  // Round 8: custom test builder sessions share exam_sims (kind='custom' + JSON config)
+  const escols = db.prepare("PRAGMA table_info(exam_sims)").all().map((c) => c.name);
+  if (!escols.includes("kind")) db.exec("ALTER TABLE exam_sims ADD COLUMN kind TEXT DEFAULT 'sim'");
+  if (!escols.includes("config")) db.exec("ALTER TABLE exam_sims ADD COLUMN config TEXT DEFAULT ''");
+  // Round 9 (peer benchmark): which option was picked, and whether a hint was used
+  const cacols0 = db.prepare("PRAGMA table_info(card_attempts)").all().map((c) => c.name);
+  if (!cacols0.includes("sel")) db.exec("ALTER TABLE card_attempts ADD COLUMN sel INTEGER");
+  if (!cacols0.includes("hint_used")) db.exec("ALTER TABLE card_attempts ADD COLUMN hint_used INTEGER DEFAULT 0");
+  // per-option pick counters («شناسنامهٔ سؤال» — % of learners choosing each option)
+  db.exec(`CREATE TABLE IF NOT EXISTS option_stats (
+    card_id INTEGER NOT NULL,
+    opt INTEGER NOT NULL,
+    n INTEGER NOT NULL DEFAULT 0,
+    PRIMARY KEY (card_id, opt)
+  )`);
+  // «پرش از واحد» (Duolingo jump-ahead): a passed quiz unlocks the whole topic
+  db.exec(`CREATE TABLE IF NOT EXISTS jump_unlocks (
+    user_id INTEGER NOT NULL,
+    topic_id INTEGER NOT NULL,
+    score INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, topic_id)
+  )`);
+  // card_attempts: per-answer study signals (UWorld-style) — a learner can FLAG
+  // a question to revisit, and honestly mark a correct answer as a GUESS so it's
+  // reviewed like a miss ("a lucky guess is a miss in disguise").
+  const cacols = db.prepare("PRAGMA table_info(card_attempts)").all().map((c) => c.name);
+  if (!cacols.includes("flagged")) db.exec("ALTER TABLE card_attempts ADD COLUMN flagged INTEGER DEFAULT 0");
+  if (!cacols.includes("guessed")) db.exec("ALTER TABLE card_attempts ADD COLUMN guessed INTEGER DEFAULT 0");
+  // Confidence-Based Assessment (medical-ed): before checking, the learner
+  // declares how sure they are (1=low, 2=medium, 3=high; 0=not declared). This
+  // powers a calibration report ("when you felt sure, how often were you right?")
+  // and safer confidence scoring — a core clinical-reasoning skill.
+  if (!cacols.includes("confidence")) db.exec("ALTER TABLE card_attempts ADD COLUMN confidence INTEGER DEFAULT 0");
+  // Topic Mastery Badges (Bloom's Mastery Learning + durable memory): a one-time
+  // record per (learner, topic) so the mastery reward is granted exactly once
+  // and the earned badge (with the accuracy snapshot) persists for display.
+  db.exec(`CREATE TABLE IF NOT EXISTS mastery_badges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    topic_id INTEGER NOT NULL,
+    accuracy INTEGER DEFAULT 0,          -- accuracy % at the moment mastery was earned
+    mature_ratio INTEGER DEFAULT 0,      -- % of the topic's cards that were SRS-mature
+    earned_at TEXT DEFAULT (datetime('now')),
+    UNIQUE(user_id, topic_id)
+  )`);
+  // Class flashcards: a teacher can attach flashcard sets to a class alongside
+  // virtual-patient cases. `graded=1` = counts toward the class grade (weighted);
+  // `graded=0` = practice-only (progress tracked but not graded).
+  db.exec(`CREATE TABLE IF NOT EXISTS class_flashcards (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    class_id INTEGER NOT NULL,
+    flashcard_id INTEGER NOT NULL,
+    weight INTEGER DEFAULT 1,
+    graded INTEGER DEFAULT 1,
+    UNIQUE(class_id, flashcard_id)
+  )`);
+  // Per-student result of a class flashcard attempt (score 0..100 + best kept).
+  db.exec(`CREATE TABLE IF NOT EXISTS class_flashcard_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    class_id INTEGER NOT NULL,
+    flashcard_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    score INTEGER DEFAULT 0,
+    answers_json TEXT DEFAULT '[]',
+    duration_sec INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+  // Successful combined submissions are idempotent, including a retry after a lost response.
+  db.exec(`CREATE TABLE IF NOT EXISTS class_flash_submissions (
+    class_id INTEGER NOT NULL, user_id INTEGER NOT NULL, submission_id TEXT NOT NULL,
+    result_json TEXT NOT NULL, created_at TEXT DEFAULT (datetime('now')),
+    PRIMARY KEY(class_id,user_id,submission_id)
+  )`);
+  const cfAttemptCols = db.prepare("PRAGMA table_info(class_flashcard_attempts)").all().map((c) => c.name);
+  if (!cfAttemptCols.includes("answers_json")) db.exec("ALTER TABLE class_flashcard_attempts ADD COLUMN answers_json TEXT DEFAULT '[]'");
+  if (!cfAttemptCols.includes("duration_sec")) db.exec("ALTER TABLE class_flashcard_attempts ADD COLUMN duration_sec INTEGER DEFAULT 0");
+  const liveClassCols = db.prepare("PRAGMA table_info(classes)").all().map((c) => c.name);
+  if (!liveClassCols.includes("live_board_enabled")) db.exec("ALTER TABLE classes ADD COLUMN live_board_enabled INTEGER NOT NULL DEFAULT 1");
+  if (!liveClassCols.includes("live_board_anonymous")) db.exec("ALTER TABLE classes ADD COLUMN live_board_anonymous INTEGER NOT NULL DEFAULT 0");
+  if (!liveClassCols.includes("university_id")) db.exec("ALTER TABLE classes ADD COLUMN university_id INTEGER");
+  // Per-class feature overrides (NULL = inherit university → global default):
+  //   flash_no_penalty — using hints / wrong stage answers never deduct points
+  //   live_board_speed — live-board tie-break by less total time
+  if (!liveClassCols.includes("flash_no_penalty")) db.exec("ALTER TABLE classes ADD COLUMN flash_no_penalty INTEGER");
+  if (!liveClassCols.includes("live_board_speed")) db.exec("ALTER TABLE classes ADD COLUMN live_board_speed INTEGER");
+  //   flash_allow_back / flash_allow_change — tri-state like the flags above; teacher per class, admin per university/global
+  if (!liveClassCols.includes("flash_allow_back")) db.exec("ALTER TABLE classes ADD COLUMN flash_allow_back INTEGER");
+  if (!liveClassCols.includes("flash_allow_change")) db.exec("ALTER TABLE classes ADD COLUMN flash_allow_change INTEGER");
+  // Existing deployments: backfill the university licensing / flag columns.
+  const uniColMig = db.prepare("PRAGMA table_info(universities)").all().map((c) => c.name);
+  if (!uniColMig.includes("limits_enabled")) db.exec("ALTER TABLE universities ADD COLUMN limits_enabled INTEGER NOT NULL DEFAULT 0");
+  if (!uniColMig.includes("max_students")) db.exec("ALTER TABLE universities ADD COLUMN max_students INTEGER");
+  if (!uniColMig.includes("max_vp_msgs_month")) db.exec("ALTER TABLE universities ADD COLUMN max_vp_msgs_month INTEGER");
+  if (!uniColMig.includes("max_vp_tokens_month")) db.exec("ALTER TABLE universities ADD COLUMN max_vp_tokens_month INTEGER");
+  if (!uniColMig.includes("license_plan")) db.exec("ALTER TABLE universities ADD COLUMN license_plan TEXT NOT NULL DEFAULT 'standard'");
+  if (!uniColMig.includes("license_expires_at")) db.exec("ALTER TABLE universities ADD COLUMN license_expires_at TEXT");
+  if (!uniColMig.includes("sales_method")) db.exec("ALTER TABLE universities ADD COLUMN sales_method TEXT");
+  if (!uniColMig.includes("flash_no_penalty")) db.exec("ALTER TABLE universities ADD COLUMN flash_no_penalty INTEGER");
+  if (!uniColMig.includes("live_board_speed")) db.exec("ALTER TABLE universities ADD COLUMN live_board_speed INTEGER");
+  if (!uniColMig.includes("flash_allow_back")) db.exec("ALTER TABLE universities ADD COLUMN flash_allow_back INTEGER");
+  if (!uniColMig.includes("flash_allow_change")) db.exec("ALTER TABLE universities ADD COLUMN flash_allow_change INTEGER");
+  db.exec(`UPDATE classes SET university_id=(SELECT university_id FROM users WHERE users.id=classes.owner_id)
+           WHERE university_id IS NULL AND owner_id IS NOT NULL`);
+  db.exec("UPDATE classes SET university_id=1 WHERE university_id IS NULL");
+  const examTenantCols = db.prepare("PRAGMA table_info(exams)").all().map((c) => c.name);
+  if (!examTenantCols.includes("university_id")) db.exec("ALTER TABLE exams ADD COLUMN university_id INTEGER");
+  db.exec(`UPDATE exams SET university_id=(SELECT university_id FROM users WHERE users.id=exams.owner_id)
+           WHERE university_id IS NULL AND owner_id IS NOT NULL`);
+  db.exec("UPDATE exams SET university_id=1 WHERE university_id IS NULL");
+  if (!examTenantCols.includes("flash_allow_back")) db.exec("ALTER TABLE exams ADD COLUMN flash_allow_back INTEGER");
+  if (!examTenantCols.includes("flash_allow_change")) db.exec("ALTER TABLE exams ADD COLUMN flash_allow_change INTEGER");
+  const checklistCols = db.prepare("PRAGMA table_info(checklists)").all().map((c) => c.name);
+  if (!checklistCols.includes("owner_id")) db.exec("ALTER TABLE checklists ADD COLUMN owner_id INTEGER");
+  // ads: optional per-lesson targeting (node_id) so admins can attach/disable an ad on individual lessons
+  const adcols = db.prepare("PRAGMA table_info(ads)").all().map((c) => c.name);
+  if (!adcols.includes("node_id")) db.exec("ALTER TABLE ads ADD COLUMN node_id INTEGER");
+  // ads: Duolingo-Ads 2026 formats. `format` = banner | interstitial | rewarded | prelesson.
+  //   reward_gems = gems granted to a learner who watches a rewarded/prelesson ad.
+  //   skippable_after = seconds before an interstitial can be skipped (Duolingo = 5).
+  //   duration_s = simulated video length (the on-screen countdown).
+  if (!adcols.includes("format")) db.exec("ALTER TABLE ads ADD COLUMN format TEXT NOT NULL DEFAULT 'banner'");
+  if (!adcols.includes("reward_gems")) db.exec("ALTER TABLE ads ADD COLUMN reward_gems INTEGER NOT NULL DEFAULT 0");
+  if (!adcols.includes("skippable_after")) db.exec("ALTER TABLE ads ADD COLUMN skippable_after INTEGER NOT NULL DEFAULT 5");
+  if (!adcols.includes("duration_s")) db.exec("ALTER TABLE ads ADD COLUMN duration_s INTEGER NOT NULL DEFAULT 15");
+  if (!adcols.includes("sponsor")) db.exec("ALTER TABLE ads ADD COLUMN sponsor TEXT DEFAULT ''");
+  // --- richer ad management (research-backed): scheduling, frequency capping,
+  // rotation weight, and per-audience targeting. All non-destructive. ---
+  if (!adcols.includes("weight")) db.exec("ALTER TABLE ads ADD COLUMN weight INTEGER NOT NULL DEFAULT 1");
+  if (!adcols.includes("start_at")) db.exec("ALTER TABLE ads ADD COLUMN start_at TEXT");   // ISO; null = always
+  if (!adcols.includes("end_at")) db.exec("ALTER TABLE ads ADD COLUMN end_at TEXT");       // ISO; null = never expires
+  if (!adcols.includes("daily_cap")) db.exec("ALTER TABLE ads ADD COLUMN daily_cap INTEGER NOT NULL DEFAULT 0"); // 0 = unlimited per user/day
+  if (!adcols.includes("audience")) db.exec("ALTER TABLE ads ADD COLUMN audience TEXT NOT NULL DEFAULT 'all'");   // all | free | new
+  // Per-user/day impression ledger for frequency capping (kept small; pruned by date).
+  db.exec(`CREATE TABLE IF NOT EXISTS ad_impressions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ad_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    day TEXT NOT NULL,
+    count INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(ad_id, user_id, day)
+  );`);
+  // Ad request ledger (per day) so we can compute fill rate = served / requested.
+  db.exec(`CREATE TABLE IF NOT EXISTS ad_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    day TEXT NOT NULL,
+    slot TEXT,
+    count INTEGER NOT NULL DEFAULT 0,
+    UNIQUE(day, slot)
+  );`);
+  // multi-program (Duolingo-style courses): each topic belongs to a program
+  // ('preint' = pre-internship & residency, 'basic' = basic sciences). Existing
+  // topics default to 'preint'. Learners pick an active program on their profile.
+  const topicCols = db.prepare("PRAGMA table_info(topics)").all().map((c) => c.name);
+  if (!topicCols.includes("program")) db.exec("ALTER TABLE topics ADD COLUMN program TEXT NOT NULL DEFAULT 'preint'");
+  const lpCols2 = db.prepare("PRAGMA table_info(learner_profiles)").all().map((c) => c.name);
+  if (!lpCols2.includes("active_program")) db.exec("ALTER TABLE learner_profiles ADD COLUMN active_program TEXT NOT NULL DEFAULT 'preint'");
+  // Duolingo-style streak upgrades: perfect streak (no freeze used) + society tier
+  if (!lpCols2.includes("perfect_streak")) db.exec("ALTER TABLE learner_profiles ADD COLUMN perfect_streak INTEGER NOT NULL DEFAULT 0");
+  if (!lpCols2.includes("society_tier")) db.exec("ALTER TABLE learner_profiles ADD COLUMN society_tier INTEGER NOT NULL DEFAULT 0");
+  // mark which streak-calendar days were saved by a freeze (blue-snowflake vs check)
+  const sdCols = db.prepare("PRAGMA table_info(streak_days)").all().map((c) => c.name);
+  if (!sdCols.includes("frozen")) db.exec("ALTER TABLE streak_days ADD COLUMN frozen INTEGER NOT NULL DEFAULT 0");
+  // Legendary levels (crown 6): a mastered node upgraded via a harder timed run.
+  // Classroom default grading criterion for the virtual patient: which section
+  // score a teacher grades on by default — "history" (extern), "overall"
+  // (intern), or "both" (show both, teacher decides). Non-destructive.
+  const classCols = db.prepare("PRAGMA table_info(classes)").all().map((c) => c.name);
+  if (!classCols.includes("grading_role")) db.exec("ALTER TABLE classes ADD COLUMN grading_role TEXT DEFAULT 'both'");
+  // Default history-form type for the class (a label/category — the case's own
+  // history_form drives scoring). e.g. internal|obgyn|cardio|peds|psych|general.
+  if (!classCols.includes("history_form")) db.exec("ALTER TABLE classes ADD COLUMN history_form TEXT DEFAULT 'general'");
+  // Per-class override of the VP grading rubric (which sections count for
+  // extern vs intern, and how much each is worth). NULL = inherit settings.vp_grading.
+  if (!classCols.includes("grading_json")) db.exec("ALTER TABLE classes ADD COLUMN grading_json TEXT");
+
+  const npCols = db.prepare("PRAGMA table_info(node_progress)").all().map((c) => c.name);
+  if (!npCols.includes("legendary")) db.exec("ALTER TABLE node_progress ADD COLUMN legendary INTEGER NOT NULL DEFAULT 0");
+  if (!npCols.includes("legendary_at")) db.exec("ALTER TABLE node_progress ADD COLUMN legendary_at TEXT");
+  // Elite counters on the profile: legendary levels earned + tournament wins.
+  const lpCols3 = db.prepare("PRAGMA table_info(learner_profiles)").all().map((c) => c.name);
+  if (!lpCols3.includes("legendary_count")) db.exec("ALTER TABLE learner_profiles ADD COLUMN legendary_count INTEGER NOT NULL DEFAULT 0");
+  if (!lpCols3.includes("tournament_wins")) db.exec("ALTER TABLE learner_profiles ADD COLUMN tournament_wins INTEGER NOT NULL DEFAULT 0");
+  // onboarding checklist state: whether the learner set a daily goal, dismissed
+  // the checklist, and already claimed its completion reward.
+  if (!lpCols3.includes("goal_set")) db.exec("ALTER TABLE learner_profiles ADD COLUMN goal_set INTEGER NOT NULL DEFAULT 0");
+  if (!lpCols3.includes("onboarding_dismissed")) db.exec("ALTER TABLE learner_profiles ADD COLUMN onboarding_dismissed INTEGER NOT NULL DEFAULT 0");
+  if (!lpCols3.includes("onboarding_claimed")) db.exec("ALTER TABLE learner_profiles ADD COLUMN onboarding_claimed INTEGER NOT NULL DEFAULT 0");
+  // placement test: whether the learner has taken the entry-level quiz + its result JSON
+  if (!lpCols3.includes("placement_done")) db.exec("ALTER TABLE learner_profiles ADD COLUMN placement_done INTEGER NOT NULL DEFAULT 0");
+  if (!lpCols3.includes("placement_json")) db.exec("ALTER TABLE learner_profiles ADD COLUMN placement_json TEXT");
+  if (!lpCols3.includes("placement_dismissed")) db.exec("ALTER TABLE learner_profiles ADD COLUMN placement_dismissed INTEGER NOT NULL DEFAULT 0");
+  // referral program columns
+  if (!lpCols3.includes("referral_code")) db.exec("ALTER TABLE learner_profiles ADD COLUMN referral_code TEXT");
+  if (!lpCols3.includes("referred_by")) db.exec("ALTER TABLE learner_profiles ADD COLUMN referred_by INTEGER");
+  if (!lpCols3.includes("referral_count")) db.exec("ALTER TABLE learner_profiles ADD COLUMN referral_count INTEGER NOT NULL DEFAULT 0");
+  if (!lpCols3.includes("referral_milestones")) db.exec("ALTER TABLE learner_profiles ADD COLUMN referral_milestones TEXT");
+  // first-time welcome flow (shown once)
+  if (!lpCols3.includes("welcome_seen")) db.exec("ALTER TABLE learner_profiles ADD COLUMN welcome_seen INTEGER NOT NULL DEFAULT 0");
+  if (!lpCols3.includes("last_node_id")) db.exec("ALTER TABLE learner_profiles ADD COLUMN last_node_id INTEGER");
+  db.exec(`CREATE TABLE IF NOT EXISTS premium_grants (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    days INTEGER,
+    until TEXT,
+    kind TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+  // Admin structural deletes (node/topic/card) must survive a restart and
+  // a bank re-import, and they apply to BOTH languages — one path, one bank.
+  db.exec(`CREATE TABLE IF NOT EXISTS admin_deleted (
+    kind TEXT NOT NULL,
+    key TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    PRIMARY KEY (kind, key)
+  )`);
+  // Diamond Tournament: a `tournament` stage tag on a league room.
+  const lgCols = db.prepare("PRAGMA table_info(leagues)").all().map((c) => c.name);
+  if (!lgCols.includes("tournament")) db.exec("ALTER TABLE leagues ADD COLUMN tournament TEXT");
+  // FSRS scheduler columns on srs_state (DSR memory model). SM-2 columns kept
+  // for backward compatibility; FSRS uses stability + difficulty + state.
+  const srsCols = db.prepare("PRAGMA table_info(srs_state)").all().map((c) => c.name);
+  if (!srsCols.includes("stability")) db.exec("ALTER TABLE srs_state ADD COLUMN stability REAL NOT NULL DEFAULT 0");
+  if (!srsCols.includes("difficulty")) db.exec("ALTER TABLE srs_state ADD COLUMN difficulty REAL NOT NULL DEFAULT 0");
+  if (!srsCols.includes("state")) db.exec("ALTER TABLE srs_state ADD COLUMN state TEXT NOT NULL DEFAULT 'new'"); // new|learning|review|relearning
+  if (!srsCols.includes("last_grade")) db.exec("ALTER TABLE srs_state ADD COLUMN last_grade INTEGER DEFAULT 0");
+  if (!srsCols.includes("scheduler")) db.exec("ALTER TABLE srs_state ADD COLUMN scheduler TEXT DEFAULT 'sm2'");
+  if (!srsCols.includes("suspended")) db.exec("ALTER TABLE srs_state ADD COLUMN suspended INTEGER NOT NULL DEFAULT 0");
+  if (!srsCols.includes("buried_until")) db.exec("ALTER TABLE srs_state ADD COLUMN buried_until TEXT");
+  if (!srsCols.includes("learning_radar")) db.exec("ALTER TABLE srs_state ADD COLUMN learning_radar INTEGER NOT NULL DEFAULT 0");
+  const lpcols = db.prepare("PRAGMA table_info(learner_profiles)").all().map((c) => c.name);
+  for (const [col, def] of [["daily_goal","30"],["xp_boost_until","NULL"],["timer_boosts","0"],["streak_repairs_used","0"],["last_league_result","NULL"],
+    // --- Calm Mode (anti-burnout, opt-in) per-learner preferences ---
+    ["calm_mode","0"],              // 1 = Calm Mode on
+    ["calm_review_cap","0"],        // learner's chosen daily review cap (0 = use admin default)
+    ["calm_hide_streak","0"],       // 1 = hide the streak flame / pressure
+    ["calm_opt_out_leagues","0"],   // 1 = don't place the learner in weekly leagues
+    ["rest_days_used","0"],         // rest days consumed in the current ISO week
+    ["rest_week_key","NULL"],       // ISO week the rest_days_used counter belongs to
+    ["last_rest_day","NULL"],       // YYYY-MM-DD (Tehran) of the last rest day taken
+    // --- Anonymous / stealth ranking (opt-in privacy) ---
+    ["anon_mode","0"],              // 1 = appear under a pseudonym to other learners
+    ["alias","NULL"],
+    // --- Round 9: premium taste granted at streak milestones (last milestone paid) ---
+    ["trial_tier","0"]]) {            // the learner's chosen/assigned pseudonym
+    if (!lpcols.includes(col)) db.exec(`ALTER TABLE learner_profiles ADD COLUMN ${col} ${def === "NULL" ? "TEXT" : "INTEGER DEFAULT " + def}`);
+  }
+  const acols = db.prepare("PRAGMA table_info(attempts)").all().map((c) => c.name);
+  if (!acols.includes("class_id")) db.exec("ALTER TABLE attempts ADD COLUMN class_id INTEGER");
+  if (!acols.includes("exam_id")) db.exec("ALTER TABLE attempts ADD COLUMN exam_id INTEGER");
+  for (const col of ["imaging_count","ddx_count","total_questions","correct_count","wrong_count"]) {
+    if (!acols.includes(col)) db.exec(`ALTER TABLE attempts ADD COLUMN ${col} INTEGER DEFAULT 0`);
+  }
+  // Teacher review of an attempt's AI score: approve / adjust / reject + feedback.
+  if (!acols.includes("teacher_status")) db.exec("ALTER TABLE attempts ADD COLUMN teacher_status TEXT");   // NULL=pending | approved | adjusted | rejected
+  if (!acols.includes("teacher_score")) db.exec("ALTER TABLE attempts ADD COLUMN teacher_score INTEGER"); // override % when adjusted
+  if (!acols.includes("teacher_feedback")) db.exec("ALTER TABLE attempts ADD COLUMN teacher_feedback TEXT");
+  if (!acols.includes("reviewed_by")) db.exec("ALTER TABLE attempts ADD COLUMN reviewed_by INTEGER");
+  if (!acols.includes("reviewed_at")) db.exec("ALTER TABLE attempts ADD COLUMN reviewed_at TEXT");
+  const ecols = db.prepare("PRAGMA table_info(exams)").all().map((c) => c.name);
+  for (const [col, def] of [["shuffle","0"],["anti_cheat","1"],["competition","0"],["show_correct","1"],["show_hints","1"],["show_ai","1"],["show_micro","1"]]) {
+    if (!ecols.includes(col)) db.exec(`ALTER TABLE exams ADD COLUMN ${col} INTEGER DEFAULT ${def}`);
+  }
+
+  // --- migrate the users role CHECK constraint (keeps every column, index and trigger) ---
+  try {
+    const r = migrateUsersRoleCheck(db);
+    if (r.migrated) console.log(`[db] users table migrated: ${r.rows} rows, ${r.columnsKept} columns kept${r.columnsLost.length ? ", lost: " + r.columnsLost.join(",") : ""}`);
+  } catch (e) { console.error("[db] users role migration skipped (rolled back):", e?.message || e); }
+
+  // --- Restored optional modules: questionnaires / Dr Tutor / research / external ads ---
+  const classColsRestored = db.prepare("PRAGMA table_info(classes)").all().map((c) => c.name);
+  if (!classColsRestored.includes("tutor_enabled")) db.exec("ALTER TABLE classes ADD COLUMN tutor_enabled INTEGER DEFAULT 0");
+  if (!classColsRestored.includes("tutor_prompt")) db.exec("ALTER TABLE classes ADD COLUMN tutor_prompt TEXT");
+  const examColsRestored = db.prepare("PRAGMA table_info(exams)").all().map((c) => c.name);
+  if (!examColsRestored.includes("tutor_enabled")) db.exec("ALTER TABLE exams ADD COLUMN tutor_enabled INTEGER DEFAULT 0");
+  if (!examColsRestored.includes("tutor_prompt")) db.exec("ALTER TABLE exams ADD COLUMN tutor_prompt TEXT");
+  try {
+    const hasAll=(cols,req)=>req.every(c=>cols.includes(c));
+    // A table with an unexpected shape is set aside, never dropped: its rows are learner
+    // and research records. The renamed copy stays in the database for recovery.
+    const dropIfBad=(name, req)=>{ const cols=db.prepare(`PRAGMA table_info(${name})`).all().map(c=>c.name); if(cols.length&&!hasAll(cols,req)) db.exec(`ALTER TABLE ${name} RENAME TO ${name}_set_aside_${Date.now()}`); };
+    dropIfBad('questionnaire_responses',["form_id","user_id","context_type","context_id","answers_json","created_at"]);
+    dropIfBad('questionnaire_forms',["questions_json","active","anonymous","created_at"]);
+    dropIfBad('tutor_chats',["context_type","context_id","role","message","created_at"]);
+    dropIfBad('research_studies',["domain","active","consent_required","created_at"]);
+    dropIfBad('research_events',["event_type","data_json","created_at"]);
+    dropIfBad('external_ads_config',["provider","enabled","client_id","slot_id","updated_at"]);
+    dropIfBad('external_ad_events',["provider","event","placement","created_at"]);
+  } catch { /* ignore */ }
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS questionnaire_forms (id INTEGER PRIMARY KEY AUTOINCREMENT,title_fa TEXT,title_en TEXT,description_fa TEXT,description_en TEXT,scope TEXT NOT NULL DEFAULT 'general',class_id INTEGER,exam_id INTEGER,questions_json TEXT NOT NULL DEFAULT '[]',active INTEGER NOT NULL DEFAULT 1,require_after_finish INTEGER NOT NULL DEFAULT 1,anonymous INTEGER NOT NULL DEFAULT 1,created_by INTEGER,created_at TEXT DEFAULT (datetime('now')),updated_at TEXT DEFAULT (datetime('now')));
+    CREATE TABLE IF NOT EXISTS questionnaire_responses (id INTEGER PRIMARY KEY AUTOINCREMENT,form_id INTEGER NOT NULL,user_id INTEGER,context_type TEXT,context_id INTEGER,answers_json TEXT NOT NULL DEFAULT '{}',created_at TEXT DEFAULT (datetime('now')),UNIQUE(form_id,user_id,context_type,context_id));
+    CREATE TABLE IF NOT EXISTS research_studies (id INTEGER PRIMARY KEY AUTOINCREMENT,title_fa TEXT,title_en TEXT,description_fa TEXT,description_en TEXT,domain TEXT DEFAULT 'general',active INTEGER NOT NULL DEFAULT 0,consent_required INTEGER NOT NULL DEFAULT 1,created_by INTEGER,created_at TEXT DEFAULT (datetime('now')),updated_at TEXT DEFAULT (datetime('now')));
+    CREATE TABLE IF NOT EXISTS research_events (id INTEGER PRIMARY KEY AUTOINCREMENT,study_id INTEGER,user_id INTEGER,event_type TEXT NOT NULL,context_type TEXT,context_id INTEGER,data_json TEXT NOT NULL DEFAULT '{}',created_at TEXT DEFAULT (datetime('now')));
+    CREATE TABLE IF NOT EXISTS tutor_settings (id INTEGER PRIMARY KEY CHECK(id=1),enabled INTEGER NOT NULL DEFAULT 0,default_prompt TEXT DEFAULT '',ai_enabled INTEGER NOT NULL DEFAULT 0,updated_at TEXT DEFAULT (datetime('now')));
+    INSERT OR IGNORE INTO tutor_settings (id,enabled,default_prompt,ai_enabled) VALUES (1,0,'تو دکتر راهنمای آموزشی MED School هستی. کوتاه، علمی و راهنما پاسخ بده؛ جواب نهایی آزمون را مستقیم لو نده.',0);
+    CREATE TABLE IF NOT EXISTS tutor_chats (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER NOT NULL,context_type TEXT NOT NULL DEFAULT 'general',context_id INTEGER,role TEXT NOT NULL,message TEXT NOT NULL,meta_json TEXT DEFAULT '{}',created_at TEXT DEFAULT (datetime('now')));
+    CREATE TABLE IF NOT EXISTS external_ads_config (id INTEGER PRIMARY KEY CHECK(id=1),enabled INTEGER NOT NULL DEFAULT 0,provider TEXT DEFAULT 'none',client_id TEXT DEFAULT '',slot_id TEXT DEFAULT '',placement TEXT DEFAULT 'blog',legal_note TEXT DEFAULT '',updated_at TEXT DEFAULT (datetime('now')));
+    INSERT OR IGNORE INTO external_ads_config (id,enabled,provider,legal_note) VALUES (1,0,'none','تبلیغات خارجی/AdSense به‌صورت پیش‌فرض خاموش است و باید با قوانین محل فعالیت و محدودیت‌های سرویس بررسی شود.');
+    CREATE TABLE IF NOT EXISTS external_ad_events (id INTEGER PRIMARY KEY AUTOINCREMENT,user_id INTEGER,provider TEXT,event TEXT,placement TEXT,detail_json TEXT DEFAULT '{}',created_at TEXT DEFAULT (datetime('now')));
+    CREATE INDEX IF NOT EXISTS idx_questionnaire_forms_scope ON questionnaire_forms(scope,active);
+    CREATE INDEX IF NOT EXISTS idx_tutor_chats_user_context ON tutor_chats(user_id,context_type,context_id,created_at);
+  `);
+
+  // ---- Additive migrations for research/anonymity support -------------------
+  // Never destructive: existing responses are kept. `pseudonym` lets an
+  // anonymous form deduplicate and pair one participant's rows without storing
+  // their identity (see lib/pseudonym.js).
+  {
+    const qcols = db.prepare("PRAGMA table_info(questionnaire_responses)").all().map((c) => c.name);
+    if (qcols.length) {
+      if (!qcols.includes("pseudonym"))  db.exec("ALTER TABLE questionnaire_responses ADD COLUMN pseudonym TEXT");
+      if (!qcols.includes("updated_at")) db.exec("ALTER TABLE questionnaire_responses ADD COLUMN updated_at TEXT");
+    }
+  }
+  // One canonical row per (form, participant, context). The legacy UNIQUE index
+  // could not enforce this once user_id became NULL for anonymous forms.
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_qresp_one_per_participant ON questionnaire_responses(form_id, pseudonym, context_type, context_id)");
+
+  /* ---- Virtual-patient conversation logging (research data) --------------
+     Privacy-by-default: nothing is recorded unless the teacher explicitly turns
+     logging on for the class/exam. The toggle is snapshotted onto the session
+     row at start time so a later change cannot retroactively re-interpret data
+     that was already collected. */
+  {
+    const classColumns = db.prepare("PRAGMA table_info(classes)").all();
+    const ccols = classColumns.map((c) => c.name);
+    if (ccols.length) {
+      if (!ccols.includes("exam_mode")) db.exec("ALTER TABLE classes ADD COLUMN exam_mode TEXT DEFAULT 'perQuestion'");
+      else if (classColumns.find((c) => c.name === "exam_mode").type.toUpperCase() !== "TEXT") {
+        // The previous demo package used an INTEGER flag. Replace only this
+        // column atomically, retaining class IDs, memberships and other fields.
+        // Legacy 0/1 had no mode semantics; both migrate to perQuestion.
+        db.transaction(() => {
+          db.exec("ALTER TABLE classes RENAME COLUMN exam_mode TO _legacy_exam_mode");
+          db.exec("ALTER TABLE classes ADD COLUMN exam_mode TEXT DEFAULT 'perQuestion'");
+          db.exec(`UPDATE classes SET exam_mode = CASE
+            WHEN typeof(_legacy_exam_mode)='text' AND length(trim(_legacy_exam_mode)) > 0
+              AND _legacy_exam_mode NOT IN ('0','1') THEN _legacy_exam_mode
+            ELSE 'perQuestion' END`);
+          db.exec("ALTER TABLE classes DROP COLUMN _legacy_exam_mode");
+        })();
+      }
+      if (!ccols.includes("timer_enabled")) db.exec("ALTER TABLE classes ADD COLUMN timer_enabled INTEGER DEFAULT 1");
+      if (!ccols.includes("timer_minutes")) db.exec("ALTER TABLE classes ADD COLUMN timer_minutes INTEGER DEFAULT 30");
+      // One-time default change. No admin screen ever wrote the class timer, so
+      // a row still at the old schema default (off, 30 min) was never chosen by
+      // anyone: turn its per-case timer on. The settings flag keeps a later
+      // explicit "off" from being flipped back on at the next boot.
+      if (ccols.includes("timer_enabled") && !db.prepare("SELECT 1 FROM settings WHERE key='migr.class_timer_default_v1'").get()) {
+        db.transaction(() => {
+          db.exec("UPDATE classes SET timer_enabled=1 WHERE timer_enabled=0 AND timer_minutes=30");
+          db.prepare("INSERT OR REPLACE INTO settings (key,value) VALUES ('migr.class_timer_default_v1','1')").run();
+        })();
+      }
+    }
+    if (ccols.length && !ccols.includes("log_transcript"))
+      db.exec("ALTER TABLE classes ADD COLUMN log_transcript INTEGER NOT NULL DEFAULT 0");
+    const ecols = db.prepare("PRAGMA table_info(exams)").all().map((c) => c.name);
+    if (ecols.length && !ecols.includes("log_transcript"))
+      db.exec("ALTER TABLE exams ADD COLUMN log_transcript INTEGER NOT NULL DEFAULT 0");
+  }
+  db.exec(`
+    -- One row per encounter. Exists even when logging is OFF (so dropouts are
+    -- still visible) — but then it holds no content, only timing metadata.
+    CREATE TABLE IF NOT EXISTS vp_sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      case_id INTEGER NOT NULL,
+      class_id INTEGER,
+      exam_id INTEGER,
+      study_id INTEGER,
+      logging_enabled INTEGER NOT NULL DEFAULT 0,
+      started_at TEXT DEFAULT (datetime('now')),
+      -- datetime('now') only has second precision, which is too coarse to
+      -- cross-check a client-reported duration. Keep epoch millis alongside.
+      started_ms INTEGER,
+      finished_at TEXT,
+      attempt_id INTEGER,
+      duration_sec INTEGER DEFAULT 0,
+      event_count INTEGER DEFAULT 0,
+      lang TEXT DEFAULT 'fa'
+    );
+    -- Timestamped interaction log. Only written when logging_enabled = 1.
+    CREATE TABLE IF NOT EXISTS vp_session_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id INTEGER NOT NULL,
+      seq INTEGER NOT NULL,
+      at_ms INTEGER NOT NULL DEFAULT 0,
+      kind TEXT NOT NULL,
+      payload_json TEXT NOT NULL DEFAULT '{}',
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_vp_sessions_user   ON vp_sessions(user_id, case_id, started_at);
+    CREATE INDEX IF NOT EXISTS idx_vp_sessions_class  ON vp_sessions(class_id, case_id, started_at);
+    CREATE INDEX IF NOT EXISTS idx_vp_events_session  ON vp_session_events(session_id, seq);
+  `);
+  // Additive: databases created before started_ms existed still need the column.
+  if (!db.prepare("PRAGMA table_info(vp_sessions)").all().some((c) => c.name === "started_ms")) {
+    db.exec("ALTER TABLE vp_sessions ADD COLUMN started_ms INTEGER");
+  }
+
+  // Optional per-user idempotency key for retrying session creation.
+  if (!db.prepare("PRAGMA table_info(vp_sessions)").all().some(c => c.name === "start_request_id")) {
+    db.exec("ALTER TABLE vp_sessions ADD COLUMN start_request_id TEXT");
+  }
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_vp_start_request ON vp_sessions(user_id,start_request_id) WHERE start_request_id IS NOT NULL");
+  // R64: resumable encounters. The server sets the deadline from the case time limit,
+  // keeps the last autosaved transcript (progress_json), and counts expiry retries.
+  // Additive only; existing rows get NULL deadlines (untimed, resumable until finished).
+  {
+    const vpCols = new Set(db.prepare("PRAGMA table_info(vp_sessions)").all().map((c) => c.name));
+    if (!vpCols.has("limit_sec")) db.exec("ALTER TABLE vp_sessions ADD COLUMN limit_sec INTEGER DEFAULT 0");
+    if (!vpCols.has("deadline_ms")) db.exec("ALTER TABLE vp_sessions ADD COLUMN deadline_ms INTEGER");
+    if (!vpCols.has("progress_json")) db.exec("ALTER TABLE vp_sessions ADD COLUMN progress_json TEXT");
+    if (!vpCols.has("progress_ms")) db.exec("ALTER TABLE vp_sessions ADD COLUMN progress_ms INTEGER");
+    if (!vpCols.has("expiry_attempts")) db.exec("ALTER TABLE vp_sessions ADD COLUMN expiry_attempts INTEGER NOT NULL DEFAULT 0");
+    if (!vpCols.has("expiry_error")) db.exec("ALTER TABLE vp_sessions ADD COLUMN expiry_error TEXT");
+    // R82 grading state (see lib/vp-grading.js): finish request, claim lease, retry time,
+    // staff-review flag, and the AI draft kept durable until the attempt is written.
+    if (!vpCols.has("finish_requested_ms")) db.exec("ALTER TABLE vp_sessions ADD COLUMN finish_requested_ms INTEGER");
+    if (!vpCols.has("grading_lease_until")) db.exec("ALTER TABLE vp_sessions ADD COLUMN grading_lease_until INTEGER");
+    if (!vpCols.has("next_try_ms")) db.exec("ALTER TABLE vp_sessions ADD COLUMN next_try_ms INTEGER");
+    if (!vpCols.has("review_required")) db.exec("ALTER TABLE vp_sessions ADD COLUMN review_required INTEGER NOT NULL DEFAULT 0");
+    if (!vpCols.has("grading_draft_json")) db.exec("ALTER TABLE vp_sessions ADD COLUMN grading_draft_json TEXT");
+  }
+  db.exec("CREATE INDEX IF NOT EXISTS idx_vp_sessions_open ON vp_sessions(finished_at, deadline_ms)");
+  // R82: the 30-second sweeper reads only unsettled encounters. A partial index keeps it small.
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_vp_sessions_unsettled ON vp_sessions(COALESCE(finish_requested_ms, deadline_ms))
+    WHERE finished_at IS NULL AND attempt_id IS NULL AND review_required=0`);
+  // R83: data retention. classes/exams.retention_days: NULL = inherit the global policy, 0 = keep, N = days.
+  // vp_sessions.purged_ms: when the chat text and the event log were removed (the grade is kept).
+  // The age-based retention deletes scan these columns, so they get plain indexes.
+  const colsNamed = (t) => db.prepare(`PRAGMA table_info(${t})`).all().map((c) => c.name);
+  if (!colsNamed("classes").includes("retention_days")) db.exec("ALTER TABLE classes ADD COLUMN retention_days INTEGER");
+  if (!colsNamed("exams").includes("retention_days")) db.exec("ALTER TABLE exams ADD COLUMN retention_days INTEGER");
+  if (!colsNamed("vp_sessions").includes("purged_ms")) db.exec("ALTER TABLE vp_sessions ADD COLUMN purged_ms INTEGER");
+  // R84: inspection_hold = 1 while a records inspection request is open (FERPA 34 CFR 99.10(e)).
+  // Nothing of a held class or exam is deleted by any retention path until the hold is released.
+  if (!colsNamed("classes").includes("inspection_hold")) db.exec("ALTER TABLE classes ADD COLUMN inspection_hold INTEGER NOT NULL DEFAULT 0");
+  if (!colsNamed("exams").includes("inspection_hold")) db.exec("ALTER TABLE exams ADD COLUMN inspection_hold INTEGER NOT NULL DEFAULT 0");
+  // R90: per-student inspection request. An open row protects every record of that student
+  // (roster, attempts, virtual-patient encounters) until the request is closed.
+  db.exec(`CREATE TABLE IF NOT EXISTS inspection_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    opened_by INTEGER,
+    opened_at TEXT NOT NULL DEFAULT (datetime('now')),
+    closed_at TEXT,
+    closed_by INTEGER,
+    reference TEXT NOT NULL DEFAULT ''
+  )`);
+  db.exec("CREATE INDEX IF NOT EXISTS idx_inspection_open ON inspection_requests(user_id) WHERE closed_at IS NULL");
+  // R96: /api/flashcards splits the bank by track on every request. This expression index makes
+  // that an index lookup instead of a JSON parse over ~11.7k rows (see lib/flashcard-track.js).
+  db.exec(TRACK_INDEX_SQL);
+  db.exec(FLASHCARDS_SIG_INDEX_SQL); // R96: covering index for the browse pool cache key
+  db.exec("CREATE INDEX IF NOT EXISTS idx_tutor_chats_created ON tutor_chats(created_at)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_security_created ON security_events(created_at)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_rum_created ON rum_vitals(created_at)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_vp_sessions_class ON vp_sessions(class_id)");
+  db.exec("CREATE INDEX IF NOT EXISTS idx_vp_sessions_exam ON vp_sessions(exam_id)");
+  // R64: flashcard runs resume from saved progress. Plain (non-unique) index on purpose:
+  // an expired, unfinalized row must never block a new run.
+  db.exec(`CREATE TABLE IF NOT EXISTS flash_progress (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    context_key TEXT NOT NULL,
+    started_ms INTEGER NOT NULL,
+    limit_sec INTEGER DEFAULT 0,
+    deadline_ms INTEGER,
+    progress_json TEXT NOT NULL DEFAULT '{}',
+    progress_ms INTEGER,
+    finished_at TEXT,
+    attempt_id INTEGER,
+    expiry_attempts INTEGER NOT NULL DEFAULT 0,
+    expiry_error TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_flash_progress_open ON flash_progress(user_id, context_key, finished_at);
+  CREATE INDEX IF NOT EXISTS idx_flash_progress_deadline ON flash_progress(finished_at, deadline_ms);`);
+  // Reference snapshot columns for source-aware microlearning (added after initial creation)
+  // Nullable for historical sessions. Never invent a past clinical version.
+  if (!db.prepare("PRAGMA table_info(vp_sessions)").all().some(c => c.name === "encounter_snapshot_json")) {
+    db.exec("ALTER TABLE vp_sessions ADD COLUMN encounter_snapshot_json TEXT");
+  }
+  if (!db.prepare("PRAGMA table_info(vp_sessions)").all().some(c => c.name === "reference_snapshot_json")) {
+    db.exec("ALTER TABLE vp_sessions ADD COLUMN reference_snapshot_json TEXT");
+  }
+  if (!db.prepare("PRAGMA table_info(attempts)").all().some(c => c.name === "reference_snapshot_json")) {
+    db.exec("ALTER TABLE attempts ADD COLUMN reference_snapshot_json TEXT");
+  }
+
+  /* ---- R80: encrypted password copy + first-login prompt --------------------
+     password_enc: the current password sealed with the settings key, so an
+     administrator can show or hand over a user's password. Never returned to a
+     client; the reveal re-checks it against password_hash.
+     initial_password: 1 while the password was set by staff (or is the student
+     number) and the user has not chosen their own yet. */
+  {
+    const ucols = db.prepare("PRAGMA table_info(users)").all().map((c) => c.name);
+    if (!ucols.includes("password_enc")) db.exec("ALTER TABLE users ADD COLUMN password_enc TEXT");
+    if (!ucols.includes("initial_password")) db.exec("ALTER TABLE users ADD COLUMN initial_password INTEGER NOT NULL DEFAULT 0");
+  }
+
+  /* ---- Phase 4: protocol instruments seeded as editable templates ----------
+     `template_key` marks a form that came from the study protocol, so reseeding
+     never duplicates it and the admin can still edit the wording freely. */
+  {
+    const fcols = db.prepare("PRAGMA table_info(questionnaire_forms)").all().map((c) => c.name);
+    if (fcols.length && !fcols.includes("template_key"))
+      db.exec("ALTER TABLE questionnaire_forms ADD COLUMN template_key TEXT");
+  }
+
+  /* ---- Phase 3: research consent (multi-mode) ------------------------------
+     `research_studies.consent_required` existed but nothing enforced it: a
+     student could take part in a study with no recorded consent at all. That is
+     the one gap that makes human-subjects data unusable, so consent now has a
+     real record with the text + protocol version it refers to.
+
+     Multi-mode is required because in practice consent is often collected on
+     paper by the researchers in the ward/clinic; the system must be able to
+     record that fact rather than pretend every participant clicked a button. */
+  {
+    const scols = db.prepare("PRAGMA table_info(research_studies)").all().map((c) => c.name);
+    if (scols.length) {
+      const addStudyCol = (name, ddl) => { if (!scols.includes(name)) db.exec(`ALTER TABLE research_studies ADD COLUMN ${name} ${ddl}`); };
+      addStudyCol("ethics_code",     "TEXT DEFAULT ''");
+      addStudyCol("protocol_version","TEXT DEFAULT ''");
+      addStudyCol("consent_text_fa", "TEXT DEFAULT ''");
+      addStudyCol("consent_text_en", "TEXT DEFAULT ''");
+      // CSV of the collection methods this study permits: online,paper,verbal
+      addStudyCol("consent_admin_managed", "INTEGER NOT NULL DEFAULT 1");
+      addStudyCol("consent_modes",   "TEXT DEFAULT 'online'");
+      // Optional, OFF by default: only the pseudonym is kept in the research
+      // export instead of the student number. Identity stays in `users`.
+      addStudyCol("anonymize",       "INTEGER NOT NULL DEFAULT 0");
+    }
+    const ccols = db.prepare("PRAGMA table_info(classes)").all().map((c) => c.name);
+    if (ccols.length && !ccols.includes("study_id")) db.exec("ALTER TABLE classes ADD COLUMN study_id INTEGER");
+    const xcols = db.prepare("PRAGMA table_info(exams)").all().map((c) => c.name);
+    if (xcols.length && !xcols.includes("study_id")) db.exec("ALTER TABLE exams ADD COLUMN study_id INTEGER");
+  }
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS research_participation_controls (
+      study_id INTEGER NOT NULL, user_id INTEGER NOT NULL,
+      blocked INTEGER NOT NULL DEFAULT 0, recorded_by INTEGER NOT NULL,
+      note TEXT NOT NULL, updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY(study_id,user_id)
+    );
+    CREATE TABLE IF NOT EXISTS research_consents (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      study_id INTEGER NOT NULL,
+      -- NULL for participants who are only known by pseudonym.
+      user_id INTEGER,
+      pseudonym TEXT,
+      mode TEXT NOT NULL DEFAULT 'online',          -- online | paper | verbal
+      status TEXT NOT NULL DEFAULT 'granted',       -- granted | withdrawn
+      consent_text_hash TEXT DEFAULT '',
+      protocol_version TEXT DEFAULT '',
+      -- The researcher who collected an offline consent. Never the participant.
+      recorded_by INTEGER,
+      note TEXT DEFAULT '',
+      granted_at TEXT DEFAULT (datetime('now')),
+      withdrawn_at TEXT
+    );
+    -- One live decision per identified participant. A partial index is needed
+    -- because SQLite treats NULLs as distinct in a plain UNIQUE index.
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_consent_one_per_user
+      ON research_consents(study_id, user_id) WHERE user_id IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS idx_consent_study_status ON research_consents(study_id, status);
+    CREATE INDEX IF NOT EXISTS idx_consent_pseudonym    ON research_consents(study_id, pseudonym);
+  `);
+
+  // ---- Site bank global promotion requests (university VP -> global bank) ----
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS case_promotion_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      case_id INTEGER NOT NULL,
+      university_id INTEGER,
+      requested_by INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending', -- pending | approved | rejected
+      reviewed_by INTEGER,
+      reviewed_at TEXT,
+      global_case_id INTEGER,
+      reason TEXT DEFAULT '',
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_promotion_case ON case_promotion_requests(case_id, status);
+    CREATE INDEX IF NOT EXISTS idx_promotion_uni ON case_promotion_requests(university_id, status);
+  `);
+
+  // Content version: every write to the learning catalog (flashcards, path nodes,
+  // topics) bumps one counter row, so read caches keyed on it are never stale even
+  // when the write comes from an admin screen, a script or raw SQL. Idempotent.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS catalog_versions (name TEXT PRIMARY KEY, v INTEGER NOT NULL DEFAULT 0);
+    INSERT OR IGNORE INTO catalog_versions (name, v) VALUES ('content', 0);
+    CREATE TRIGGER IF NOT EXISTS trg_flashcards_ver_ins AFTER INSERT ON flashcards BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+    CREATE TRIGGER IF NOT EXISTS trg_flashcards_ver_upd AFTER UPDATE ON flashcards BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+    CREATE TRIGGER IF NOT EXISTS trg_flashcards_ver_del AFTER DELETE ON flashcards BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+    CREATE TRIGGER IF NOT EXISTS trg_path_nodes_ver_ins AFTER INSERT ON path_nodes BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+    CREATE TRIGGER IF NOT EXISTS trg_path_nodes_ver_upd AFTER UPDATE ON path_nodes BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+    CREATE TRIGGER IF NOT EXISTS trg_path_nodes_ver_del AFTER DELETE ON path_nodes BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+    CREATE TRIGGER IF NOT EXISTS trg_topics_ver_ins AFTER INSERT ON topics BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+    CREATE TRIGGER IF NOT EXISTS trg_topics_ver_upd AFTER UPDATE ON topics BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+    CREATE TRIGGER IF NOT EXISTS trg_topics_ver_del AFTER DELETE ON topics BEGIN UPDATE catalog_versions SET v = v + 1 WHERE name = 'content'; END;
+  `);
+
+  // Shared, multi-process state (R73b). Several worker processes on one host read and
+  // write these tables, so the counters are in SQLite, not in each process's memory.
+  //  • rate_hits: request counters for the auth limiters (lib/shared-store.js)
+  //  • login_throttle: per-account failed-login backoff (routes/auth.js)
+  //  • job_leases: one process runs each scheduled job (lib/leases.js)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS rate_hits (key TEXT PRIMARY KEY, hits INTEGER NOT NULL, reset_at INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS login_throttle (key TEXT PRIMARY KEY, n INTEGER NOT NULL, until INTEGER NOT NULL DEFAULT 0, updated INTEGER NOT NULL);
+    CREATE TABLE IF NOT EXISTS job_leases (name TEXT PRIMARY KEY, holder TEXT NOT NULL, expires_at INTEGER NOT NULL);
+  `);
+
+  // Hot-path indexes for dashboards, exam results, class membership, learner
+  // progress and notifications. Idempotent and safe on existing databases.
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_attempts_user        ON attempts(user_id);
+    -- R89: per-learner best score per case (playableCases, learn dashboards). Covers the GROUP BY.
+    CREATE INDEX IF NOT EXISTS idx_attempts_user_case   ON attempts(user_id, case_id, score);
+    CREATE INDEX IF NOT EXISTS idx_attempts_exam        ON attempts(exam_id, user_id);
+    CREATE INDEX IF NOT EXISTS idx_attempts_class       ON attempts(class_id, user_id);
+    CREATE INDEX IF NOT EXISTS idx_attempts_created     ON attempts(created_at);
+    CREATE INDEX IF NOT EXISTS idx_class_members_user   ON class_members(user_id);
+    -- R93: league_members is looked up by user on account delete (UNIQUE(league_id,user_id) cannot serve it).
+    CREATE INDEX IF NOT EXISTS idx_league_members_user  ON league_members(user_id);
+    CREATE INDEX IF NOT EXISTS idx_exam_parts_user      ON exam_participants(user_id);
+    CREATE INDEX IF NOT EXISTS idx_flashcards_active    ON flashcards(active);
+    CREATE INDEX IF NOT EXISTS idx_cases_active         ON cases(active);
+    CREATE INDEX IF NOT EXISTS idx_users_role           ON users(role);
+    CREATE INDEX IF NOT EXISTS idx_users_student_no     ON users(student_no);
+    CREATE INDEX IF NOT EXISTS idx_users_email          ON users(email);
+    CREATE INDEX IF NOT EXISTS idx_users_email_lower    ON users(lower(email));
+    CREATE INDEX IF NOT EXISTS idx_users_username_lower ON users(lower(username));
+    CREATE INDEX IF NOT EXISTS idx_users_university     ON users(university_id);
+    CREATE INDEX IF NOT EXISTS idx_card_attempts_user   ON card_attempts(user_id, card_id);
+    CREATE INDEX IF NOT EXISTS idx_card_attempts_day    ON card_attempts(day);
+    CREATE INDEX IF NOT EXISTS idx_xp_events_user       ON xp_events(user_id);
+    CREATE INDEX IF NOT EXISTS idx_node_progress_user   ON node_progress(user_id);
+    CREATE INDEX IF NOT EXISTS idx_srs_due              ON srs_state(user_id, due);
+    CREATE INDEX IF NOT EXISTS idx_notifications_user   ON notifications(user_id, seen);
+    CREATE INDEX IF NOT EXISTS idx_support_user         ON support_tickets(user_id, status);
+
+    -- Tenant/university hot-path indexes: shared-schema multi-tenancy needs
+    -- tenant-leading indexes so teacher/university filters are fast and safer.
+    CREATE INDEX IF NOT EXISTS idx_users_uni_role_no       ON users(university_id, role, student_no);
+    CREATE INDEX IF NOT EXISTS idx_users_uni_role_status   ON users(university_id, role, status);
+    CREATE INDEX IF NOT EXISTS idx_classes_uni_active      ON classes(university_id, active, id DESC);
+    CREATE INDEX IF NOT EXISTS idx_exams_uni_active        ON exams(university_id, active, id DESC);
+    CREATE INDEX IF NOT EXISTS idx_cases_uni_active        ON cases(university_id, active, id);
+    CREATE INDEX IF NOT EXISTS idx_flashcards_uni_active   ON flashcards(university_id, active, id);
+    CREATE INDEX IF NOT EXISTS idx_cases_created_by        ON cases(created_by);
+    CREATE INDEX IF NOT EXISTS idx_flashcards_created_by   ON flashcards(created_by);
+    CREATE INDEX IF NOT EXISTS idx_users_is_expert         ON users(university_id, is_expert);
+    CREATE INDEX IF NOT EXISTS idx_class_members_class_user ON class_members(class_id, user_id);
+    CREATE INDEX IF NOT EXISTS idx_class_cases_class_case   ON class_cases(class_id, case_id);
+    CREATE INDEX IF NOT EXISTS idx_class_flash_class_card   ON class_flashcards(class_id, flashcard_id);
+    CREATE INDEX IF NOT EXISTS idx_class_flash_attempts_live ON class_flashcard_attempts(class_id, user_id, flashcard_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_attempts_class_live      ON attempts(class_id, user_id, type, created_at);
+    CREATE INDEX IF NOT EXISTS idx_attempts_exam_live       ON attempts(exam_id, user_id, type, created_at);
+    CREATE INDEX IF NOT EXISTS idx_exam_parts_exam_user     ON exam_participants(exam_id, user_id);
+    CREATE INDEX IF NOT EXISTS idx_questionnaire_resp_form  ON questionnaire_responses(form_id, user_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_research_events_study    ON research_events(study_id, user_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_external_ad_events_kind  ON external_ad_events(provider, event, placement, created_at);
+
+    -- Learning path & node covering indexes
+    CREATE INDEX IF NOT EXISTS idx_path_nodes_active_topic ON path_nodes(active, topic_id, ord, id);
+    CREATE INDEX IF NOT EXISTS idx_topics_active_prog       ON topics(active, program, ord, id);
+    CREATE INDEX IF NOT EXISTS idx_node_prog_user_node     ON node_progress(user_id, node_id, stars, completed_at, legendary);
+
+    -- Custom test / exam simulation history index
+    CREATE INDEX IF NOT EXISTS idx_exam_sims_user_kind_id  ON exam_sims(user_id, kind, id DESC);
+
+    -- Mistakes & flagged attempt covering index
+    CREATE INDEX IF NOT EXISTS idx_card_att_user_full      ON card_attempts(user_id, card_id, correct, flagged, guessed, created_at);
+  `);
+  // --- Bug Hunt (recurring automated QA) ------------------------------------
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bug_reports (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      reporter_id INTEGER,
+      title TEXT NOT NULL,
+      description TEXT NOT NULL,
+      severity TEXT NOT NULL DEFAULT 'medium',
+      status TEXT NOT NULL DEFAULT 'open',
+      kind TEXT NOT NULL DEFAULT 'manual',
+      meta_json TEXT DEFAULT '{}',
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE TABLE IF NOT EXISTS bug_scans (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      started_at TEXT DEFAULT (datetime('now')),
+      finished_at TEXT,
+      findings INTEGER DEFAULT 0,
+      report_json TEXT DEFAULT '[]',
+      created_at TEXT DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_bug_reports_status ON bug_reports(status, severity, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_bug_reports_kind   ON bug_reports(kind, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_bug_scans_created  ON bug_scans(created_at DESC);
+  `);
+  try { db.exec("PRAGMA optimize"); } catch { /* best-effort SQLite planner stats */ }
+
+  // Sample content is created only by explicit seed, never rewritten at boot.
+
+  // Account creation belongs to explicit provisioning, never schema migration.
+
+  ensureContentIdentity(db);
+  universityOnlyCases(db);
+  // Round 62: default checklist items move to evidence-point keys so each item
+  // earns partial credit. Only items whose id AND legacy keys match the shipped
+  // defaults are rewritten, so teacher-edited items are never touched. One-time.
+  if (!db.prepare("SELECT 1 FROM settings WHERE key='migr.checklist_points_r62'").get()) {
+    db.transaction(() => {
+      for (const row of db.prepare("SELECT id, items_json FROM checklists").all()) {
+        let parsed; try { parsed = JSON.parse(row.items_json || "[]"); } catch { continue; }
+        const wrapped = !Array.isArray(parsed) && Array.isArray(parsed?.items);
+        const { items: next, changed } = regroupDefaultItems(wrapped ? parsed.items : parsed);
+        if (!changed) continue;
+        const out = wrapped ? { ...parsed, items: next } : next;
+        db.prepare("UPDATE checklists SET items_json=? WHERE id=?").run(JSON.stringify(out), row.id);
+      }
+      db.prepare("INSERT OR REPLACE INTO settings (key,value) VALUES ('migr.checklist_points_r62','1')").run();
+    })();
+  }
+  // Round 63: evidence-point facets for every default criterion, normal-by-default
+  // wording for missing chart data. Exact R62 defaults only (see lib/r63-migration.js).
+  migrateR63(db);
+  // R64: ECG back to one criterion; history/exam/symptom criteria split for partial credit.
+  migrateR64(db);
+  // R76: the competitive virtual patient is revived (admin-enabled). The R49 triggers that
+  // rejected learn-track cases are dropped so the admin VP library can save them again.
+  db.exec(`DROP TRIGGER IF EXISTS cases_academic_insert; DROP TRIGGER IF EXISTS cases_academic_update;`);
+
+  markEngineVersion();
+}
+

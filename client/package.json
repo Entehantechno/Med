@@ -1,0 +1,31 @@
+{
+  "name": "medlab-client",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node scripts/defer-css.mjs && node scripts/stamp-sw.mjs && node scripts/compress-assets.mjs",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "perf:budget": "node scripts/perf-budget.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/vazirmatn": "^5.2.8",
+    "@fontsource/estedad": "^5.2.1",
+    "dompurify": "^3.4.17",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.5.0",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@vitejs/plugin-react": "^4.3.1",
+    "jsdom": "^25.0.1",
+    "postcss": "^8.5.32",
+    "vite": "^7.3.7",
+    "vitest": "^5.0.5"
+  }
+}

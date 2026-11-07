@@ -1,0 +1,302 @@
+/* ================================================================
+   index.js — Server launcher
+   ================================================================ */
+import "./lib/node-version.js"; // must stay first: refuses Node < 22.14 before the native addon loads
+import "./load-env.js";
+import { initDb, reloadDb, initSchema, db, snapshotDb } from "./db.js";
+import { createApp } from "./app.js";
+import { runStreakReminders } from "./lib/notify.js";
+import { execFile, fork } from "child_process";
+import path from "path";
+import { fileURLToPath } from "url";
+// Safety net: Express 4 does not catch async errors. Log them instead of exiting,
+// so one failing request cannot take the whole site down.
+process.on("unhandledRejection", (err) => { console.error("[unhandledRejection]", err?.stack || err); });
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PORT = process.env.PORT || 4000;
+
+/* ------------------------------------------------------------------
+   Boot strategy for shared hosts (cPanel / Passenger / small VPS)
+   ------------------------------------------------------------------
+   Passenger only waits a limited time for the app to accept its first
+   request; the FIRST start of MED School must seed the demo content and
+   import ~11 600 official questions (≈ 60-70 s, ≈ 500 MB peak RSS). When
+   that ran BEFORE `listen()`, the host gave up and the site never appeared.
+
+   So we now:
+     1. open the listening socket FIRST, answering every request with a light
+        "preparing, back in a minute" page (auto-refreshing) + 503 for /api;
+     2. run seeding / bank import / migrations in the background;
+     3. swap in the real Express app once ready (no restart needed).
+   Warm boots (database already prepared) go through the same path but
+   finish in ~1-2 s, so visitors never notice. */
+import http from "http";
+import fs from "node:fs";
+import {DB_PATH,DATA_DIR} from './lib/paths.js';
+import {installBundledDemo} from './lib/first-run.js';
+import {warnIfDefaultAdminPassword} from './lib/demo-credentials.js';
+import { makeLeases } from './lib/leases.js';
+const leases = makeLeases(db);
+
+let realApp = null;                      // set once the full app is ready
+let bootState = { phase: "starting", startedAt: Date.now(), error: null };
+
+const PREPARING_HTML = (lang) => `<!doctype html><html lang="${lang}" dir="${lang === "fa" ? "rtl" : "ltr"}"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="8"><title>MED School</title>
+<style>body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,Tahoma,sans-serif;background:#eef1f6;color:#1e2b3d}
+.b{background:#fff;border:1px solid #dbe3ee;border-radius:18px;padding:28px 32px;max-width:420px;text-align:center;box-shadow:0 20px 50px -30px rgba(38,82,122,.4)}
+.s{width:40px;height:40px;border:4px solid #dbe3ee;border-top-color:#2f7fd1;border-radius:50%;margin:0 auto 14px;animation:r 1s linear infinite}@keyframes r{to{transform:rotate(360deg)}}
+h1{font-size:1.1rem;margin:0 0 6px}p{margin:0;color:#647184;font-size:.92rem;line-height:1.7}</style></head><body><div class="b"><div class="s"></div>
+${lang === "fa"
+  ? "<h1>MED School در حال آماده‌سازی است</h1><p>اولین اجرا: بانک سؤال و محتوای اولیه در حال بارگذاری است. این صفحه خودش تازه می‌شود؛ معمولاً کمتر از یک دقیقه طول می‌کشد.</p>"
+  : "<h1>MED School is getting ready</h1><p>First start: loading the question bank and initial content. This page refreshes itself; it usually takes under a minute.</p>"}
+</div></body></html>`;
+
+function placeholder(req, res) {
+  if (req.url.startsWith("/api/health")) {
+    res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+    return res.end(JSON.stringify({ ok: true, ready: false, phase: bootState.phase, uptime_s: Math.round((Date.now() - bootState.startedAt) / 1000) }));
+  }
+  if (req.url.startsWith("/api/")) {
+    res.writeHead(503, { "Content-Type": "application/json", "Retry-After": "10", "Cache-Control": "no-store" });
+    return res.end(JSON.stringify({ error: "starting", message_fa: "سرور در حال آماده‌سازی است؛ چند لحظه بعد دوباره تلاش کنید.", message_en: "Server is starting; retry in a moment." }));
+  }
+  const lang = /medlab_lang=en/.test(req.headers.cookie || "") ? "en" : "fa";
+  res.writeHead(503, { "Content-Type": "text/html; charset=utf-8", "Retry-After": "10", "Cache-Control": "no-store" });
+  res.end(PREPARING_HTML(lang));
+}
+
+const server = http.createServer((req, res) => (realApp ? realApp(req, res) : placeholder(req, res)));
+// Slowloris / hung-connection protection (must satisfy headersTimeout > requestTimeout).
+server.requestTimeout = 60_000;   // 60s to send the full request
+server.headersTimeout = 65_000;   // a bit longer for headers
+server.keepAliveTimeout = 30_000; // close idle keep-alive sockets
+server.on("error", (err) => {
+  if (err && err.code === "EADDRINUSE") {
+    console.error(`✗ port ${PORT} is already in use (another MED School instance running?). Stop it or set PORT=… in .env`);
+  } else {
+    console.error("✗ server error:", err?.stack || err);
+  }
+  setTimeout(() => process.exit(1), 500);
+});
+// WEB_CONCURRENCY > 1 runs extra HTTP worker processes that share the port (SO_REUSEPORT).
+// Default 1 = the single-process server it has always been.
+const WORKERS = Math.max(1, Math.min(8, Number(process.env.WEB_CONCURRENCY) || 1));
+const CLUSTERED = WORKERS > 1;
+server.listen(CLUSTERED ? { port: PORT, reusePort: true } : PORT, () => console.log(`🎓 MED School listening on http://localhost:${PORT} (preparing…)`));
+
+/* Starts the extra workers (primary only, after the database is ready). A worker that
+   exits is replaced with a short backoff. Workers stop when this process stops. */
+function startWorkers(count) {
+  const workerFile = path.join(__dirname, "worker.js");
+  const children = new Set();
+  let stopping = false;
+  const spawnOne = (attempt = 0) => {
+    const child = fork(workerFile, [], { env: { ...process.env, MED_ROLE: "worker" }, stdio: "inherit" });
+    children.add(child);
+    child.on("exit", (code) => {
+      children.delete(child);
+      if (stopping) return;
+      const wait = Math.min(30_000, 1000 * 2 ** Math.min(attempt, 5));
+      console.error(`[cluster] worker ${child.pid} exited (code ${code}); restarting in ${wait} ms`);
+      setTimeout(() => spawnOne(attempt + 1), wait).unref();
+    });
+  };
+  for (let i = 0; i < count; i++) spawnOne();
+  const stop = () => { stopping = true; for (const c of children) c.kill("SIGTERM"); };
+  process.once("exit", stop);
+  console.log(`🧩 cluster: ${count + 1} processes share port ${PORT} (WEB_CONCURRENCY=${WORKERS})`);
+}
+
+async function main() {
+  bootState.phase = "database";
+  const freshInstallation = !fs.existsSync(DB_PATH);
+  // Location guard: if the configured database is missing but a real database exists
+  // in another folder the launcher or an earlier install used, do NOT silently create a
+  // new demo database (public demo passwords, empty classes). Stop with a clear message.
+  if (!fs.existsSync(DB_PATH) && process.env.ALLOW_NEW_DATABASE !== "1") {
+    const ROOT_DIR = path.resolve(__dirname, "..", "..");
+    const candidates = [
+      path.join(ROOT_DIR, "data", "medlab.db"),
+      path.join(ROOT_DIR, "..", "medschool-data", "medlab.db"),
+      path.join(ROOT_DIR, "medschool-data", "medlab.db"),
+    ].map((f) => path.resolve(f)).filter((f) => f !== path.resolve(DB_PATH));
+    const found = candidates.filter((f) => { try { return fs.statSync(f).size > 0; } catch { return false; } });
+    if (found.length) {
+      console.error(`[database] ❌ No database at ${DB_PATH}, but existing database(s) were found at:\n   ${found.join("\n   ")}\n   Startup stopped so that no new empty/demo database is created. Set DATA_DIR in .env to the folder that holds your medlab.db (or ALLOW_NEW_DATABASE=1 to create a new one on purpose).`);
+      throw new Error("database_location_mismatch");
+    }
+  }
+  const provisioning = installBundledDemo({dbPath:DB_PATH,dataDir:DATA_DIR,bundleDir:path.resolve(__dirname,'../../demo-database')});
+  if(provisioning.installed) console.warn('Demo database installed in the persistent DATA_DIR. Demo accounts use the shipped demo password — change it right after first login.');
+  console.log('[database]',DB_PATH);
+  await initDb();                 // open the SQLite database (WAL) first
+  initSchema();                   // ensure all tables exist before we query them
+  // R70: environment audit + seal legacy plaintext provider keys (idempotent).
+  try {
+    const { checkEnvironment, logEnvironmentFindings } = await import("./lib/hardening.js");
+    logEnvironmentFindings(checkEnvironment());
+    const { migrateLegacySecrets } = await import("./lib/secret-store.js");
+    const sealed = migrateLegacySecrets(db);
+    if (sealed.migrated) { console.log(`[secret-store] sealed ${sealed.migrated} stored provider key(s)`); }
+  } catch (e) { console.error("[security-boot]", e?.message || e); }
+  setTimeout(() => { warnIfDefaultAdminPassword().catch(() => {}); }, 5000);
+
+  // FIRST-RUN ONLY seeding: if the database has no users, load the demo/content
+  // seed once. On every later start (even after code changes) the existing data
+  // is preserved — user accounts, exams, flashcards, attempts, everything stays.
+  const existing = db.prepare("SELECT COUNT(*) n FROM users").get()?.n ?? 0;
+  if (existing === 0 && freshInstallation) {
+    bootState.phase = "seed";
+    console.log("🌱 First run — seeding initial content (this happens only once)…");
+    // Flush and quiesce this process's writer before the child seed runs:
+    // with the seed child exporting the same DB file, a pending debounced write
+    // from THIS process could otherwise land after the child's seeded image.
+    try { } catch { /* best-effort */ }
+    try {
+      // async child so the placeholder page keeps being served meanwhile
+      await new Promise((resolve, reject) => {
+        const child = execFile(process.execPath, [path.join(__dirname, "seed.js"), "--force"], { env: process.env, maxBuffer: 64 * 1024 * 1024 }, (err, stdout, stderr) => {
+          if (stdout) process.stdout.write(stdout);
+          if (stderr) process.stderr.write(stderr);
+          err ? reject(err) : resolve();
+        });
+        child.on("error", reject);
+      });
+      await reloadDb();           // force-reload the freshly-written database file
+      initSchema();               // run any migrations on the reloaded DB
+      // The boot-time backup ran BEFORE this seed, so first-day backups used to
+      // hold only an empty schema — a restore would re-seed and look like data
+      // loss. Take a forced snapshot NOW so backups/ always contains the full
+      // seeded database from day one.
+      try {
+        snapshotDb({ force: true });
+        console.log("💾 post-seed backup snapshot saved to backups/");
+      } catch (e) { console.warn("post-seed snapshot skipped:", e?.message || e); }
+    } catch (e) {
+      throw new Error("Initial provisioning failed: " + e.message);
+    }
+  } else {
+    console.log(`✓ Existing database detected (${existing} users) — data preserved, no seeding.`);
+  }
+
+  // Upload/upgrade provisioning is additive; stable source claims preserve edits,
+  // inactivity and deletion. Never reset the retained database to seed ten cases.
+  try {
+    const { ensureEmergencyCases } = await import("./lib/emergency-provision.js");
+    const patients = ensureEmergencyCases();
+    console.log("Academic emergency patients:", JSON.stringify(patients));
+  } catch (e) {
+    // A missing/renamed institutional rubric must not take an existing site down
+    // or be silently replaced with an unrelated rubric. The transaction rolls back.
+    console.warn("Academic emergency patients NOT provisioned:", e.message);
+  }
+
+  try {const {ensureAzarbarzTeacher}=await import('./lib/azarbarz-provision.js');console.log('Requested academic setup:',JSON.stringify(ensureAzarbarzTeacher()));}
+  catch(e){console.warn('Requested academic setup NOT applied:',e.message);}
+
+  // Accounts saved with Persian/Arabic digits -> ASCII (idempotent, never merges).
+  try { const { normalizeAccountDigits } = await import("./lib/digits.js"); const { db: dbh } = await import("./db.js"); console.log("Account digits:", JSON.stringify(normalizeAccountDigits(dbh))); }
+  catch (e) { console.warn("Account digit normalisation NOT applied:", e?.message || e); }
+
+  // Arak student roster: insert-only, idempotent.
+  try { const { ensureArakStudents } = await import("./lib/arak-students-provision.js"); console.log("Arak students:", JSON.stringify(ensureArakStudents())); }
+  catch (e) { console.warn("Arak students NOT provisioned:", e?.message || e); }
+
+  // Password runtime check: warns when argon2id hashes exist but cannot be verified here.
+  try { const { passwordRuntimeReport } = await import("./lib/password.js"); const { db: pdb } = await import("./db.js"); console.log("Password runtime:", JSON.stringify(await passwordRuntimeReport(pdb))); }
+  catch (e) { console.warn("Password runtime check failed:", e?.message || e); }
+
+  try { const { ensureDefaultEducationPosts } = await import("./lib/blog.js"); const n = ensureDefaultEducationPosts(); if (n) console.log(`📝 ensured ${n} default education blog post change(s)`); } catch (e) { console.warn("default blog posts skipped", e?.message || e); }
+
+  // Load the past-exam question banks that ship with the release. This is
+  // idempotent — questions already present are skipped by permanent source identity (legacy: fingerprint) — so it
+  // is safe on every restart, and it means a fresh deployment comes up with a
+  // populated learning path instead of an empty one.
+  bootState.phase = "question-bank";
+  try {
+    const { ensureQuestionBanks } = await import("./lib/bankbootstrap.js");
+    const r = await ensureQuestionBanks();
+    if (r && r.inserted) {
+      const who = r.subjects.length ? ` (${r.subjects.join("، ")})` : "";
+      console.log(`📚 imported ${r.inserted} official exam question(s)${who}; bank now ${r.after} cards`);
+    } else if (r && r.cached) {
+      console.log(`📚 question bank unchanged — ${r.after} cards (import skipped)`);
+    } else if (r && r.after) {
+      console.log(`📚 question bank ready — ${r.after} cards already present`);
+    } else if (r && r.failed) {
+      console.warn(`📚 question bank import had ${r.failed} problem file(s)`);
+    }
+    if (r?.curation && !r.curation.skipped && !r.curation.empty) {
+      const c = r.curation;
+      console.log(`🛣️  curated competitive path: ${c.topicsCovered} subjects, ${c.stages} titled stages, ${c.pathCards} free-path questions, ${c.premiumCards} premium-bank questions`);
+    }
+  } catch (e) {
+    console.warn("question bank import skipped:", e?.message || e);
+  }
+
+  try {
+    const { getSetting } = await import("./routes/content.js");
+    const { resolveAiConfig } = await import("./lib/ai-engine.js");
+    const ai = resolveAiConfig(getSetting("ai", {}));
+    if (ai.apiKey) {
+      console.log(`✓ Virtual-patient AI path ready (${ai.provider || "custom"} / ${ai.model || "default"})`);
+    } else {
+      console.log("✓ Virtual-patient AI path ready — mock until an API key is saved in Admin → AI");
+    }
+  } catch (e) {
+    console.warn("AI path check skipped:", e?.message || e);
+  }
+
+  bootState.phase = "app";
+  realApp = createApp();
+  bootState.phase = "ready";
+  // Pre-warm hot caches after the first tick so "ready" is not delayed.
+  setTimeout(async () => {
+    try { const m = await import("./routes/learn.js"); m.prewarmLearnCaches?.(); } catch { /* best-effort */ }
+  }, 50);
+  console.log(`🎓 MED School API ready on http://localhost:${PORT} (boot ${((Date.now() - bootState.startedAt) / 1000).toFixed(1)} s)`);
+  if (CLUSTERED) startWorkers(WORKERS - 1);
+
+  // Streak-reminder scheduler: check hourly for learners who risk losing a streak.
+  const tick = async () => {
+    // Hourly jobs (streak reminders, admin digests, bug-hunt scan) run in one process only.
+    if (!leases.tryLease("hourly-tick", 50 * 60 * 1000)) return;
+    try { const n = await runStreakReminders(); if (n) console.log(`🔔 sent ${n} streak reminders`); } catch (e) { /* */ }
+    // Admin analytics scheduler: daily health-alert notifications + weekly digest
+    // (self-gated by per-day/per-week de-dup tags, so it's safe to call hourly).
+    try { const { runAdminAnalyticsScheduler } = await import("./lib/analytics-notify.js"); const m = await runAdminAnalyticsScheduler(); if (m) console.log(`📊 sent ${m} admin analytics notifications`); } catch (e) { /* */ }
+    // Bug Hunt auto-scan (recurring QA) — respects bug_hunt.enabled + auto_scan_hours
+    try {
+      const { getGameConfig } = await import("./lib/gameconfig.js");
+      const cfg = getGameConfig().bug_hunt;
+      if (cfg?.enabled !== false && (cfg?.auto_scan_hours || 0) > 0) {
+        const { db } = await import("./db.js");
+        const row = db.prepare("SELECT (julianday('now') - julianday(created_at))*24 AS hours FROM bug_scans ORDER BY id DESC LIMIT 1").get();
+        const hoursSince = row?.hours ?? 999;
+        if (hoursSince >= (cfg.auto_scan_hours || 24)) {
+          const { scanOnce } = await import("./lib/bughunt.js");
+          const out = scanOnce();
+          if (out.findings.length) console.log(`🐛 bug-hunt auto-scan: ${out.findings.length} findings`);
+        }
+      }
+    } catch (e) { /* never break tick */ }
+  };
+  setTimeout(tick, 15000);                 // once shortly after boot
+  setInterval(tick, 60 * 60 * 1000);       // then hourly
+  // R64: finalize encounters and flashcard runs whose time ran out (every 30 s).
+  const { startTimedExpiry } = await import("./lib/timed-expiry.js");
+  startTimedExpiry();
+  // R83: stored chats and logs are deleted only by the admin's retention periods, once a day.
+  const { startRetention } = await import("./lib/retention.js");
+  startRetention();
+}
+
+main().catch((e) => {
+  // Keep listening so the operator sees the error in the browser/log instead
+  // of a bare Passenger "application could not be started".
+  bootState.phase = "failed"; bootState.error = String(e?.stack || e);
+  console.error("Startup failed:", e);
+  setTimeout(() => process.exit(1), 30_000);
+});

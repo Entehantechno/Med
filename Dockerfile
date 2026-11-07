@@ -1,0 +1,49 @@
+# ================================================================
+# MED Lab — multi-stage Docker build
+#   Stage 1: build the React client
+#   Stage 2: install server deps and run everything on one port
+#   The runtime stage runs as the unprivileged `node` user (uid 1000).
+# ================================================================
+
+# ---- Stage 1: build client ----
+FROM node:22-slim AS client-build
+WORKDIR /app/client
+COPY client/package*.json ./
+# `npm ci` installs exactly the lockfile versions (reproducible, faster than npm install).
+RUN npm ci --no-audit --no-fund
+COPY client/ ./
+RUN npm run build
+
+# ---- Stage 2: server runtime ----
+# SQLite through better-sqlite3 13 (native addon, R71). The tag floats to the latest
+# 22.x, which is >= 22.14 (needed for the Node-API 10 prebuilt binaries). The prebuilt
+# binary ships inside the package; the compiler toolchain below is only a fallback
+# and is removed in the same layer.
+FROM node:22-slim AS runtime
+ENV NODE_ENV=production \
+    PORT=4000
+WORKDIR /app/server
+COPY server/package*.json ./
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends python3 make g++ \
+ && npm ci --omit=dev --no-audit --no-fund \
+ && apt-get purge -y --auto-remove python3 make g++ \
+ && rm -rf /var/lib/apt/lists/* \
+ && npm cache clean --force
+COPY server/ ./
+# bring in the built client so the server can serve it
+COPY --from=client-build /app/client/dist /app/client/dist
+# The app writes its .env (generated JWT secret), the SQLite DB and uploads
+# next to itself, so the unprivileged user needs ownership of the app tree.
+RUN chown -R node:node /app
+USER node
+
+EXPOSE 4000
+
+# Liveness: the API answers /api/health once boot (seed check, migrations) is done.
+# The first boot can take a minute on a fresh database, hence the long start period.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||4000)+'/api/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
+
+# Seed the DB on first run only (if empty), then start the server.
+CMD ["sh", "-c", "node src/seed_if_empty.js && node src/index.js"]

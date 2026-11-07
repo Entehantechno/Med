@@ -1,53 +1,261 @@
-# سامانه آموزشی و بیمار مجازی MED School
+# 🧪 MED Lab — AI Medical Education Platform (Full Stack)
 
-این مخزن شامل کد مبنا، بسته‌های تحویل و ابزارهای پشتیبان‌گیری، بازیابی و تفکیک چندمستأجری داده‌های دانشگاهی و مسیر یادگیری است.
+پلتفرم هوشمند آموزش، ارزیابی و پژوهش دانشجویان پزشکی (دوزبانه فارسی/انگلیسی) — **MED Lab**.
 
-## بسته‌های تحویل
+A bilingual (FA/EN), fully responsive (desktop + mobile) platform for teaching,
+assessing and researching medical students, built as a real full-stack application.
 
-- `MED-School-GLOBAL-AUDIT-2026-10-04.zip` — **بسته ۲۰۲۶-۱۰-۰۴ — ممیزی سراسری Glass + بانک ۱۰۰٪ عالی (نسخه ۱۰۸ — غربالگری و اصلاح جامع ۱۰۰٪)**
-  - **غربالگری دقیق ۱۱٬۶۰۴ سؤال تک‌به‌تک:** قبل ۱۱٬۲۰۸ ناسالم (۹۶٫۶٪)؛ بعد **۰ ناسالم (۰٪) — ۱۱٬۶۰۴ سالم (۱۰۰٪)**؛ ۲ سؤال part22 چندپاسخی نیز به تک‌پاسخی اصلاح شد (q1: EPO به بینابینی شبه‌فیبروبلاست، q53: جنس → واکسیناسیون ناقص)
-  - **اصلاح جامع:** ۱۱٬۵۷۳ why، ۳٬۲۹۶ expl، ۱۱٬۵۷۳ micro + ۲۹ کلید دقیق هاریسون/نلسون؛ ۲٬۷۲۴ توضیح <۵۰۰ به >۶۰۰ (۵ پاراگراف مرجع‌محور)؛ همه توضیحات اکنون ۵۰۰–۲۰۰۰ حرف، چندپاراگرافی و دارای ارجاع
-  - ممیزی سراسری زیبایی/کاربرپسندی با پژوهش ۲۰۲۶ — Glassmorphism سراسری Topbar/Sidenav/Tabbar/Home-Hero/Browse/Card/Table/Modal با blur 10–18px؛ بیلد ۴٫۴۱s، ۱۶۸ compressed، ۱۱۹۱ فایل، sw `medschool-2026.10.02-motion-premium-122`
-  - گزارش غربالگری: `AUDIT-BANK-DETAILED-2026-10-04.md` + `AUDIT-BANK-FAILURES-2026-10-04.csv` (۰ ردیف)
+---
 
-- `MED-School-107-MINDMAP-COMPLETE.zip` — **بسته ۱۰۷ — مایندمپِ کامل ۳۳ نقشه + تکمیلِ دستیِ ادمین (۲۰۲۶-۱۰-۰۳)**
-  - **تکمیلِ مایندمپ‌ها**: نفروتیک و سپسیس از ۳ گره به ۸ گره (definition→etiology→clinical→workup→treatment→complication با Harrison 22e) + CKD به‌عنوان ۳۰امین + ۳ ورودیِ دستیِ ادمین (هیپرکالمی اورژانس، حمله آسم، پانکراتیت حاد) با ۷-۸ گره و رفرنس — هر کدام ۳ لینکِ دقیق به بانکِ سؤالات (آزمون: هیپرکالمی ۱۶۷۶، آسم ۴۴۰، پانکراتیت ۱۱۴۶)
-  - **ورودِ دستیِ ادمین (تستِ زنده)**: ۳ نقشه از طریق `POST /admin/mindmap-bank` با گرافِ کامل وارد شد؛ به‌عنوان کاربر تأیید شد: جستجوی `هیپرکالمی/آسم/پانکراتیت`، فیلتر `nephro`، جزئیاتِ گراف (۸ گره)، و `by-concept` → ۳ سؤال/گره و `Q→mindmap` دوسویه — آسمِ رایگان (is_premium=false) همیشه باز، بقیه ۳ پیش‌نمایش + قفلِ پرمیوم
-  - **بانکِ نهایی ۳۳ نقشه**: ۳۰ هسته + ۳ دستی — تستِ نهایی: آزاد ۳/۳۳ (۳ پیش‌نمایش + ۱ رایگانِ آسم همیشه باز)، پرمیوم ۳۳/۳۳ — صفحه‌بندی ۷ صفحه (۵/ص)، faceted با counts
-- `MED-School-106-MINDMAP-ADVANCED.zip` — **بسته ۱۰۶ — مایندمپِ پیشرفته: جستجوی چندوجهی + ادمینِ کامل + ۳۰ نقشهٔ هاریسون (۲۰۲۶-۱۰-۰۳)**
-  - **جستجوی پیشرفتهٔ بانکِ مایندمپ (هم‌تراز بانکِ سؤالات)**: Faceted با OR داخل هر فاست و AND بین فاست‌ها، به‌همراه شمارشِ زنده (counts)، تمام‌متن روی عنوان/خلاصه/گره‌ها (فارسی‌نرمال)، مرتب‌سازی (پیشنهادی/جدیدترین/گره‌ها/الفبا) و صفحه‌بندی (۲۰/ص) — API: `GET /learn/mindmap-bank?q=&system=&type=&level=&branch=&sort=&page=` + `GET /learn/mindmap-bank/facets`
-  - **ادمینِ کامل**: جستجو + فیلتر + انتخابِ چندتایی → حذف/تغییر وضعیت/پرمیومِ انبوه، تکثیر، تاریخچه، اعتبارسنجیِ گراف (nodes/edges/branch)، پیش‌نمایش، درون‌ریزی/برون‌بری CSV & JSON، cover — مسیر: رقابتی → محتوا → بانک مایندمپ — بیلد Admin ۵۸۹k / Mindmap ۲۲.۵k / MindmapBankAdmin ۱۱.۹k
-  - **بانکِ ۲۹ نقشهٔ مرجع‌محور (Harrison 22e)**: ۱۱ قبلی + ۱۸ جدیدِ High-Yield — هر نقشه definition→etiology→patho→clinical→workup→treatment→complication با رفرنس فصل هاریسون، و ≥۳ لینکِ خودکار به بانکِ سؤالات
-  - **لینک دوسویه حفظ شد**: `Q→mindmap` (badge 🧠 روی کارت) و `node→Q` (`by-concept`)؛ پرمیوم: ۳ پیش‌نمایش آزاد، بقیه قفل طلایی — تست API: آزاد ۳/۲۹، پرمیوم ۲۹/۲۹
-- `MED-School-105-MINDMAP-BANK.zip` — **بسته ۱۰۵ — بانک مایندمپ و اپروچ پرمیوم لینک‌دار (۲۰۲۶-۱۰-۰۲)**
-  - بانک گرافیِ دانش: ۱۱ نقشهٔ باکیفیت (۶ مایندمپ + ۵ اپروچ) با لینک دوسویه به بانک سؤالات — از هر سؤال → مایندمپ مرتبط (دکمه 🧠 روی کارت) و از هر گرهٔ مایندمپ → سؤالات مرتبط (۲ کلیک تا تسلط)
-  - پرمیوم: ۳ نقشه رایگان برای آشنایی، بقیه با قفل طلایی و CTA ارتقا؛ پرمیوم همه ۱۱ را می‌بیند — تست API تأیید شد (آزاد ۳/۱۱، پرمیوم ۱۱/۱۱، detail قفل/باز)
-  - گرافِ تعاملی: SVG + کارتِ شبکه‌ای (بدون وابستگی سنگین)، رنگ‌بندیِ دستگاه (قلب قرمز، ریه آبی، کلیه بنفش...) و branch (definition/etiology/workup...)
-  - فیلترِ دستگاه/نوع، جستجو، پیش‌نمایشِ قفل با بنرِ ارتقا، و لینک‌سازیِ خودکار (۵ سؤال/نقشه) + API کامل (`/learn/mindmap-bank`, `/questions/by-concept`, `/questions/:id/mindmaps`)
-  - پنلِ ادمین: ویرایشِ گرافِ JSON، لینک/آنلینکِ سؤال، seed و مدیریتِ ۱۱ نقشه — مسیر: رقابتی → محتوا → بانک مایندمپ
-  - کلاینت بیلد ۱۸.۲k (Mindmap) + ۱۴.۳k (Browse) + ۲۷.۴k (Lesson) + ۵۸۹k (Admin) — تست بیلد و API و UI تأیید شد
-- `MED-School-104-PREMIUM-ADFIX.zip` — **بسته ۱۰۴ — باگ‌فیکس پرمیوم و موشن درجه‌یک (۲۰۲۶-۱۰-۰۲)**
-  - رفع باگ نمایش تبلیغات برای کاربران پرمیوم — سرور `serveAds` با `premium_effective` و کلاینت با گارد مضاعف `!(premium_effective||premium)`؛ تست API و UI تأیید شد (پرمیوم ۰ تبلیغ، آزاد ۷/۷ اسلات)
-  - بازگردانی ۷ جایگاه تبلیغاتی با طراحی موشن متحرک (گرادیان، گوی بلور، چیپ شیشه‌ای): `home/#1a3a7a`, `path/#2f7fd1`, `lesson-intro/#0e3a4a`, `between/#7a4b12`, `sidebar/#6d28d9`, `review/#e0533d`, `leaderboard/#22a06b` — فعال با سوئیچ مستر `enabled:true`
-  - تکمیل جایگاه‌های جاافتاده: `Review` و `Leaderboard` (قبلاً خالی) و `Sidebar` در `Home/Path`
-  - `AdCard` بازطراحی به موشن ۱۰–۱۵ ثانیه‌ای با احترام به `prefers-reduced-motion` و فونت Vazirmatn/Estedad
-- `MED-School-103-VP-EMERGENCY.zip` — **نسخه ۱۰۳ — ۱۰ بیمار مجازی طب داخلی در اورژانس**
-  - منبع: ۱۰ شرح‌حال دوزبانه (فارسی/انگلیسی) اولویت‌دار طب داخلی — از سندرم حاد کرونری (STEMI قدامی) تا پیلونفریت و اوروسپسیس
-  - **همه بیماران در اورژانس** ویزیت/ارزیابی می‌شوند تا محل بستری پاسخ نهایی را لو ندهد؛ تخصص نمایشی برای هر ۱۰ مورد «طب داخلی - اورژانس» یکسان‌سازی شد
-  - محتوای هر کیس: چیف، HPI با OPQRST و مثبت/منفی‌ها، PMH، دارو و پایبندی، آلرژی، فامیلی، سوشال (Pack-Year دقیق)، ROS منظومه‌ای، معاینه کامل و علائم حیاتی واقعی
-  - پاراکلینیک ساختاریافته قابل «سفارش» توسط دانشجو: `labResults` و `imagingResults` با آلایاس‌های طبیعی (تروپونین، ABG، BNP، CBC، ECG، CXR، CT مغز، سونو، مایع آسیت، آنالیز ادرار) — نتیجهٔ ثبت‌نشده = «نرمال» (قانون Zero-Cost)
-  - ارزیابی OSCE: پرابلم‌لیست، افتراقی، تشخیص نهایی، مرور سفارش‌های به‌جا/بی‌جا و میکرولرنینگ؛ مسیر اذیت/اجرا با موتور قطعی (Mock) و LLM اختیاری تست شد
-  - مسیر سالم: `seed.js` به صورت خودکار ۱۰ کیس را در بذر تازه می‌سازد؛ اسکریپت `server/src/seed-emergency-ten.js` نیز نصب ادغامی (idempotent) روی دیتابیس فعال انجام می‌دهد بدون تکرار
-- `MED-School-102-ACADEMIC-FINAL.zip` — **بسته تحویل نهایی کامل (نسخه ۱۰۲)**
-  - شامل معماری کامل چندمستأجری (Tenant Isolation)
-  - پیاده‌سازی مراجع مصوب کانونی (از جمله طب داخلی بر پایه هاریسون ویرایش ۲۲)
-  - بسته‌بندی جامع قابل‌حمل دانشگاه (`medschool.university-portable.v2`) همراه با نسخه‌های تاریخی و رسانه‌ها
-  - بازگردانی اتمیک با نگاشت کلیدها و رول‌بک ایمن (`Transactional Restore`)
-  - تفکیک مستقل حوزه یادگیری رقابتی (`medschool.learning-package.v1`)
-  - پنل رابط کاربری مدیریت مراجع و پشتیبان‌گیری به زبان فارسی
-  - غنی‌سازی و غربالگری ۱۰۰٪ کامل تمام ۵۴ بانک سؤال (۱۱٬۶۰۴ سؤال) با درسنامه، پیشوندهای ساختاریافته و میکرولرنینگ
-  - کلاینت بیلدشده آماده استقرار
+## 🚀 Deployment (HTTPS + auto-backup)
 
-## اعتبارسنجی و آزمون‌ها
+Production-ready one-command deploy with **Caddy** (automatic HTTPS) + **Docker**:
 
-آزمون‌های کامل سرور و کلاینت، تست‌های چندمستأجری، حاکمیت مراجع، بانک سؤالات (۱۱٬۶۰۴ سالم از ۱۱٬۶۰۴ — ۱۰۰٪)، بیمار مجازی (۲۲ تست VP) و پایلوت ۱۰ دانشجو با موفقیت کامل پاس شده‌اند.
+```bash
+cp .env.deploy.example .env          # then edit JWT_SECRET
+docker compose -f docker-compose.deploy.yml up -d --build
+# → https://medschool.localhost  (or your real domain, see deploy/Caddyfile)
+```
+
+Includes automatic daily database backups into `./backups`.
+**Full step-by-step Persian guide: `docs/راهنمای-استقرار.md`**
+
+## 🧱 Tech Stack
+
+| Layer     | Technology                                   |
+|-----------|----------------------------------------------|
+| Backend   | Node.js · Express · better-sqlite3 · JWT     |
+| Frontend  | React 18 · Vite                              |
+| Database  | SQLite (file-based, zero config)             |
+| AI Engine | Real-ready (OpenAI-compatible) + mock fallback |
+
+---
+
+## ✨ Features (mapped to the project spec)
+
+- **Classrooms (replaces the traditional logbook):** a teacher/admin creates a
+  class, attaches cases (with per-case weights) and enrolls students. Students
+  enter their class, complete the assigned cases interactively and earn a
+  **weighted class grade**. Teachers get a live **gradebook** with per-student
+  progress. Non-enrolled students cannot access a class (HTTP 403).
+- **Responsive UI:** works on desktop and mobile, with a refined design system
+  and proper fonts (Vazirmatn for Persian, Inter for English).
+- **Three student modules**
+  - **Virtual Patient (ASKI/OSCE):** chat with an AI patient, order tests/imaging,
+    enter differential & final diagnosis, timed exam, then a checklist-based
+    AI evaluation with **strengths / weaknesses / missed items / common mistakes**
+    and a **personalized Microlearning lesson** built only from the student's mistakes.
+  - **Flashcards:** practice decks grouped by course.
+    - **Question types:** image, text, or **both** (image + text).
+    - **Answer modes:** classic **multiple choice**, or a **professional search box
+      (autocomplete)** where the student types and picks the matching answer from a
+      filtered list — with fuzzy/bilingual matching and keyboard navigation, so
+      typos never cause problems.
+    - A wrong answer reveals a **progressive hint** instead of the solution.
+    - A **deck picker** lets students choose a course or practice everything.
+- **Admin dashboard:** users, patient bank (cases), flashcards, checklists,
+  AI configuration, prompt management, exam settings, and research reports.
+- **Teacher-controlled content:** the AI never invents cases; it only role-plays
+  and evaluates from teacher-authored data.
+- **Model-agnostic AI:** provider/model/API-key configurable from the Admin panel.
+  With no key it falls back to a deterministic checklist-based engine.
+- **Prompt management:** all prompts live in the DB and are editable in the panel —
+  none are hard-coded.
+- **Content versioning:** editing a case or flashcard archives the previous version.
+- **Research export:** every interaction is stored; export to CSV.
+- **Full bilingual UI** with instant RTL/LTR switching.
+- **Auth & RBAC:** JWT login; student / teacher / admin roles enforced server-side.
+
+---
+
+## 👤 Profile & self-service password change
+
+Every user has a **Profile** page (👤 in the top bar) showing account info and a
+**change-password** form (verifies the current password). Students also see their
+personal stats and a **score-trend chart**.
+
+## 📊 Graphical dashboard
+
+The admin **Dashboard** renders dependency-free charts (inline SVG/CSS): a
+**score-trend line**, an **activity-by-type donut** (virtual patient vs. flashcards),
+and a **score-distribution bar chart** — alongside the KPI cards and recent activity.
+
+## ✅ Continuous Integration
+
+`.github/workflows/ci.yml` runs on every push/PR: **server tests** (vitest),
+**client build**, and a **Docker image build** — so regressions are caught automatically.
+
+## 🩻 Medical image upload
+
+Teachers/admins can attach real medical images (radiology, pathology, histology)
+to **cases** (multiple, each with a bilingual label) and to **flashcards** (one image).
+Uploads go to `server/uploads/` and are served from `/uploads/...`. During an exam,
+students view a case's images under the **Images** tab. Only staff can upload;
+files are validated (image types only, ≤ 8 MB).
+
+## 🐳 Run with Docker (one command)
+
+```bash
+docker compose up --build      # → http://localhost:4000
+```
+
+The image builds the client, installs the server, seeds the DB on first run, and
+serves everything on port 4000. The SQLite DB and uploaded images persist in a
+named volume (`medlab-data`). Configure AI/JWT via environment variables (see
+`docker-compose.yml`).
+
+## 🧪 Tests
+
+**API / integration (75 tests — vitest + supertest):**
+```bash
+cd server && npm test
+```
+Covers auth, granular RBAC, exam access control, virtual patient, evaluation,
+classrooms, class grading, all flashcard types, gamified learner track (XP,
+streak, hearts, leagues, SRS review, challenges), feature-flag enforcement,
+impersonation guards, the super-admin panel, and account-universe separation.
+
+**End-to-end / browser (29 tests — Playwright):**
+```bash
+cd client && npm run build      # the server serves the built client
+cd ../e2e && npm install && npx playwright install chromium && npm test
+```
+Drives a real Chromium browser through the full UI for every role: student,
+teacher, admin, content-manager, support, and competitive learner — including a
+complete virtual-patient interview and a full gamified lesson. See `e2e/README.md`.
+
+## 🚀 Getting Started
+
+### 1) Backend
+
+```bash
+cd server
+npm install
+cp .env.example .env      # optional: set JWT_SECRET / AI_API_KEY
+npm run seed              # load demo content (idempotent)
+npm start                 # API on http://localhost:4000
+```
+
+### 2) Frontend (development, with hot reload)
+
+```bash
+cd client
+npm install
+npm run dev               # http://localhost:5173 (proxies /api to :4000)
+```
+
+### 3) Production (single server serves the built client)
+
+```bash
+cd client && npm install && npm run build   # outputs client/dist
+cd ../server && npm start                    # serves API + client on :4000
+```
+
+Then open **http://localhost:4000**.
+
+---
+
+## 🔐 Demo Accounts (password: `demo`)
+
+| Username / Student № | Role    | Assigned exams          |
+|----------------------|---------|-------------------------|
+| `teacher`            | Teacher | (all)                   |
+| `admin`              | Admin   | (all)                   |
+| `40012345` (Ali)     | Student | Case 1                  |
+| `40067890` (Maryam)  | Student | Cases 1 & 2             |
+| `40099999` (Nima)    | Student | inactive (cannot log in)|
+
+> Students log in with their **student number** as the username.
+
+---
+
+## 🎓 Student enrollment & exam access control
+
+- In **Admin → Users → + Add student**, staff create a student by **student number**
+  (used as the username). If the password field is left blank, the **password
+  defaults to the student number**.
+- During creation (or later via **Manage access**) the admin selects exactly which
+  **exams (cases)** the student may take, plus a **max-attempts** limit.
+- A student **only sees and can open the exams assigned to them**. Any attempt to
+  reach an unassigned case is rejected by the server (HTTP 403).
+- A student with **no assignments** sees a "no exams assigned" screen.
+- Inactive accounts cannot log in.
+
+## 🤖 Supported AI providers
+
+The engine speaks the **OpenAI-compatible** `/chat/completions` protocol, so a wide
+range of providers work out of the box (base URL auto-fills on selection):
+
+`OpenAI` · `OpenRouter` · `Groq` · `DeepSeek` · `Mistral` · `Together` ·
+`Fireworks` · `Perplexity` · `xAI (Grok)` · `Anthropic` · `Google (Gemini)` ·
+`Azure OpenAI` · `Ollama` (local) · `LM Studio` (local) · `Custom`.
+
+---
+
+## 🧠 How the AI uses your prompts & case data
+
+- **Virtual patient:** the admin-authored *patient prompt* is combined with a
+  **sanitized copy of the case chart** and the **full conversation history**, then
+  sent to the model. The patient answers in character from the case data only.
+- **Safety:** the case's **final diagnosis, correct answers, checklist keys and
+  learning objectives are stripped** before anything reaches the patient model, so
+  the answer can never leak. (The examiner still uses the full data.)
+- **AI examiner:** the objective **checklist score is always computed
+  deterministically** (reliable & reproducible). When an API key is set, the
+  *examiner* and *microlearning* prompts additionally produce richer qualitative
+  feedback and a personalized lesson. Without a key, the built-in engine is used.
+- All of this is editable in **Admin → Prompt Management**; nothing is hard-coded.
+
+## 🤖 Connecting a real AI model
+
+The engine calls an **OpenAI-compatible** `/chat/completions` endpoint.
+Set the provider, model, API key and (optionally) base URL either in
+`server/.env` or in **Admin → AI Configuration → Test connection**.
+If no key is present, the app transparently uses the built-in mock engine,
+so the whole platform is fully demonstrable offline.
+
+---
+
+## 🗂️ Project Structure
+
+```
+medlab-fullstack/
+├── server/
+│   ├── src/
+│   │   ├── index.js          # Express entry
+│   │   ├── db.js             # SQLite schema (+ versioning tables)
+│   │   ├── seed.js           # Bilingual demo content
+│   │   ├── lib/
+│   │   │   ├── ai-engine.js  # Real-ready AI + mock fallback
+│   │   │   └── auth.js       # JWT + RBAC middleware
+│   │   └── routes/           # auth · content · exam · reports
+│   └── package.json
+└── client/
+    ├── src/
+    │   ├── App.jsx           # Router
+    │   ├── context.jsx       # Auth + language context
+    │   ├── api.js            # Fetch wrapper (JWT)
+    │   ├── i18n.js           # FA/EN dictionary
+    │   ├── components/UI.jsx
+    │   └── pages/            # Login · StudentHome · CaseList · Exam · Flashcards · Admin
+    └── package.json
+```
+
+---
+
+## 🔬 REST API (summary)
+
+| Method | Endpoint                     | Role         |
+|--------|------------------------------|--------------|
+| POST   | `/api/auth/login`            | public       |
+| GET    | `/api/cases`                 | any          |
+| POST/PUT/DELETE | `/api/cases`        | teacher/admin|
+| GET    | `/api/flashcards`            | any          |
+| POST   | `/api/exam/patient-reply`    | any          |
+| POST   | `/api/exam/evaluate`         | any          |
+| POST   | `/api/exam/flashcard-result` | any          |
+| GET    | `/api/reports/summary`       | teacher/admin|
+| GET    | `/api/reports/export.csv`    | teacher/admin|
+| GET/PUT| `/api/prompts`               | teacher/admin|
+| GET/PUT| `/api/settings/:key`         | any / t+a    |
+```

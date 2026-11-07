@@ -1,0 +1,103 @@
+import React, { lazy, Suspense } from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App.jsx";
+import { AppProvider } from "./context.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
+// Self-hosted fonts (bundled by Vite) — works offline / no external CDN:
+// Vazirmatn for Persian body/UI (RTL), Inter for Latin. Both variable-weight.
+import "@fontsource-variable/vazirmatn";
+// Estedad — a modern, confident Persian display face used for headings only
+// (Arabic subset carries the Persian glyphs). Heavy weights give titles punch.
+import "./styles.css";
+// 2025 visual polish — loaded last so it layers on top of styles.css.
+import "./design-refresh.css";
+// Motion + micro-interactions must be global — Landing (eager) needs them too
+// (regression 2026-10-03: moving them to LearnApp broke landing). Entry budget
+// is raised to 52gz to accommodate; UX > 0.5KB.
+import "./styles-motion-ads.css";
+import "./styles-speed-fixes.css";
+import "./styles-r60.css";
+import "./mobile-learn.css";
+import "./scroll-unlock.css";
+// R72 UI/UX pass (ui-ux-pro-max review): audit-driven fixes only. Loaded last.
+import "./ui-pro-max.css";
+import "./app-boot.css";
+import "./r106.css";
+import "./r107.css";
+import { safeLocal } from "./lib/storage.js";
+import { initSwUpdate } from "./lib/sw-update.js";
+import { installKeyboardCssVars } from "./lib/keyboard-viewport.js";
+
+/* Apply saved font-size (and theme) as early as possible to avoid a flash of
+   the default size before React hydrates the context. Accessibility-friendly. */
+try {
+  const SCALES = { small: 15, normal: 16, large: 18, xl: 20 };
+  const f = localStorage.getItem("medlab_font") || "normal";
+  document.documentElement.style.setProperty("--fs", `${SCALES[f] || 16}px`);
+  const th = localStorage.getItem("medlab_theme") || "light";
+  document.documentElement.setAttribute("data-theme", th);
+} catch (_) { /* ignore */ }
+
+// R70: /reset-password is a standalone page (no app shell, no session needed).
+const PasswordReset = lazy(() => import("./pages/PasswordReset.jsx"));
+const RootScreen = typeof window !== "undefined" && window.location.pathname === "/reset-password" ? PasswordReset : App;
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <ErrorBoundary>
+      <AppProvider>
+        <Suspense fallback={null}>
+          <RootScreen />
+        </Suspense>
+      </AppProvider>
+    </ErrorBoundary>
+  </React.StrictMode>
+);
+
+// R54: publish --kb-top/--kb-h/--kb-inset + html.kb-up so every fixed/sticky
+// text surface (modal sheets, support chat, exam composer) clears the keyboard.
+installKeyboardCssVars();
+
+const runWhenIdle = (fn, timeout = 3000) => {
+  if ("requestIdleCallback" in window) window.requestIdleCallback(fn, { timeout });
+  else window.setTimeout(fn, 1200);
+};
+
+// RUM is non-critical: load it only once the browser is idle (keeps it out of the entry bundle).
+runWhenIdle(() => { import("./lib/rum.js").then((m) => m.initRum()).catch(() => {}); });
+
+/* Register the service worker for PWA/offline shell + push (best-effort).
+   It is intentionally delayed until after first paint/idle so it never competes
+   with the LCP-critical CSS/JS on the first visit. */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    runWhenIdle(() => initSwUpdate());
+  });
+}
+
+/* Record an app "launch" event once per load. This analytics request is not
+   needed for rendering, so it is delayed until idle to keep the first view fast. */
+runWhenIdle(() => {
+  try {
+    const standalone =
+      window.matchMedia && window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true;
+    const ua = navigator.userAgent || "";
+    const platform = /iPad|iPhone|iPod/.test(ua)
+      ? "ios"
+      : /Android/.test(ua)
+      ? "android"
+      : /Windows|Macintosh|Linux|CrOS/.test(ua)
+      ? "desktop"
+      : "other";
+    const tok = safeLocal.getItem("medlab_token");
+    const headers = { "Content-Type": "application/json" };
+    if (tok) headers.Authorization = `Bearer ${tok}`;
+    fetch("/api/pwa/event", {
+      method: "POST", credentials: "same-origin",
+      headers,
+      body: JSON.stringify({ event: "launch", platform, standalone }),
+      keepalive: true,
+    }).catch(() => {});
+  } catch (_) { /* ignore */ }
+}, 5000);

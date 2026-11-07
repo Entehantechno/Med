@@ -1,0 +1,76 @@
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import { dedupeOverriddenCss } from "./scripts/css-dedupe.mjs";
+
+/* Build-only: drop CSS declarations that a later identical-selector rule always
+   overrides (see scripts/css-dedupe.mjs). Source stylesheets are not changed. */
+const cssDedupe = {
+  name: "med-css-dedupe",
+  apply: "build",
+  enforce: "post",
+  generateBundle(_options, bundle) {
+    for (const file of Object.values(bundle)) {
+      if (file.type === "asset" && file.fileName.endsWith(".css")) {
+        file.source = dedupeOverriddenCss(String(file.source)).css;
+      }
+    }
+  },
+};
+
+/* Production build is tuned for fast first paint + cache-friendly chunks:
+   - React/ReactDOM live in a stable `react-vendor` chunk so app changes don't
+     invalidate the (large) framework download on repeat visits.
+   - Page components are code-split via React.lazy in App.jsx (each page = its
+     own chunk), so learners never download the admin bundle and vice-versa.
+   - Target modern browsers to ship less transpiled/polyfilled code. */
+// The API server listens on PORT (default 4000 — see server/src/index.js).
+// Override with VITE_API_TARGET when the API runs elsewhere. This proxy is
+// server-side (dev only), so the browser still only ever talks to its own origin.
+const API_TARGET = process.env.VITE_API_TARGET || "http://localhost:4000";
+
+export default defineConfig(({ command }) => ({
+  plugins: [react(), cssDedupe],
+  // Drop console.* / debugger from the production bundle only; keep them in dev.
+  esbuild: command === "build" ? { drop: ["console", "debugger"] } : {},
+  server: {
+    port: 5173,
+    host: "0.0.0.0",
+    allowedHosts: true,
+    hmr: { clientPort: 443 },
+    proxy: {
+      "/api": API_TARGET,
+    },
+  },
+  build: {
+    target: "es2020",
+    cssTarget: "chrome100",
+    chunkSizeWarningLimit: 700,
+    // Strip console.* and debugger from the production bundle for a smaller,
+    // faster download (and no dev noise leaking to users). esbuild is the
+    // default minifier — fast and effective.
+    minify: "esbuild",
+    cssCodeSplit: true,
+    // First paint needs only React (and the entry). Keep lazy-route chunks such as
+    // DOMPurify out of the HTML <link rel="modulepreload"> list so visitors on slow
+    // links are not charged for code that a page may never use.
+    modulePreload: {
+      resolveDependencies(_filename, deps, { hostType }) {
+        if (hostType !== "html") return deps;
+        return deps.filter((d) => /\/react-vendor-/.test(d));
+      },
+    },
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("/react-dom/") || id.includes("/react/") || id.includes("/scheduler/")) return "react-vendor";
+            if (id.includes("i18n") || id.includes("i18next")) return "i18n";
+            return "vendor";
+          }
+          // Split large translation files to keep entry small
+          if (id.includes("/i18n/") || id.includes("/locales/")) return "i18n";
+        },
+      },
+    },
+  },
+}));

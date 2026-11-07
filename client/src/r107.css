@@ -1,0 +1,47 @@
+/* R107 — visual system pass for the university student path (home, class, case, flashcards).
+   Flat-first (R104): solid tints and borders, no gloss. Every colour is a token; both themes are covered.
+   Motion is opt-in and disabled for reduced-motion users. No timers or streak pressure are added. */
+
+/* Student home: class summary inside the classes hero */
+.sd-classlist{ list-style:none; margin:0; padding:0; display:grid; gap:8px; }
+.sd-classitem{
+  display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px;
+  padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:var(--panel);
+  border-inline-start:4px solid var(--cls, var(--primary));
+}
+.sd-classitem-dot{ width:10px; height:10px; border-radius:50%; background:var(--cls, var(--primary)); }
+.sd-classitem-name{ font-weight:800; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.sd-classitem-meta{ font-size:12px; color:var(--muted); white-space:nowrap; }
+@media (max-width: 520px){
+  .sd-classitem{ grid-template-columns:auto 1fr; }
+  .sd-classitem-meta{ grid-column:2; }
+}
+
+/* Class detail: section headings with an icon chip */
+.r107-sec{ display:flex; align-items:center; gap:8px; }
+.r107-sec-ico{
+  display:inline-grid; place-items:center; width:28px; height:28px; border-radius:9px;
+  background:var(--panel2, #eef3f9); color:var(--primary); border:1px solid var(--border);
+}
+/* Class detail: the suggested next step */
+.case-item.is-next{ border-color:var(--primary); box-shadow:0 0 0 3px var(--primaryGlow, rgba(37,99,235,.18)); }
+.r107-next{
+  display:inline-block; font-size:11px; font-weight:800; letter-spacing:.2px;
+  padding:2px 8px; border-radius:999px; margin-bottom:6px; margin-inline-end:8px; vertical-align:middle;
+  background:#1e4fa3; color:var(--on-solid,#fff);
+}
+[data-theme="dark"] .r107-next{ background:#93c5fd; color:#0b1d3a; }
+
+/* Case screen: tab icons */
+.side-panel .tab{ display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+.r107-tab-ico{ display:inline-grid; place-items:center; opacity:.85; }
+.side-panel .tab.active .r107-tab-ico{ opacity:1; }
+
+/* Hover affordance for interactive cards (not for read-only rows) */
+@media (prefers-reduced-motion: no-preference){
+  .case-item{ transition:box-shadow .18s ease, border-color .18s ease, transform .18s ease; }
+  .case-item:hover{ transform:translateY(-1px); }
+}
+@media (prefers-reduced-motion: reduce){
+  .case-item{ transition:none; }
+}

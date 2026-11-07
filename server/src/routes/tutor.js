@@ -1,0 +1,205 @@
+import express from "express";
+import { db, durableTransaction } from "../db.js";
+import { authRequired, requireRole } from "../lib/auth.js";
+import { resolveAiConfig, tutorReply } from "../lib/ai-engine.js";
+import { getSetting } from "./content.js";
+import { takeAiTurn } from "../lib/ai-budget.js";
+
+const r = express.Router();
+const admin = [authRequired, requireRole("admin", "teacher", "content_manager")];
+const settings = () => db.prepare("SELECT * FROM tutor_settings WHERE id=1").get() || { enabled: 0, ai_enabled: 0, default_prompt: "" };
+const isEnabledFor = (ct = "general", cid = null) => {
+  let en = !!settings().enabled;
+  cid = Number(cid || 0) || null;
+  if (ct === "class" && cid) en = en || !!db.prepare("SELECT tutor_enabled FROM classes WHERE id=?").get(cid)?.tutor_enabled;
+  if (ct === "exam" && cid) en = en || !!db.prepare("SELECT tutor_enabled FROM exams WHERE id=?").get(cid)?.tutor_enabled;
+  return en;
+};
+const reply = (m, l) => l === "en"
+  ? `Dr Tutor: I can guide your reasoning. Compare close options. Your question: "${String(m).slice(0, 160)}"`
+  : `دکتر راهنما: جواب نهایی آزمون را مستقیم لو نمی‌دهم، اما مسیر فکر کردن را راهنمایی می‌کنم. سؤال تو: «${String(m).slice(0, 160)}»`;
+
+/* R92: only the three known contexts are stored. An unknown contextType used to be saved as-is
+   (rows with any label), and a general chat kept whatever contextId was sent, so the same
+   conversation could land under two keys. Returns null for an unknown context. */
+const CONTEXT_TYPES = ["general", "class", "exam"];
+function contextOf(raw, rawId) {
+  const ct = raw == null || raw === "" ? "general" : String(raw);
+  if (!CONTEXT_TYPES.includes(ct)) return null;
+  const cid = ct === "general" ? null : (Number(rawId || 0) || null);
+  return { ct, cid };
+}
+
+function studentBelongsToClass(uid, cid) {
+  return !!db.prepare("SELECT 1 FROM class_members WHERE class_id=? AND user_id=?").get(cid, uid);
+}
+function studentBelongsToExam(uid, eid) {
+  return !!db.prepare("SELECT 1 FROM exam_participants WHERE exam_id=? AND user_id=?").get(eid, uid);
+}
+/* University class/exam tutor is for enrolled students only. Learners stay on general/learn. */
+function tutorContextDenied(user, ct, cid) {
+  if (ct !== "class" && ct !== "exam") return null;
+  if (user.role === "learner") return { status: 403, error: "university_only", stage: "access" };
+  if (user.role !== "student") return { status: 403, error: "forbidden", stage: "access" };
+  if (!cid) return { status: 403, error: ct === "class" ? "not enrolled" : "not assigned", stage: "access" };
+  if (ct === "class" && !studentBelongsToClass(user.id, cid)) {
+    return { status: 403, error: "not enrolled", stage: "access" };
+  }
+  if (ct === "exam" && !studentBelongsToExam(user.id, cid)) {
+    return { status: 403, error: "not assigned", stage: "access" };
+  }
+  // Enrollment rows can outlive a university transfer or deactivation.
+  // Authorize the live parent and the student's current university as well.
+  const table = ct === "class" ? "classes" : "exams";
+  const parent = db.prepare(`SELECT university_id,active FROM ${table} WHERE id=?`).get(cid);
+  const uni = currentUniversityId(user);
+  if (!parent || !parent.active || !uni || Number(parent.university_id) !== Number(uni)) {
+    return { status: 403, error: "context_unavailable", stage: "access" };
+  }
+  return null;
+}
+
+function currentUniversityId(user) {
+  return db.prepare("SELECT university_id FROM users WHERE id=?").get(user.id)?.university_id || null;
+}
+function refuseCm(req, res) {
+  if (req.user.role === "content_manager") {
+    res.status(403).json({ error: "university_only", stage: "access" });
+    return true;
+  }
+  return false;
+}
+r.get("/settings", ...admin, (req, res) => {
+  if (refuseCm(req, res)) return;
+  res.json(settings());
+});
+r.put("/settings", authRequired, requireRole("admin"), (req, res) => {
+  if (refuseCm(req, res)) return;
+  const b = req.body || {};
+  durableTransaction(() => {
+    db.prepare("UPDATE tutor_settings SET enabled=?,ai_enabled=?,default_prompt=?,updated_at=datetime('now') WHERE id=1")
+      .run(b.enabled ? 1 : 0, b.ai_enabled ? 1 : 0, b.default_prompt || "");
+  });
+  res.json(settings());
+});
+r.get("/context-settings", ...admin, (req, res) => {
+  if (refuseCm(req, res)) return;
+  // Teachers see only the classes/exams they own, inside their own university.
+  // Admin sees everything.
+  const teacher = req.user.role === "teacher";
+  const uni = teacher ? (currentUniversityId(req.user) || -1) : null;
+  const classes = teacher
+    ? db.prepare("SELECT id,name_fa,name_en,tutor_enabled,tutor_prompt FROM classes WHERE owner_id=? AND COALESCE(university_id,1)=? ORDER BY id DESC LIMIT 200").all(req.user.id, uni)
+    : db.prepare("SELECT id,name_fa,name_en,tutor_enabled,tutor_prompt FROM classes ORDER BY id DESC LIMIT 200").all();
+  const exams = teacher
+    ? db.prepare("SELECT id,title_fa,title_en,tutor_enabled,tutor_prompt FROM exams WHERE owner_id=? AND university_id=? ORDER BY id DESC LIMIT 200").all(req.user.id, uni)
+    : db.prepare("SELECT id,title_fa,title_en,tutor_enabled,tutor_prompt FROM exams ORDER BY id DESC LIMIT 200").all();
+  res.json({ classes, exams });
+});
+r.put("/context-settings", ...admin, (req, res) => {
+  if (refuseCm(req, res)) return;
+  const b = req.body || {}, id = Number(b.contextId || 0);
+  if (!id) return res.status(400).json({ error: "bad_id" });
+  if (req.user.role === "teacher") {
+    // Owner-only: a teacher may change tutor settings only for their own
+    // class/exam in their own university.
+    const uni = currentUniversityId(req.user) || -1;
+    if (b.contextType === "class") {
+      const cl = db.prepare("SELECT university_id,owner_id FROM classes WHERE id=?").get(id);
+      // R92: the list uses COALESCE(university_id,1); the check must agree, or a teacher sees a class and cannot save it.
+      if (!cl || Number(cl.university_id ?? 1) !== uni) return res.status(403).json({ error: "wrong_university", stage: "access" });
+      if (Number(cl.owner_id) !== Number(req.user.id)) return res.status(403).json({ error: "not_owner", stage: "access" });
+    } else if (b.contextType === "exam") {
+      const ex = db.prepare("SELECT university_id,owner_id FROM exams WHERE id=?").get(id);
+      if (!ex || ex.university_id !== uni) return res.status(403).json({ error: "wrong_university", stage: "access" });
+      if (Number(ex.owner_id) !== Number(req.user.id)) return res.status(403).json({ error: "not_owner", stage: "access" });
+    }
+  }
+  if (!["class", "exam"].includes(b.contextType)) return res.status(400).json({ error: "bad_context" });
+  const table = b.contextType === "class" ? "classes" : "exams";
+  if (!db.prepare(`SELECT id FROM ${table} WHERE id=?`).get(id)) return res.status(404).json({ error: "context_not_found" });
+  durableTransaction(() => {
+    if (b.contextType === "class") db.prepare("UPDATE classes SET tutor_enabled=?,tutor_prompt=? WHERE id=?").run(b.enabled ? 1 : 0, b.prompt || "", id);
+    else if (b.contextType === "exam") db.prepare("UPDATE exams SET tutor_enabled=?,tutor_prompt=? WHERE id=?").run(b.enabled ? 1 : 0, b.prompt || "", id);
+  });
+  res.json({ ok: true });
+});
+r.get("/status", authRequired, (req, res) => {
+  const c = contextOf(req.query.contextType, req.query.contextId);
+  if (!c) return res.status(400).json({ error: "bad_context" });
+  const { ct, cid } = c;
+  const denied = tutorContextDenied(req.user, ct, cid);
+  if (denied) return res.status(denied.status).json({ error: denied.error, stage: denied.stage });
+  res.json({ enabled: isEnabledFor(ct, cid) });
+});
+r.get("/history", authRequired, (req, res) => {
+  const c = contextOf(req.query.contextType, req.query.contextId);
+  if (!c) return res.status(400).json({ error: "bad_context" });
+  const { ct, cid } = c;
+  const denied = tutorContextDenied(req.user, ct, cid);
+  if (denied) return res.status(denied.status).json({ error: denied.error, stage: denied.stage });
+  if (!isEnabledFor(ct, cid)) return res.status(403).json({ error: "tutor_disabled" });
+  res.json({
+    messages: db.prepare("SELECT role,message,created_at FROM tutor_chats WHERE user_id=? AND context_type=? AND COALESCE(context_id,0)=COALESCE(?,0) ORDER BY id DESC LIMIT 80")
+      .all(req.user.id, ct, cid).reverse(),
+  });
+});
+/* R90: the Dr Tutor answer is produced by the configured AI when the admin has
+   turned on tutor AI and saved a key. Exam context: never a final answer. */
+const TUTOR_RULES = {
+  fa: "تو دکتر راهنمای آموزشی MED School هستی. فقط برای آموزش دانشجوی پزشکی پاسخ بده، نه برای تشخیص یا درمان بیمار واقعی. به زبان دانشجو جواب بده، کوتاه و علمی. به‌جای دادن پاسخ نهایی یک سؤال، به استدلال کمک کن: گزینه‌ها را مقایسه کن، سؤال راهنما بپرس و مفهوم کلیدی را توضیح بده.",
+  en: "You are the Dr Tutor for MED School, an educational assistant for medical students. Answer for education only, never for diagnosing or treating a real patient. Reply briefly and scientifically in the learner's language. Do not state the final answer to a question; guide the reasoning: compare options, ask guiding questions, and explain the key concept.",
+};
+const EXAM_RULE = {
+  fa: "این گفتگو مربوط به یک آزمون است: هرگز پاسخ نهایی یا شماره گزینه درست را نگو.",
+  en: "This chat belongs to an exam: never reveal the final answer or the correct option.",
+};
+function tutorMessages(uid, ct, cid, lang, msg) {
+  const L = lang === "en" ? "en" : "fa";
+  const ctxPrompt = ct === "class" && cid
+    ? db.prepare("SELECT tutor_prompt FROM classes WHERE id=?").get(cid)?.tutor_prompt
+    : ct === "exam" && cid ? db.prepare("SELECT tutor_prompt FROM exams WHERE id=?").get(cid)?.tutor_prompt : "";
+  const system = [TUTOR_RULES[L], ct === "exam" ? EXAM_RULE[L] : "",
+    String(settings().default_prompt || "").slice(0, 800), String(ctxPrompt || "").slice(0, 800)].filter(Boolean).join("\n\n");
+  const history = db.prepare("SELECT role,message FROM tutor_chats WHERE user_id=? AND context_type=? AND COALESCE(context_id,0)=COALESCE(?,0) ORDER BY id DESC LIMIT 8")
+    .all(uid, ct, cid).reverse()
+    .map((h) => ({ role: h.role === "user" ? "user" : "assistant", content: String(h.message || "").slice(0, 1200) }));
+  return [{ role: "system", content: system }, ...history, { role: "user", content: msg }];
+}
+r.post("/message", authRequired, async (req, res) => {
+  const b = req.body || {};
+  const c = contextOf(b.contextType, b.contextId);
+  if (!c) return res.status(400).json({ error: "bad_context" });
+  const { ct, cid } = c;
+  const denied = tutorContextDenied(req.user, ct, cid);
+  if (denied) return res.status(denied.status).json({ error: denied.error, stage: denied.stage });
+  if (!isEnabledFor(ct, cid)) return res.status(403).json({ error: "tutor_disabled" });
+  const msg = String(b.message || "").trim().slice(0, 2000);
+  if (!msg) return res.status(400).json({ error: "empty" });
+  const lang = b.lang === "en" ? "en" : "fa";
+  let out = null, source = "guide";
+  if (settings().ai_enabled) {
+    const aiCfg = resolveAiConfig(getSetting("ai", {}));
+    // R92: a paid model call is counted per account. Over the budget the student gets a clear
+    // 429 (not the canned guide, which would look like the tutor is broken).
+    if (aiCfg?.apiKey) {
+      if (!takeAiTurn("tutor", req.user.id)) {
+        return res.status(429).json({ error: "ai_rate_limited", stage: "tutor",
+          message_fa: "در چند دقیقهٔ اخیر پیام زیادی فرستادی. کمی صبر کن و دوباره بپرس.",
+          message_en: "You sent many messages in the last few minutes. Wait a moment and ask again." });
+      }
+      out = await tutorReply({ messages: tutorMessages(req.user.id, ct, cid, lang, msg), aiCfg });
+      if (out) source = "ai";
+    }
+  }
+  if (!out) out = reply(msg, lang);
+  // A success response promises a complete, durably saved exchange.
+  durableTransaction(() => {
+    db.prepare("INSERT INTO tutor_chats (user_id,context_type,context_id,role,message) VALUES (?,?,?,?,?)")
+      .run(req.user.id, ct, cid, "user", msg);
+    db.prepare("INSERT INTO tutor_chats (user_id,context_type,context_id,role,message,meta_json) VALUES (?,?,?,?,?,?)")
+      .run(req.user.id, ct, cid, "tutor", out, JSON.stringify({ ai: source === "ai", source }));
+  });
+  res.json({ reply: out, source });
+});
+export default r;

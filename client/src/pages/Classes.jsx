@@ -1,0 +1,226 @@
+import { useEffect, useState } from "react";
+import { useApp } from "../context.jsx";
+import { api, loadFailKind, loadFailText } from "../api.js";
+import { TopBar, Spinner, Pill, StarRating } from "../components/UI.jsx";
+import { biField } from "../lib/bifield.js";
+import Icon from "../components/Icon.jsx";
+
+/* Student-facing classroom list + detail */
+export default function Classes({ go, home }) {
+  const { t, lang } = useApp();
+  const [classes, setClasses] = useState(null);
+  const [openId, setOpenId] = useState(null);
+  const [loadErr, setLoadErr] = useState("");
+  const load = () => {
+    setLoadErr("");
+    setClasses(null);
+    api.get("/classes", { timeoutMs: 20_000, stage: "boot" })
+      .then((d) => setClasses(Array.isArray(d) ? d : []))
+      .catch((e) => { setClasses([]); setLoadErr(loadFailKind(e)); });
+  };
+  useEffect(() => { load(); }, []);
+  if (!classes) return <div className="app"><TopBar onHome={home} /><Spinner /></div>;
+
+  if (openId) return <ClassDetail classId={openId} go={go} back={() => setOpenId(null)} home={home} />;
+
+  return (
+    <div className="app">
+      <TopBar onHome={home} />
+      <div className="container">
+        <div className="section-title">
+          <h2><Icon name="class" size={16} /> {t("myClasses")}</h2>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={home}>← {t("back")}</button>
+        </div>
+        {loadErr ? (
+          <div className="card empty-state">
+            <div className="ico"><Icon name="warn" size={30} /></div>
+            <h3>{lang === "fa" ? "«بارگذاری کلاس‌ها» قطع شد" : "[Loading classes] failed"}</h3>
+            <div className="muted small mt8">{loadFailText(loadErr, lang)}</div>
+            <button type="button" className="btn btn-primary mt16" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Try again"}</button>
+          </div>
+        ) : classes.length === 0 ? (
+          <div className="card empty-state">
+            <div className="ico"><Icon name="class" size={30} /></div>
+            <h3>{t("noClasses")}</h3>
+            <div className="muted small mt8">{t("noClassesDesc")}</div>
+          </div>
+        ) : (
+          <div className="grid grid-2">
+            {classes.map((c) => (
+              <button type="button" className="card mod-card mod-card-row" key={c.id} onClick={() => setOpenId(c.id)}>
+                <div className="mod-ico" style={{ background: "var(--grad-purple)" }}><Icon name="class" size={26} /></div>
+                <div className="mod-card-body">
+                  <h3>{biField(c, "name", lang)}</h3>
+                  <p>{biField(c, "desc", lang)}</p>
+                  <div className="case-meta mt8">
+                    <span className="tag"><Icon name="book" size={16} /> {c.nCases} {t("casesCount")}</span>
+                    <span className="tag"><Icon name="users" size={16} /> {c.nStudents} {t("students")}</span>
+                  </div>
+                </div>
+                <Icon name={lang === "fa" ? "chevronLeft" : "chevronRight"} size={18} className="mod-card-go" />
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export function ClassDetail({ classId, go, back, home }) {
+  const { t, lang } = useApp();
+  const [data, setData] = useState(null);
+  const [loadErr, setLoadErr] = useState("");
+  const load = () => {
+    setLoadErr("");
+    setData(null);
+    api.get(`/classes/${classId}`, { timeoutMs: 20_000, stage: "boot" })
+      .then(setData)
+      .catch((e) => setLoadErr(loadFailKind(e)));
+  };
+  useEffect(() => { load(); }, [classId]);
+  if (loadErr) {
+    return (
+      <div className="app"><TopBar onHome={home} />
+        <div className="container">
+          <div className="card empty-state">
+            <div className="ico"><Icon name="warn" size={30} /></div>
+            <h3>{lang === "fa" ? "«بارگذاری کلاس» قطع شد" : "[Loading the class] failed"}</h3>
+            <div className="muted small mt8">{loadFailText(loadErr, lang)}</div>
+            <div className="row gap8 mt16" style={{ justifyContent: "center" }}>
+              <button type="button" className="btn btn-primary" onClick={load}>{lang === "fa" ? "تلاش دوباره" : "Try again"}</button>
+              <button type="button" className="btn btn-ghost" onClick={back}>{lang === "fa" ? "بازگشت" : "Back"}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  if (!data) return <div className="app"><TopBar onHome={home} /><Spinner /></div>;
+
+  const { class: cl, cases, flashcards = [], grade, doneCount, maxAttempts } = data;
+  // Archived (deactivated) cases stay listed for history but are not graded items.
+  const totalItems = (cases?.filter((c) => !c.archived).length || 0) + (flashcards?.length || 0);
+  // R106: every item shows a text state label; colour and icon are never the only signal.
+  // R107: the first unfinished, open item is the suggested next step (highlighted, no timer or streak).
+  const nextKey = (() => {
+    const c = (cases || []).find((x) => !x.archived && (x.attemptsUsed ?? 0) < (maxAttempts ?? 1) && x.best == null);
+    if (c) return `c${c.case_id}`;
+    const f = (flashcards || []).find((x) => (!x.graded || (x.attemptsUsed ?? 0) < (maxAttempts ?? 1)) && x.best == null);
+    return f ? `f${f.flashcard_id}` : "";
+  })();
+  const stateChip = (best, locked) => {
+    const st = locked ? "locked" : best != null ? "done" : "todo";
+    const label = { done: lang === "fa" ? "انجام شده" : "Done", todo: lang === "fa" ? "آماده شروع" : "Ready", locked: lang === "fa" ? "بسته" : "Closed" }[st];
+    const icon = { done: "check", todo: "play", locked: "lock" }[st];
+    return <span className={`r106-state r106-state-${st}`}><Icon name={icon} size={12} /> {label}</span>;
+  };
+  return (
+    <div className="app">
+      <TopBar onHome={home} />
+      <div className="container">
+        <div className="section-title">
+          <h2><Icon name="class" size={16} /> {biField(cl, "name", lang)}</h2>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={back}>← {t("back")}</button>
+        </div>
+
+        <div className="grid grid-2 mb16">
+          <div className="card center">
+            <div className="score-ring" style={{ "--pct": `${grade * 3.6}deg` }}><div className="val">{grade}</div></div>
+            <div className="lbl muted mt8">{t("yourGrade")} / 100</div>
+          </div>
+          <div className="card">
+            <h4 className="mb8"><Icon name="chart" size={16} /> {t("progress")}</h4>
+            <div className="muted small mb8">{doneCount || 0} {t("of")} {totalItems} {t("completed")}</div>
+            <div className="pbar"><span style={{ width: `${totalItems ? ((doneCount || 0) / totalItems) * 100 : 0}%` }} /></div>
+            {/* R106: one segment per graded item; the text above carries the number, the segments are a visual aid. */}
+            {totalItems > 0 && totalItems <= 40 && (
+              <div className="r106-segs" aria-hidden="true">
+                {Array.from({ length: totalItems }).map((_, i) => <span key={i} className={i < (doneCount || 0) ? "done" : ""} />)}
+              </div>
+            )}
+            <div className="mt16 small muted">{biField(cl, "desc", lang)}</div>
+          </div>
+        </div>
+
+        <h4 className="mb16 r107-sec"><span className="r107-sec-ico" aria-hidden="true"><Icon name="book" size={16} /></span> {t("classCases")}</h4>
+        <div className="grid" style={{ gap: 12 }}>
+          {cases.map((c) => {
+            const used = c.attemptsUsed ?? 0;
+            const remaining = Math.max(0, (maxAttempts ?? 1) - used);
+            const exhausted = remaining <= 0;
+            const archived = !!c.archived;
+            return (
+              <div className={`case-item${!archived && !exhausted && c.best == null && nextKey === `c${c.case_id}` ? " is-next" : ""}`} key={c.case_id}>
+                <div style={{ minWidth: 0 }}>
+                  {nextKey === `c${c.case_id}` && <span className="r107-next">{lang === "fa" ? "قدم بعدی" : "Up next"}</span>}
+                  {stateChip(c.best, exhausted || archived)}
+                  <strong>{biField(c, "title", lang) || biField(c, "chief", lang) || `#${c.case_id}`}</strong> <span className="badge-ver">v{c.version}</span>
+                  {archived && <span className="tag muted" style={{ marginInlineStart: 6 }}>{lang === "fa" ? "بایگانی‌شده (فقط سابقه)" : "Archived (history only)"}</span>}
+                  <StarRating score={c.best} lang={lang} />
+                  <div className="case-meta">
+                    <Pill kind={c.difficulty}>{t(c.difficulty)}</Pill>
+                    <span className="tag">{t("weightField")}: {c.weight}</span>
+                    <span className="tag"><Icon name="clock" size={14} /> {cl.timer_enabled ? `${cl.timer_minutes} ${t("min")}` : t("noTimeLimit")}</span>
+                    <span className="tag">{t("attemptsRemaining")}: {remaining}/{maxAttempts}</span>
+                    {c.best != null && <span className="tag" style={{ color: "var(--ok-ink)", borderColor: "var(--ok)" }}>{t("bestScore")}: {c.best}</span>}
+                  </div>
+                </div>
+                <button type="button" className="btn btn-primary" disabled={exhausted || archived}
+                  style={exhausted || archived ? { opacity: .5, cursor: "not-allowed" } : {}}
+                  onClick={() => !exhausted && !archived && go("exam", { caseId: c.case_id, classId, untimed: !cl.timer_enabled, examDuration: cl.timer_enabled ? cl.timer_minutes : undefined })}>
+                  {c.best != null ? t("retake") : t("startClassCase")}
+                </button>
+              </div>
+            );
+          })}
+          {cases.length === 0 && <div className="small muted">{t("classNoCases")}</div>}
+        </div>
+
+        {/* Class flashcard sets (graded or practice) */}
+        {flashcards.length > 0 && (<>
+          <h4 className="mb16 mt16 r107-sec"><span className="r107-sec-ico" aria-hidden="true"><Icon name="flask" size={16} /></span> {t("classFlashcards")}</h4>
+          <div className="grid" style={{ gap: 12 }}>
+            {cl.exam_mode === 'combined' ? <div className="card">
+              <h4>{lang==='fa'?'آزمون سؤال‌های کلاس':'Class question exam'}</h4>
+              <p>{lang==='fa'?`${flashcards.length} سؤال؛ یک ثبت نهایی. نمره هر سؤال در کارنامه حفظ می‌شود.`:`${flashcards.length} questions, one final submission. Each question remains in the gradebook.`}</p>
+              <button type="button" className="btn btn-primary" disabled={flashcards.some(f=>f.graded&&(f.attemptsUsed??0)>=(maxAttempts??1))}
+                onClick={()=>go('flashcards',{classId,classCombined:true,flashcardIds:flashcards.map(f=>f.flashcard_id),noPenalty:!!cl.flashNoPenalty,allowBack:!!cl.flashAllowBack,allowChange:!!cl.flashAllowChange})}>
+                {lang==='fa'?'شروع آزمون کلاس':'Start class exam'}
+              </button>
+              {flashcards.some(f=>f.graded&&(f.attemptsUsed??0)>=(maxAttempts??1))&&<p role="status">{lang==='fa'?'فرصت شرکت در یکی از سؤال‌ها تمام شده است.':'One or more questions have no attempts remaining.'}</p>}
+            </div> : flashcards.map((f) => {
+              const used = f.attemptsUsed ?? 0;
+              const remaining = Math.max(0, (maxAttempts ?? 1) - used);
+              const exhausted = f.graded && remaining <= 0;   // practice sets never lock
+              return (
+                <div className="case-item" key={f.flashcard_id}>
+                  <div style={{ minWidth: 0 }}>
+                    {nextKey === `f${f.flashcard_id}` && <span className="r107-next">{lang === "fa" ? "قدم بعدی" : "Up next"}</span>}
+                    {stateChip(f.best, exhausted)}
+                    {/* Students see the QUESTION, never the teacher's internal title. */}
+                    <strong>{biField(f, "q", lang) || biField(f, "title", lang) || `#${f.flashcard_id}`}</strong>
+                    <div className="case-meta">
+                      <span className="tag" style={f.graded ? {} : { opacity: .7 }}>{f.graded ? t("gradedShort") : t("practiceShort")}</span>
+                      {!!data.class?.flashNoPenalty && <span className="tag" style={{ color: "var(--ok,#16a34a)", borderColor: "var(--ok,#16a34a)" }}>{lang === "fa" ? "🎯 بدون کسر نمره" : "🎯 no penalty"}</span>}
+                      {!!data.class?.flashAllowBack && <span className="tag">{lang === "fa" ? "↩ بازگشت به کارت قبلی" : "↩ back allowed"}</span>}
+                      {!!data.class?.flashAllowChange && <span className="tag">{lang === "fa" ? "✎ تغییر پاسخ مجاز" : "✎ answers changeable"}</span>}
+                      {f.graded && <span className="tag">{t("weightField")}: {f.weight}</span>}
+                      {f.graded && <span className="tag">{t("attemptsRemaining")}: {remaining}/{maxAttempts}</span>}
+                      {f.best != null && <span className="tag" style={{ color: "var(--ok-ink)", borderColor: "var(--ok)" }}>{t("bestScore")}: {f.best}</span>}
+                    </div>
+                  </div>
+                  <button type="button" className="btn btn-primary" disabled={exhausted}
+                    style={exhausted ? { opacity: .5, cursor: "not-allowed" } : {}}
+                    onClick={() => !exhausted && go("flashcards", { flashcardIds: [f.flashcard_id], classId, classFlashcardId: f.flashcard_id, noPenalty: !!data.class?.flashNoPenalty, allowBack: !!data.class?.flashAllowBack, allowChange: !!data.class?.flashAllowChange })}>
+                    {f.best != null ? t("retake") : t("startClassCase")}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </>)}
+      </div>
+    </div>
+  );
+}

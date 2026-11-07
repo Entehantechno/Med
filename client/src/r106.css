@@ -1,0 +1,77 @@
+/* R106 — university flashcard, class detail and virtual-patient polish.
+   Flat-first (R104): no gradients or glow here. Colour is never the only signal:
+   every state has a text label. Tokens come from styles.css so both themes work. */
+
+/* ---- Virtual patient (case screen) ---- */
+/* The hint boxes were clipped because the tab panel had a fixed height and scrolled.
+   The side panel now grows with its content, so hints stack with real spacing and none are cut off. */
+@media (min-width: 901px){ .side-panel{ height:auto; min-height:min(560px,72vh); } }
+.side-panel .tab-content{ flex:none; overflow:visible; padding-right:0; }
+.side-panel .ddle-question + .ddle-question{ margin-top:10px !important; }
+.side-panel .ddle-question{ margin-top:0 !important; }
+.side-panel .tabs{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(104px,1fr)); gap:6px;
+  flex-wrap:initial; margin-bottom:12px;
+}
+.side-panel .tabs .tab{ min-height:40px; white-space:nowrap; }
+.side-panel .r106-finish{ margin-top:14px; }
+
+.r106-chat-empty{
+  margin:auto; display:grid; justify-items:center; gap:8px; text-align:center;
+  padding:18px 12px; max-width:420px;
+}
+.r106-chat-empty-ico{
+  width:44px; height:44px; border-radius:50%; display:grid; place-items:center;
+  background:var(--panel2, #eef3f9); color:var(--primary); border:1px solid var(--border);
+}
+.r106-chat-empty-title{ font-weight:800; }
+.r106-chips{ display:flex; flex-wrap:wrap; justify-content:center; gap:8px; margin-top:6px; }
+.r106-chip{
+  font:inherit; font-size:13px; padding:7px 12px; border-radius:999px; cursor:pointer;
+  background:var(--panel, #fff); color:var(--text); border:1px solid var(--border);
+}
+.r106-chip:hover, .r106-chip:focus-visible{ border-color:var(--primary); color:var(--primary); outline:none; }
+.r106-chip:focus-visible{ box-shadow:0 0 0 3px var(--primaryGlow, rgba(37,99,235,.25)); }
+
+/* ---- Flashcards ---- */
+.r106-progress{ display:grid; gap:6px; margin:0 0 10px; }
+.r106-progress-top{ display:flex; justify-content:space-between; align-items:center; gap:8px; font-size:13px; }
+.r106-progress-step{ font-weight:800; }
+.r106-progress-done{ color:var(--muted); }
+.r106-progress-bar{ height:8px; border-radius:999px; background:var(--bg2, #e8eef6); overflow:hidden; }
+.r106-progress-bar span{ display:block; height:100%; border-radius:999px; background:var(--primary); transition:width .3s ease; }
+@media (prefers-reduced-motion: reduce){ .r106-progress-bar span{ transition:none; } }
+
+.r106-noimg{
+  display:flex; align-items:center; gap:8px; margin:8px 0 12px; padding:9px 12px;
+  border-radius:10px; font-size:13px; background:var(--warn-soft, #fff7e6);
+  color:var(--warn-ink, #8a5a00); border:1px dashed var(--warn, #d98e04);
+}
+
+/* ---- Class detail ---- */
+.r106-state{
+  display:inline-flex; align-items:center; gap:4px; font-size:12px; font-weight:700;
+  padding:2px 8px; border-radius:999px; margin-inline-end:8px; vertical-align:middle;
+  border:1px solid var(--border); color:var(--muted);
+}
+.r106-state-done{ color:var(--ok-ink, #166534); border-color:var(--ok, #16a34a); }
+.r106-state-todo{ color:var(--primary); border-color:var(--primary); }
+.r106-state-locked{ color:var(--muted); }
+
+.r106-segs{ display:grid; grid-template-columns:repeat(auto-fill,minmax(10px,1fr)); gap:4px; margin-top:12px; }
+.r106-segs span{ height:8px; border-radius:4px; background:var(--bg2, #e8eef6); }
+.r106-segs span.done{ background:var(--ok, #16a34a); }
+
+/* ---- Flashcard card: subject accent + metadata zone (R106) ---- */
+.r106-card{ border-top:4px solid var(--subj, var(--primary)); }
+.r106-meta{ display:flex; flex-wrap:wrap; gap:6px; margin-top:14px; padding-top:10px; border-top:1px dashed var(--border); }
+.r106-meta-chip{
+  display:inline-flex; align-items:center; gap:4px; font-size:12px; padding:3px 9px; border-radius:999px;
+  background:var(--panel2, #eef3f9); color:var(--muted); border:1px solid var(--border);
+}
+
+/* ---- Contrast fixes found by axe (R106): text must meet 4.5:1 in both themes ---- */
+.badge-ver{ color:#7a4a00; background:#fff3d6; border-color:#e0b15a; }
+[data-theme="dark"] .badge-ver{ color:#fcd34d; background:rgba(224,165,46,.16); border-color:rgba(224,165,46,.4); }
+.r106-noimg{ color:#7a4a00; background:#fff7e6; border-color:#d98e04; }
+[data-theme="dark"] .r106-noimg{ color:#fde68a; background:rgba(217,142,4,.16); border-color:rgba(217,142,4,.55); }
