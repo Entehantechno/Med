@@ -107,7 +107,7 @@ The comparison tool is `pixdiff.mjs` (lab). The raw captures are in `/home/user/
 
 ## 6. Open findings (not fixed here)
 
-1. **Blocked by an unfinished encounter (needs an owner decision).** An encounter that finished or timed out
+1. **[Resolved in R101]** Blocked by an unfinished encounter. An encounter that finished or timed out
    without grading blocks a new encounter (`findGradingPending`, `server/src/lib/timed-session.js`). Background
    grading retries. In the lab, two learner sessions failed three times with `ai_evaluation_unavailable`
    (the lab AI is in mock mode), so the learner was refused "previous encounter still being recorded"

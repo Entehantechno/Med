@@ -8,14 +8,17 @@
    - grading_lease_until  compare-and-set claim. One grader at a time per encounter,
                           in any process. A crashed holder's claim simply expires.
    - next_try_ms          next automatic retry after a transient failure (exponential
-                          backoff, capped at 15 minutes).
+                          backoff, capped at 15 minutes, plus up to 25% jitter).
    - review_required      a permanent failure (the student no longer has access, the
                           encounter no longer fits its class). Nothing is retried; the
                           chat stays on record for staff.
    - grading_draft_json   AI outputs (checklist score, lesson) kept as soon as they
                           exist, so a retry never pays for them twice.
 
-   A failure never closes an encounter. It only ends when an attempt is written. */
+   A failure never closes an encounter. It only ends when an attempt is written.
+   An AI outage never restricts the student: a pending encounter does not block a new one,
+   does not take the student's lock, and does not use up an attempt until it is scored
+   (the scoring path re-checks the budget, so the first scored encounter takes it). */
 import { createHash } from "node:crypto";
 import { db, durableTransaction } from "../db.js";
 
@@ -30,6 +33,15 @@ export const evaluationFingerprint = (value) =>
 /* Seconds-scale first retry, doubling, never more than 15 minutes apart. */
 export function backoffMs(tries) {
   return Math.min(MAX_BACKOFF_MS, BASE_BACKOFF_MS * 2 ** Math.max(0, Number(tries) - 1));
+}
+
+/* R101: the next retry, with up to 25% extra jitter. Encounters that failed in the same
+   outage would otherwise all retry on the same schedule and hit the provider in waves
+   when it comes back (the thundering herd). The jitter only ever adds delay, so a retry
+   is never earlier than backoffMs(tries). */
+export function retryDelayMs(tries, random = Math.random) {
+  const base = backoffMs(tries);
+  return base + Math.floor(random() * base * 0.25);
 }
 
 /* "transient": retry later. "permanent": staff must look. "busy": another grader holds
@@ -87,7 +99,7 @@ export function recordGradingFailure(sessionId, { error, kind, now = Date.now() 
     if (!row) return;
     const tries = Number(row.expiry_attempts) + 1;
     db.prepare("UPDATE vp_sessions SET expiry_attempts=?, expiry_error=?, next_try_ms=? WHERE id=?")
-      .run(tries, message, now + backoffMs(tries), Number(sessionId));
+      .run(tries, message, now + retryDelayMs(tries), Number(sessionId));
   });
 }
 

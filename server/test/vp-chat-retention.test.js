@@ -61,12 +61,12 @@ describe("virtual-patient chat survives a failed settlement", () => {
     expect(logCount(first.sessionId)).toBe(1);
     expect(row(first.sessionId).finished_at).toBeNull();          // still eligible for grading
 
-    // The student is told to wait; no second encounter is created.
+    // R101: an AI outage never restricts the student. A new encounter opens at once, and the old
+    // chat stays a log that is still graded in the background (no attempt is spent until scored).
     const again = await start(classId);
-    expect(again.status).toBe(409);
-    expect(again.body.error).toBe("evaluation_in_progress");
-    expect(again.body.retryable).toBe(true);
-    const open = db.prepare("SELECT COUNT(*) n FROM vp_sessions WHERE user_id=? AND class_id=? AND finished_at IS NULL").get(student.id, classId).n;
-    expect(open).toBe(1);
+    expect(again.status).toBe(200);
+    expect(again.body.sessionId).not.toBe(first.sessionId);
+    expect(row(first.sessionId).finished_at).toBeNull();
+    expect(logCount(first.sessionId)).toBe(1);
   });
 });

@@ -1,6 +1,6 @@
 import { sealEncounter, readEncounter } from "../lib/vp-encounter.js";
 import { evaluationFingerprint, claimGrading, releaseGrading, markFinishRequested, recordGradingFailure, failureKind, accessRevoked, readDraft, writeDraft } from "../lib/vp-grading.js";
-import { acquireCompletion, completionBusy, publicEvaluation } from "../lib/vp-completion.js";
+import { acquireCompletion, completionBusy, completionKey, publicEvaluation } from "../lib/vp-completion.js";
 /* ================================================================
    exam.js — Virtual patient chat + evaluation + flashcard submit.
    All AI logic lives server-side; prompts pulled from DB.
@@ -350,21 +350,17 @@ r.post("/session-start", authRequired, async (req, res) => {
   // keeps the same clock and the same attempt budget, and returns the saved transcript.
   // An encounter whose time ran out, but which no sweep has settled yet, is finalized
   // as it stood first. A quick return therefore never opens a second attempt.
-  // A previous encounter that is still being settled blocks a new one: starting over it
-  // used to orphan its saved chat. Once its retries are spent it is closed (kept as a log).
-  // A finished or timed-out encounter that is not graded yet blocks a new one. Grading
-  // runs in the background (never held open for this request), so the student retries.
+  // R101: an encounter that is finished or timed out but not graded yet does NOT block a new
+  // one. Grading is durable and runs in the background (retried with backoff while the AI is
+  // down), so an AI outage must never stop a student from starting, resuming, or leaving. An
+  // attempt is spent only when it is actually scored, and the budget check at scoring time
+  // (see evaluateRoute) lets only the first scored encounter take it. The chat of every
+  // encounter is kept as a log either way.
   const pending = findGradingPending({ userId: req.user.id, caseId: caseData.id, classId: ownerClassId, examId: ownerExamId, studyId, lang });
-  if (pending) {
-    if (pending.next_try_ms == null || Number(pending.next_try_ms) <= Date.now()) {
-      const { kickGrading } = await import("../lib/timed-expiry.js");
-      kickGrading(pending);
-    }
-    return res.status(409).json({
-      error: "evaluation_in_progress", stage: "session", retryable: true,
-      message_fa: "جلسهٔ قبلی هنوز ثبت نهایی نشده است؛ چند لحظه بعد دوباره تلاش کنید. گفتگوی شما ذخیره شده است.",
-      message_en: "Your previous encounter is still being recorded. Try again shortly; your conversation is saved.",
-    });
+  if (pending && (pending.next_try_ms == null || Number(pending.next_try_ms) <= Date.now())) {
+    // Nudge the grader without holding this request. The lease makes a repeat a no-op.
+    const { kickGrading } = await import("../lib/timed-expiry.js");
+    kickGrading(pending);
   }
   const resumable = findOpenVpSession({ userId: req.user.id, caseId: caseData.id, classId: ownerClassId, examId: ownerExamId, studyId, lang });
   if (resumable) {
@@ -424,7 +420,7 @@ r.post("/session-abandon", authRequired, (req, res) => {
   if (!owned) return res.status(404).json({ error: "session_not_found", stage: "session" });
   if (Number(owned.user_id) !== Number(req.user.id)) return res.status(403).json({ error: "not_your_session", stage: "session" });
   // A grading run in progress owns this encounter: leaving must not race it.
-  if (completionBusy(req.user.id, owned.case_id)) return res.status(409).json({ error: "evaluation_in_progress", stage: "session", retryable: true });
+  if (completionBusy(completionKey({ sessionId: owned.id, userId: req.user.id, caseId: owned.case_id }))) return res.status(409).json({ error: "evaluation_in_progress", stage: "session", retryable: true });
   // Finished, or finish requested: the server grades it without the student. Nothing to keep open.
   if (owned.finished_at || owned.finish_requested_ms) return res.json({ ok: true, resumable: false, stored: 0 });
   const consent = assertConsent(req.user, { classId: owned.class_id, examId: owned.exam_id });
@@ -456,7 +452,7 @@ r.put("/session-progress", authRequired, (req, res) => {
   if (Number(owned.user_id) !== Number(req.user.id)) return res.status(403).json({ error: "not_your_session", stage: "session" });
   if (owned.finished_at) return res.status(409).json({ error: "session_closed", stage: "session" });
   if (owned.finish_requested_ms) return res.status(409).json({ error: "finish_requested", stage: "session", retryable: false });
-  if (completionBusy(req.user.id, owned.case_id)) return res.status(409).json({ error: "evaluation_in_progress", stage: "session", retryable: true });
+  if (completionBusy(completionKey({ sessionId: owned.id, userId: req.user.id, caseId: owned.case_id }))) return res.status(409).json({ error: "evaluation_in_progress", stage: "session", retryable: true });
   if (!savesOpen(owned)) return res.status(409).json({ error: "session_expired", stage: "session", remainingSec: 0 });
   const study = studyForContext({ classId: owned.class_id, examId: owned.exam_id });
   if (Number(owned.study_id || 0) !== Number(study?.id || 0)) return res.status(409).json({ error: "study_context_changed", stage: "session" });
@@ -643,11 +639,20 @@ async function evaluateRoute(req, res) {
   const open = !!session && !session.finished_at && Number(session.user_id) === Number(req.user.id);
   if (!open) return gradeEncounter(req, res);
   const now = Date.now();
-  if (session.review_required) return res.status(409).json({
-    error: "under_staff_review", stage: "evaluate", retryable: false,
-    message_fa: "این گفتگو برای بررسی مدیر ارسال شده است. گفتگوی شما حفظ شده و نیازی به ارسال دوباره نیست.",
-    message_en: "This conversation was sent to staff for review. It is kept on record; no need to resend.",
-  });
+  if (session.review_required) {
+    // R101: an encounter that was scored after the attempt limit was already used (for example
+    // a second encounter opened while the AI was down) is kept as a log, not scored again.
+    if (session.expiry_error === "attempts exhausted") return res.status(409).json({
+      error: "under_staff_review", stage: "evaluate", retryable: false, reason: "attempts_exhausted",
+      message_fa: "این گفتگو به‌عنوان تلاش جدا نمره‌دهی نشد، چون سقف تلاش این کیس پر شده بود. تلاش ثبت‌شدهٔ قبلی شما نمره گرفته است و گفتگوی این بار حفظ شده است.",
+      message_en: "This conversation was not scored as a separate attempt, because this case's attempt limit was already used. Your earlier recorded attempt was scored; this conversation is kept on record.",
+    });
+    return res.status(409).json({
+      error: "under_staff_review", stage: "evaluate", retryable: false,
+      message_fa: "این گفتگو برای بررسی مدیر ارسال شده است. گفتگوی شما حفظ شده و نیازی به ارسال دوباره نیست.",
+      message_en: "This conversation was sent to staff for review. It is kept on record; no need to resend.",
+    });
+  }
   if (!req.systemGrading) {
     // The student's finish (or retry of it). While the time is open, the snapshot they send is the
     // one graded; after the deadline the snapshot kept at the first finish is frozen and graded.
@@ -724,7 +729,7 @@ async function gradeEncounter(req, res) {
   } else if (process.env.VP_REQUIRE_AI_EVALUATION !== "0" && ["student", "learner"].includes(req.user.role)) {
     return res.status(400).json({ error: "session_id_required", stage: "evaluate" });
   }
-  releaseCompletion = acquireCompletion(req.user.id, caseId);
+  releaseCompletion = acquireCompletion(completionKey({ sessionId: vpSession?.id, userId: req.user.id, caseId }));
   if (!releaseCompletion) return res.status(409).json({
     error: "evaluation_in_progress", stage: "evaluate", retryable: true,
     message_fa: "ارزیابی این برخورد هنوز در حال انجام است؛ کمی صبر کنید و دوباره دریافت نتیجه را امتحان کنید.",

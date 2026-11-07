@@ -63,7 +63,9 @@ export function findOpenVpSession({ userId, caseId, classId = null, examId = nul
 }
 
 /* An encounter the student finished, or whose time ran out, that still has no attempt and
-   is not under staff review. The student cannot start a new one over it until it is graded. */
+   is not under staff review. It is being graded in the background. It does NOT block a new
+   encounter (R101): an AI outage must never restrict the student. The caller only nudges the
+   grader with it. */
 export function findGradingPending({ userId, caseId, classId = null, examId = null, studyId = null, lang = "fa", now = Date.now() }) {
   return db.prepare(
     `SELECT * FROM vp_sessions

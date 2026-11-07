@@ -122,11 +122,13 @@ describe("finish is a commitment: the server completes it", () => {
       expect(r.next_try_ms - Date.now()).toBeGreaterThan(backoffMs(i + 1) - 5000);
     }
     expect(row(s).review_required).toBe(0);
-    // A student who opens the case again is told it is still being recorded, not sent a new encounter.
+    // R101: a student who opens the case again is not held back by the AI outage. The new encounter
+    // opens; the old one stays pending and is still graded, with its chat kept.
     const again = await start(c);
-    expect(again.status).toBe(409);
-    expect(again.body.error).toBe("evaluation_in_progress");
-    expect(db.prepare("SELECT COUNT(*) n FROM vp_sessions WHERE user_id=? AND class_id=? AND finished_at IS NULL").get(student.id, c).n).toBe(1);
+    expect(again.status).toBe(200);
+    expect(again.body.sessionId).not.toBe(s);
+    expect(row(s).finished_at).toBeNull();
+    expect(row(s).review_required).toBe(0);
   });
 
   it("keeps the chat of a logging-off class on record too (the teacher's list shows it)", async () => {
