@@ -892,6 +892,7 @@ export default function Exam({ caseId, classId, examId, examDuration, untimed = 
                   differentials → THEN order tests/imaging from your ddx. */}
               {["history", "problem", "dx", "tests", "paraclinic", "imaging", "images"].map((id) => (
                 <button type="button" key={id} className={`tab ${tab === id ? "active" : ""}`} onClick={() => { setTab(id); logEvent("tab_switch", { tab: id }); }}>
+                  <span className="r107-tab-ico" aria-hidden="true"><Icon name={({ history: "chat", problem: "list", dx: "brain", tests: "flask", paraclinic: "activity", imaging: "xray", images: "image" })[id] || "brain"} size={14} /></span>
                   {t(id === "history" ? "tabHistory" : id === "problem" ? "tabProblem"
                     : id === "tests" ? "tabTests" : id === "paraclinic" ? "tabParaclinic"
                     : id === "imaging" ? "tabImaging" : id === "images" ? "tabImages" : "tabDx")}

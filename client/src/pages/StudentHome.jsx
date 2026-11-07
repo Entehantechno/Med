@@ -8,6 +8,9 @@ import StatNum from "../components/StatNum.jsx";
 import Icon from "../components/Icon.jsx";
 import { SkeletonCards } from "../components/Skeleton.jsx";
 
+// R107: one flat accent per class (token-based, readable in both themes).
+const CLASS_TONES = ["var(--primary)", "var(--ok, #16a34a)", "var(--warn, #d98e04)", "#7c3aed", "#0d9488"];
+
 export default function StudentHome({ go }) {
   const { t, user, lang } = useApp();
   const [data, setData] = useState(null);
@@ -118,6 +121,20 @@ export default function StudentHome({ go }) {
                   <span className="sd-ico"><Icon name={heroModule.ico} size={22} /></span>
                   <div><h3 id="sd-hero-title">{heroModule.title}</h3><p className="muted">{heroModule.desc}</p></div>
                 </div>
+                {/* R107: a visual summary of the student's classes (colour dot, cases, classmates). Not buttons: the hero action stays the only button. */}
+                {heroModule.key === "classes" && data.classes.length > 0 && (
+                  <ul className="sd-classlist" aria-label={lang === "fa" ? "کلاس‌های شما" : "Your classes"}>
+                    {data.classes.slice(0, 4).map((cl, i) => (
+                      <li className="sd-classitem" key={cl.id} style={{ "--cls": CLASS_TONES[i % CLASS_TONES.length] }}>
+                        <span className="sd-classitem-dot" aria-hidden="true" />
+                        <span className="sd-classitem-name">{biField(cl, "name", lang)}</span>
+                        <span className="sd-classitem-meta">
+                          {lang === "fa" ? `${cl.nCases ?? 0} کیس · ${cl.nStudents ?? 0} دانشجو` : `${cl.nCases ?? 0} cases · ${cl.nStudents ?? 0} students`}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 <button type="button" className="btn btn-primary" onClick={() => go(heroModule.key)}>
                   {t(heroModule.action)} <Icon name={chevron} size={16} />
                 </button>

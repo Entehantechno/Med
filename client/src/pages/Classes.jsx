@@ -102,6 +102,13 @@ export function ClassDetail({ classId, go, back, home }) {
   // Archived (deactivated) cases stay listed for history but are not graded items.
   const totalItems = (cases?.filter((c) => !c.archived).length || 0) + (flashcards?.length || 0);
   // R106: every item shows a text state label; colour and icon are never the only signal.
+  // R107: the first unfinished, open item is the suggested next step (highlighted, no timer or streak).
+  const nextKey = (() => {
+    const c = (cases || []).find((x) => !x.archived && (x.attemptsUsed ?? 0) < (maxAttempts ?? 1) && x.best == null);
+    if (c) return `c${c.case_id}`;
+    const f = (flashcards || []).find((x) => (!x.graded || (x.attemptsUsed ?? 0) < (maxAttempts ?? 1)) && x.best == null);
+    return f ? `f${f.flashcard_id}` : "";
+  })();
   const stateChip = (best, locked) => {
     const st = locked ? "locked" : best != null ? "done" : "todo";
     const label = { done: lang === "fa" ? "انجام شده" : "Done", todo: lang === "fa" ? "آماده شروع" : "Ready", locked: lang === "fa" ? "بسته" : "Closed" }[st];
@@ -136,7 +143,7 @@ export function ClassDetail({ classId, go, back, home }) {
           </div>
         </div>
 
-        <h4 className="mb16"><Icon name="book" size={16} /> {t("classCases")}</h4>
+        <h4 className="mb16 r107-sec"><span className="r107-sec-ico" aria-hidden="true"><Icon name="book" size={16} /></span> {t("classCases")}</h4>
         <div className="grid" style={{ gap: 12 }}>
           {cases.map((c) => {
             const used = c.attemptsUsed ?? 0;
@@ -144,8 +151,9 @@ export function ClassDetail({ classId, go, back, home }) {
             const exhausted = remaining <= 0;
             const archived = !!c.archived;
             return (
-              <div className="case-item" key={c.case_id}>
+              <div className={`case-item${!archived && !exhausted && c.best == null && nextKey === `c${c.case_id}` ? " is-next" : ""}`} key={c.case_id}>
                 <div style={{ minWidth: 0 }}>
+                  {nextKey === `c${c.case_id}` && <span className="r107-next">{lang === "fa" ? "قدم بعدی" : "Up next"}</span>}
                   {stateChip(c.best, exhausted || archived)}
                   <strong>{biField(c, "title", lang) || biField(c, "chief", lang) || `#${c.case_id}`}</strong> <span className="badge-ver">v{c.version}</span>
                   {archived && <span className="tag muted" style={{ marginInlineStart: 6 }}>{lang === "fa" ? "بایگانی‌شده (فقط سابقه)" : "Archived (history only)"}</span>}
@@ -171,7 +179,7 @@ export function ClassDetail({ classId, go, back, home }) {
 
         {/* Class flashcard sets (graded or practice) */}
         {flashcards.length > 0 && (<>
-          <h4 className="mb16 mt16"><Icon name="flask" size={16} /> {t("classFlashcards")}</h4>
+          <h4 className="mb16 mt16 r107-sec"><span className="r107-sec-ico" aria-hidden="true"><Icon name="flask" size={16} /></span> {t("classFlashcards")}</h4>
           <div className="grid" style={{ gap: 12 }}>
             {cl.exam_mode === 'combined' ? <div className="card">
               <h4>{lang==='fa'?'آزمون سؤال‌های کلاس':'Class question exam'}</h4>
@@ -188,6 +196,7 @@ export function ClassDetail({ classId, go, back, home }) {
               return (
                 <div className="case-item" key={f.flashcard_id}>
                   <div style={{ minWidth: 0 }}>
+                    {nextKey === `f${f.flashcard_id}` && <span className="r107-next">{lang === "fa" ? "قدم بعدی" : "Up next"}</span>}
                     {stateChip(f.best, exhausted)}
                     {/* Students see the QUESTION, never the teacher's internal title. */}
                     <strong>{biField(f, "q", lang) || biField(f, "title", lang) || `#${f.flashcard_id}`}</strong>

@@ -23,6 +23,7 @@ import "./scroll-unlock.css";
 import "./ui-pro-max.css";
 import "./app-boot.css";
 import "./r106.css";
+import "./r107.css";
 import { safeLocal } from "./lib/storage.js";
 import { initSwUpdate } from "./lib/sw-update.js";
 import { installKeyboardCssVars } from "./lib/keyboard-viewport.js";
