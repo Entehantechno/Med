@@ -569,7 +569,7 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
       <button type="button" className="btn btn-accent btn-block mt16" disabled={gradeBusy.current} onClick={confirmChoice}>{t("confirmAnswer")}</button>
     );
     return (
-      <div className="ddle-card">
+      <div className="ddle-card r106-card" style={{ "--subj": subjectColor(courseOf(c, lang)) }}>
         {/* The learner sees the QUESTION, not the teacher-facing title. The
             title/category are an admin label for finding cards — never shown
             to students. Falls back to title only if a card has no question. */}
@@ -709,6 +709,13 @@ export default function Flashcards({ home, examId, flashcardIds, examDuration, s
             {dn && idx < reachedIdx && !navCfg.change && <div className="small muted flash-nav-note"><Icon name="lock" size={12} style={{ verticalAlign: "-1px" }} /> {t("lockedAnswer")}</div>}
           </div>
         )}
+        {/* R106: metadata zone — course and category are shown as labelled chips, not colour alone. */}
+        {(courseOf(c, lang) !== "—" || catOf(c, lang)) && (
+          <div className="r106-meta" aria-label={lang === "fa" ? "درس و موضوع" : "Course and topic"}>
+            {courseOf(c, lang) !== "—" && <span className="r106-meta-chip"><Icon name="book" size={12} /> {courseOf(c, lang)}</span>}
+            {catOf(c, lang) && <span className="r106-meta-chip"><Icon name="bookmark" size={12} /> {catOf(c, lang)}</span>}
+          </div>
+        )}
       </div>
     );
   };
@@ -790,6 +797,13 @@ async function loadCardBodies(ids) {
   return ids.map((id) => byId.get(id)).filter(Boolean);
 }
 const catOf = (c, lang) => biField(c, "category", lang);
+// R106: a stable subject colour per course (token-based, six hues, label always shown in the metadata zone).
+const SUBJECT_COLORS = ["var(--primary)", "var(--ok, #16a34a)", "var(--warn, #d98e04)", "var(--danger, #dc2626)", "#7c3aed", "#0d9488"];
+export function subjectColor(name) {
+  const s = String(name || "");
+  let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return SUBJECT_COLORS[h % SUBJECT_COLORS.length];
+}
 const courseOf = (c, lang) => biField(c, "course", lang) || "—";
 
 /* Deck chooser: decks are the courses; a category chip narrows them, search matches

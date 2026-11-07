@@ -61,3 +61,17 @@
 .r106-segs{ display:grid; grid-template-columns:repeat(auto-fill,minmax(10px,1fr)); gap:4px; margin-top:12px; }
 .r106-segs span{ height:8px; border-radius:4px; background:var(--bg2, #e8eef6); }
 .r106-segs span.done{ background:var(--ok, #16a34a); }
+
+/* ---- Flashcard card: subject accent + metadata zone (R106) ---- */
+.r106-card{ border-top:4px solid var(--subj, var(--primary)); }
+.r106-meta{ display:flex; flex-wrap:wrap; gap:6px; margin-top:14px; padding-top:10px; border-top:1px dashed var(--border); }
+.r106-meta-chip{
+  display:inline-flex; align-items:center; gap:4px; font-size:12px; padding:3px 9px; border-radius:999px;
+  background:var(--panel2, #eef3f9); color:var(--muted); border:1px solid var(--border);
+}
+
+/* ---- Contrast fixes found by axe (R106): text must meet 4.5:1 in both themes ---- */
+.badge-ver{ color:#7a4a00; background:#fff3d6; border-color:#e0b15a; }
+[data-theme="dark"] .badge-ver{ color:#fcd34d; background:rgba(224,165,46,.16); border-color:rgba(224,165,46,.4); }
+.r106-noimg{ color:#7a4a00; background:#fff7e6; border-color:#d98e04; }
+[data-theme="dark"] .r106-noimg{ color:#fde68a; background:rgba(217,142,4,.16); border-color:rgba(217,142,4,.55); }
