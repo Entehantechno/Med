@@ -78,3 +78,22 @@ Rules that follow from this:
 3. Decorative surfaces that are darker than the panel (the landing mock card) may need a
    scoped token override (`[data-theme="dark"] .mock-league{ --muted: #b4c1d9 }`).
 
+
+## R99 — student dashboard (hero, stats column, compact modules)
+
+The student home (`client/src/pages/StudentHome.jsx`) follows these rules. Classes are in
+`client/src/design-refresh.css` under the marker `R99 student dashboard`. Layout is guarded by
+`client/src/pages/StudentHome.layout.test.jsx`.
+
+1. **One primary action.** A hero card shows the open exam (with `btn-accent`), or otherwise the
+   first module with one explicit button. The button sits at the bottom of the hero.
+2. **Stats are a side column,** not a row of full-width boxes. From 900 px, hero 2fr beside stats 1fr.
+   On mobile the three stats sit in a row.
+3. **Only interactive tiles look interactive.** Link tiles are `<button>` with an icon and a
+   pointer cursor. The progress tile is a plain `div`.
+4. **Other modules are compact cards** in an `auto-fit` grid (`minmax(240px, 1fr)`). A single
+   module must never span the full width. Do not use `grid-N` by module count.
+5. **Focus order equals visual order.** Do not use `grid-auto-flow: dense` on interactive tiles.
+6. **Empty state** guides the next step (kept from R97).
+
+Budget: `design-refresh.css` entry CSS is at 59.331 KB of a 60 KB limit. Trim before adding.

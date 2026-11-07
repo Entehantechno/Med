@@ -2810,3 +2810,30 @@ tbody tr:hover td{ transform: translateX(1px) }
 /* Buttons do not inherit colour by default. The landing brand is a <button>, so it rendered
    black on the dark footer (axe 1.25:1). Inherit the page text colour instead. */
 .lp-brand{ color:inherit; }
+
+/* ============================ R99 student dashboard ============================
+   One primary next action (hero), a stats column, and compact module cards that size to
+   their content. Replaces the single full-width card (grid-1) that read as a long empty box. */
+.sd-top{display:grid;gap:16px;margin-bottom:16px}
+.sd-hero{display:flex;flex-direction:column;justify-content:space-between;gap:16px;padding:22px}
+.sd-hero-head{display:flex;align-items:center;gap:14px}
+.sd-hero-head h3{margin:0 0 2px}
+.sd-hero-head p{margin:0}
+.sd-hero>.btn{align-self:flex-start}
+.sd-ico{position:relative;display:inline-grid;place-items:center;flex:0 0 auto;width:44px;height:44px;border-radius:12px;background:var(--primaryGlow);color:var(--primary)}
+.sd-ico-ok{background:var(--accentGlow);color:var(--ok-ink)}
+.sd-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.sd-stat{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:14px;width:100%;font:inherit;color:inherit;text-align:start}
+.sd-stat .num{display:block;font-size:1.5rem;font-weight:800;line-height:1.1}
+.sd-stat .lbl{display:block;color:var(--muted);font-size:.85rem}
+.sd-stat-link{cursor:pointer}
+.sd-mods{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.sd-mod{display:flex;align-items:center;gap:12px;padding:16px;width:100%;font:inherit;color:inherit;text-align:start}
+.sd-mod-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.sd-mod-go{color:var(--muted);flex:0 0 auto}
+.sd-badge{position:absolute;top:-6px;inset-inline-end:-6px;border-radius:999px;background:var(--ok);color:#fff;font-size:.62rem;font-weight:800;padding:1px 7px}
+@media (min-width:900px){
+  .sd-top{grid-template-columns:minmax(0,2fr) minmax(0,1fr);align-items:stretch}
+  .sd-stats{grid-template-columns:1fr}
+  .sd-stat{flex-direction:row;align-items:center}
+}

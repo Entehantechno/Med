@@ -62,46 +62,28 @@ export default function StudentHome({ go }) {
   const hasClasses = data.classes.length > 0;
   const hasAssigned = (data.assigned || []).length > 0;
 
-   // Classes remain the main classroom entry. Students access virtual patient
-   // cases directly through their classes or scheduled exams.
-   const modules = [];
-   if (hasExams) modules.push({ key: "exams", ico: "exam", bg: "var(--grad-purple)",
-     title: t("modExams"), desc: t("modExamsDesc"), badge: activeExams.length });
-   if (hasClasses) modules.push({ key: "classes", ico: "class", bg: "var(--grad-primary)",
-     title: t("modClasses"), desc: t("modClassesDesc") });
-   // Only surface standalone caseList when the student has direct-assigned cases without any classes:
-   if (hasAssigned && !hasClasses) modules.push({ key: "caseList", ico: "patient", bg: "var(--grad-ocean)",
-     title: t("modCases"), desc: t("modCasesDesc") });
+  // Classes remain the main classroom entry. Students access virtual patient
+  // cases directly through their classes or scheduled exams.
+  const modules = [];
+  if (hasExams) modules.push({ key: "exams", ico: "exam", bg: "var(--grad-purple)",
+    title: t("modExams"), desc: t("modExamsDesc"), badge: activeExams.length, action: "myExams" });
+  if (hasClasses) modules.push({ key: "classes", ico: "class", bg: "var(--grad-primary)",
+    title: t("modClasses"), desc: t("modClassesDesc"), action: "enterClass" });
+  // Only surface standalone caseList when the student has direct-assigned cases without any classes:
+  if (hasAssigned && !hasClasses) modules.push({ key: "caseList", ico: "patient", bg: "var(--grad-ocean)",
+    title: t("modCases"), desc: t("modCasesDesc"), action: "startVp" });
+
+  // One hero: the open exam if there is one, otherwise the first module. The rest are compact cards.
+  const liveHero = activeExams.length > 0;
+  const heroModule = liveHero ? null : modules[0];
+  const restModules = liveHero ? modules : modules.slice(1);
+  const chevron = lang === "fa" ? "chevronLeft" : "chevronRight";
 
   return (
     <div className="app">
       <TopBar onHome={() => go("home")} />
       <div className="container" role="main">
         <div className="section-title"><h2>{t("welcome")}، {lang === "fa" ? user.name_fa : user.name_en} </h2></div>
-
-        {/* Active exams banner — the most important thing for a student */}
-        {activeExams.length > 0 && (
-          <div className="card mb16" style={{ borderInlineStart: "4px solid var(--ok)" }}>
-            <div className="section-title" style={{ marginBottom: 12 }}>
-              <h4 style={{ color: "var(--ok-ink)", borderBottom: "none", padding: 0 }}><Icon name="circleCheck" size={16} /> {t("activeExams")}</h4>
-            </div>
-            <div className="grid" style={{ gap: 10 }}>
-              {activeExams.map((e) => (
-                <div className="case-item" key={e.id}>
-                  <div>
-                    <strong>{biField(e, "title", lang)}</strong>
-                    <div className="case-meta">
-                      <Pill kind="active">{t("stateOpen")}</Pill>
-                      <span className="tag"><Icon name="clock" size={16} /> {e.duration_min} {t("min")}</span>
-                      <span className="tag"><Icon name="clock" size={16} /> {fmtDateTime(e.ends_at, lang)}</span>
-                    </div>
-                  </div>
-                  <button type="button" className="btn btn-accent" onClick={() => go("exams")}>{t("enterExam")}</button>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {modules.length === 0 ? (
           <div className="card empty-state">
@@ -110,32 +92,69 @@ export default function StudentHome({ go }) {
             <div className="muted small mt8">{t("noExamsAssignedDesc")}</div>
           </div>
         ) : (
-          <div className={`grid grid-${Math.min(modules.length, 3)} mb16`}>
-            {modules.map((m) => (
-              <button type="button" className="card mod-card mod-card-row" key={m.key} onClick={() => go(m.key)}>
-                <div className="mod-ico" style={{ background: m.bg, position: "relative" }}><Icon name={m.ico} size={26} />
-                  {m.badge > 0 && <span style={{ position: "absolute", top: -6, insetInlineEnd: -6,
-                    background: "var(--ok)", color: "#fff", borderRadius: 999, fontSize: ".62rem",
-                    fontWeight: 800, padding: "1px 7px" }}>{m.badge}</span>}
+          <div className="sd-top">
+            {liveHero ? (
+              <section className="card sd-hero" aria-labelledby="sd-hero-title">
+                <div className="sd-hero-head">
+                  <span className="sd-ico sd-ico-ok"><Icon name="circleCheck" size={22} /></span>
+                  <div><h3 id="sd-hero-title">{t("activeExams")}</h3><p className="muted small">{t("stateOpen")}</p></div>
                 </div>
-                <div className="mod-card-body">
-                  <h3>{m.title}</h3><p>{m.desc}</p>
+                {activeExams.map((e) => (
+                  <div className="case-item" key={e.id}>
+                    <div>
+                      <strong>{biField(e, "title", lang)}</strong>
+                      <div className="case-meta">
+                        <span className="tag"><Icon name="clock" size={16} /> {e.duration_min} {t("min")}</span>
+                        <span className="tag"><Icon name="clock" size={16} /> {fmtDateTime(e.ends_at, lang)}</span>
+                      </div>
+                    </div>
+                    <button type="button" className="btn btn-accent" onClick={() => go("exams")}>{t("enterExam")}</button>
+                  </div>
+                ))}
+              </section>
+            ) : (
+              <section className="card sd-hero" aria-labelledby="sd-hero-title">
+                <div className="sd-hero-head">
+                  <span className="sd-ico"><Icon name={heroModule.ico} size={22} /></span>
+                  <div><h3 id="sd-hero-title">{heroModule.title}</h3><p className="muted">{heroModule.desc}</p></div>
                 </div>
-                <Icon name={lang === "fa" ? "chevronLeft" : "chevronRight"} size={18} className="mod-card-go" />
+                <button type="button" className="btn btn-primary" onClick={() => go(heroModule.key)}>
+                  {t(heroModule.action)} <Icon name={chevron} size={16} />
+                </button>
+              </section>
+            )}
+
+            <div className="sd-stats">
+              <button type="button" className="card sd-stat sd-stat-link" onClick={() => go("exams")}>
+                <span className="sd-ico"><Icon name="exam" size={18} /></span>
+                <span><span className="num"><StatNum value={data.exams.length} /></span><span className="lbl">{t("myExams")}</span></span>
               </button>
-            ))}
+              <button type="button" className="card sd-stat sd-stat-link" onClick={() => go("classes")}>
+                <span className="sd-ico"><Icon name="class" size={18} /></span>
+                <span><span className="num"><StatNum value={data.classes.length} /></span><span className="lbl">{t("myClasses")}</span></span>
+              </button>
+              <div className="card sd-stat" title={t("myProgress")}>
+                <span className="sd-ico"><Icon name="chart" size={18} /></span>
+                <span><span className="num"><StatNum value={data.mine.length} /></span><span className="lbl">{t("myProgress")}</span></span>
+              </div>
+            </div>
+
+            {restModules.length > 0 && (
+              <div className="sd-mods">
+                {restModules.map((m) => (
+                  <button type="button" className="card sd-mod" key={m.key} onClick={() => go(m.key)}>
+                    <span className="sd-ico" style={{ background: m.bg, color: "#fff", position: "relative" }}>
+                      <Icon name={m.ico} size={20} />
+                      {m.badge > 0 && <span className="sd-badge">{m.badge}</span>}
+                    </span>
+                    <span className="sd-mod-text"><strong>{m.title}</strong><span className="muted small">{m.desc}</span></span>
+                    <Icon name={chevron} size={18} className="sd-mod-go" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
-
-        {/* At-a-glance counters — first two navigate, third is a pure progress summary (avoids duplicate nav target). */}
-        <div className="grid stat-grid-3">
-          <button type="button" className="card stat-card stat-card-link" onClick={() => go("exams")}>
-            <div className="num"><StatNum value={data.exams.length} /></div><div className="lbl">{t("myExams")}</div></button>
-          <button type="button" className="card stat-card stat-card-link" onClick={() => go("classes")}>
-            <div className="num"><StatNum value={data.classes.length} /></div><div className="lbl">{t("myClasses")}</div></button>
-          <div className="card stat-card" title={t("myProgress")}>
-            <div className="num"><StatNum value={data.mine.length} /></div><div className="lbl">{t("myProgress")}</div></div>
-        </div>
       </div>
     </div>
   );
