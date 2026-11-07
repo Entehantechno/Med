@@ -141,7 +141,7 @@ export function ClassDetail({ classId, go, back, home }) {
                     <span className="tag">{t("weightField")}: {c.weight}</span>
                     <span className="tag"><Icon name="clock" size={14} /> {cl.timer_enabled ? `${cl.timer_minutes} ${t("min")}` : t("noTimeLimit")}</span>
                     <span className="tag">{t("attemptsRemaining")}: {remaining}/{maxAttempts}</span>
-                    {c.best != null && <span className="tag" style={{ color: "var(--ok)", borderColor: "var(--ok)" }}>{t("bestScore")}: {c.best}</span>}
+                    {c.best != null && <span className="tag" style={{ color: "var(--ok-ink)", borderColor: "var(--ok)" }}>{t("bestScore")}: {c.best}</span>}
                   </div>
                 </div>
                 <button type="button" className="btn btn-primary" disabled={exhausted || archived}
@@ -183,7 +183,7 @@ export function ClassDetail({ classId, go, back, home }) {
                       {!!data.class?.flashAllowChange && <span className="tag">{lang === "fa" ? "✎ تغییر پاسخ مجاز" : "✎ answers changeable"}</span>}
                       {f.graded && <span className="tag">{t("weightField")}: {f.weight}</span>}
                       {f.graded && <span className="tag">{t("attemptsRemaining")}: {remaining}/{maxAttempts}</span>}
-                      {f.best != null && <span className="tag" style={{ color: "var(--ok)", borderColor: "var(--ok)" }}>{t("bestScore")}: {f.best}</span>}
+                      {f.best != null && <span className="tag" style={{ color: "var(--ok-ink)", borderColor: "var(--ok)" }}>{t("bestScore")}: {f.best}</span>}
                     </div>
                   </div>
                   <button type="button" className="btn btn-primary" disabled={exhausted}

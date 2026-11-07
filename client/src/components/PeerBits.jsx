@@ -73,7 +73,7 @@ export function HintButton({ card, premium, onUsed, onProfile }) {
         <Icon name="bulb" size={14} style={{ verticalAlign: "-2px" }} /> {fa ? "راهنمایی بگیر" : "Get a hint"} {!premium && <span className="hint-cost"><Icon name="crown" size={14} style={{ verticalAlign: "-2px" }} /></span>}
       </button>
       {err === "premium" && <span className="small muted">{fa ? "راهنمایی قبل از پاسخ، ویژهٔ پرمیوم است." : "Pre-answer hints are a premium perk."}</span>}
-      {err && err !== "premium" && <span className="small" style={{ color: "var(--danger)" }}>{err}</span>}
+      {err && err !== "premium" && <span className="small" style={{ color: "var(--danger-ink)" }}>{err}</span>}
     </div>
   );
 }

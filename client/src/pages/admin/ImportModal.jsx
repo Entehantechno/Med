@@ -109,7 +109,7 @@ export default function ImportModal({ onClose, onDone }) {
         <div className="card mt16" style={{ background: "var(--panel2)" }}>
           <div style={{ fontWeight: 800, marginBottom: 8 }}>
             {t("valid")}: <span style={{ color: "var(--green)" }}>{preview.valid}</span> / {preview.total}
-            {preview.errors.length > 0 && <span style={{ color: "var(--danger)" }}> · {t("errors")}: {preview.errors.length}</span>}
+            {preview.errors.length > 0 && <span style={{ color: "var(--danger-ink)" }}> · {t("errors")}: {preview.errors.length}</span>}
           </div>
 
           {/* valid topic slugs — so the admin can copy exact values */}

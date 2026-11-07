@@ -33,8 +33,8 @@ export default function CommunityModeration() {
 
       <div className="case-meta mb16" style={{ flexWrap: "wrap" }}>
         <span className="tag">⏳ {t("pending")}: {stats.pending || 0}</span>
-        <span className="tag" style={{ color: "var(--accent2)" }}>✅ {t("approved")}: {stats.approved || 0}</span>
-        <span className="tag" style={{ color: "var(--danger)" }}>✖ {t("rejected")}: {stats.rejected || 0}</span>
+        <span className="tag" style={{ color: "var(--ok-ink)" }}>✅ {t("approved")}: {stats.approved || 0}</span>
+        <span className="tag" style={{ color: "var(--danger-ink)" }}>✖ {t("rejected")}: {stats.rejected || 0}</span>
       </div>
 
       {queue.length === 0 ? (

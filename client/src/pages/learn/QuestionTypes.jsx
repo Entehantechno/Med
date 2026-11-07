@@ -225,7 +225,7 @@ export function Order({ card, checked, sel, setSel }) {
         })}
       </div>
       {checked && !correct && (
-        <div className="small mt8" style={{ color: "var(--danger)" }}>
+        <div className="small mt8" style={{ color: "var(--danger-ink)" }}>
           {card.items.map((it, i) => `${i + 1}. ${it.text}`).join(" → ")}
         </div>
       )}

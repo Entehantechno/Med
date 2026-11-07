@@ -114,7 +114,7 @@ export default function ExamOtherType({ card, lang, done, showCorrect, showHints
       {card.type === "fill" && (
         <div>
           {card.answerMode==='search'&&card.options_fa?.length?<><SearchAnswer options={card.options_fa.map((fa,i)=>({fa,en:card.options_en?.[i]||fa}))} lang={lang} disabled={checked} onPick={i=>setSel((fa?card.options_fa:card.options_en)[i])}/>{sel&&<p role="status">{fa?'پاسخ انتخاب‌شده: ':'Selected answer: '}{sel}</p>}</>:<input className="fill-input" value={sel || ""} disabled={checked} placeholder={fa ? "پاسخ را تایپ کنید…" : "Type your answer…"} onChange={(e) => setSel(e.target.value)} />}
-          {checked && !right && showCorrect && <div className="small mt8" style={{ color: "var(--danger)" }}>{fa ? "پاسخ درست" : "Answer"}: {fa ? (reveal?.fa || card.blank_fa) : (reveal?.en || card.blank_en)}</div>}
+          {checked && !right && showCorrect && <div className="small mt8" style={{ color: "var(--danger-ink)" }}>{fa ? "پاسخ درست" : "Answer"}: {fa ? (reveal?.fa || card.blank_fa) : (reveal?.en || card.blank_en)}</div>}
         </div>
       )}
       {card.type === "match" && (
@@ -430,7 +430,7 @@ function StepwiseQuestion({ card, lang, showCorrect, checked, setChecked, onGrad
     <LocalHints hints={hints} showHints={showHints && !checked} fa={fa} />
     {steps.length === 0 ? <div className="ddle-banner bad">{fa ? "برای این سؤال مرحله‌ای هنوز مرحله‌ای ثبت نشده است." : "No steps are configured for this stepwise question."}</div> : steps.map((s, i) => {
       const res = stepResults?.[i];
-      return <div key={i} className={`step-card ${res ? (res.correct ? 'ok' : 'bad') : ''}`}><div className="step-no">{fa ? `مرحله ${i+1}` : `Step ${i+1}`} · {(s.answerType || s.type || "autocomplete")}</div><div className="step-prompt">{stepLabel(s, "prompt", fa)}</div>{stepLabel(s, "hint", fa) && !checked && <div className="small muted">💡 {stepLabel(s, "hint", fa)}</div>}{renderInput(s, i)}{checked && showCorrect && !res?.correct && <div className="small" style={{color:'var(--danger)'}}>{fa ? "پاسخ مورد انتظار:" : "Expected:"} {res?.expected}</div>}{checked && stepLabel(s, "explanation", fa) && <div className="small muted">{stepLabel(s, "explanation", fa)}</div>}</div>;
+      return <div key={i} className={`step-card ${res ? (res.correct ? 'ok' : 'bad') : ''}`}><div className="step-no">{fa ? `مرحله ${i+1}` : `Step ${i+1}`} · {(s.answerType || s.type || "autocomplete")}</div><div className="step-prompt">{stepLabel(s, "prompt", fa)}</div>{stepLabel(s, "hint", fa) && !checked && <div className="small muted">💡 {stepLabel(s, "hint", fa)}</div>}{renderInput(s, i)}{checked && showCorrect && !res?.correct && <div className="small" style={{color:'var(--danger-ink)'}}>{fa ? "پاسخ مورد انتظار:" : "Expected:"} {res?.expected}</div>}{checked && stepLabel(s, "explanation", fa) && <div className="small muted">{stepLabel(s, "explanation", fa)}</div>}</div>;
     })}
     {checked && <div className={`ddle-banner ${stepResults?.every((x)=>x.correct)?'ok':'bad'}`} style={{marginTop:12}}>{stepResults?.filter((x)=>x.correct).length || 0}/{steps.length} {fa ? "مرحله درست" : "steps correct"}</div>}
     {gradeErr && <div className="ddle-banner bad" style={{ marginTop: 12 }}>{gradeErr}</div>}
@@ -486,7 +486,7 @@ function KfQuestion({ card, lang, showCorrect, checked, setChecked, onGraded, hi
         ) : (
           <input className="fill-input" value={answers[i] || ""} disabled={checked} placeholder={fa ? "پاسخ کوتاه…" : "Short answer…"} onChange={(e) => setAnswers((a) => ({ ...a, [i]: e.target.value }))} />
         )}
-        {checked && showCorrect && !res?.correct && <div className="small" style={{ color: "var(--danger)" }}>{fa ? "پاسخ مورد انتظار:" : "Expected:"} {res?.expected}</div>}
+        {checked && showCorrect && !res?.correct && <div className="small" style={{ color: "var(--danger-ink)" }}>{fa ? "پاسخ مورد انتظار:" : "Expected:"} {res?.expected}</div>}
       </div>;
     })}
     {checked && <div className={`ddle-banner ${itemResults?.every((x) => x.correct) ? "ok" : "bad"}`} style={{ marginTop: 12 }}>{itemResults?.filter((x) => x.correct).length || 0}/{items.length} {fa ? "مورد درست" : "items correct"}</div>}
@@ -577,7 +577,7 @@ function PuzzleQuestion({ card, lang, showCorrect, checked, setChecked, onGraded
         return <button type="button" className={`label-pin-row u-tap ${activePin === i && !checked ? "on" : ""}`} key={i} disabled={checked} onClick={() => setActivePin(i)}>
           <span className={`label-pin static ${checked ? (pinOk(i) ? "ok" : "bad") : ""}`}>{i + 1}</span>
           <span className="label-pin-slot">{lab ? lab.text : (fa ? "—" : "—")}</span>
-          {checked && showCorrect && !pinOk(i) && <span className="small" style={{ color: "var(--danger)" }}>{fa ? (p.label_fa || p.label_en) : (p.label_en || p.label_fa)}</span>}
+          {checked && showCorrect && !pinOk(i) && <span className="small" style={{ color: "var(--danger-ink)" }}>{fa ? (p.label_fa || p.label_en) : (p.label_en || p.label_fa)}</span>}
         </button>;
       })}
     </div>

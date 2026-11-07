@@ -115,7 +115,7 @@ input:focus,textarea:focus,select:focus{
 /* Gamification HUD chips read as labels next to their icon/number. On light
    surfaces the vivid hues fell below AA; deepen them for the light theme only
    (the gradient-hero HUD keeps the bright tokens via its own dark backdrop). */
-[data-theme="light"] .hud-chip.heart,[data-theme="light"] .mock-pill.heart,[data-theme="light"] .lp-chip.heart,[data-theme="light"] .heart{ color:#b7362f; }
+[data-theme="light"] .hud-chip.heart,[data-theme="light"] .mock-pill.heart,[data-theme="light"] .lp-chip.heart,[data-theme="light"] .heart{ color:var(--heart-ink); }
 [data-theme="light"] .hud-chip.gem,[data-theme="light"] .mock-pill.gem,[data-theme="light"] .lp-chip.gem,[data-theme="light"] .gem{ color:#1780a3; }
 [data-theme="light"] .hud-chip.xp,[data-theme="light"] .mock-pill.xp,[data-theme="light"] .lp-chip.xp,[data-theme="light"] .xp{ color:#7a580a; }
 [data-theme="light"] .hud-chip.flame,[data-theme="light"] .mock-pill.flame,[data-theme="light"] .lp-chip.flame,[data-theme="light"] .flame{ color:#9a4705; }
@@ -230,7 +230,7 @@ input:focus,textarea:focus,select:focus{
 .cmp-choice:hover:not(:disabled){border-color:var(--primary)}
 .cmp-choice.sel{background:var(--primary);color:#fff;border-color:var(--primary)}
 .cmp-choice.correct{background:var(--ok);color:#fff;border-color:var(--ok)}
-.cmp-choice.wrong{background:rgba(224,84,79,.15);border-color:var(--danger);color:var(--danger)}
+.cmp-choice.wrong{background:rgba(224,84,79,.15);border-color:var(--danger);color:var(--danger-ink)}
 .cmp-choice:disabled{cursor:default}
 
 /* ---------------- Section Checkpoint exam (shelf-style) ---------------- */
@@ -257,7 +257,7 @@ input:focus,textarea:focus,select:focus{
 /* exam runner extras */
 .cp-exam .cp-timer{font-weight:800;font-size:.9rem;background:var(--panel2,rgba(120,130,150,.14));
   border-radius:999px;padding:3px 10px;white-space:nowrap}
-.cp-exam .cp-timer.low{background:rgba(224,84,79,.16);color:var(--danger);animation:cpPulse 1s ease-in-out infinite}
+.cp-exam .cp-timer.low{background:rgba(224,84,79,.16);color:var(--danger-ink);animation:cpPulse 1s ease-in-out infinite}
 @keyframes cpPulse{50%{opacity:.55}}
 .cp-exam .lesson-actions{margin-top:18px}
 
@@ -269,7 +269,7 @@ input:focus,textarea:focus,select:focus{
 .cp-result-emoji{font-size:3.4rem;line-height:1;margin-bottom:6px}
 .cp-result-card h2{margin:0 0 10px;font-family:var(--font-display,inherit)}
 .cp-score-big{font-size:3.6rem;font-weight:900;line-height:1;color:var(--primary);font-family:var(--font-display,inherit)}
-.cp-result-card.fail .cp-score-big{color:var(--danger)}
+.cp-result-card.fail .cp-score-big{color:var(--danger-ink)}
 .cp-score-big .pct{font-size:1.6rem;font-weight:800}
 .cp-result-stats{display:flex;justify-content:center;gap:26px;margin:18px 0 4px}
 .cp-stat{display:flex;flex-direction:column;gap:2px}
@@ -2790,3 +2790,23 @@ tbody tr:hover td{ transform: translateX(1px) }
   .lp-btn-primary::after{ transition:none !important }
 }
 
+/* ============================ R98 text-ink tokens ============================
+   Status colours used as TEXT must reach WCAG AA (4.5:1) on every surface, in both
+   themes. The fill tokens (--danger, --ok, --warn, --heart) keep their values for
+   backgrounds and borders; the *-ink tokens below are the text-only variants.
+   Guarded by client/src/design-tokens.test.js (contrast on bg, panel, panel2, panel3).
+   Found by the dark-theme axe run: heart #e0544f was 4.42:1 on the dark card, and
+   the landing mock card was 3.42:1. Light --danger as text was 3.78:1. */
+:root{
+  --danger-ink:#b3322d; --ok-ink:#17702f; --warn-ink:#815000; --heart-ink:#b7362f;
+  --muted:#5a6578; --muted2:#5f6b7e;
+}
+[data-theme="dark"]{
+  --danger-ink:#ff9a94; --ok-ink:#3ecb86; --warn-ink:#f0a640; --heart-ink:#ff9a94;
+  --muted:#9fadc9; --muted2:#8fa0c0;
+}
+/* The landing mock card is a darker surface (#27436d); its muted text needs a lighter tone. */
+[data-theme="dark"] .mock-league{ --muted:#b4c1d9; }
+/* Buttons do not inherit colour by default. The landing brand is a <button>, so it rendered
+   black on the dark footer (axe 1.25:1). Inherit the page text colour instead. */
+.lp-brand{ color:inherit; }

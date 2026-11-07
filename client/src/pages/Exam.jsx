@@ -1146,7 +1146,7 @@ function Report({ caseData, evalRes, settings, onBack, home, embedded = false })
           <div className="small muted mt16" role="status">{lang === "fa" ? "در حال ترجمهٔ گزارش به فارسی…" : "Translating the report to English…"}</div>
         )}
         {trStatus === "failed" && (
-          <div className="small mt16" role="alert" style={{ color: "var(--warn)" }}>{lang === "fa" ? "ترجمه انجام نشد؛ گزارش به زبان اصلی نمایش داده می‌شود." : "Translation failed; showing the report in its original language."}</div>
+          <div className="small mt16" role="alert" style={{ color: "var(--warn-ink)" }}>{lang === "fa" ? "ترجمه انجام نشد؛ گزارش به زبان اصلی نمایش داده می‌شود." : "Translation failed; showing the report in its original language."}</div>
         )}
         {showMicro && v.microlearning && (
           <div className="card mt16" style={{ borderInlineStart: "5px solid var(--primary, #0284c7)", background: "var(--panel, #ffffff)" }}>
@@ -1184,12 +1184,12 @@ function Report({ caseData, evalRes, settings, onBack, home, embedded = false })
         {showAi && (
           <>
             <div className="grid grid-2 mt16">
-              <div className="card"><h4 style={{ color: "var(--ok)" }}><Icon name="strength" size={16} /> {t("strengths")}</h4><List arr={v.strengths} /></div>
-              <div className="card"><h4 style={{ color: "var(--danger)" }}><Icon name="warn" size={16} /> {t("weaknesses")}</h4><List arr={v.weaknesses} /></div>
+              <div className="card"><h4 style={{ color: "var(--ok-ink)" }}><Icon name="strength" size={16} /> {t("strengths")}</h4><List arr={v.strengths} /></div>
+              <div className="card"><h4 style={{ color: "var(--danger-ink)" }}><Icon name="warn" size={16} /> {t("weaknesses")}</h4><List arr={v.weaknesses} /></div>
             </div>
             <div className="grid grid-2 mt16">
-              <div className="card"><h4 style={{ color: "var(--warn)" }}><Icon name="pin" size={16} /> {t("missed")}</h4><List arr={v.missed} fallback="✓" /></div>
-              <div className="card"><h4 style={{ color: "var(--warn)" }}><Icon name="repeat" size={16} /> {t("commonMistakes")}</h4><List arr={v.commonMistakes} /></div>
+              <div className="card"><h4 style={{ color: "var(--warn-ink)" }}><Icon name="pin" size={16} /> {t("missed")}</h4><List arr={v.missed} fallback="✓" /></div>
+              <div className="card"><h4 style={{ color: "var(--warn-ink)" }}><Icon name="repeat" size={16} /> {t("commonMistakes")}</h4><List arr={v.commonMistakes} /></div>
             </div>
             {v.suggestion && <div className="card mt16"><h4><Icon name="bulb" size={16} /> {t("suggestion")}</h4><div className="small mt8">{v.suggestion}</div></div>}
           </>

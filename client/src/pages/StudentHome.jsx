@@ -83,7 +83,7 @@ export default function StudentHome({ go }) {
         {activeExams.length > 0 && (
           <div className="card mb16" style={{ borderInlineStart: "4px solid var(--ok)" }}>
             <div className="section-title" style={{ marginBottom: 12 }}>
-              <h4 style={{ color: "var(--ok)", borderBottom: "none", padding: 0 }}><Icon name="circleCheck" size={16} /> {t("activeExams")}</h4>
+              <h4 style={{ color: "var(--ok-ink)", borderBottom: "none", padding: 0 }}><Icon name="circleCheck" size={16} /> {t("activeExams")}</h4>
             </div>
             <div className="grid" style={{ gap: 10 }}>
               {activeExams.map((e) => (

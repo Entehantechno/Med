@@ -24,7 +24,7 @@
 .sb-opt-kind{font-size:.7rem;font-weight:700;color:var(--primary);background:color-mix(in srgb,var(--primary) 10%,transparent);border-radius:999px;padding:2px 8px;flex:none}
 .sb-card .sb-opt-kind{color:var(--muted);background:var(--panel2)}
 .sb-mini{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:.72rem;padding:2px 6px;border-radius:6px;display:inline-flex;align-items:center}
-.sb-mini:hover{background:var(--panel2);color:var(--danger)}
+.sb-mini:hover{background:var(--panel2);color:var(--danger-ink)}
 .sb-help{position:absolute;inset-inline-end:0;top:calc(100% + 6px);z-index:41;width:min(420px,96vw);padding:12px 14px;font-size:.84rem;box-shadow:0 14px 34px rgba(0,0,0,.14)}
 .sb-help-title{font-weight:800;margin-bottom:6px}
 .sb-help dl{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;margin:0 0 8px}
@@ -40,7 +40,7 @@ mark{background:color-mix(in srgb,#f7c948 55%,transparent);color:inherit;border-
 .fchip button{border:0;background:transparent;color:inherit;display:inline-flex;width:20px;height:20px;align-items:center;justify-content:center;border-radius:50%;cursor:pointer}
 .fchip button:hover{background:rgba(0,0,0,.08)}
 .fchip-clear{border:0;background:transparent;color:var(--muted);font-size:.78rem;font-weight:700;cursor:pointer;padding:4px 8px;border-radius:8px}
-.fchip-clear:hover{color:var(--danger);background:var(--panel2)}
+.fchip-clear:hover{color:var(--danger-ink);background:var(--panel2)}
 .browse-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between;margin:6px 0 4px}
 .browse-toolbar .muted{min-height:1.4em}
 .seg{display:inline-flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--panel2)}

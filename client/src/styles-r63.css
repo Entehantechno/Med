@@ -21,7 +21,7 @@
 .cpk-toggle b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cpk-badge { font-size: .72rem; color: var(--muted); border: 1px solid var(--border); border-radius: 999px;
   padding: 1px 8px; white-space: nowrap; }
-.cpk-badge.on { color: var(--accent2); border-color: var(--accent); background: var(--accentGlow); }
+.cpk-badge.on { color: var(--ok-ink); border-color: var(--accent); background: var(--accentGlow); }
 
 .cpk-rows { display: grid; }
 .cpk-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 10px;
@@ -36,7 +36,7 @@
 .cpk-opts { display: inline-flex; align-items: center; gap: 4px; }
 .cpk-chip { border: 1px solid var(--border); background: var(--panel); color: var(--muted); border-radius: 999px;
   padding: 2px 10px; font: inherit; font-size: .75rem; cursor: pointer; }
-.cpk-chip.on { color: var(--accent2); border-color: var(--accent); background: var(--accentGlow); }
+.cpk-chip.on { color: var(--ok-ink); border-color: var(--accent); background: var(--accentGlow); }
 .cpk-weight { display: inline-flex; align-items: center; gap: 4px; font-size: .75rem; color: var(--muted); }
 .cpk-weight input { width: 56px; padding: 4px 6px; border-radius: 8px; border: 1px solid var(--border);
   background: var(--panel); color: var(--text); }
@@ -47,7 +47,7 @@
   background: var(--panel2); color: var(--muted); border-radius: 8px; padding: 1px 6px; cursor: pointer;
   font: inherit; font-size: .72rem; white-space: nowrap; }
 .cc-compact code { font-size: .72rem; color: var(--text); background: transparent; }
-.cc-compact:hover { border-color: var(--accent); color: var(--accent2); }
+.cc-compact:hover { border-color: var(--accent); color: var(--ok-ink); }
 .cc-state { opacity: .8; }
 
 @media (max-width: 560px) {

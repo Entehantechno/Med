@@ -16,6 +16,11 @@ describe('landmarks (R97)', () => {
     expect(src).toMatch(/<div id="learn-main"[^>]*role="main"/);
   });
 
+  it('the staff (admin and teacher) panel is the page main landmark (R98: axe landmark-one-main)', () => {
+    const src = read('pages/Admin.jsx');
+    expect(src).toMatch(/<div className="container" role="main">\s*\n\s*<div className="section-title">\s*\n\s*<h2>\{t\("adminPanel"\)\}/);
+  });
+
   it('the learner top bar row sits inside a labelled region (axe: region)', () => {
     const src = read('pages/learn/LearnApp.jsx');
     expect(src).toMatch(/<section className=\{`learn-topline[^`]*`\} aria-label=/);

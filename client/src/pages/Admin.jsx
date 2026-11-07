@@ -243,7 +243,7 @@ export default function Admin({ home }) {
   return (
     <div className="app">
       <TopBar onHome={home} />
-      <div className="container">
+      <div className="container" role="main">
         <div className="section-title">
           <h2>{t("adminPanel")}</h2>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -940,7 +940,7 @@ function StudentImportModal({ onClose, onDone }) {
           )}
           {result.failures?.length>0 ? (
             <>
-              <div style={{ fontWeight:800, marginBottom:6, color:"var(--danger)" }}>{fa?`۹ تایی که وارد نشدند — ${result.failures.length} ردیف`:`${result.failures.length} rows failed`} — {fa?"هر ردیف دلیلش نوشته شده تا فوری اصلاح کنید":"each row shows why"}</div>
+              <div style={{ fontWeight:800, marginBottom:6, color:"var(--danger-ink)" }}>{fa?`۹ تایی که وارد نشدند — ${result.failures.length} ردیف`:`${result.failures.length} rows failed`} — {fa?"هر ردیف دلیلش نوشته شده تا فوری اصلاح کنید":"each row shows why"}</div>
               <div style={{ maxHeight: 260, overflow:"auto", border:"1px solid var(--border)", borderRadius:8 }}>
                 <table style={{ width:"100%", fontSize:".85rem", borderCollapse:"collapse" }}>
                   <thead><tr style={{ background:"var(--panel)", position:"sticky", top:0 }}>
@@ -955,7 +955,7 @@ function StudentImportModal({ onClose, onDone }) {
                         <td style={{ padding:"6px 8px" }}>{f.line}</td>
                         <td style={{ padding:"6px 8px" }}>{f.name||"—"}</td>
                         <td style={{ padding:"6px 8px", direction:"ltr", fontFamily:"monospace" }}>{f.sno||"—"}</td>
-                        <td style={{ padding:"6px 8px", color:"var(--danger)" }}>{fa?f.reason_fa:f.reason_en}</td>
+                        <td style={{ padding:"6px 8px", color:"var(--danger-ink)" }}>{fa?f.reason_fa:f.reason_en}</td>
                       </tr>
                     ))}
                   </tbody>

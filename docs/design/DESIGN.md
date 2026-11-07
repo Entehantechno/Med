@@ -51,3 +51,30 @@ Reference: the Notion entry in [VoltAgent/awesome-design-md](https://github.com/
   dark theme while the app is light (needs an owner decision on theme); learner home has
   many cards with competing gradients (a product decision on the premium banner); the
   student home is sparse; the virtual-patient case screen was not re-audited in this round.
+
+## R98 — text-ink tokens (measured in both themes)
+
+Status colours are fills (backgrounds, borders) or text. Text needs 4.5:1 on every surface
+it sits on. The fill tokens (`--danger`, `--ok`, `--warn`, `--heart`) keep their values. The
+text-only variants are the `-ink` tokens. Defined in `client/src/design-refresh.css`, after
+the marker `R98 text-ink tokens`. Guarded by `client/src/design-tokens.test.js`, which checks
+each token on `--bg`, `--panel`, `--panel2` and `--panel3` in both themes.
+
+| Token | Light | Dark | Lowest contrast, light / dark (over bg, panel, panel2, panel3) |
+|---|---|---|---|
+| `--danger-ink` | `#b3322d` | `#ff9a94` | 5.33 / 6.36 |
+| `--ok-ink` | `#17702f` | `#3ecb86` | 5.35 / 6.23 |
+| `--warn-ink` | `#815000` | `#f0a640` | 5.90 / 6.32 |
+| `--heart-ink` | `#b7362f` | `#ff9a94` | 5.07 / 6.36 |
+| `--muted` | `#5a6578` | `#9fadc9` | 5.09 / 5.74 |
+| `--muted2` | `#5f6b7e` | `#8fa0c0` | 4.67 / 4.91 |
+
+Rules that follow from this:
+
+1. Colour a text element with `-ink`. Do not use the fill token as the text colour.
+   Guarded: no `color: var(--danger|ok|warn|heart|green2|accent2)` remains in CSS or JSX.
+2. A `<button>` does not inherit `color` by default. Set `color: inherit` on any button that
+   carries text on a themed surface (the landing brand did, and rendered black on the dark footer).
+3. Decorative surfaces that are darker than the panel (the landing mock card) may need a
+   scoped token override (`[data-theme="dark"] .mock-league{ --muted: #b4c1d9 }`).
+
